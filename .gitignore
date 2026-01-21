@@ -1,0 +1,48 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# ==== Backend (Spring Boot / Java) ====
+backend/build/
+backend/.gradle/
+backend/bin/
+backend/out/
+backend/*.jar
+backend/*.war
+
+# ==== Frontend (React / Node.js) ====
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.pnp/
+frontend/.pnp.js
+frontend/coverage/
+frontend/.next/
+frontend/out/
+
+# npm / yarn / pnpm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.yarn/
+
+# Test
+frontend/*.lcov
