@@ -1,10 +1,13 @@
 package igrus.web.user.domain;
 
-import igrus.web.common.domain.BaseEntity;
+import igrus.web.common.domain.SoftDeletableEntity;
+import igrus.web.user.exception.InvalidEmailException;
+import igrus.web.user.exception.InvalidStudentIdException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,15 +16,19 @@ import java.util.List;
 // 사용자 기본정보
 @Entity
 @Table(name = "users")
+@SQLRestriction("users_deleted = false")
 @AttributeOverrides({
         @AttributeOverride(name = "createdAt", column = @Column(name = "users_created_at", nullable = false, updatable = false)),
         @AttributeOverride(name = "updatedAt", column = @Column(name = "users_updated_at", nullable = false)),
         @AttributeOverride(name = "createdBy", column = @Column(name = "users_created_by", updatable = false)),
-        @AttributeOverride(name = "updatedBy", column = @Column(name = "users_updated_by"))
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "users_updated_by")),
+        @AttributeOverride(name = "deleted", column = @Column(name = "users_deleted", nullable = false)),
+        @AttributeOverride(name = "deletedAt", column = @Column(name = "users_deleted_at")),
+        @AttributeOverride(name = "deletedBy", column = @Column(name = "users_deleted_by"))
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseEntity {
+public class User extends SoftDeletableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,6 +72,9 @@ public class User extends BaseEntity {
 
     public static User create(String studentId, String name, String email,
                               String phoneNumber, String department, String motivation) {
+        validateStudentId(studentId);
+        validateEmail(email);
+
         User user = new User();
         user.studentId = studentId;
         user.name = name;
@@ -74,6 +84,19 @@ public class User extends BaseEntity {
         user.motivation = motivation;
         user.role = UserRole.ASSOCIATE;
         return user;
+    }
+
+    private static void validateStudentId(String studentId) {
+        if (studentId == null || !studentId.matches("^\\d{8}$")) {
+            throw new InvalidStudentIdException(studentId);
+        }
+    }
+
+    private static void validateEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        if (email == null || !email.matches(emailRegex)) {
+            throw new InvalidEmailException(email);
+        }
     }
 
     // === 역할 변경 ===

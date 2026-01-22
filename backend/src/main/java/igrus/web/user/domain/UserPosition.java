@@ -6,7 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 // User-Position 다대다 관계를 위한 중간 테이블
 @Entity
@@ -36,7 +36,7 @@ public class UserPosition extends BaseEntity {
 
     // 직책 부여일
     @Column(name = "user_positions_assigned_at", nullable = false)
-    private LocalDateTime assignedAt;
+    private Instant assignedAt;
 
     // === 정적 팩토리 메서드 ===
 
@@ -44,11 +44,11 @@ public class UserPosition extends BaseEntity {
         UserPosition userPosition = new UserPosition();
         userPosition.user = user;
         userPosition.position = position;
-        userPosition.assignedAt = LocalDateTime.now();
+        userPosition.assignedAt = Instant.now();
         return userPosition;
     }
 
-    public static UserPosition create(User user, Position position, LocalDateTime assignedAt) {
+    public static UserPosition create(User user, Position position, Instant assignedAt) {
         UserPosition userPosition = new UserPosition();
         userPosition.user = user;
         userPosition.position = position;
