@@ -1,10 +1,11 @@
 package igrus.web.user.domain;
 
-import igrus.web.common.domain.BaseEntity;
+import igrus.web.common.domain.SoftDeletableEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,15 +13,19 @@ import java.util.List;
 // 직책 (기술부, 기술부장, 회장 등)
 @Entity
 @Table(name = "positions")
+@SQLRestriction("positions_deleted = false")
 @AttributeOverrides({
         @AttributeOverride(name = "createdAt", column = @Column(name = "positions_created_at", nullable = false, updatable = false)),
         @AttributeOverride(name = "updatedAt", column = @Column(name = "positions_updated_at", nullable = false)),
         @AttributeOverride(name = "createdBy", column = @Column(name = "positions_created_by", updatable = false)),
-        @AttributeOverride(name = "updatedBy", column = @Column(name = "positions_updated_by"))
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "positions_updated_by")),
+        @AttributeOverride(name = "deleted", column = @Column(name = "positions_deleted", nullable = false)),
+        @AttributeOverride(name = "deletedAt", column = @Column(name = "positions_deleted_at")),
+        @AttributeOverride(name = "deletedBy", column = @Column(name = "positions_deleted_by"))
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Position extends BaseEntity {
+public class Position extends SoftDeletableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

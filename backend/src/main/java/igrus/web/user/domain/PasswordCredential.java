@@ -1,25 +1,30 @@
 package igrus.web.user.domain;
 
-import igrus.web.common.domain.BaseEntity;
+import igrus.web.common.domain.SoftDeletableEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 // 사용자 패스워드 기반 인증 정보 (비밀번호, 계정 상태, 승인 정보)
 @Entity
 @Table(name = "password_credentials")
+@SQLRestriction("password_credentials_deleted = false")
 @AttributeOverrides({
         @AttributeOverride(name = "createdAt", column = @Column(name = "password_credentials_created_at", nullable = false, updatable = false)),
         @AttributeOverride(name = "updatedAt", column = @Column(name = "password_credentials_updated_at", nullable = false)),
         @AttributeOverride(name = "createdBy", column = @Column(name = "password_credentials_created_by", updatable = false)),
-        @AttributeOverride(name = "updatedBy", column = @Column(name = "password_credentials_updated_by"))
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "password_credentials_updated_by")),
+        @AttributeOverride(name = "deleted", column = @Column(name = "password_credentials_deleted", nullable = false)),
+        @AttributeOverride(name = "deletedAt", column = @Column(name = "password_credentials_deleted_at")),
+        @AttributeOverride(name = "deletedBy", column = @Column(name = "password_credentials_deleted_by"))
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PasswordCredential extends BaseEntity {
+public class PasswordCredential extends SoftDeletableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,7 +46,7 @@ public class PasswordCredential extends BaseEntity {
 
     // 정회원 승인일 : 준회원 -> 정회원 전환 시 기록
     @Column(name = "password_credentials_approved_at")
-    private LocalDateTime approvedAt;
+    private Instant approvedAt;
 
     // 승인 처리자의 ID
     @Column(name = "password_credentials_approved_by")
@@ -94,7 +99,7 @@ public class PasswordCredential extends BaseEntity {
     // === 정회원 승인 ===
 
     public void approve(Long approverId) {
-        this.approvedAt = LocalDateTime.now();
+        this.approvedAt = Instant.now();
         this.approvedBy = approverId;
     }
 
