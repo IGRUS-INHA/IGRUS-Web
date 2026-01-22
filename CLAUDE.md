@@ -9,20 +9,31 @@
 ```
 IGRUS-Web/
 ├── backend/     # Spring Boot 백엔드
-├── frontend/    # React 프론트엔드
+├── frontend/    # React + Vite 프론트엔드
+├── docs/        # 프로젝트 문서 (ADR, 기능 명세 등)
+├── specs/       # 기능 스펙 문서
 └── README.md
 ```
+
+### 서브 프로젝트별 가이드
+
+각 서브 프로젝트의 상세한 개발 규칙은 해당 디렉토리의 CLAUDE.md 참조:
+- `backend/CLAUDE.md` - 백엔드 개발 규칙, 아키텍처, 테스트 가이드
 
 ## 기술 스택
 
 ### Backend
-- Java
-- Spring Boot
+- Java 21
+- Spring Boot 4.0.1
+- Spring Data JPA
+- Spring Security
+- MySQL 8.x
 - Gradle
 
 ### Frontend
-- React
+- React 19
 - TypeScript
+- Vite 7
 
 ## 커밋 규칙
 
