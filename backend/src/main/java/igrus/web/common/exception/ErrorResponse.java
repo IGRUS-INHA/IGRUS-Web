@@ -1,12 +1,12 @@
 package igrus.web.common.exception;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record ErrorResponse(
         int status,
         String code,
         String message,
-        LocalDateTime timestamp
+        Instant timestamp
 ) {
 
     public static ErrorResponse of(ErrorCode errorCode) {
@@ -14,7 +14,7 @@ public record ErrorResponse(
                 errorCode.getStatus(),
                 errorCode.getCode(),
                 errorCode.getMessage(),
-                LocalDateTime.now()
+                Instant.now()
         );
     }
 
@@ -23,7 +23,7 @@ public record ErrorResponse(
                 errorCode.getStatus(),
                 errorCode.getCode(),
                 message,
-                LocalDateTime.now()
+                Instant.now()
         );
     }
 
@@ -32,7 +32,7 @@ public record ErrorResponse(
                 status,
                 code,
                 message,
-                LocalDateTime.now()
+                Instant.now()
         );
     }
 }

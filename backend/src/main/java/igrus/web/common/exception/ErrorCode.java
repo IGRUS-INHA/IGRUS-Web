@@ -18,7 +18,9 @@ public enum ErrorCode {
     USER_NOT_FOUND(404, "U001", "사용자를 찾을 수 없습니다"),
     DUPLICATE_EMAIL(409, "U002", "이미 존재하는 이메일입니다"),
     INVALID_PASSWORD(401, "U003", "비밀번호가 일치하지 않습니다"),
-    SAME_ROLE_CHANGE(400, "U004", "이전 역할과 새 역할이 동일합니다");
+    SAME_ROLE_CHANGE(400, "U004", "이전 역할과 새 역할이 동일합니다"),
+    INVALID_STUDENT_ID(400, "U005", "학번은 8자리 숫자여야 합니다"),
+    INVALID_EMAIL_FORMAT(400, "U006", "유효하지 않은 이메일 형식입니다");
 
     private final int status;
     private final String code;
