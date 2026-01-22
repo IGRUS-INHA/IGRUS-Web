@@ -9,8 +9,9 @@
 ## Clarifications
 
 ### Session 2026-01-22 (3차)
-- Q: 데이터 모델 정규화? → A: User 테이블을 User(기본정보), UserAuth(인증정보), UserSuspension(정지이력)으로 분리
+- Q: 데이터 모델 정규화? → A: User 테이블을 User(기본정보+역할), UserAuth(인증자격증명), UserSuspension(정지이력)으로 분리
 - 분리 사유: 3NF 위반 해소 (status→suspendedUntil 이행 종속), 보안/책임 분리, 정지 이력 관리
+- Q: role 위치? → A: User에 배치 (조직 내 위치를 나타내는 프로필 속성, 인가 개념이므로 인증 테이블에서 분리)
 
 ### Session 2026-01-22 (2차)
 - Q: 회원가입 방식 변경? → A: 동아리 가입 = 웹 회원가입 동시 진행, MemberList 사전 검증 제거, 누구나 가입 신청 가능
@@ -968,10 +969,15 @@ semester: "2025-1"
 **테이블 분리 근거:**
 | 분리 전 | 분리 후 | 분리 사유 |
 |---------|---------|-----------|
-| User.password | UserAuth.passwordHash | 프로필 정보와 인증 정보 분리 (보안 및 책임 분리) |
-| User.role, status | UserAuth.role, status | 인증/권한 관련 속성 별도 관리 |
+| User.password | UserAuth.passwordHash | 프로필 정보와 인증 자격증명 분리 (보안 및 책임 분리) |
+| User.status | UserAuth.status | 계정 상태는 인증 도메인에 귀속 (로그인 가능 여부 결정) |
 | User.suspendedUntil | UserSuspension 테이블 | 정지 이력 관리 및 3NF 위반 해소 (status→suspendedUntil 이행 종속) |
 | User.approvedAt | UserAuth.approvedAt | 승인 정보는 인증 도메인에 귀속 |
+
+**role을 User에 배치한 이유:**
+- role은 "조직 내 사용자의 위치"를 나타내는 프로필 속성
+- 인증(Authentication)이 아닌 인가(Authorization) 개념
+- 대부분의 조회에서 User + role이 함께 필요 → JOIN 불필요
 
 **테이블 관계:**
 ```
