@@ -49,9 +49,10 @@ public class User {
     private UserRole role = UserRole.ASSOCIATE;
     // 역할
 
-    @Column
-    private String title;
-    // 칭호 -> 관리자 설정 요소
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "title_id")
+    private Title title;
+    // 칭호 (관리자 설정)
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
