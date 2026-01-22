@@ -46,3 +46,6 @@ pnpm-debug.log*
 
 # Test
 frontend/*.lcov
+
+# Claude
+.claude/settings.local.json

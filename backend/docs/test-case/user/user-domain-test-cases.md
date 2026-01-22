@@ -1,7 +1,7 @@
 # User 도메인 테스트 케이스
 
 **작성일**: 2026-01-22
-**버전**: 1.0
+**버전**: 1.1
 **관련 PRD**: [IGRUS_WEB_PRD_V2.md](../../../../docs/feature/common/IGRUS_WEB_PRD_V2.md)
 
 ---
@@ -12,14 +12,15 @@ User 도메인 관련 테스트 케이스를 정의합니다. 현재 구현된 �
 
 ### 1.1 테스트 대상
 
-| 클래스 | 설명 | 테스트 파일 |
-|--------|------|------------|
-| `User` | 사용자 기본정보 엔티티 | (미구현) |
-| `UserRole` | 사용자 역할 Enum | (미구현) |
-| `UserRoleHistory` | 역할 변경 이력 엔티티 | `UserRoleHistoryTest.java` |
-| `PasswordCredential` | 인증 자격증명 엔티티 | (미구현) |
-| `Position` | 직책 엔티티 | (미구현) |
-| `UserPosition` | 사용자-직책 연결 엔티티 | (미구현) |
+| 클래스 | 설명 | 테스트 파일 | 상태 |
+|--------|------|------------|------|
+| `User` | 사용자 기본정보 엔티티 | `UserTest.java` | ✅ 구현됨 |
+| `UserRole` | 사용자 역할 Enum | (User 테스트에 포함) | ✅ 구현됨 |
+| `UserRoleHistory` | 역할 변경 이력 엔티티 | `UserRoleHistoryTest.java` | ✅ 구현됨 |
+| `PasswordCredential` | 인증 자격증명 엔티티 | `PasswordCredentialTest.java` | ✅ 구현됨 |
+| `Position` | 직책 엔티티 | `PositionTest.java` | ✅ 구현됨 |
+| `UserPosition` | 사용자-직책 연결 엔티티 | (User 테스트에 포함) | ✅ 구현됨 |
+| `UserSuspension` | 계정 정지 이력 엔티티 | `UserSuspensionTest.java` | ✅ 구현됨 |
 
 ---
 
@@ -111,123 +112,236 @@ User 도메인 관련 테스트 케이스를 정의합니다. 현재 구현된 �
 
 ---
 
-## 3. User 테스트 케이스 (구현 예정)
+## 3. User 테스트 케이스
+
+**테스트 파일**: `src/test/java/igrus/web/user/domain/UserTest.java`
 
 ### 3.1 create 정적 팩토리 메서드
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| U-001 | 유효한 정보로 User 생성 성공 | 모든 필수 필드가 유효하면 User 객체 생성 | ⬜ 미구현 |
-| U-002 | 생성 시 기본 역할은 ASSOCIATE | 생성된 User의 role은 ASSOCIATE | ⬜ 미구현 |
-| U-003 | 학번이 8자리가 아니면 예외 발생 | 학번 형식 검증 | ⬜ 미구현 |
-| U-004 | 이메일 형식이 유효하지 않으면 예외 발생 | 이메일 형식 검증 | ⬜ 미구현 |
+| U-001 | 유효한 정보로 User 생성 성공 | 모든 필수 필드가 유효하면 User 객체 생성 | ✅ 구현됨 |
+| U-002 | 생성 시 기본 역할은 ASSOCIATE | 생성된 User의 role은 ASSOCIATE | ✅ 구현됨 |
 
-### 3.2 역할 변경 메서드
+### 3.2 학번 검증
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| U-005 | promoteToMember 호출 시 MEMBER로 변경 | 준회원→정회원 승급 | ⬜ 미구현 |
-| U-006 | promoteToOperator 호출 시 OPERATOR로 변경 | 운영진으로 승급 | ⬜ 미구현 |
-| U-007 | promoteToAdmin 호출 시 ADMIN으로 변경 | 관리자로 승급 | ⬜ 미구현 |
-| U-008 | demoteToMember 호출 시 MEMBER로 변경 | 정회원으로 강등 | ⬜ 미구현 |
-| U-009 | changeRole 호출 시 지정한 역할로 변경 | 임의 역할로 변경 | ⬜ 미구현 |
+| U-003 | null 학번 -> InvalidStudentIdException | 학번이 null일 때 예외 발생 | ✅ 구현됨 |
+| U-004 | 빈 문자열 학번 -> InvalidStudentIdException | 학번이 빈 문자열일 때 예외 발생 | ✅ 구현됨 |
+| U-005 | 7자리 학번 -> InvalidStudentIdException | 학번이 7자리일 때 예외 발생 | ✅ 구현됨 |
+| U-006 | 9자리 학번 -> InvalidStudentIdException | 학번이 9자리일 때 예외 발생 | ✅ 구현됨 |
+| U-007 | 숫자가 아닌 문자 포함 학번 -> InvalidStudentIdException | 학번에 문자 포함 시 예외 발생 | ✅ 구현됨 |
 
-### 3.3 역할 확인 메서드
-
-| TC-ID | 테스트명 | 설명 | 상태 |
-|-------|---------|------|------|
-| U-010 | isAdmin - ADMIN일 때 true 반환 | 관리자 여부 확인 | ⬜ 미구현 |
-| U-011 | isOperator - OPERATOR일 때 true 반환 | 운영진 여부 확인 | ⬜ 미구현 |
-| U-012 | isOperatorOrAbove - OPERATOR/ADMIN일 때 true 반환 | 운영진 이상 여부 확인 | ⬜ 미구현 |
-| U-013 | isMember - MEMBER일 때 true 반환 | 정회원 여부 확인 | ⬜ 미구현 |
-| U-014 | isAssociate - ASSOCIATE일 때 true 반환 | 준회원 여부 확인 | ⬜ 미구현 |
-
-### 3.4 직책 관련 메서드
+### 3.3 이메일 검증
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| U-015 | addPosition으로 직책 추가 성공 | 새 직책 추가 | ⬜ 미구현 |
-| U-016 | 중복 직책 추가 시 무시 | 이미 가진 직책 추가 시 중복 방지 | ⬜ 미구현 |
-| U-017 | removePosition으로 직책 제거 성공 | 기존 직책 제거 | ⬜ 미구현 |
-| U-018 | clearPositions으로 모든 직책 제거 | 전체 직책 초기화 | ⬜ 미구현 |
-| U-019 | hasPosition - 해당 직책 보유 시 true 반환 | 직책 보유 여부 확인 | ⬜ 미구현 |
-| U-020 | hasAnyPosition - 직책이 있으면 true 반환 | 직책 존재 여부 확인 | ⬜ 미구현 |
+| U-008 | null 이메일 -> InvalidEmailException | 이메일이 null일 때 예외 발생 | ✅ 구현됨 |
+| U-009 | 빈 문자열 이메일 -> InvalidEmailException | 이메일이 빈 문자열일 때 예외 발생 | ✅ 구현됨 |
+| U-010 | @ 없는 이메일 -> InvalidEmailException | @ 기호 없을 때 예외 발생 | ✅ 구현됨 |
+| U-011 | 도메인 없는 이메일 -> InvalidEmailException | @ 뒤에 도메인 없을 때 예외 발생 | ✅ 구현됨 |
 
-### 3.5 프로필 수정 메서드
+### 3.4 역할 변경 메서드
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| U-021 | updateProfile로 프로필 정보 수정 성공 | name, phoneNumber, department 수정 | ⬜ 미구현 |
-| U-022 | updateEmail로 이메일 수정 성공 | email 수정 | ⬜ 미구현 |
+| U-012 | promoteToMember 호출 시 MEMBER로 변경 | 준회원→정회원 승급 | ✅ 구현됨 |
+| U-013 | promoteToOperator 호출 시 OPERATOR로 변경 | 운영진으로 승급 | ✅ 구현됨 |
+| U-014 | promoteToAdmin 호출 시 ADMIN으로 변경 | 관리자로 승급 | ✅ 구현됨 |
+| U-015 | demoteToMember 호출 시 MEMBER로 변경 | 정회원으로 강등 | ✅ 구현됨 |
+| U-016 | changeRole 호출 시 지정한 역할로 변경 | 임의 역할로 변경 | ✅ 구현됨 |
+
+### 3.5 역할 확인 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| U-017 | isAdmin - ADMIN일 때 true 반환 | 관리자 여부 확인 | ✅ 구현됨 |
+| U-018 | isAdmin - ASSOCIATE/MEMBER/OPERATOR일 때 false 반환 | 비관리자 역할 확인 | ✅ 구현됨 |
+| U-019 | isOperator - OPERATOR일 때 true 반환 | 운영진 여부 확인 | ✅ 구현됨 |
+| U-020 | isOperator - ASSOCIATE/MEMBER/ADMIN일 때 false 반환 | 비운영진 역할 확인 | ✅ 구현됨 |
+| U-021 | isOperatorOrAbove - OPERATOR/ADMIN일 때 true 반환 | 운영진 이상 여부 확인 | ✅ 구현됨 |
+| U-022 | isOperatorOrAbove - ASSOCIATE/MEMBER일 때 false 반환 | 운영진 미만 역할 확인 | ✅ 구현됨 |
+| U-023 | isMember - MEMBER일 때 true 반환 | 정회원 여부 확인 | ✅ 구현됨 |
+| U-024 | isMember - ASSOCIATE/OPERATOR/ADMIN일 때 false 반환 | 비정회원 역할 확인 | ✅ 구현됨 |
+| U-025 | isAssociate - ASSOCIATE일 때 true 반환 | 준회원 여부 확인 | ✅ 구현됨 |
+| U-026 | isAssociate - MEMBER/OPERATOR/ADMIN일 때 false 반환 | 비준회원 역할 확인 | ✅ 구현됨 |
+
+### 3.6 직책 관련 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| U-027 | addPosition으로 직책 추가 성공 | 새 직책 추가 | ✅ 구현됨 |
+| U-028 | 여러 직책 추가 가능 | 복수의 직책 추가 | ✅ 구현됨 |
+| U-029 | 중복 직책 추가 시 무시 | 이미 가진 직책 추가 시 중복 방지 | ✅ 구현됨 |
+| U-030 | removePosition으로 직책 제거 성공 | 기존 직책 제거 | ✅ 구현됨 |
+| U-031 | 없는 직책 제거 시 예외 없이 정상 동작 | 존재하지 않는 직책 제거 시도 | ✅ 구현됨 |
+| U-032 | clearPositions으로 모든 직책 제거 | 전체 직책 초기화 | ✅ 구현됨 |
+| U-033 | 이미 비어있을 때도 clearPositions 정상 동작 | 빈 상태에서 초기화 | ✅ 구현됨 |
+| U-034 | hasPosition - 해당 직책 보유 시 true 반환 | 직책 보유 여부 확인 | ✅ 구현됨 |
+| U-035 | hasPosition - 해당 직책 미보유 시 false 반환 | 직책 미보유 확인 | ✅ 구현됨 |
+| U-036 | hasAnyPosition - 직책이 있으면 true 반환 | 직책 존재 여부 확인 | ✅ 구현됨 |
+| U-037 | hasAnyPosition - 직책이 없으면 false 반환 | 직책 없음 확인 | ✅ 구현됨 |
+
+### 3.7 프로필 수정 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| U-038 | updateProfile로 프로필 정보 수정 성공 | name, phoneNumber, department 수정 | ✅ 구현됨 |
+| U-039 | updateEmail로 이메일 수정 성공 | email 수정 | ✅ 구현됨 |
 
 ---
 
-## 4. PasswordCredential 테스트 케이스 (구현 예정)
+## 4. PasswordCredential 테스트 케이스
+
+**테스트 파일**: `src/test/java/igrus/web/user/domain/PasswordCredentialTest.java`
 
 ### 4.1 create 정적 팩토리 메서드
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| PC-001 | 유효한 정보로 PasswordCredential 생성 성공 | User와 passwordHash로 생성 | ⬜ 미구현 |
-| PC-002 | 생성 시 기본 상태는 ACTIVE | 생성된 credential의 status는 ACTIVE | ⬜ 미구현 |
+| PC-001 | 유효한 정보로 PasswordCredential 생성 성공 | User와 passwordHash로 생성 | ✅ 구현됨 |
+| PC-002 | 생성 시 기본 상태는 ACTIVE | 생성된 credential의 status는 ACTIVE | ✅ 구현됨 |
+| PC-003 | 생성 시 approvedAt은 null (미승인 상태) | 승인 정보 초기값 확인 | ✅ 구현됨 |
 
 ### 4.2 비밀번호 관련 메서드
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| PC-003 | changePassword로 비밀번호 변경 성공 | 새 passwordHash로 변경 | ⬜ 미구현 |
+| PC-004 | changePassword로 비밀번호 변경 성공 | 새 passwordHash로 변경 | ✅ 구현됨 |
 
 ### 4.3 계정 상태 관련 메서드
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| PC-004 | activate 호출 시 ACTIVE로 변경 | 계정 활성화 | ⬜ 미구현 |
-| PC-005 | suspend 호출 시 SUSPENDED로 변경 | 계정 정지 | ⬜ 미구현 |
-| PC-006 | withdraw 호출 시 WITHDRAWN으로 변경 | 계정 탈퇴 | ⬜ 미구현 |
-| PC-007 | isActive - ACTIVE일 때 true 반환 | 활성 상태 확인 | ⬜ 미구현 |
-| PC-008 | isSuspended - SUSPENDED일 때 true 반환 | 정지 상태 확인 | ⬜ 미구현 |
-| PC-009 | isWithdrawn - WITHDRAWN일 때 true 반환 | 탈퇴 상태 확인 | ⬜ 미구현 |
+| PC-005 | activate 호출 시 ACTIVE로 변경 | 계정 활성화 | ✅ 구현됨 |
+| PC-006 | suspend 호출 시 SUSPENDED로 변경 | 계정 정지 | ✅ 구현됨 |
+| PC-007 | withdraw 호출 시 WITHDRAWN으로 변경 | 계정 탈퇴 | ✅ 구현됨 |
+| PC-008 | isActive - ACTIVE일 때 true 반환 | 활성 상태 확인 | ✅ 구현됨 |
+| PC-009 | isActive - SUSPENDED일 때 false 반환 | 정지 상태에서 활성 확인 | ✅ 구현됨 |
+| PC-010 | isActive - WITHDRAWN일 때 false 반환 | 탈퇴 상태에서 활성 확인 | ✅ 구현됨 |
+| PC-011 | isSuspended - SUSPENDED일 때 true 반환 | 정지 상태 확인 | ✅ 구현됨 |
+| PC-012 | isSuspended - ACTIVE일 때 false 반환 | 활성 상태에서 정지 확인 | ✅ 구현됨 |
+| PC-013 | isSuspended - WITHDRAWN일 때 false 반환 | 탈퇴 상태에서 정지 확인 | ✅ 구현됨 |
+| PC-014 | isWithdrawn - WITHDRAWN일 때 true 반환 | 탈퇴 상태 확인 | ✅ 구현됨 |
+| PC-015 | isWithdrawn - ACTIVE일 때 false 반환 | 활성 상태에서 탈퇴 확인 | ✅ 구현됨 |
+| PC-016 | isWithdrawn - SUSPENDED일 때 false 반환 | 정지 상태에서 탈퇴 확인 | ✅ 구현됨 |
 
 ### 4.4 정회원 승인 메서드
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| PC-010 | approve 호출 시 승인 정보 기록 | approvedAt, approvedBy 설정 | ⬜ 미구현 |
-| PC-011 | isApproved - 승인되었으면 true 반환 | approvedAt != null | ⬜ 미구현 |
+| PC-017 | approve 호출 시 승인 정보 기록 | approvedAt, approvedBy 설정 | ✅ 구현됨 |
+| PC-018 | isApproved - 승인 후 true 반환 | approvedAt != null | ✅ 구현됨 |
+| PC-019 | isApproved - 승인 전 false 반환 | approvedAt == null | ✅ 구현됨 |
 
 ---
 
-## 5. Position 테스트 케이스 (구현 예정)
+## 5. Position 테스트 케이스
+
+**테스트 파일**: `src/test/java/igrus/web/user/domain/PositionTest.java`
 
 ### 5.1 create 정적 팩토리 메서드
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| P-001 | 유효한 정보로 Position 생성 성공 | name, imageUrl, displayOrder로 생성 | ⬜ 미구현 |
+| P-001 | 유효한 정보로 Position 생성 성공 | name, imageUrl, displayOrder로 생성 | ✅ 구현됨 |
+| P-002 | imageUrl이 null이어도 생성 성공 | imageUrl 옵션 확인 | ✅ 구현됨 |
+| P-003 | displayOrder가 null이어도 생성 성공 | displayOrder 옵션 확인 | ✅ 구현됨 |
 
 ### 5.2 수정 메서드
 
 | TC-ID | 테스트명 | 설명 | 상태 |
 |-------|---------|------|------|
-| P-002 | updateName으로 직책명 수정 성공 | name 수정 | ⬜ 미구현 |
-| P-003 | updateImageUrl로 이미지 URL 수정 성공 | imageUrl 수정 | ⬜ 미구현 |
-| P-004 | updateDisplayOrder로 표시 순서 수정 성공 | displayOrder 수정 | ⬜ 미구현 |
-| P-005 | update로 전체 정보 수정 성공 | 모든 필드 수정 | ⬜ 미구현 |
+| P-004 | updateName으로 직책명 수정 성공 | name 수정 | ✅ 구현됨 |
+| P-005 | updateImageUrl로 이미지 URL 수정 성공 | imageUrl 수정 | ✅ 구현됨 |
+| P-006 | updateImageUrl로 null 설정 가능 | imageUrl을 null로 변경 | ✅ 구현됨 |
+| P-007 | updateDisplayOrder로 표시 순서 수정 성공 | displayOrder 수정 | ✅ 구현됨 |
+| P-008 | updateDisplayOrder로 null 설정 가능 | displayOrder를 null로 변경 | ✅ 구현됨 |
+| P-009 | update로 전체 정보 수정 성공 | 모든 필드 수정 | ✅ 구현됨 |
 
 ---
 
-## 6. PRD 기반 비즈니스 규칙 테스트 케이스 (구현 예정)
+## 6. UserSuspension 테스트 케이스
 
-### 6.1 회원가입 규칙 (PRD 섹션 1)
+**테스트 파일**: `src/test/java/igrus/web/user/domain/UserSuspensionTest.java`
+
+### 6.1 create 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| US-001 | 유효한 정지 정보로 UserSuspension 생성 성공 | user, reason, suspendedUntil, suspendedBy로 생성 | ✅ 구현됨 |
+| US-002 | 정지 시작일 지정하여 생성 성공 | suspendedAt 지정 생성 | ✅ 구현됨 |
+| US-003 | 정지 종료일이 시작일 이전이면 예외 발생 | 유효하지 않은 기간 검증 | ✅ 구현됨 |
+
+### 6.2 lift 메서드 (정지 해제)
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| US-004 | 정지 해제 성공 | lift(liftedBy) 호출 시 해제 정보 기록 | ✅ 구현됨 |
+| US-005 | 해제일 지정하여 정지 해제 성공 | lift(liftedAt, liftedBy) 호출 | ✅ 구현됨 |
+| US-006 | 이미 해제된 정지를 다시 해제하면 예외 발생 | 중복 해제 방지 | ✅ 구현됨 |
+
+### 6.3 isActive 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| US-007 | 현재 유효한 정지는 true 반환 | 정지 기간 내 + 미해제 상태 | ✅ 구현됨 |
+| US-008 | 해제된 정지는 false 반환 | lifted 상태 | ✅ 구현됨 |
+| US-009 | 만료된 정지는 false 반환 | suspendedUntil 지남 | ✅ 구현됨 |
+| US-010 | 아직 시작되지 않은 정지는 false 반환 | suspendedAt 이전 | ✅ 구현됨 |
+
+### 6.4 isExpired 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| US-011 | 만료된 정지는 true 반환 | suspendedUntil 지남 | ✅ 구현됨 |
+| US-012 | 만료되지 않은 정지는 false 반환 | suspendedUntil 이전 | ✅ 구현됨 |
+
+### 6.5 hasStarted 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| US-013 | 시작된 정지는 true 반환 | suspendedAt 지남 | ✅ 구현됨 |
+| US-014 | 아직 시작되지 않은 정지는 false 반환 | suspendedAt 이전 | ✅ 구현됨 |
+
+### 6.6 updateReason 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| US-015 | 사유 업데이트 성공 | 새로운 reason으로 업데이트 | ✅ 구현됨 |
+| US-016 | null로 사유 업데이트 시 예외 발생 | reason 필수 검증 | ✅ 구현됨 |
+| US-017 | 빈 문자열로 사유 업데이트 시 예외 발생 | reason 필수 검증 | ✅ 구현됨 |
+
+### 6.7 extendSuspension 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| US-018 | 정지 기간 연장 성공 | 새로운 종료일로 연장 | ✅ 구현됨 |
+| US-019 | 해제된 정지 연장 시 예외 발생 | lifted 상태에서 연장 불가 | ✅ 구현됨 |
+| US-020 | 기존 종료일 이전으로 연장 시 예외 발생 | 유효한 연장일 검증 | ✅ 구현됨 |
+
+### 6.8 isLifted 메서드
+
+| TC-ID | 테스트명 | 설명 | 상태 |
+|-------|---------|------|------|
+| US-021 | 해제되지 않은 정지는 false 반환 | liftedAt == null | ✅ 구현됨 |
+| US-022 | 해제된 정지는 true 반환 | liftedAt != null | ✅ 구현됨 |
+
+---
+
+## 7. PRD 기반 비즈니스 규칙 테스트 케이스 (구현 예정)
+
+### 7.1 회원가입 규칙 (PRD 섹션 1)
 
 | TC-ID | 테스트명 | 설명 | PRD 참조 | 상태 |
 |-------|---------|------|---------|------|
-| BIZ-001 | 학번은 정확히 8자리 숫자여야 함 | 유효성 검증 | PRD 108행 | ⬜ 미구현 |
+| BIZ-001 | 학번은 정확히 8자리 숫자여야 함 | 유효성 검증 | PRD 108행 | ✅ 구현됨 |
 | BIZ-002 | 비밀번호는 영문 대/소문자 + 숫자 + 특수문자 조합, 최소 8자 이상 | 비밀번호 정책 | PRD 110행 | ⬜ 미구현 |
 | BIZ-003 | 동일 학번 중복 가입 불가 | 중복 검증 | PRD 115행 | ⬜ 미구현 |
 | BIZ-004 | 탈퇴 후 5일 이내 동일 학번 재가입 불가 | 재가입 제한 | PRD 12-16행 | ⬜ 미구현 |
 
-### 6.2 역할 권한 규칙 (PRD 섹션 3)
+### 7.2 역할 권한 규칙 (PRD 섹션 3)
 
 | TC-ID | 테스트명 | 설명 | PRD 참조 | 상태 |
 |-------|---------|------|---------|------|
@@ -236,7 +350,7 @@ User 도메인 관련 테스트 케이스를 정의합니다. 현재 구현된 �
 | BIZ-007 | 준회원→정회원 승인은 ADMIN만 가능 | 권한 검증 | PRD 76행 | ⬜ 미구현 |
 | BIZ-008 | 회원 정지/강제탈퇴는 ADMIN만 가능 | 권한 검증 | PRD 78행 | ⬜ 미구현 |
 
-### 6.3 계정 상태 규칙 (PRD 섹션 3)
+### 7.3 계정 상태 규칙 (PRD 섹션 3)
 
 | TC-ID | 테스트명 | 설명 | PRD 참조 | 상태 |
 |-------|---------|------|---------|------|
@@ -244,7 +358,7 @@ User 도메인 관련 테스트 케이스를 정의합니다. 현재 구현된 �
 | BIZ-010 | WITHDRAWN 상태에서는 로그인 불가 | 상태 검증 | PRD 168행 | ⬜ 미구현 |
 | BIZ-011 | 상태 변경 시 모든 활성 토큰 무효화 | 보안 정책 | PRD 179행 | ⬜ 미구현 |
 
-### 6.4 관리자 제한 규칙 (PRD 섹션 8.3)
+### 7.4 관리자 제한 규칙 (PRD 섹션 8.3)
 
 | TC-ID | 테스트명 | 설명 | PRD 참조 | 상태 |
 |-------|---------|------|---------|------|
@@ -254,13 +368,20 @@ User 도메인 관련 테스트 케이스를 정의합니다. 현재 구현된 �
 
 ---
 
-## 7. 테스트 실행 방법
+## 8. 테스트 실행 방법
 
 ```bash
 # 전체 테스트 실행
 ./gradlew test
 
+# User 도메인 테스트 실행
+./gradlew test --tests "igrus.web.user.domain.*"
+
 # 특정 테스트 클래스 실행
+./gradlew test --tests "igrus.web.user.domain.UserTest"
+./gradlew test --tests "igrus.web.user.domain.PasswordCredentialTest"
+./gradlew test --tests "igrus.web.user.domain.PositionTest"
+./gradlew test --tests "igrus.web.user.domain.UserSuspensionTest"
 ./gradlew test --tests "igrus.web.user.domain.UserRoleHistoryTest"
 
 # 테스트 리포트 확인
@@ -269,8 +390,23 @@ User 도메인 관련 테스트 케이스를 정의합니다. 현재 구현된 �
 
 ---
 
-## 8. 변경 이력
+## 9. 테스트 커버리지 요약
+
+| 도메인 | 총 테스트 케이스 | 구현됨 | 미구현 | 커버리지 |
+|--------|----------------|--------|--------|----------|
+| UserRoleHistory | 27 | 27 | 0 | 100% |
+| User | 39 | 39 | 0 | 100% |
+| PasswordCredential | 19 | 19 | 0 | 100% |
+| Position | 9 | 9 | 0 | 100% |
+| UserSuspension | 22 | 22 | 0 | 100% |
+| 비즈니스 규칙 | 14 | 1 | 13 | 7% |
+| **합계** | **130** | **117** | **13** | **90%** |
+
+---
+
+## 10. 변경 이력
 
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 1.0 | 2026-01-22 | - | 최초 작성 |
+| 1.1 | 2026-01-22 | - | 구현된 테스트 반영 (User, PasswordCredential, Position, UserSuspension) |
