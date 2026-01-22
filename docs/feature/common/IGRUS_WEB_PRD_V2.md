@@ -8,6 +8,20 @@
 
 ## Clarifications
 
+### Session 2026-01-22 (7차)
+- Q: PRD와 백엔드 구현 정합성 검토? → A: 백엔드 구현에 맞게 PRD 데이터 모델 수정
+- UserAuth → PasswordCredential 명칭 변경 (비밀번호 기반 인증이므로 더 명확한 네이밍)
+- User.phone → User.phoneNumber 필드명 변경 (컬럼명 일관성)
+- UserRoleHistory 엔티티 추가 (역할 변경 감사 이력 관리)
+- SoftDeletableEntity 패턴 적용: deleted, deletedAt, deletedBy 필드 추가
+- BaseEntity 패턴 적용: createdBy, updatedBy 필드 추가 (Audit 강화)
+
+### Session 2026-01-22 (6차)
+- Q: 칭호(title) 필드 처리? → A: 칭호 대신 직책(Position) 엔티티로 대체
+- 직책 예시: 기술부, 기술부장, 회장, 부회장 등
+- 다대다 관계: 한 사용자가 여러 직책 보유 가능 (UserPosition 중간 테이블)
+- User.title 필드 제거, Position/UserPosition 테이블 추가
+
 ### Session 2026-01-22 (5차)
 - Q: 탈퇴한 계정 복구 및 재가입 정책? → A: 탈퇴 후 5일 이내 복구 가능, 동일 학번 재가입 5일간 제한
 - 복구 방법: 탈퇴한 학번+비밀번호로 로그인 시도 시 복구 확인 화면 표시
@@ -1369,6 +1383,33 @@ semester: "2025-1"
 
 ## 데이터 모델
 
+### 공통 엔티티 패턴
+
+**BaseEntity (기본 엔티티)**
+모든 엔티티가 상속하는 기본 클래스로, JPA Auditing을 적용하여 생성/수정 정보를 자동 관리한다.
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| createdAt | DateTime | 생성일 (NOT NULL, 수정 불가) |
+| updatedAt | DateTime | 수정일 (NOT NULL) |
+| createdBy | Long | 생성자 ID |
+| updatedBy | Long | 수정자 ID |
+
+**SoftDeletableEntity (소프트 삭제 엔티티)**
+BaseEntity를 상속하며, 논리적 삭제(Soft Delete)를 지원한다.
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| deleted | Boolean | 삭제 여부 (NOT NULL, 기본값: false) |
+| deletedAt | DateTime | 삭제일 (nullable) |
+| deletedBy | Long | 삭제자 ID (nullable) |
+
+**Soft Delete 적용 대상**
+- User, PasswordCredential, Position: SoftDeletableEntity 상속 (삭제된 데이터 복구 가능)
+- UserPosition, UserSuspension, UserRoleHistory: BaseEntity만 상속 (감사 이력 또는 중간 테이블)
+
+---
+
 ### 정규화 설계 원칙
 
 **적용된 정규화:**
@@ -1379,10 +1420,10 @@ semester: "2025-1"
 **테이블 분리 근거:**
 | 분리 전 | 분리 후 | 분리 사유 |
 |---------|---------|-----------|
-| User.password | UserAuth.passwordHash | 프로필 정보와 인증 자격증명 분리 (보안 및 책임 분리) |
-| User.status | UserAuth.status | 계정 상태는 인증 도메인에 귀속 (로그인 가능 여부 결정) |
+| User.password | PasswordCredential.passwordHash | 프로필 정보와 인증 자격증명 분리 (보안 및 책임 분리) |
+| User.status | PasswordCredential.status | 계정 상태는 인증 도메인에 귀속 (로그인 가능 여부 결정) |
 | User.suspendedUntil | UserSuspension 테이블 | 정지 이력 관리 및 3NF 위반 해소 (status→suspendedUntil 이행 종속) |
-| User.approvedAt | UserAuth.approvedAt | 승인 정보는 인증 도메인에 귀속 |
+| User.approvedAt | PasswordCredential.approvedAt | 승인 정보는 인증 도메인에 귀속 |
 
 **role을 User에 배치한 이유:**
 - role은 "조직 내 사용자의 위치"를 나타내는 프로필 속성
@@ -1391,9 +1432,13 @@ semester: "2025-1"
 
 **테이블 관계:**
 ```
-User (1) ─────── (1) UserAuth
+User (1) ─────── (1) PasswordCredential
   │
   └─────────────── (N) UserSuspension
+  │
+  └─────────────── (N) UserRoleHistory
+  │
+  └─────────────── (N) UserPosition (N) ─────── (1) Position
   │
   └─────────────── (N) RefreshToken
   │
@@ -1411,39 +1456,100 @@ User (1) ─────── (1) UserAuth
 |------|------|------|
 | id | Long | PK |
 | studentId | String(8) | 학번 (Unique) |
-| name | String | 본명 |
+| name | String(50) | 본명 |
 | email | String | 이메일 (Unique) |
-| phone | String | 전화번호 |
-| department | String | 학과 |
+| phoneNumber | String(20) | 전화번호 (Unique) |
+| department | String(50) | 학과 |
 | motivation | Text | 가입 동기 |
 | role | Enum | ASSOCIATE, MEMBER, OPERATOR, ADMIN |
-| title | String | 칭호 (nullable) |
-| createdAt | DateTime | 가입일 |
+| createdAt | DateTime | 생성일 |
 | updatedAt | DateTime | 수정일 |
+| createdBy | Long | 생성자 ID |
+| updatedBy | Long | 수정자 ID |
+| deleted | Boolean | 삭제 여부 (기본값: false) |
+| deletedAt | DateTime | 삭제일 (nullable) |
+| deletedBy | Long | 삭제자 ID (nullable) |
 
-### UserAuth (인증 자격증명)
+### PasswordCredential (비밀번호 인증 자격증명)
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | id | Long | PK |
-| userId | Long | 사용자 FK (Unique) |
-| passwordHash | String | 비밀번호 해시 |
-| status | Enum | ACTIVE, SUSPENDED, WITHDRAWN |
+| user | User | 사용자 FK (Unique, 1:1 관계) |
+| passwordHash | String | 비밀번호 해시 (BCrypt) |
+| status | Enum | ACTIVE, SUSPENDED, WITHDRAWN (기본값: ACTIVE) |
 | approvedAt | DateTime | 정회원 승인일 (nullable) |
-| approvedBy | Long | 승인 처리자 FK (nullable) |
+| approvedBy | Long | 승인 처리자 ID (nullable) |
 | createdAt | DateTime | 생성일 |
 | updatedAt | DateTime | 수정일 |
+| createdBy | Long | 생성자 ID |
+| updatedBy | Long | 수정자 ID |
+| deleted | Boolean | 삭제 여부 (기본값: false) |
+| deletedAt | DateTime | 삭제일 (nullable) |
+| deletedBy | Long | 삭제자 ID (nullable) |
 
 ### UserSuspension (정지 이력)
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | id | Long | PK |
-| userId | Long | 사용자 FK |
-| reason | String | 정지 사유 |
+| user | User | 사용자 FK |
+| reason | String | 정지 사유 (NOT NULL) |
 | suspendedAt | DateTime | 정지 시작일 |
 | suspendedUntil | DateTime | 정지 종료일 |
-| suspendedBy | Long | 정지 처리자 FK |
+| suspendedBy | Long | 정지 처리자 ID |
 | liftedAt | DateTime | 해제일 (nullable) |
-| liftedBy | Long | 해제 처리자 FK (nullable) |
+| liftedBy | Long | 해제 처리자 ID (nullable) |
+| createdAt | DateTime | 생성일 |
+| updatedAt | DateTime | 수정일 |
+| createdBy | Long | 생성자 ID |
+| updatedBy | Long | 수정자 ID |
+
+※ 감사 이력 테이블이므로 Soft Delete 미적용
+
+### UserRoleHistory (역할 변경 이력)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | PK |
+| user | User | 사용자 FK |
+| previousRole | Enum | 이전 역할 |
+| newRole | Enum | 새 역할 |
+| reason | String | 변경 사유 (nullable) |
+| createdAt | DateTime | 생성일 |
+| updatedAt | DateTime | 수정일 |
+| createdBy | Long | 생성자 ID |
+| updatedBy | Long | 수정자 ID |
+
+※ 감사 이력 테이블이므로 Soft Delete 미적용
+
+### Position (직책)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | PK |
+| name | String(20) | 직책명 (Unique) - 예: 기술부, 기술부장, 회장 |
+| imageUrl | String | 직책 이미지 URL (nullable) |
+| displayOrder | Integer | 표시 순서 (nullable) |
+| createdAt | DateTime | 생성일 |
+| updatedAt | DateTime | 수정일 |
+| createdBy | Long | 생성자 ID |
+| updatedBy | Long | 수정자 ID |
+| deleted | Boolean | 삭제 여부 (기본값: false) |
+| deletedAt | DateTime | 삭제일 (nullable) |
+| deletedBy | Long | 삭제자 ID (nullable) |
+
+### UserPosition (사용자-직책 매핑)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | PK |
+| user | User | 사용자 FK |
+| position | Position | 직책 FK |
+| assignedAt | DateTime | 직책 부여일 |
+| createdAt | DateTime | 생성일 |
+| updatedAt | DateTime | 수정일 |
+| createdBy | Long | 생성자 ID |
+| updatedBy | Long | 수정자 ID |
+
+※ 한 사용자가 여러 직책을 가질 수 있음 (다대다 관계)
+※ UNIQUE 제약: (user_id, position_id)
+※ 중간 테이블이므로 Soft Delete 미적용
 
 ### Post (게시글)
 | 필드 | 타입 | 설명 |
