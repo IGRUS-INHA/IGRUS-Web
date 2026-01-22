@@ -1,18 +1,16 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 0.0.0 → 1.0.0 (MAJOR - initial ratification)
-Modified principles: N/A (new constitution)
+Version change: 1.0.0 → 1.1.0 (MINOR - documentation management section added)
+Modified principles: N/A
 Added sections:
-  - Core Principles (7 principles)
-  - 기술 표준 (Technical Standards)
-  - 개발 워크플로우 (Development Workflow)
-  - Governance
+  - 문서 관리 (Documentation Management) under 기술 표준
+  - Updated 프로젝트 구조 to include docs subfolders
 Removed sections: N/A
 Templates requiring updates:
-  - .specify/templates/plan-template.md ✅ (Constitution Check section compatible)
-  - .specify/templates/spec-template.md ✅ (User Scenarios align with test-first principle)
-  - .specify/templates/tasks-template.md ✅ (Test tasks align with TDD principle)
+  - .specify/templates/plan-template.md ✅ (no changes needed - uses specs/ for feature docs)
+  - .specify/templates/spec-template.md ✅ (no changes needed)
+  - .specify/templates/tasks-template.md ✅ (docs/ reference compatible)
 Follow-up TODOs: None
 -->
 
@@ -112,10 +110,28 @@ Follow-up TODOs: None
 
 ```
 IGRUS-Web/
-├── backend/     # Spring Boot 백엔드
-├── frontend/    # React 프론트엔드
-└── docs/        # 프로젝트 문서
+├── backend/          # Spring Boot 백엔드
+│   └── docs/         # 백엔드 관련 문서
+├── frontend/         # React 프론트엔드
+│   └── docs/         # 프론트엔드 관련 문서
+├── docs/             # 프로젝트 공통 문서
+│   └── feature/      # 기능별 문서
+└── specs/            # 기능 명세 및 구현 계획
 ```
+
+### 문서 관리 (Documentation Management)
+
+프로젝트 문서는 체계적으로 관리한다.
+
+- **공통 문서**: `docs/` 폴더에서 관리
+  - PRD, 아키텍처, 공통 가이드 등 프로젝트 전반에 관한 문서
+- **백엔드 문서**: `backend/docs/` 폴더에서 관리
+  - API 문서, 데이터베이스 스키마, 백엔드 아키텍처 등
+- **프론트엔드 문서**: `frontend/docs/` 폴더에서 관리
+  - 컴포넌트 가이드, 스타일 가이드, 프론트엔드 아키텍처 등
+- **기능 명세**: `specs/` 폴더에서 관리 (speckit 도구 사용)
+
+**근거**: 문서 위치 일관성, 관심사 분리, 유지보수 용이성
 
 ### 코드 스타일
 
@@ -173,4 +189,4 @@ IGRUS-Web/
 - MINOR: 새 원칙 추가 또는 섹션 확장
 - PATCH: 문구 수정, 오타 수정, 명확화
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-22 | **Last Amended**: 2026-01-22
+**Version**: 1.1.0 | **Ratified**: 2026-01-22 | **Last Amended**: 2026-01-22
