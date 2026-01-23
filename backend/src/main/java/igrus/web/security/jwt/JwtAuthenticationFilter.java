@@ -1,4 +1,4 @@
-package igrus.web.auth.jwt;
+package igrus.web.security.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

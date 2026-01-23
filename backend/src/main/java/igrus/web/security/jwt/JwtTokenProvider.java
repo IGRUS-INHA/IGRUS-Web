@@ -1,4 +1,4 @@
-package igrus.web.auth.jwt;
+package igrus.web.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
