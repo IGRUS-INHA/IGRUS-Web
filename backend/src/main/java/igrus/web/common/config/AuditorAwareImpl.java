@@ -1,4 +1,4 @@
-package igrus.web.config;
+package igrus.web.common.config;
 
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
