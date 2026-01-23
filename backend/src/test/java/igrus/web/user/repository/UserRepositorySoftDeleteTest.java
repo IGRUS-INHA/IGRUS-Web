@@ -29,6 +29,13 @@ class UserRepositorySoftDeleteTest {
     @BeforeEach
     void setUp() {
         // native query로 soft deleted 포함 모든 레코드 삭제
+        // inquiry 관련 테이블 먼저 삭제 (FK 제약 조건)
+        entityManager.createNativeQuery("DELETE FROM inquiry_memos").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM inquiry_replies").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM inquiry_attachments").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM guest_inquiries").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM member_inquiries").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM user_positions").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM user_role_history").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
