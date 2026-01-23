@@ -1,0 +1,141 @@
+{
+  "version": "1.0.0",
+  "ruleSources": [
+    ".specify/memory/constitution.md",
+    "CLAUDE.md",
+    "backend/CLAUDE.md"
+  ],
+  "rules": [
+    {
+      "id": "test-coverage",
+      "name": "테스트 커버리지",
+      "principle": "I. 테스트 우선 개발",
+      "type": "file-pair",
+      "enabled": true,
+      "config": {
+        "sourcePattern": "backend/src/main/java/**/*.java",
+        "targetPattern": "backend/src/test/java/**/*Test.java",
+        "transform": {
+          "from": "src/main/java/(.*)\\.java",
+          "to": "src/test/java/$1Test.java"
+        },
+        "excludePatterns": [
+          "**/entity/**",
+          "**/dto/**",
+          "**/config/**",
+          "**/exception/**"
+        ]
+      },
+      "message": {
+        "pass": "테스트 파일 존재",
+        "fail": "테스트 파일 누락"
+      }
+    },
+    {
+      "id": "swagger-annotations",
+      "name": "Swagger 어노테이션",
+      "principle": "IV. API 계약 우선",
+      "type": "content-pattern",
+      "enabled": true,
+      "config": {
+        "filePattern": "backend/src/main/java/**/controller/**/*.java",
+        "requiredPatterns": ["@Operation\\s*\\(", "@ApiResponse"],
+        "excludePatterns": ["**/test/**"]
+      },
+      "message": {
+        "pass": "API 문서화 완료",
+        "fail": "@Operation 또는 @ApiResponse 누락"
+      }
+    },
+    {
+      "id": "security-hardcoded",
+      "name": "하드코딩 민감정보",
+      "principle": "VI. 보안 우선",
+      "type": "forbidden-pattern",
+      "enabled": true,
+      "config": {
+        "filePattern": "**/*.{java,ts,tsx,js,jsx}",
+        "forbiddenPatterns": [
+          "password\\s*=\\s*[\"'][^\"']{4,}[\"']",
+          "api[_-]?key\\s*=\\s*[\"'][A-Za-z0-9]{10,}[\"']",
+          "secret\\s*=\\s*[\"'][^\"']{8,}[\"']",
+          "token\\s*=\\s*[\"'][A-Za-z0-9]{20,}[\"']"
+        ],
+        "excludePatterns": [
+          "**/test/**",
+          "**/*.test.*",
+          "**/*.spec.*",
+          "**/application*.yml",
+          "**/application*.yaml"
+        ]
+      },
+      "message": {
+        "pass": "하드코딩된 민감 정보 없음",
+        "fail": "하드코딩된 민감 정보 발견"
+      }
+    },
+    {
+      "id": "flyway-migration",
+      "name": "Flyway 마이그레이션",
+      "principle": "IV. API 계약 우선",
+      "type": "file-exists",
+      "enabled": true,
+      "config": {
+        "triggerPattern": "backend/src/main/java/**/entity/**/*.java",
+        "checkPath": "backend/src/main/resources/db/migration/",
+        "checkPattern": "V*__.*.sql"
+      },
+      "message": {
+        "pass": "마이그레이션 파일 존재",
+        "fail": "Entity 변경 시 마이그레이션 파일 필요"
+      }
+    },
+    {
+      "id": "tasks-completion",
+      "name": "tasks.md 완료 상태",
+      "principle": "문서화",
+      "type": "markdown-checklist",
+      "enabled": true,
+      "config": {
+        "filePath": "specs/{branch}/tasks.md",
+        "warnThreshold": 0
+      },
+      "message": {
+        "pass": "모든 작업 완료",
+        "fail": "미완료 작업 {count}개"
+      }
+    },
+    {
+      "id": "documentation-update",
+      "name": "문서 업데이트",
+      "principle": "문서화",
+      "type": "doc-code-sync",
+      "enabled": true,
+      "config": {
+        "mappingFile": ".specify/mapping/doc-code-map.json"
+      },
+      "message": {
+        "pass": "관련 문서 업데이트됨",
+        "fail": "코드 수정됨, 문서 업데이트 필요"
+      }
+    }
+  ],
+  "manualCheckReminders": [
+    {
+      "principle": "II. 코드 품질",
+      "reminder": "SRP, DRY 원칙 준수 확인"
+    },
+    {
+      "principle": "III. 타입 안전성",
+      "reminder": "Optional 사용, any 타입 금지 확인"
+    },
+    {
+      "principle": "V. 코드 리뷰",
+      "reminder": "PR 리뷰 요청 필요"
+    },
+    {
+      "principle": "VII. 단순성",
+      "reminder": "YAGNI 원칙 준수 확인"
+    }
+  ]
+}
