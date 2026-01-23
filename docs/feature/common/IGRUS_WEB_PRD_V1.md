@@ -2,82 +2,12 @@
 
 ---
 
-## ERD
+## Clarifications
 
-```
-┌─────────────────────────────────────┐       ┌──────────────────────────────┐
-│            MemberList               │       │           User               │
-├─────────────────────────────────────┤       ├──────────────────────────────┤
-│ PK  id            INT               │       │ PK  id              INT      │
-│     student_id    VARCHAR(8)        │──────▶│ UK  student_id      VARCHAR  │
-│     name          VARCHAR(50)       │       │     name            VARCHAR  │
-│     semester      VARCHAR(10)       │       │     password        VARCHAR  │
-│     created_at    DATETIME          │       │     email           VARCHAR  │
-└─────────────────────────────────────┘       │     email_verified  BOOLEAN  │
-                                              │     status          ENUM     │
-                                              │     role            ENUM     │
-                                              │     title           VARCHAR  │
-                                              │     suspended_until DATETIME │
-                                              │     created_at      DATETIME │
-                                              └──────────────────────────────┘
-                                                          │
-                    ┌─────────────────┬─────────────────┬─┴───────────┬──────────────────┐
-                    │                 │                 │             │                  │
-                    ▼                 ▼                 ▼             ▼                  ▼
-┌───────────────────────────┐ ┌─────────────────┐ ┌──────────────┐ ┌───────────────────────────────┐
-│          Post             │ │     Comment     │ │     Like     │ │         Inquiry               │
-├───────────────────────────┤ ├─────────────────┤ ├──────────────┤ ├───────────────────────────────┤
-│ PK  id          INT       │ │ PK id       INT │ │ PK id    INT │ │ PK  id              INT       │
-│     title       VARCHAR   │ │    content  VARCHAR │ FK post_id INT │ UK  inquiry_number  VARCHAR   │
-│     content     TEXT      │ │ FK post_id  INT │ │ FK user_id INT │     type            ENUM      │
-│     board_type  ENUM      │ │ FK author_id INT│ │    created_at  │     title           VARCHAR   │
-│ FK  author_id   INT       │ │ FK parent_id INT│ └──────────────┘ │     content         TEXT      │
-│     is_question BOOLEAN   │ │    is_anonymous │                  │     email           VARCHAR   │
-│     is_anonymous BOOLEAN  │ │    is_deleted   │ ┌──────────────┐ │ FK  user_id         INT       │
-│     view_count  INT       │ │    created_at   │ │   Bookmark   │ │     status          ENUM      │
-│     is_deleted  BOOLEAN   │ └─────────────────┘ ├──────────────┤ │     admin_memo      TEXT      │
-│     created_at  DATETIME  │         │           │ PK id    INT │ │     created_at      DATETIME  │
-└───────────────────────────┘         │           │ FK post_id INT └───────────────────────────────┘
-          │                           │           │ FK user_id INT             │
-          │                           │           │    created_at  │             │
-          ▼                           ▼           └──────────────┘             ▼
-┌───────────────────────────┐   (self-ref)                        ┌───────────────────────────────┐
-│        PostImage          │                                      │      InquiryAttachment        │
-├───────────────────────────┤                                      ├───────────────────────────────┤
-│ PK  id            INT     │                                      │ PK  id            INT         │
-│ FK  post_id       INT     │                                      │ FK  inquiry_id    INT         │
-│     image_url     VARCHAR │                                      │     file_url      VARCHAR     │
-│     display_order INT     │                                      └───────────────────────────────┘
-└───────────────────────────┘
-
-
-┌───────────────────────────────────┐         ┌───────────────────────────────┐
-│             Event                 │         │       EventRegistration       │
-├───────────────────────────────────┤         ├───────────────────────────────┤
-│ PK  id                    INT     │         │ PK  id            INT         │
-│     title                 VARCHAR │────────▶│ FK  event_id      INT         │
-│     description           TEXT    │         │ FK  user_id       INT         │
-│     start_datetime        DATETIME│         │     status        ENUM        │
-│     end_datetime          DATETIME│         │     created_at    DATETIME    │
-│     location              VARCHAR │         └───────────────────────────────┘
-│     capacity              INT     │                     ▲
-│     registration_deadline DATETIME│                     │
-│     status                ENUM    │                     │
-│     created_at            DATETIME│              (from User)
-└───────────────────────────────────┘
-```
-
-### ENUM 값
-
-| 컬럼 | 값 |
-|------|-----|
-| User.status | ACTIVE, INACTIVE, SUSPENDED, WITHDRAWN |
-| User.role | MEMBER, ADMIN |
-| Post.board_type | NOTICE, GENERAL, INSIGHT |
-| Event.status | UPCOMING, CLOSED, ONGOING, COMPLETED |
-| EventRegistration.status | REGISTERED, CANCELLED |
-| Inquiry.type | JOIN, EVENT, REPORT, ACCOUNT, OTHER |
-| Inquiry.status | PENDING, IN_PROGRESS, COMPLETED |
+### Session 2026-01-22
+- Q: 사용자 계정이 정지/탈퇴될 때 활성 세션(토큰) 처리 방식? → A: 즉시 무효화 - 정지/탈퇴 시 모든 활성 토큰 즉시 폐기
+- Q: 게시글/댓글 삭제 처리 방식? → A: Soft Delete - is_deleted=true로 표시, DB 보존, UI에서 "삭제된 게시글/댓글입니다" 표시
+- Q: 이메일 발송 실패 시 처리 방식? → A: 요청 성공 + 재시도 - 요청은 성공, 이메일은 백그라운드 재시도, "이메일 재발송" 버튼 제공
 
 ---
 
@@ -89,19 +19,21 @@
 - 동일 학번 중복 가입 불가
 - 비밀번호: 영문+숫자+특수문자 8자 이상
 - 이메일 본인 인증 (인증 링크 발송)
+- 이메일 발송 실패 시: 가입 요청은 성공, 백그라운드 재시도, "이메일 재발송" 버튼 제공
 
 ### 로그인/인증
 - 학번 + 비밀번호 로그인
 - JWT: Access Token 1시간, Refresh Token 7일
 - 비밀번호 재설정: 이메일 링크 발송 (30분 유효)
+- 재설정 이메일 발송 실패 시: 요청은 성공, 백그라운드 재시도, "이메일 재발송" 버튼 제공
 
 ### 계정 상태
 | 상태 | 설명 |
 |------|------|
 | Active | 정상 이용 |
 | Inactive | 명단 미포함, 로그인 불가 |
-| Suspended | 관리자 정지 |
-| Withdrawn | 본인 탈퇴 |
+| Suspended | 관리자 정지, 기존 활성 토큰 즉시 무효화 |
+| Withdrawn | 본인 탈퇴, 기존 활성 토큰 즉시 무효화 |
 
 ### 게시판
 
@@ -115,10 +47,12 @@
 - 제목 100자, 이미지 최대 5개(각 10MB)
 - 익명 설정은 수정 불가
 - 자유게시판에서 "질문으로 등록" 옵션 선택 가능
+- 삭제 시 Soft Delete (is_deleted=true), UI에 "삭제된 게시글입니다" 표시
 
 **댓글**
 - 최대 500자
 - 대댓글 1단계까지
+- 삭제 시 Soft Delete (is_deleted=true), UI에 "삭제된 댓글입니다" 표시
 
 **좋아요**
 - 게시글당 1인 1회, 취소 가능
