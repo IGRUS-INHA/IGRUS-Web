@@ -1,5 +1,6 @@
 package igrus.web.common.config;
 
+import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,8 +23,10 @@ public class AuditorAwareImpl implements AuditorAware<Long> {
             return Optional.empty();
         }
 
-        // TODO: Spring Security 인증 구현 후 실제 사용자 ID 반환하도록 수정
-        // 현재는 인증 시스템 구현 전이므로 empty 반환
+        if (principal instanceof AuthenticatedUser authenticatedUser) {
+            return Optional.of(authenticatedUser.userId());
+        }
+
         return Optional.empty();
     }
 }

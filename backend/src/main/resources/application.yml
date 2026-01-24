@@ -9,3 +9,16 @@ app:
   jwt:
     access-token-validity: 3600000      # 1시간
     refresh-token-validity: 604800000   # 7일
+    issuer: igrus-api
+    audience: igrus-web
+  security:
+    login-attempts-max: 5
+    login-lockout-minutes: 30
+  mail:
+    from-address: ${MAIL_FROM_ADDRESS:noreply@igrus.inha.ac.kr}
+    verification-code-expiry: 600000    # 10분
+    verification-max-attempts: 5
+    password-reset-expiry: 1800000      # 30분
+    resend-rate-limit-seconds: 300      # 5분
+  cleanup:
+    unverified-user-retention-hours: 24 # 24시간
