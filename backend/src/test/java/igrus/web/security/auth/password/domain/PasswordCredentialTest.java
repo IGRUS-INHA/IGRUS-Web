@@ -1,5 +1,7 @@
-package igrus.web.user.domain;
+package igrus.web.security.auth.password.domain;
 
+import igrus.web.user.domain.User;
+import igrus.web.user.domain.UserStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,8 +36,8 @@ class PasswordCredentialTest {
         }
 
         @Test
-        @DisplayName("생성 시 기본 상태는 ACTIVE")
-        void create_DefaultStatus_IsActive() {
+        @DisplayName("생성 시 기본 상태는 PENDING_VERIFICATION")
+        void create_DefaultStatus_IsPendingVerification() {
             // given
             User user = createTestUser();
             String passwordHash = "$2a$10$hashedPassword";
@@ -44,8 +46,8 @@ class PasswordCredentialTest {
             PasswordCredential credential = PasswordCredential.create(user, passwordHash);
 
             // then
-            assertThat(credential.getStatus()).isEqualTo(UserStatus.ACTIVE);
-            assertThat(credential.isActive()).isTrue();
+            assertThat(credential.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
+            assertThat(credential.isPendingVerification()).isTrue();
         }
 
         @Test
@@ -141,6 +143,7 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
+            credential.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
 
             // then
             assertThat(credential.isActive()).isTrue();
@@ -188,6 +191,7 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
+            credential.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
 
             // then
             assertThat(credential.isSuspended()).isFalse();
@@ -223,9 +227,65 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
+            credential.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
 
             // then
             assertThat(credential.isWithdrawn()).isFalse();
+        }
+
+        @Test
+        @DisplayName("isPendingVerification - PENDING_VERIFICATION일 때 true 반환")
+        void isPendingVerification_WhenPendingVerification_ReturnsTrue() {
+            // given
+            User user = createTestUser();
+            PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
+
+            // then
+            assertThat(credential.isPendingVerification()).isTrue();
+        }
+
+        @Test
+        @DisplayName("isPendingVerification - ACTIVE일 때 false 반환")
+        void isPendingVerification_WhenActive_ReturnsFalse() {
+            // given
+            User user = createTestUser();
+            PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
+            credential.verifyEmail();
+
+            // then
+            assertThat(credential.isPendingVerification()).isFalse();
+        }
+
+        @Test
+        @DisplayName("verifyEmail 호출 시 PENDING_VERIFICATION에서 ACTIVE로 변경")
+        void verifyEmail_WhenPendingVerification_ChangesToActive() {
+            // given
+            User user = createTestUser();
+            PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
+            assertThat(credential.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
+
+            // when
+            credential.verifyEmail();
+
+            // then
+            assertThat(credential.getStatus()).isEqualTo(UserStatus.ACTIVE);
+            assertThat(credential.isActive()).isTrue();
+        }
+
+        @Test
+        @DisplayName("verifyEmail - 이미 ACTIVE인 경우 상태 유지")
+        void verifyEmail_WhenAlreadyActive_KeepsActive() {
+            // given
+            User user = createTestUser();
+            PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
+            credential.verifyEmail(); // ACTIVE 상태로 변경
+            assertThat(credential.getStatus()).isEqualTo(UserStatus.ACTIVE);
+
+            // when
+            credential.verifyEmail();
+
+            // then
+            assertThat(credential.getStatus()).isEqualTo(UserStatus.ACTIVE);
         }
 
         @Test
