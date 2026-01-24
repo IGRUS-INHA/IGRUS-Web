@@ -13,6 +13,31 @@
 - **[Story]**: 해당 태스크가 속한 User Story (예: US1, US2, US3)
 - 설명에 정확한 파일 경로 포함
 
+## ⚠️ 구현 경로 변경 안내
+
+**실제 구현 경로**: 태스크 문서에서 명시된 `igrus/web/auth/` 경로가 아닌 `igrus/web/security/auth/` 경로에 구현되었습니다.
+- 원본: `backend/src/main/java/igrus/web/auth/`
+- 실제: `backend/src/main/java/igrus/web/security/auth/`
+
+## 구현 현황 요약 (2026-01-24 기준)
+
+| Phase | 총 태스크 | 완료 | 미완료 | 완료율 |
+|-------|----------|------|--------|--------|
+| Phase 1: Setup | 5 | 5 | 0 | 100% |
+| Phase 2: Foundational | 11 | 11 | 0 | 100% |
+| Phase 3: US1 회원가입 | 8 | 7 | 1 | 87.5% |
+| Phase 4: US2 로그인 | 7 | 6 | 1 | 85.7% |
+| Phase 5: US3 토큰 갱신 | 6 | 5 | 1 | 83.3% |
+| Phase 6: US4 비밀번호 재설정 | 6 | 2 | 4 | 33.3% |
+| Phase 7: US5 탈퇴 계정 복구 | 7 | 4 | 3 | 57.1% |
+| Phase 8: US6 준회원 승인 | 7 | 3 | 4 | 42.9% |
+| Phase 9: Polish | 9 | 3 | 6 | 33.3% |
+| **Total** | **66** | **46** | **20** | **69.7%** |
+
+### MVP 구현 현황 (Phase 1-4)
+- **완료율: 93.5% (29/31 태스크)**
+- **미완료**: 통합 테스트 2개 (T024, T031)
+
 ## 기존 구현 현황
 
 ### 구현 완료
@@ -21,18 +46,24 @@
 - UserRole, UserStatus Enum
 - JwtTokenProvider (토큰 생성/검증)
 - JwtAuthenticationFilter (인증 필터)
-- SecurityConfig (기본 설정)
+- SecurityConfig → ApiSecurityConfig, PublicResourceSecurityConfig로 분리
 - BCryptPasswordEncoder
 
-### 미구현 (이 태스크에서 구현)
-- Auth Controller, Service
-- EmailVerification 엔티티 및 기능
-- RefreshToken 엔티티 및 관리
-- PrivacyConsent 엔티티
-- 비밀번호 재설정 기능
-- 계정 복구 기능
-- 준회원 승인 기능
-- 인증 관련 DTO, Exception, ErrorCode
+### 추가 구현 완료 (이 태스크에서)
+- ✅ Auth Controller (PasswordAuthController), Service (PasswordAuthService, PasswordSignupService)
+- ✅ EmailVerification 엔티티 및 기능
+- ✅ RefreshToken 엔티티 및 관리
+- ✅ PrivacyConsent 엔티티 및 서비스
+- ✅ 비밀번호 재설정 서비스 (PasswordResetService) - 컨트롤러 미완료
+- ✅ 계정 복구 서비스 (AccountRecoveryService) - 컨트롤러 미완료
+- ✅ 준회원 승인 서비스 (MemberApprovalService) - 컨트롤러 미완료
+- ✅ 인증 관련 DTO, Exception, ErrorCode
+
+### 미완료
+- 비밀번호 재설정, 계정 복구, 준회원 승인 컨트롤러 엔드포인트
+- 통합 테스트
+- 스케줄러 (RefreshToken 정리, 탈퇴 후 개인정보 삭제)
+- 이메일 재시도 로직
 
 ---
 
@@ -40,11 +71,17 @@
 
 **Purpose**: 인증 기능 구현을 위한 기반 구조 설정
 
-- [ ] T001 [P] 인증 관련 ErrorCode 추가 in `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`
-- [ ] T002 [P] 인증 관련 커스텀 예외 클래스 생성 in `backend/src/main/java/igrus/web/auth/exception/`
-- [ ] T003 [P] 이메일 발송 설정 추가 in `backend/src/main/resources/application.yml`
-- [ ] T004 [P] 이메일 발송 서비스 인터페이스 정의 in `backend/src/main/java/igrus/web/auth/service/EmailService.java`
-- [ ] T005 [P] SMTP 이메일 발송 구현체 생성 in `backend/src/main/java/igrus/web/auth/service/SmtpEmailService.java`
+**Status**: ✅ 완료 (5/5)
+
+- [x] T001 [P] 인증 관련 ErrorCode 추가 in `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`
+  - 실제 구현: Auth (A001-A021), Member Approval (M001-M004) 에러 코드 추가됨
+- [x] T002 [P] 인증 관련 커스텀 예외 클래스 생성 in `backend/src/main/java/igrus/web/security/auth/**/exception/`
+  - 실제 구현: email/, verification/, token/, account/, signup/, approval/exception 패키지에 분산 구현
+- [x] T003 [P] 이메일 발송 설정 추가 in `backend/src/main/resources/application.yml`
+  - 실제 구현: app.mail.* 설정 추가됨 (from-address, verification-code-expiry, verification-max-attempts 등)
+- [x] T004 [P] 이메일 발송 서비스 인터페이스 정의 in `backend/src/main/java/igrus/web/security/auth/common/service/EmailService.java`
+- [x] T005 [P] SMTP 이메일 발송 구현체 생성 in `backend/src/main/java/igrus/web/security/auth/common/service/SmtpEmailService.java`
+  - 추가 구현: LoggingEmailService (local, test 프로파일용)
 
 ---
 
@@ -52,29 +89,31 @@
 
 **Purpose**: 모든 User Story에서 필요한 핵심 엔티티 및 기반 기능
 
-**⚠️ CRITICAL**: User Story 작업 전 반드시 완료 필요
+**Status**: ✅ 완료 (11/11)
 
 ### 엔티티 및 마이그레이션
 
-- [ ] T006 [P] EmailVerification 엔티티 생성 in `backend/src/main/java/igrus/web/auth/domain/EmailVerification.java`
-- [ ] T007 [P] RefreshToken 엔티티 생성 in `backend/src/main/java/igrus/web/auth/domain/RefreshToken.java`
-- [ ] T008 [P] PrivacyConsent 엔티티 생성 in `backend/src/main/java/igrus/web/auth/domain/PrivacyConsent.java`
-- [ ] T009 [P] PasswordResetToken 엔티티 생성 in `backend/src/main/java/igrus/web/auth/domain/PasswordResetToken.java`
-- [ ] T010 Flyway 마이그레이션 V7 생성 (auth 테이블) in `backend/src/main/resources/db/migration/V7__add_auth_tables.sql`
+- [x] T006 [P] EmailVerification 엔티티 생성 in `backend/src/main/java/igrus/web/security/auth/common/domain/EmailVerification.java`
+- [x] T007 [P] RefreshToken 엔티티 생성 in `backend/src/main/java/igrus/web/security/auth/common/domain/RefreshToken.java`
+- [x] T008 [P] PrivacyConsent 엔티티 생성 in `backend/src/main/java/igrus/web/security/auth/common/domain/PrivacyConsent.java`
+- [x] T009 [P] PasswordResetToken 엔티티 생성 in `backend/src/main/java/igrus/web/security/auth/password/domain/PasswordResetToken.java`
+- [x] T010 Flyway 마이그레이션 생성 (auth 테이블) in `backend/src/main/resources/db/migration/V1__init_schema.sql`
+  - 변경: V7 대신 V1에 통합됨 (email_verifications, refresh_tokens, privacy_consents, password_reset_tokens 테이블 포함)
 
 ### Repository
 
-- [ ] T011 [P] EmailVerificationRepository 생성 in `backend/src/main/java/igrus/web/auth/repository/EmailVerificationRepository.java`
-- [ ] T012 [P] RefreshTokenRepository 생성 in `backend/src/main/java/igrus/web/auth/repository/RefreshTokenRepository.java`
-- [ ] T013 [P] PrivacyConsentRepository 생성 in `backend/src/main/java/igrus/web/auth/repository/PrivacyConsentRepository.java`
-- [ ] T014 [P] PasswordResetTokenRepository 생성 in `backend/src/main/java/igrus/web/auth/repository/PasswordResetTokenRepository.java`
+- [x] T011 [P] EmailVerificationRepository 생성 in `backend/src/main/java/igrus/web/security/auth/common/repository/EmailVerificationRepository.java`
+- [x] T012 [P] RefreshTokenRepository 생성 in `backend/src/main/java/igrus/web/security/auth/common/repository/RefreshTokenRepository.java`
+- [x] T013 [P] PrivacyConsentRepository 생성 in `backend/src/main/java/igrus/web/security/auth/common/repository/PrivacyConsentRepository.java`
+- [x] T014 [P] PasswordResetTokenRepository 생성 in `backend/src/main/java/igrus/web/security/auth/password/repository/PasswordResetTokenRepository.java`
 
 ### Repository 확장 (User 도메인)
 
-- [ ] T015 [P] UserRepository에 findByStudentId, findByEmail, existsByStudentId 등 쿼리 메서드 추가 in `backend/src/main/java/igrus/web/user/repository/UserRepository.java`
-- [ ] T016 [P] PasswordCredentialRepository에 findByUserId 등 쿼리 메서드 추가 in `backend/src/main/java/igrus/web/user/repository/PasswordCredentialRepository.java`
+- [x] T015 [P] UserRepository에 findByStudentId, findByEmail, existsByStudentId 등 쿼리 메서드 추가 in `backend/src/main/java/igrus/web/user/repository/UserRepository.java`
+  - 구현: findByEmail, findByStudentId, findByPhoneNumber, existsByEmail, existsByStudentId, existsByPhoneNumber, findByIdIncludingDeleted, findByEmailIncludingDeleted, findByStudentIdIncludingDeleted
+- [x] T016 [P] PasswordCredentialRepository에 findByUserId 등 쿼리 메서드 추가 in `backend/src/main/java/igrus/web/security/auth/password/repository/PasswordCredentialRepository.java`
 
-**Checkpoint**: Foundation 완료 - User Story 구현 시작 가능
+**Checkpoint**: ✅ Foundation 완료 - User Story 구현 시작 가능
 
 ---
 
@@ -82,39 +121,44 @@
 
 **Goal**: 비회원이 필수 정보를 입력하고 이메일 인증을 완료하여 준회원으로 등록
 
+**Status**: 🟡 진행중 (7/8) - 통합 테스트 미완료
+
 **Independent Test**: 회원가입 폼 작성 → 이메일 인증 → 로그인 성공 확인
 
 ### DTO for User Story 1
 
-- [ ] T017 [P] [US1] SignupRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/SignupRequest.java`
-- [ ] T018 [P] [US1] EmailVerificationRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/EmailVerificationRequest.java`
-- [ ] T019 [P] [US1] ResendVerificationRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/ResendVerificationRequest.java`
-- [ ] T020 [P] [US1] SignupResponse DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/response/SignupResponse.java`
+- [x] T017 [P] [US1] SignupRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/password/dto/request/PasswordSignupRequest.java`
+  - 변경: SignupRequest → PasswordSignupRequest (패스워드 기반 인증 명시)
+- [x] T018 [P] [US1] EmailVerificationRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/common/dto/request/EmailVerificationRequest.java`
+- [x] T019 [P] [US1] ResendVerificationRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/common/dto/request/ResendVerificationRequest.java`
+- [x] T020 [P] [US1] SignupResponse DTO 생성 in `backend/src/main/java/igrus/web/security/auth/password/dto/response/PasswordSignupResponse.java`
+  - 변경: SignupResponse → PasswordSignupResponse
 
 ### Service for User Story 1
 
-- [ ] T021 [US1] SignupService 생성 - 회원가입 비즈니스 로직 in `backend/src/main/java/igrus/web/auth/service/SignupService.java`
-  - 개인정보 동의 검증
-  - 중복 검증 (학번, 이메일, 전화번호)
-  - 비밀번호 정책 검증 (영문 대/소문자 + 숫자 + 특수문자, 8자 이상)
-  - 임시 사용자 데이터 저장
-  - 인증 코드 생성 및 이메일 발송
-  - 인증 코드 검증 (10분 유효, 5회 제한)
-  - 준회원(ASSOCIATE) 등록
+- [x] T021 [US1] SignupService 생성 - 회원가입 비즈니스 로직 in `backend/src/main/java/igrus/web/security/auth/password/service/PasswordSignupService.java`
+  - ✅ 개인정보 동의 검증
+  - ✅ 중복 검증 (학번, 이메일, 전화번호)
+  - ✅ 비밀번호 정책 검증 (영문 대/소문자 + 숫자 + 특수문자, 8자 이상)
+  - ✅ 임시 사용자 데이터 저장
+  - ✅ 인증 코드 생성 및 이메일 발송
+  - ✅ 인증 코드 검증 (10분 유효, 5회 제한)
+  - ✅ 준회원(ASSOCIATE) 등록
 
 ### Controller for User Story 1
 
-- [ ] T022 [US1] AuthController - 회원가입 엔드포인트 구현 in `backend/src/main/java/igrus/web/auth/controller/AuthController.java`
-  - POST /api/v1/auth/signup (회원가입 요청)
-  - POST /api/v1/auth/verify-email (이메일 인증)
-  - POST /api/v1/auth/resend-verification (인증 코드 재발송)
+- [x] T022 [US1] AuthController - 회원가입 엔드포인트 구현 in `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthController.java`
+  - ✅ POST /api/v1/auth/password/signup (회원가입 요청) - 경로 변경
+  - ✅ POST /api/v1/auth/password/verify-email (이메일 인증) - 경로 변경
+  - ✅ POST /api/v1/auth/password/resend-verification (인증 코드 재발송) - 경로 변경
+  - 추가: PasswordAuthControllerApi (Swagger 문서화)
 
 ### Test for User Story 1
 
-- [ ] T023 [P] [US1] SignupService 단위 테스트 in `backend/src/test/java/igrus/web/auth/service/SignupServiceTest.java`
-- [ ] T024 [P] [US1] AuthController 회원가입 통합 테스트 in `backend/src/test/java/igrus/web/auth/controller/AuthControllerSignupTest.java`
+- [x] T023 [P] [US1] SignupService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/PasswordSignupServiceTest.java`
+- [ ] T024 [P] [US1] AuthController 회원가입 통합 테스트 - **미구현**
 
-**Checkpoint**: 회원가입 기능 완료 - 독립적으로 테스트 가능
+**Checkpoint**: 🟡 회원가입 기능 완료 - 통합 테스트 필요
 
 ---
 
@@ -122,36 +166,41 @@
 
 **Goal**: 등록된 사용자가 학번과 비밀번호로 로그인하여 토큰 발급
 
+**Status**: 🟡 진행중 (6/7) - 통합 테스트 미완료
+
 **Independent Test**: 등록된 계정으로 로그인 → Access Token + Refresh Token 발급 확인
 
 ### DTO for User Story 2
 
-- [ ] T025 [P] [US2] LoginRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/LoginRequest.java`
-- [ ] T026 [P] [US2] LoginResponse DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/response/LoginResponse.java`
-- [ ] T027 [P] [US2] LogoutRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/LogoutRequest.java`
+- [x] T025 [P] [US2] LoginRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/password/dto/request/PasswordLoginRequest.java`
+  - 변경: LoginRequest → PasswordLoginRequest
+- [x] T026 [P] [US2] LoginResponse DTO 생성 in `backend/src/main/java/igrus/web/security/auth/password/dto/response/PasswordLoginResponse.java`
+  - 변경: LoginResponse → PasswordLoginResponse
+- [x] T027 [P] [US2] LogoutRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/password/dto/request/PasswordLogoutRequest.java`
+  - 변경: LogoutRequest → PasswordLogoutRequest
 
 ### Service for User Story 2
 
-- [ ] T028 [US2] AuthService 생성 - 로그인/로그아웃 비즈니스 로직 in `backend/src/main/java/igrus/web/auth/service/AuthService.java`
-  - 학번/비밀번호 인증
-  - 이메일 인증 완료 여부 확인
-  - 계정 상태 확인 (ACTIVE, SUSPENDED, WITHDRAWN)
-  - Access Token (1시간) + Refresh Token (7일) 발급
-  - Refresh Token DB 저장
-  - 로그아웃 시 토큰 무효화
+- [x] T028 [US2] AuthService 생성 - 로그인/로그아웃 비즈니스 로직 in `backend/src/main/java/igrus/web/security/auth/password/service/PasswordAuthService.java`
+  - ✅ 학번/비밀번호 인증
+  - ✅ 이메일 인증 완료 여부 확인
+  - ✅ 계정 상태 확인 (ACTIVE, SUSPENDED, WITHDRAWN)
+  - ✅ Access Token (1시간) + Refresh Token (7일) 발급
+  - ✅ Refresh Token DB 저장
+  - ✅ 로그아웃 시 토큰 무효화
 
 ### Controller for User Story 2
 
-- [ ] T029 [US2] AuthController - 로그인/로그아웃 엔드포인트 추가 in `backend/src/main/java/igrus/web/auth/controller/AuthController.java`
-  - POST /api/v1/auth/login (로그인)
-  - POST /api/v1/auth/logout (로그아웃)
+- [x] T029 [US2] AuthController - 로그인/로그아웃 엔드포인트 추가 in `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthController.java`
+  - ✅ POST /api/v1/auth/password/login (로그인) - 경로 변경
+  - ✅ POST /api/v1/auth/password/logout (로그아웃) - 경로 변경
 
 ### Test for User Story 2
 
-- [ ] T030 [P] [US2] AuthService 로그인 단위 테스트 in `backend/src/test/java/igrus/web/auth/service/AuthServiceLoginTest.java`
-- [ ] T031 [P] [US2] AuthController 로그인 통합 테스트 in `backend/src/test/java/igrus/web/auth/controller/AuthControllerLoginTest.java`
+- [x] T030 [P] [US2] AuthService 로그인 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/PasswordAuthServiceLoginTest.java`
+- [ ] T031 [P] [US2] AuthController 로그인 통합 테스트 - **미구현**
 
-**Checkpoint**: 로그인/로그아웃 기능 완료 - 독립적으로 테스트 가능
+**Checkpoint**: 🟡 로그인/로그아웃 기능 완료 - 통합 테스트 필요
 
 ---
 
@@ -159,32 +208,35 @@
 
 **Goal**: Access Token 만료 시 Refresh Token으로 새 Access Token 발급
 
+**Status**: 🟡 진행중 (5/6) - 통합 테스트 미완료
+
 **Independent Test**: 만료된 Access Token 상태에서 Refresh Token으로 갱신 성공 확인
 
 ### DTO for User Story 3
 
-- [ ] T032 [P] [US3] TokenRefreshRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/TokenRefreshRequest.java`
-- [ ] T033 [P] [US3] TokenRefreshResponse DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/response/TokenRefreshResponse.java`
+- [x] T032 [P] [US3] TokenRefreshRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/password/dto/request/TokenRefreshRequest.java`
+- [x] T033 [P] [US3] TokenRefreshResponse DTO 생성 in `backend/src/main/java/igrus/web/security/auth/password/dto/response/TokenRefreshResponse.java`
 
 ### Service for User Story 3
 
-- [ ] T034 [US3] TokenService 생성 - 토큰 갱신 비즈니스 로직 in `backend/src/main/java/igrus/web/auth/service/TokenService.java`
-  - Refresh Token 유효성 검증
-  - DB 저장 토큰과 비교
-  - 새 Access Token 발급
-  - (선택) Refresh Token Rotation
+- [x] T034 [US3] TokenService 생성 - 토큰 갱신 비즈니스 로직 in `backend/src/main/java/igrus/web/security/auth/password/service/PasswordAuthService.java`
+  - 변경: 별도 TokenService가 아닌 PasswordAuthService.refreshToken() 메서드로 구현
+  - ✅ Refresh Token 유효성 검증
+  - ✅ DB 저장 토큰과 비교
+  - ✅ 새 Access Token 발급
+  - ❌ (선택) Refresh Token Rotation - 미구현
 
 ### Controller for User Story 3
 
-- [ ] T035 [US3] AuthController - 토큰 갱신 엔드포인트 추가 in `backend/src/main/java/igrus/web/auth/controller/AuthController.java`
-  - POST /api/v1/auth/refresh (토큰 갱신)
+- [x] T035 [US3] AuthController - 토큰 갱신 엔드포인트 추가 in `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthController.java`
+  - ✅ POST /api/v1/auth/password/refresh (토큰 갱신) - 경로 변경
 
 ### Test for User Story 3
 
-- [ ] T036 [P] [US3] TokenService 단위 테스트 in `backend/src/test/java/igrus/web/auth/service/TokenServiceTest.java`
-- [ ] T037 [P] [US3] AuthController 토큰 갱신 통합 테스트 in `backend/src/test/java/igrus/web/auth/controller/AuthControllerTokenTest.java`
+- [x] T036 [P] [US3] TokenService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/PasswordAuthServiceTokenTest.java`
+- [ ] T037 [P] [US3] AuthController 토큰 갱신 통합 테스트 - **미구현**
 
-**Checkpoint**: 토큰 갱신 기능 완료 - 독립적으로 테스트 가능
+**Checkpoint**: 🟡 토큰 갱신 기능 완료 - 통합 테스트 필요
 
 ---
 
@@ -192,34 +244,39 @@
 
 **Goal**: 비밀번호를 잊은 사용자가 이메일을 통해 비밀번호 재설정
 
+**Status**: 🔴 미완료 (2/6) - 컨트롤러 및 DTO 미구현
+
 **Independent Test**: 비밀번호 재설정 요청 → 이메일 링크 → 새 비밀번호 설정 → 로그인 성공
 
 ### DTO for User Story 4
 
-- [ ] T038 [P] [US4] PasswordResetRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/PasswordResetRequest.java`
-- [ ] T039 [P] [US4] PasswordResetConfirmRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/PasswordResetConfirmRequest.java`
+- [ ] T038 [P] [US4] PasswordResetRequest DTO 생성 - **미구현**
+  - 필요 필드: studentId
+- [ ] T039 [P] [US4] PasswordResetConfirmRequest DTO 생성 - **미구현**
+  - 필요 필드: token, newPassword
 
 ### Service for User Story 4
 
-- [ ] T040 [US4] PasswordResetService 생성 in `backend/src/main/java/igrus/web/auth/service/PasswordResetService.java`
-  - 학번으로 사용자 조회
-  - 재설정 토큰 생성 (30분 유효)
-  - 이메일로 재설정 링크 발송
-  - 토큰 검증 및 비밀번호 변경
-  - 모든 기존 Refresh Token 무효화
+- [x] T040 [US4] PasswordResetService 생성 in `backend/src/main/java/igrus/web/security/auth/password/service/PasswordResetService.java`
+  - ✅ 학번으로 사용자 조회
+  - ✅ 재설정 토큰 생성 (30분 유효)
+  - ✅ 이메일로 재설정 링크 발송
+  - ✅ 토큰 검증 및 비밀번호 변경
+  - ✅ 모든 기존 Refresh Token 무효화
+  - ⚠️ 서비스는 구현되었으나 컨트롤러에서 호출하지 않음
 
 ### Controller for User Story 4
 
-- [ ] T041 [US4] AuthController - 비밀번호 재설정 엔드포인트 추가 in `backend/src/main/java/igrus/web/auth/controller/AuthController.java`
-  - POST /api/v1/auth/password/reset-request (재설정 요청)
-  - POST /api/v1/auth/password/reset-confirm (새 비밀번호 설정)
+- [ ] T041 [US4] AuthController - 비밀번호 재설정 엔드포인트 추가 - **미구현**
+  - 필요: POST /api/v1/auth/password/reset-request (재설정 요청)
+  - 필요: POST /api/v1/auth/password/reset-confirm (새 비밀번호 설정)
 
 ### Test for User Story 4
 
-- [ ] T042 [P] [US4] PasswordResetService 단위 테스트 in `backend/src/test/java/igrus/web/auth/service/PasswordResetServiceTest.java`
-- [ ] T043 [P] [US4] AuthController 비밀번호 재설정 통합 테스트 in `backend/src/test/java/igrus/web/auth/controller/AuthControllerPasswordResetTest.java`
+- [x] T042 [P] [US4] PasswordResetService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/PasswordResetServiceTest.java`
+- [ ] T043 [P] [US4] AuthController 비밀번호 재설정 통합 테스트 - **미구현**
 
-**Checkpoint**: 비밀번호 재설정 기능 완료 - 독립적으로 테스트 가능
+**Checkpoint**: 🔴 비밀번호 재설정 기능 미완료 - 컨트롤러 엔드포인트 구현 필요
 
 ---
 
@@ -227,35 +284,41 @@
 
 **Goal**: 탈퇴 후 5일 이내 계정 복구 기능 제공
 
+**Status**: 🔴 미완료 (4/7) - 컨트롤러 미구현, 로그인 시 복구 프롬프트 로직 미구현
+
 **Independent Test**: 탈퇴 → 5일 이내 로그인 시도 → 복구 선택 → 계정 활성화
 
 ### DTO for User Story 5
 
-- [ ] T044 [P] [US5] AccountRecoveryResponse DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/response/AccountRecoveryResponse.java`
-- [ ] T045 [P] [US5] AccountRecoveryConfirmRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/AccountRecoveryConfirmRequest.java`
+- [x] T044 [P] [US5] AccountRecoveryResponse DTO 생성 in `backend/src/main/java/igrus/web/security/auth/common/dto/response/AccountRecoveryResponse.java`
+  - 추가 구현: RecoveryEligibilityResponse (복구 가능 여부 확인용)
+- [x] T045 [P] [US5] AccountRecoveryConfirmRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/common/dto/request/AccountRecoveryRequest.java`
+  - 변경: AccountRecoveryConfirmRequest → AccountRecoveryRequest
 
 ### Service for User Story 5
 
-- [ ] T046 [US5] AccountRecoveryService 생성 in `backend/src/main/java/igrus/web/auth/service/AccountRecoveryService.java`
-  - 탈퇴 상태 및 복구 가능 기간 확인 (5일)
-  - 계정 상태 ACTIVE로 전환
-  - 탈퇴 후 5일 이내 재가입 차단 로직
+- [x] T046 [US5] AccountRecoveryService 생성 in `backend/src/main/java/igrus/web/security/auth/common/service/AccountRecoveryService.java`
+  - ✅ 탈퇴 상태 및 복구 가능 기간 확인 (5일)
+  - ✅ 계정 상태 ACTIVE로 전환
+  - ✅ 탈퇴 후 5일 이내 재가입 차단 로직
 
 ### Service for User Story 5 (추가)
 
-- [ ] T047 [US5] AuthService에 탈퇴 계정 로그인 시 복구 프롬프트 로직 추가 in `backend/src/main/java/igrus/web/auth/service/AuthService.java`
+- [ ] T047 [US5] AuthService에 탈퇴 계정 로그인 시 복구 프롬프트 로직 추가 - **미구현**
+  - 현재: PasswordAuthService에서 탈퇴 계정 로그인 시 AccountWithdrawnException만 발생
+  - 필요: 복구 가능 여부 확인 후 별도 응답 반환
 
 ### Controller for User Story 5
 
-- [ ] T048 [US5] AuthController - 계정 복구 엔드포인트 추가 in `backend/src/main/java/igrus/web/auth/controller/AuthController.java`
-  - POST /api/v1/auth/account/recover (계정 복구)
+- [ ] T048 [US5] AuthController - 계정 복구 엔드포인트 추가 - **미구현**
+  - 필요: POST /api/v1/auth/password/account/recover (계정 복구)
 
 ### Test for User Story 5
 
-- [ ] T049 [P] [US5] AccountRecoveryService 단위 테스트 in `backend/src/test/java/igrus/web/auth/service/AccountRecoveryServiceTest.java`
-- [ ] T050 [P] [US5] AuthController 계정 복구 통합 테스트 in `backend/src/test/java/igrus/web/auth/controller/AuthControllerRecoveryTest.java`
+- [x] T049 [P] [US5] AccountRecoveryService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/common/service/AccountRecoveryServiceTest.java`
+- [ ] T050 [P] [US5] AuthController 계정 복구 통합 테스트 - **미구현**
 
-**Checkpoint**: 탈퇴 계정 복구 기능 완료 - 독립적으로 테스트 가능
+**Checkpoint**: 🔴 탈퇴 계정 복구 기능 미완료 - 컨트롤러 엔드포인트 및 복구 프롬프트 로직 구현 필요
 
 ---
 
@@ -263,35 +326,40 @@
 
 **Goal**: 관리자가 준회원을 정회원으로 승인
 
+**Status**: 🔴 미완료 (3/7) - 컨트롤러 및 일부 DTO 미구현
+
 **Independent Test**: 관리자 로그인 → 준회원 목록 조회 → 승인 → 역할 변경 확인
 
 ### DTO for User Story 6
 
-- [ ] T051 [P] [US6] AssociateMemberResponse DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/response/AssociateMemberResponse.java`
-- [ ] T052 [P] [US6] MemberApprovalRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/MemberApprovalRequest.java`
-- [ ] T053 [P] [US6] BulkApprovalRequest DTO 생성 in `backend/src/main/java/igrus/web/auth/dto/request/BulkApprovalRequest.java`
+- [x] T051 [P] [US6] AssociateMemberResponse DTO 생성 in `backend/src/main/java/igrus/web/security/auth/approval/dto/response/AssociateInfoResponse.java`
+  - 변경: AssociateMemberResponse → AssociateInfoResponse
+- [ ] T052 [P] [US6] MemberApprovalRequest DTO 생성 - **미구현**
+  - 필요 필드: reason (승인 사유, 선택)
+- [ ] T053 [P] [US6] BulkApprovalRequest DTO 생성 - **미구현**
+  - 필요 필드: userIds (List<Long>), reason (선택)
 
 ### Service for User Story 6
 
-- [ ] T054 [US6] MemberApprovalService 생성 in `backend/src/main/java/igrus/web/auth/service/MemberApprovalService.java`
-  - 준회원 목록 조회 (학번, 본명, 학과, 가입 동기)
-  - 개별 승인 (ASSOCIATE → MEMBER)
-  - 일괄 승인
-  - 역할 변경 이력 기록
+- [x] T054 [US6] MemberApprovalService 생성 in `backend/src/main/java/igrus/web/security/auth/approval/service/MemberApprovalService.java`
+  - ✅ 준회원 목록 조회 (학번, 본명, 학과, 가입 동기)
+  - ✅ 개별 승인 (ASSOCIATE → MEMBER)
+  - ✅ 일괄 승인
+  - ✅ 역할 변경 이력 기록
 
 ### Controller for User Story 6
 
-- [ ] T055 [US6] AdminMemberController 생성 in `backend/src/main/java/igrus/web/auth/controller/AdminMemberController.java`
-  - GET /api/v1/admin/members/pending (준회원 목록)
-  - POST /api/v1/admin/members/{id}/approve (개별 승인)
-  - POST /api/v1/admin/members/approve/bulk (일괄 승인)
+- [ ] T055 [US6] AdminMemberController 생성 - **미구현**
+  - 필요: GET /api/v1/admin/members/pending (준회원 목록)
+  - 필요: POST /api/v1/admin/members/{id}/approve (개별 승인)
+  - 필요: POST /api/v1/admin/members/approve/bulk (일괄 승인)
 
 ### Test for User Story 6
 
-- [ ] T056 [P] [US6] MemberApprovalService 단위 테스트 in `backend/src/test/java/igrus/web/auth/service/MemberApprovalServiceTest.java`
-- [ ] T057 [P] [US6] AdminMemberController 통합 테스트 in `backend/src/test/java/igrus/web/auth/controller/AdminMemberControllerTest.java`
+- [x] T056 [P] [US6] MemberApprovalService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/approval/service/MemberApprovalServiceTest.java`
+- [ ] T057 [P] [US6] AdminMemberController 통합 테스트 - **미구현**
 
-**Checkpoint**: 준회원 승인 기능 완료 - 독립적으로 테스트 가능
+**Checkpoint**: 🔴 준회원 승인 기능 미완료 - AdminMemberController 및 DTO 구현 필요
 
 ---
 
@@ -299,29 +367,41 @@
 
 **Purpose**: 여러 User Story에 걸친 개선사항
 
+**Status**: 🔴 미완료 (3/9)
+
 ### 스케줄링 및 정리 작업
 
-- [ ] T058 인증 미완료 임시 데이터 24시간 후 삭제 스케줄러 in `backend/src/main/java/igrus/web/auth/scheduler/AuthCleanupScheduler.java`
-- [ ] T059 만료된 Refresh Token 정리 스케줄러 in `backend/src/main/java/igrus/web/auth/scheduler/AuthCleanupScheduler.java`
-- [ ] T060 탈퇴 후 5일 경과 개인정보 영구 삭제 스케줄러 in `backend/src/main/java/igrus/web/auth/scheduler/AuthCleanupScheduler.java`
+- [x] T058 인증 미완료 임시 데이터 24시간 후 삭제 스케줄러 in `backend/src/main/java/igrus/web/security/auth/common/scheduler/UnverifiedUserCleanupScheduler.java`
+  - ✅ 매일 새벽 3시 실행
+  - ✅ 24시간 경과한 미인증 EmailVerification 및 관련 사용자 데이터 삭제
+- [ ] T059 만료된 Refresh Token 정리 스케줄러 - **미구현**
+- [ ] T060 탈퇴 후 5일 경과 개인정보 영구 삭제 스케줄러 - **미구현**
 
 ### 이메일 재시도 로직
 
-- [ ] T061 이메일 발송 실패 시 재시도 로직 구현 (1분, 5분, 15분) in `backend/src/main/java/igrus/web/auth/service/SmtpEmailService.java`
+- [ ] T061 이메일 발송 실패 시 재시도 로직 구현 (1분, 5분, 15분) - **미구현**
+  - 현재: SmtpEmailService에서 실패 시 즉시 EmailSendFailedException 발생
 
 ### 보안 강화
 
-- [ ] T062 JwtAuthenticationFilter 계정 상태 검증 추가 in `backend/src/main/java/igrus/web/security/jwt/JwtAuthenticationFilter.java`
-- [ ] T063 SecurityConfig URL 패턴 최종 업데이트 in `backend/src/main/java/igrus/web/security/config/SecurityConfig.java`
+- [ ] T062 JwtAuthenticationFilter 계정 상태 검증 추가 - **미구현**
+  - 현재: JWT 토큰 유효성만 검증, DB에서 계정 상태 (SUSPENDED, WITHDRAWN) 확인하지 않음
+  - 필요: 토큰은 유효하지만 계정이 정지/탈퇴된 경우 처리
+- [x] T063 SecurityConfig URL 패턴 최종 업데이트 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
+  - 변경: SecurityConfig → ApiSecurityConfig + PublicResourceSecurityConfig로 분리
+  - ✅ /api/v1/auth/password/** 허용
+  - ✅ /api/admin/** ADMIN 역할 필요
+  - ✅ 운영진 (OPERATOR, ADMIN) 경로 설정
 
 ### API 문서화
 
-- [ ] T064 [P] AuthController Swagger 어노테이션 추가 in `backend/src/main/java/igrus/web/auth/controller/AuthController.java`
-- [ ] T065 [P] AdminMemberController Swagger 어노테이션 추가 in `backend/src/main/java/igrus/web/auth/controller/AdminMemberController.java`
+- [x] T064 [P] AuthController Swagger 어노테이션 추가 in `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthControllerApi.java`
+  - 변경: AuthController → PasswordAuthControllerApi (인터페이스로 분리)
+- [ ] T065 [P] AdminMemberController Swagger 어노테이션 추가 - **미구현** (컨트롤러 자체가 미구현)
 
 ### 통합 테스트
 
-- [ ] T066 전체 인증 플로우 E2E 테스트 in `backend/src/test/java/igrus/web/auth/AuthFlowIntegrationTest.java`
+- [ ] T066 전체 인증 플로우 E2E 테스트 - **미구현**
 
 ---
 
@@ -458,26 +538,56 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 
 ## Summary
 
-| Phase | 태스크 수 | 병렬 가능 | 설명 |
-|-------|----------|----------|------|
-| Phase 1: Setup | 5 | 5 | 공통 인프라 |
-| Phase 2: Foundational | 11 | 10 | 핵심 엔티티/Repository |
-| Phase 3: US1 회원가입 | 8 | 6 | MVP |
-| Phase 4: US2 로그인 | 7 | 5 | MVP |
-| Phase 5: US3 토큰 갱신 | 6 | 4 | P2 |
-| Phase 6: US4 비밀번호 재설정 | 6 | 4 | P2 |
-| Phase 7: US5 탈퇴 복구 | 7 | 4 | P3 |
-| Phase 8: US6 준회원 승인 | 7 | 5 | P2 |
-| Phase 9: Polish | 9 | 2 | 정리 및 개선 |
-| **Total** | **66** | **45** | |
+| Phase | 태스크 수 | 완료 | 미완료 | 완료율 | 설명 |
+|-------|----------|------|--------|--------|------|
+| Phase 1: Setup | 5 | 5 | 0 | 100% | 공통 인프라 ✅ |
+| Phase 2: Foundational | 11 | 11 | 0 | 100% | 핵심 엔티티/Repository ✅ |
+| Phase 3: US1 회원가입 | 8 | 7 | 1 | 87.5% | MVP 🟡 |
+| Phase 4: US2 로그인 | 7 | 6 | 1 | 85.7% | MVP 🟡 |
+| Phase 5: US3 토큰 갱신 | 6 | 5 | 1 | 83.3% | P2 🟡 |
+| Phase 6: US4 비밀번호 재설정 | 6 | 2 | 4 | 33.3% | P2 🔴 |
+| Phase 7: US5 탈퇴 복구 | 7 | 4 | 3 | 57.1% | P3 🔴 |
+| Phase 8: US6 준회원 승인 | 7 | 3 | 4 | 42.9% | P2 🔴 |
+| Phase 9: Polish | 9 | 3 | 6 | 33.3% | 정리 및 개선 🔴 |
+| **Total** | **66** | **46** | **20** | **69.7%** | |
 
-### Suggested MVP Scope
+### MVP Scope 현황
 
-- Phase 1 (Setup): 5 tasks
-- Phase 2 (Foundational): 11 tasks
-- Phase 3 (US1 회원가입): 8 tasks
-- Phase 4 (US2 로그인): 7 tasks
-- **MVP Total: 31 tasks**
+- Phase 1 (Setup): 5/5 tasks ✅
+- Phase 2 (Foundational): 11/11 tasks ✅
+- Phase 3 (US1 회원가입): 7/8 tasks 🟡
+- Phase 4 (US2 로그인): 6/7 tasks 🟡
+- **MVP Total: 29/31 tasks (93.5%)** 🟡
+
+### 미완료 태스크 목록
+
+#### MVP (우선 완료 필요)
+- T024: AuthController 회원가입 통합 테스트
+- T031: AuthController 로그인 통합 테스트
+
+#### P2 (비밀번호 재설정, 토큰 갱신, 준회원 승인)
+- T037: AuthController 토큰 갱신 통합 테스트
+- T038: PasswordResetRequest DTO
+- T039: PasswordResetConfirmRequest DTO
+- T041: 비밀번호 재설정 컨트롤러 엔드포인트
+- T043: AuthController 비밀번호 재설정 통합 테스트
+- T052: MemberApprovalRequest DTO
+- T053: BulkApprovalRequest DTO
+- T055: AdminMemberController
+- T057: AdminMemberController 통합 테스트
+
+#### P3 (탈퇴 계정 복구)
+- T047: AuthService 탈퇴 계정 복구 프롬프트 로직
+- T048: 계정 복구 컨트롤러 엔드포인트
+- T050: AuthController 계정 복구 통합 테스트
+
+#### Polish
+- T059: Refresh Token 정리 스케줄러
+- T060: 탈퇴 후 개인정보 삭제 스케줄러
+- T061: 이메일 재시도 로직
+- T062: JwtAuthenticationFilter 계정 상태 검증
+- T065: AdminMemberController Swagger
+- T066: E2E 통합 테스트
 
 ---
 

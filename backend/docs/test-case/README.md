@@ -17,6 +17,7 @@
 |------|------|-----------------|
 | [user-domain-test-cases.md](user/user-domain-test-cases.md) | User 도메인 관련 테스트 케이스 | `UserRoleHistoryTest.java` |
 | [soft-delete-test-cases.md](user/soft-delete-test-cases.md) | Soft Delete 기능 테스트 케이스 | `SoftDeletableEntityTest.java`, `UserRepositorySoftDeleteTest.java` |
+| [auth/README.md](auth/README.md) | 인증 기능 테스트 케이스 (회원가입, 로그인, 토큰 등) | 구현 예정 |
 
 ---
 
@@ -36,12 +37,18 @@
 
 | 카테고리 | 예상 테스트 케이스 수 | 우선순위 |
 |----------|---------------------|---------|
+| 인증 - 회원가입 | 26개 | P1 (높음) |
+| 인증 - 로그인 | 18개 | P1 (높음) |
+| 인증 - 토큰 갱신 | 15개 | P2 (높음) |
+| 인증 - 비밀번호 재설정 | 15개 | P2 (높음) |
+| 인증 - 탈퇴 계정 복구 | 15개 | P3 (중간) |
+| 인증 - 준회원 승인 | 17개 | P2 (높음) |
 | User 도메인 (추가) | 22개 | 높음 |
 | PasswordCredential 도메인 | 11개 | 높음 |
 | Position 도메인 | 5개 | 중간 |
 | 비즈니스 규칙 | 14개 | 높음 |
 | Soft Delete (추가) | 10개 | 중간 |
-| **총계** | **약 62개** | - |
+| **총계** | **약 168개** | - |
 
 ---
 
