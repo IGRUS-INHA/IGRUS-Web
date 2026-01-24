@@ -1,41 +1,82 @@
 package igrus.web.common.exception;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
 public enum ErrorCode {
 
     // Common
-    INVALID_INPUT_VALUE(400, "C001", "잘못된 입력값입니다"),
-    METHOD_NOT_ALLOWED(405, "C002", "허용되지 않은 메서드입니다"),
-    INTERNAL_SERVER_ERROR(500, "C003", "서버 내부 오류가 발생했습니다"),
-    INVALID_TYPE_VALUE(400, "C004", "잘못된 타입입니다"),
-    ACCESS_DENIED(403, "C005", "접근이 거부되었습니다"),
+    INVALID_INPUT_VALUE(400, "잘못된 입력값입니다"),
+    METHOD_NOT_ALLOWED(405, "허용되지 않은 메서드입니다"),
+    INTERNAL_SERVER_ERROR(500, "서버 내부 오류가 발생했습니다"),
+    INVALID_TYPE_VALUE(400, "잘못된 타입입니다"),
+    ACCESS_DENIED(403, "접근이 거부되었습니다"),
 
     // User
-    USER_NOT_FOUND(404, "U001", "사용자를 찾을 수 없습니다"),
-    DUPLICATE_EMAIL(409, "U002", "이미 존재하는 이메일입니다"),
-    INVALID_PASSWORD(401, "U003", "비밀번호가 일치하지 않습니다"),
-    SAME_ROLE_CHANGE(400, "U004", "이전 역할과 새 역할이 동일합니다"),
-    INVALID_STUDENT_ID(400, "U005", "학번은 8자리 숫자여야 합니다"),
-    INVALID_EMAIL_FORMAT(400, "U006", "유효하지 않은 이메일 형식입니다"),
+    USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다"),
+    DUPLICATE_EMAIL(409, "이미 존재하는 이메일입니다"),
+    INVALID_PASSWORD(401, "비밀번호가 일치하지 않습니다"),
+    SAME_ROLE_CHANGE(400, "이전 역할과 새 역할이 동일합니다"),
+    INVALID_STUDENT_ID(400, "학번은 8자리 숫자여야 합니다"),
+    INVALID_EMAIL_FORMAT(400, "유효하지 않은 이메일 형식입니다"),
 
     // Inquiry
-    INQUIRY_NOT_FOUND(404, "I001", "문의를 찾을 수 없습니다"),
-    INQUIRY_ACCESS_DENIED(403, "I002", "문의에 대한 접근 권한이 없습니다"),
-    INQUIRY_ALREADY_REPLIED(409, "I003", "이미 답변이 작성된 문의입니다"),
-    INQUIRY_INVALID_PASSWORD(401, "I004", "문의 비밀번호가 일치하지 않습니다"),
-    INQUIRY_MAX_ATTACHMENTS_EXCEEDED(400, "I005", "첨부파일은 최대 3개까지 가능합니다"),
-    INQUIRY_NUMBER_GENERATION_FAILED(500, "I006", "문의 번호 생성에 실패했습니다"),
-    GUEST_INQUIRY_EMAIL_REQUIRED(400, "I007", "비회원 문의 시 이메일은 필수입니다"),
-    GUEST_INQUIRY_NAME_REQUIRED(400, "I008", "비회원 문의 시 이름은 필수입니다"),
-    GUEST_INQUIRY_PASSWORD_REQUIRED(400, "I009", "비회원 문의 시 비밀번호는 필수입니다"),
-    INQUIRY_REPLY_NOT_FOUND(404, "I010", "답변을 찾을 수 없습니다"),
-    INVALID_STATUS_TRANSITION(400, "I011", "허용되지 않은 상태 변경입니다");
+    INQUIRY_NOT_FOUND(404, "문의를 찾을 수 없습니다"),
+    INQUIRY_ACCESS_DENIED(403, "문의에 대한 접근 권한이 없습니다"),
+    INQUIRY_ALREADY_REPLIED(409, "이미 답변이 작성된 문의입니다"),
+    INQUIRY_INVALID_PASSWORD(401, "문의 비밀번호가 일치하지 않습니다"),
+    INQUIRY_MAX_ATTACHMENTS_EXCEEDED(400, "첨부파일은 최대 3개까지 가능합니다"),
+    INQUIRY_NUMBER_GENERATION_FAILED(500, "문의 번호 생성에 실패했습니다"),
+    GUEST_INQUIRY_EMAIL_REQUIRED(400, "비회원 문의 시 이메일은 필수입니다"),
+    GUEST_INQUIRY_NAME_REQUIRED(400, "비회원 문의 시 이름은 필수입니다"),
+    GUEST_INQUIRY_PASSWORD_REQUIRED(400, "비회원 문의 시 비밀번호는 필수입니다"),
+    INQUIRY_REPLY_NOT_FOUND(404, "답변을 찾을 수 없습니다"),
+    INVALID_STATUS_TRANSITION(400, "허용되지 않은 상태 변경입니다"),
+
+    // JWT
+    ACCESS_TOKEN_INVALID(401, "유효하지 않은 액세스 토큰입니다"),
+    ACCESS_TOKEN_EXPIRED(401, "액세스 토큰이 만료되었습니다"),
+    INVALID_TOKEN_TYPE(401, "올바르지 않은 토큰 타입입니다"),
+
+    // Auth
+    INVALID_CREDENTIALS(401, "학번 또는 비밀번호가 올바르지 않습니다"),
+    EMAIL_NOT_VERIFIED(401, "이메일 인증이 완료되지 않았습니다"),
+    EMAIL_ALREADY_VERIFIED(400, "이미 인증된 이메일입니다"),
+    VERIFICATION_CODE_EXPIRED(400, "인증 코드가 만료되었습니다"),
+    VERIFICATION_CODE_INVALID(400, "유효하지 않은 인증 코드입니다"),
+    VERIFICATION_ATTEMPTS_EXCEEDED(429, "인증 시도 횟수를 초과했습니다"),
+    DUPLICATE_STUDENT_ID(409, "이미 가입된 학번입니다"),
+    DUPLICATE_PHONE_NUMBER(409, "이미 등록된 전화번호입니다"),
+    INVALID_PASSWORD_FORMAT(400, "비밀번호는 영문 대/소문자, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다"),
+    PRIVACY_CONSENT_REQUIRED(400, "개인정보 처리방침 동의가 필요합니다"),
+    ACCOUNT_SUSPENDED(403, "정지된 계정입니다"),
+    ACCOUNT_WITHDRAWN(403, "탈퇴한 계정입니다"),
+    ACCOUNT_RECOVERABLE(200, "복구 가능한 탈퇴 계정입니다"),
+    ACCOUNT_NOT_RECOVERABLE(400, "복구 기간이 만료된 계정입니다"),
+    REFRESH_TOKEN_INVALID(401, "유효하지 않은 리프레시 토큰입니다"),
+    REFRESH_TOKEN_EXPIRED(401, "리프레시 토큰이 만료되었습니다"),
+    PASSWORD_RESET_TOKEN_INVALID(400, "유효하지 않은 비밀번호 재설정 토큰입니다"),
+    PASSWORD_RESET_TOKEN_EXPIRED(400, "비밀번호 재설정 토큰이 만료되었습니다"),
+    EMAIL_SEND_FAILED(500, "이메일 발송에 실패했습니다"),
+    RECENT_WITHDRAWAL_EXISTS(400, "최근 탈퇴 이력이 있어 재가입이 불가합니다"),
+    VERIFICATION_RESEND_RATE_LIMITED(429, "인증 코드 재발송은 5분에 1회만 가능합니다"),
+    ACCOUNT_LOCKED(423, "로그인 시도 횟수 초과로 계정이 잠겼습니다"),
+
+    // Member Approval
+    ADMIN_REQUIRED(403, "관리자 권한이 필요합니다"),
+    USER_NOT_ASSOCIATE(400, "해당 사용자는 준회원이 아닙니다"),
+    LAST_ADMIN_CANNOT_CHANGE(400, "마지막 관리자는 권한을 변경할 수 없습니다"),
+    BULK_APPROVAL_EMPTY(400, "승인할 사용자를 선택해주세요");
 
     private final int status;
-    private final String code;
     private final String message;
+
+    ErrorCode(int status, String message) {
+        this.status = status;
+        this.message = message;
+    }
+
+    public String getCode() {
+        return this.name();
+    }
 }

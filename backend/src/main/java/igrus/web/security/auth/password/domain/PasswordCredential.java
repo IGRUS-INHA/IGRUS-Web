@@ -1,6 +1,8 @@
-package igrus.web.user.domain;
+package igrus.web.security.auth.password.domain;
 
 import igrus.web.common.domain.SoftDeletableEntity;
+import igrus.web.user.domain.User;
+import igrus.web.user.domain.UserStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -58,7 +60,7 @@ public class PasswordCredential extends SoftDeletableEntity {
         PasswordCredential credential = new PasswordCredential();
         credential.user = user;
         credential.passwordHash = passwordHash;
-        credential.status = UserStatus.ACTIVE;
+        credential.status = UserStatus.PENDING_VERIFICATION;
         return credential;
     }
 
@@ -94,6 +96,16 @@ public class PasswordCredential extends SoftDeletableEntity {
 
     public boolean isWithdrawn() {
         return this.status == UserStatus.WITHDRAWN;
+    }
+
+    public boolean isPendingVerification() {
+        return this.status == UserStatus.PENDING_VERIFICATION;
+    }
+
+    public void verifyEmail() {
+        if (this.status == UserStatus.PENDING_VERIFICATION) {
+            this.status = UserStatus.ACTIVE;
+        }
     }
 
     // === 정회원 승인 ===

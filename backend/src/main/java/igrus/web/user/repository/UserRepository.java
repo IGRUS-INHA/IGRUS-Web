@@ -2,6 +2,8 @@ package igrus.web.user.repository;
 
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,6 +30,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByPhoneNumber(String phoneNumber);
 
     List<User> findByRole(UserRole role);
+
+    Page<User> findByRole(UserRole role, Pageable pageable);
+
+    long countByRole(UserRole role);
 
     // === 삭제된 데이터 포함 조회 (관리자용, native query로 @SQLRestriction 우회) ===
 

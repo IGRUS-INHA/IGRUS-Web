@@ -64,6 +64,11 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_role", nullable = false)
     private UserRole role = UserRole.ASSOCIATE;
 
+    // 상태
+    @Enumerated(EnumType.STRING)
+    @Column(name = "users_status", nullable = false)
+    private UserStatus status = UserStatus.PENDING_VERIFICATION;
+
     // 직책 (다대다: 한 유저가 여러 직책 보유 가능)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserPosition> userPositions = new ArrayList<>();
@@ -141,6 +146,44 @@ public class User extends SoftDeletableEntity {
 
     public boolean isAssociate() {
         return this.role == UserRole.ASSOCIATE;
+    }
+
+    // === 상태 확인 ===
+
+    public boolean isActive() {
+        return this.status == UserStatus.ACTIVE;
+    }
+
+    public boolean isSuspended() {
+        return this.status == UserStatus.SUSPENDED;
+    }
+
+    public boolean isWithdrawn() {
+        return this.status == UserStatus.WITHDRAWN;
+    }
+
+    public boolean isPendingVerification() {
+        return this.status == UserStatus.PENDING_VERIFICATION;
+    }
+
+    // === 상태 변경 ===
+
+    public void activate() {
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void suspend() {
+        this.status = UserStatus.SUSPENDED;
+    }
+
+    public void withdraw() {
+        this.status = UserStatus.WITHDRAWN;
+    }
+
+    public void verifyEmail() {
+        if (this.status == UserStatus.PENDING_VERIFICATION) {
+            this.status = UserStatus.ACTIVE;
+        }
     }
 
     // === 직책 관련 ===
