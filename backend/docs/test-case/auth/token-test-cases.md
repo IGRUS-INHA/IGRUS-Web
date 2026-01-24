@@ -65,35 +65,29 @@
 
 ---
 
-## 4. 예상 테스트 클래스 구조
+## 4. 구현된 테스트 클래스
+
+### 4.1 Controller 테스트
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerTokenTest.java`
+- **테스트 범위**: TKN-001 ~ TKN-014 (HTTP 레이어)
 
 ```java
-@Nested
-@DisplayName("토큰 갱신 테스트")
-class TokenRefreshTest {
+@WebMvcTest(PasswordAuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
+@DisplayName("PasswordAuthController 토큰 갱신 테스트")
+class PasswordAuthControllerTokenTest {
 
     @Nested
     @DisplayName("토큰 갱신 성공")
-    class RefreshSuccessTest {
+    class TokenRefreshSuccessTest {
         // TKN-001 ~ TKN-004
     }
 
     @Nested
     @DisplayName("토큰 갱신 실패")
-    class RefreshFailureTest {
+    class TokenRefreshFailureTest {
         // TKN-010 ~ TKN-014
-    }
-
-    @Nested
-    @DisplayName("계정 상태 변경 시 토큰 처리")
-    class AccountStatusTokenTest {
-        // TKN-020 ~ TKN-024
-    }
-
-    @Nested
-    @DisplayName("토큰 보안")
-    class TokenSecurityTest {
-        // TKN-030 ~ TKN-032
     }
 }
 ```
@@ -105,3 +99,4 @@ class TokenRefreshTest {
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 1.0 | 2026-01-23 | - | 최초 작성 |
+| 1.1 | 2026-01-24 | - | 컨트롤러 레벨 테스트 구현 정보 추가 |

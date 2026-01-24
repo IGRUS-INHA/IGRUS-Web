@@ -99,48 +99,42 @@
 
 ---
 
-## 4. 예상 테스트 클래스 구조
+## 4. 구현된 테스트 클래스
+
+### 4.1 Service 테스트
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/service/PasswordSignupServiceTest.java`
+- **테스트 범위**: REG-001 ~ REG-052 (비즈니스 로직)
+
+### 4.2 Controller 테스트
+- **회원가입**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerSignupTest.java`
+- **이메일 인증**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerVerificationTest.java`
 
 ```java
-@Nested
-@DisplayName("회원가입 테스트")
-class RegistrationTest {
+// 회원가입 컨트롤러 테스트
+@WebMvcTest(PasswordAuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
+@DisplayName("PasswordAuthController 회원가입 테스트")
+class PasswordAuthControllerSignupTest {
+    @Nested class SignupSuccessTest { /* REG-010 */ }
+    @Nested class StudentIdValidationTest { /* REG-011 ~ REG-013 */ }
+    @Nested class RequiredFieldValidationTest { /* REG-014 ~ REG-018 */ }
+    @Nested class PasswordValidationTest { /* REG-021 ~ REG-025 */ }
+    @Nested class DuplicateCheckTest { /* REG-030 ~ REG-032 */ }
+    @Nested class PrivacyConsentValidationTest { /* 개인정보 동의 검증 */ }
+}
 
-    @Nested
-    @DisplayName("개인정보 동의")
-    class PrivacyConsentTest {
-        // REG-001 ~ REG-004
+// 이메일 인증 컨트롤러 테스트
+@WebMvcTest(PasswordAuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
+@DisplayName("PasswordAuthController 이메일 인증 테스트")
+class PasswordAuthControllerVerificationTest {
+    @Nested class VerifyEmailTest {
+        @Nested class VerifySuccessTest { /* REG-041 */ }
+        @Nested class VerifyFailureTest { /* REG-042 ~ REG-043 */ }
     }
-
-    @Nested
-    @DisplayName("필수 정보 검증")
-    class RequiredFieldsValidationTest {
-        // REG-010 ~ REG-018
-    }
-
-    @Nested
-    @DisplayName("비밀번호 검증")
-    class PasswordValidationTest {
-        // REG-020 ~ REG-026
-    }
-
-    @Nested
-    @DisplayName("중복 검사")
-    class DuplicationCheckTest {
-        // REG-030 ~ REG-032
-    }
-
-    @Nested
-    @DisplayName("이메일 인증")
-    class EmailVerificationTest {
-        // REG-040 ~ REG-045
-    }
-
-    @Nested
-    @DisplayName("Edge Cases")
-    class EdgeCasesTest {
-        // REG-050 ~ REG-052
-    }
+    @Nested class ResendVerificationTest { /* REG-044 ~ REG-045 */ }
 }
 ```
 
@@ -151,3 +145,4 @@ class RegistrationTest {
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 1.0 | 2026-01-23 | - | 최초 작성 |
+| 1.1 | 2026-01-24 | - | 컨트롤러 레벨 테스트 구현 정보 추가 |
