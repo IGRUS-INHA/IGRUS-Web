@@ -396,13 +396,15 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             user.changeRole(UserRole.MEMBER);
             user.verifyEmail();
             user.withdraw(); // 탈퇴 처리
-            // soft delete 처리 - deletedAt 설정
+            // soft delete 처리 - deleted와 deletedAt 설정
+            ReflectionTestUtils.setField(user, "deleted", true);
             ReflectionTestUtils.setField(user, "deletedAt", Instant.now());
             userRepository.save(user);
 
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
             credential.verifyEmail();
             credential.withdraw(); // 탈퇴 처리
+            ReflectionTestUtils.setField(credential, "deleted", true);
             ReflectionTestUtils.setField(credential, "deletedAt", Instant.now());
             passwordCredentialRepository.save(credential);
 
@@ -427,12 +429,14 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             user.changeRole(UserRole.MEMBER);
             user.verifyEmail();
             user.withdraw();
+            ReflectionTestUtils.setField(user, "deleted", true);
             ReflectionTestUtils.setField(user, "deletedAt", Instant.now());
             userRepository.save(user);
 
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
             credential.verifyEmail();
             credential.withdraw();
+            ReflectionTestUtils.setField(credential, "deleted", true);
             ReflectionTestUtils.setField(credential, "deletedAt", Instant.now());
             passwordCredentialRepository.save(credential);
 
@@ -473,12 +477,14 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             user.changeRole(UserRole.OPERATOR);
             user.verifyEmail();
             user.withdraw();
+            ReflectionTestUtils.setField(user, "deleted", true);
             ReflectionTestUtils.setField(user, "deletedAt", Instant.now());
             userRepository.save(user);
 
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
             credential.verifyEmail();
             credential.withdraw();
+            ReflectionTestUtils.setField(credential, "deleted", true);
             ReflectionTestUtils.setField(credential, "deletedAt", Instant.now());
             passwordCredentialRepository.save(credential);
 
@@ -505,12 +511,14 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             user.verifyEmail();
             user.withdraw();
             // 6일 전으로 설정
+            ReflectionTestUtils.setField(user, "deleted", true);
             ReflectionTestUtils.setField(user, "deletedAt", Instant.now().minusSeconds(6 * 24 * 60 * 60));
             userRepository.save(user);
 
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
             credential.verifyEmail();
             credential.withdraw();
+            ReflectionTestUtils.setField(credential, "deleted", true);
             ReflectionTestUtils.setField(credential, "deletedAt", Instant.now().minusSeconds(6 * 24 * 60 * 60));
             passwordCredentialRepository.save(credential);
 
@@ -534,7 +542,10 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             String oldRefreshToken = loginResponse.refreshToken();
 
             // === 탈퇴 처리 (모든 토큰 무효화 시뮬레이션) ===
-            refreshTokenRepository.revokeAllByUserId(user.getId());
+            transactionTemplate.execute(status -> {
+                refreshTokenRepository.revokeAllByUserId(user.getId());
+                return null;
+            });
 
             // === 이전 토큰으로 API 호출 시도 (토큰 무효화 확인) ===
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(oldRefreshToken)).isEmpty();

@@ -12,6 +12,7 @@ import igrus.web.security.auth.common.exception.verification.VerificationResendR
 import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
+import igrus.web.security.auth.password.service.PasswordResetService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
 import igrus.web.security.config.ApiSecurityConfig;
 import igrus.web.security.config.SecurityConfigUtil;
@@ -49,6 +50,9 @@ class PasswordAuthControllerVerificationTest {
 
     @MockitoBean
     private PasswordSignupService passwordSignupService;
+
+    @MockitoBean
+    private PasswordResetService passwordResetService;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;

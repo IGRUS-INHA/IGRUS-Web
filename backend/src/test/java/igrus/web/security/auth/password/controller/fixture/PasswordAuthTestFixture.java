@@ -1,9 +1,15 @@
 package igrus.web.security.auth.password.controller.fixture;
 
+import igrus.web.security.auth.common.dto.request.AccountRecoveryRequest;
+import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
+import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.user.domain.UserRole;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 /**
  * PasswordAuthController 테스트를 위한 픽스처 클래스
@@ -158,5 +164,83 @@ public final class PasswordAuthTestFixture {
      */
     public static PasswordLogoutRequest logoutRequestWithBlankToken() {
         return new PasswordLogoutRequest(BLANK_STRING);
+    }
+
+    // ==================== Account Recovery Request Fixtures ====================
+
+    /**
+     * 유효한 계정 복구 요청 생성
+     */
+    public static AccountRecoveryRequest validRecoveryRequest() {
+        return new AccountRecoveryRequest(VALID_STUDENT_ID, VALID_PASSWORD);
+    }
+
+    /**
+     * 잘못된 비밀번호로 계정 복구 요청 생성
+     */
+    public static AccountRecoveryRequest recoveryRequestWithInvalidPassword() {
+        return new AccountRecoveryRequest(VALID_STUDENT_ID, INVALID_PASSWORD);
+    }
+
+    /**
+     * 빈 학번으로 계정 복구 요청 생성
+     */
+    public static AccountRecoveryRequest recoveryRequestWithEmptyStudentId() {
+        return new AccountRecoveryRequest(EMPTY_STRING, VALID_PASSWORD);
+    }
+
+    /**
+     * 빈 비밀번호로 계정 복구 요청 생성
+     */
+    public static AccountRecoveryRequest recoveryRequestWithEmptyPassword() {
+        return new AccountRecoveryRequest(VALID_STUDENT_ID, EMPTY_STRING);
+    }
+
+    /**
+     * 잘못된 형식의 학번으로 계정 복구 요청 생성
+     */
+    public static AccountRecoveryRequest recoveryRequestWithInvalidStudentIdFormat() {
+        return new AccountRecoveryRequest(INVALID_FORMAT_STUDENT_ID, VALID_PASSWORD);
+    }
+
+    // ==================== Account Recovery Response Fixtures ====================
+
+    /**
+     * 계정 복구 성공 응답 생성
+     */
+    public static AccountRecoveryResponse recoverySuccessResponse() {
+        return AccountRecoveryResponse.of(
+                VALID_ACCESS_TOKEN,
+                VALID_REFRESH_TOKEN,
+                VALID_USER_ID,
+                VALID_STUDENT_ID,
+                VALID_NAME,
+                UserRole.MEMBER,
+                VALID_EXPIRES_IN
+        );
+    }
+
+    // ==================== Recovery Eligibility Response Fixtures ====================
+
+    /**
+     * 복구 가능 응답 생성
+     */
+    public static RecoveryEligibilityResponse recoverableResponse() {
+        Instant deadline = Instant.now().plus(3, ChronoUnit.DAYS);
+        return RecoveryEligibilityResponse.recoverable(deadline);
+    }
+
+    /**
+     * 복구 불가능 응답 생성 (기간 만료)
+     */
+    public static RecoveryEligibilityResponse notRecoverableResponse() {
+        return RecoveryEligibilityResponse.notRecoverable();
+    }
+
+    /**
+     * 탈퇴 상태가 아닌 계정 응답 생성
+     */
+    public static RecoveryEligibilityResponse notWithdrawnResponse() {
+        return RecoveryEligibilityResponse.notWithdrawn();
     }
 }
