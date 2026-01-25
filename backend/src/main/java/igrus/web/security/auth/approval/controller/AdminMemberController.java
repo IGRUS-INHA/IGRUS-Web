@@ -1,5 +1,6 @@
 package igrus.web.security.auth.approval.controller;
 
+import igrus.web.common.config.SwaggerConfig;
 import igrus.web.security.auth.approval.dto.request.BulkApprovalRequest;
 import igrus.web.security.auth.approval.dto.response.AssociateInfoResponse;
 import igrus.web.security.auth.approval.dto.response.BulkApprovalResultResponse;
@@ -32,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin Member Management", description = "관리자 회원 관리 API (ADMIN 전용)")
-@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 public class AdminMemberController {
 
     private final MemberApprovalService memberApprovalService;
