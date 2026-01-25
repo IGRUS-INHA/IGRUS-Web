@@ -8,8 +8,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+/**
+ * SMTP를 통한 실제 이메일 발송 서비스.
+ * 프로덕션 환경에서 사용됩니다.
+ */
 @Slf4j
 @Service
 @Profile("!local & !test")
@@ -55,6 +63,78 @@ public class SmtpEmailService implements EmailService {
 
         sendEmail(message);
         log.info("환영 이메일 발송 완료: to={}", to);
+    }
+
+    @Async("emailTaskExecutor")
+    @Retryable(
+            retryFor = EmailSendFailedException.class,
+            maxAttempts = 4,
+            backoff = @Backoff(
+                    delay = 60000,      // 1분
+                    multiplier = 3,     // 1분 → 3분 → 9분
+                    maxDelay = 900000   // 최대 15분
+            )
+    )
+    @Override
+    public void sendVerificationEmailWithRetry(String to, String code) {
+        log.debug("인증 코드 이메일 발송 시도 (재시도 포함): to={}", to);
+        sendVerificationEmail(to, code);
+    }
+
+    @Async("emailTaskExecutor")
+    @Retryable(
+            retryFor = EmailSendFailedException.class,
+            maxAttempts = 4,
+            backoff = @Backoff(
+                    delay = 60000,
+                    multiplier = 3,
+                    maxDelay = 900000
+            )
+    )
+    @Override
+    public void sendPasswordResetEmailWithRetry(String to, String resetLink) {
+        log.debug("비밀번호 재설정 이메일 발송 시도 (재시도 포함): to={}", to);
+        sendPasswordResetEmail(to, resetLink);
+    }
+
+    @Async("emailTaskExecutor")
+    @Retryable(
+            retryFor = EmailSendFailedException.class,
+            maxAttempts = 4,
+            backoff = @Backoff(
+                    delay = 60000,
+                    multiplier = 3,
+                    maxDelay = 900000
+            )
+    )
+    @Override
+    public void sendWelcomeEmailWithRetry(String to, String name) {
+        log.debug("환영 이메일 발송 시도 (재시도 포함): to={}", to);
+        sendWelcomeEmail(to, name);
+    }
+
+    /**
+     * 인증 코드 이메일 재시도 소진 시 복구 메서드
+     */
+    @Recover
+    public void recoverVerificationEmail(EmailSendFailedException e, String to, String code) {
+        log.error("인증 코드 이메일 발송 최종 실패 (재시도 소진): to={}, code={}", to, code);
+    }
+
+    /**
+     * 비밀번호 재설정 이메일 재시도 소진 시 복구 메서드
+     */
+    @Recover
+    public void recoverPasswordResetEmail(EmailSendFailedException e, String to, String resetLink) {
+        log.error("비밀번호 재설정 이메일 발송 최종 실패 (재시도 소진): to={}, resetLink={}", to, resetLink);
+    }
+
+    /**
+     * 환영 이메일 재시도 소진 시 복구 메서드
+     */
+    @Recover
+    public void recoverWelcomeEmail(EmailSendFailedException e, String to, String name) {
+        log.error("환영 이메일 발송 최종 실패 (재시도 소진): to={}, name={}", to, name);
     }
 
     private void sendEmail(SimpleMailMessage message) {

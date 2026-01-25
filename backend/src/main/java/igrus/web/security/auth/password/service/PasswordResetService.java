@@ -83,9 +83,9 @@ public class PasswordResetService {
         PasswordResetToken resetToken = PasswordResetToken.create(user, token, passwordResetExpiry);
         passwordResetTokenRepository.save(resetToken);
 
-        // 재설정 링크 이메일 발송
+        // 재설정 링크 이메일 발송 (비동기, 재시도 포함)
         String resetLink = frontendUrl + "/reset-password?token=" + token;
-        emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
+        emailService.sendPasswordResetEmailWithRetry(user.getEmail(), resetLink);
 
         log.info("비밀번호 재설정 이메일 발송 완료: userId={}, email={}", user.getId(), user.getEmail());
     }

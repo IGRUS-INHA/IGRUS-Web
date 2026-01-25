@@ -105,8 +105,8 @@ public class PasswordSignupService {
         );
         emailVerificationRepository.save(emailVerification);
 
-        // 이메일 발송
-        emailService.sendVerificationEmail(request.email(), verificationCode);
+        // 이메일 발송 (비동기, 재시도 포함)
+        emailService.sendVerificationEmailWithRetry(request.email(), verificationCode);
 
         log.info("회원가입 완료, 이메일 인증 대기: email={}", request.email());
 
@@ -196,8 +196,8 @@ public class PasswordSignupService {
         );
         emailVerificationRepository.save(emailVerification);
 
-        // 이메일 발송
-        emailService.sendVerificationEmail(request.email(), verificationCode);
+        // 이메일 발송 (비동기, 재시도 포함)
+        emailService.sendVerificationEmailWithRetry(request.email(), verificationCode);
 
         log.info("인증 코드 재발송 완료: email={}", request.email());
 

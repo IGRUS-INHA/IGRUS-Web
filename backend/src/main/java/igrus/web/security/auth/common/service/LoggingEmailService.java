@@ -36,4 +36,28 @@ public class LoggingEmailService implements EmailService {
         log.info("이름: {}", name);
         log.info("============================");
     }
+
+    @Override
+    public void sendVerificationEmailWithRetry(String to, String code) {
+        log.info("===== [로컬] 인증 코드 이메일 (재시도 포함) =====");
+        log.info("수신자: {}", to);
+        log.info("인증 코드: {}", code);
+        log.info("============================================");
+    }
+
+    @Override
+    public void sendPasswordResetEmailWithRetry(String to, String resetLink) {
+        log.info("===== [로컬] 비밀번호 재설정 이메일 (재시도 포함) =====");
+        log.info("수신자: {}", to);
+        log.info("재설정 링크: {}", resetLink);
+        log.info("================================================");
+    }
+
+    @Override
+    public void sendWelcomeEmailWithRetry(String to, String name) {
+        log.info("===== [로컬] 환영 이메일 (재시도 포함) =====");
+        log.info("수신자: {}", to);
+        log.info("이름: {}", name);
+        log.info("========================================");
+    }
 }
