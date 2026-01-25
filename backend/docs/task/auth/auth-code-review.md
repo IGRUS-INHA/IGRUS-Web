@@ -1,7 +1,7 @@
 # 백엔드 인증 로직 코드 리뷰
 
 > 작성일: 2025-01-23
-> 최종 수정일: 2026-01-24
+> 최종 수정일: 2026-01-25
 > 리뷰 범위: `backend/src/main/java/igrus/web/security/**`
 
 ## 목차
@@ -24,10 +24,11 @@
 | 영역 | 주요 파일 |
 |------|----------|
 | JWT | `JwtTokenProvider.java`, `JwtAuthenticationFilter.java`, `jwt/exception/*.java` |
-| Security Config | `ApiSecurityConfig.java`, `PublicResourceSecurityConfig.java`, `SecurityConfigUtil.java` |
+| Security Config | `ApiSecurityConfig.java`, `PublicResourceSecurityConfig.java`, `SecurityConfigUtil.java`, `SecurityPaths.java` |
 | Password Auth | `PasswordAuthService.java`, `PasswordSignupService.java`, `PasswordAuthController.java` |
+| Brute Force 방어 | `LoginAttempt.java`, `LoginAttemptService.java`, `LoginAttemptRepository.java` |
 | 도메인/공통 서비스 | `EmailVerification.java`, `RefreshToken.java`, `PrivacyConsent.java`, `SmtpEmailService.java` 등 |
-| 테스트 | `JwtTokenProviderTest.java`, `PasswordAuthServiceLoginTest.java`, `PasswordSignupServiceTest.java` 등 |
+| 테스트 | `JwtTokenProviderTest.java`, `JwtAuthenticationFilterTest.java`, `PasswordAuthServiceLoginTest.java`, `PasswordSignupServiceTest.java`, `LoginAttemptServiceTest.java` 등 |
 
 ### 1.2 리뷰 관점
 
@@ -74,33 +75,21 @@ configuration.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://
 
 ### 2.2 JWT 표준 클레임 누락
 
-**파일**: `JwtTokenProvider.java` (42-54행)
+**파일**: `JwtTokenProvider.java`
+
+**상태**: ✅ **해결됨** - 2026-01-25
+
+**해결 내용**:
+- `issuer("igrus-api")` 클레임 추가
+- `audience().add("igrus-web").and()` 클레임 추가
+- 토큰 검증 시 `requireIssuer()`, `requireAudience()` 검증 추가
+- `application.yml`에 설정 외부화 (`app.jwt.issuer`, `app.jwt.audience`)
 
 ```java
 return Jwts.builder()
+        .issuer(issuer)
+        .audience().add(audience).and()
         .subject(userId.toString())
-        .claim("studentId", studentId)
-        .claim("role", role)
-        .claim("type", "access")
-        .issuedAt(now)
-        .expiration(expiry)
-        .signWith(secretKey)
-        .compact();
-```
-
-**상태**: ⚠️ **미해결**
-
-**문제점**:
-- JWT 표준 클레임 누락: `iss` (Issuer), `aud` (Audience)
-- 토큰 생성 환경/버전 추적 불가
-- 토큰 용도 검증 불충분
-
-**권고사항**:
-```java
-return Jwts.builder()
-        .subject(userId.toString())
-        .issuer("igrus-api")
-        .audience().add("igrus-web").and()
         .claim("studentId", studentId)
         .claim("role", role)
         .claim("type", "access")
@@ -114,28 +103,15 @@ return Jwts.builder()
 
 ### 2.3 Timing Attack 취약점
 
-**파일**: `PasswordSignupService.java` (136행)
+**파일**: `PasswordSignupService.java`
+
+**상태**: ✅ **해결됨** - 2026-01-25
+
+**해결 내용**:
+- `String.equals()` → `MessageDigest.isEqual()` 변경
+- 상수 시간(constant-time) 비교로 타이밍 공격 방지
 
 ```java
-if (!verification.getCode().equals(request.code())) {
-    verification.incrementAttempts();
-    emailVerificationRepository.save(verification);
-    throw new VerificationCodeInvalidException();
-}
-```
-
-**상태**: ⚠️ **미해결**
-
-**문제점**:
-- `String.equals()`는 첫 번째 불일치 문자에서 즉시 반환
-- 응답 시간 차이로 인증 코드 유추 가능
-- 6자리 코드는 충분히 추측 가능 범위
-
-**권고사항**:
-```java
-import java.security.MessageDigest;
-import java.nio.charset.StandardCharsets;
-
 if (!MessageDigest.isEqual(
     verification.getCode().getBytes(StandardCharsets.UTF_8),
     request.code().getBytes(StandardCharsets.UTF_8))) {
@@ -153,40 +129,29 @@ if (!MessageDigest.isEqual(
 
 **파일**: `PasswordAuthService.java`
 
-**상태**: ⚠️ **미해결**
+**상태**: ✅ **해결됨** - 2026-01-25
 
-**문제점**:
-- 로그인 실패 횟수 제한 없음
-- IP 기반 Rate Limiting 없음
-- 계정 잠금 기능 없음
+**해결 내용**:
+- `LoginAttempt` 엔티티 생성 (DB 기반 로그인 시도 추적)
+- `LoginAttemptService` 구현
+- 5회 실패 시 30분 계정 잠금
+- 로그인 성공 시 시도 횟수 초기화
+- `AccountLockedException` 예외 추가 (HTTP 423)
 
-**권고사항**:
-```java
-// Redis를 사용한 로그인 실패 추적
-@Service
-public class LoginAttemptService {
-    private static final int MAX_ATTEMPTS = 5;
-    private static final long LOCK_TIME_MINUTES = 15;
+**구현 파일**:
+- `LoginAttempt.java` - 엔티티
+- `LoginAttemptRepository.java` - 리포지토리
+- `LoginAttemptService.java` - 서비스
+- `AccountLockedException.java` - 예외
+- `V2__add_login_attempts.sql` - DB 마이그레이션
+- `LoginAttemptServiceTest.java` - 테스트
 
-    private final RedisTemplate<String, Integer> redisTemplate;
-
-    public void recordFailedLogin(String studentId) {
-        String key = "login_attempts:" + studentId;
-        Integer attempts = redisTemplate.opsForValue().get(key);
-
-        if (attempts == null) {
-            redisTemplate.opsForValue().set(key, 1, Duration.ofMinutes(LOCK_TIME_MINUTES));
-        } else {
-            redisTemplate.opsForValue().increment(key);
-        }
-    }
-
-    public boolean isAccountLocked(String studentId) {
-        String key = "login_attempts:" + studentId;
-        Integer attempts = redisTemplate.opsForValue().get(key);
-        return attempts != null && attempts >= MAX_ATTEMPTS;
-    }
-}
+**설정** (`application.yml`):
+```yaml
+app:
+  security:
+    login-attempts-max: 5
+    login-lockout-minutes: 30
 ```
 
 ---
@@ -195,34 +160,18 @@ public class LoginAttemptService {
 
 **파일**: `ApiSecurityConfig.java`, `JwtAuthenticationFilter.java`
 
+**상태**: ✅ **해결됨** - 2026-01-25
+
+**해결 내용**:
+- `SecurityPaths.java` 공통 상수 클래스 생성
+- `ApiSecurityConfig.java`에서 `SecurityPaths.PUBLIC_PATHS` 참조
+- `JwtAuthenticationFilter.java`에서 `SecurityPaths.PUBLIC_PATHS` 참조
+
 ```java
-// ApiSecurityConfig.java (32-40행)
-.requestMatchers(
-    "/api/v1/auth/password/**",
-    "/api/privacy/policy",
-    "/api/inquiries",
-    "/api/inquiries/lookup"
-).permitAll()
-
-// JwtAuthenticationFilter.java (34-39행)
-private static final Set<String> PUBLIC_PATHS = Set.of(
-    "/api/v1/auth/password/**",
-    "/api/privacy/policy",
-    "/api/inquiries",
-    "/api/inquiries/lookup"
-);
-```
-
-**상태**: ⚠️ **미해결**
-
-**문제점**:
-- 동일한 경로를 두 곳에서 관리
-- 변경 시 불일치 발생 위험
-
-**권고사항**:
-```java
-// SecurityPaths.java (공통 상수 클래스)
+// SecurityPaths.java
 public final class SecurityPaths {
+    private SecurityPaths() {}
+
     public static final String[] PUBLIC_PATHS = {
         "/api/v1/auth/password/**",
         "/api/privacy/policy",
@@ -236,17 +185,31 @@ public final class SecurityPaths {
 
 ### 3.3 보안 헤더 설정 누락
 
-**파일**: `ApiSecurityConfig.java`
+**파일**: `ApiSecurityConfig.java`, `SecurityConfigUtil.java`
 
-**상태**: ⚠️ **미해결**
+**상태**: ✅ **해결됨** - 2026-01-25
 
-**권고사항**:
+**해결 내용**:
+- `SecurityConfigUtil.configSecurityHeaders()` 메서드 추가
+- XSS Protection 헤더
+- X-Frame-Options: DENY (클릭재킹 방지)
+- X-Content-Type-Options: nosniff (MIME 스니핑 방지)
+- Content-Security-Policy
+- Referrer-Policy: STRICT_ORIGIN_WHEN_CROSS_ORIGIN
+
 ```java
-http.headers(headers -> headers
-    .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
-    .frameOptions(frame -> frame.deny())
-    .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
-);
+public void configSecurityHeaders(HttpSecurity http) throws Exception {
+    http.headers(headers -> headers
+        .xssProtection(xss -> xss.headerValue(
+            XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+        .frameOptions(frame -> frame.deny())
+        .contentTypeOptions(contentType -> {})
+        .contentSecurityPolicy(csp -> csp.policyDirectives(
+            "default-src 'self'; frame-ancestors 'none'; form-action 'self'"))
+        .referrerPolicy(referrer -> referrer.policy(
+            ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+    );
+}
 ```
 
 ---
@@ -255,17 +218,22 @@ http.headers(headers -> headers
 
 ### 4.1 JwtAuthenticationFilter 테스트 전무
 
-**상태**: ⚠️ **미해결**
+**상태**: ✅ **해결됨** - 2026-01-25
 
-**예상 필요 케이스**:
-```
-- 유효한 토큰으로 인증 성공
-- Authorization 헤더 없음 -> 인증 없이 통과
-- Bearer 접두사 없음 -> 인증 없이 통과
-- 만료된 토큰 -> 로깅 후 통과
-- Refresh Token으로 접근 시도 -> InvalidTokenTypeException
-- 공개 경로 -> shouldNotFilter() 반환 true
-```
+**해결 내용**:
+- `JwtAuthenticationFilterTest.java` 생성
+- 21개 테스트 케이스 구현
+
+**테스트 케이스**:
+- 공개 경로 요청 시 필터 스킵 (6개)
+- 유효한 토큰으로 SecurityContext 설정 성공
+- Authorization 헤더 없음 → 인증 없이 통과
+- Bearer 접두사 없음 → 인증 없이 통과
+- 만료된 토큰 → 로그 후 통과
+- Refresh Token 사용 → InvalidTokenTypeException
+- 역할별 권한 부여 (4개: ASSOCIATE, MEMBER, OPERATOR, ADMIN)
+- 필터 체인 동작 검증 (2개)
+- 토큰 추출 엣지 케이스 (2개)
 
 ---
 
@@ -273,14 +241,18 @@ http.headers(headers -> headers
 
 **파일**: `JwtTokenProvider.java`
 
-**문제점**:
-- `validateAccessTokenAndGetClaims()` 추가로 토큰 파싱 최적화됨
-- 그러나 레거시 메서드들 (`getUserId()`, `getStudentId()`, `getRole()`)이 여전히 존재
-- 다른 코드에서 재파싱 발생 가능
+**상태**: ✅ **해결됨** - 2026-01-25
 
-**권고사항**:
-- 레거시 메서드들을 `@Deprecated`로 표시
-- 점진적으로 제거
+**해결 내용**:
+다음 메서드들에 `@Deprecated(since = "1.0", forRemoval = true)` 추가:
+- `validateToken(String token)`
+- `getUserId(String token)`
+- `getStudentId(String token)`
+- `getRole(String token)`
+- `getTokenType(String token)`
+- `isTokenExpired(String token)`
+
+각 메서드에 대체 메서드를 안내하는 Javadoc 추가됨.
 
 ---
 
@@ -296,6 +268,7 @@ http.headers(headers -> headers
 | 예외 분리 | 만료/무효/타입오류를 각각 다른 예외로 분리 |
 | 비밀키 검증 | 최소 32바이트 검증으로 HMAC-SHA256 요구사항 충족 ✅ |
 | 토큰 파싱 최적화 | `validateAccessTokenAndGetClaims()` 메서드로 재파싱 최소화 ✅ |
+| 표준 클레임 | `iss`, `aud` 클레임 포함 및 검증 ✅ |
 
 ### 5.2 Security Config
 
@@ -305,6 +278,8 @@ http.headers(headers -> headers
 | JWT 필터 위치 | `UsernamePasswordAuthenticationFilter` 앞에 적절히 배치 |
 | 불필요한 인증 비활성화 | Form Login, HTTP Basic 비활성화로 공격 표면 감소 |
 | Config 분리 | API/정적 리소스 별도 SecurityFilterChain ✅ |
+| 경로 중앙 관리 | `SecurityPaths` 클래스로 PUBLIC_PATHS 통합 관리 ✅ |
+| 보안 헤더 | XSS, 클릭재킹, CSP 등 보안 헤더 적용 ✅ |
 
 ### 5.3 Password Auth
 
@@ -316,16 +291,19 @@ http.headers(headers -> headers
 | 비밀번호 최대 길이 | 72자 제한으로 BCrypt 한계 준수 ✅ |
 | SecureRandom | 예측 불가능한 인증 코드 생성 |
 | Rate Limiting | 인증 코드 재발송 5분 제한 ✅ |
+| Brute Force 방어 | 5회 실패 시 30분 계정 잠금 ✅ |
+| Timing Attack 방지 | MessageDigest.isEqual() 사용 ✅ |
 
 ### 5.4 도메인 설계
 
 | 항목 | 설명 |
 |------|------|
 | 정적 팩토리 메서드 | 객체 생성 로직 캡슐화 (`create()`) |
-| 비즈니스 로직 캡슐화 | `isExpired()`, `canAttempt()` 등 도메인 내부 구현 |
+| 비즈니스 로직 캡슐화 | `isExpired()`, `canAttempt()`, `isLocked()` 등 도메인 내부 구현 |
 | Refresh Token 저장 | DB 저장으로 revoke 기능 지원 |
 | 환경별 구현체 분리 | Profile 기반 EmailService 전략 패턴 |
 | 시간 타입 통일 | 모든 엔티티에서 `Instant` 사용 ✅ |
+| Login Attempt 추적 | DB 기반 로그인 시도 추적 ✅ |
 
 ### 5.5 운영 기능
 
@@ -342,30 +320,23 @@ http.headers(headers -> headers
 
 | 파일 | 테스트 유형 | 테스트 수 | 상태 |
 |------|------------|---------|------|
-| `JwtTokenProviderTest.java` | 단위 테스트 | 10개 | ✅ 양호 |
+| `JwtTokenProviderTest.java` | 단위 테스트 | 14개 | ✅ 양호 |
+| `JwtAuthenticationFilterTest.java` | 단위 테스트 | 21개 | ✅ 양호 |
 | `PasswordSignupServiceTest.java` | 서비스 Mock | 20개 | ✅ 양호 |
 | `PasswordAuthServiceLoginTest.java` | 서비스 Mock | 22개 | ✅ 양호 |
 | `PasswordAuthServiceTokenTest.java` | 서비스 Mock | 11개 | ✅ 양호 |
+| `LoginAttemptServiceTest.java` | 서비스 Mock | 5개 | ✅ 양호 |
 | `PrivacyConsentTest.java` | 도메인 단위 | 5개 | ✅ 양호 |
 | `PrivacyConsentServiceTest.java` | 서비스 Mock | 10개 | ✅ 양호 |
 | `PrivacyConsentRepositoryTest.java` | 통합 테스트 | 12개 | ✅ 양호 |
 | `AuthenticatedUserTest.java` | 단위 테스트 | 2개 | ⚠️ 최소한 |
 
-### 6.2 테스트 전무 컴포넌트
-
-#### JwtAuthenticationFilter (예상 10+ 케이스)
-```
-- 유효한 토큰 -> SecurityContext 설정 성공
-- Authorization 헤더 없음 -> 인증 없이 통과
-- Bearer 접두사 없음 -> 인증 없이 통과
-- 만료된 토큰 -> 로깅 후 통과
-- Refresh Token으로 접근 시도 -> InvalidTokenTypeException
-- 공개 경로 -> shouldNotFilter() true
-```
+### 6.2 테스트 보완 필요
 
 #### 도메인 테스트 보완 필요
 - `RefreshToken` 도메인 테스트
 - `EmailVerification` 도메인 테스트
+- `LoginAttempt` 도메인 테스트
 
 ---
 
@@ -374,26 +345,13 @@ http.headers(headers -> headers
 ### 7.1 1단계: 프로덕션 배포 전 필수
 
 - [ ] CORS Origin 제한 (프로덕션용 도메인만 허용)
-- [ ] Timing Attack 완화 (MessageDigest.isEqual 적용)
-- [ ] Brute Force 방어 구현 (Redis 기반 로그인 실패 추적)
 
-### 7.2 2단계: 보안 강화
+### 7.2 2단계: 테스트 보완
 
-- [ ] PUBLIC_PATHS 상수 중앙화
-- [ ] JWT 표준 클레임 추가 (issuer, audience)
-- [ ] 보안 헤더 설정 추가
-
-### 7.3 3단계: 테스트 보완
-
-- [ ] `JwtAuthenticationFilter` 테스트 작성 (10+ 케이스)
-- [ ] `RefreshToken`, `EmailVerification` 도메인 테스트 작성
+- [ ] `RefreshToken`, `EmailVerification`, `LoginAttempt` 도메인 테스트 작성
 - [ ] 통합 테스트 추가 (E2E 인증 플로우)
 
-### 7.4 4단계: 코드 품질
-
-- [ ] 레거시 JWT 메서드 @Deprecated 처리 및 정리
-
-### 7.5 완료된 항목
+### 7.3 완료된 항목
 
 - [x] 인가 규칙 순서 수정 - **2026-01-24 완료**
 - [x] SMTP 발신자 주소 설정 - **2026-01-24 완료**
@@ -407,6 +365,13 @@ http.headers(headers -> headers
 - [x] `PrivacyConsentRepositoryTest`에서 `@Transactional` 제거 - **2026-01-24 완료**
 - [x] `PasswordAuthService` 테스트 작성 (33 케이스) - **2026-01-24 완료**
 - [x] `PasswordSignupService` 테스트 작성 (20 케이스) - **2026-01-24 완료**
+- [x] JWT 표준 클레임 추가 (issuer, audience) - **2026-01-25 완료**
+- [x] Timing Attack 완화 (MessageDigest.isEqual 적용) - **2026-01-25 완료**
+- [x] Brute Force 방어 구현 (DB 기반 로그인 실패 추적) - **2026-01-25 완료**
+- [x] PUBLIC_PATHS 상수 중앙화 - **2026-01-25 완료**
+- [x] 보안 헤더 설정 추가 - **2026-01-25 완료**
+- [x] 레거시 JWT 메서드 @Deprecated 처리 - **2026-01-25 완료**
+- [x] `JwtAuthenticationFilter` 테스트 작성 (21 케이스) - **2026-01-25 완료**
 
 ---
 
@@ -416,25 +381,26 @@ http.headers(headers -> headers
 
 | 영역 | 점수 | 비고 |
 |-----|------|------|
-| JWT 구현 | 8/10 | 비밀키 검증 및 파싱 최적화 완료, 표준 클레임 누락 |
-| Security Config | 6/10 | CORS 수정 필요, Config 분리는 양호 |
-| Password Auth | 7/10 | Brute Force 방어 추가 필요 |
+| JWT 구현 | 9/10 | 표준 클레임 추가, 레거시 메서드 정리 완료 |
+| Security Config | 8/10 | 보안 헤더 추가, 경로 중앙화 완료, CORS만 미해결 |
+| Password Auth | 9/10 | Brute Force 방어, Timing Attack 방지 완료 |
 | 도메인/서비스 | 9/10 | 시간 타입 통일, 배치 스케줄러 완료 |
-| 테스트 커버리지 | 7/10 | 핵심 서비스 테스트 완료, 필터 테스트 부족 |
+| 테스트 커버리지 | 9/10 | 필터 테스트 추가, 도메인 테스트 일부 부족 |
 
 ### 8.2 전체 보안 점수
 
-**6.8 / 10** (이전: 6.4)
+**8.5 / 10** (이전: 6.8)
 
 ### 8.3 OWASP Top 10 매핑
 
 | OWASP 순위 | 취약점 | 현황 | 심각도 |
 |----------|--------|------|--------|
-| A01:2021 - Broken Access Control | PUBLIC_PATHS 이중 관리 | ⚠️ 미해결 | MEDIUM |
+| A01:2021 - Broken Access Control | PUBLIC_PATHS 이중 관리 | ✅ 해결 | - |
 | A02:2021 - Cryptographic Failures | CORS + allowCredentials | ⚠️ 미해결 | **CRITICAL** |
-| A07:2021 - CSRF | JWT 기반 + CSRF 비활성화 | ✅ 해결 | LOW |
-| A07:2021 - Auth Failures | Brute Force 방어 부재 | ⚠️ 미해결 | **HIGH** |
-| A03:2021 - Injection | Timing Attack 취약점 | ⚠️ 미해결 | **HIGH** |
+| A02:2021 - Cryptographic Failures | JWT 표준 클레임 | ✅ 해결 | - |
+| A07:2021 - CSRF | JWT 기반 + CSRF 비활성화 | ✅ 해결 | - |
+| A07:2021 - Auth Failures | Brute Force 방어 | ✅ 해결 | - |
+| A03:2021 - Injection | Timing Attack | ✅ 해결 | - |
 
 ### 8.4 강점
 
@@ -443,23 +409,21 @@ http.headers(headers -> headers
 - 도메인 주도 설계(DDD) 원칙 준수
 - 팩토리 메서드 패턴으로 객체 생성 로직 캡슐화
 - 예외 처리가 체계적으로 구성됨
-- 핵심 서비스 테스트 커버리지 확보
+- 핵심 서비스 및 필터 테스트 커버리지 확보
 - 시간 타입 일관성 확보 (Instant)
+- JWT 표준 클레임(iss, aud) 포함 및 검증
+- Brute Force 방어 메커니즘 구현
+- Timing Attack 방지 (상수 시간 비교)
+- 보안 헤더 적용 (XSS, 클릭재킹, CSP)
 
 ### 8.5 개선 필요
 
-- CORS 설정이 과도하게 허용됨 (CRITICAL)
-- Brute Force 방어 메커니즘 부재 (HIGH)
-- Timing Attack 취약점 (HIGH)
-- JWT 표준 클레임(`iss`, `aud`) 누락
-- JwtAuthenticationFilter 테스트 전무
+- CORS 설정이 과도하게 허용됨 (CRITICAL) - 프로덕션 배포 전 필수 수정
 
 ### 8.6 프로덕션 배포 준비 상태
 
-**불가** - 3개의 CRITICAL/HIGH 이슈 해결 필요:
-1. CORS 설정 개선 (예상: 30분)
-2. Timing Attack 완화 (예상: 20분)
-3. Brute Force 방어 구현 (예상: 2-3시간)
+**조건부 가능** - 1개의 CRITICAL 이슈 해결 필요:
+1. CORS 설정 개선 (환경별 Origin 제한)
 
 ---
 
@@ -470,3 +434,4 @@ http.headers(headers -> headers
 | 2025-01-23 | Claude | 초기 코드 리뷰 작성 |
 | 2026-01-24 | Claude | 이슈 2.2, 2.3, 2.5, 3.4, 3.5, 4.1, 4.2, 4.3, 4.6, 4.7 수정 완료 |
 | 2026-01-24 | Claude | 2차 리뷰: 테스트 커버리지 개선 확인, 미해결 이슈 재평가, 종합 점수 업데이트 |
+| 2026-01-25 | Claude | 3차 리팩토링: 이슈 2.2(JWT 클레임), 2.3(Timing Attack), 3.1(Brute Force), 3.2(PUBLIC_PATHS), 3.3(보안 헤더), 4.1(필터 테스트), 4.2(레거시 메서드) 해결 완료, 보안 점수 8.5/10으로 상향 |

@@ -138,6 +138,23 @@ class PasswordAuthControllerVerificationTest {
 }
 ```
 
+### 4.3 통합 테스트
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordSignupIntegrationTest.java`
+- **테스트 범위**: REG-004, REG-010, REG-020, REG-026, REG-030 ~ REG-045 (서비스 통합 테스트)
+- **테스트 수**: 42개
+
+```java
+@DisplayName("회원가입 통합 테스트")
+class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
+    @Nested class PrivacyConsentTest { /* REG-004 */ }
+    @Nested class RequiredFieldsTest { /* REG-010 */ }
+    @Nested class PasswordValidationTest { /* REG-020, REG-026 */ }
+    @Nested class DuplicationCheckTest { /* REG-030 ~ REG-032 */ }
+    @Nested class EmailVerificationTest { /* REG-040 ~ REG-045 */ }
+    @Nested class EdgeCasesTest { /* Edge Cases */ }
+}
+```
+
 ---
 
 ## 5. 변경 이력
@@ -146,3 +163,4 @@ class PasswordAuthControllerVerificationTest {
 |------|------|--------|----------|
 | 1.0 | 2026-01-23 | - | 최초 작성 |
 | 1.1 | 2026-01-24 | - | 컨트롤러 레벨 테스트 구현 정보 추가 |
+| 1.2 | 2026-01-25 | - | 통합 테스트(PasswordSignupIntegrationTest) 구현 정보 추가 |

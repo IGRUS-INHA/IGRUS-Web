@@ -111,6 +111,22 @@ class PasswordAuthControllerLoginTest {
 }
 ```
 
+### 4.3 통합 테스트
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordLoginIntegrationTest.java`
+- **테스트 범위**: LOG-001 ~ LOG-041 (서비스 통합 테스트)
+- **테스트 수**: 21개
+
+```java
+@DisplayName("로그인 통합 테스트")
+class PasswordLoginIntegrationTest extends ServiceIntegrationTestBase {
+    @Nested class LoginSuccessTest { /* LOG-001 ~ LOG-007 */ }
+    @Nested class LoginFailureTest { /* LOG-010 ~ LOG-014 */ }
+    @Nested class AccountStatusLoginTest { /* LOG-020 ~ LOG-022 */ }
+    @Nested class LogoutTest { /* LOG-030 ~ LOG-032 */ }
+    @Nested class MultiDeviceLoginTest { /* LOG-040 ~ LOG-041 */ }
+}
+```
+
 ---
 
 ## 5. 변경 이력
@@ -119,3 +135,4 @@ class PasswordAuthControllerLoginTest {
 |------|------|--------|----------|
 | 1.0 | 2026-01-23 | - | 최초 작성 |
 | 1.1 | 2026-01-24 | - | 컨트롤러 레벨 테스트 구현 정보 추가 |
+| 1.2 | 2026-01-25 | - | 통합 테스트(PasswordLoginIntegrationTest) 구현 정보 추가 |

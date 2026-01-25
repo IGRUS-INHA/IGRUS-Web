@@ -67,7 +67,11 @@
 
 ## 4. 구현된 테스트 클래스
 
-### 4.1 Controller 테스트
+### 4.1 Service 테스트
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/service/PasswordAuthServiceTokenTest.java`
+- **테스트 범위**: TKN-001 ~ TKN-024 (비즈니스 로직)
+
+### 4.2 Controller 테스트
 - **파일**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerTokenTest.java`
 - **테스트 범위**: TKN-001 ~ TKN-014 (HTTP 레이어)
 
@@ -92,6 +96,21 @@ class PasswordAuthControllerTokenTest {
 }
 ```
 
+### 4.3 통합 테스트
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/integration/TokenRefreshIntegrationTest.java`
+- **테스트 범위**: TKN-001 ~ TKN-032 (서비스 통합 테스트)
+- **테스트 수**: 18개
+
+```java
+@DisplayName("토큰 갱신 통합 테스트")
+class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
+    @Nested class TokenRefreshSuccessTest { /* TKN-001 ~ TKN-004 */ }
+    @Nested class TokenRefreshFailureTest { /* TKN-010 ~ TKN-014 */ }
+    @Nested class AccountStatusTokenTest { /* TKN-020 ~ TKN-024 */ }
+    @Nested class TokenSecurityTest { /* TKN-030 ~ TKN-032 */ }
+}
+```
+
 ---
 
 ## 5. 변경 이력
@@ -100,3 +119,4 @@ class PasswordAuthControllerTokenTest {
 |------|------|--------|----------|
 | 1.0 | 2026-01-23 | - | 최초 작성 |
 | 1.1 | 2026-01-24 | - | 컨트롤러 레벨 테스트 구현 정보 추가 |
+| 1.2 | 2026-01-25 | - | 서비스 테스트 및 통합 테스트(TokenRefreshIntegrationTest) 구현 정보 추가 |

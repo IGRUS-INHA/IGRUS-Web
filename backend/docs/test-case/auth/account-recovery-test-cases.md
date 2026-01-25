@@ -72,7 +72,19 @@
 
 ---
 
-## 4. 예상 테스트 클래스 구조
+## 4. 테스트 클래스 구조
+
+### 4.1 서비스 통합 테스트
+
+**파일**: `src/test/java/igrus/web/security/auth/common/service/AccountRecoveryServiceTest.java`
+
+AccountRecoveryService의 단위 테스트로, 복구 가능 여부 확인, 계정 복구, 재가입 가능 여부 등을 테스트합니다.
+
+### 4.2 계정 복구 통합 테스트
+
+**파일**: `src/test/java/igrus/web/security/auth/common/integration/AccountRecoveryIntegrationTest.java`
+
+PasswordAuthService와 AccountRecoveryService를 함께 테스트하여 로그인 시 복구 프롬프트 로직을 검증합니다.
 
 ```java
 @Nested
@@ -111,6 +123,21 @@ class AccountRecoveryTest {
 }
 ```
 
+### 4.3 컨트롤러 엔드포인트
+
+**컨트롤러**: `PasswordAuthController`
+
+| HTTP Method | 경로 | 설명 |
+|-------------|------|------|
+| GET | `/api/v1/auth/password/account/recovery-check?studentId={studentId}` | 복구 가능 여부 확인 |
+| POST | `/api/v1/auth/password/account/recover` | 계정 복구 |
+
+### 4.4 예외 처리
+
+- `AccountRecoverableException`: 복구 가능한 탈퇴 계정 로그인 시 발생
+- `AccountWithdrawnException`: 복구 불가능한 탈퇴 계정 로그인 시 발생
+- `AccountNotRecoverableException`: 복구 기간 만료 후 복구 시도 시 발생
+
 ---
 
 ## 5. 변경 이력
@@ -118,3 +145,4 @@ class AccountRecoveryTest {
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 1.0 | 2026-01-23 | - | 최초 작성 |
+| 1.1 | 2026-01-25 | - | 컨트롤러 테스트 정보, 예외 처리 정보 추가 |
