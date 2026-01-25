@@ -237,12 +237,12 @@ emailService.sendVerificationCodeWithRetry(email, code);
 
 ## 체크리스트
 
-- [ ] spring-retry 의존성 추가
-- [ ] RetryConfig 생성 (@EnableRetry)
-- [ ] AsyncConfig 생성 (@EnableAsync)
-- [ ] EmailService 인터페이스에 WithRetry 메서드 추가
-- [ ] SmtpEmailService에 @Retryable, @Async 적용
-- [ ] LoggingEmailService 동일하게 수정 (테스트용)
-- [ ] 기존 서비스에서 WithRetry 메서드 호출로 변경
-- [ ] 단위 테스트 작성
-- [ ] 통합 테스트로 재시도 동작 확인
+- [x] spring-retry 의존성 추가 ✅ 2026-01-25
+- [x] RetryConfig 생성 (@EnableRetry) ✅ 2026-01-25
+- [x] AsyncConfig 생성 (@EnableAsync) ✅ 2026-01-25
+- [x] EmailService 인터페이스에 WithRetry 메서드 추가 ✅ 2026-01-25
+- [x] SmtpEmailService에 @Retryable, @Async 적용 ✅ 2026-01-25
+- [x] LoggingEmailService 동일하게 수정 (테스트용) ✅ 2026-01-25
+- [x] 기존 서비스에서 WithRetry 메서드 호출로 변경 ✅ 2026-01-25
+- [x] 단위 테스트 작성 (SmtpEmailServiceRetryTest) ✅ 2026-01-25
+- [ ] 통합 테스트로 재시도 동작 확인 (Spring Retry AOP 통합 테스트는 선택적)

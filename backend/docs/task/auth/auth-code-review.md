@@ -29,8 +29,8 @@
 | Password Auth | `PasswordAuthService.java`, `PasswordSignupService.java`, `PasswordAuthController.java` |
 | Brute Force 방어 | `LoginAttempt.java`, `LoginAttemptService.java`, `LoginAttemptRepository.java` |
 | 계정 상태 검증 | `AccountStatusService.java`, `account/exception/*.java` |
-| 도메인/공통 서비스 | `EmailVerification.java`, `RefreshToken.java`, `PrivacyConsent.java`, `SmtpEmailService.java` 등 |
-| 테스트 | `JwtTokenProviderTest.java`, `JwtAuthenticationFilterTest.java`, `JwtAuthenticationFilterAccountStatusTest.java`, `AccountStatusServiceTest.java`, `PasswordAuthServiceLoginTest.java`, `PasswordSignupServiceTest.java`, `LoginAttemptServiceTest.java` 등 |
+| 도메인/공통 서비스 | `EmailVerification.java`, `RefreshToken.java`, `PrivacyConsent.java`, `SmtpEmailService.java`, `RetryConfig.java`, `AsyncConfig.java` 등 |
+| 테스트 | `JwtTokenProviderTest.java`, `JwtAuthenticationFilterTest.java`, `JwtAuthenticationFilterAccountStatusTest.java`, `AccountStatusServiceTest.java`, `PasswordAuthServiceLoginTest.java`, `PasswordSignupServiceTest.java`, `LoginAttemptServiceTest.java`, `SmtpEmailServiceRetryTest.java` 등 |
 
 ### 1.2 리뷰 관점
 
@@ -314,6 +314,7 @@ public void configSecurityHeaders(HttpSecurity http) throws Exception {
 |------|------|
 | 미인증 사용자 정리 | 24시간 후 자동 삭제 배치 스케줄러 ✅ |
 | SMTP 발신자 설정 | 명시적 from 주소 설정 ✅ |
+| 이메일 재시도 로직 | Spring Retry + Async로 지수 백오프 재시도 (1분 → 3분 → 9분, 최대 4회) ✅ |
 
 ---
 
@@ -321,7 +322,7 @@ public void configSecurityHeaders(HttpSecurity http) throws Exception {
 
 ### 6.1 현재 테스트 현황
 
-**총 테스트 파일: 35개 | 총 테스트 케이스: 550개**
+**총 테스트 파일: 36개 | 총 테스트 케이스: 567개**
 
 #### JWT/Security 테스트
 
@@ -341,6 +342,7 @@ public void configSecurityHeaders(HttpSecurity http) throws Exception {
 | `LoginAttemptServiceTest.java` | 서비스 Mock | 10개 | ✅ 양호 |
 | `AccountStatusServiceTest.java` | 서비스 Mock | 6개 | ✅ 양호 |
 | `PrivacyConsentServiceTest.java` | 서비스 Mock | 10개 | ✅ 양호 |
+| `SmtpEmailServiceRetryTest.java` | 서비스 단위 | 17개 | ✅ 양호 |
 
 #### 도메인 테스트
 
@@ -484,3 +486,4 @@ public void configSecurityHeaders(HttpSecurity http) throws Exception {
 | 2026-01-25 | Claude | 3차 리팩토링: 이슈 2.2(JWT 클레임), 2.3(Timing Attack), 3.1(Brute Force), 3.2(PUBLIC_PATHS), 3.3(보안 헤더), 4.1(필터 테스트), 4.2(레거시 메서드) 해결 완료, 보안 점수 8.5/10으로 상향 |
 | 2026-01-25 | Claude | 4차 리뷰: 도메인 테스트(RefreshToken 11개, EmailVerification 16개), 통합 테스트(8개 파일, 170개+), E2E 테스트(2개 파일, 20개) 완료 확인, 총 537개 테스트 케이스, 보안 점수 8.9/10으로 상향 |
 | 2026-01-25 | Claude | T062 완료: JwtAuthenticationFilter 계정 상태 검증 추가, AccountStatusService 구현 (ACTIVE/SUSPENDED/WITHDRAWN/PENDING_VERIFICATION 상태 검증), 테스트 13개 추가 (AccountStatusServiceTest 6개, JwtAuthenticationFilterAccountStatusTest 7개), 총 550개 테스트 케이스 |
+| 2026-01-25 | Claude | T061 완료: 이메일 재시도 로직 구현 (Spring Retry + Async), RetryConfig/AsyncConfig 생성, EmailService 인터페이스 WithRetry 메서드 추가, SmtpEmailService/LoggingEmailService 수정, SmtpEmailServiceRetryTest 17개 테스트 추가, 총 567개 테스트 케이스 |
