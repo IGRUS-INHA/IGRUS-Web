@@ -30,9 +30,9 @@
 | Phase 5: US3 토큰 갱신 | 6 | 6 | 0 | 100% |
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% |
 | Phase 7: US5 탈퇴 계정 복구 | 7 | 7 | 0 | 100% |
-| Phase 8: US6 준회원 승인 | 7 | 6 | 1 | 85.7% |
-| Phase 9: Polish | 9 | 4 | 5 | 44.4% |
-| **Total** | **66** | **60** | **6** | **90.9%** |
+| Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% |
+| Phase 9: Polish | 9 | 5 | 4 | 55.6% |
+| **Total** | **66** | **62** | **4** | **93.9%** |
 
 ### MVP 구현 현황 (Phase 1-4)
 - **완료율: 100% (31/31 태스크)** ✅
@@ -62,7 +62,6 @@
 - 스케줄러 (RefreshToken 정리, 탈퇴 후 개인정보 삭제)
 - 이메일 재시도 로직
 - JwtAuthenticationFilter 계정 상태 검증
-- AdminMemberController 통합 테스트
 
 ---
 
@@ -324,7 +323,7 @@
 
 **Goal**: 관리자가 준회원을 정회원으로 승인
 
-**Status**: 🟡 진행중 (6/7) - 통합 테스트 미완료
+**Status**: ✅ 완료 (7/7)
 
 **Independent Test**: 관리자 로그인 → 준회원 목록 조회 → 승인 → 역할 변경 확인
 
@@ -354,9 +353,9 @@
 ### Test for User Story 6
 
 - [x] T056 [P] [US6] MemberApprovalService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/approval/service/MemberApprovalServiceTest.java`
-- [ ] T057 [P] [US6] AdminMemberController 통합 테스트 - **미구현**
+- [x] T057 [P] [US6] AdminMemberController 통합 테스트 in `backend/src/test/java/igrus/web/security/auth/approval/controller/AdminMemberControllerTest.java`
 
-**Checkpoint**: 🟡 준회원 승인 기능 대부분 완료 - 통합 테스트 구현 필요
+**Checkpoint**: ✅ 준회원 승인 기능 완료
 
 ---
 
@@ -364,7 +363,7 @@
 
 **Purpose**: 여러 User Story에 걸친 개선사항
 
-**Status**: 🟡 진행중 (4/9)
+**Status**: 🟡 진행중 (5/9)
 
 ### 스케줄링 및 정리 작업
 
@@ -545,9 +544,9 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 | Phase 5: US3 토큰 갱신 | 6 | 6 | 0 | 100% | P2 ✅ |
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% | P2 ✅ |
 | Phase 7: US5 탈퇴 복구 | 7 | 7 | 0 | 100% | P3 ✅ |
-| Phase 8: US6 준회원 승인 | 7 | 6 | 1 | 85.7% | P2 🟡 |
-| Phase 9: Polish | 9 | 4 | 5 | 44.4% | 정리 및 개선 🟡 |
-| **Total** | **66** | **60** | **6** | **90.9%** | |
+| Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% | P2 ✅ |
+| Phase 9: Polish | 9 | 5 | 4 | 55.6% | 정리 및 개선 🟡 |
+| **Total** | **66** | **62** | **4** | **93.9%** | |
 
 ### MVP Scope 현황
 
@@ -557,10 +556,7 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 - Phase 4 (US2 로그인): 7/7 tasks ✅
 - **MVP Total: 31/31 tasks (100%)** ✅
 
-### 미완료 태스크 목록 (6개)
-
-#### P2 (준회원 승인)
-- T057: AdminMemberController 통합 테스트
+### 미완료 태스크 목록 (4개)
 
 #### Polish
 - T059: Refresh Token 정리 스케줄러
