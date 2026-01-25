@@ -2,7 +2,7 @@ package igrus.web.security.auth.password.service;
 
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.RefreshToken;
-import igrus.web.security.auth.common.service.EmailService;
+import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.domain.PasswordResetToken;
 import igrus.web.security.auth.password.exception.InvalidPasswordFormatException;
@@ -38,7 +38,7 @@ class PasswordResetServiceTest extends ServiceIntegrationTestBase {
     private PasswordResetService passwordResetService;
 
     @MockitoBean
-    private EmailService emailService;
+    private AuthEmailService authEmailService;
 
     private static final long PASSWORD_RESET_EXPIRY = 1800000L; // 30분
 
@@ -89,7 +89,7 @@ class PasswordResetServiceTest extends ServiceIntegrationTestBase {
             assertThat(tokens.get(0).isUsed()).isFalse();
 
             // 외부 의존성 상호작용 검증
-            verify(emailService).sendPasswordResetEmail(eq(user.getEmail()), anyString());
+            verify(authEmailService).sendPasswordResetEmail(eq(user.getEmail()), anyString());
         }
 
         @Test
@@ -105,7 +105,7 @@ class PasswordResetServiceTest extends ServiceIntegrationTestBase {
             List<PasswordResetToken> tokens = passwordResetTokenRepository.findAll();
             assertThat(tokens).isEmpty();
 
-            verify(emailService, never()).sendPasswordResetEmail(anyString(), anyString());
+            verify(authEmailService, never()).sendPasswordResetEmail(anyString(), anyString());
         }
 
         @Test
@@ -144,7 +144,7 @@ class PasswordResetServiceTest extends ServiceIntegrationTestBase {
             passwordResetService.requestPasswordReset(studentId);
 
             // then
-            verify(emailService).sendPasswordResetEmail(eq(user.getEmail()), linkCaptor.capture());
+            verify(authEmailService).sendPasswordResetEmail(eq(user.getEmail()), linkCaptor.capture());
 
             String resetLink = linkCaptor.getValue();
             assertThat(resetLink).startsWith("http://localhost:5173/reset-password?token=");

@@ -18,19 +18,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * SmtpEmailService 단위 테스트.
+ * SmtpAuthEmailService 단위 테스트.
  * 재시도 로직은 Spring Retry AOP에 의해 처리되므로,
  * 이 테스트는 기본 이메일 발송 동작을 검증합니다.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("SmtpEmailService 단위 테스트")
-class SmtpEmailServiceRetryTest {
+@DisplayName("SmtpAuthEmailService 단위 테스트")
+class SmtpAuthEmailServiceRetryTest {
 
     @Mock
     private JavaMailSender mailSender;
 
     @InjectMocks
-    private SmtpEmailService smtpEmailService;
+    private SmtpAuthEmailService smtpAuthEmailService;
 
     private static final String TEST_EMAIL = "test@inha.edu";
     private static final String TEST_CODE = "123456";
@@ -46,11 +46,11 @@ class SmtpEmailServiceRetryTest {
         @DisplayName("이메일 발송 성공")
         void sendVerificationEmail_success() {
             // given
-            ReflectionTestUtils.setField(smtpEmailService, "fromAddress", FROM_ADDRESS);
+            ReflectionTestUtils.setField(smtpAuthEmailService, "fromAddress", FROM_ADDRESS);
             doNothing().when(mailSender).send(any(SimpleMailMessage.class));
 
             // when
-            smtpEmailService.sendVerificationEmail(TEST_EMAIL, TEST_CODE);
+            smtpAuthEmailService.sendVerificationEmail(TEST_EMAIL, TEST_CODE);
 
             // then
             verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
@@ -60,12 +60,12 @@ class SmtpEmailServiceRetryTest {
         @DisplayName("이메일 발송 실패 시 EmailSendFailedException 발생")
         void sendVerificationEmail_failure_throwsException() {
             // given
-            ReflectionTestUtils.setField(smtpEmailService, "fromAddress", FROM_ADDRESS);
+            ReflectionTestUtils.setField(smtpAuthEmailService, "fromAddress", FROM_ADDRESS);
             doThrow(new MailException("SMTP 연결 실패") {
             }).when(mailSender).send(any(SimpleMailMessage.class));
 
             // when & then
-            assertThatThrownBy(() -> smtpEmailService.sendVerificationEmail(TEST_EMAIL, TEST_CODE))
+            assertThatThrownBy(() -> smtpAuthEmailService.sendVerificationEmail(TEST_EMAIL, TEST_CODE))
                     .isInstanceOf(EmailSendFailedException.class);
         }
     }
@@ -78,11 +78,11 @@ class SmtpEmailServiceRetryTest {
         @DisplayName("이메일 발송 성공")
         void sendPasswordResetEmail_success() {
             // given
-            ReflectionTestUtils.setField(smtpEmailService, "fromAddress", FROM_ADDRESS);
+            ReflectionTestUtils.setField(smtpAuthEmailService, "fromAddress", FROM_ADDRESS);
             doNothing().when(mailSender).send(any(SimpleMailMessage.class));
 
             // when
-            smtpEmailService.sendPasswordResetEmail(TEST_EMAIL, TEST_RESET_LINK);
+            smtpAuthEmailService.sendPasswordResetEmail(TEST_EMAIL, TEST_RESET_LINK);
 
             // then
             verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
@@ -92,12 +92,12 @@ class SmtpEmailServiceRetryTest {
         @DisplayName("이메일 발송 실패 시 EmailSendFailedException 발생")
         void sendPasswordResetEmail_failure_throwsException() {
             // given
-            ReflectionTestUtils.setField(smtpEmailService, "fromAddress", FROM_ADDRESS);
+            ReflectionTestUtils.setField(smtpAuthEmailService, "fromAddress", FROM_ADDRESS);
             doThrow(new MailException("SMTP 연결 실패") {
             }).when(mailSender).send(any(SimpleMailMessage.class));
 
             // when & then
-            assertThatThrownBy(() -> smtpEmailService.sendPasswordResetEmail(TEST_EMAIL, TEST_RESET_LINK))
+            assertThatThrownBy(() -> smtpAuthEmailService.sendPasswordResetEmail(TEST_EMAIL, TEST_RESET_LINK))
                     .isInstanceOf(EmailSendFailedException.class);
         }
     }
@@ -110,11 +110,11 @@ class SmtpEmailServiceRetryTest {
         @DisplayName("이메일 발송 성공")
         void sendWelcomeEmail_success() {
             // given
-            ReflectionTestUtils.setField(smtpEmailService, "fromAddress", FROM_ADDRESS);
+            ReflectionTestUtils.setField(smtpAuthEmailService, "fromAddress", FROM_ADDRESS);
             doNothing().when(mailSender).send(any(SimpleMailMessage.class));
 
             // when
-            smtpEmailService.sendWelcomeEmail(TEST_EMAIL, TEST_NAME);
+            smtpAuthEmailService.sendWelcomeEmail(TEST_EMAIL, TEST_NAME);
 
             // then
             verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
@@ -124,60 +124,13 @@ class SmtpEmailServiceRetryTest {
         @DisplayName("이메일 발송 실패 시 EmailSendFailedException 발생")
         void sendWelcomeEmail_failure_throwsException() {
             // given
-            ReflectionTestUtils.setField(smtpEmailService, "fromAddress", FROM_ADDRESS);
+            ReflectionTestUtils.setField(smtpAuthEmailService, "fromAddress", FROM_ADDRESS);
             doThrow(new MailException("SMTP 연결 실패") {
             }).when(mailSender).send(any(SimpleMailMessage.class));
 
             // when & then
-            assertThatThrownBy(() -> smtpEmailService.sendWelcomeEmail(TEST_EMAIL, TEST_NAME))
+            assertThatThrownBy(() -> smtpAuthEmailService.sendWelcomeEmail(TEST_EMAIL, TEST_NAME))
                     .isInstanceOf(EmailSendFailedException.class);
-        }
-    }
-
-    @Nested
-    @DisplayName("재시도 포함 메서드 테스트")
-    class WithRetryMethodsTest {
-
-        @Test
-        @DisplayName("sendVerificationEmailWithRetry - 성공 시 내부 메서드 호출")
-        void sendVerificationEmailWithRetry_success_callsInternalMethod() {
-            // given
-            ReflectionTestUtils.setField(smtpEmailService, "fromAddress", FROM_ADDRESS);
-            doNothing().when(mailSender).send(any(SimpleMailMessage.class));
-
-            // when
-            smtpEmailService.sendVerificationEmailWithRetry(TEST_EMAIL, TEST_CODE);
-
-            // then
-            verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
-        }
-
-        @Test
-        @DisplayName("sendPasswordResetEmailWithRetry - 성공 시 내부 메서드 호출")
-        void sendPasswordResetEmailWithRetry_success_callsInternalMethod() {
-            // given
-            ReflectionTestUtils.setField(smtpEmailService, "fromAddress", FROM_ADDRESS);
-            doNothing().when(mailSender).send(any(SimpleMailMessage.class));
-
-            // when
-            smtpEmailService.sendPasswordResetEmailWithRetry(TEST_EMAIL, TEST_RESET_LINK);
-
-            // then
-            verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
-        }
-
-        @Test
-        @DisplayName("sendWelcomeEmailWithRetry - 성공 시 내부 메서드 호출")
-        void sendWelcomeEmailWithRetry_success_callsInternalMethod() {
-            // given
-            ReflectionTestUtils.setField(smtpEmailService, "fromAddress", FROM_ADDRESS);
-            doNothing().when(mailSender).send(any(SimpleMailMessage.class));
-
-            // when
-            smtpEmailService.sendWelcomeEmailWithRetry(TEST_EMAIL, TEST_NAME);
-
-            // then
-            verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
         }
     }
 
@@ -192,7 +145,7 @@ class SmtpEmailServiceRetryTest {
             EmailSendFailedException exception = new EmailSendFailedException();
 
             // when & then (예외 없이 정상 실행)
-            smtpEmailService.recoverVerificationEmail(exception, TEST_EMAIL, TEST_CODE);
+            smtpAuthEmailService.recoverVerificationEmail(exception, TEST_EMAIL, TEST_CODE);
         }
 
         @Test
@@ -202,7 +155,7 @@ class SmtpEmailServiceRetryTest {
             EmailSendFailedException exception = new EmailSendFailedException();
 
             // when & then (예외 없이 정상 실행)
-            smtpEmailService.recoverPasswordResetEmail(exception, TEST_EMAIL, TEST_RESET_LINK);
+            smtpAuthEmailService.recoverPasswordResetEmail(exception, TEST_EMAIL, TEST_RESET_LINK);
         }
 
         @Test
@@ -212,7 +165,7 @@ class SmtpEmailServiceRetryTest {
             EmailSendFailedException exception = new EmailSendFailedException();
 
             // when & then (예외 없이 정상 실행)
-            smtpEmailService.recoverWelcomeEmail(exception, TEST_EMAIL, TEST_NAME);
+            smtpAuthEmailService.recoverWelcomeEmail(exception, TEST_EMAIL, TEST_NAME);
         }
     }
 }

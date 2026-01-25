@@ -12,10 +12,11 @@ import igrus.web.security.auth.common.exception.verification.VerificationAttempt
 import igrus.web.security.auth.common.exception.verification.VerificationCodeExpiredException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeInvalidException;
 import igrus.web.security.auth.common.exception.verification.VerificationResendRateLimitedException;
-import igrus.web.security.auth.common.service.EmailService;
+import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +46,7 @@ class PasswordSignupServiceTest extends ServiceIntegrationTestBase {
     private PasswordSignupService passwordSignupService;
 
     @MockitoBean
-    private EmailService emailService;
+    private AuthEmailService authEmailService;
 
     private static final String VALID_STUDENT_ID = "20231234";
     private static final String VALID_NAME = "홍길동";
@@ -108,7 +109,7 @@ class PasswordSignupServiceTest extends ServiceIntegrationTestBase {
             assertThat(verification).isPresent();
 
             // 외부 의존성만 상호작용 검증
-            verify(emailService).sendVerificationEmail(eq(VALID_EMAIL), anyString());
+            verify(authEmailService).sendVerificationEmail(eq(VALID_EMAIL), anyString());
         }
 
         @Test
@@ -123,7 +124,7 @@ class PasswordSignupServiceTest extends ServiceIntegrationTestBase {
             passwordSignupService.signup(request);
 
             // then
-            verify(emailService).sendVerificationEmail(anyString(), codeCaptor.capture());
+            verify(authEmailService).sendVerificationEmail(anyString(), codeCaptor.capture());
             String code = codeCaptor.getValue();
             assertThat(code).hasSize(6);
             assertThat(code).matches("^\\d{6}$");
@@ -319,7 +320,7 @@ class PasswordSignupServiceTest extends ServiceIntegrationTestBase {
             assertThatThrownBy(() -> passwordSignupService.resendVerification(request))
                     .isInstanceOf(VerificationResendRateLimitedException.class);
 
-            verify(emailService, never()).sendVerificationEmail(anyString(), anyString());
+            verify(authEmailService, never()).sendVerificationEmail(anyString(), anyString());
         }
 
         @Test
@@ -330,18 +331,18 @@ class PasswordSignupServiceTest extends ServiceIntegrationTestBase {
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             // when
-            PasswordSignupResponse response = passwordSignupService.resendVerification(request);
+            VerificationResendResponse response = passwordSignupService.resendVerification(request);
 
             // then
             assertThat(response).isNotNull();
             assertThat(response.email()).isEqualTo(VALID_EMAIL);
-            assertThat(response.requiresVerification()).isTrue();
+            assertThat(response.message()).isEqualTo("인증 코드가 재발송되었습니다.");
 
             // DB에서 새 인증 레코드 확인
             Optional<EmailVerification> verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL);
             assertThat(verification).isPresent();
 
-            verify(emailService).sendVerificationEmail(eq(VALID_EMAIL), anyString());
+            verify(authEmailService).sendVerificationEmail(eq(VALID_EMAIL), anyString());
         }
 
         @Test
@@ -392,7 +393,7 @@ class PasswordSignupServiceTest extends ServiceIntegrationTestBase {
             passwordSignupService.resendVerification(request);
 
             // then
-            verify(emailService).sendVerificationEmail(anyString(), codeCaptor.capture());
+            verify(authEmailService).sendVerificationEmail(anyString(), codeCaptor.capture());
             String code = codeCaptor.getValue();
             assertThat(code).hasSize(6);
             assertThat(code).matches("^\\d{6}$");

@@ -5,7 +5,7 @@ import tools.jackson.databind.json.JsonMapper;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
-import igrus.web.security.auth.common.service.EmailService;
+import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
@@ -82,7 +82,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private EmailService emailService;
+    private AuthEmailService authEmailService;
 
     @BeforeEach
     void setUp() {
@@ -117,7 +117,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.requiresVerification").value(true));
 
             // 이메일 발송 확인
-            verify(emailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
+            verify(authEmailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
 
             // 사용자 상태 확인 (PENDING_VERIFICATION)
             User pendingUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();

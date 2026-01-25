@@ -2,7 +2,7 @@ package igrus.web.security.auth.password.integration;
 
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.RefreshToken;
-import igrus.web.security.auth.common.service.EmailService;
+import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.domain.PasswordResetToken;
 import igrus.web.security.auth.password.exception.InvalidPasswordFormatException;
@@ -50,7 +50,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
     private PasswordResetService passwordResetService;
 
     @MockitoBean
-    private EmailService emailService;
+    private AuthEmailService authEmailService;
 
     private static final long PASSWORD_RESET_EXPIRY = 1800000L; // 30분
     private static final String TEST_STUDENT_ID = "12345678";
@@ -122,7 +122,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
 
             // then
-            verify(emailService).sendPasswordResetEmail(emailCaptor.capture(), linkCaptor.capture());
+            verify(authEmailService).sendPasswordResetEmail(emailCaptor.capture(), linkCaptor.capture());
             assertThat(emailCaptor.getValue()).isEqualTo(TEST_EMAIL);
             assertThat(linkCaptor.getValue()).contains("http://localhost:5173/reset-password?token=");
         }
@@ -137,7 +137,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             passwordResetService.requestPasswordReset(nonExistentStudentId);
 
             // then - 이메일이 발송되지 않음 (보안상 동일한 응답)
-            verify(emailService, never()).sendPasswordResetEmail(anyString(), anyString());
+            verify(authEmailService, never()).sendPasswordResetEmail(anyString(), anyString());
         }
 
         @Test
@@ -153,7 +153,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
 
             // then
-            verify(emailService).sendPasswordResetEmail(eq(TEST_EMAIL), linkCaptor.capture());
+            verify(authEmailService).sendPasswordResetEmail(eq(TEST_EMAIL), linkCaptor.capture());
             String resetLink = linkCaptor.getValue();
             String tokenString = resetLink.substring(resetLink.indexOf("token=") + 6);
 
@@ -181,7 +181,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
 
             // then - 이메일이 두 번 발송됨
-            verify(emailService, times(2)).sendPasswordResetEmail(eq(TEST_EMAIL), anyString());
+            verify(authEmailService, times(2)).sendPasswordResetEmail(eq(TEST_EMAIL), anyString());
         }
     }
 

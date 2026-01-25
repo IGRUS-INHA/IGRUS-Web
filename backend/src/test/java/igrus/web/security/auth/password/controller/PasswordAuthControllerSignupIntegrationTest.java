@@ -80,7 +80,7 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
                     .andExpect(jsonPath("$.requiresVerification").value(true));
 
             // 이메일 발송 확인
-            verify(emailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
+            verify(authEmailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
 
             // DB 상태 확인
             User savedUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();
@@ -129,7 +129,8 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
             // when & then
             performPost("/resend-verification", resendRequest)
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.requiresVerification").value(true));
+                    .andExpect(jsonPath("$.email").value(TEST_EMAIL))
+                    .andExpect(jsonPath("$.message").exists());
 
             // 새 코드가 발급되었는지 확인
             String newCode = getVerificationCode(TEST_EMAIL);
@@ -392,12 +393,14 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
         @DisplayName("[RES-002] 존재하지 않는 이메일로 재발송 시도 - 200 OK (새 인증 코드 생성)")
         void resendVerification_withNonExistentEmail_returns200() throws Exception {
             // given - 현재 구현에서는 존재하지 않는 이메일도 새 인증 코드를 생성합니다
-            ResendVerificationRequest resendRequest = new ResendVerificationRequest("nonexistent@inha.edu");
+            String nonExistentEmail = "nonexistent@inha.edu";
+            ResendVerificationRequest resendRequest = new ResendVerificationRequest(nonExistentEmail);
 
             // when & then - 새 인증 코드가 생성되어 성공 응답
             performPost("/resend-verification", resendRequest)
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.requiresVerification").value(true));
+                    .andExpect(jsonPath("$.email").value(nonExistentEmail))
+                    .andExpect(jsonPath("$.message").exists());
         }
     }
 }

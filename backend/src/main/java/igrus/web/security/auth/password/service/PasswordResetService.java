@@ -1,7 +1,7 @@
 package igrus.web.security.auth.password.service;
 
 import igrus.web.security.auth.common.repository.RefreshTokenRepository;
-import igrus.web.security.auth.common.service.EmailService;
+import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.domain.PasswordResetToken;
 import igrus.web.security.auth.password.exception.InvalidPasswordFormatException;
@@ -35,7 +35,7 @@ public class PasswordResetService {
     private final PasswordCredentialRepository passwordCredentialRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final EmailService emailService;
+    private final AuthEmailService authEmailService;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.mail.password-reset-expiry}")
@@ -85,7 +85,7 @@ public class PasswordResetService {
 
         // 재설정 링크 이메일 발송 (비동기, 재시도 포함)
         String resetLink = frontendUrl + "/reset-password?token=" + token;
-        emailService.sendPasswordResetEmailWithRetry(user.getEmail(), resetLink);
+        authEmailService.sendPasswordResetEmail(user.getEmail(), resetLink);
 
         log.info("비밀번호 재설정 이메일 발송 완료: userId={}, email={}", user.getId(), user.getEmail());
     }

@@ -7,7 +7,7 @@ import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.exception.account.AccountRecoverableException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
-import igrus.web.security.auth.common.service.EmailService;
+import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
@@ -73,7 +73,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private EmailService emailService;
+    private AuthEmailService authEmailService;
 
     private static final long ACCESS_TOKEN_VALIDITY = 3600000L; // 1시간
     private static final long REFRESH_TOKEN_VALIDITY = 604800000L; // 7일
@@ -133,7 +133,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             assertThat(signupResponse.requiresVerification()).isTrue();
 
             // 이메일 발송 확인
-            verify(emailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
+            verify(authEmailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
 
             // 사용자 상태 확인 (PENDING_VERIFICATION)
             User pendingUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();
@@ -324,7 +324,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
             passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
 
-            verify(emailService).sendPasswordResetEmail(eq(TEST_EMAIL), linkCaptor.capture());
+            verify(authEmailService).sendPasswordResetEmail(eq(TEST_EMAIL), linkCaptor.capture());
             String resetLink = linkCaptor.getValue();
             String resetToken = resetLink.substring(resetLink.indexOf("token=") + 6);
 
@@ -360,7 +360,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             // === 비밀번호 재설정 ===
             ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
             passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
-            verify(emailService).sendPasswordResetEmail(eq(TEST_EMAIL), linkCaptor.capture());
+            verify(authEmailService).sendPasswordResetEmail(eq(TEST_EMAIL), linkCaptor.capture());
 
             String resetLink = linkCaptor.getValue();
             String resetToken = resetLink.substring(resetLink.indexOf("token=") + 6);

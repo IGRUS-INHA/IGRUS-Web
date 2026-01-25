@@ -3,7 +3,7 @@ package igrus.web.security.auth.password.controller;
 import tools.jackson.databind.json.JsonMapper;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
-import igrus.web.security.auth.common.service.EmailService;
+import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
@@ -70,7 +70,7 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
     protected JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    protected EmailService emailService;
+    protected AuthEmailService authEmailService;
 
     /**
      * 컨트롤러 테스트를 위한 초기화를 수행합니다.

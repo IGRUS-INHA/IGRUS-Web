@@ -22,48 +22,12 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("!local & !test")
 @RequiredArgsConstructor
-public class SmtpEmailService implements EmailService {
+public class SmtpAuthEmailService implements AuthEmailService {
 
     private final JavaMailSender mailSender;
 
     @Value("${app.mail.from-address}")
     private String fromAddress;
-
-    @Override
-    public void sendVerificationEmail(String to, String code) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(to);
-        message.setSubject("[IGRUS] 이메일 인증 코드");
-        message.setText(buildVerificationEmailContent(code));
-
-        sendEmail(message);
-        log.info("인증 코드 이메일 발송 완료: to={}", to);
-    }
-
-    @Override
-    public void sendPasswordResetEmail(String to, String resetLink) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(to);
-        message.setSubject("[IGRUS] 비밀번호 재설정");
-        message.setText(buildPasswordResetEmailContent(resetLink));
-
-        sendEmail(message);
-        log.info("비밀번호 재설정 이메일 발송 완료: to={}", to);
-    }
-
-    @Override
-    public void sendWelcomeEmail(String to, String name) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(to);
-        message.setSubject("[IGRUS] 가입을 환영합니다");
-        message.setText(buildWelcomeEmailContent(name));
-
-        sendEmail(message);
-        log.info("환영 이메일 발송 완료: to={}", to);
-    }
 
     @Async("emailTaskExecutor")
     @Retryable(
@@ -76,9 +40,17 @@ public class SmtpEmailService implements EmailService {
             )
     )
     @Override
-    public void sendVerificationEmailWithRetry(String to, String code) {
-        log.debug("인증 코드 이메일 발송 시도 (재시도 포함): to={}", to);
-        sendVerificationEmail(to, code);
+    public void sendVerificationEmail(String to, String code) {
+        log.debug("인증 코드 이메일 발송 시도: to={}", to);
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
+        message.setTo(to);
+        message.setSubject("[IGRUS] 이메일 인증 코드");
+        message.setText(buildVerificationEmailContent(code));
+
+        sendEmail(message);
+        log.info("인증 코드 이메일 발송 완료: to={}", to);
     }
 
     @Async("emailTaskExecutor")
@@ -92,9 +64,17 @@ public class SmtpEmailService implements EmailService {
             )
     )
     @Override
-    public void sendPasswordResetEmailWithRetry(String to, String resetLink) {
-        log.debug("비밀번호 재설정 이메일 발송 시도 (재시도 포함): to={}", to);
-        sendPasswordResetEmail(to, resetLink);
+    public void sendPasswordResetEmail(String to, String resetLink) {
+        log.debug("비밀번호 재설정 이메일 발송 시도: to={}", to);
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
+        message.setTo(to);
+        message.setSubject("[IGRUS] 비밀번호 재설정");
+        message.setText(buildPasswordResetEmailContent(resetLink));
+
+        sendEmail(message);
+        log.info("비밀번호 재설정 이메일 발송 완료: to={}", to);
     }
 
     @Async("emailTaskExecutor")
@@ -108,9 +88,17 @@ public class SmtpEmailService implements EmailService {
             )
     )
     @Override
-    public void sendWelcomeEmailWithRetry(String to, String name) {
-        log.debug("환영 이메일 발송 시도 (재시도 포함): to={}", to);
-        sendWelcomeEmail(to, name);
+    public void sendWelcomeEmail(String to, String name) {
+        log.debug("환영 이메일 발송 시도: to={}", to);
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
+        message.setTo(to);
+        message.setSubject("[IGRUS] 가입을 환영합니다");
+        message.setText(buildWelcomeEmailContent(name));
+
+        sendEmail(message);
+        log.info("환영 이메일 발송 완료: to={}", to);
     }
 
     /**

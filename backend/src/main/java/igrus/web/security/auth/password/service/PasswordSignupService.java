@@ -6,7 +6,7 @@ import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.security.auth.common.repository.PrivacyConsentRepository;
-import igrus.web.security.auth.common.service.EmailService;
+import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.common.service.EmailVerificationAttemptService;
 import igrus.web.security.auth.common.exception.verification.VerificationAttemptsExceededException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeExpiredException;
@@ -14,6 +14,7 @@ import igrus.web.security.auth.common.exception.verification.VerificationCodeInv
 import igrus.web.security.auth.common.exception.verification.VerificationResendRateLimitedException;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
@@ -44,7 +45,7 @@ public class PasswordSignupService {
     private final EmailVerificationRepository emailVerificationRepository;
     private final PrivacyConsentRepository privacyConsentRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService;
+    private final AuthEmailService authEmailService;
     private final EmailVerificationAttemptService emailVerificationAttemptService;
 
     @Value("${app.mail.verification-code-expiry}")
@@ -106,7 +107,7 @@ public class PasswordSignupService {
         emailVerificationRepository.save(emailVerification);
 
         // 이메일 발송 (비동기, 재시도 포함)
-        emailService.sendVerificationEmailWithRetry(request.email(), verificationCode);
+        authEmailService.sendVerificationEmail(request.email(), verificationCode);
 
         log.info("회원가입 완료, 이메일 인증 대기: email={}", request.email());
 
@@ -172,7 +173,7 @@ public class PasswordSignupService {
      * @return 재발송 완료 응답
      * @throws VerificationResendRateLimitedException 5분 내 재발송 요청 시
      */
-    public PasswordSignupResponse resendVerification(ResendVerificationRequest request) {
+    public VerificationResendResponse resendVerification(ResendVerificationRequest request) {
         log.info("인증 코드 재발송 요청: email={}", request.email());
 
         // Rate Limiting 체크: 5분 내 재발송 기록 확인
@@ -197,11 +198,11 @@ public class PasswordSignupService {
         emailVerificationRepository.save(emailVerification);
 
         // 이메일 발송 (비동기, 재시도 포함)
-        emailService.sendVerificationEmailWithRetry(request.email(), verificationCode);
+        authEmailService.sendVerificationEmail(request.email(), verificationCode);
 
         log.info("인증 코드 재발송 완료: email={}", request.email());
 
-        return PasswordSignupResponse.pendingVerification(request.email());
+        return VerificationResendResponse.success(request.email());
     }
 
     /**

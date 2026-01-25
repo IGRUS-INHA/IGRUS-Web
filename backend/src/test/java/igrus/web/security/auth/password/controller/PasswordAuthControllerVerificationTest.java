@@ -12,6 +12,7 @@ import igrus.web.security.auth.common.exception.verification.VerificationResendR
 import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordResetService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
@@ -267,7 +268,7 @@ class PasswordAuthControllerVerificationTest {
         void resendVerification_Success_Returns200() throws Exception {
             // given
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
-            PasswordSignupResponse response = PasswordSignupResponse.pendingVerification(VALID_EMAIL);
+            VerificationResendResponse response = VerificationResendResponse.success(VALID_EMAIL);
 
             given(passwordSignupService.resendVerification(any(ResendVerificationRequest.class)))
                     .willReturn(response);
@@ -279,7 +280,7 @@ class PasswordAuthControllerVerificationTest {
                             )
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.email").value(VALID_EMAIL))
-                    .andExpect(jsonPath("$.requiresVerification").value(true));
+                    .andExpect(jsonPath("$.message").value("인증 코드가 재발송되었습니다."));
         }
 
         @Test
