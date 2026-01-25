@@ -1,5 +1,6 @@
 package igrus.web.common.exception;
 
+import igrus.web.security.auth.common.exception.account.AccountRecoverableException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,22 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 복구 가능한 탈퇴 계정 예외 처리.
+     * 클라이언트가 복구 플로우로 이동할 수 있도록 추가 정보를 포함합니다.
+     */
+    @ExceptionHandler(AccountRecoverableException.class)
+    public ResponseEntity<AccountRecoverableErrorResponse> handleAccountRecoverableException(AccountRecoverableException e) {
+        log.info("AccountRecoverableException: studentId={}, recoveryDeadline={}", e.getStudentId(), e.getRecoveryDeadline());
+        ErrorCode errorCode = e.getErrorCode();
+        AccountRecoverableErrorResponse response = AccountRecoverableErrorResponse.of(
+                errorCode,
+                e.getStudentId(),
+                e.getRecoveryDeadline()
+        );
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
 
     @ExceptionHandler(CustomBaseException.class)
     public ResponseEntity<ErrorResponse> handleCustomBaseException(CustomBaseException e) {
