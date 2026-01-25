@@ -15,6 +15,10 @@ spring:
   flyway:
     enabled: false
 
+springdoc:
+  server-url: localhost:8080
+  
+
 app:
   jwt:
     secret: test-secret-key-for-testing-purposes-only-must-be-at-least-256-bits

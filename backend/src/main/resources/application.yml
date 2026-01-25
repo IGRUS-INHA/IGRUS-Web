@@ -5,6 +5,9 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+springdoc:
+  server-url: ${SWAGGER_SERVER_URL:http://localhost:8080}
+
 app:
   jwt:
     access-token-validity: 3600000      # 1시간

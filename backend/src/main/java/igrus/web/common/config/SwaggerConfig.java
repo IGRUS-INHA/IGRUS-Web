@@ -4,17 +4,29 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
 
     public static final String SECURITY_SCHEME_NAME = "Bearer Authentication";
 
+    @Value("${springdoc.server-url}")
+    private String serverUrl;
+
     @Bean
     public OpenAPI openAPI() {
+        Server server = new Server()
+                .url(serverUrl)
+                .description("API Server");
+
         return new OpenAPI()
+                .servers(List.of(server))
                 .info(apiInfo())
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME, securityScheme()));
@@ -24,7 +36,7 @@ public class SwaggerConfig {
         return new Info()
                 .title("IGRUS Web API")
                 .description("""
-                        인하대학교 IGRUS 동아리 웹사이트 API
+                        인하대학교 정보통신처 소속 컴퓨터 연구 동아리 IGRUS 웹사이트 API
 
                         ## 인증 방식
 
