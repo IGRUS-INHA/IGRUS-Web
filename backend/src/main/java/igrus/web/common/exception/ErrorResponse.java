@@ -1,11 +1,20 @@
 package igrus.web.common.exception;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
+@Schema(description = "에러 응답")
 public record ErrorResponse(
+        @Schema(description = "HTTP 상태 코드", example = "400")
         int status,
+
+        @Schema(description = "에러 코드", example = "AUTH_001")
         String code,
+
+        @Schema(description = "에러 메시지", example = "잘못된 요청입니다.")
         String message,
+
+        @Schema(description = "에러 발생 시각", example = "2024-01-15T10:30:00Z")
         Instant timestamp
 ) {
 

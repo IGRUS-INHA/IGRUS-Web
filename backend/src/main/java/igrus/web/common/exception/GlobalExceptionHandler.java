@@ -1,10 +1,13 @@
 package igrus.web.common.exception;
 
+import igrus.web.security.auth.common.exception.account.AccountRecoverableException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -17,6 +20,22 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 복구 가능한 탈퇴 계정 예외 처리.
+     * 클라이언트가 복구 플로우로 이동할 수 있도록 추가 정보를 포함합니다.
+     */
+    @ExceptionHandler(AccountRecoverableException.class)
+    public ResponseEntity<AccountRecoverableErrorResponse> handleAccountRecoverableException(AccountRecoverableException e) {
+        log.info("AccountRecoverableException: studentId={}, recoveryDeadline={}", e.getStudentId(), e.getRecoveryDeadline());
+        ErrorCode errorCode = e.getErrorCode();
+        AccountRecoverableErrorResponse response = AccountRecoverableErrorResponse.of(
+                errorCode,
+                e.getStudentId(),
+                e.getRecoveryDeadline()
+        );
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
 
     @ExceptionHandler(CustomBaseException.class)
     public ResponseEntity<ErrorResponse> handleCustomBaseException(CustomBaseException e) {
@@ -73,6 +92,20 @@ public class GlobalExceptionHandler {
         String message = "필수 파라미터 누락: " + e.getParameterName();
         ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
+        log.warn("AccessDeniedException: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.of(ErrorCode.ACCESS_DENIED);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
+        log.warn("AuthorizationDeniedException: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.of(ErrorCode.ACCESS_DENIED);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     @ExceptionHandler(Exception.class)
