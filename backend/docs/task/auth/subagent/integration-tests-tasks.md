@@ -121,11 +121,42 @@ class PasswordAuthControllerSignupIntegrationTest {
 
 ## 완료 조건
 
-- [ ] 회원가입 통합 테스트 (10+ 케이스) 작성 및 통과
-- [ ] 로그인 통합 테스트 (8+ 케이스) 작성 및 통과
-- [ ] 토큰 갱신 통합 테스트 (5+ 케이스) 작성 및 통과
-- [ ] E2E 테스트 작성 및 통과
-- [ ] `./gradlew test` 전체 테스트 통과
+- [x] 회원가입 통합 테스트 (10+ 케이스) 작성 및 통과 ✅ (18개 테스트 케이스)
+- [x] 로그인 통합 테스트 (8+ 케이스) 작성 및 통과 ✅ (17개 테스트 케이스)
+- [x] 토큰 갱신 통합 테스트 (5+ 케이스) 작성 및 통과 ✅ (11개 테스트 케이스)
+- [x] E2E 테스트 작성 및 통과 ✅ (10개 테스트 케이스)
+- [ ] `./gradlew test` 전체 테스트 통과 (기존 테스트들의 실패 존재)
+
+## 구현 결과
+
+### 생성된 파일
+
+| 파일 | 설명 | 테스트 케이스 수 |
+|------|------|----------------|
+| `ControllerIntegrationTestBase.java` | 컨트롤러 통합 테스트 베이스 클래스 | - |
+| `PasswordAuthControllerSignupIntegrationTest.java` | 회원가입 HTTP 통합 테스트 | 18개 |
+| `PasswordAuthControllerLoginIntegrationTest.java` | 로그인 HTTP 통합 테스트 | 17개 |
+| `PasswordAuthControllerTokenIntegrationTest.java` | 토큰 갱신 HTTP 통합 테스트 | 11개 |
+| `AuthFlowE2ETest.java` | 인증 플로우 E2E 테스트 | 10개 |
+
+### 테스트 실행 방법
+
+```bash
+# 새로 구현한 통합 테스트만 실행
+./gradlew test --tests "*.PasswordAuthController*IntegrationTest" --tests "*.AuthFlowE2ETest"
+
+# 개별 테스트 실행
+./gradlew test --tests "*.PasswordAuthControllerSignupIntegrationTest"
+./gradlew test --tests "*.PasswordAuthControllerLoginIntegrationTest"
+./gradlew test --tests "*.PasswordAuthControllerTokenIntegrationTest"
+./gradlew test --tests "*.AuthFlowE2ETest"
+```
+
+### 추가 수정 사항 (프로덕션 코드)
+
+테스트 중 발견된 누락된 클래스 추가:
+- `BulkApprovalResultResponse.java` - 일괄 승인 결과 응답 DTO
+- `AdminMemberController.java` - @Override 어노테이션 정리
 
 ## 주의사항
 
