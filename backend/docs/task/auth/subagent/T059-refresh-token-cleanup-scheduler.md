@@ -89,8 +89,28 @@ int deleteByExpiresAtBefore(@Param("now") Instant now);
 
 ## 체크리스트
 
-- [ ] RefreshTokenCleanupService 생성
-- [ ] RefreshTokenCleanupScheduler 생성
-- [ ] RefreshTokenRepository에 deleteByExpiresAtBefore 메서드 추가
-- [ ] 단위 테스트 작성
+- [x] RefreshTokenCleanupService 생성
+- [x] RefreshTokenCleanupScheduler 생성
+- [x] RefreshTokenRepository에 deleteByExpiresAtBefore 메서드 추가 (수정: Instant 타입, int 반환)
+- [x] 단위 테스트 작성 (5개 케이스)
 - [ ] 로컬 환경에서 스케줄러 동작 확인
+
+## 구현 완료 (2026-01-25)
+
+### 변경 사항
+
+1. **RefreshTokenRepository** - `deleteByExpiresAtBefore` 메서드 수정
+   - 기존: `void deleteByExpiresAtBefore(LocalDateTime dateTime)`
+   - 변경: `int deleteByExpiresAtBefore(Instant now)` - 엔티티의 `expiresAt` 필드 타입(Instant)에 맞게 수정, 삭제된 개수 반환
+
+2. **RefreshTokenCleanupService** 생성
+   - 경로: `backend/src/main/java/igrus/web/security/auth/common/service/RefreshTokenCleanupService.java`
+   - `deleteExpiredTokens()` 메서드로 만료된 토큰 삭제
+
+3. **RefreshTokenCleanupScheduler** 생성
+   - 경로: `backend/src/main/java/igrus/web/security/auth/common/scheduler/RefreshTokenCleanupScheduler.java`
+   - 매일 새벽 4시 실행 (cron: `0 0 4 * * *`)
+
+4. **단위 테스트** 작성
+   - 경로: `backend/src/test/java/igrus/web/security/auth/common/service/RefreshTokenCleanupServiceTest.java`
+   - 5개 테스트 케이스 모두 통과

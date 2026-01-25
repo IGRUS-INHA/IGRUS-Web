@@ -31,8 +31,8 @@
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% |
 | Phase 7: US5 탈퇴 계정 복구 | 7 | 7 | 0 | 100% |
 | Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% |
-| Phase 9: Polish | 9 | 6 | 3 | 66.7% |
-| **Total** | **66** | **63** | **3** | **95.5%** |
+| Phase 9: Polish | 9 | 7 | 2 | 77.8% |
+| **Total** | **66** | **64** | **2** | **97.0%** |
 
 ### MVP 구현 현황 (Phase 1-4)
 - **완료율: 100% (31/31 태스크)** ✅
@@ -59,7 +59,7 @@
 - ✅ 인증 관련 DTO, Exception, ErrorCode
 
 ### 미완료
-- 스케줄러 (RefreshToken 정리, 탈퇴 후 개인정보 삭제)
+- 스케줄러 (탈퇴 후 개인정보 삭제)
 - 이메일 재시도 로직
 
 ---
@@ -362,14 +362,19 @@
 
 **Purpose**: 여러 User Story에 걸친 개선사항
 
-**Status**: 🟡 진행중 (6/9)
+**Status**: 🟡 진행중 (7/9)
 
 ### 스케줄링 및 정리 작업
 
 - [x] T058 인증 미완료 임시 데이터 24시간 후 삭제 스케줄러 in `backend/src/main/java/igrus/web/security/auth/common/scheduler/UnverifiedUserCleanupScheduler.java`
   - ✅ 매일 새벽 3시 실행
   - ✅ 24시간 경과한 미인증 EmailVerification 및 관련 사용자 데이터 삭제
-- [ ] T059 만료된 Refresh Token 정리 스케줄러 - **미구현**
+- [x] T059 만료된 Refresh Token 정리 스케줄러 in `backend/src/main/java/igrus/web/security/auth/common/scheduler/RefreshTokenCleanupScheduler.java`
+  - ✅ 매일 새벽 4시 실행
+  - ✅ 만료된 Refresh Token 자동 삭제
+  - ✅ RefreshTokenCleanupService (`backend/src/main/java/igrus/web/security/auth/common/service/RefreshTokenCleanupService.java`)
+  - ✅ RefreshTokenRepository.deleteByExpiresAtBefore 메서드 추가
+  - ✅ 단위 테스트 5개 케이스 (`RefreshTokenCleanupServiceTest.java`)
 - [ ] T060 탈퇴 후 5일 경과 개인정보 영구 삭제 스케줄러 - **미구현**
 
 ### 이메일 재시도 로직
@@ -546,8 +551,8 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% | P2 ✅ |
 | Phase 7: US5 탈퇴 복구 | 7 | 7 | 0 | 100% | P3 ✅ |
 | Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% | P2 ✅ |
-| Phase 9: Polish | 9 | 6 | 3 | 66.7% | 정리 및 개선 🟡 |
-| **Total** | **66** | **63** | **3** | **95.5%** | |
+| Phase 9: Polish | 9 | 7 | 2 | 77.8% | 정리 및 개선 🟡 |
+| **Total** | **66** | **64** | **2** | **97.0%** | |
 
 ### MVP Scope 현황
 
@@ -557,10 +562,9 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 - Phase 4 (US2 로그인): 7/7 tasks ✅
 - **MVP Total: 31/31 tasks (100%)** ✅
 
-### 미완료 태스크 목록 (3개)
+### 미완료 태스크 목록 (2개)
 
 #### Polish
-- T059: Refresh Token 정리 스케줄러
 - T060: 탈퇴 후 개인정보 삭제 스케줄러
 - T061: 이메일 재시도 로직
 
