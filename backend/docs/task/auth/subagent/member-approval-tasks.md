@@ -13,8 +13,14 @@
 - ✅ `MemberApprovalService`: `backend/src/main/java/igrus/web/security/auth/approval/service/MemberApprovalService.java`
   - `getPendingAssociates()` - 승인 대기 준회원 목록 조회
   - `approveAssociate(Long userId, String reason)` - 개별 승인
-  - `bulkApproveAssociates(List<Long> userIds, String reason)` - 일괄 승인
+  - `approveBulk(List<Long> userIds, Long adminId)` - 일괄 승인
 - ✅ `AssociateInfoResponse` DTO: `backend/src/main/java/igrus/web/security/auth/approval/dto/response/AssociateInfoResponse.java`
+- ✅ `MemberApprovalRequest` DTO: `backend/src/main/java/igrus/web/security/auth/approval/dto/request/MemberApprovalRequest.java`
+- ✅ `BulkApprovalRequest` DTO: `backend/src/main/java/igrus/web/security/auth/approval/dto/request/BulkApprovalRequest.java`
+- ✅ `BulkApprovalResultResponse` DTO: `backend/src/main/java/igrus/web/security/auth/approval/dto/response/BulkApprovalResultResponse.java`
+- ✅ `AdminMemberController`: `backend/src/main/java/igrus/web/security/auth/approval/controller/AdminMemberController.java` (Swagger 문서 포함)
+- ✅ `MemberApprovalServiceTest`: `backend/src/test/java/igrus/web/security/auth/approval/service/MemberApprovalServiceTest.java`
+- ✅ `AdminMemberControllerTest`: `backend/src/test/java/igrus/web/security/auth/approval/controller/AdminMemberControllerTest.java`
 
 ## 구현할 태스크
 
@@ -123,12 +129,13 @@ public interface AdminMemberControllerApi {
 
 ## 완료 조건
 
-- [ ] MemberApprovalRequest DTO 생성
-- [ ] BulkApprovalRequest DTO 생성
-- [ ] AdminMemberController 생성
-- [ ] AdminMemberControllerApi 인터페이스 생성 (Swagger)
-- [ ] 통합 테스트 작성 및 통과
-- [ ] `./gradlew test` 전체 테스트 통과
+- [x] MemberApprovalRequest DTO 생성 (`backend/src/main/java/igrus/web/security/auth/approval/dto/request/MemberApprovalRequest.java`)
+- [x] BulkApprovalRequest DTO 생성 (`backend/src/main/java/igrus/web/security/auth/approval/dto/request/BulkApprovalRequest.java`)
+- [x] BulkApprovalResultResponse DTO 생성 (`backend/src/main/java/igrus/web/security/auth/approval/dto/response/BulkApprovalResultResponse.java`)
+- [x] AdminMemberController 생성 (`backend/src/main/java/igrus/web/security/auth/approval/controller/AdminMemberController.java`)
+- [x] Swagger 문서화 (컨트롤러에 직접 어노테이션 포함 - dev 브랜치 패턴 적용)
+- [x] 통합 테스트 작성 및 통과 (`backend/src/test/java/igrus/web/security/auth/approval/controller/AdminMemberControllerTest.java`)
+- [ ] `./gradlew test` 전체 테스트 통과 (기존 WebMvcTest 관련 실패 존재)
 
 ## 주의사항
 
