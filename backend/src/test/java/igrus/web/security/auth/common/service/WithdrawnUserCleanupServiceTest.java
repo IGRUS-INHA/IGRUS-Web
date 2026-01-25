@@ -35,24 +35,26 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
     }
 
     private User createAndSaveWithdrawnUser(Instant deletedAt) {
-        User user = User.create(
-                TEST_STUDENT_ID,
-                "홍길동",
-                TEST_EMAIL,
-                "010-1234-5678",
-                "컴퓨터공학과",
-                "테스트 동기"
-        );
-        user.changeRole(UserRole.MEMBER);
-        User savedUser = userRepository.save(user);
+        return transactionTemplate.execute(status -> {
+            User user = User.create(
+                    TEST_STUDENT_ID,
+                    "홍길동",
+                    TEST_EMAIL,
+                    "010-1234-5678",
+                    "컴퓨터공학과",
+                    "테스트 동기"
+            );
+            user.changeRole(UserRole.MEMBER);
+            User savedUser = userRepository.save(user);
 
-        // Withdraw the user
-        savedUser.withdraw();
-        setField(savedUser, "deleted", true);
-        setField(savedUser, "deletedAt", deletedAt);
-        setField(savedUser, "deletedBy", savedUser.getId());
+            // Withdraw the user
+            savedUser.withdraw();
+            setField(savedUser, "deleted", true);
+            setField(savedUser, "deletedAt", deletedAt);
+            setField(savedUser, "deletedBy", savedUser.getId());
 
-        return userRepository.save(savedUser);
+            return userRepository.save(savedUser);
+        });
     }
 
     private PasswordCredential createAndSavePasswordCredential(User user) {
@@ -144,10 +146,14 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(6));
             User user = createAndSaveWithdrawnUser(deletedAt);
+            Long userId = user.getId();
 
-            // 이미 익명화 처리
-            user.anonymize("test1234");
-            userRepository.save(user);
+            // 이미 익명화 처리 - 트랜잭션 내에서 수행
+            transactionTemplate.execute(status -> {
+                User reloadedUser = userRepository.findByIdIncludingDeleted(userId).orElseThrow();
+                reloadedUser.anonymize("test1234");
+                return null;
+            });
 
             // when
             int processedCount = withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();

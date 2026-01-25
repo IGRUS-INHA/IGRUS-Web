@@ -36,7 +36,7 @@ public class User extends SoftDeletableEntity {
     private Long id;
 
     // 학번
-    @Column(name = "users_student_id", unique = true, nullable = false, length = 8)
+    @Column(name = "users_student_id", unique = true, nullable = false, length = 20)
     private String studentId;
 
     // 본명
@@ -47,16 +47,16 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_email", unique = true, nullable = false)
     private String email;
 
-    // 전화번호
-    @Column(name = "users_phone_number", unique = true, nullable = false, length = 20)
+    // 전화번호 (익명화 시 null 가능)
+    @Column(name = "users_phone_number", unique = true, length = 20)
     private String phoneNumber;
 
-    // 학과
-    @Column(name = "users_department", nullable = false, length = 50)
+    // 학과 (익명화 시 null 가능)
+    @Column(name = "users_department", length = 50)
     private String department;
 
-    // 가입 동기
-    @Column(name = "users_motivation", nullable = false, columnDefinition = "TEXT")
+    // 가입 동기 (익명화 시 null 가능)
+    @Column(name = "users_motivation", columnDefinition = "TEXT")
     private String motivation;
 
     // 역할
