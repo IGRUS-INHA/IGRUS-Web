@@ -48,7 +48,7 @@ public class RefreshToken extends BaseEntity {
     /**
      * 리프레시 토큰 문자열.
      */
-    @Column(name = "refresh_tokens_token", nullable = false, unique = true, length = 512)
+    @Column(name = "refresh_tokens_token", nullable = false, unique = true, length = 2048)
     private String token;
 
     /**
