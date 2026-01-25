@@ -38,3 +38,5 @@ out/
 
 ### 추가 ###
 .env
+
+.claude/settings.local.json
