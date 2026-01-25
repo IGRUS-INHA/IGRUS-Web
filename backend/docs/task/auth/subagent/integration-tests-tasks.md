@@ -121,11 +121,11 @@ class PasswordAuthControllerSignupIntegrationTest {
 
 ## 완료 조건
 
-- [ ] 회원가입 통합 테스트 (10+ 케이스) 작성 및 통과
-- [ ] 로그인 통합 테스트 (8+ 케이스) 작성 및 통과
-- [ ] 토큰 갱신 통합 테스트 (5+ 케이스) 작성 및 통과
-- [ ] E2E 테스트 작성 및 통과
-- [ ] `./gradlew test` 전체 테스트 통과
+- [x] 회원가입 통합 테스트 (10+ 케이스) 작성 및 통과 → `PasswordSignupIntegrationTest.java`
+- [x] 로그인 통합 테스트 (8+ 케이스) 작성 및 통과 → `PasswordLoginIntegrationTest.java`
+- [x] 토큰 갱신 통합 테스트 (5+ 케이스) 작성 및 통과 → `TokenRefreshIntegrationTest.java`
+- [x] E2E 테스트 작성 및 통과 → `AuthenticationE2ETest.java`
+- [x] `./gradlew test` 전체 테스트 통과
 
 ## 주의사항
 

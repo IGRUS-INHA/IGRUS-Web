@@ -123,12 +123,12 @@ public interface AdminMemberControllerApi {
 
 ## 완료 조건
 
-- [ ] MemberApprovalRequest DTO 생성
-- [ ] BulkApprovalRequest DTO 생성
-- [ ] AdminMemberController 생성
-- [ ] AdminMemberControllerApi 인터페이스 생성 (Swagger)
+- [x] MemberApprovalRequest DTO 생성
+- [x] BulkApprovalRequest DTO 생성
+- [x] AdminMemberController 생성
+- [x] Swagger 문서화 (컨트롤러에 직접 어노테이션 추가, 인터페이스 분리 방식에서 변경됨)
 - [ ] 통합 테스트 작성 및 통과
-- [ ] `./gradlew test` 전체 테스트 통과
+- [x] `./gradlew test` 전체 테스트 통과
 
 ## 주의사항
 

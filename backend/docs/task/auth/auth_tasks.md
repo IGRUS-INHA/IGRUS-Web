@@ -19,24 +19,23 @@
 - 원본: `backend/src/main/java/igrus/web/auth/`
 - 실제: `backend/src/main/java/igrus/web/security/auth/`
 
-## 구현 현황 요약 (2026-01-24 기준)
+## 구현 현황 요약 (2026-01-25 기준)
 
 | Phase | 총 태스크 | 완료 | 미완료 | 완료율 |
 |-------|----------|------|--------|--------|
 | Phase 1: Setup | 5 | 5 | 0 | 100% |
 | Phase 2: Foundational | 11 | 11 | 0 | 100% |
-| Phase 3: US1 회원가입 | 8 | 7 | 1 | 87.5% |
-| Phase 4: US2 로그인 | 7 | 6 | 1 | 85.7% |
-| Phase 5: US3 토큰 갱신 | 6 | 5 | 1 | 83.3% |
-| Phase 6: US4 비밀번호 재설정 | 6 | 2 | 4 | 33.3% |
-| Phase 7: US5 탈퇴 계정 복구 | 7 | 4 | 3 | 57.1% |
-| Phase 8: US6 준회원 승인 | 7 | 3 | 4 | 42.9% |
-| Phase 9: Polish | 9 | 3 | 6 | 33.3% |
-| **Total** | **66** | **46** | **20** | **69.7%** |
+| Phase 3: US1 회원가입 | 8 | 8 | 0 | 100% |
+| Phase 4: US2 로그인 | 7 | 7 | 0 | 100% |
+| Phase 5: US3 토큰 갱신 | 6 | 6 | 0 | 100% |
+| Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% |
+| Phase 7: US5 탈퇴 계정 복구 | 7 | 7 | 0 | 100% |
+| Phase 8: US6 준회원 승인 | 7 | 6 | 1 | 85.7% |
+| Phase 9: Polish | 9 | 4 | 5 | 44.4% |
+| **Total** | **66** | **60** | **6** | **90.9%** |
 
 ### MVP 구현 현황 (Phase 1-4)
-- **완료율: 93.5% (29/31 태스크)**
-- **미완료**: 통합 테스트 2개 (T024, T031)
+- **완료율: 100% (31/31 태스크)** ✅
 
 ## 기존 구현 현황
 
@@ -60,10 +59,10 @@
 - ✅ 인증 관련 DTO, Exception, ErrorCode
 
 ### 미완료
-- 비밀번호 재설정, 계정 복구, 준회원 승인 컨트롤러 엔드포인트
-- 통합 테스트
 - 스케줄러 (RefreshToken 정리, 탈퇴 후 개인정보 삭제)
 - 이메일 재시도 로직
+- JwtAuthenticationFilter 계정 상태 검증
+- AdminMemberController 통합 테스트
 
 ---
 
@@ -121,7 +120,7 @@
 
 **Goal**: 비회원이 필수 정보를 입력하고 이메일 인증을 완료하여 준회원으로 등록
 
-**Status**: 🟡 진행중 (7/8) - 통합 테스트 미완료
+**Status**: ✅ 완료 (8/8)
 
 **Independent Test**: 회원가입 폼 작성 → 이메일 인증 → 로그인 성공 확인
 
@@ -156,9 +155,9 @@
 ### Test for User Story 1
 
 - [x] T023 [P] [US1] SignupService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/PasswordSignupServiceTest.java`
-- [ ] T024 [P] [US1] AuthController 회원가입 통합 테스트 - **미구현**
+- [x] T024 [P] [US1] AuthController 회원가입 통합 테스트 in `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordSignupIntegrationTest.java`
 
-**Checkpoint**: 🟡 회원가입 기능 완료 - 통합 테스트 필요
+**Checkpoint**: ✅ 회원가입 기능 완료
 
 ---
 
@@ -166,7 +165,7 @@
 
 **Goal**: 등록된 사용자가 학번과 비밀번호로 로그인하여 토큰 발급
 
-**Status**: 🟡 진행중 (6/7) - 통합 테스트 미완료
+**Status**: ✅ 완료 (7/7)
 
 **Independent Test**: 등록된 계정으로 로그인 → Access Token + Refresh Token 발급 확인
 
@@ -198,9 +197,9 @@
 ### Test for User Story 2
 
 - [x] T030 [P] [US2] AuthService 로그인 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/PasswordAuthServiceLoginTest.java`
-- [ ] T031 [P] [US2] AuthController 로그인 통합 테스트 - **미구현**
+- [x] T031 [P] [US2] AuthController 로그인 통합 테스트 in `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordLoginIntegrationTest.java`
 
-**Checkpoint**: 🟡 로그인/로그아웃 기능 완료 - 통합 테스트 필요
+**Checkpoint**: ✅ 로그인/로그아웃 기능 완료
 
 ---
 
@@ -208,7 +207,7 @@
 
 **Goal**: Access Token 만료 시 Refresh Token으로 새 Access Token 발급
 
-**Status**: 🟡 진행중 (5/6) - 통합 테스트 미완료
+**Status**: ✅ 완료 (6/6)
 
 **Independent Test**: 만료된 Access Token 상태에서 Refresh Token으로 갱신 성공 확인
 
@@ -234,9 +233,9 @@
 ### Test for User Story 3
 
 - [x] T036 [P] [US3] TokenService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/PasswordAuthServiceTokenTest.java`
-- [ ] T037 [P] [US3] AuthController 토큰 갱신 통합 테스트 - **미구현**
+- [x] T037 [P] [US3] AuthController 토큰 갱신 통합 테스트 in `backend/src/test/java/igrus/web/security/auth/password/integration/TokenRefreshIntegrationTest.java`
 
-**Checkpoint**: 🟡 토큰 갱신 기능 완료 - 통합 테스트 필요
+**Checkpoint**: ✅ 토큰 갱신 기능 완료
 
 ---
 
@@ -244,16 +243,14 @@
 
 **Goal**: 비밀번호를 잊은 사용자가 이메일을 통해 비밀번호 재설정
 
-**Status**: 🔴 미완료 (2/6) - 컨트롤러 및 DTO 미구현
+**Status**: ✅ 완료 (6/6)
 
 **Independent Test**: 비밀번호 재설정 요청 → 이메일 링크 → 새 비밀번호 설정 → 로그인 성공
 
 ### DTO for User Story 4
 
-- [ ] T038 [P] [US4] PasswordResetRequest DTO 생성 - **미구현**
-  - 필요 필드: studentId
-- [ ] T039 [P] [US4] PasswordResetConfirmRequest DTO 생성 - **미구현**
-  - 필요 필드: token, newPassword
+- [x] T038 [P] [US4] PasswordResetRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/password/dto/request/PasswordResetRequest.java`
+- [x] T039 [P] [US4] PasswordResetConfirmRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/password/dto/request/PasswordResetConfirmRequest.java`
 
 ### Service for User Story 4
 
@@ -263,20 +260,20 @@
   - ✅ 이메일로 재설정 링크 발송
   - ✅ 토큰 검증 및 비밀번호 변경
   - ✅ 모든 기존 Refresh Token 무효화
-  - ⚠️ 서비스는 구현되었으나 컨트롤러에서 호출하지 않음
 
 ### Controller for User Story 4
 
-- [ ] T041 [US4] AuthController - 비밀번호 재설정 엔드포인트 추가 - **미구현**
-  - 필요: POST /api/v1/auth/password/reset-request (재설정 요청)
-  - 필요: POST /api/v1/auth/password/reset-confirm (새 비밀번호 설정)
+- [x] T041 [US4] AuthController - 비밀번호 재설정 엔드포인트 추가 in `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthController.java`
+  - ✅ POST /api/v1/auth/password/reset-request (재설정 요청)
+  - ✅ POST /api/v1/auth/password/reset-confirm (새 비밀번호 설정)
+  - ✅ GET /api/v1/auth/password/reset-validate (토큰 유효성 검증)
 
 ### Test for User Story 4
 
 - [x] T042 [P] [US4] PasswordResetService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/PasswordResetServiceTest.java`
-- [ ] T043 [P] [US4] AuthController 비밀번호 재설정 통합 테스트 - **미구현**
+- [x] T043 [P] [US4] AuthController 비밀번호 재설정 통합 테스트 in `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordResetIntegrationTest.java`
 
-**Checkpoint**: 🔴 비밀번호 재설정 기능 미완료 - 컨트롤러 엔드포인트 구현 필요
+**Checkpoint**: ✅ 비밀번호 재설정 기능 완료
 
 ---
 
@@ -284,7 +281,7 @@
 
 **Goal**: 탈퇴 후 5일 이내 계정 복구 기능 제공
 
-**Status**: 🔴 미완료 (4/7) - 컨트롤러 미구현, 로그인 시 복구 프롬프트 로직 미구현
+**Status**: ✅ 완료 (7/7)
 
 **Independent Test**: 탈퇴 → 5일 이내 로그인 시도 → 복구 선택 → 계정 활성화
 
@@ -304,21 +301,22 @@
 
 ### Service for User Story 5 (추가)
 
-- [ ] T047 [US5] AuthService에 탈퇴 계정 로그인 시 복구 프롬프트 로직 추가 - **미구현**
-  - 현재: PasswordAuthService에서 탈퇴 계정 로그인 시 AccountWithdrawnException만 발생
-  - 필요: 복구 가능 여부 확인 후 별도 응답 반환
+- [x] T047 [US5] AuthService에 탈퇴 계정 로그인 시 복구 프롬프트 로직 추가
+  - ✅ AccountRecoverableException 예외 활용
+  - ✅ 탈퇴 계정이면서 복구 가능 기간(5일) 내인 경우 AccountRecoverableException 발생
 
 ### Controller for User Story 5
 
-- [ ] T048 [US5] AuthController - 계정 복구 엔드포인트 추가 - **미구현**
-  - 필요: POST /api/v1/auth/password/account/recover (계정 복구)
+- [x] T048 [US5] AuthController - 계정 복구 엔드포인트 추가 in `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthController.java`
+  - ✅ GET /api/v1/auth/password/account/recovery-check (복구 가능 여부 확인)
+  - ✅ POST /api/v1/auth/password/account/recover (계정 복구)
 
 ### Test for User Story 5
 
 - [x] T049 [P] [US5] AccountRecoveryService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/common/service/AccountRecoveryServiceTest.java`
-- [ ] T050 [P] [US5] AuthController 계정 복구 통합 테스트 - **미구현**
+- [x] T050 [P] [US5] AuthController 계정 복구 통합 테스트 in `backend/src/test/java/igrus/web/security/auth/common/integration/AccountRecoveryIntegrationTest.java`
 
-**Checkpoint**: 🔴 탈퇴 계정 복구 기능 미완료 - 컨트롤러 엔드포인트 및 복구 프롬프트 로직 구현 필요
+**Checkpoint**: ✅ 탈퇴 계정 복구 기능 완료
 
 ---
 
@@ -326,7 +324,7 @@
 
 **Goal**: 관리자가 준회원을 정회원으로 승인
 
-**Status**: 🔴 미완료 (3/7) - 컨트롤러 및 일부 DTO 미구현
+**Status**: 🟡 진행중 (6/7) - 통합 테스트 미완료
 
 **Independent Test**: 관리자 로그인 → 준회원 목록 조회 → 승인 → 역할 변경 확인
 
@@ -334,10 +332,8 @@
 
 - [x] T051 [P] [US6] AssociateMemberResponse DTO 생성 in `backend/src/main/java/igrus/web/security/auth/approval/dto/response/AssociateInfoResponse.java`
   - 변경: AssociateMemberResponse → AssociateInfoResponse
-- [ ] T052 [P] [US6] MemberApprovalRequest DTO 생성 - **미구현**
-  - 필요 필드: reason (승인 사유, 선택)
-- [ ] T053 [P] [US6] BulkApprovalRequest DTO 생성 - **미구현**
-  - 필요 필드: userIds (List<Long>), reason (선택)
+- [x] T052 [P] [US6] MemberApprovalRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/approval/dto/request/MemberApprovalRequest.java`
+- [x] T053 [P] [US6] BulkApprovalRequest DTO 생성 in `backend/src/main/java/igrus/web/security/auth/approval/dto/request/BulkApprovalRequest.java`
 
 ### Service for User Story 6
 
@@ -349,17 +345,18 @@
 
 ### Controller for User Story 6
 
-- [ ] T055 [US6] AdminMemberController 생성 - **미구현**
-  - 필요: GET /api/v1/admin/members/pending (준회원 목록)
-  - 필요: POST /api/v1/admin/members/{id}/approve (개별 승인)
-  - 필요: POST /api/v1/admin/members/approve/bulk (일괄 승인)
+- [x] T055 [US6] AdminMemberController 생성 in `backend/src/main/java/igrus/web/security/auth/approval/controller/AdminMemberController.java`
+  - ✅ GET /api/v1/admin/members/pending (준회원 목록)
+  - ✅ POST /api/v1/admin/members/{id}/approve (개별 승인)
+  - ✅ POST /api/v1/admin/members/approve/bulk (일괄 승인)
+  - ✅ Swagger 문서화 (컨트롤러에 직접 어노테이션 추가)
 
 ### Test for User Story 6
 
 - [x] T056 [P] [US6] MemberApprovalService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/approval/service/MemberApprovalServiceTest.java`
 - [ ] T057 [P] [US6] AdminMemberController 통합 테스트 - **미구현**
 
-**Checkpoint**: 🔴 준회원 승인 기능 미완료 - AdminMemberController 및 DTO 구현 필요
+**Checkpoint**: 🟡 준회원 승인 기능 대부분 완료 - 통합 테스트 구현 필요
 
 ---
 
@@ -367,7 +364,7 @@
 
 **Purpose**: 여러 User Story에 걸친 개선사항
 
-**Status**: 🔴 미완료 (3/9)
+**Status**: 🟡 진행중 (4/9)
 
 ### 스케줄링 및 정리 작업
 
@@ -395,13 +392,14 @@
 
 ### API 문서화
 
-- [x] T064 [P] AuthController Swagger 어노테이션 추가 in `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthControllerApi.java`
-  - 변경: AuthController → PasswordAuthControllerApi (인터페이스로 분리)
-- [ ] T065 [P] AdminMemberController Swagger 어노테이션 추가 - **미구현** (컨트롤러 자체가 미구현)
+- [x] T064 [P] AuthController Swagger 어노테이션 추가
+  - 변경: Swagger 어노테이션을 컨트롤러에 직접 추가하는 방식으로 변경됨 (인터페이스 분리 방식 폐기)
+- [x] T065 [P] AdminMemberController Swagger 어노테이션 추가 in `backend/src/main/java/igrus/web/security/auth/approval/controller/AdminMemberController.java`
+  - 컨트롤러에 직접 Swagger 어노테이션 포함
 
 ### 통합 테스트
 
-- [ ] T066 전체 인증 플로우 E2E 테스트 - **미구현**
+- [x] T066 전체 인증 플로우 E2E 테스트 in `backend/src/test/java/igrus/web/security/auth/e2e/AuthenticationE2ETest.java`
 
 ---
 
@@ -542,52 +540,33 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 |-------|----------|------|--------|--------|------|
 | Phase 1: Setup | 5 | 5 | 0 | 100% | 공통 인프라 ✅ |
 | Phase 2: Foundational | 11 | 11 | 0 | 100% | 핵심 엔티티/Repository ✅ |
-| Phase 3: US1 회원가입 | 8 | 7 | 1 | 87.5% | MVP 🟡 |
-| Phase 4: US2 로그인 | 7 | 6 | 1 | 85.7% | MVP 🟡 |
-| Phase 5: US3 토큰 갱신 | 6 | 5 | 1 | 83.3% | P2 🟡 |
-| Phase 6: US4 비밀번호 재설정 | 6 | 2 | 4 | 33.3% | P2 🔴 |
-| Phase 7: US5 탈퇴 복구 | 7 | 4 | 3 | 57.1% | P3 🔴 |
-| Phase 8: US6 준회원 승인 | 7 | 3 | 4 | 42.9% | P2 🔴 |
-| Phase 9: Polish | 9 | 3 | 6 | 33.3% | 정리 및 개선 🔴 |
-| **Total** | **66** | **46** | **20** | **69.7%** | |
+| Phase 3: US1 회원가입 | 8 | 8 | 0 | 100% | MVP ✅ |
+| Phase 4: US2 로그인 | 7 | 7 | 0 | 100% | MVP ✅ |
+| Phase 5: US3 토큰 갱신 | 6 | 6 | 0 | 100% | P2 ✅ |
+| Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% | P2 ✅ |
+| Phase 7: US5 탈퇴 복구 | 7 | 7 | 0 | 100% | P3 ✅ |
+| Phase 8: US6 준회원 승인 | 7 | 6 | 1 | 85.7% | P2 🟡 |
+| Phase 9: Polish | 9 | 4 | 5 | 44.4% | 정리 및 개선 🟡 |
+| **Total** | **66** | **60** | **6** | **90.9%** | |
 
 ### MVP Scope 현황
 
 - Phase 1 (Setup): 5/5 tasks ✅
 - Phase 2 (Foundational): 11/11 tasks ✅
-- Phase 3 (US1 회원가입): 7/8 tasks 🟡
-- Phase 4 (US2 로그인): 6/7 tasks 🟡
-- **MVP Total: 29/31 tasks (93.5%)** 🟡
+- Phase 3 (US1 회원가입): 8/8 tasks ✅
+- Phase 4 (US2 로그인): 7/7 tasks ✅
+- **MVP Total: 31/31 tasks (100%)** ✅
 
-### 미완료 태스크 목록
+### 미완료 태스크 목록 (6개)
 
-#### MVP (우선 완료 필요)
-- T024: AuthController 회원가입 통합 테스트
-- T031: AuthController 로그인 통합 테스트
-
-#### P2 (비밀번호 재설정, 토큰 갱신, 준회원 승인)
-- T037: AuthController 토큰 갱신 통합 테스트
-- T038: PasswordResetRequest DTO
-- T039: PasswordResetConfirmRequest DTO
-- T041: 비밀번호 재설정 컨트롤러 엔드포인트
-- T043: AuthController 비밀번호 재설정 통합 테스트
-- T052: MemberApprovalRequest DTO
-- T053: BulkApprovalRequest DTO
-- T055: AdminMemberController
+#### P2 (준회원 승인)
 - T057: AdminMemberController 통합 테스트
-
-#### P3 (탈퇴 계정 복구)
-- T047: AuthService 탈퇴 계정 복구 프롬프트 로직
-- T048: 계정 복구 컨트롤러 엔드포인트
-- T050: AuthController 계정 복구 통합 테스트
 
 #### Polish
 - T059: Refresh Token 정리 스케줄러
 - T060: 탈퇴 후 개인정보 삭제 스케줄러
 - T061: 이메일 재시도 로직
 - T062: JwtAuthenticationFilter 계정 상태 검증
-- T065: AdminMemberController Swagger
-- T066: E2E 통합 테스트
 
 ---
 
