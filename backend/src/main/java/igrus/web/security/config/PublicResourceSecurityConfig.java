@@ -19,6 +19,9 @@ public class PublicResourceSecurityConfig {
 
         // Swagger 및 공개 리소스 경로 담당
         http.securityMatcher(
+                "/",
+                "/index.html",
+                "/favicon.svg",
                 "/swagger-ui/**",
                 "/swagger-ui.html",
                 "/v3/api-docs/**",
