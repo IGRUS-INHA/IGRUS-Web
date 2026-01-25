@@ -1,6 +1,7 @@
 package igrus.web.security.jwt;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
+import igrus.web.security.auth.common.service.AccountStatusService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,13 +18,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,8 +37,9 @@ class JwtAuthenticationFilterTest {
     // 실제 객체 사용 (고전파)
     private JwtTokenProvider jwtTokenProvider;
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private JsonMapper jsonMapper;
 
-    // Mock 유지 (런던파 - Servlet API 의존성)
+    // Mock 유지 (런던파 - Servlet API 의존성 및 외부 서비스)
     @Mock
     private HttpServletRequest request;
 
@@ -43,6 +48,9 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private FilterChain filterChain;
+
+    @Mock
+    private AccountStatusService accountStatusService;
 
     // 테스트용 설정 값
     private static final String TEST_SECRET_KEY = "ThisIsATestSecretKeyThatIsLongEnoughForHS256AlgorithmAtLeast256Bits";
@@ -64,7 +72,13 @@ class JwtAuthenticationFilterTest {
                 TEST_AUDIENCE
         );
 
-        jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtTokenProvider);
+        jsonMapper = JsonMapper.builder().build();
+
+        jwtAuthenticationFilter = new JwtAuthenticationFilter(
+                jwtTokenProvider,
+                accountStatusService,
+                jsonMapper
+        );
     }
 
     @Nested
@@ -165,6 +179,8 @@ class JwtAuthenticationFilterTest {
             String validToken = jwtTokenProvider.createAccessToken(userId, studentId, role);
 
             given(request.getHeader("Authorization")).willReturn("Bearer " + validToken);
+            // AccountStatusService가 예외를 던지지 않도록 설정
+            willDoNothing().given(accountStatusService).validateAccountStatus(userId);
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -361,6 +377,8 @@ class JwtAuthenticationFilterTest {
             String validToken = jwtTokenProvider.createAccessToken(userId, studentId, role);
 
             given(request.getHeader("Authorization")).willReturn("Bearer " + validToken);
+            // AccountStatusService가 예외를 던지지 않도록 설정
+            willDoNothing().given(accountStatusService).validateAccountStatus(userId);
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -394,6 +412,8 @@ class JwtAuthenticationFilterTest {
 
             String validToken = jwtTokenProvider.createAccessToken(userId, studentId, role);
             given(request.getHeader("Authorization")).willReturn("Bearer " + validToken);
+            // AccountStatusService가 예외를 던지지 않도록 설정
+            willDoNothing().given(accountStatusService).validateAccountStatus(userId);
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
