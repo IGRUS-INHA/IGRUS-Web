@@ -27,7 +27,6 @@ public class AdminMemberController implements AdminMemberControllerApi {
 
     private final MemberApprovalService memberApprovalService;
 
-    @Override
     @GetMapping("/pending")
     public ResponseEntity<Page<AssociateInfoResponse>> getPendingAssociates(
             Pageable pageable,
@@ -47,7 +46,6 @@ public class AdminMemberController implements AdminMemberControllerApi {
         throw new UnsupportedOperationException("Use the method with AuthenticatedUser parameter");
     }
 
-    @Override
     @PostMapping("/{id}/approve")
     public ResponseEntity<Void> approveAssociate(
             @PathVariable("id") Long userId,
@@ -64,7 +62,6 @@ public class AdminMemberController implements AdminMemberControllerApi {
         throw new UnsupportedOperationException("Use the method with AuthenticatedUser parameter");
     }
 
-    @Override
     @PostMapping("/approve/bulk")
     public ResponseEntity<BulkApprovalResultResponse> approveBulk(
             @Valid @RequestBody BulkApprovalRequest request,

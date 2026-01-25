@@ -9,6 +9,7 @@ import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.password.dto.request.TokenRefreshRequest;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
+import igrus.web.security.auth.password.service.PasswordResetService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +45,9 @@ class PasswordAuthControllerTokenTest {
 
     @MockitoBean
     private PasswordSignupService passwordSignupService;
+
+    @MockitoBean
+    private PasswordResetService passwordResetService;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;

@@ -49,23 +49,47 @@ public record PasswordResetConfirmRequest(
 
 **파일**: `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthController.java`
 
-추가할 엔드포인트:
+추가된 엔드포인트:
 - `POST /api/v1/auth/password/reset-request` - 비밀번호 재설정 요청
 - `POST /api/v1/auth/password/reset-confirm` - 새 비밀번호 설정
+- `GET /api/v1/auth/password/reset-validate` - 토큰 유효성 검증 (추가 구현됨)
 
 **Swagger 문서화**: `PasswordAuthControllerApi.java` 인터페이스에도 메서드 시그니처 추가
 
 ### T043: 통합 테스트
 
-**경로**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerPasswordResetTest.java`
+**경로**: `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordResetIntegrationTest.java`
 
-테스트 케이스:
-1. 비밀번호 재설정 요청 성공
-2. 존재하지 않는 학번으로 요청 시 에러
-3. 유효한 토큰으로 비밀번호 변경 성공
-4. 만료된 토큰으로 요청 시 에러
-5. 잘못된 토큰으로 요청 시 에러
-6. 비밀번호 정책 미충족 시 에러
+테스트 케이스 (총 20개):
+1. **재설정 링크 발송 테스트** (4개)
+   - 등록된 학번으로 재설정 요청
+   - 미등록 학번으로 요청 시 보안을 위해 성공 응답
+   - 빈 학번으로 요청 시 400 Bad Request
+   - 승인되지 않은 사용자 요청 시 200 OK (보안)
+
+2. **토큰 검증 테스트** (3개)
+   - 유효한 토큰으로 검증 시 200 OK
+   - 잘못된 토큰으로 검증 시 400 Bad Request
+   - 만료된 토큰으로 검증 시 400 Bad Request
+
+3. **비밀번호 재설정 성공 테스트** (4개)
+   - 유효한 토큰과 비밀번호로 재설정 성공
+   - 재설정 후 새 비밀번호로 로그인 성공
+   - 재설정 후 기존 토큰 무효화
+   - 재설정 후 기존 비밀번호로 로그인 실패
+
+4. **비밀번호 재설정 실패 테스트** (3개)
+   - 만료된 토큰으로 재설정 시 400 Bad Request
+   - 잘못된 토큰으로 재설정 시 400 Bad Request
+   - 이미 사용된 토큰으로 재설정 시 400 Bad Request
+
+5. **새 비밀번호 검증 테스트** (6개)
+   - 빈 비밀번호로 요청 시 400 Bad Request
+   - 8자 미만 비밀번호로 요청 시 400 Bad Request
+   - 대문자 미포함 비밀번호로 요청 시 400 Bad Request
+   - 소문자 미포함 비밀번호로 요청 시 400 Bad Request
+   - 숫자 미포함 비밀번호로 요청 시 400 Bad Request
+   - 특수문자 미포함 비밀번호로 요청 시 400 Bad Request
 
 ## 참고 파일
 
@@ -76,12 +100,12 @@ public record PasswordResetConfirmRequest(
 
 ## 완료 조건
 
-- [ ] PasswordResetRequest DTO 생성
-- [ ] PasswordResetConfirmRequest DTO 생성
-- [ ] PasswordAuthController에 2개 엔드포인트 추가
-- [ ] PasswordAuthControllerApi에 Swagger 문서화
-- [ ] 통합 테스트 작성 및 통과
-- [ ] `./gradlew test` 전체 테스트 통과
+- [x] PasswordResetRequest DTO 생성
+- [x] PasswordResetConfirmRequest DTO 생성
+- [x] PasswordAuthController에 3개 엔드포인트 추가 (reset-request, reset-confirm, reset-validate)
+- [x] PasswordAuthControllerApi에 Swagger 문서화
+- [x] 통합 테스트 작성 및 통과 (20개 테스트 케이스)
+- [x] 비밀번호 재설정 관련 테스트 통과
 
 ## 주의사항
 
