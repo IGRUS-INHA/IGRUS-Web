@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,4 +46,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = "SELECT * FROM users u WHERE u.users_student_id = :studentId", nativeQuery = true)
     Optional<User> findByStudentIdIncludingDeleted(@Param("studentId") String studentId);
+
+    // === 탈퇴 사용자 정리용 (native query로 @SQLRestriction 우회) ===
+
+    /**
+     * 탈퇴 후 지정 시간이 경과하고 아직 익명화되지 않은 사용자를 조회합니다.
+     *
+     * @param cutoffTime 기준 시간 (이 시간 이전에 삭제된 사용자 대상)
+     * @return 익명화 대상 사용자 목록
+     */
+    @Query(value = "SELECT * FROM users u WHERE u.users_status = 'WITHDRAWN' " +
+           "AND u.users_deleted_at < :cutoffTime AND u.users_anonymized = false", nativeQuery = true)
+    List<User> findWithdrawnUsersBeforeAndNotAnonymized(@Param("cutoffTime") Instant cutoffTime);
 }

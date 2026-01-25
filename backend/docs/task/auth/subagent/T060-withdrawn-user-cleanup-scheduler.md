@@ -168,12 +168,12 @@ ALTER TABLE users ADD COLUMN is_anonymized BOOLEAN NOT NULL DEFAULT FALSE;
 
 ## 체크리스트
 
-- [ ] User 엔티티에 isAnonymized 필드 추가
-- [ ] User 엔티티에 anonymize() 메서드 추가
-- [ ] Flyway 마이그레이션 스크립트 작성
-- [ ] WithdrawnUserCleanupService 생성
-- [ ] WithdrawnUserCleanupScheduler 생성
-- [ ] UserRepository에 쿼리 메서드 추가
-- [ ] 각 Repository에 deleteByUserId 메서드 추가 (필요 시)
-- [ ] 단위 테스트 작성
-- [ ] 통합 테스트로 전체 플로우 확인
+- [x] User 엔티티에 isAnonymized 필드 추가
+- [x] User 엔티티에 anonymize() 메서드 추가
+- [x] Flyway 마이그레이션 스크립트 작성 (`V4__add_user_anonymized_flag.sql`)
+- [x] WithdrawnUserCleanupService 생성
+- [x] WithdrawnUserCleanupScheduler 생성
+- [x] UserRepository에 쿼리 메서드 추가 (`findWithdrawnUsersBeforeAndNotAnonymized`)
+- [x] 각 Repository에 삭제 메서드 추가 (`EmailVerificationRepository.deleteByEmail`, `RefreshTokenRepository.deleteByUserId`)
+- [x] 단위 테스트 작성 (`WithdrawnUserCleanupServiceTest`)
+- [ ] 통합 테스트로 전체 플로우 확인 (선택사항)

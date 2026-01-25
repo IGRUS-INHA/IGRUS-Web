@@ -69,6 +69,18 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_status", nullable = false)
     private UserStatus status = UserStatus.PENDING_VERIFICATION;
 
+    /**
+     * 익명화 처리 완료 여부.
+     * <p>
+     * 탈퇴 후 복구 가능 기간(5일) 만료 시 개인정보 영구 삭제 스케줄러에 의해 true로 설정됩니다.
+     * 스케줄러가 매일 실행될 때, 이미 익명화된 사용자를 중복 처리하지 않도록 구분하는 용도입니다.
+     * </p>
+     *
+     * @see igrus.web.security.auth.common.scheduler.WithdrawnUserCleanupScheduler
+     */
+    @Column(name = "users_anonymized", nullable = false)
+    private boolean anonymized = false;
+
     // 직책 (다대다: 한 유저가 여러 직책 보유 가능)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserPosition> userPositions = new ArrayList<>();
@@ -234,6 +246,31 @@ public class User extends SoftDeletableEntity {
 
     public void updateEmail(String email) {
         this.email = email;
+    }
+
+    // === 익명화 ===
+
+    /**
+     * 사용자 개인정보를 익명화합니다.
+     * <p>
+     * 탈퇴 후 복구 가능 기간 만료 시 호출됩니다.
+     * 이름, 이메일, 학번을 익명 값으로 대체하고, 전화번호/학과/가입동기는 null로 설정합니다.
+     * </p>
+     *
+     * @param hash 익명화에 사용할 고유 해시값 (예: UUID 앞 8자리)
+     */
+    public void anonymize(String hash) {
+        this.name = "탈퇴회원_" + hash;
+        this.email = "deleted_" + hash + "@deleted.local";
+        this.studentId = "DELETED_" + this.id;
+        this.phoneNumber = null;
+        this.department = null;
+        this.motivation = null;
+        this.anonymized = true;
+    }
+
+    public boolean isAnonymized() {
+        return this.anonymized;
     }
 
 }

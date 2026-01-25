@@ -31,8 +31,8 @@
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% |
 | Phase 7: US5 탈퇴 계정 복구 | 7 | 7 | 0 | 100% |
 | Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% |
-| Phase 9: Polish | 9 | 7 | 2 | 77.8% |
-| **Total** | **66** | **64** | **2** | **97.0%** |
+| Phase 9: Polish | 9 | 8 | 1 | 88.9% |
+| **Total** | **66** | **65** | **1** | **98.5%** |
 
 ### MVP 구현 현황 (Phase 1-4)
 - **완료율: 100% (31/31 태스크)** ✅
@@ -59,7 +59,6 @@
 - ✅ 인증 관련 DTO, Exception, ErrorCode
 
 ### 미완료
-- 스케줄러 (탈퇴 후 개인정보 삭제)
 - 이메일 재시도 로직
 
 ---
@@ -362,7 +361,7 @@
 
 **Purpose**: 여러 User Story에 걸친 개선사항
 
-**Status**: 🟡 진행중 (7/9)
+**Status**: 🟡 진행중 (8/9)
 
 ### 스케줄링 및 정리 작업
 
@@ -375,7 +374,12 @@
   - ✅ RefreshTokenCleanupService (`backend/src/main/java/igrus/web/security/auth/common/service/RefreshTokenCleanupService.java`)
   - ✅ RefreshTokenRepository.deleteByExpiresAtBefore 메서드 추가
   - ✅ 단위 테스트 5개 케이스 (`RefreshTokenCleanupServiceTest.java`)
-- [ ] T060 탈퇴 후 5일 경과 개인정보 영구 삭제 스케줄러 - **미구현**
+- [x] T060 탈퇴 후 5일 경과 개인정보 영구 삭제 스케줄러 in `backend/src/main/java/igrus/web/security/auth/common/scheduler/WithdrawnUserCleanupScheduler.java`
+  - ✅ 매일 새벽 5시 실행
+  - ✅ 탈퇴 후 5일 경과한 사용자 개인정보 익명화
+  - ✅ 연관 데이터 삭제 (PasswordCredential, PrivacyConsent, EmailVerification, RefreshToken)
+  - ✅ User 엔티티에 anonymized 필드 및 anonymize() 메서드 추가
+  - ✅ 단위 테스트 작성 (WithdrawnUserCleanupServiceTest)
 
 ### 이메일 재시도 로직
 
@@ -551,8 +555,8 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% | P2 ✅ |
 | Phase 7: US5 탈퇴 복구 | 7 | 7 | 0 | 100% | P3 ✅ |
 | Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% | P2 ✅ |
-| Phase 9: Polish | 9 | 7 | 2 | 77.8% | 정리 및 개선 🟡 |
-| **Total** | **66** | **64** | **2** | **97.0%** | |
+| Phase 9: Polish | 9 | 8 | 1 | 88.9% | 정리 및 개선 🟡 |
+| **Total** | **66** | **65** | **1** | **98.5%** | |
 
 ### MVP Scope 현황
 
@@ -562,10 +566,9 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 - Phase 4 (US2 로그인): 7/7 tasks ✅
 - **MVP Total: 31/31 tasks (100%)** ✅
 
-### 미완료 태스크 목록 (2개)
+### 미완료 태스크 목록 (1개)
 
 #### Polish
-- T060: 탈퇴 후 개인정보 삭제 스케줄러
 - T061: 이메일 재시도 로직
 
 ---

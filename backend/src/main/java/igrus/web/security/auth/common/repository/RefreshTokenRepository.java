@@ -24,4 +24,11 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM RefreshToken r WHERE r.expiresAt < :now")
     int deleteByExpiresAtBefore(@Param("now") Instant now);
+
+    /**
+     * 특정 사용자의 모든 리프레시 토큰을 삭제합니다.
+     *
+     * @param userId 사용자 ID
+     */
+    void deleteByUserId(Long userId);
 }

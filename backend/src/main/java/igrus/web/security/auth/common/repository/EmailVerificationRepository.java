@@ -32,4 +32,11 @@ public interface EmailVerificationRepository extends JpaRepository<EmailVerifica
      * @return 기준 시간 이후에 생성된 미인증 레코드가 있으면 true
      */
     boolean existsByEmailAndVerifiedFalseAndCreatedAtAfter(String email, Instant after);
+
+    /**
+     * 특정 이메일에 대한 모든 인증 기록을 삭제합니다.
+     *
+     * @param email 삭제할 이메일 주소
+     */
+    void deleteByEmail(String email);
 }
