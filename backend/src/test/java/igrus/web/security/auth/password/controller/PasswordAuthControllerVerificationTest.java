@@ -9,6 +9,7 @@ import igrus.web.security.auth.common.exception.verification.VerificationAttempt
 import igrus.web.security.auth.common.exception.verification.VerificationCodeExpiredException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeInvalidException;
 import igrus.web.security.auth.common.exception.verification.VerificationResendRateLimitedException;
+import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
@@ -51,6 +52,9 @@ class PasswordAuthControllerVerificationTest {
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private AccountRecoveryService accountRecoveryService;
 
     private static final String VALID_EMAIL = "test@inha.edu";
     private static final String VALID_CODE = "123456";

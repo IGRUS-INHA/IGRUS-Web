@@ -6,6 +6,7 @@ import igrus.web.security.auth.common.exception.account.AccountSuspendedExceptio
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
+import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.password.controller.fixture.PasswordAuthTestFixture;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
@@ -13,6 +14,7 @@ import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.config.ApiSecurityConfig;
 import igrus.web.security.config.SecurityConfigUtil;
 import igrus.web.security.jwt.JwtAuthenticationFilter;
 import igrus.web.security.jwt.JwtTokenProvider;
@@ -40,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(PasswordAuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, ApiSecurityConfig.class, SecurityConfigUtil.class, JwtAuthenticationFilter.class})
 @DisplayName("PasswordAuthController 로그인/로그아웃 테스트")
 class PasswordAuthControllerLoginTest {
 
@@ -63,6 +65,9 @@ class PasswordAuthControllerLoginTest {
 
     @MockitoBean
     private SecurityConfigUtil securityConfigUtil;
+
+    @MockitoBean
+    private AccountRecoveryService accountRecoveryService;
 
     private static final String LOGIN_URL = "/api/v1/auth/password/login";
     private static final String LOGOUT_URL = "/api/v1/auth/password/logout";
