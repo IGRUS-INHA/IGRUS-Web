@@ -4,7 +4,6 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.RefreshToken;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
-import igrus.web.security.auth.password.dto.request.TokenRefreshRequest;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
@@ -68,10 +67,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
+            String tokenString = refreshTokenString;
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(tokenString);
 
             // then
             assertThat(response).isNotNull();
@@ -87,10 +86,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
+            String tokenString = refreshTokenString;
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(tokenString);
 
             // then
             assertThat(response.expiresIn()).isEqualTo(ACCESS_TOKEN_VALIDITY);
@@ -104,10 +103,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
+            String tokenString = refreshTokenString;
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(tokenString);
 
             // then
             assertThat(response.accessToken()).isNotNull();
@@ -126,10 +125,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
+            String tokenString = refreshTokenString;
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(tokenString);
 
             // then
             assertThat(response).isNotNull();
@@ -149,10 +148,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveExpiredRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
+            String tokenString = refreshTokenString;
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenExpiredException.class);
         }
 
@@ -160,10 +159,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
         @DisplayName("유효하지 않은 Refresh Token으로 갱신 시도 시 예외 발생 [TKN-011]")
         void refreshToken_WithInvalidToken_ThrowsException() {
             // given
-            TokenRefreshRequest request = new TokenRefreshRequest("invalid-refresh-token");
+            String tokenString = "invalid-refresh-token";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -171,10 +170,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
         @DisplayName("변조된 Refresh Token으로 갱신 시도 시 예외 발생 [TKN-012]")
         void refreshToken_WithTamperedToken_ThrowsException() {
             // given
-            TokenRefreshRequest request = new TokenRefreshRequest("tampered-token-payload-modified");
+            String tokenString = "tampered-token-payload-modified";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -182,10 +181,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
         @DisplayName("빈 Refresh Token으로 갱신 시도 시 예외 발생 [TKN-013]")
         void refreshToken_WithEmptyToken_ThrowsException() {
             // given
-            TokenRefreshRequest request = new TokenRefreshRequest("");
+            String tokenString = "";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -201,10 +200,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
             refreshToken.revoke();
             refreshTokenRepository.save(refreshToken);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
+            String tokenString = refreshTokenString;
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
     }
@@ -217,10 +216,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
         @DisplayName("토큰이 존재하지 않는 경우 갱신 실패 [TKN-020]")
         void refreshToken_WhenTokenNotExists_ThrowsException() {
             // given
-            TokenRefreshRequest request = new TokenRefreshRequest("non-existent-token");
+            String tokenString = "non-existent-token";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -237,10 +236,10 @@ class PasswordAuthServiceTokenTest extends ServiceIntegrationTestBase {
                     refreshTokenRepository.revokeAllByUserId(user.getId())
             );
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
+            String tokenString = refreshTokenString;
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
     }

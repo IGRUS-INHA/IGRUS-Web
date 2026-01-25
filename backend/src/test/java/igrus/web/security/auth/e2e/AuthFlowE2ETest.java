@@ -1,28 +1,27 @@
 package igrus.web.security.auth.e2e;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
-import igrus.web.security.auth.password.dto.request.TokenRefreshRequest;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -70,7 +69,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
     @Autowired
     private MockMvc mockMvc;
 
-    private final JsonMapper jsonMapper = JsonMapper.builder().build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private PasswordAuthService passwordAuthService;
@@ -94,6 +93,18 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
         ReflectionTestUtils.setField(passwordSignupService, "resendRateLimitSeconds", 0L); // 테스트용으로 비활성화
     }
 
+    /**
+     * 로그인 응답에서 Set-Cookie 헤더로부터 refreshToken 추출
+     */
+    private String extractRefreshTokenFromCookie(MvcResult result) {
+        String setCookieHeader = result.getResponse().getHeader("Set-Cookie");
+        if (setCookieHeader != null && setCookieHeader.contains("refreshToken=")) {
+            String tokenPart = setCookieHeader.split("refreshToken=")[1];
+            return tokenPart.split(";")[0];
+        }
+        return null;
+    }
+
     // ===== 시나리오 1: 완전한 회원가입 → 이메일 인증 → 로그인 플로우 =====
 
     @Nested
@@ -111,7 +122,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
 
             mockMvc.perform(post(API_BASE_PATH + "/signup")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(signupRequest)))
+                            .content(objectMapper.writeValueAsString(signupRequest)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.email").value(TEST_EMAIL))
                     .andExpect(jsonPath("$.requiresVerification").value(true));
@@ -129,7 +140,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
 
             mockMvc.perform(post(API_BASE_PATH + "/verify-email")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(verifyRequest)))
+                            .content(objectMapper.writeValueAsString(verifyRequest)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.requiresVerification").value(false));
 
@@ -138,23 +149,23 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             assertThat(activeUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
             assertThat(activeUser.getRole()).isEqualTo(UserRole.ASSOCIATE);
 
-            // === Step 3: POST /login → 200 OK, 토큰 발급 ===
+            // === Step 3: POST /login → 200 OK, 토큰 발급 (refreshToken은 쿠키로) ===
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             MvcResult loginResult = mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                    .andExpect(jsonPath("$.refreshToken").isNotEmpty())
                     .andExpect(jsonPath("$.userId").value(activeUser.getId()))
                     .andExpect(jsonPath("$.studentId").value(TEST_STUDENT_ID))
                     .andExpect(jsonPath("$.name").value(TEST_NAME))
                     .andExpect(jsonPath("$.role").value("ASSOCIATE"))
+                    .andExpect(cookie().exists("refreshToken"))
                     .andReturn();
 
             // === Step 4: Access Token 검증 ===
-            JsonNode responseJson = jsonMapper.readTree(loginResult.getResponse().getContentAsString());
+            JsonNode responseJson = objectMapper.readTree(loginResult.getResponse().getContentAsString());
             String accessToken = responseJson.get("accessToken").asText();
 
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(accessToken);
@@ -183,26 +194,24 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
 
             MvcResult loginResult = mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isOk())
                     .andReturn();
 
-            JsonNode loginJson = jsonMapper.readTree(loginResult.getResponse().getContentAsString());
+            JsonNode loginJson = objectMapper.readTree(loginResult.getResponse().getContentAsString());
             String originalAccessToken = loginJson.get("accessToken").asText();
-            String refreshToken = loginJson.get("refreshToken").asText();
+            String refreshToken = extractRefreshTokenFromCookie(loginResult);
+            assertThat(refreshToken).isNotNull();
 
-            // === Step 2: POST /refresh → 새 Access Token 발급 ===
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(refreshToken);
-
+            // === Step 2: POST /refresh (쿠키로) → 새 Access Token 발급 ===
             MvcResult refreshResult = mockMvc.perform(post(API_BASE_PATH + "/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(refreshRequest)))
+                            .cookie(new Cookie("refreshToken", refreshToken)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.accessToken").isNotEmpty())
                     .andExpect(jsonPath("$.expiresIn").value(ACCESS_TOKEN_VALIDITY))
                     .andReturn();
 
-            JsonNode refreshJson = jsonMapper.readTree(refreshResult.getResponse().getContentAsString());
+            JsonNode refreshJson = objectMapper.readTree(refreshResult.getResponse().getContentAsString());
             String newAccessToken = refreshJson.get("accessToken").asText();
 
             // === Step 3: 새 Access Token이 다른 것 확인 ===
@@ -226,30 +235,26 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
             MvcResult loginResult = mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isOk())
                     .andReturn();
 
-            JsonNode loginJson = jsonMapper.readTree(loginResult.getResponse().getContentAsString());
-            String refreshToken = loginJson.get("refreshToken").asText();
+            String refreshToken = extractRefreshTokenFromCookie(loginResult);
+            assertThat(refreshToken).isNotNull();
 
-            // === 여러 번 갱신 ===
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(refreshToken);
-
+            // === 여러 번 갱신 (쿠키로) ===
             MvcResult refresh1 = mockMvc.perform(post(API_BASE_PATH + "/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(refreshRequest)))
+                            .cookie(new Cookie("refreshToken", refreshToken)))
                     .andExpect(status().isOk())
                     .andReturn();
 
             MvcResult refresh2 = mockMvc.perform(post(API_BASE_PATH + "/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(refreshRequest)))
+                            .cookie(new Cookie("refreshToken", refreshToken)))
                     .andExpect(status().isOk())
                     .andReturn();
 
-            String token1 = jsonMapper.readTree(refresh1.getResponse().getContentAsString()).get("accessToken").asText();
-            String token2 = jsonMapper.readTree(refresh2.getResponse().getContentAsString()).get("accessToken").asText();
+            String token1 = objectMapper.readTree(refresh1.getResponse().getContentAsString()).get("accessToken").asText();
+            String token2 = objectMapper.readTree(refresh2.getResponse().getContentAsString()).get("accessToken").asText();
 
             // 서로 다른 토큰
             assertThat(token1).isNotEqualTo(token2);
@@ -275,28 +280,24 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
             MvcResult loginResult = mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isOk())
                     .andReturn();
 
-            JsonNode loginJson = jsonMapper.readTree(loginResult.getResponse().getContentAsString());
-            String refreshToken = loginJson.get("refreshToken").asText();
+            String refreshToken = extractRefreshTokenFromCookie(loginResult);
+            assertThat(refreshToken).isNotNull();
 
             // Refresh Token이 DB에 저장되어 있는지 확인
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(refreshToken)).isPresent();
 
-            // === Step 2: POST /logout → 200 OK ===
-            PasswordLogoutRequest logoutRequest = new PasswordLogoutRequest(refreshToken);
+            // === Step 2: POST /logout (쿠키로) → 200 OK ===
             mockMvc.perform(post(API_BASE_PATH + "/logout")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(logoutRequest)))
+                            .cookie(new Cookie("refreshToken", refreshToken)))
                     .andExpect(status().isOk());
 
             // === Step 3: 이전 Refresh Token으로 갱신 시도 → 401 Unauthorized ===
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(refreshToken);
             mockMvc.perform(post(API_BASE_PATH + "/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(refreshRequest)))
+                            .cookie(new Cookie("refreshToken", refreshToken)))
                     .andExpect(status().isUnauthorized());
 
             // 토큰이 무효화되었는지 확인
@@ -324,31 +325,27 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Step 1: Device A 로그인 ===
             MvcResult deviceAResult = mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isOk())
                     .andReturn();
 
-            String deviceARefreshToken = jsonMapper.readTree(deviceAResult.getResponse().getContentAsString())
-                    .get("refreshToken").asText();
+            String deviceARefreshToken = extractRefreshTokenFromCookie(deviceAResult);
 
             // === Step 2: Device B 로그인 ===
             MvcResult deviceBResult = mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isOk())
                     .andReturn();
 
-            String deviceBRefreshToken = jsonMapper.readTree(deviceBResult.getResponse().getContentAsString())
-                    .get("refreshToken").asText();
+            String deviceBRefreshToken = extractRefreshTokenFromCookie(deviceBResult);
 
             // 서로 다른 토큰인지 확인
             assertThat(deviceARefreshToken).isNotEqualTo(deviceBRefreshToken);
 
-            // === Step 3: Device A 로그아웃 ===
-            PasswordLogoutRequest logoutRequest = new PasswordLogoutRequest(deviceARefreshToken);
+            // === Step 3: Device A 로그아웃 (쿠키로) ===
             mockMvc.perform(post(API_BASE_PATH + "/logout")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(logoutRequest)))
+                            .cookie(new Cookie("refreshToken", deviceARefreshToken)))
                     .andExpect(status().isOk());
 
             // === Step 4: Device A 토큰 무효화 확인 ===
@@ -358,10 +355,8 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(deviceBRefreshToken)).isPresent();
 
             // Device B로 토큰 갱신 가능
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(deviceBRefreshToken);
             mockMvc.perform(post(API_BASE_PATH + "/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(refreshRequest)))
+                            .cookie(new Cookie("refreshToken", deviceBRefreshToken)))
                     .andExpect(status().isOk());
         }
 
@@ -379,18 +374,18 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === 여러 기기에서 로그인 ===
             MvcResult result1 = mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isOk())
                     .andReturn();
 
             MvcResult result2 = mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isOk())
                     .andReturn();
 
-            JsonNode json1 = jsonMapper.readTree(result1.getResponse().getContentAsString());
-            JsonNode json2 = jsonMapper.readTree(result2.getResponse().getContentAsString());
+            JsonNode json1 = objectMapper.readTree(result1.getResponse().getContentAsString());
+            JsonNode json2 = objectMapper.readTree(result2.getResponse().getContentAsString());
 
             // 사용자 정보는 동일해야 함
             assertThat(json1.get("userId").asLong()).isEqualTo(json2.get("userId").asLong());
@@ -398,9 +393,13 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             assertThat(json1.get("name").asText()).isEqualTo(json2.get("name").asText());
             assertThat(json1.get("role").asText()).isEqualTo(json2.get("role").asText());
 
-            // 토큰은 달라야 함
+            // Access 토큰은 달라야 함
             assertThat(json1.get("accessToken").asText()).isNotEqualTo(json2.get("accessToken").asText());
-            assertThat(json1.get("refreshToken").asText()).isNotEqualTo(json2.get("refreshToken").asText());
+
+            // Refresh 토큰도 달라야 함 (쿠키에서 추출)
+            String refreshToken1 = extractRefreshTokenFromCookie(result1);
+            String refreshToken2 = extractRefreshTokenFromCookie(result2);
+            assertThat(refreshToken1).isNotEqualTo(refreshToken2);
         }
     }
 
@@ -421,7 +420,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
 
             mockMvc.perform(post(API_BASE_PATH + "/signup")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(signupRequest)))
+                            .content(objectMapper.writeValueAsString(signupRequest)))
                     .andExpect(status().isCreated());
 
             // === 로그인 시도 → 401 Unauthorized (이메일 미인증) ===
@@ -429,7 +428,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
 
             mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isUnauthorized());
         }
 
@@ -447,7 +446,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
 
             mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(loginRequest)))
+                            .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isUnauthorized());
         }
     }

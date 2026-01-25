@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -37,7 +37,7 @@ class JwtAuthenticationFilterTest {
     // 실제 객체 사용 (고전파)
     private JwtTokenProvider jwtTokenProvider;
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-    private JsonMapper jsonMapper;
+    private ObjectMapper objectMapper;
 
     // Mock 유지 (런던파 - Servlet API 의존성 및 외부 서비스)
     @Mock
@@ -72,12 +72,12 @@ class JwtAuthenticationFilterTest {
                 TEST_AUDIENCE
         );
 
-        jsonMapper = JsonMapper.builder().build();
+        objectMapper = new ObjectMapper();
 
         jwtAuthenticationFilter = new JwtAuthenticationFilter(
                 jwtTokenProvider,
                 accountStatusService,
-                jsonMapper
+                objectMapper
         );
     }
 

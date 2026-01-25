@@ -3,6 +3,9 @@ package igrus.web.security.auth.common.repository;
 import igrus.web.security.auth.common.domain.PrivacyConsent;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -78,4 +81,14 @@ public interface PrivacyConsentRepository extends JpaRepository<PrivacyConsent, 
      * @param userId 사용자 ID
      */
     void deleteByUserId(Long userId);
+
+    /**
+     * 사용자의 모든 동의 기록을 물리적으로 삭제합니다 (hard delete).
+     * User의 @SQLRestriction을 우회하여 soft deleted 사용자의 데이터도 삭제합니다.
+     *
+     * @param userId 사용자 ID
+     */
+    @Modifying(flushAutomatically = true)
+    @Query(value = "DELETE FROM privacy_consents WHERE privacy_consents_user_id = :userId", nativeQuery = true)
+    void hardDeleteByUserId(@Param("userId") Long userId);
 }

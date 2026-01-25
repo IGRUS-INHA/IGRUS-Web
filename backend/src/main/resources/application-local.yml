@@ -31,3 +31,6 @@ logging:
 app:
   jwt:
     secret: local-dev-secret-key-do-not-use-in-production
+  cookie:
+    secure: false
+    same-site: Lax

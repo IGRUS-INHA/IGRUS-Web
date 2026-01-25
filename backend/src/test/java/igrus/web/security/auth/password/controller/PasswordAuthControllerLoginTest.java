@@ -8,10 +8,10 @@ import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.common.service.AccountStatusService;
+import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.controller.fixture.PasswordAuthTestFixture;
+import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
-import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordResetService;
@@ -25,15 +25,24 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.Cookie;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.http.ResponseCookie;
+
+import java.time.Duration;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
@@ -51,7 +60,7 @@ class PasswordAuthControllerLoginTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final JsonMapper jsonMapper = JsonMapper.builder().build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
     private PasswordAuthService passwordAuthService;
@@ -77,8 +86,31 @@ class PasswordAuthControllerLoginTest {
     @MockitoBean
     private AccountStatusService accountStatusService;
 
+    @MockitoBean
+    private CookieUtil cookieUtil;
+
     private static final String LOGIN_URL = "/api/v1/auth/password/login";
     private static final String LOGOUT_URL = "/api/v1/auth/password/logout";
+
+    @BeforeEach
+    void setUp() {
+        // Mock for login - createRefreshTokenCookie
+        given(cookieUtil.createRefreshTokenCookie(anyString(), any(Duration.class)))
+                .willReturn(ResponseCookie.from("refreshToken", "test-token")
+                        .httpOnly(true)
+                        .path("/api/v1/auth")
+                        .build());
+
+        // Mock for logout - getRefreshTokenFromCookies and deleteRefreshTokenCookie
+        given(cookieUtil.getRefreshTokenFromCookies(any()))
+                .willReturn(Optional.of(PasswordAuthTestFixture.VALID_REFRESH_TOKEN));
+        given(cookieUtil.deleteRefreshTokenCookie())
+                .willReturn(ResponseCookie.from("refreshToken", "")
+                        .httpOnly(true)
+                        .path("/api/v1/auth")
+                        .maxAge(0)
+                        .build());
+    }
 
     @Nested
     @DisplayName("로그인 테스트")
@@ -93,19 +125,18 @@ class PasswordAuthControllerLoginTest {
             void login_withAssociateRole_returns200() throws Exception {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
-                PasswordLoginResponse response = PasswordAuthTestFixture.associateLoginResponse();
+                LoginResult result = PasswordAuthTestFixture.associateLoginResult();
 
                 given(passwordAuthService.login(any(PasswordLoginRequest.class)))
-                        .willReturn(response);
+                        .willReturn(result);
 
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.accessToken").value(PasswordAuthTestFixture.VALID_ACCESS_TOKEN))
-                        .andExpect(jsonPath("$.refreshToken").value(PasswordAuthTestFixture.VALID_REFRESH_TOKEN))
                         .andExpect(jsonPath("$.userId").value(PasswordAuthTestFixture.VALID_USER_ID))
                         .andExpect(jsonPath("$.studentId").value(PasswordAuthTestFixture.VALID_STUDENT_ID))
                         .andExpect(jsonPath("$.name").value(PasswordAuthTestFixture.VALID_NAME))
@@ -118,15 +149,15 @@ class PasswordAuthControllerLoginTest {
             void login_withMemberRole_returnsMemberRole() throws Exception {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
-                PasswordLoginResponse response = PasswordAuthTestFixture.memberLoginResponse();
+                LoginResult result = PasswordAuthTestFixture.memberLoginResult();
 
                 given(passwordAuthService.login(any(PasswordLoginRequest.class)))
-                        .willReturn(response);
+                        .willReturn(result);
 
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.role").value(UserRole.MEMBER.name()));
@@ -137,15 +168,15 @@ class PasswordAuthControllerLoginTest {
             void login_withOperatorRole_returnsOperatorRole() throws Exception {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
-                PasswordLoginResponse response = PasswordAuthTestFixture.operatorLoginResponse();
+                LoginResult result = PasswordAuthTestFixture.operatorLoginResult();
 
                 given(passwordAuthService.login(any(PasswordLoginRequest.class)))
-                        .willReturn(response);
+                        .willReturn(result);
 
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.role").value(UserRole.OPERATOR.name()));
@@ -156,15 +187,15 @@ class PasswordAuthControllerLoginTest {
             void login_withAdminRole_returnsAdminRole() throws Exception {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
-                PasswordLoginResponse response = PasswordAuthTestFixture.adminLoginResponse();
+                LoginResult result = PasswordAuthTestFixture.adminLoginResult();
 
                 given(passwordAuthService.login(any(PasswordLoginRequest.class)))
-                        .willReturn(response);
+                        .willReturn(result);
 
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.role").value(UserRole.ADMIN.name()));
@@ -175,15 +206,15 @@ class PasswordAuthControllerLoginTest {
             void login_success_returnsUserRoleInfo() throws Exception {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
-                PasswordLoginResponse response = PasswordAuthTestFixture.memberLoginResponse();
+                LoginResult result = PasswordAuthTestFixture.memberLoginResult();
 
                 given(passwordAuthService.login(any(PasswordLoginRequest.class)))
-                        .willReturn(response);
+                        .willReturn(result);
 
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.role").exists())
@@ -209,7 +240,7 @@ class PasswordAuthControllerLoginTest {
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()))
@@ -228,7 +259,7 @@ class PasswordAuthControllerLoginTest {
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()))
@@ -247,7 +278,7 @@ class PasswordAuthControllerLoginTest {
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
                         .andExpect(jsonPath("$.code").value(ErrorCode.EMAIL_NOT_VERIFIED.getCode()))
@@ -268,7 +299,7 @@ class PasswordAuthControllerLoginTest {
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -283,7 +314,7 @@ class PasswordAuthControllerLoginTest {
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -298,7 +329,7 @@ class PasswordAuthControllerLoginTest {
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -313,7 +344,7 @@ class PasswordAuthControllerLoginTest {
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -336,7 +367,7 @@ class PasswordAuthControllerLoginTest {
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isForbidden())
                         .andExpect(jsonPath("$.code").value(ErrorCode.ACCOUNT_SUSPENDED.getCode()))
@@ -355,7 +386,7 @@ class PasswordAuthControllerLoginTest {
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isForbidden())
                         .andExpect(jsonPath("$.code").value(ErrorCode.ACCOUNT_WITHDRAWN.getCode()))
@@ -376,14 +407,11 @@ class PasswordAuthControllerLoginTest {
             @DisplayName("로그아웃 성공 - 200 OK [LOG-030]")
             void logout_withValidToken_returns200() throws Exception {
                 // given
-                PasswordLogoutRequest request = PasswordAuthTestFixture.validLogoutRequest();
-
-                willDoNothing().given(passwordAuthService).logout(any(PasswordLogoutRequest.class));
+                willDoNothing().given(passwordAuthService).logout(anyString());
 
                 // when & then
                 mockMvc.perform(post(LOGOUT_URL)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .cookie(new Cookie("refreshToken", PasswordAuthTestFixture.VALID_REFRESH_TOKEN)))
                         .andDo(print())
                         .andExpect(status().isOk());
             }
@@ -397,15 +425,12 @@ class PasswordAuthControllerLoginTest {
             @DisplayName("유효하지 않은 토큰 - 401 Unauthorized [LOG-031]")
             void logout_withInvalidToken_returns401() throws Exception {
                 // given
-                PasswordLogoutRequest request = PasswordAuthTestFixture.logoutRequestWithInvalidToken();
-
                 willThrow(new RefreshTokenInvalidException())
-                        .given(passwordAuthService).logout(any(PasswordLogoutRequest.class));
+                        .given(passwordAuthService).logout(anyString());
 
                 // when & then
                 mockMvc.perform(post(LOGOUT_URL)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .cookie(new Cookie("refreshToken", PasswordAuthTestFixture.INVALID_REFRESH_TOKEN)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
                         .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()))
@@ -413,33 +438,17 @@ class PasswordAuthControllerLoginTest {
             }
 
             @Test
-            @DisplayName("빈 토큰 - 400 Bad Request [LOG-032]")
-            void logout_withEmptyToken_returns400() throws Exception {
-                // given
-                PasswordLogoutRequest request = PasswordAuthTestFixture.logoutRequestWithEmptyToken();
+            @DisplayName("쿠키 없음 - 401 Unauthorized [LOG-032]")
+            void logout_withNoCookie_returns401() throws Exception {
+                // given - 쿠키 없이 요청: getRefreshTokenFromCookies가 빈 Optional 반환
+                given(cookieUtil.getRefreshTokenFromCookies(any()))
+                        .willReturn(Optional.empty());
 
                 // when & then
-                mockMvc.perform(post(LOGOUT_URL)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                mockMvc.perform(post(LOGOUT_URL))
                         .andDo(print())
-                        .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
-            }
-
-            @Test
-            @DisplayName("공백 토큰 - 400 Bad Request")
-            void logout_withBlankToken_returns400() throws Exception {
-                // given
-                PasswordLogoutRequest request = PasswordAuthTestFixture.logoutRequestWithBlankToken();
-
-                // when & then
-                mockMvc.perform(post(LOGOUT_URL)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
-                        .andDo(print())
-                        .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(status().isUnauthorized())
+                        .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()));
             }
         }
     }

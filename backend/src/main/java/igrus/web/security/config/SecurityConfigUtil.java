@@ -13,23 +13,23 @@ import java.util.Collections;
 @Component
 public class SecurityConfigUtil {
 
-    public void disableSessionManagement(HttpSecurity http) {
+    public void disableSessionManagement(HttpSecurity http) throws Exception {
         http.sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
     }
 
-    public void disableCsrf(HttpSecurity http) {
+    public void disableCsrf(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
     }
 
-    public void disableDefaultLoginOption(HttpSecurity http) {
+    public void disableDefaultLoginOption(HttpSecurity http) throws Exception {
         http.formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable);
     }
 
-    public void configCors(HttpSecurity http) {
+    public void configCors(HttpSecurity http) throws Exception {
         http.cors(
                 corsCustomizer ->
                         corsCustomizer.configurationSource(
@@ -58,7 +58,7 @@ public class SecurityConfigUtil {
      * - Content-Security-Policy
      * - Referrer-Policy: STRICT_ORIGIN_WHEN_CROSS_ORIGIN
      */
-    public void configSecurityHeaders(HttpSecurity http) {
+    public void configSecurityHeaders(HttpSecurity http) throws Exception {
         http.headers(headers -> headers
                 // XSS Protection (레거시 브라우저 호환성)
                 .xssProtection(xss -> xss.headerValue(

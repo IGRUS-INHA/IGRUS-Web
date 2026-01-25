@@ -2,12 +2,13 @@ package igrus.web.security.auth.password.controller;
 
 import igrus.web.common.exception.ErrorCode;
 import igrus.web.common.exception.GlobalExceptionHandler;
+import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.request.AccountRecoveryRequest;
-import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.account.AccountNotRecoverableException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.common.service.AccountStatusService;
+import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.controller.fixture.PasswordAuthTestFixture;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.service.PasswordAuthService;
@@ -18,18 +19,23 @@ import igrus.web.security.config.SecurityConfigUtil;
 import igrus.web.security.jwt.JwtAuthenticationFilter;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.UserRole;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseCookie;
+
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -47,7 +53,7 @@ class PasswordAuthControllerAccountRecoveryTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final JsonMapper jsonMapper = JsonMapper.builder().build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
     private PasswordAuthService passwordAuthService;
@@ -73,8 +79,21 @@ class PasswordAuthControllerAccountRecoveryTest {
     @MockitoBean
     private AccountStatusService accountStatusService;
 
+    @MockitoBean
+    private CookieUtil cookieUtil;
+
     private static final String RECOVERY_CHECK_URL = "/api/v1/auth/password/account/recovery-check";
     private static final String RECOVERY_URL = "/api/v1/auth/password/account/recover";
+
+    @BeforeEach
+    void setUp() {
+        // Mock for account recovery - createRefreshTokenCookie
+        given(cookieUtil.createRefreshTokenCookie(anyString(), any(Duration.class)))
+                .willReturn(ResponseCookie.from("refreshToken", "test-token")
+                        .httpOnly(true)
+                        .path("/api/v1/auth")
+                        .build());
+    }
 
     @Nested
     @DisplayName("복구 가능 여부 조회 테스트")
@@ -179,21 +198,20 @@ class PasswordAuthControllerAccountRecoveryTest {
             void recoverAccount_withValidRequest_returns200() throws Exception {
                 // given
                 AccountRecoveryRequest request = PasswordAuthTestFixture.validRecoveryRequest();
-                AccountRecoveryResponse response = PasswordAuthTestFixture.recoverySuccessResponse();
+                RecoveryResult result = PasswordAuthTestFixture.recoverySuccessResult();
 
                 given(accountRecoveryService.recoverAccount(
                         PasswordAuthTestFixture.VALID_STUDENT_ID,
                         PasswordAuthTestFixture.VALID_PASSWORD))
-                        .willReturn(response);
+                        .willReturn(result);
 
-                // when & then
+                // when & then - refreshToken은 쿠키로 설정됨
                 mockMvc.perform(post(RECOVERY_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.accessToken").value(PasswordAuthTestFixture.VALID_ACCESS_TOKEN))
-                        .andExpect(jsonPath("$.refreshToken").value(PasswordAuthTestFixture.VALID_REFRESH_TOKEN))
                         .andExpect(jsonPath("$.userId").value(PasswordAuthTestFixture.VALID_USER_ID))
                         .andExpect(jsonPath("$.studentId").value(PasswordAuthTestFixture.VALID_STUDENT_ID))
                         .andExpect(jsonPath("$.name").value(PasswordAuthTestFixture.VALID_NAME))
@@ -221,7 +239,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // when & then
                 mockMvc.perform(post(RECOVERY_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()))
@@ -245,7 +263,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // when & then
                 mockMvc.perform(post(RECOVERY_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()));
@@ -270,7 +288,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // when & then
                 mockMvc.perform(post(RECOVERY_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.ACCOUNT_NOT_RECOVERABLE.getCode()))
@@ -291,7 +309,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // when & then
                 mockMvc.perform(post(RECOVERY_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -306,7 +324,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // when & then
                 mockMvc.perform(post(RECOVERY_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -321,7 +339,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // when & then
                 mockMvc.perform(post(RECOVERY_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request)))
+                                .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));

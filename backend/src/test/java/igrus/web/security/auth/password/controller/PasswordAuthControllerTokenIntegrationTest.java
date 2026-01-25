@@ -1,9 +1,9 @@
 package igrus.web.security.auth.password.controller;
 
 import igrus.web.security.auth.common.domain.RefreshToken;
+import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.request.TokenRefreshRequest;
-import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,6 +13,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -46,13 +47,11 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given - 로그인하여 토큰 획득
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest);
 
-            String originalAccessToken = loginResponse.accessToken();
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(loginResponse.refreshToken());
-
-            // when & then
-            performPost("/refresh", refreshRequest)
+            // when & then - 쿠키로 토큰 갱신
+            mockMvc.perform(post(API_BASE_PATH + "/refresh")
+                            .cookie(new Cookie("refreshToken", loginResult.refreshToken())))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.accessToken").isNotEmpty())
                     .andExpect(jsonPath("$.expiresIn").value(ACCESS_TOKEN_VALIDITY));
@@ -64,13 +63,12 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest);
 
-            String originalAccessToken = loginResponse.accessToken();
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(loginResponse.refreshToken());
+            String originalAccessToken = loginResult.accessToken();
 
             // when
-            var newTokenResponse = passwordAuthService.refreshToken(refreshRequest);
+            var newTokenResponse = passwordAuthService.refreshToken(loginResult.refreshToken());
 
             // then - 새로운 Access Token이 발급됨
             assertThat(newTokenResponse.accessToken()).isNotEqualTo(originalAccessToken);
@@ -82,14 +80,14 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest);
 
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(loginResponse.refreshToken());
+            String refreshToken = loginResult.refreshToken();
 
             // when
-            var response1 = passwordAuthService.refreshToken(refreshRequest);
-            var response2 = passwordAuthService.refreshToken(refreshRequest);
-            var response3 = passwordAuthService.refreshToken(refreshRequest);
+            var response1 = passwordAuthService.refreshToken(refreshToken);
+            var response2 = passwordAuthService.refreshToken(refreshToken);
+            var response3 = passwordAuthService.refreshToken(refreshToken);
 
             // then - 모든 Access Token이 서로 다름
             assertThat(response1.accessToken())
@@ -111,29 +109,26 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given - 로그인하여 토큰 획득
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest);
 
             // Refresh Token 만료 시뮬레이션
-            RefreshToken refreshToken = refreshTokenRepository.findByTokenAndRevokedFalse(loginResponse.refreshToken())
+            RefreshToken refreshToken = refreshTokenRepository.findByTokenAndRevokedFalse(loginResult.refreshToken())
                     .orElseThrow();
             ReflectionTestUtils.setField(refreshToken, "expiresAt", Instant.now().minusSeconds(60));
             refreshTokenRepository.save(refreshToken);
 
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(loginResponse.refreshToken());
-
-            // when & then
-            performPost("/refresh", refreshRequest)
+            // when & then - 쿠키로 토큰 갱신 시도
+            mockMvc.perform(post(API_BASE_PATH + "/refresh")
+                            .cookie(new Cookie("refreshToken", loginResult.refreshToken())))
                     .andExpect(status().isUnauthorized());
         }
 
         @Test
         @DisplayName("[TOK-011] 잘못된 형식의 Refresh Token으로 갱신 - 401 Unauthorized 응답")
         void refreshToken_withMalformedToken_returns401() throws Exception {
-            // given
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest("invalid.malformed.token");
-
-            // when & then
-            performPost("/refresh", refreshRequest)
+            // when & then - 쿠키로 토큰 갱신 시도
+            mockMvc.perform(post(API_BASE_PATH + "/refresh")
+                            .cookie(new Cookie("refreshToken", "invalid.malformed.token")))
                     .andExpect(status().isUnauthorized());
         }
 
@@ -141,12 +136,11 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
         @DisplayName("[TOK-012] DB에 없는 Refresh Token으로 갱신 - 401 Unauthorized 응답")
         void refreshToken_withNonExistentToken_returns401() throws Exception {
             // given - 유효한 형식이지만 DB에 없는 토큰
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(
-                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
-            );
+            String nonExistentToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U";
 
-            // when & then
-            performPost("/refresh", refreshRequest)
+            // when & then - 쿠키로 토큰 갱신 시도
+            mockMvc.perform(post(API_BASE_PATH + "/refresh")
+                            .cookie(new Cookie("refreshToken", nonExistentToken)))
                     .andExpect(status().isUnauthorized());
         }
 
@@ -156,42 +150,23 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given - 로그인 후 로그아웃
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest);
 
             // 로그아웃으로 토큰 무효화
-            passwordAuthService.logout(new igrus.web.security.auth.password.dto.request.PasswordLogoutRequest(
-                    loginResponse.refreshToken()));
+            passwordAuthService.logout(loginResult.refreshToken());
 
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(loginResponse.refreshToken());
-
-            // when & then
-            performPost("/refresh", refreshRequest)
+            // when & then - 쿠키로 토큰 갱신 시도
+            mockMvc.perform(post(API_BASE_PATH + "/refresh")
+                            .cookie(new Cookie("refreshToken", loginResult.refreshToken())))
                     .andExpect(status().isUnauthorized());
         }
 
         @Test
-        @DisplayName("[TOK-014] 빈 Refresh Token으로 갱신 - 400 Bad Request 응답")
-        void refreshToken_withEmptyToken_returns400() throws Exception {
-            // given
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest("");
-
-            // when & then
-            performPost("/refresh", refreshRequest)
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @DisplayName("[TOK-015] null Refresh Token으로 갱신 - 400 Bad Request 응답")
-        void refreshToken_withNullToken_returns400() throws Exception {
-            // given - JSON에서 refreshToken 필드가 없는 경우
-            String requestJson = "{}";
-
-            // when & then
-            mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                            .post(API_BASE_PATH + "/refresh")
-                            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                            .content(requestJson))
-                    .andExpect(status().isBadRequest());
+        @DisplayName("[TOK-014] 쿠키 없이 갱신 시도 - 401 Unauthorized 응답")
+        void refreshToken_withNoCookie_returns401() throws Exception {
+            // when & then - 쿠키 없이 갱신 시도
+            mockMvc.perform(post(API_BASE_PATH + "/refresh"))
+                    .andExpect(status().isUnauthorized());
         }
     }
 
@@ -207,17 +182,15 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
-
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(loginResponse.refreshToken());
+            LoginResult loginResult = passwordAuthService.login(loginRequest);
 
             // when
-            var newTokenResponse = passwordAuthService.refreshToken(refreshRequest);
+            var newTokenResponse = passwordAuthService.refreshToken(loginResult.refreshToken());
 
             // then - 새 토큰에서 사용자 정보 추출
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(newTokenResponse.accessToken());
             assertThat(jwtTokenProvider.getStudentIdFromClaims(claims)).isEqualTo(TEST_STUDENT_ID);
-            assertThat(jwtTokenProvider.getUserIdFromClaims(claims)).isEqualTo(loginResponse.userId());
+            assertThat(jwtTokenProvider.getUserIdFromClaims(claims)).isEqualTo(loginResult.userId());
         }
 
         @Test
@@ -226,12 +199,11 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest);
 
-            TokenRefreshRequest refreshRequest = new TokenRefreshRequest(loginResponse.refreshToken());
-
-            // when & then
-            performPost("/refresh", refreshRequest)
+            // when & then - 쿠키로 토큰 갱신
+            mockMvc.perform(post(API_BASE_PATH + "/refresh")
+                            .cookie(new Cookie("refreshToken", loginResult.refreshToken())))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.expiresIn").value(ACCESS_TOKEN_VALIDITY));
         }

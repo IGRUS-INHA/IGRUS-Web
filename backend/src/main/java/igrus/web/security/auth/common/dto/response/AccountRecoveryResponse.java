@@ -8,9 +8,6 @@ public record AccountRecoveryResponse(
     @Schema(description = "JWT Access Token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     String accessToken,
 
-    @Schema(description = "JWT Refresh Token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
-    String refreshToken,
-
     @Schema(description = "사용자 고유 ID", example = "1")
     Long userId,
 
@@ -23,7 +20,7 @@ public record AccountRecoveryResponse(
     @Schema(description = "사용자 권한", example = "MEMBER", allowableValues = {"ASSOCIATE", "MEMBER", "OPERATOR", "ADMIN"})
     UserRole role,
 
-    @Schema(description = "Access Token 만료까지 남은 시간 (초)", example = "3600")
+    @Schema(description = "Access Token 만료까지 남은 시간 (밀리초)", example = "3600000")
     long expiresIn,
 
     @Schema(description = "복구 결과 메시지", example = "계정이 성공적으로 복구되었습니다")
@@ -31,7 +28,6 @@ public record AccountRecoveryResponse(
 ) {
     public static AccountRecoveryResponse of(
             String accessToken,
-            String refreshToken,
             Long userId,
             String studentId,
             String name,
@@ -40,7 +36,6 @@ public record AccountRecoveryResponse(
     ) {
         return new AccountRecoveryResponse(
             accessToken,
-            refreshToken,
             userId,
             studentId,
             name,

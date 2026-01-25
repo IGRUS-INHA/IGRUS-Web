@@ -1,7 +1,7 @@
 package igrus.web.security.auth.common.service;
 
 import igrus.web.common.ServiceIntegrationTestBase;
-import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
+import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.account.AccountNotRecoverableException;
 import igrus.web.security.auth.common.service.AccountRecoveryService.ReRegistrationCheckResult;
@@ -141,13 +141,12 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response).isNotNull();
             assertThat(response.accessToken()).isNotNull();
             assertThat(response.refreshToken()).isNotNull();
-            assertThat(response.message()).isEqualTo("계정이 성공적으로 복구되었습니다");
 
             // User 상태 확인 - DB에서 다시 조회
             User recoveredUser = userRepository.findByStudentIdIncludingDeleted(TEST_STUDENT_ID).orElseThrow();
@@ -172,13 +171,13 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.accessToken()).isNotNull();
             assertThat(response.refreshToken()).isNotNull();
             assertThat(response.userId()).isEqualTo(user.getId());
-            assertThat(response.expiresIn()).isEqualTo(ACCESS_TOKEN_VALIDITY);
+            assertThat(response.accessTokenValidity()).isEqualTo(ACCESS_TOKEN_VALIDITY);
         }
 
         @Test
@@ -190,7 +189,7 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.MEMBER);
@@ -375,7 +374,7 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.accessToken()).isNotNull();
@@ -553,7 +552,7 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
             passwordCredentialRepository.save(credential);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.OPERATOR);
@@ -589,7 +588,7 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
             passwordCredentialRepository.save(credential);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.ADMIN);
