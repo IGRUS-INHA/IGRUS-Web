@@ -8,10 +8,8 @@ import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
-import igrus.web.security.auth.password.dto.request.TokenRefreshRequest;
-import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.common.exception.account.AccountSuspendedException;
@@ -54,7 +52,7 @@ public class PasswordAuthService {
      * 로그인을 수행합니다.
      *
      * @param request 로그인 요청 (학번, 비밀번호)
-     * @return 로그인 응답 (토큰 및 사용자 정보)
+     * @return 로그인 결과 (토큰 및 사용자 정보)
      * @throws igrus.web.security.auth.common.exception.account.AccountLockedException 계정이 잠금 상태인 경우
      * @throws InvalidCredentialsException 학번 또는 비밀번호가 올바르지 않은 경우
      * @throws AccountSuspendedException 계정이 정지된 경우
@@ -62,7 +60,7 @@ public class PasswordAuthService {
      * @throws AccountRecoverableException 계정이 탈퇴 상태이지만 복구 가능한 경우
      * @throws EmailNotVerifiedException 이메일 인증이 완료되지 않은 경우
      */
-    public PasswordLoginResponse login(PasswordLoginRequest request) {
+    public LoginResult login(PasswordLoginRequest request) {
         log.info("로그인 시도: studentId={}", request.studentId());
 
         // 0. 계정 잠금 상태 확인
@@ -129,27 +127,28 @@ public class PasswordAuthService {
 
         log.info("로그인 성공: studentId={}, userId={}", request.studentId(), user.getId());
 
-        return PasswordLoginResponse.of(
+        return new LoginResult(
                 accessToken,
                 refreshToken,
                 user.getId(),
                 user.getStudentId(),
                 user.getName(),
                 user.getRole(),
-                accessTokenValidity
+                accessTokenValidity,
+                refreshTokenValidity
         );
     }
 
     /**
      * 로그아웃을 수행합니다.
      *
-     * @param request 로그아웃 요청 (리프레시 토큰)
+     * @param refreshTokenValue 리프레시 토큰
      * @throws RefreshTokenInvalidException 리프레시 토큰이 유효하지 않은 경우
      */
-    public void logout(PasswordLogoutRequest request) {
+    public void logout(String refreshTokenValue) {
         log.info("로그아웃 시도");
 
-        RefreshToken refreshToken = refreshTokenRepository.findByTokenAndRevokedFalse(request.refreshToken())
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenAndRevokedFalse(refreshTokenValue)
                 .orElseThrow(() -> {
                     log.warn("로그아웃 실패 - 유효하지 않은 리프레시 토큰");
                     return new RefreshTokenInvalidException();
@@ -163,17 +162,17 @@ public class PasswordAuthService {
     /**
      * 리프레시 토큰으로 새로운 액세스 토큰을 발급합니다.
      *
-     * @param request 토큰 갱신 요청 (리프레시 토큰)
+     * @param refreshTokenValue 리프레시 토큰
      * @return 새로운 액세스 토큰 응답
      * @throws RefreshTokenInvalidException 리프레시 토큰이 유효하지 않은 경우
      * @throws RefreshTokenExpiredException 리프레시 토큰이 만료된 경우
      */
     @Transactional(readOnly = true)
-    public TokenRefreshResponse refreshToken(TokenRefreshRequest request) {
+    public TokenRefreshResponse refreshToken(String refreshTokenValue) {
         log.info("토큰 갱신 시도");
 
         // 1. DB에서 Refresh Token 조회 (revoked가 아닌 토큰)
-        RefreshToken refreshTokenEntity = refreshTokenRepository.findByTokenAndRevokedFalse(request.refreshToken())
+        RefreshToken refreshTokenEntity = refreshTokenRepository.findByTokenAndRevokedFalse(refreshTokenValue)
                 .orElseThrow(() -> {
                     log.warn("토큰 갱신 실패 - 유효하지 않은 리프레시 토큰");
                     return new RefreshTokenInvalidException();
