@@ -135,7 +135,7 @@ public interface AdminMemberControllerApi {
 - [x] AdminMemberController 생성 (`backend/src/main/java/igrus/web/security/auth/approval/controller/AdminMemberController.java`)
 - [x] Swagger 문서화 (컨트롤러에 직접 어노테이션 포함 - dev 브랜치 패턴 적용)
 - [x] 통합 테스트 작성 및 통과 (`backend/src/test/java/igrus/web/security/auth/approval/controller/AdminMemberControllerTest.java`)
-- [ ] `./gradlew test` 전체 테스트 통과 (기존 WebMvcTest 관련 실패 존재)
+- [x] `./gradlew test` 전체 테스트 통과
 
 ## 주의사항
 

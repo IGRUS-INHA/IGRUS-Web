@@ -125,7 +125,7 @@ class PasswordAuthControllerSignupIntegrationTest {
 - [x] 로그인 통합 테스트 (8+ 케이스) 작성 및 통과 ✅ (17개 테스트 케이스)
 - [x] 토큰 갱신 통합 테스트 (5+ 케이스) 작성 및 통과 ✅ (11개 테스트 케이스)
 - [x] E2E 테스트 작성 및 통과 ✅ (10개 테스트 케이스)
-- [ ] `./gradlew test` 전체 테스트 통과 (기존 테스트들의 실패 존재)
+- [x] `./gradlew test` 전체 테스트 통과
 
 ## 구현 결과
 
