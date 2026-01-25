@@ -1,5 +1,7 @@
 # T062: JwtAuthenticationFilter 계정 상태 검증 추가
 
+**상태**: ✅ 완료 (2026-01-25)
+
 ## 개요
 
 현재 JwtAuthenticationFilter는 JWT 토큰의 유효성만 검증하고 있습니다. 토큰은 유효하지만 계정이 정지(SUSPENDED)되었거나 탈퇴(WITHDRAWN)된 경우에도 인증이 성공하는 문제가 있습니다.
@@ -181,29 +183,34 @@ public UserStatus getUserStatus(Long userId) {
 public void evictUserStatusCache(Long userId) {}
 ```
 
-## 테스트 계획
+## 테스트 결과
 
 ### 단위 테스트
 
 **파일 경로**: `backend/src/test/java/igrus/web/security/auth/common/service/AccountStatusServiceTest.java`
 
-| 테스트 케이스 | 설명 |
-|-------------|------|
-| ACTIVE 계정 | 정상적으로 true 반환 |
-| SUSPENDED 계정 | AccountSuspendedException 발생 |
-| WITHDRAWN 계정 | AccountWithdrawnException 발생 |
-| 존재하지 않는 userId | AccessTokenInvalidException 발생 |
+| 테스트 케이스 | 설명 | 상태 |
+|-------------|------|------|
+| ACTIVE 계정 | 예외 없이 정상 통과 | ✅ |
+| SUSPENDED 계정 | AccountSuspendedException 발생 | ✅ |
+| WITHDRAWN 계정 | AccountWithdrawnException 발생 | ✅ |
+| PENDING_VERIFICATION 계정 | EmailNotVerifiedException 발생 | ✅ |
+| 존재하지 않는 userId | UserNotFoundException 발생 | ✅ |
+| 상태 변경 후 검증 | ACTIVE → SUSPENDED 변경 후 예외 발생 | ✅ |
 
 ### 통합 테스트
 
 **파일 경로**: `backend/src/test/java/igrus/web/security/jwt/JwtAuthenticationFilterAccountStatusTest.java`
 
-| 테스트 케이스 | 설명 |
-|-------------|------|
-| 활성 계정 + 유효 토큰 | 인증 성공, 요청 처리 |
-| 정지 계정 + 유효 토큰 | 인증 실패, 403 반환 |
-| 탈퇴 계정 + 유효 토큰 | 인증 실패, 403 반환 |
-| 실시간 상태 변경 반영 | 토큰 발급 후 계정 정지 → 다음 요청 거부 |
+| 테스트 케이스 | 설명 | 상태 |
+|-------------|------|------|
+| ACTIVE 계정 + 유효 토큰 | 200, 요청 정상 처리 | ✅ |
+| SUSPENDED 계정 + 유효 토큰 | 403, ACCOUNT_SUSPENDED | ✅ |
+| WITHDRAWN 계정 + 유효 토큰 | 403, ACCOUNT_WITHDRAWN | ✅ |
+| PENDING_VERIFICATION 계정 + 유효 토큰 | 401, EMAIL_NOT_VERIFIED | ✅ |
+| 존재하지 않는 사용자 ID | 404, USER_NOT_FOUND | ✅ |
+| 토큰 발급 후 계정 정지 | 다음 요청에서 403 반환 | ✅ |
+| 토큰 발급 후 계정 탈퇴 | 다음 요청에서 403 반환 | ✅ |
 
 ## 고려사항
 
@@ -213,9 +220,9 @@ public void evictUserStatusCache(Long userId) {}
 
 ## 체크리스트
 
-- [ ] AccountStatusService 생성
-- [ ] JwtAuthenticationFilter에 계정 상태 검증 로직 추가
-- [ ] AccountStatusService 단위 테스트 작성
-- [ ] JwtAuthenticationFilter 통합 테스트 작성
-- [ ] 계정 정지/탈퇴 시나리오 E2E 테스트
-- [ ] 성능 모니터링 및 필요시 캐시 적용
+- [x] AccountStatusService 생성 ✅ 2026-01-25
+- [x] JwtAuthenticationFilter에 계정 상태 검증 로직 추가 ✅ 2026-01-25
+- [x] AccountStatusService 단위 테스트 작성 (6개 테스트 케이스) ✅ 2026-01-25
+- [x] JwtAuthenticationFilter 통합 테스트 작성 (7개 테스트 케이스) ✅ 2026-01-25
+- [x] 계정 정지/탈퇴 시나리오 E2E 테스트 ✅ 2026-01-25
+- [ ] 성능 모니터링 및 필요시 캐시 적용 (향후 최적화)

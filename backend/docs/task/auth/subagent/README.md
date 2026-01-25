@@ -6,20 +6,20 @@
 
 ## 태스크 목록
 
-| 태스크 ID | 제목 | 우선순위 | 복잡도 | 문서 |
-|----------|------|---------|--------|------|
-| T059 | Refresh Token 정리 스케줄러 | 낮음 | 낮음 | [T059-refresh-token-cleanup-scheduler.md](./T059-refresh-token-cleanup-scheduler.md) |
-| T060 | 탈퇴 후 개인정보 삭제 스케줄러 | 중간 | 중간 | [T060-withdrawn-user-cleanup-scheduler.md](./T060-withdrawn-user-cleanup-scheduler.md) |
-| T061 | 이메일 재시도 로직 | 중간 | 중간 | [T061-email-retry-logic.md](./T061-email-retry-logic.md) |
-| T062 | JWT 필터 계정 상태 검증 | 높음 | 낮음 | [T062-jwt-filter-account-status-validation.md](./T062-jwt-filter-account-status-validation.md) |
+| 태스크 ID | 제목 | 우선순위 | 복잡도 | 상태 | 문서 |
+|----------|------|---------|--------|------|------|
+| T059 | Refresh Token 정리 스케줄러 | 낮음 | 낮음 | 미완료 | [T059-refresh-token-cleanup-scheduler.md](./T059-refresh-token-cleanup-scheduler.md) |
+| T060 | 탈퇴 후 개인정보 삭제 스케줄러 | 중간 | 중간 | 미완료 | [T060-withdrawn-user-cleanup-scheduler.md](./T060-withdrawn-user-cleanup-scheduler.md) |
+| T061 | 이메일 재시도 로직 | 중간 | 중간 | 미완료 | [T061-email-retry-logic.md](./T061-email-retry-logic.md) |
+| T062 | JWT 필터 계정 상태 검증 | 높음 | 낮음 | ✅ 완료 | [T062-jwt-filter-account-status-validation.md](./T062-jwt-filter-account-status-validation.md) |
 
 ## 권장 구현 순서
 
-### 1단계: 보안 강화 (우선)
-1. **T062**: JWT 필터 계정 상태 검증
-   - 보안 취약점 해결
-   - 구현 복잡도 낮음
-   - 다른 태스크와 의존성 없음
+### 1단계: 보안 강화 (완료)
+1. ~~**T062**: JWT 필터 계정 상태 검증~~ ✅ (2026-01-25 완료)
+   - AccountStatusService 생성 (계정 상태 검증)
+   - JwtAuthenticationFilter에 계정 상태 검증 로직 추가
+   - 단위 테스트 6개, 통합 테스트 7개 작성 완료
 
 ### 2단계: 스케줄러 구현
 2. **T059**: Refresh Token 정리 스케줄러
@@ -48,13 +48,13 @@
 
 ## 예상 소요 시간
 
-| 태스크 | 예상 시간 |
-|-------|----------|
-| T059 | 1-2시간 |
-| T060 | 3-4시간 |
-| T061 | 2-3시간 |
-| T062 | 1-2시간 |
-| **총계** | **7-11시간** |
+| 태스크 | 예상 시간 | 상태 |
+|-------|----------|------|
+| T059 | 1-2시간 | 미완료 |
+| T060 | 3-4시간 | 미완료 |
+| T061 | 2-3시간 | 미완료 |
+| T062 | 1-2시간 | ✅ 완료 |
+| **총계** | **7-11시간** | **1/4 완료** |
 
 ## 관련 문서
 

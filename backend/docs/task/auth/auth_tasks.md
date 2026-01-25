@@ -31,8 +31,8 @@
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% |
 | Phase 7: US5 탈퇴 계정 복구 | 7 | 7 | 0 | 100% |
 | Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% |
-| Phase 9: Polish | 9 | 5 | 4 | 55.6% |
-| **Total** | **66** | **62** | **4** | **93.9%** |
+| Phase 9: Polish | 9 | 6 | 3 | 66.7% |
+| **Total** | **66** | **63** | **3** | **95.5%** |
 
 ### MVP 구현 현황 (Phase 1-4)
 - **완료율: 100% (31/31 태스크)** ✅
@@ -61,7 +61,6 @@
 ### 미완료
 - 스케줄러 (RefreshToken 정리, 탈퇴 후 개인정보 삭제)
 - 이메일 재시도 로직
-- JwtAuthenticationFilter 계정 상태 검증
 
 ---
 
@@ -363,7 +362,7 @@
 
 **Purpose**: 여러 User Story에 걸친 개선사항
 
-**Status**: 🟡 진행중 (5/9)
+**Status**: 🟡 진행중 (6/9)
 
 ### 스케줄링 및 정리 작업
 
@@ -380,9 +379,11 @@
 
 ### 보안 강화
 
-- [ ] T062 JwtAuthenticationFilter 계정 상태 검증 추가 - **미구현**
-  - 현재: JWT 토큰 유효성만 검증, DB에서 계정 상태 (SUSPENDED, WITHDRAWN) 확인하지 않음
-  - 필요: 토큰은 유효하지만 계정이 정지/탈퇴된 경우 처리
+- [x] T062 JwtAuthenticationFilter 계정 상태 검증 추가 in `backend/src/main/java/igrus/web/security/jwt/JwtAuthenticationFilter.java`
+  - ✅ AccountStatusService 생성 (`backend/src/main/java/igrus/web/security/auth/common/service/AccountStatusService.java`)
+  - ✅ JwtAuthenticationFilter에서 토큰 유효성 검증 후 계정 상태 (SUSPENDED, WITHDRAWN) 검증
+  - ✅ 단위 테스트 6개 케이스 (`AccountStatusServiceTest.java`)
+  - ✅ 통합 테스트 7개 케이스 (`JwtAuthenticationFilterAccountStatusTest.java`)
 - [x] T063 SecurityConfig URL 패턴 최종 업데이트 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
   - 변경: SecurityConfig → ApiSecurityConfig + PublicResourceSecurityConfig로 분리
   - ✅ /api/v1/auth/password/** 허용
@@ -545,8 +546,8 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% | P2 ✅ |
 | Phase 7: US5 탈퇴 복구 | 7 | 7 | 0 | 100% | P3 ✅ |
 | Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% | P2 ✅ |
-| Phase 9: Polish | 9 | 5 | 4 | 55.6% | 정리 및 개선 🟡 |
-| **Total** | **66** | **62** | **4** | **93.9%** | |
+| Phase 9: Polish | 9 | 6 | 3 | 66.7% | 정리 및 개선 🟡 |
+| **Total** | **66** | **63** | **3** | **95.5%** | |
 
 ### MVP Scope 현황
 
@@ -556,13 +557,12 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 - Phase 4 (US2 로그인): 7/7 tasks ✅
 - **MVP Total: 31/31 tasks (100%)** ✅
 
-### 미완료 태스크 목록 (4개)
+### 미완료 태스크 목록 (3개)
 
 #### Polish
 - T059: Refresh Token 정리 스케줄러
 - T060: 탈퇴 후 개인정보 삭제 스케줄러
 - T061: 이메일 재시도 로직
-- T062: JwtAuthenticationFilter 계정 상태 검증
 
 ---
 
