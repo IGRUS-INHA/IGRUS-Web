@@ -32,6 +32,9 @@ spring:
           starttls:
             enable: true
 
+springdoc:
+  server-url: http://igrus-web-alb-535342735.ap-northeast-2.elb.amazonaws.com
+
 app:
   cookie:
     secure: true
