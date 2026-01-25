@@ -7,6 +7,7 @@ import igrus.web.security.auth.common.exception.account.AccountWithdrawnExceptio
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.password.controller.fixture.PasswordAuthTestFixture;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
@@ -72,6 +73,9 @@ class PasswordAuthControllerLoginTest {
 
     @MockitoBean
     private AccountRecoveryService accountRecoveryService;
+
+    @MockitoBean
+    private AccountStatusService accountStatusService;
 
     private static final String LOGIN_URL = "/api/v1/auth/password/login";
     private static final String LOGOUT_URL = "/api/v1/auth/password/logout";

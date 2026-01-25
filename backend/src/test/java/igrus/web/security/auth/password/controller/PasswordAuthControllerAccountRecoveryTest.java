@@ -7,6 +7,7 @@ import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.account.AccountNotRecoverableException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.password.controller.fixture.PasswordAuthTestFixture;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.service.PasswordAuthService;
@@ -68,6 +69,9 @@ class PasswordAuthControllerAccountRecoveryTest {
 
     @MockitoBean
     private SecurityConfigUtil securityConfigUtil;
+
+    @MockitoBean
+    private AccountStatusService accountStatusService;
 
     private static final String RECOVERY_CHECK_URL = "/api/v1/auth/password/account/recovery-check";
     private static final String RECOVERY_URL = "/api/v1/auth/password/account/recover";

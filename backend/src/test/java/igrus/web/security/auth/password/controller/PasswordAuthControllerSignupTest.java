@@ -7,6 +7,7 @@ import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
@@ -57,6 +58,9 @@ class PasswordAuthControllerSignupTest {
 
     @MockitoBean
     private AccountRecoveryService accountRecoveryService;
+
+    @MockitoBean
+    private AccountStatusService accountStatusService;
 
     private static final String SIGNUP_URL = "/api/v1/auth/password/signup";
 

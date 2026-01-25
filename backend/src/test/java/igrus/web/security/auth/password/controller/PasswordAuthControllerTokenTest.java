@@ -6,6 +6,7 @@ import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.password.dto.request.TokenRefreshRequest;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
@@ -54,6 +55,9 @@ class PasswordAuthControllerTokenTest {
 
     @MockitoBean
     private AccountRecoveryService accountRecoveryService;
+
+    @MockitoBean
+    private AccountStatusService accountStatusService;
 
     private static final String VALID_REFRESH_TOKEN = "valid.refresh.token";
     private static final String EXPIRED_REFRESH_TOKEN = "expired.refresh.token";
