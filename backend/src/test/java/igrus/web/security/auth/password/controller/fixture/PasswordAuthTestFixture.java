@@ -1,10 +1,10 @@
 package igrus.web.security.auth.password.controller.fixture;
 
+import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.request.AccountRecoveryRequest;
-import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
+import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.user.domain.UserRole;
 
@@ -99,7 +99,6 @@ public final class PasswordAuthTestFixture {
     public static PasswordLoginResponse loginSuccessResponse(UserRole role) {
         return PasswordLoginResponse.of(
                 VALID_ACCESS_TOKEN,
-                VALID_REFRESH_TOKEN,
                 VALID_USER_ID,
                 VALID_STUDENT_ID,
                 VALID_NAME,
@@ -134,36 +133,6 @@ public final class PasswordAuthTestFixture {
      */
     public static PasswordLoginResponse adminLoginResponse() {
         return loginSuccessResponse(UserRole.ADMIN);
-    }
-
-    // ==================== Logout Request Fixtures ====================
-
-    /**
-     * 유효한 로그아웃 요청 생성
-     */
-    public static PasswordLogoutRequest validLogoutRequest() {
-        return new PasswordLogoutRequest(VALID_REFRESH_TOKEN);
-    }
-
-    /**
-     * 유효하지 않은 토큰으로 로그아웃 요청 생성
-     */
-    public static PasswordLogoutRequest logoutRequestWithInvalidToken() {
-        return new PasswordLogoutRequest(INVALID_REFRESH_TOKEN);
-    }
-
-    /**
-     * 빈 토큰으로 로그아웃 요청 생성
-     */
-    public static PasswordLogoutRequest logoutRequestWithEmptyToken() {
-        return new PasswordLogoutRequest(EMPTY_STRING);
-    }
-
-    /**
-     * 공백 토큰으로 로그아웃 요청 생성
-     */
-    public static PasswordLogoutRequest logoutRequestWithBlankToken() {
-        return new PasswordLogoutRequest(BLANK_STRING);
     }
 
     // ==================== Account Recovery Request Fixtures ====================
@@ -203,20 +172,69 @@ public final class PasswordAuthTestFixture {
         return new AccountRecoveryRequest(INVALID_FORMAT_STUDENT_ID, VALID_PASSWORD);
     }
 
-    // ==================== Account Recovery Response Fixtures ====================
+    // ==================== Login Result Fixtures (for service mocking) ====================
+
+    public static final long VALID_REFRESH_TOKEN_VALIDITY = 604800000L; // 7일
 
     /**
-     * 계정 복구 성공 응답 생성
+     * 특정 역할에 대한 로그인 결과 생성 (서비스 레이어 반환값 mock용)
      */
-    public static AccountRecoveryResponse recoverySuccessResponse() {
-        return AccountRecoveryResponse.of(
+    public static LoginResult loginResult(UserRole role) {
+        return new LoginResult(
+                VALID_ACCESS_TOKEN,
+                VALID_REFRESH_TOKEN,
+                VALID_USER_ID,
+                VALID_STUDENT_ID,
+                VALID_NAME,
+                role,
+                VALID_EXPIRES_IN,
+                VALID_REFRESH_TOKEN_VALIDITY
+        );
+    }
+
+    /**
+     * 준회원 로그인 결과 생성
+     */
+    public static LoginResult associateLoginResult() {
+        return loginResult(UserRole.ASSOCIATE);
+    }
+
+    /**
+     * 정회원 로그인 결과 생성
+     */
+    public static LoginResult memberLoginResult() {
+        return loginResult(UserRole.MEMBER);
+    }
+
+    /**
+     * 운영진 로그인 결과 생성
+     */
+    public static LoginResult operatorLoginResult() {
+        return loginResult(UserRole.OPERATOR);
+    }
+
+    /**
+     * 관리자 로그인 결과 생성
+     */
+    public static LoginResult adminLoginResult() {
+        return loginResult(UserRole.ADMIN);
+    }
+
+    // ==================== Account Recovery Result Fixtures ====================
+
+    /**
+     * 계정 복구 성공 결과 생성 (서비스 레이어 반환값 mock용)
+     */
+    public static RecoveryResult recoverySuccessResult() {
+        return new RecoveryResult(
                 VALID_ACCESS_TOKEN,
                 VALID_REFRESH_TOKEN,
                 VALID_USER_ID,
                 VALID_STUDENT_ID,
                 VALID_NAME,
                 UserRole.MEMBER,
-                VALID_EXPIRES_IN
+                VALID_EXPIRES_IN,
+                VALID_REFRESH_TOKEN_VALIDITY
         );
     }
 

@@ -7,9 +7,8 @@ import igrus.web.security.auth.common.exception.account.AccountWithdrawnExceptio
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.password.domain.PasswordCredential;
+import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
-import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
@@ -105,7 +104,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            PasswordLoginResponse response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request);
 
             // then
             assertThat(response).isNotNull();
@@ -129,7 +128,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            PasswordLoginResponse response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.MEMBER);
@@ -145,7 +144,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            PasswordLoginResponse response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.OPERATOR);
@@ -161,7 +160,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            PasswordLoginResponse response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.ADMIN);
@@ -177,10 +176,10 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            PasswordLoginResponse response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request);
 
             // then
-            assertThat(response.expiresIn()).isEqualTo(ACCESS_TOKEN_VALIDITY);
+            assertThat(response.accessTokenValidity()).isEqualTo(ACCESS_TOKEN_VALIDITY);
         }
 
         @Test
@@ -193,7 +192,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            PasswordLoginResponse response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request);
 
             // then
             assertThat(response.name()).isEqualTo("홍길동");
@@ -304,15 +303,15 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
 
             // 먼저 로그인하여 토큰 획득
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResponse = passwordAuthService.login(loginRequest);
 
-            PasswordLogoutRequest logoutRequest = new PasswordLogoutRequest(loginResponse.refreshToken());
+            String refreshTokenString = loginResponse.refreshToken();
 
             // when
-            passwordAuthService.logout(logoutRequest);
+            passwordAuthService.logout(refreshTokenString);
 
             // then - 토큰이 무효화되었는지 확인
-            Optional<RefreshToken> revokedToken = refreshTokenRepository.findByTokenAndRevokedFalse(loginResponse.refreshToken());
+            Optional<RefreshToken> revokedToken = refreshTokenRepository.findByTokenAndRevokedFalse(refreshTokenString);
             assertThat(revokedToken).isEmpty();
         }
 
@@ -325,15 +324,14 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
 
             // 먼저 로그인하여 토큰 획득
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResponse = passwordAuthService.login(loginRequest);
             String refreshTokenString = loginResponse.refreshToken();
 
             // 로그아웃
-            PasswordLogoutRequest logoutRequest = new PasswordLogoutRequest(refreshTokenString);
-            passwordAuthService.logout(logoutRequest);
+            passwordAuthService.logout(refreshTokenString);
 
             // when & then - 로그아웃된 토큰으로 다시 로그아웃 시도
-            assertThatThrownBy(() -> passwordAuthService.logout(logoutRequest))
+            assertThatThrownBy(() -> passwordAuthService.logout(refreshTokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -341,10 +339,10 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
         @DisplayName("잘못된 토큰으로 로그아웃 시도 시 예외 발생 [LOG-032]")
         void logout_withInvalidRefreshToken_throwsException() {
             // given
-            PasswordLogoutRequest request = new PasswordLogoutRequest("invalid.refresh.token");
+            String invalidRefreshToken = "invalid.refresh.token";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.logout(request))
+            assertThatThrownBy(() -> passwordAuthService.logout(invalidRefreshToken))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
     }
@@ -363,8 +361,8 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when - 두 번 로그인
-            PasswordLoginResponse responseA = passwordAuthService.login(request);
-            PasswordLoginResponse responseB = passwordAuthService.login(request);
+            LoginResult responseA = passwordAuthService.login(request);
+            LoginResult responseB = passwordAuthService.login(request);
 
             // then - 서로 다른 토큰이 발급됨
             assertThat(responseA.accessToken()).isNotEqualTo(responseB.accessToken());
@@ -385,12 +383,11 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // 두 기기에서 로그인
-            PasswordLoginResponse responseA = passwordAuthService.login(loginRequest);
-            PasswordLoginResponse responseB = passwordAuthService.login(loginRequest);
+            LoginResult responseA = passwordAuthService.login(loginRequest);
+            LoginResult responseB = passwordAuthService.login(loginRequest);
 
             // Device A 로그아웃
-            PasswordLogoutRequest logoutRequestA = new PasswordLogoutRequest(responseA.refreshToken());
-            passwordAuthService.logout(logoutRequestA);
+            passwordAuthService.logout(responseA.refreshToken());
 
             // then
             // Device A 토큰은 무효화됨

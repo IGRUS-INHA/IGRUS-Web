@@ -1,17 +1,18 @@
 package igrus.web.security.auth.password.controller;
 
+import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
-import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -42,7 +43,7 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
     class LoginSuccessTest {
 
         @Test
-        @DisplayName("[LOG-001] 정상 로그인 - 200 응답 및 Access/Refresh Token 발급")
+        @DisplayName("[LOG-001] 정상 로그인 - 200 응답 및 Access Token 발급, Refresh Token 쿠키 설정")
         void login_withValidCredentials_returns200WithTokens() throws Exception {
             // given
             createAndSaveDefaultUserWithCredential();
@@ -52,12 +53,12 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
             performPost("/login", request)
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                    .andExpect(jsonPath("$.refreshToken").isNotEmpty())
                     .andExpect(jsonPath("$.userId").isNumber())
                     .andExpect(jsonPath("$.studentId").value(TEST_STUDENT_ID))
                     .andExpect(jsonPath("$.name").value(TEST_NAME))
                     .andExpect(jsonPath("$.role").value("ASSOCIATE"))
-                    .andExpect(jsonPath("$.expiresIn").value(ACCESS_TOKEN_VALIDITY));
+                    .andExpect(jsonPath("$.expiresIn").value(ACCESS_TOKEN_VALIDITY))
+                    .andExpect(cookie().exists("refreshToken"));
         }
 
         @Test
@@ -207,16 +208,15 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
             // given - 로그인하여 토큰 획득
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest);
 
-            PasswordLogoutRequest logoutRequest = new PasswordLogoutRequest(loginResponse.refreshToken());
-
-            // when & then
-            performPost("/logout", logoutRequest)
+            // when & then - 쿠키로 로그아웃
+            mockMvc.perform(post(API_BASE_PATH + "/logout")
+                            .cookie(new Cookie("refreshToken", loginResult.refreshToken())))
                     .andExpect(status().isOk());
 
             // 토큰 무효화 확인
-            assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(loginResponse.refreshToken())).isEmpty();
+            assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(loginResult.refreshToken())).isEmpty();
         }
 
         @Test
@@ -225,36 +225,31 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
             // given - 로그인 후 로그아웃
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            PasswordLoginResponse loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest);
 
-            PasswordLogoutRequest logoutRequest = new PasswordLogoutRequest(loginResponse.refreshToken());
-            passwordAuthService.logout(logoutRequest);
+            passwordAuthService.logout(loginResult.refreshToken());
 
             // when - 동일 토큰으로 재로그아웃 시도
-            performPost("/logout", logoutRequest)
+            mockMvc.perform(post(API_BASE_PATH + "/logout")
+                            .cookie(new Cookie("refreshToken", loginResult.refreshToken())))
                     .andExpect(status().isUnauthorized());
         }
 
         @Test
         @DisplayName("[LOG-032] 잘못된 Refresh Token으로 로그아웃 시도 - 401 Unauthorized 응답")
         void logout_withInvalidRefreshToken_returns401() throws Exception {
-            // given
-            PasswordLogoutRequest logoutRequest = new PasswordLogoutRequest("invalid.refresh.token");
-
-            // when & then
-            performPost("/logout", logoutRequest)
+            // when & then - 쿠키로 로그아웃 시도
+            mockMvc.perform(post(API_BASE_PATH + "/logout")
+                            .cookie(new Cookie("refreshToken", "invalid.refresh.token")))
                     .andExpect(status().isUnauthorized());
         }
 
         @Test
-        @DisplayName("[LOG-033] 빈 토큰으로 로그아웃 시도 - 400 Bad Request 응답")
-        void logout_withEmptyToken_returns400() throws Exception {
-            // given
-            PasswordLogoutRequest logoutRequest = new PasswordLogoutRequest("");
-
-            // when & then
-            performPost("/logout", logoutRequest)
-                    .andExpect(status().isBadRequest());
+        @DisplayName("[LOG-033] 쿠키 없이 로그아웃 시도 - 401 Unauthorized 응답")
+        void logout_withNoCookie_returns401() throws Exception {
+            // when & then - 쿠키 없이 로그아웃 시도
+            mockMvc.perform(post(API_BASE_PATH + "/logout"))
+                    .andExpect(status().isUnauthorized());
         }
     }
 
@@ -268,20 +263,20 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
         @DisplayName("[LOG-040] 여러 기기에서 동시 로그인 - 각각 독립된 토큰 발급")
         void login_multipleDevices_issuesSeparateTokens() throws Exception {
             // given
-            User user = createAndSaveDefaultUserWithCredential();
+            createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when - 두 번 로그인
-            PasswordLoginResponse response1 = passwordAuthService.login(request);
-            PasswordLoginResponse response2 = passwordAuthService.login(request);
+            LoginResult result1 = passwordAuthService.login(request);
+            LoginResult result2 = passwordAuthService.login(request);
 
             // then - 서로 다른 토큰 발급
-            assertThat(response1.accessToken()).isNotEqualTo(response2.accessToken());
-            assertThat(response1.refreshToken()).isNotEqualTo(response2.refreshToken());
+            assertThat(result1.accessToken()).isNotEqualTo(result2.accessToken());
+            assertThat(result1.refreshToken()).isNotEqualTo(result2.refreshToken());
 
             // 둘 다 유효한 토큰
-            assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(response1.refreshToken())).isPresent();
-            assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(response2.refreshToken())).isPresent();
+            assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(result1.refreshToken())).isPresent();
+            assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(result2.refreshToken())).isPresent();
         }
 
         @Test
@@ -292,12 +287,12 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // 두 기기에서 로그인
-            PasswordLoginResponse deviceA = passwordAuthService.login(loginRequest);
-            PasswordLoginResponse deviceB = passwordAuthService.login(loginRequest);
+            LoginResult deviceA = passwordAuthService.login(loginRequest);
+            LoginResult deviceB = passwordAuthService.login(loginRequest);
 
-            // when - Device A 로그아웃
-            PasswordLogoutRequest logoutRequest = new PasswordLogoutRequest(deviceA.refreshToken());
-            performPost("/logout", logoutRequest)
+            // when - Device A 로그아웃 (쿠키로)
+            mockMvc.perform(post(API_BASE_PATH + "/logout")
+                            .cookie(new Cookie("refreshToken", deviceA.refreshToken())))
                     .andExpect(status().isOk());
 
             // then - Device A 토큰 무효화, Device B 토큰 유효
