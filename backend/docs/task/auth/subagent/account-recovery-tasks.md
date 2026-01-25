@@ -8,7 +8,9 @@
 
 탈퇴 후 5일 이내 계정 복구 기능을 완성합니다. 탈퇴한 사용자가 로그인 시도 시 복구 가능 여부를 알려주고, 복구를 선택하면 계정을 다시 활성화합니다.
 
-## 이미 구현된 것
+## 구현 완료
+
+### 이미 구현된 것
 
 - ✅ `AccountRecoveryService`: `backend/src/main/java/igrus/web/security/auth/common/service/AccountRecoveryService.java`
   - `checkRecoveryEligibility(String studentId)` - 복구 가능 여부 확인
@@ -17,57 +19,49 @@
 - ✅ `AccountRecoveryResponse` DTO: `backend/src/main/java/igrus/web/security/auth/common/dto/response/AccountRecoveryResponse.java`
 - ✅ `RecoveryEligibilityResponse` DTO: `backend/src/main/java/igrus/web/security/auth/common/dto/response/RecoveryEligibilityResponse.java`
 
-## 구현할 태스크
-
-### T047: 로그인 시 탈퇴 계정 복구 프롬프트 로직
+### T047: 로그인 시 탈퇴 계정 복구 프롬프트 로직 ✅
 
 **파일**: `backend/src/main/java/igrus/web/security/auth/password/service/PasswordAuthService.java`
 
-현재 동작:
-- 탈퇴 계정 로그인 시 `AccountWithdrawnException` 발생
+구현 완료:
+- `AccountRecoverableException` 예외 클래스 활용
+- 탈퇴 계정이면서 복구 가능 기간(5일) 내인 경우, `AccountRecoverableException` 발생
+- 복구 불가능한 경우 `AccountWithdrawnException` 발생
+- 프론트엔드가 이를 감지하여 복구 UI를 표시할 수 있음
 
-변경할 동작:
-- 탈퇴 계정이면서 복구 가능 기간(5일) 내인 경우, 복구 가능 정보를 포함한 특별한 예외 또는 응답 반환
-- 프론트엔드가 이를 감지하여 복구 UI를 표시할 수 있도록 함
-
-구현 방안:
-1. `AccountRecoverableException` 생성 (복구 가능한 탈퇴 계정임을 알림)
-2. 또는 `GlobalExceptionHandler`에서 `AccountWithdrawnException` 처리 시 복구 가능 여부 체크
-
-### T048: 계정 복구 컨트롤러 엔드포인트
+### T048: 계정 복구 컨트롤러 엔드포인트 ✅
 
 **파일**: `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthController.java`
 
-추가할 엔드포인트:
-- `GET /api/v1/auth/password/account/recovery-status?studentId={studentId}` - 복구 가능 여부 확인
+추가된 엔드포인트:
+- `GET /api/v1/auth/password/account/recovery-check?studentId={studentId}` - 복구 가능 여부 확인
 - `POST /api/v1/auth/password/account/recover` - 계정 복구 실행
 
-```java
-@GetMapping("/account/recovery-status")
-public ResponseEntity<RecoveryEligibilityResponse> checkRecoveryStatus(
-    @RequestParam String studentId
-);
+**Swagger 문서화**: `PasswordAuthControllerApi.java`에 완료
 
-@PostMapping("/account/recover")
-public ResponseEntity<AccountRecoveryResponse> recoverAccount(
-    @Valid @RequestBody AccountRecoveryRequest request
-);
-```
-
-**Swagger 문서화**: `PasswordAuthControllerApi.java`에 메서드 시그니처 추가
-
-### T050: 통합 테스트
+### T050: 컨트롤러 레벨 테스트 ✅
 
 **경로**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerAccountRecoveryTest.java`
 
-테스트 케이스:
-1. 탈퇴 계정 로그인 시도 → 복구 가능 응답 반환
-2. 복구 가능 여부 조회 성공 (복구 가능)
-3. 복구 가능 여부 조회 성공 (복구 불가 - 5일 초과)
-4. 계정 복구 성공
-5. 잘못된 비밀번호로 복구 시도 시 실패
-6. 복구 불가능한 계정 복구 시도 시 실패
-7. 복구 후 정상 로그인 성공
+구현된 테스트 케이스:
+1. ✅ 복구 가능한 계정 조회 - 200 OK [REC-001]
+2. ✅ 복구 불가능한 계정 조회 (5일 초과) - 200 OK [REC-002]
+3. ✅ 탈퇴 상태가 아닌 계정 조회 - 200 OK [REC-003]
+4. ✅ 학번 형식 오류 - 400 Bad Request [REC-004]
+5. ✅ 학번 누락 - 400 Bad Request [REC-005]
+6. ✅ 유효한 요청으로 계정 복구 성공 - 200 OK [REC-010]
+7. ✅ 잘못된 비밀번호 - 401 Unauthorized [REC-011]
+8. ✅ 존재하지 않는 계정 - 401 Unauthorized [REC-012]
+9. ✅ 복구 기간 만료 - 400 Bad Request [REC-013]
+10. ✅ 학번 빈 값 - 400 Bad Request [REC-014]
+11. ✅ 비밀번호 빈 값 - 400 Bad Request [REC-015]
+12. ✅ 학번 형식 오류 - 400 Bad Request [REC-016]
+
+### 기타 테스트 ✅
+
+- `backend/src/test/java/igrus/web/security/auth/common/service/AccountRecoveryServiceTest.java` - 서비스 단위 테스트
+- `backend/src/test/java/igrus/web/security/auth/common/integration/AccountRecoveryIntegrationTest.java` - 통합 테스트
+- `backend/src/test/java/igrus/web/security/auth/e2e/AuthenticationE2ETest.java` - E2E 테스트 (E2E-005 시나리오)
 
 ## 참고 파일
 
@@ -76,17 +70,37 @@ public ResponseEntity<AccountRecoveryResponse> recoverAccount(
 - 계정 복구 서비스: `backend/src/main/java/igrus/web/security/auth/common/service/AccountRecoveryService.java`
 - 단위 테스트: `backend/src/test/java/igrus/web/security/auth/common/service/AccountRecoveryServiceTest.java`
 - 예외 처리: `backend/src/main/java/igrus/web/common/exception/GlobalExceptionHandler.java`
+- 테스트 픽스쳐: `backend/src/test/java/igrus/web/security/auth/password/controller/fixture/PasswordAuthTestFixture.java`
 
 ## 완료 조건
 
-- [ ] PasswordAuthService에 복구 프롬프트 로직 추가 (또는 별도 예외 클래스)
-- [ ] PasswordAuthController에 복구 관련 2개 엔드포인트 추가
-- [ ] PasswordAuthControllerApi에 Swagger 문서화
-- [ ] 통합 테스트 작성 및 통과
-- [ ] `./gradlew test` 전체 테스트 통과
+- [x] PasswordAuthService에 복구 프롬프트 로직 추가 (AccountRecoverableException 활용)
+- [x] PasswordAuthController에 복구 관련 2개 엔드포인트 추가
+- [x] PasswordAuthControllerApi에 Swagger 문서화
+- [x] 컨트롤러 테스트 작성 및 통과
+- [x] 통합 테스트 작성 및 통과
+- [x] E2E 테스트 작성 및 통과
+- [x] `./gradlew test` 전체 테스트 통과
 
 ## 주의사항
 
 - `PasswordAuthController.java`는 다른 worktree(password-reset)에서도 수정할 수 있으므로, 새로운 메서드만 추가하고 기존 코드는 수정하지 말 것
 - `PasswordAuthService.java`의 `login()` 메서드 수정 시 기존 로직을 해치지 않도록 주의
 - 복구 가능 여부 체크 API는 인증 없이 접근 가능해야 함 (SecurityConfig 확인 필요)
+
+## 수정된 파일 목록
+
+### 신규 파일
+- `backend/src/main/java/igrus/web/security/auth/approval/dto/response/BulkApprovalResultResponse.java`
+- `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerAccountRecoveryTest.java`
+
+### 수정된 파일
+- `backend/src/main/java/igrus/web/security/auth/approval/controller/AdminMemberController.java` (불필요한 @Override 제거)
+- `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthController.java` (@Validated 추가, @Valid 인터페이스로 이동)
+- `backend/src/main/java/igrus/web/security/auth/password/controller/PasswordAuthControllerApi.java` (@Valid 어노테이션 추가)
+- `backend/src/test/java/igrus/web/security/auth/password/controller/fixture/PasswordAuthTestFixture.java` (복구 관련 픽스쳐 추가)
+- `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerLoginTest.java` (PasswordResetService MockBean 추가)
+- `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerSignupTest.java` (PasswordResetService MockBean 추가)
+- `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerTokenTest.java` (PasswordResetService MockBean 추가)
+- `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerVerificationTest.java` (PasswordResetService MockBean 추가)
+- `backend/src/test/java/igrus/web/security/auth/e2e/AuthenticationE2ETest.java` (deleted 필드 설정 추가, 트랜잭션 처리)
