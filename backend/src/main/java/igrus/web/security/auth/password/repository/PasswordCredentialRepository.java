@@ -2,6 +2,7 @@ package igrus.web.security.auth.password.repository;
 
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -31,4 +32,14 @@ public interface PasswordCredentialRepository extends JpaRepository<PasswordCred
      * @param userId 사용자 ID
      */
     void deleteByUserId(Long userId);
+
+    /**
+     * 사용자의 비밀번호 자격 증명을 물리적으로 삭제합니다 (hard delete).
+     * User의 @SQLRestriction을 우회하여 soft deleted 사용자의 데이터도 삭제합니다.
+     *
+     * @param userId 사용자 ID
+     */
+    @Modifying(flushAutomatically = true)
+    @Query(value = "DELETE FROM password_credentials WHERE password_credentials_user_id = :userId", nativeQuery = true)
+    void hardDeleteByUserId(@Param("userId") Long userId);
 }

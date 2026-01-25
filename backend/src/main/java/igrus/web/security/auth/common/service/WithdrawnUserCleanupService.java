@@ -83,11 +83,11 @@ public class WithdrawnUserCleanupService {
         String email = user.getEmail();
         String anonymousHash = generateAnonymousHash();
 
-        // 1. 연관 데이터 삭제
-        passwordCredentialRepository.deleteByUserId(userId);
-        privacyConsentRepository.deleteByUserId(userId);
+        // 1. 연관 데이터 삭제 (hard delete - soft deleted User의 연관 데이터도 삭제)
+        passwordCredentialRepository.hardDeleteByUserId(userId);
+        privacyConsentRepository.hardDeleteByUserId(userId);
         emailVerificationRepository.deleteByEmail(email);
-        refreshTokenRepository.deleteByUserId(userId);
+        refreshTokenRepository.hardDeleteByUserId(userId);
 
         // 2. 사용자 정보 익명화
         user.anonymize(anonymousHash);
