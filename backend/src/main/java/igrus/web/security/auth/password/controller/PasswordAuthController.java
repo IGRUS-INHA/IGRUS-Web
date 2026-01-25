@@ -15,6 +15,7 @@ import igrus.web.security.auth.password.dto.request.TokenRefreshRequest;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
+import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordResetService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
@@ -184,17 +185,22 @@ public class PasswordAuthController {
             @ApiResponse(
                     responseCode = "200",
                     description = "인증 코드 재발송 성공",
-                    content = @Content(schema = @Schema(implementation = PasswordSignupResponse.class))
+                    content = @Content(schema = @Schema(implementation = VerificationResendResponse.class))
             ),
             @ApiResponse(
                     responseCode = "400",
                     description = "잘못된 요청 (유효성 검증 실패)",
                     content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "429",
+                    description = "재발송 요청 횟수 초과 (5분 내 재요청 불가)",
+                    content = @Content
             )
     })
     @PostMapping("/resend-verification")
-    public ResponseEntity<PasswordSignupResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
-        PasswordSignupResponse response = passwordSignupService.resendVerification(request);
+    public ResponseEntity<VerificationResendResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        VerificationResendResponse response = passwordSignupService.resendVerification(request);
         return ResponseEntity.ok(response);
     }
 
