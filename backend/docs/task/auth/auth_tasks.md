@@ -31,8 +31,8 @@
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% |
 | Phase 7: US5 탈퇴 계정 복구 | 7 | 7 | 0 | 100% |
 | Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% |
-| Phase 9: Polish | 9 | 9 | 0 | 100% |
-| **Total** | **66** | **66** | **0** | **100%** |
+| Phase 9: Polish | 10 | 10 | 0 | 100% |
+| **Total** | **67** | **67** | **0** | **100%** |
 
 ### MVP 구현 현황 (Phase 1-4)
 - **완료율: 100% (31/31 태스크)** ✅
@@ -52,12 +52,14 @@
 - ✅ Auth Controller (PasswordAuthController), Service (PasswordAuthService, PasswordSignupService)
 - ✅ EmailVerification 엔티티 및 기능
 - ✅ RefreshToken 엔티티 및 관리
-- ✅ PrivacyConsent 엔티티 및 서비스
-- ✅ 비밀번호 재설정 서비스 (PasswordResetService) - 컨트롤러 미완료
-- ✅ 계정 복구 서비스 (AccountRecoveryService) - 컨트롤러 미완료
-- ✅ 준회원 승인 서비스 (MemberApprovalService) - 컨트롤러 미완료
-- ✅ 인증 관련 DTO, Exception, ErrorCode
-- ✅ 이메일 재시도 로직 (Spring Retry + Async)
+- ✅ PrivacyConsent 엔티티 및 서비스 (PrivacyConsentService)
+- ✅ 비밀번호 재설정 서비스 (PasswordResetService) 및 컨트롤러
+- ✅ 계정 복구 서비스 (AccountRecoveryService) 및 컨트롤러
+- ✅ 준회원 승인 서비스 (MemberApprovalService) 및 AdminMemberController
+- ✅ 인증 관련 DTO, Exception (27개 커스텀 예외), ErrorCode
+- ✅ 이메일 재시도 로직 (Spring Retry + Async, 지수 백오프 1분→3분→9분)
+- ✅ Brute Force 방지 (LoginAttemptService, LoginAttempt 엔티티)
+- ✅ AuthenticatedUser 도메인 클래스 (인증된 사용자 정보 캡슐화)
 
 ---
 
@@ -359,7 +361,7 @@
 
 **Purpose**: 여러 User Story에 걸친 개선사항
 
-**Status**: ✅ 완료 (9/9)
+**Status**: ✅ 완료 (10/10)
 
 ### 스케줄링 및 정리 작업
 
@@ -398,6 +400,12 @@
   - ✅ JwtAuthenticationFilter에서 토큰 유효성 검증 후 계정 상태 (SUSPENDED, WITHDRAWN) 검증
   - ✅ 단위 테스트 6개 케이스 (`AccountStatusServiceTest.java`)
   - ✅ 통합 테스트 7개 케이스 (`JwtAuthenticationFilterAccountStatusTest.java`)
+- [x] T062-1 [추가] Brute Force 공격 방지 구현
+  - ✅ LoginAttempt 엔티티 생성 (`backend/src/main/java/igrus/web/security/auth/common/domain/LoginAttempt.java`)
+  - ✅ LoginAttemptRepository 생성 (`backend/src/main/java/igrus/web/security/auth/common/repository/LoginAttemptRepository.java`)
+  - ✅ LoginAttemptService 생성 (`backend/src/main/java/igrus/web/security/auth/common/service/LoginAttemptService.java`)
+  - ✅ 로그인 실패 횟수 추적 및 계정 잠금 (기본 30분)
+  - ✅ 단위 테스트 (`LoginAttemptServiceTest.java`)
 - [x] T063 SecurityConfig URL 패턴 최종 업데이트 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
   - 변경: SecurityConfig → ApiSecurityConfig + PublicResourceSecurityConfig로 분리
   - ✅ /api/v1/auth/password/** 허용
@@ -560,8 +568,8 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 | Phase 6: US4 비밀번호 재설정 | 6 | 6 | 0 | 100% | P2 ✅ |
 | Phase 7: US5 탈퇴 복구 | 7 | 7 | 0 | 100% | P3 ✅ |
 | Phase 8: US6 준회원 승인 | 7 | 7 | 0 | 100% | P2 ✅ |
-| Phase 9: Polish | 9 | 9 | 0 | 100% | 정리 및 개선 ✅ |
-| **Total** | **66** | **66** | **0** | **100%** | |
+| Phase 9: Polish | 10 | 10 | 0 | 100% | 정리 및 개선 ✅ |
+| **Total** | **67** | **67** | **0** | **100%** | |
 
 ### MVP Scope 현황
 
@@ -573,7 +581,54 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 
 ### 완료된 태스크 목록
 
-모든 66개 태스크가 완료되었습니다. ✅
+모든 67개 태스크가 완료되었습니다. ✅
+
+---
+
+## 테스트 현황
+
+### 단위/통합 테스트 (35개 파일)
+
+**도메인 테스트:**
+- `AuthenticatedUserTest.java`
+- `EmailVerificationTest.java`
+- `PrivacyConsentTest.java`
+- `RefreshTokenTest.java`
+- `PasswordCredentialTest.java`
+- `PasswordResetTokenTest.java`
+
+**서비스 테스트:**
+- `LoginAttemptServiceTest.java`
+- `PrivacyConsentServiceTest.java`
+- `AccountRecoveryServiceTest.java`
+- `AccountStatusServiceTest.java`
+- `PasswordAuthServiceLoginTest.java`
+- `PasswordAuthServiceTokenTest.java`
+- `PasswordSignupServiceTest.java`
+- `PasswordResetServiceTest.java`
+- `RefreshTokenCleanupServiceTest.java`
+- `WithdrawnUserCleanupServiceTest.java`
+- `SmtpEmailServiceRetryTest.java`
+- `UnverifiedUserCleanupServiceTest.java`
+- `MemberApprovalServiceTest.java`
+
+**컨트롤러/통합 테스트:**
+- `PasswordAuthControllerLoginTest.java`
+- `PasswordAuthControllerSignupTest.java`
+- `PasswordAuthControllerTokenTest.java`
+- `PasswordAuthControllerVerificationTest.java`
+- `PasswordAuthControllerAccountRecoveryTest.java`
+- `AdminMemberControllerTest.java`
+- `PasswordSignupIntegrationTest.java`
+- `PasswordLoginIntegrationTest.java`
+- `TokenRefreshIntegrationTest.java`
+- `PasswordResetIntegrationTest.java`
+- `AccountRecoveryIntegrationTest.java`
+- `JwtAuthenticationFilterAccountStatusTest.java`
+
+**E2E 테스트:**
+- `AuthenticationE2ETest.java`
+- `AuthFlowE2ETest.java`
 
 ---
 
