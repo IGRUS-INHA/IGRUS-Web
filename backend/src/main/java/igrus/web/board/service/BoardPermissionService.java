@@ -46,7 +46,7 @@ public class BoardPermissionService {
      */
     public void checkReadPermission(Board board, UserRole role) {
         if (!canRead(board, role)) {
-            log.warn("읽기 권한 거부 - board: {}, role: {}", board.getCode(), role);
+            log.warn("읽기 권한 거부 - board: {}, role: {}", board.getCode().name(), role);
             throw new BoardReadDeniedException(
                     String.format("'%s' 게시판 읽기 권한이 없습니다. 필요 권한: %s 이상",
                             board.getName(), getRequiredRoleForRead(board)));
@@ -58,7 +58,7 @@ public class BoardPermissionService {
      */
     public void checkWritePermission(Board board, UserRole role) {
         if (!canWrite(board, role)) {
-            log.warn("쓰기 권한 거부 - board: {}, role: {}", board.getCode(), role);
+            log.warn("쓰기 권한 거부 - board: {}, role: {}", board.getCode().name(), role);
             throw new BoardWriteDeniedException(
                     String.format("'%s' 게시판 쓰기 권한이 없습니다. 필요 권한: %s 이상",
                             board.getName(), getRequiredRoleForWrite(board)));

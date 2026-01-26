@@ -1,6 +1,7 @@
 package igrus.web.board.service;
 
 import igrus.web.board.domain.Board;
+import igrus.web.board.domain.BoardCode;
 import igrus.web.board.dto.response.BoardListResponse;
 import igrus.web.board.exception.BoardNotFoundException;
 import igrus.web.board.repository.BoardRepository;
@@ -42,9 +43,9 @@ class BoardServiceTest {
 
     @BeforeEach
     void setUp() {
-        noticesBoard = Board.create("notices", "공지사항", "동아리 공지사항을 확인하세요.", false, false, 1);
-        generalBoard = Board.create("general", "자유게시판", "자유롭게 이야기를 나눌 수 있는 공간입니다.", true, false, 2);
-        insightBoard = Board.create("insight", "정보공유", "유용한 정보를 공유하세요.", false, true, 3);
+        noticesBoard = Board.create(BoardCode.NOTICES, "공지사항", "동아리 공지사항을 확인하세요.", false, false, 1);
+        generalBoard = Board.create(BoardCode.GENERAL, "자유게시판", "자유롭게 이야기를 나눌 수 있는 공간입니다.", true, false, 2);
+        insightBoard = Board.create(BoardCode.INSIGHT, "정보공유", "유용한 정보를 공유하세요.", false, true, 3);
     }
 
     @Nested
@@ -69,9 +70,9 @@ class BoardServiceTest {
 
             // then
             assertThat(result).hasSize(3);
-            assertThat(result.get(0).code()).isEqualTo("notices");
-            assertThat(result.get(1).code()).isEqualTo("general");
-            assertThat(result.get(2).code()).isEqualTo("insight");
+            assertThat(result.get(0).code()).isEqualTo("NOTICES");
+            assertThat(result.get(1).code()).isEqualTo("GENERAL");
+            assertThat(result.get(2).code()).isEqualTo("INSIGHT");
         }
 
         @DisplayName("준회원(ASSOCIATE)이 게시판 목록 조회 시 읽기 권한 있는 게시판만 반환 (공지사항만)")
@@ -92,7 +93,7 @@ class BoardServiceTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).code()).isEqualTo("notices");
+            assertThat(result.get(0).code()).isEqualTo("NOTICES");
             assertThat(result.get(0).canRead()).isTrue();
             assertThat(result.get(0).canWrite()).isFalse();
         }
@@ -107,7 +108,6 @@ class BoardServiceTest {
         void getBoardEntity_WithNonExistentCode_ThrowsBoardNotFoundException() {
             // given
             String nonExistentCode = "non-existent";
-            given(boardRepository.findByCode(nonExistentCode)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> boardService.getBoardEntity(nonExistentCode))
@@ -119,15 +119,56 @@ class BoardServiceTest {
         void getBoardEntity_WithValidCode_ReturnsBoard() {
             // given
             String validCode = "notices";
-            given(boardRepository.findByCode(validCode)).willReturn(Optional.of(noticesBoard));
+            given(boardRepository.findByCode(BoardCode.NOTICES)).willReturn(Optional.of(noticesBoard));
 
             // when
             Board result = boardService.getBoardEntity(validCode);
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.getCode()).isEqualTo("notices");
+            assertThat(result.getCode()).isEqualTo(BoardCode.NOTICES);
             assertThat(result.getName()).isEqualTo("공지사항");
+        }
+
+        @DisplayName("대문자 게시판 코드로 조회 시 게시판 반환")
+        @Test
+        void getBoardEntity_WithUppercaseCode_ReturnsBoard() {
+            // given
+            String validCode = "NOTICES";
+            given(boardRepository.findByCode(BoardCode.NOTICES)).willReturn(Optional.of(noticesBoard));
+
+            // when
+            Board result = boardService.getBoardEntity(validCode);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getCode()).isEqualTo(BoardCode.NOTICES);
+        }
+
+        @DisplayName("BoardCode enum으로 조회 시 게시판 반환")
+        @Test
+        void getBoardEntity_WithBoardCodeEnum_ReturnsBoard() {
+            // given
+            given(boardRepository.findByCode(BoardCode.GENERAL)).willReturn(Optional.of(generalBoard));
+
+            // when
+            Board result = boardService.getBoardEntity(BoardCode.GENERAL);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getCode()).isEqualTo(BoardCode.GENERAL);
+            assertThat(result.getName()).isEqualTo("자유게시판");
+        }
+
+        @DisplayName("존재하지 않는 BoardCode로 조회 시 BoardNotFoundException 발생")
+        @Test
+        void getBoardEntity_WithNonExistentBoardCode_ThrowsBoardNotFoundException() {
+            // given
+            given(boardRepository.findByCode(BoardCode.NOTICES)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> boardService.getBoardEntity(BoardCode.NOTICES))
+                    .isInstanceOf(BoardNotFoundException.class);
         }
     }
 }

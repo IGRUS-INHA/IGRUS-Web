@@ -1,6 +1,7 @@
 package igrus.web.board.integration;
 
 import igrus.web.board.domain.Board;
+import igrus.web.board.domain.BoardCode;
 import igrus.web.board.domain.BoardPermission;
 import igrus.web.board.repository.BoardPermissionRepository;
 import igrus.web.board.repository.BoardRepository;
@@ -70,9 +71,9 @@ class BoardPermissionIntegrationTest extends ServiceIntegrationTestBase {
 
     private void setupBoardData() {
         // 게시판 생성
-        Board notices = Board.create("notices", "공지사항", "동아리 공지사항을 확인할 수 있습니다.", false, false, 1);
-        Board general = Board.create("general", "자유게시판", "자유롭게 이야기를 나눌 수 있는 공간입니다.", true, true, 2);
-        Board insight = Board.create("insight", "정보공유", "유용한 정보를 공유하는 게시판입니다.", false, false, 3);
+        Board notices = Board.create(BoardCode.NOTICES, "공지사항", "동아리 공지사항을 확인할 수 있습니다.", false, false, 1);
+        Board general = Board.create(BoardCode.GENERAL, "자유게시판", "자유롭게 이야기를 나눌 수 있는 공간입니다.", true, true, 2);
+        Board insight = Board.create(BoardCode.INSIGHT, "정보공유", "유용한 정보를 공유하는 게시판입니다.", false, false, 3);
 
         boardRepository.save(notices);
         boardRepository.save(general);
@@ -131,7 +132,7 @@ class BoardPermissionIntegrationTest extends ServiceIntegrationTestBase {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.code").value("notices"))
+                    .andExpect(jsonPath("$.code").value("NOTICES"))
                     .andExpect(jsonPath("$.canRead").value(true))
                     .andExpect(jsonPath("$.canWrite").value(false));
         }
@@ -145,7 +146,7 @@ class BoardPermissionIntegrationTest extends ServiceIntegrationTestBase {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.code").value("general"))
+                    .andExpect(jsonPath("$.code").value("GENERAL"))
                     .andExpect(jsonPath("$.canRead").value(false))
                     .andExpect(jsonPath("$.canWrite").value(false));
         }
@@ -161,7 +162,7 @@ class BoardPermissionIntegrationTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].code").value("notices"));
+                    .andExpect(jsonPath("$[0].code").value("NOTICES"));
         }
     }
 
@@ -214,9 +215,9 @@ class BoardPermissionIntegrationTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$.length()").value(3))
-                    .andExpect(jsonPath("$[0].code").value("notices"))
-                    .andExpect(jsonPath("$[1].code").value("general"))
-                    .andExpect(jsonPath("$[2].code").value("insight"));
+                    .andExpect(jsonPath("$[0].code").value("NOTICES"))
+                    .andExpect(jsonPath("$[1].code").value("GENERAL"))
+                    .andExpect(jsonPath("$[2].code").value("INSIGHT"));
         }
 
         @DisplayName("정회원이 공지사항 쓰기 권한 없음")

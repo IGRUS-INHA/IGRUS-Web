@@ -33,30 +33,30 @@ CREATE TABLE board_permissions (
     INDEX idx_board_permissions_board_id (board_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 초기 게시판 데이터 INSERT
+-- 초기 게시판 데이터 INSERT (code는 대문자로 통일)
 INSERT INTO boards (code, name, description, allows_anonymous, allows_question_tag, display_order) VALUES
-('notices', '공지사항', '동아리 공지사항을 확인할 수 있습니다.', FALSE, FALSE, 1),
-('general', '자유게시판', '자유롭게 이야기를 나눌 수 있는 공간입니다.', TRUE, TRUE, 2),
-('insight', '정보공유', '유용한 정보를 공유하는 게시판입니다.', FALSE, FALSE, 3);
+('NOTICES', '공지사항', '동아리 공지사항을 확인할 수 있습니다.', FALSE, FALSE, 1),
+('GENERAL', '자유게시판', '자유롭게 이야기를 나눌 수 있는 공간입니다.', TRUE, TRUE, 2),
+('INSIGHT', '정보공유', '유용한 정보를 공유하는 게시판입니다.', FALSE, FALSE, 3);
 
 -- 게시판별 권한 초기 데이터 INSERT
--- notices (공지사항): ASSOCIATE 읽기만(준회원 공개글만), MEMBER 이상 읽기, OPERATOR 이상 쓰기
+-- NOTICES (공지사항): ASSOCIATE 읽기만(준회원 공개글만), MEMBER 이상 읽기, OPERATOR 이상 쓰기
 INSERT INTO board_permissions (board_id, role, can_read, can_write) VALUES
-((SELECT id FROM boards WHERE code = 'notices'), 'ASSOCIATE', TRUE, FALSE),
-((SELECT id FROM boards WHERE code = 'notices'), 'MEMBER', TRUE, FALSE),
-((SELECT id FROM boards WHERE code = 'notices'), 'OPERATOR', TRUE, TRUE),
-((SELECT id FROM boards WHERE code = 'notices'), 'ADMIN', TRUE, TRUE);
+((SELECT id FROM boards WHERE code = 'NOTICES'), 'ASSOCIATE', TRUE, FALSE),
+((SELECT id FROM boards WHERE code = 'NOTICES'), 'MEMBER', TRUE, FALSE),
+((SELECT id FROM boards WHERE code = 'NOTICES'), 'OPERATOR', TRUE, TRUE),
+((SELECT id FROM boards WHERE code = 'NOTICES'), 'ADMIN', TRUE, TRUE);
 
--- general (자유게시판): MEMBER 이상 읽기/쓰기
+-- GENERAL (자유게시판): MEMBER 이상 읽기/쓰기
 INSERT INTO board_permissions (board_id, role, can_read, can_write) VALUES
-((SELECT id FROM boards WHERE code = 'general'), 'ASSOCIATE', FALSE, FALSE),
-((SELECT id FROM boards WHERE code = 'general'), 'MEMBER', TRUE, TRUE),
-((SELECT id FROM boards WHERE code = 'general'), 'OPERATOR', TRUE, TRUE),
-((SELECT id FROM boards WHERE code = 'general'), 'ADMIN', TRUE, TRUE);
+((SELECT id FROM boards WHERE code = 'GENERAL'), 'ASSOCIATE', FALSE, FALSE),
+((SELECT id FROM boards WHERE code = 'GENERAL'), 'MEMBER', TRUE, TRUE),
+((SELECT id FROM boards WHERE code = 'GENERAL'), 'OPERATOR', TRUE, TRUE),
+((SELECT id FROM boards WHERE code = 'GENERAL'), 'ADMIN', TRUE, TRUE);
 
--- insight (정보공유): MEMBER 이상 읽기/쓰기
+-- INSIGHT (정보공유): MEMBER 이상 읽기/쓰기
 INSERT INTO board_permissions (board_id, role, can_read, can_write) VALUES
-((SELECT id FROM boards WHERE code = 'insight'), 'ASSOCIATE', FALSE, FALSE),
-((SELECT id FROM boards WHERE code = 'insight'), 'MEMBER', TRUE, TRUE),
-((SELECT id FROM boards WHERE code = 'insight'), 'OPERATOR', TRUE, TRUE),
-((SELECT id FROM boards WHERE code = 'insight'), 'ADMIN', TRUE, TRUE);
+((SELECT id FROM boards WHERE code = 'INSIGHT'), 'ASSOCIATE', FALSE, FALSE),
+((SELECT id FROM boards WHERE code = 'INSIGHT'), 'MEMBER', TRUE, TRUE),
+((SELECT id FROM boards WHERE code = 'INSIGHT'), 'OPERATOR', TRUE, TRUE),
+((SELECT id FROM boards WHERE code = 'INSIGHT'), 'ADMIN', TRUE, TRUE);

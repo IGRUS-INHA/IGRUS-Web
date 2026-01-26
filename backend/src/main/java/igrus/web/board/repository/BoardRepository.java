@@ -1,6 +1,7 @@
 package igrus.web.board.repository;
 
 import igrus.web.board.domain.Board;
+import igrus.web.board.domain.BoardCode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,7 +14,7 @@ import java.util.Optional;
 @Repository
 public interface BoardRepository extends JpaRepository<Board, Long> {
 
-    Optional<Board> findByCode(String code);
+    Optional<Board> findByCode(BoardCode code);
 
     List<Board> findAllByOrderByDisplayOrderAsc();
 }

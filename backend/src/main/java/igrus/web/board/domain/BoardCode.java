@@ -1,27 +1,29 @@
 package igrus.web.board.domain;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 /**
  * 게시판 코드 enum.
  * 시스템에서 사용하는 게시판 식별자를 정의합니다.
  */
-@Getter
-@RequiredArgsConstructor
 public enum BoardCode {
-    NOTICES("notices"),
-    GENERAL("general"),
-    INSIGHT("insight");
+    NOTICES,
+    GENERAL,
+    INSIGHT;
 
-    private final String code;
-
-    public static BoardCode fromCode(String code) {
-        for (BoardCode boardCode : values()) {
-            if (boardCode.code.equals(code)) {
-                return boardCode;
-            }
+    /**
+     * URL path variable(소문자)을 BoardCode로 변환합니다.
+     *
+     * @param value path variable 값 (소문자)
+     * @return BoardCode enum
+     * @throws IllegalArgumentException 알 수 없는 코드인 경우
+     */
+    public static BoardCode fromPathVariable(String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Board code cannot be null");
         }
-        throw new IllegalArgumentException("Unknown board code: " + code);
+        try {
+            return valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unknown board code: " + value);
+        }
     }
 }

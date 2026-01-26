@@ -1,6 +1,7 @@
 package igrus.web.board.service;
 
 import igrus.web.board.domain.Board;
+import igrus.web.board.domain.BoardCode;
 import igrus.web.board.domain.BoardPermission;
 import igrus.web.board.exception.BoardReadDeniedException;
 import igrus.web.board.exception.BoardWriteDeniedException;
@@ -36,8 +37,8 @@ class BoardPermissionServiceTest {
 
     @BeforeEach
     void setUp() {
-        noticeBoard = Board.create("notice", "공지사항", "공지사항 게시판", false, false, 1);
-        freeBoard = Board.create("free", "자유게시판", "자유게시판", false, false, 2);
+        noticeBoard = Board.create(BoardCode.NOTICES, "공지사항", "공지사항 게시판", false, false, 1);
+        freeBoard = Board.create(BoardCode.GENERAL, "자유게시판", "자유게시판", false, false, 2);
     }
 
     @Nested

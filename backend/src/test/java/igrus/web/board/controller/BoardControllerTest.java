@@ -1,6 +1,7 @@
 package igrus.web.board.controller;
 
 import igrus.web.board.domain.Board;
+import igrus.web.board.domain.BoardCode;
 import igrus.web.board.domain.BoardPermission;
 import igrus.web.board.repository.BoardPermissionRepository;
 import igrus.web.board.repository.BoardRepository;
@@ -58,9 +59,9 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
 
     private void setupBoardData() {
         // 게시판 생성
-        Board notices = Board.create("notices", "공지사항", "동아리 공지사항을 확인할 수 있습니다.", false, false, 1);
-        Board general = Board.create("general", "자유게시판", "자유롭게 이야기를 나눌 수 있는 공간입니다.", true, true, 2);
-        Board insight = Board.create("insight", "정보공유", "유용한 정보를 공유하는 게시판입니다.", false, false, 3);
+        Board notices = Board.create(BoardCode.NOTICES, "공지사항", "동아리 공지사항을 확인할 수 있습니다.", false, false, 1);
+        Board general = Board.create(BoardCode.GENERAL, "자유게시판", "자유롭게 이야기를 나눌 수 있는 공간입니다.", true, true, 2);
+        Board insight = Board.create(BoardCode.INSIGHT, "정보공유", "유용한 정보를 공유하는 게시판입니다.", false, false, 3);
 
         boardRepository.save(notices);
         boardRepository.save(general);
@@ -114,11 +115,11 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$.length()").value(3))
-                    .andExpect(jsonPath("$[0].code").value("notices"))
+                    .andExpect(jsonPath("$[0].code").value("NOTICES"))
                     .andExpect(jsonPath("$[0].name").value("공지사항"))
-                    .andExpect(jsonPath("$[1].code").value("general"))
+                    .andExpect(jsonPath("$[1].code").value("GENERAL"))
                     .andExpect(jsonPath("$[1].name").value("자유게시판"))
-                    .andExpect(jsonPath("$[2].code").value("insight"))
+                    .andExpect(jsonPath("$[2].code").value("INSIGHT"))
                     .andExpect(jsonPath("$[2].name").value("정보공유"));
         }
 
@@ -133,7 +134,7 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].code").value("notices"));
+                    .andExpect(jsonPath("$[0].code").value("NOTICES"));
         }
 
         @DisplayName("비인증 사용자가 접근 시 403 Forbidden")
@@ -162,7 +163,7 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.code").value("general"))
+                    .andExpect(jsonPath("$.code").value("GENERAL"))
                     .andExpect(jsonPath("$.name").value("자유게시판"))
                     .andExpect(jsonPath("$.allowsAnonymous").value(true))
                     .andExpect(jsonPath("$.allowsQuestionTag").value(true))

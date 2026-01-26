@@ -1,6 +1,7 @@
 package igrus.web.board.service;
 
 import igrus.web.board.domain.Board;
+import igrus.web.board.domain.BoardCode;
 import igrus.web.board.dto.response.BoardDetailResponse;
 import igrus.web.board.dto.response.BoardListResponse;
 import igrus.web.board.exception.BoardNotFoundException;
@@ -47,6 +48,10 @@ public class BoardService {
 
     /**
      * 게시판 코드로 게시판 상세 정보를 조회합니다.
+     *
+     * @param code URL path variable (소문자 가능)
+     * @param role 사용자 역할
+     * @return 게시판 상세 정보
      */
     public BoardDetailResponse getBoardByCode(String code, UserRole role) {
         log.debug("게시판 상세 조회 - code: {}, role: {}", code, role);
@@ -59,10 +64,31 @@ public class BoardService {
     }
 
     /**
-     * 게시판 코드로 게시판 엔티티를 조회합니다. (내부용)
+     * 게시판 코드(String)로 게시판 엔티티를 조회합니다.
+     * URL path variable(소문자)을 받아 BoardCode로 변환합니다.
+     *
+     * @param code URL path variable (소문자 가능)
+     * @return 게시판 엔티티
+     * @throws BoardNotFoundException 게시판을 찾을 수 없는 경우
      */
     public Board getBoardEntity(String code) {
+        try {
+            BoardCode boardCode = BoardCode.fromPathVariable(code);
+            return getBoardEntity(boardCode);
+        } catch (IllegalArgumentException e) {
+            throw new BoardNotFoundException(code);
+        }
+    }
+
+    /**
+     * BoardCode enum으로 게시판 엔티티를 조회합니다.
+     *
+     * @param code BoardCode enum
+     * @return 게시판 엔티티
+     * @throws BoardNotFoundException 게시판을 찾을 수 없는 경우
+     */
+    public Board getBoardEntity(BoardCode code) {
         return boardRepository.findByCode(code)
-                .orElseThrow(() -> new BoardNotFoundException(code));
+                .orElseThrow(() -> new BoardNotFoundException(code.name()));
     }
 }

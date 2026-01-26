@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @Schema(description = "게시판 목록 응답")
 public record BoardListResponse(
-        @Schema(description = "게시판 코드", example = "general")
+        @Schema(description = "게시판 코드", example = "GENERAL")
         String code,
 
         @Schema(description = "게시판 이름", example = "자유게시판")
@@ -25,7 +25,7 @@ public record BoardListResponse(
 ) {
     public static BoardListResponse of(Board board, boolean canRead, boolean canWrite) {
         return new BoardListResponse(
-                board.getCode(),
+                board.getCode().name(),
                 board.getName(),
                 board.getDescription(),
                 canRead,
