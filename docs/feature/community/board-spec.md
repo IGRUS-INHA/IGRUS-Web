@@ -20,6 +20,11 @@
 - Q: 게시글 제목과 본문의 최대 길이 제한은? → A: 표준 제한 - 제목 100자, 본문 10,000자
 - Q: 익명 게시글 작성자가 본인 글을 수정/삭제할 때 소유권 검증 방식은? → A: 세션 기반 - 서버에 실제 작성자 ID 저장, 로그인 사용자와 매칭하여 검증
 
+### Session 2026-01-26
+
+- Q: Rate limiting의 구체적인 제한 값은? → A: 분당 60회 - IP당 분당 60회 요청 제한 적용
+- Q: 첨부파일(Attachment) 저장 방식은? → A: AWS S3 - 확장성과 내구성을 위해 AWS S3에 저장
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - 게시판 목록 조회 (Priority: P1)
@@ -103,7 +108,7 @@
 
 - **Board** *(DB Entity)*: 게시판 유형 (notices, general, insight), 각 게시판별 읽기/쓰기 권한 규칙, 익명 허용 여부, 질문 태그 허용 여부. 데이터베이스 테이블로 관리되어 런타임에 동적 추가 가능.
 - **BoardPermission** *(DB Entity)*: 회원 등급(Role)과 게시판별 허용 동작(읽기/쓰기) 매핑. 각 게시판마다 역할별 권한을 개별 지정 가능.
-- **Attachment** *(DB Entity)*: 게시글 첨부파일. 파일명, 저장 경로, MIME 타입, 파일 크기, 업로드 일시. 게시글당 최대 10개, 파일당 최대 10MB.
+- **Attachment** *(DB Entity)*: 게시글 첨부파일. 파일명, S3 저장 경로, MIME 타입, 파일 크기, 업로드 일시. 게시글당 최대 10개, 파일당 최대 10MB. AWS S3에 저장.
 
 ## Success Criteria *(mandatory)*
 
@@ -116,4 +121,4 @@
 
 ### Non-Functional Requirements
 
-- **NFR-001**: 게시판 API는 IP당 분당 요청 수 제한(Rate Limiting)을 적용해야 한다
+- **NFR-001**: 게시판 API는 IP당 분당 60회 요청 제한(Rate Limiting)을 적용해야 한다
