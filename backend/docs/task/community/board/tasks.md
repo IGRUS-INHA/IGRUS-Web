@@ -26,9 +26,9 @@
 
 **Purpose**: 게시판 도메인의 기본 패키지 구조 및 Flyway 마이그레이션 설정
 
-- [ ] T001 기존 Board, Post, Attachment 등 주석 처리된 도메인 클래스 정리 (삭제 또는 백업) in `backend/src/main/java/igrus/web/board/domain/`
-- [ ] T002 [P] 게시판 도메인 패키지 구조 생성: `board/domain/`, `board/repository/`, `board/service/`, `board/controller/`, `board/dto/`, `board/exception/`
-- [ ] T003 [P] Flyway 마이그레이션 버전 확인 및 V6 번호 예약 확인
+- [x] T001 기존 Board, Post, Attachment 등 주석 처리된 도메인 클래스 정리 (삭제 또는 백업) in `backend/src/main/java/igrus/web/board/domain/`
+- [x] T002 [P] 게시판 도메인 패키지 구조 생성: `board/domain/`, `board/repository/`, `board/service/`, `board/controller/`, `board/dto/`, `board/exception/`
+- [x] T003 [P] Flyway 마이그레이션 버전 확인 및 V6 번호 예약 확인
 
 ---
 
@@ -40,7 +40,7 @@
 
 ### 2.1 데이터베이스 스키마
 
-- [ ] T004 Flyway 마이그레이션 V6__create_board_tables.sql 작성 in `backend/src/main/resources/db/migration/V6__create_board_tables.sql`
+- [x] T004 Flyway 마이그레이션 V6__create_board_tables.sql 작성 in `backend/src/main/resources/db/migration/V6__create_board_tables.sql`
   - boards 테이블: id, code(unique), name, description, allows_anonymous, allows_question_tag, display_order, created_at, updated_at
   - board_permissions 테이블: id, board_id(FK), role(ENUM), can_read, can_write, created_at
   - 초기 데이터: notices, general, insight 게시판 INSERT
@@ -48,39 +48,39 @@
 
 ### 2.2 핵심 도메인 엔티티
 
-- [ ] T005 [P] Board 엔티티 구현 in `backend/src/main/java/igrus/web/board/domain/Board.java`
+- [x] T005 [P] Board 엔티티 구현 in `backend/src/main/java/igrus/web/board/domain/Board.java`
   - BaseEntity 상속
   - 필드: code, name, description, allowsAnonymous, allowsQuestionTag, displayOrder
   - 정적 팩토리 메서드, 불변성 보장
 
-- [ ] T006 [P] BoardPermission 엔티티 구현 in `backend/src/main/java/igrus/web/board/domain/BoardPermission.java`
+- [x] T006 [P] BoardPermission 엔티티 구현 in `backend/src/main/java/igrus/web/board/domain/BoardPermission.java`
   - BaseEntity 상속
   - 필드: board(ManyToOne), role(UserRole), canRead, canWrite
   - 복합 유니크 제약: (board_id, role)
 
-- [ ] T007 [P] BoardCode enum 구현 in `backend/src/main/java/igrus/web/board/domain/BoardCode.java`
+- [x] T007 [P] BoardCode enum 구현 in `backend/src/main/java/igrus/web/board/domain/BoardCode.java`
   - NOTICES("notices"), GENERAL("general"), INSIGHT("insight")
 
 ### 2.3 Repository
 
-- [ ] T008 [P] BoardRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/repository/BoardRepository.java`
+- [x] T008 [P] BoardRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/repository/BoardRepository.java`
   - findByCode(String code): Optional<Board>
   - findAllByOrderByDisplayOrderAsc(): List<Board>
 
-- [ ] T009 [P] BoardPermissionRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/repository/BoardPermissionRepository.java`
+- [x] T009 [P] BoardPermissionRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/repository/BoardPermissionRepository.java`
   - findByBoardAndRole(Board board, UserRole role): Optional<BoardPermission>
   - findAllByBoard(Board board): List<BoardPermission>
 
 ### 2.4 예외 클래스
 
-- [ ] T010 [P] BoardNotFoundException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/BoardNotFoundException.java`
-- [ ] T011 [P] BoardAccessDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/BoardAccessDeniedException.java`
-- [ ] T012 [P] ErrorCode에 게시판 관련 에러 코드 추가 in `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`
+- [x] T010 [P] BoardNotFoundException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/BoardNotFoundException.java`
+- [x] T011 [P] BoardAccessDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/BoardAccessDeniedException.java`
+- [x] T012 [P] ErrorCode에 게시판 관련 에러 코드 추가 in `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`
   - BOARD_NOT_FOUND, BOARD_ACCESS_DENIED, BOARD_READ_DENIED, BOARD_WRITE_DENIED
 
 ### 2.5 권한 검증 서비스
 
-- [ ] T013 BoardPermissionService 구현 in `backend/src/main/java/igrus/web/board/service/BoardPermissionService.java`
+- [x] T013 BoardPermissionService 구현 in `backend/src/main/java/igrus/web/board/service/BoardPermissionService.java`
   - canRead(Board board, UserRole role): boolean
   - canWrite(Board board, UserRole role): boolean
   - checkReadPermission(Board board, UserRole role): void (예외 발생)
@@ -104,12 +104,12 @@
 
 ### Tests for User Story 1
 
-- [ ] T014 [P] [US1] BoardService 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/BoardServiceTest.java`
+- [x] T014 [P] [US1] BoardService 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/BoardServiceTest.java`
   - 정회원이 게시판 목록 조회 시 3개 게시판 반환
   - 준회원이 게시판 목록 조회 시 읽기 권한 있는 게시판만 반환
   - 존재하지 않는 게시판 코드 조회 시 BoardNotFoundException 발생
 
-- [ ] T015 [P] [US1] BoardController 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/controller/BoardControllerTest.java`
+- [x] T015 [P] [US1] BoardController 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/controller/BoardControllerTest.java`
   - GET /api/v1/boards - 인증된 사용자가 게시판 목록 조회 성공
   - GET /api/v1/boards - 비인증 사용자가 접근 시 401 Unauthorized
   - GET /api/v1/boards/{code} - 유효한 게시판 코드로 상세 조회 성공
@@ -117,24 +117,24 @@
 
 ### Implementation for User Story 1
 
-- [ ] T016 [US1] BoardService 구현 in `backend/src/main/java/igrus/web/board/service/BoardService.java`
+- [x] T016 [US1] BoardService 구현 in `backend/src/main/java/igrus/web/board/service/BoardService.java`
   - getBoardList(UserRole role): List<BoardListResponse>
   - getBoardByCode(String code): BoardDetailResponse
   - getBoardEntity(String code): Board (내부용)
 
-- [ ] T017 [P] [US1] BoardListResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/BoardListResponse.java`
+- [x] T017 [P] [US1] BoardListResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/BoardListResponse.java`
   - 필드: code, name, description, canRead, canWrite
 
-- [ ] T018 [P] [US1] BoardDetailResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/BoardDetailResponse.java`
+- [x] T018 [P] [US1] BoardDetailResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/BoardDetailResponse.java`
   - 필드: code, name, description, allowsAnonymous, allowsQuestionTag, canRead, canWrite
 
-- [ ] T019 [US1] BoardController 구현 in `backend/src/main/java/igrus/web/board/controller/BoardController.java`
+- [x] T019 [US1] BoardController 구현 in `backend/src/main/java/igrus/web/board/controller/BoardController.java`
   - GET /api/v1/boards - 게시판 목록 조회
   - GET /api/v1/boards/{code} - 게시판 상세 조회
   - Swagger 어노테이션 (@Operation, @ApiResponse) 추가
 
-- [ ] T020 [US1] SecurityConfig에 게시판 API 경로 권한 설정 추가 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
-  - /api/v1/boards/** - 인증 필요 (ASSOCIATE 이상)
+- [x] T020 [US1] SecurityConfig에 게시판 API 경로 권한 설정 추가 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
+  - /api/v1/boards/** - 인증 필요 (ASSOCIATE 이상) - 기존 anyRequest().authenticated() 설정으로 처리됨
 
 **Checkpoint**: User Story 1 완료 - 게시판 목록 조회 기능 독립적으로 테스트 가능
 
@@ -155,36 +155,36 @@
 
 ### Tests for User Story 2
 
-- [ ] T021 [P] [US2] BoardPermissionService 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/BoardPermissionServiceTest.java`
+- [x] T021 [P] [US2] BoardPermissionService 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/BoardPermissionServiceTest.java`
   - 준회원이 공지사항 읽기 권한 확인 - true
   - 준회원이 자유게시판 읽기 권한 확인 - false
   - 정회원이 공지사항 쓰기 권한 확인 - false
   - OPERATOR가 공지사항 쓰기 권한 확인 - true
   - 권한 없는 접근 시 BoardAccessDeniedException 발생
 
-- [ ] T022 [P] [US2] 권한 검증 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/integration/BoardPermissionIntegrationTest.java`
+- [x] T022 [P] [US2] 권한 검증 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/integration/BoardPermissionIntegrationTest.java`
   - 준회원 토큰으로 자유게시판 접근 시 403 Forbidden
   - 정회원 토큰으로 모든 게시판 접근 성공
   - OPERATOR 토큰으로 공지사항 쓰기 권한 확인
 
 ### Implementation for User Story 2
 
-- [ ] T023 [US2] BoardPermissionService 권한 검증 로직 강화 in `backend/src/main/java/igrus/web/board/service/BoardPermissionService.java`
+- [x] T023 [US2] BoardPermissionService 권한 검증 로직 강화 in `backend/src/main/java/igrus/web/board/service/BoardPermissionService.java`
   - 게시판별 역할 권한 매트릭스 적용
   - 예외 메시지에 필요한 권한 정보 포함
 
-- [ ] T024 [P] [US2] BoardWriteDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/BoardWriteDeniedException.java`
-- [ ] T025 [P] [US2] BoardReadDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/BoardReadDeniedException.java`
+- [x] T024 [P] [US2] BoardWriteDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/BoardWriteDeniedException.java`
+- [x] T025 [P] [US2] BoardReadDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/BoardReadDeniedException.java`
 
-- [ ] T026 [US2] BoardController에 권한 검증 응답 처리 추가 in `backend/src/main/java/igrus/web/board/controller/BoardController.java`
+- [x] T026 [US2] BoardController에 권한 검증 응답 처리 추가 in `backend/src/main/java/igrus/web/board/controller/BoardController.java`
   - 권한 부족 시 적절한 HTTP 상태 코드 및 메시지 반환
   - 준회원 접근 제한 안내 메시지 ("정회원 승인 후 이용 가능합니다")
 
-- [ ] T027 [US2] GlobalExceptionHandler에 게시판 예외 핸들러 추가 in `backend/src/main/java/igrus/web/common/exception/GlobalExceptionHandler.java`
-  - BoardNotFoundException → 404 Not Found
-  - BoardAccessDeniedException → 403 Forbidden
-  - BoardReadDeniedException → 403 Forbidden
-  - BoardWriteDeniedException → 403 Forbidden
+- [x] T027 [US2] GlobalExceptionHandler에 게시판 예외 핸들러 추가 in `backend/src/main/java/igrus/web/common/exception/GlobalExceptionHandler.java`
+  - BoardNotFoundException → 404 Not Found (CustomBaseException 핸들러로 처리)
+  - BoardAccessDeniedException → 403 Forbidden (CustomBaseException 핸들러로 처리)
+  - BoardReadDeniedException → 403 Forbidden (CustomBaseException 핸들러로 처리)
+  - BoardWriteDeniedException → 403 Forbidden (CustomBaseException 핸들러로 처리)
 
 **Checkpoint**: User Story 2 완료 - 권한 관리 기능 독립적으로 테스트 가능
 

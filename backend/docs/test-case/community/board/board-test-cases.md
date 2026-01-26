@@ -125,19 +125,25 @@
 
 ## 4. 구현된 테스트 클래스
 
-> 테스트 구현 시 업데이트 예정
-
 ### 4.1 Service 테스트
-- **파일**: `backend/src/test/java/igrus/web/community/board/service/BoardServiceTest.java`
-- **테스트 범위**: BRD-001 ~ BRD-091 (비즈니스 로직)
+- **파일**: `backend/src/test/java/igrus/web/board/service/BoardServiceTest.java`
+- **테스트 범위**: BRD-001, BRD-002, BRD-081 (게시판 목록/상세 조회 비즈니스 로직)
+- **구현 완료**: 2026-01-26
 
-### 4.2 Controller 테스트
-- **파일**: `backend/src/test/java/igrus/web/community/board/controller/BoardControllerTest.java`
-- **테스트 범위**: BRD-001 ~ BRD-091 (HTTP 레이어)
+### 4.2 BoardPermissionService 테스트
+- **파일**: `backend/src/test/java/igrus/web/board/service/BoardPermissionServiceTest.java`
+- **테스트 범위**: BRD-010 ~ BRD-016 (권한 검증 로직)
+- **구현 완료**: 2026-01-26
 
-### 4.3 통합 테스트
-- **파일**: `backend/src/test/java/igrus/web/community/board/integration/BoardIntegrationTest.java`
-- **테스트 범위**: 전체 플로우 통합 테스트
+### 4.3 Controller 테스트
+- **파일**: `backend/src/test/java/igrus/web/board/controller/BoardControllerTest.java`
+- **테스트 범위**: BRD-001, BRD-005, BRD-081 (HTTP 레이어)
+- **구현 완료**: 2026-01-26
+
+### 4.4 통합 테스트
+- **파일**: `backend/src/test/java/igrus/web/board/integration/BoardPermissionIntegrationTest.java`
+- **테스트 범위**: BRD-003, BRD-005, BRD-010 ~ BRD-016, BRD-081 (권한 검증 전체 플로우 통합 테스트)
+- **구현 완료**: 2026-01-26
 
 ---
 
@@ -146,3 +152,4 @@
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 1.0 | 2026-01-26 | - | 최초 작성 |
+| 1.1 | 2026-01-26 | Claude | 테스트 클래스 경로 수정 및 구현 완료 상태 업데이트 |

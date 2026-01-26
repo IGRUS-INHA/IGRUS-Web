@@ -66,7 +66,13 @@ public enum ErrorCode {
     ADMIN_REQUIRED(403, "관리자 권한이 필요합니다"),
     USER_NOT_ASSOCIATE(400, "해당 사용자는 준회원이 아닙니다"),
     LAST_ADMIN_CANNOT_CHANGE(400, "마지막 관리자는 권한을 변경할 수 없습니다"),
-    BULK_APPROVAL_EMPTY(400, "승인할 사용자를 선택해주세요");
+    BULK_APPROVAL_EMPTY(400, "승인할 사용자를 선택해주세요"),
+
+    // Board
+    BOARD_NOT_FOUND(404, "게시판을 찾을 수 없습니다"),
+    BOARD_ACCESS_DENIED(403, "게시판 접근이 거부되었습니다"),
+    BOARD_READ_DENIED(403, "게시판 읽기 권한이 없습니다"),
+    BOARD_WRITE_DENIED(403, "게시판 쓰기 권한이 없습니다");
 
     private final int status;
     private final String message;
