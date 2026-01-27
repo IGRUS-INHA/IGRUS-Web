@@ -13,6 +13,8 @@ import igrus.web.community.post.dto.response.PostCreateResponse;
 import igrus.web.community.post.dto.response.PostDetailResponse;
 import igrus.web.community.post.dto.response.PostListPageResponse;
 import igrus.web.community.post.dto.response.PostUpdateResponse;
+import igrus.web.community.post.dto.response.PostViewHistoryResponse;
+import igrus.web.community.post.dto.response.PostViewStatsResponse;
 import igrus.web.community.post.exception.InvalidPostOptionException;
 import igrus.web.community.post.exception.PostAccessDeniedException;
 import igrus.web.community.post.exception.PostAnonymousUnchangeableException;
@@ -25,12 +27,15 @@ import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -41,6 +46,7 @@ public class PostService {
     private final BoardService boardService;
     private final BoardPermissionService boardPermissionService;
     private final PostRateLimitService postRateLimitService;
+    private final PostViewService postViewService;
 
     /**
      * 게시글 작성
@@ -330,13 +336,43 @@ public class PostService {
             throw new PostNotFoundException(postId);
         }
 
-        // 조회수 증가
-        post.incrementViewCount();
+        // 조회 기록 저장 (비동기 - 항상 성공)
+        postViewService.recordViewAsync(post.getId(), currentUser.getId());
+
+        // 조회수 증가 (재시도 2회)
+        incrementViewCountWithRetry(post, 2);
 
         // 현재 사용자가 작성자인지 확인
         boolean isCurrentUserAuthor = post.getAuthor().getId().equals(currentUser.getId());
 
         return PostDetailResponse.from(post, isCurrentUserAuthor);
+    }
+
+    /**
+     * 조회수를 증가시킵니다. 낙관적 락 충돌 시 재시도합니다.
+     *
+     * @param post       게시글
+     * @param maxRetries 최대 재시도 횟수
+     */
+    private void incrementViewCountWithRetry(Post post, int maxRetries) {
+        Long postId = post.getId();
+        Post currentPost = post;
+
+        for (int attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                currentPost.incrementViewCount();
+                postRepository.saveAndFlush(currentPost);
+                return;
+            } catch (OptimisticLockException e) {
+                if (attempt == maxRetries) {
+                    log.warn("조회수 증가 실패 ({}회 재시도 후): postId={}", maxRetries, postId);
+                    return;
+                }
+                // 엔티티 새로고침 후 재시도
+                currentPost = postRepository.findById(postId)
+                        .orElseThrow(() -> new PostNotFoundException(postId));
+            }
+        }
     }
 
     // === Private Helper Methods for Post List Query ===
@@ -360,5 +396,61 @@ public class PostService {
             return postRepository.searchByTitleOrContent(board, keyword, pageable);
         }
         return postRepository.findByBoardAndDeletedFalseOrderByCreatedAtDesc(board, pageable);
+    }
+
+    // === View Statistics Methods ===
+
+    /**
+     * 게시글 조회 통계를 조회합니다.
+     * OPERATOR 이상만 조회 가능합니다.
+     *
+     * @param boardCode 게시판 코드
+     * @param postId    게시글 ID
+     * @param user      인증된 사용자 정보
+     * @return 조회 통계 응답
+     */
+    @Transactional(readOnly = true)
+    public PostViewStatsResponse getPostViewStats(String boardCode, Long postId, AuthenticatedUser user) {
+        User currentUser = userRepository.findById(user.userId())
+                .orElseThrow(UserNotFoundException::new);
+
+        // OPERATOR 이상만 조회 가능
+        if (!currentUser.isOperatorOrAbove()) {
+            throw new PostAccessDeniedException();
+        }
+
+        Board board = boardService.getBoardEntity(boardCode);
+        Post post = postRepository.findByBoardAndIdAndDeletedFalse(board, postId)
+                .orElseThrow(() -> new PostNotFoundException(postId));
+
+        return postViewService.getPostViewStats(post);
+    }
+
+    /**
+     * 게시글 조회 기록 목록을 조회합니다.
+     * OPERATOR 이상만 조회 가능합니다.
+     *
+     * @param boardCode 게시판 코드
+     * @param postId    게시글 ID
+     * @param user      인증된 사용자 정보
+     * @param pageable  페이징 정보
+     * @return 조회 기록 페이지
+     */
+    @Transactional(readOnly = true)
+    public Page<PostViewHistoryResponse> getPostViewHistory(String boardCode, Long postId,
+                                                            AuthenticatedUser user, Pageable pageable) {
+        User currentUser = userRepository.findById(user.userId())
+                .orElseThrow(UserNotFoundException::new);
+
+        // OPERATOR 이상만 조회 가능
+        if (!currentUser.isOperatorOrAbove()) {
+            throw new PostAccessDeniedException();
+        }
+
+        Board board = boardService.getBoardEntity(boardCode);
+        Post post = postRepository.findByBoardAndIdAndDeletedFalse(board, postId)
+                .orElseThrow(() -> new PostNotFoundException(postId));
+
+        return postViewService.getPostViewHistory(post, pageable);
     }
 }

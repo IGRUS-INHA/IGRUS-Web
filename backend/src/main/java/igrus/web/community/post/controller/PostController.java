@@ -6,6 +6,8 @@ import igrus.web.community.post.dto.response.PostCreateResponse;
 import igrus.web.community.post.dto.response.PostDetailResponse;
 import igrus.web.community.post.dto.response.PostListPageResponse;
 import igrus.web.community.post.dto.response.PostUpdateResponse;
+import igrus.web.community.post.dto.response.PostViewHistoryResponse;
+import igrus.web.community.post.dto.response.PostViewStatsResponse;
 import igrus.web.community.post.service.PostService;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
@@ -19,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -325,5 +328,108 @@ public class PostController {
 
         postService.deletePost(boardCode, postId, user);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "게시글 조회 통계",
+            description = "게시글의 조회 통계를 조회합니다. OPERATOR 이상만 조회 가능합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 통계 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PostViewStatsResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 필요",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "조회 권한 없음 (OPERATOR 이상 필요)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "게시글을 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/{postId}/view-stats")
+    public ResponseEntity<PostViewStatsResponse> getPostViewStats(
+            @Parameter(description = "게시판 코드", example = "GENERAL")
+            @PathVariable String boardCode,
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long postId,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        log.info("게시글 조회 통계 요청 - boardCode: {}, postId: {}, userId: {}",
+                boardCode, postId, user.userId());
+
+        PostViewStatsResponse response = postService.getPostViewStats(boardCode, postId, user);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "게시글 조회 기록 목록",
+            description = "게시글의 조회 기록을 페이징하여 조회합니다. OPERATOR 이상만 조회 가능합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 기록 목록 조회 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 필요",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "조회 권한 없음 (OPERATOR 이상 필요)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "게시글을 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/{postId}/view-history")
+    public ResponseEntity<Page<PostViewHistoryResponse>> getPostViewHistory(
+            @Parameter(description = "게시판 코드", example = "GENERAL")
+            @PathVariable String boardCode,
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long postId,
+            @PageableDefault(size = 20) Pageable pageable,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        log.info("게시글 조회 기록 요청 - boardCode: {}, postId: {}, userId: {}, page: {}, size: {}",
+                boardCode, postId, user.userId(), pageable.getPageNumber(), pageable.getPageSize());
+
+        Page<PostViewHistoryResponse> response = postService.getPostViewHistory(boardCode, postId, user, pageable);
+        return ResponseEntity.ok(response);
     }
 }

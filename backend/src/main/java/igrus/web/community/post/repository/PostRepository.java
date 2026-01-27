@@ -5,6 +5,7 @@ import igrus.web.community.post.domain.Post;
 import igrus.web.user.domain.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,6 +35,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * @param pageable 페이징 정보
      * @return 게시글 페이지
      */
+    @EntityGraph(attributePaths = {"author", "board"})
     Page<Post> findByBoardAndDeletedFalseOrderByCreatedAtDesc(Board board, Pageable pageable);
 
     /**
@@ -63,6 +65,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * @param pageable 페이징 정보
      * @return 검색된 게시글 페이지
      */
+    @EntityGraph(attributePaths = {"author", "board"})
     @Query("SELECT p FROM Post p WHERE p.board = :board " +
            "AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%) " +
            "AND p.deleted = false " +
@@ -78,6 +81,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * @param pageable 페이징 정보
      * @return 질문 게시글 페이지
      */
+    @EntityGraph(attributePaths = {"author", "board"})
     @Query("SELECT p FROM Post p WHERE p.board = :board " +
            "AND p.isQuestion = true " +
            "AND p.deleted = false " +
@@ -92,6 +96,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * @param pageable 페이징 정보
      * @return 검색된 질문 게시글 페이지
      */
+    @EntityGraph(attributePaths = {"author", "board"})
     @Query("SELECT p FROM Post p WHERE p.board = :board " +
            "AND p.isQuestion = true " +
            "AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%) " +
@@ -108,6 +113,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * @param pageable 페이징 정보
      * @return 준회원 공개 게시글 페이지
      */
+    @EntityGraph(attributePaths = {"author", "board"})
     @Query("SELECT p FROM Post p WHERE p.board = :board " +
            "AND p.isVisibleToAssociate = true " +
            "AND p.deleted = false " +
@@ -122,6 +128,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * @param pageable 페이징 정보
      * @return 검색된 준회원 공개 게시글 페이지
      */
+    @EntityGraph(attributePaths = {"author", "board"})
     @Query("SELECT p FROM Post p WHERE p.board = :board " +
            "AND p.isVisibleToAssociate = true " +
            "AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%) " +
@@ -138,5 +145,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * @param postId 게시글 ID
      * @return 게시글 Optional
      */
+    @EntityGraph(attributePaths = {"author", "board", "images"})
     Optional<Post> findByBoardAndIdAndDeletedFalse(Board board, Long postId);
 }

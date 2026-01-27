@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -65,6 +66,11 @@ public class Post extends SoftDeletableEntity {
     /** 조회수 (기본값: 0) */
     @Column(name = "view_count", nullable = false)
     private int viewCount = 0;
+
+    /** 낙관적 락을 위한 버전 (동시성 제어) */
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     /** 익명 여부. 자유게시판(GENERAL)에서만 true 가능 */
     @Column(name = "is_anonymous", nullable = false)
@@ -164,6 +170,16 @@ public class Post extends SoftDeletableEntity {
      */
     public void incrementViewCount() {
         this.viewCount++;
+    }
+
+    /**
+     * 조회수를 지정된 값으로 동기화합니다.
+     * PostView 테이블의 실제 조회 수와 동기화할 때 사용합니다.
+     *
+     * @param viewCount 동기화할 조회수
+     */
+    public void syncViewCount(int viewCount) {
+        this.viewCount = viewCount;
     }
 
     /**
