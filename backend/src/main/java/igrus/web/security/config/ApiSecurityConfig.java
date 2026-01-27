@@ -45,6 +45,9 @@ public class ApiSecurityConfig {
                 // 관리자 전용
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                // 게시글 API - ASSOCIATE 이상
+                .requestMatchers("/api/v1/boards/*/posts/**").hasAnyRole("ASSOCIATE", "MEMBER", "OPERATOR", "ADMIN")
+
                 // 그 외 모든 요청은 인증 필요
                 .anyRequest().authenticated()
         );
