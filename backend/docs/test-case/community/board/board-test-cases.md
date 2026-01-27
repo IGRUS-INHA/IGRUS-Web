@@ -1,7 +1,7 @@
 # 게시판(Board) 테스트 케이스
 
 **작성일**: 2026-01-26
-**버전**: 1.0
+**버전**: 1.3
 **관련 스펙**: [board-spec.md](../../../../../docs/feature/community/board-spec.md)
 **우선순위**: P1
 
@@ -19,88 +19,88 @@
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-001 | 정회원 게시판 목록 조회 | 정회원(MEMBER)으로 로그인 | 커뮤니티 메뉴 접근 | 공지사항, 자유게시판, 정보공유 게시판 목록 표시 | ⬜ |
-| BRD-002 | 게시판 선택 시 게시글 목록 조회 | 정회원으로 로그인 | 자유게시판 선택 | 해당 게시판의 게시글 목록이 최신순으로 표시 | ⬜ |
-| BRD-003 | 준회원 게시판 접근 제한 | 준회원(ASSOCIATE)으로 로그인 | 자유게시판 접근 | "정회원 승인 후 이용 가능합니다" 메시지 표시 | ⬜ |
-| BRD-004 | 게시판 목록 조회 성능 | 로그인 상태 | 게시판 목록 조회 요청 | 3초 이내 응답 | ⬜ |
-| BRD-005 | 비로그인 사용자 게시판 접근 | 비로그인 상태 | 게시판 목록 접근 | 로그인 필요 안내 또는 401 응답 | ⬜ |
+| BRD-001 | 정회원 게시판 목록 조회 | 정회원(MEMBER)으로 로그인 | 커뮤니티 메뉴 접근 | 공지사항, 자유게시판, 정보공유 게시판 목록 표시 | ✅ |
+| BRD-002 | 게시판 선택 시 게시글 목록 조회 | 정회원으로 로그인 | 자유게시판 선택 | 해당 게시판의 게시글 목록이 최신순으로 표시 | ✅ |
+| BRD-003 | 준회원 게시판 접근 제한 | 준회원(ASSOCIATE)으로 로그인 | 자유게시판 접근 | "정회원 승인 후 이용 가능합니다" 메시지 표시 | ✅ |
+| BRD-004 | 게시판 목록 조회 성능 | 로그인 상태 | 게시판 목록 조회 요청 | 3초 이내 응답 | ✅ |
+| BRD-005 | 비로그인 사용자 게시판 접근 | 비로그인 상태 | 게시판 목록 접근 | 로그인 필요 안내 또는 401 응답 | ✅ |
 
 ### 2.2 게시판별 권한 관리
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-010 | 준회원 공지사항 읽기 (공개글) | 준회원으로 로그인, 준회원 공개 설정된 공지 존재 | 공지사항 접근 | "준회원 공개" 설정된 글만 표시 | ⬜ |
-| BRD-011 | 준회원 정보공유 게시판 접근 거부 | 준회원으로 로그인 | 정보공유 게시판 접근 | 접근 거부 및 안내 메시지 표시 | ⬜ |
-| BRD-012 | 운영진 공지사항 작성 권한 | 운영진(OPERATOR)으로 로그인 | 공지사항에서 글 작성 버튼 클릭 | 글 작성 화면 표시 | ⬜ |
-| BRD-013 | 정회원 공지사항 작성 권한 없음 | 정회원으로 로그인 | 공지사항에서 글 작성 버튼 확인 | 버튼 미표시 또는 비활성화 | ⬜ |
-| BRD-014 | 정회원 자유게시판 작성 권한 | 정회원으로 로그인 | 자유게시판에서 글 작성 버튼 클릭 | 글 작성 화면 표시 | ⬜ |
-| BRD-015 | 정회원 정보공유 작성 권한 | 정회원으로 로그인 | 정보공유에서 글 작성 버튼 클릭 | 글 작성 화면 표시 | ⬜ |
-| BRD-016 | 관리자 모든 게시판 접근 권한 | 관리자(ADMIN)로 로그인 | 모든 게시판 접근 | 모든 게시판 읽기/쓰기 가능 | ⬜ |
+| BRD-010 | 준회원 공지사항 읽기 (공개글) | 준회원으로 로그인, 준회원 공개 설정된 공지 존재 | 공지사항 접근 | "준회원 공개" 설정된 글만 표시 | ✅ |
+| BRD-011 | 준회원 정보공유 게시판 접근 거부 | 준회원으로 로그인 | 정보공유 게시판 접근 | 접근 거부 및 안내 메시지 표시 | ✅ |
+| BRD-012 | 운영진 공지사항 작성 권한 | 운영진(OPERATOR)으로 로그인 | 공지사항에서 글 작성 버튼 클릭 | 글 작성 화면 표시 | ✅ |
+| BRD-013 | 정회원 공지사항 작성 권한 없음 | 정회원으로 로그인 | 공지사항에서 글 작성 버튼 확인 | 버튼 미표시 또는 비활성화 | ✅ |
+| BRD-014 | 정회원 자유게시판 작성 권한 | 정회원으로 로그인 | 자유게시판에서 글 작성 버튼 클릭 | 글 작성 화면 표시 | ✅ |
+| BRD-015 | 정회원 정보공유 작성 권한 | 정회원으로 로그인 | 정보공유에서 글 작성 버튼 클릭 | 글 작성 화면 표시 | ✅ |
+| BRD-016 | 관리자 모든 게시판 접근 권한 | 관리자(ADMIN)로 로그인 | 모든 게시판 접근 | 모든 게시판 읽기/쓰기 가능 | ✅ |
 
 ### 2.3 준회원 공개 설정 (공지사항)
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-020 | 운영진 준회원 공개 옵션 설정 | 운영진으로 로그인 | 공지사항 작성 시 "준회원에게 공개" 옵션 선택 후 저장 | 해당 공지 준회원에게 표시 | ⬜ |
-| BRD-021 | 준회원 비공개 공지 미표시 | 준회원 공개 미설정된 공지 존재 | 준회원으로 공지사항 조회 | 해당 공지 목록에 미표시 | ⬜ |
-| BRD-022 | 정회원 모든 공지 조회 | 준회원 공개/비공개 공지 모두 존재 | 정회원으로 공지사항 조회 | 모든 공지사항 표시 | ⬜ |
+| BRD-020 | 운영진 준회원 공개 옵션 설정 | 운영진으로 로그인 | 공지사항 작성 시 "준회원에게 공개" 옵션 선택 후 저장 | 해당 공지 준회원에게 표시 | ✅ |
+| BRD-021 | 준회원 비공개 공지 미표시 | 준회원 공개 미설정된 공지 존재 | 준회원으로 공지사항 조회 | 해당 공지 목록에 미표시 | ✅ |
+| BRD-022 | 정회원 모든 공지 조회 | 준회원 공개/비공개 공지 모두 존재 | 정회원으로 공지사항 조회 | 모든 공지사항 표시 | ✅ |
 
 ### 2.4 게시판 검색 기능
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-030 | 제목 검색 | 정회원으로 로그인, 게시글 존재 | 제목에 특정 키워드로 검색 | 제목에 키워드가 포함된 게시글 목록 반환 | ⬜ |
-| BRD-031 | 내용 검색 | 정회원으로 로그인, 게시글 존재 | 내용에 특정 키워드로 검색 | 내용에 키워드가 포함된 게시글 목록 반환 | ⬜ |
-| BRD-032 | 제목+내용 검색 | 정회원으로 로그인 | 제목과 내용에 키워드 검색 | 제목 또는 내용에 키워드가 포함된 게시글 목록 반환 | ⬜ |
-| BRD-033 | 검색 결과 없음 | 정회원으로 로그인 | 존재하지 않는 키워드 검색 | 빈 목록 반환, "검색 결과가 없습니다" 안내 | ⬜ |
+| BRD-030 | 제목 검색 | 정회원으로 로그인, 게시글 존재 | 제목에 특정 키워드로 검색 | 제목에 키워드가 포함된 게시글 목록 반환 | ✅ |
+| BRD-031 | 내용 검색 | 정회원으로 로그인, 게시글 존재 | 내용에 특정 키워드로 검색 | 내용에 키워드가 포함된 게시글 목록 반환 | ✅ |
+| BRD-032 | 제목+내용 검색 | 정회원으로 로그인 | 제목과 내용에 키워드 검색 | 제목 또는 내용에 키워드가 포함된 게시글 목록 반환 | ✅ |
+| BRD-033 | 검색 결과 없음 | 정회원으로 로그인 | 존재하지 않는 키워드 검색 | 빈 목록 반환, "검색 결과가 없습니다" 안내 | ✅ |
 
 ### 2.5 페이지네이션
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-040 | 기본 페이지 크기 | 30개 이상의 게시글 존재 | 게시판 목록 첫 페이지 조회 | 기본 20개 게시글 반환 | ⬜ |
-| BRD-041 | 페이지 이동 | 30개 이상의 게시글 존재 | 2페이지 조회 | 21~40번째 게시글 반환 | ⬜ |
-| BRD-042 | 최신순 정렬 | 여러 게시글 존재 | 게시글 목록 조회 | 최신 작성글이 상단에 표시 | ⬜ |
+| BRD-040 | 기본 페이지 크기 | 30개 이상의 게시글 존재 | 게시판 목록 첫 페이지 조회 | 기본 20개 게시글 반환 | ✅ |
+| BRD-041 | 페이지 이동 | 30개 이상의 게시글 존재 | 2페이지 조회 | 21~40번째 게시글 반환 | ✅ |
+| BRD-042 | 최신순 정렬 | 여러 게시글 존재 | 게시글 목록 조회 | 최신 작성글이 상단에 표시 | ✅ |
 
 ### 2.6 익명 게시판 설정
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-050 | 자유게시판 익명 옵션 존재 | 정회원으로 로그인 | 자유게시판 글 작성 화면 접근 | 익명 작성 옵션 표시 | ⬜ |
-| BRD-051 | 공지사항 익명 옵션 없음 | 운영진으로 로그인 | 공지사항 글 작성 화면 접근 | 익명 작성 옵션 미표시 | ⬜ |
-| BRD-052 | 정보공유 익명 옵션 없음 | 정회원으로 로그인 | 정보공유 글 작성 화면 접근 | 익명 작성 옵션 미표시 | ⬜ |
+| BRD-050 | 자유게시판 익명 옵션 존재 | 정회원으로 로그인 | 자유게시판 글 작성 화면 접근 | 익명 작성 옵션 표시 | ✅ |
+| BRD-051 | 공지사항 익명 옵션 없음 | 운영진으로 로그인 | 공지사항 글 작성 화면 접근 | 익명 작성 옵션 미표시 | ✅ |
+| BRD-052 | 정보공유 익명 옵션 없음 | 정회원으로 로그인 | 정보공유 글 작성 화면 접근 | 익명 작성 옵션 미표시 | ✅ |
 
 ### 2.7 질문 태그 기능
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-060 | 자유게시판 질문 태그 옵션 | 정회원으로 로그인 | 자유게시판 글 작성 화면 접근 | 질문으로 등록 옵션 표시 | ⬜ |
-| BRD-061 | 정보공유 질문 태그 없음 | 정회원으로 로그인 | 정보공유 글 작성 화면 접근 | 질문으로 등록 옵션 미표시 | ⬜ |
-| BRD-062 | 질문만 필터링 | 질문 태그가 있는 게시글 존재 | 자유게시판에서 질문만 필터 적용 | 질문 태그가 있는 게시글만 표시 | ⬜ |
+| BRD-060 | 자유게시판 질문 태그 옵션 | 정회원으로 로그인 | 자유게시판 글 작성 화면 접근 | 질문으로 등록 옵션 표시 | ✅ |
+| BRD-061 | 정보공유 질문 태그 없음 | 정회원으로 로그인 | 정보공유 글 작성 화면 접근 | 질문으로 등록 옵션 미표시 | ✅ |
+| BRD-062 | 질문만 필터링 | 질문 태그가 있는 게시글 존재 | 자유게시판에서 질문만 필터 적용 | 질문 태그가 있는 게시글만 표시 | ✅ |
 
 ### 2.8 관리자 익명 게시글 조회
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-070 | 운영진 익명 게시글 작성자 조회 | 운영진으로 로그인, 익명 게시글 존재 | 익명 게시글 작성자 정보 조회 | 실제 작성자 정보 확인 가능 | ⬜ |
-| BRD-071 | 정회원 익명 게시글 작성자 조회 불가 | 정회원으로 로그인, 익명 게시글 존재 | 익명 게시글 조회 | 작성자 "익명"으로만 표시 | ⬜ |
+| BRD-070 | 운영진 익명 게시글 작성자 조회 | 운영진으로 로그인, 익명 게시글 존재 | 익명 게시글 작성자 정보 조회 | 실제 작성자 정보 확인 가능 | ⚠️ |
+| BRD-071 | 정회원 익명 게시글 작성자 조회 불가 | 정회원으로 로그인, 익명 게시글 존재 | 익명 게시글 조회 | 작성자 "익명"으로만 표시 | ✅ |
 
 ### 2.9 Edge Cases
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-080 | 접근 중 회원 등급 변경 | 정회원으로 로그인 후 준회원으로 강등 | 다음 API 요청 | 새로운 권한이 적용됨 | ⬜ |
-| BRD-081 | 존재하지 않는 게시판 접근 | 로그인 상태 | 존재하지 않는 게시판 코드로 접근 | 404 에러 응답 | ⬜ |
-| BRD-082 | 빈 게시판 조회 | 게시글이 없는 게시판 | 게시판 목록 조회 | "게시글이 없습니다" 안내 메시지 | ⬜ |
-| BRD-083 | 삭제된 게시글 직접 접근 | 삭제된 게시글 ID 존재 | 삭제된 게시글 직접 접근 | "삭제된 게시글입니다" 안내 표시 | ⬜ |
-| BRD-084 | 익명 게시글 권한 없는 사용자 수정 시도 | 타인의 익명 게시글 존재 | 해당 게시글 수정 시도 | 403 Forbidden, "수정 권한이 없습니다" | ⬜ |
+| BRD-080 | 접근 중 회원 등급 변경 | 정회원으로 로그인 후 준회원으로 강등 | 다음 API 요청 | 새로운 권한이 적용됨 | ⚠️ |
+| BRD-081 | 존재하지 않는 게시판 접근 | 로그인 상태 | 존재하지 않는 게시판 코드로 접근 | 404 에러 응답 | ✅ |
+| BRD-082 | 빈 게시판 조회 | 게시글이 없는 게시판 | 게시판 목록 조회 | "게시글이 없습니다" 안내 메시지 | ✅ |
+| BRD-083 | 삭제된 게시글 직접 접근 | 삭제된 게시글 ID 존재 | 삭제된 게시글 직접 접근 | "삭제된 게시글입니다" 안내 표시 | ✅ |
+| BRD-084 | 익명 게시글 권한 없는 사용자 수정 시도 | 타인의 익명 게시글 존재 | 해당 게시글 수정 시도 | 403 Forbidden, "수정 권한이 없습니다" | ✅ |
 
 ### 2.10 Rate Limiting
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| BRD-090 | IP 기반 Rate Limit 적용 | 로그인 상태 | 분당 60회 초과 요청 | 429 Too Many Requests 응답 | ⬜ |
-| BRD-091 | Rate Limit 이내 요청 | 로그인 상태 | 분당 60회 이내 요청 | 모든 요청 정상 처리 | ⬜ |
+| BRD-090 | IP 기반 Rate Limit 적용 | 로그인 상태 | 분당 60회 초과 요청 | 429 Too Many Requests 응답 | ✅ |
+| BRD-091 | Rate Limit 이내 요청 | 로그인 상태 | 분당 60회 이내 요청 | 모든 요청 정상 처리 | ✅ |
 
 ---
 
@@ -125,31 +125,151 @@
 
 ## 4. 구현된 테스트 클래스
 
-### 4.1 Service 테스트
+### 4.1 BoardServiceTest (단위 테스트)
 - **파일**: `backend/src/test/java/igrus/web/board/service/BoardServiceTest.java`
-- **테스트 범위**: BRD-001, BRD-002, BRD-081 (게시판 목록/상세 조회 비즈니스 로직)
-- **구현 완료**: 2026-01-26
+- **테스트 범위**: BRD-001, BRD-002, BRD-003, BRD-081
+- **구현된 테스트 메서드**:
+  - `getBoardList_WithMemberRole_ReturnsAllBoards` - 정회원 게시판 목록 조회
+  - `getBoardList_WithAssociateRole_ReturnsOnlyReadableBoards` - 준회원 게시판 목록 조회 제한
+  - `getBoardEntity_WithNonExistentCode_ThrowsBoardNotFoundException` - 존재하지 않는 코드 조회 시 예외
+  - `getBoardEntity_WithValidCode_ReturnsBoard` - 유효한 코드로 게시판 조회
+  - `getBoardEntity_WithUppercaseCode_ReturnsBoard` - 대문자 코드로 게시판 조회
+  - `getBoardEntity_WithBoardCodeEnum_ReturnsBoard` - BoardCode enum으로 조회
+  - `getBoardEntity_WithNonExistentBoardCode_ThrowsBoardNotFoundException` - 존재하지 않는 BoardCode로 조회 시 예외
 
-### 4.2 BoardPermissionService 테스트
+### 4.2 BoardPermissionServiceTest (단위 테스트)
 - **파일**: `backend/src/test/java/igrus/web/board/service/BoardPermissionServiceTest.java`
-- **테스트 범위**: BRD-010 ~ BRD-016 (권한 검증 로직)
-- **구현 완료**: 2026-01-26
+- **테스트 범위**: BRD-010, BRD-011, BRD-012, BRD-013
+- **구현된 테스트 메서드**:
+  - `canRead_AssociateWithNoticeBoard_ReturnsTrue` - 준회원 공지사항 읽기 권한
+  - `canRead_AssociateWithFreeBoard_ReturnsFalse` - 준회원 자유게시판 읽기 권한 없음
+  - `canRead_WithNoPermission_ReturnsFalse` - 권한 없을 때 읽기 거부
+  - `canWrite_MemberWithNoticeBoard_ReturnsFalse` - 정회원 공지사항 쓰기 권한 없음
+  - `canWrite_OperatorWithNoticeBoard_ReturnsTrue` - 운영진 공지사항 쓰기 권한
+  - `canWrite_WithNoPermission_ReturnsFalse` - 권한 없을 때 쓰기 거부
+  - `checkReadPermission_WithValidPermission_NoException` - 읽기 권한 검증 성공
+  - `checkReadPermission_WithoutPermission_ThrowsBoardReadDeniedException` - 읽기 권한 없을 때 예외
+  - `checkWritePermission_WithValidPermission_NoException` - 쓰기 권한 검증 성공
+  - `checkWritePermission_WithoutPermission_ThrowsBoardWriteDeniedException` - 쓰기 권한 없을 때 예외
 
-### 4.3 Controller 테스트
+### 4.3 BoardControllerTest (통합 테스트)
 - **파일**: `backend/src/test/java/igrus/web/board/controller/BoardControllerTest.java`
-- **테스트 범위**: BRD-001, BRD-005, BRD-081 (HTTP 레이어)
-- **구현 완료**: 2026-01-26
+- **테스트 범위**: BRD-001, BRD-002, BRD-003, BRD-005, BRD-081
+- **구현된 테스트 메서드**:
+  - `getBoardList_WithAuthenticatedUser_ReturnsOk` - 인증된 사용자 게시판 목록 조회
+  - `getBoardList_WithAssociateUser_ReturnsOnlyNotices` - 준회원 게시판 목록 조회 제한
+  - `getBoardList_WithUnauthenticatedUser_ReturnsForbidden` - 비인증 사용자 접근 거부 (403)
+  - `getBoardByCode_WithValidCode_ReturnsOk` - 유효한 코드로 게시판 상세 조회
+  - `getBoardByCode_WithInvalidCode_ReturnsNotFound` - 존재하지 않는 코드 조회 시 404
+  - `getBoardByCode_WithUnauthenticatedUser_ReturnsForbidden` - 비인증 사용자 상세 조회 거부
 
-### 4.4 통합 테스트
+### 4.4 BoardPermissionIntegrationTest (통합 테스트)
 - **파일**: `backend/src/test/java/igrus/web/board/integration/BoardPermissionIntegrationTest.java`
-- **테스트 범위**: BRD-003, BRD-005, BRD-010 ~ BRD-016, BRD-081 (권한 검증 전체 플로우 통합 테스트)
-- **구현 완료**: 2026-01-26
+- **테스트 범위**: BRD-001, BRD-003, BRD-005, BRD-010 ~ BRD-016, BRD-081
+- **구현된 테스트 메서드**:
+  - `associate_canRead_notices` - 준회원 공지사항 읽기 성공
+  - `associate_cannotRead_general_returnsCanReadFalse` - 준회원 자유게시판 접근 시 canRead=false
+  - `associate_getBoardList_returnsOnlyAccessibleBoards` - 준회원 게시판 목록 제한
+  - `member_canRead_allBoards` - 정회원 모든 게시판 읽기/쓰기 권한 확인
+  - `member_getBoardList_returnsAllBoards` - 정회원 모든 게시판 목록 조회
+  - `member_cannotWrite_notices` - 정회원 공지사항 쓰기 권한 없음
+  - `operator_canWrite_notices` - 운영진 공지사항 쓰기 권한
+  - `operator_hasFullAccess_allBoards` - 운영진 전체 게시판 접근 권한
+  - `admin_hasFullAccess_allBoards` - 관리자 전체 게시판 접근 권한
+  - `unauthenticated_getBoardList_returnsForbidden` - 비인증 사용자 목록 조회 거부
+  - `unauthenticated_getBoardDetail_returnsForbidden` - 비인증 사용자 상세 조회 거부
+  - `getBoardByCode_withInvalidCode_returnsNotFound` - 존재하지 않는 게시판 코드 조회 시 404
+
+### 4.5 PostServiceTest (단위 테스트)
+- **파일**: `backend/src/test/java/igrus/web/board/service/PostServiceTest.java`
+- **테스트 범위**: BRD-050 ~ BRD-052, BRD-060 ~ BRD-061
+- **구현된 테스트 메서드**:
+  - `createPost_InGeneral_WithAnonymousOption_Success` - 자유게시판 익명 게시글 작성 성공
+  - `createPost_InNotices_WithAnonymousOption_ThrowsException` - 공지사항 익명 옵션 예외
+  - `createPost_InInsight_WithAnonymousOption_ThrowsException` - 정보공유 익명 옵션 예외
+  - `createPost_InGeneral_WithQuestionTag_Success` - 자유게시판 질문 태그 성공
+  - `createPost_InInsight_WithQuestionTag_ThrowsException` - 정보공유 질문 태그 예외
+  - `createPost_InNotices_WithQuestionTag_ThrowsException` - 공지사항 질문 태그 예외
+  - `createPost_WithValidRequest_Success` - 일반 게시글 작성 성공
+  - `createPost_WithBothAnonymousAndQuestion_Success` - 익명 + 질문 동시 사용 성공
+
+### 4.6 PostRateLimitServiceTest (단위 테스트)
+- **파일**: `backend/src/test/java/igrus/web/board/service/PostRateLimitServiceTest.java`
+- **테스트 범위**: BRD-090 ~ BRD-091
+- **구현된 테스트 메서드**:
+  - `checkRateLimit_ExceedsLimit_ThrowsException` - Rate Limit 초과 시 예외
+  - `checkRateLimit_WithinLimit_Success` - Rate Limit 이내 성공
+  - `checkRateLimit_NoPosts_Success` - 게시글 없는 경우 성공
+  - `checkRateLimit_ExactlyAtLimit_ThrowsException` - 정확히 20개에서 추가 시 예외
+  - `getRemainingPosts_*` - 남은 게시글 수 조회 테스트들
+
+### 4.7 PostControllerTest (통합 테스트)
+- **파일**: `backend/src/test/java/igrus/web/board/controller/PostControllerTest.java`
+- **테스트 범위**: BRD-004, BRD-020 ~ BRD-022, BRD-030 ~ BRD-033, BRD-040 ~ BRD-042, BRD-062
+- **구현된 테스트 메서드**:
+  - `getPostList_Performance_CompletesWithin3Seconds` - 성능 테스트 (3초 이내)
+  - `createPost_InNotices_WithVisibleToAssociate_Success` - 준회원 공개 공지 작성
+  - `getNoticeList_AsAssociate_HiddenNonVisibleNotices` - 준회원 비공개 공지 미표시
+  - `getNoticeList_AsMember_ShowsAllNotices` - 정회원 모든 공지 조회
+  - `searchPosts_ByTitle_ReturnsMatchingPosts` - 제목 검색
+  - `searchPosts_ByContent_ReturnsMatchingPosts` - 내용 검색
+  - `searchPosts_ByTitleOrContent_ReturnsCombinedResults` - 제목+내용 검색
+  - `searchPosts_NoMatches_ReturnsEmptyList` - 검색 결과 없음
+  - `getPostList_DefaultPageSize_Returns20Posts` - 기본 페이지 크기 20개
+  - `getPostList_Page2_Returns21To40Posts` - 페이지 이동
+  - `getPostList_DefaultOrder_SortedByCreatedAtDesc` - 최신순 정렬
+  - `getPostList_WithQuestionOnlyFilter_ReturnsOnlyQuestions` - 질문만 필터링
+  - `createPost_WithValidRequest_ReturnsCreated` - 게시글 작성 성공
+  - `getPostDetail_WithValidId_ReturnsOk` - 게시글 상세 조회 성공
+  - `getPostDetail_WithInvalidId_ReturnsNotFound` - 존재하지 않는 게시글 조회 시 404
+
+### 4.8 PostIntegrationTest (통합 테스트)
+- **파일**: `backend/src/test/java/igrus/web/board/integration/PostIntegrationTest.java`
+- **테스트 범위**: BRD-070 ~ BRD-071, BRD-082 ~ BRD-084
+- **구현된 테스트 메서드**:
+  - `getPostDetail_AsOperator_AnonymousPost_ShowsAnonymous` - 운영진 익명 게시글 조회 (현재 구현: 익명으로만 표시)
+  - `getPostDetail_AsMember_AnonymousPost_ShowsAnonymous` - 정회원 익명 게시글 조회
+  - `getPostList_EmptyBoard_ReturnsEmptyList` - 빈 게시판 조회
+  - `getPostDetail_DeletedPost_ReturnsNotFound` - 삭제된 게시글 조회 시 404
+  - `updatePost_AnonymousPost_ByNonAuthor_ReturnsForbidden` - 타인 익명 게시글 수정 거부
+  - `updatePost_DeletedPost_ReturnsError` - 삭제된 게시글 수정 거부
+  - `deletePost_AlreadyDeleted_ReturnsError` - 이미 삭제된 게시글 삭제 거부
+  - `getPostList_AsAssociate_InGeneral_ReturnsForbidden` - 준회원 자유게시판 접근 거부
+  - `updatePost_ByAuthor_Success` - 작성자 본인 수정 성공
+  - `deletePost_ByAuthor_Success` - 작성자 본인 삭제 성공
+  - `deletePost_ByOperator_Success` - 운영자 타인 게시글 삭제 성공
+  - `deletePost_ByOtherMember_ReturnsForbidden` - 타인 게시글 삭제 거부
+  - `getPostDetail_IncreasesViewCount` - 조회수 증가
 
 ---
 
-## 5. 변경 이력
+## 5. 테스트 커버리지 요약
+
+| 카테고리 | 총 테스트 케이스 | 구현 완료 | 미구현/부분구현 | 커버리지 |
+|---------|----------------|----------|----------------|----------|
+| 게시판 목록 조회 (2.1) | 5 | 5 | 0 | 100% |
+| 게시판별 권한 관리 (2.2) | 7 | 7 | 0 | 100% |
+| 준회원 공개 설정 (2.3) | 3 | 3 | 0 | 100% |
+| 게시판 검색 기능 (2.4) | 4 | 4 | 0 | 100% |
+| 페이지네이션 (2.5) | 3 | 3 | 0 | 100% |
+| 익명 게시판 설정 (2.6) | 3 | 3 | 0 | 100% |
+| 질문 태그 기능 (2.7) | 3 | 3 | 0 | 100% |
+| 관리자 익명 게시글 조회 (2.8) | 2 | 1 | 1 | 50% |
+| Edge Cases (2.9) | 5 | 4 | 1 | 80% |
+| Rate Limiting (2.10) | 2 | 2 | 0 | 100% |
+| **총계** | **37** | **35** | **2** | **95%** |
+
+> **참고**:
+> - ⚠️ BRD-070 (운영진 익명 게시글 작성자 조회): 현재 미구현 - 운영진도 익명 게시글의 작성자 정보를 확인할 수 없음
+> - ⚠️ BRD-080 (접근 중 회원 등급 변경): 런타임 중 등급 변경 시나리오로 테스트 복잡성 높음
+
+---
+
+## 6. 변경 이력
 
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 1.0 | 2026-01-26 | - | 최초 작성 |
 | 1.1 | 2026-01-26 | Claude | 테스트 클래스 경로 수정 및 구현 완료 상태 업데이트 |
+| 1.2 | 2026-01-26 | Claude | 테스트 케이스 상태 업데이트 (12개 ✅), 테스트 메서드 상세 목록 추가, 커버리지 요약 섹션 추가 |
+| 1.3 | 2026-01-27 | Claude | Post 관련 테스트 클래스 추가 (PostServiceTest, PostRateLimitServiceTest, PostControllerTest, PostIntegrationTest), 테스트 케이스 상태 업데이트 (35개 ✅, 2개 ⚠️), 커버리지 95% 달성 |

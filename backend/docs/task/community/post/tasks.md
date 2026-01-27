@@ -26,9 +26,9 @@
 
 **Purpose**: 게시글 도메인의 기본 패키지 구조 및 의존성 확인
 
-- [ ] T001 Board 도메인 구현 완료 확인 (board-spec.md 기반 tasks 선행 필수)
-- [ ] T002 [P] 게시글 관련 추가 패키지 구조 생성: `board/dto/request/`, `board/dto/response/`
-- [ ] T003 [P] Flyway 마이그레이션 버전 확인 및 V7 번호 예약 확인 (V6는 board 사용)
+- [x] T001 Board 도메인 구현 완료 확인 (board-spec.md 기반 tasks 선행 필수)
+- [x] T002 [P] 게시글 관련 추가 패키지 구조 생성: `board/dto/request/`, `board/dto/response/`
+- [x] T003 [P] Flyway 마이그레이션 버전 확인 및 V7 번호 예약 확인 (V6는 board 사용)
 
 ---
 
@@ -40,50 +40,50 @@
 
 ### 2.1 데이터베이스 스키마
 
-- [ ] T004 Flyway 마이그레이션 V7__create_post_tables.sql 작성 in `backend/src/main/resources/db/migration/V7__create_post_tables.sql`
+- [x] T004 Flyway 마이그레이션 V7__create_post_tables.sql 작성 in `backend/src/main/resources/db/migration/V7__create_post_tables.sql`
   - posts 테이블: id, board_id(FK), author_id(FK), title(VARCHAR 100), content(TEXT), view_count, is_anonymous, is_question, is_visible_to_associate, deleted, deleted_at, deleted_by, created_at, updated_at, created_by, updated_by
   - post_images 테이블: id, post_id(FK), image_url, display_order, created_at
   - 인덱스: board_id, author_id, created_at, (board_id, is_question), (board_id, deleted)
 
 ### 2.2 핵심 도메인 엔티티
 
-- [ ] T005 [P] Post 엔티티 구현 in `backend/src/main/java/igrus/web/board/domain/Post.java`
+- [x] T005 [P] Post 엔티티 구현 in `backend/src/main/java/igrus/web/board/domain/Post.java`
   - SoftDeletableEntity 상속
   - 필드: board(ManyToOne), author(ManyToOne), title, content, viewCount, isAnonymous, isQuestion, isVisibleToAssociate
   - 정적 팩토리 메서드: createPost(), createAnonymousPost(), createNotice()
   - 비즈니스 메서드: updateContent(), incrementViewCount(), canModify(User), canDelete(User)
   - 제약조건: 제목 100자, 익명/질문 옵션은 자유게시판만, 준회원 공개는 공지사항만
 
-- [ ] T006 [P] PostImage 엔티티 구현 in `backend/src/main/java/igrus/web/board/domain/PostImage.java`
+- [x] T006 [P] PostImage 엔티티 구현 in `backend/src/main/java/igrus/web/board/domain/PostImage.java`
   - BaseEntity 상속
   - 필드: post(ManyToOne), imageUrl, displayOrder
   - 최대 5개 제한 (Post에서 관리)
 
 ### 2.3 Repository
 
-- [ ] T007 [P] PostRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/repository/PostRepository.java`
+- [x] T007 [P] PostRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/repository/PostRepository.java`
   - findByIdAndDeletedFalse(Long id): Optional<Post>
   - findByBoardAndDeletedFalseOrderByCreatedAtDesc(Board board, Pageable pageable): Page<Post>
   - findByBoardAndIsQuestionTrueAndDeletedFalse(Board board, Pageable pageable): Page<Post>
   - searchByTitleOrContent(Board board, String keyword, Pageable pageable): Page<Post>
   - countByAuthorAndCreatedAtAfter(User author, Instant after): long
 
-- [ ] T008 [P] PostImageRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/repository/PostImageRepository.java`
+- [x] T008 [P] PostImageRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/repository/PostImageRepository.java`
   - findByPostOrderByDisplayOrderAsc(Post post): List<PostImage>
   - deleteByPost(Post post): void
   - countByPost(Post post): long
 
 ### 2.4 예외 클래스
 
-- [ ] T009 [P] PostNotFoundException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostNotFoundException.java`
-- [ ] T010 [P] PostAccessDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostAccessDeniedException.java`
-- [ ] T011 [P] PostTitleTooLongException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostTitleTooLongException.java`
-- [ ] T012 [P] PostImageLimitExceededException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostImageLimitExceededException.java`
-- [ ] T013 [P] PostRateLimitExceededException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostRateLimitExceededException.java`
-- [ ] T014 [P] InvalidPostOptionException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/InvalidPostOptionException.java`
-- [ ] T015 [P] PostDeletedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostDeletedException.java`
+- [x] T009 [P] PostNotFoundException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostNotFoundException.java`
+- [x] T010 [P] PostAccessDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostAccessDeniedException.java`
+- [x] T011 [P] PostTitleTooLongException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostTitleTooLongException.java`
+- [x] T012 [P] PostImageLimitExceededException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostImageLimitExceededException.java`
+- [x] T013 [P] PostRateLimitExceededException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostRateLimitExceededException.java`
+- [x] T014 [P] InvalidPostOptionException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/InvalidPostOptionException.java`
+- [x] T015 [P] PostDeletedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/exception/PostDeletedException.java`
 
-- [ ] T016 ErrorCode에 게시글 관련 에러 코드 추가 in `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`
+- [x] T016 ErrorCode에 게시글 관련 에러 코드 추가 in `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`
   - POST_NOT_FOUND(404, "게시글을 찾을 수 없습니다")
   - POST_ACCESS_DENIED(403, "게시글에 대한 접근 권한이 없습니다")
   - POST_TITLE_TOO_LONG(400, "제목은 100자 이내여야 합니다")
@@ -97,7 +97,7 @@
 
 ### 2.5 Rate Limiting 서비스
 
-- [ ] T017 PostRateLimitService 구현 in `backend/src/main/java/igrus/web/board/service/PostRateLimitService.java`
+- [x] T017 PostRateLimitService 구현 in `backend/src/main/java/igrus/web/board/service/PostRateLimitService.java`
   - checkRateLimit(User user): void (시간당 20회 초과 시 예외)
   - getRemainingPosts(User user): int
   - 내부: 최근 1시간 내 게시글 수 조회
@@ -148,24 +148,24 @@
 
 ### Implementation for User Story 1
 
-- [ ] T021 [P] [US1] CreatePostRequest DTO 구현 in `backend/src/main/java/igrus/web/board/dto/request/CreatePostRequest.java`
+- [x] T021 [P] [US1] CreatePostRequest DTO 구현 in `backend/src/main/java/igrus/web/board/dto/request/CreatePostRequest.java`
   - 필드: title(@NotBlank, @Size(max=100)), content(@NotBlank), isAnonymous, isQuestion, imageUrls(List, max 5)
   - Bean Validation 적용
 
-- [ ] T022 [P] [US1] PostCreateResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostCreateResponse.java`
+- [x] T022 [P] [US1] PostCreateResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostCreateResponse.java`
   - 필드: postId, boardCode, title, createdAt
 
-- [ ] T023 [US1] PostService 게시글 작성 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
+- [x] T023 [US1] PostService 게시글 작성 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
   - createPost(String boardCode, CreatePostRequest request, User author): PostCreateResponse
   - 권한 검증, Rate Limit 검증, 옵션 유효성 검증 포함
   - 이미지 URL 저장 처리
 
-- [ ] T024 [US1] PostController 게시글 작성 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
+- [x] T024 [US1] PostController 게시글 작성 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
   - POST /api/v1/boards/{boardCode}/posts - 게시글 작성
   - @Valid 적용, 인증 사용자 정보 주입
   - Swagger 어노테이션 (@Operation, @ApiResponse) 추가
 
-- [ ] T025 [US1] GlobalExceptionHandler에 게시글 예외 핸들러 추가 in `backend/src/main/java/igrus/web/common/exception/GlobalExceptionHandler.java`
+- [x] T025 [US1] GlobalExceptionHandler에 게시글 예외 핸들러 추가 in `backend/src/main/java/igrus/web/common/exception/GlobalExceptionHandler.java`
   - PostNotFoundException → 404 Not Found
   - PostAccessDeniedException → 403 Forbidden
   - PostTitleTooLongException → 400 Bad Request
@@ -212,24 +212,24 @@
 
 ### Implementation for User Story 2
 
-- [ ] T028 [P] [US2] PostListResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostListResponse.java`
+- [x] T028 [P] [US2] PostListResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostListResponse.java`
   - 필드: postId, title, authorName(익명 시 "익명"), isAnonymous, isQuestion, viewCount, likeCount, commentCount, createdAt
   - 정적 팩토리 메서드: from(Post post)
 
-- [ ] T029 [P] [US2] PostDetailResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostDetailResponse.java`
+- [x] T029 [P] [US2] PostDetailResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostDetailResponse.java`
   - 필드: postId, boardCode, title, content, authorId(익명 시 null), authorName, isAnonymous, isQuestion, viewCount, likeCount, commentCount, imageUrls, createdAt, updatedAt
   - 정적 팩토리 메서드: from(Post post, boolean isAuthor)
 
-- [ ] T030 [P] [US2] PostListPageResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostListPageResponse.java`
+- [x] T030 [P] [US2] PostListPageResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostListPageResponse.java`
   - 필드: posts(List<PostListResponse>), totalElements, totalPages, currentPage, hasNext
 
-- [ ] T031 [US2] PostService 게시글 조회 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
+- [x] T031 [US2] PostService 게시글 조회 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
   - getPostList(String boardCode, UserRole role, String keyword, Boolean questionOnly, Pageable pageable): PostListPageResponse
   - getPostDetail(String boardCode, Long postId, User currentUser): PostDetailResponse
   - 준회원 공개 필터링 적용 (공지사항)
   - 익명 게시글 작성자 정보 필터링
 
-- [ ] T032 [US2] PostController 게시글 조회 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
+- [x] T032 [US2] PostController 게시글 조회 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
   - GET /api/v1/boards/{boardCode}/posts - 게시글 목록 조회 (페이징, 검색, 필터)
   - GET /api/v1/boards/{boardCode}/posts/{postId} - 게시글 상세 조회
   - Swagger 어노테이션 추가
@@ -269,19 +269,19 @@
 
 ### Implementation for User Story 3
 
-- [ ] T035 [P] [US3] UpdatePostRequest DTO 구현 in `backend/src/main/java/igrus/web/board/dto/request/UpdatePostRequest.java`
+- [x] T035 [P] [US3] UpdatePostRequest DTO 구현 in `backend/src/main/java/igrus/web/board/dto/request/UpdatePostRequest.java`
   - 필드: title(@NotBlank, @Size(max=100)), content(@NotBlank), isQuestion, imageUrls(List, max 5)
   - 익명 설정은 변경 불가이므로 필드 제외
 
-- [ ] T036 [P] [US3] PostUpdateResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostUpdateResponse.java`
+- [x] T036 [P] [US3] PostUpdateResponse DTO 구현 in `backend/src/main/java/igrus/web/board/dto/response/PostUpdateResponse.java`
   - 필드: postId, boardCode, title, updatedAt
 
-- [ ] T037 [US3] PostService 게시글 수정 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
+- [x] T037 [US3] PostService 게시글 수정 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
   - updatePost(String boardCode, Long postId, UpdatePostRequest request, User currentUser): PostUpdateResponse
   - 작성자 본인 또는 관리자만 수정 가능
   - 익명 설정 불변 검증
 
-- [ ] T038 [US3] PostController 게시글 수정 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
+- [x] T038 [US3] PostController 게시글 수정 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
   - PUT /api/v1/boards/{boardCode}/posts/{postId} - 게시글 수정
   - Swagger 어노테이션 추가
 
@@ -319,12 +319,12 @@
 
 ### Implementation for User Story 4
 
-- [ ] T041 [US4] PostService 게시글 삭제 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
+- [x] T041 [US4] PostService 게시글 삭제 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
   - deletePost(String boardCode, Long postId, User currentUser): void
   - Soft Delete 적용 (SoftDeletableEntity.delete() 사용)
   - 작성자 본인 또는 관리자만 삭제 가능
 
-- [ ] T042 [US4] PostController 게시글 삭제 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
+- [x] T042 [US4] PostController 게시글 삭제 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
   - DELETE /api/v1/boards/{boardCode}/posts/{postId} - 게시글 삭제
   - Swagger 어노테이션 추가
 
@@ -366,22 +366,22 @@
 
 ### Implementation for User Story 5
 
-- [ ] T046 [P] [US5] CreateNoticeRequest DTO 구현 in `backend/src/main/java/igrus/web/board/dto/request/CreateNoticeRequest.java`
+- [x] T046 [P] [US5] CreateNoticeRequest DTO 구현 in `backend/src/main/java/igrus/web/board/dto/request/CreateNoticeRequest.java`
   - 필드: title(@NotBlank, @Size(max=100)), content(@NotBlank), isVisibleToAssociate(기본값 false), imageUrls
   - 익명, 질문 옵션 필드 없음
 
-- [ ] T047 [US5] PostService 공지사항 작성 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
+- [x] T047 [US5] PostService 공지사항 작성 로직 구현 in `backend/src/main/java/igrus/web/board/service/PostService.java`
   - createNotice(CreateNoticeRequest request, User author): PostCreateResponse
   - OPERATOR 이상만 작성 가능 검증
   - 준회원 공개 옵션 처리
 
-- [ ] T048 [US5] PostService 공지사항 조회 시 준회원 필터링 적용 in `backend/src/main/java/igrus/web/board/service/PostService.java`
+- [x] T048 [US5] PostService 공지사항 조회 시 준회원 필터링 적용 in `backend/src/main/java/igrus/web/board/service/PostService.java`
   - 준회원이 공지사항 조회 시 isVisibleToAssociate=true인 게시글만 반환
   - 상세 조회 시 권한 검증
 
-- [ ] T049 [US5] PostController 공지사항 엔드포인트 통합 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
+- [x] T049 [US5] PostController 공지사항 엔드포인트 통합 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
   - 기존 엔드포인트에서 boardCode=notices일 때 특수 처리
-  - 또는 별도 엔드포인트 생성 고려
+  - 또는 별도 엔드포인트 생성 고려 (NoticeController.java 별도 생성)
 
 **Checkpoint**: User Story 5 완료 - 공지사항 작성/조회 기능 독립적으로 테스트 가능
 
@@ -391,10 +391,10 @@
 
 **Purpose**: 전체 기능에 걸친 개선 및 품질 향상
 
-- [ ] T050 [P] SecurityConfig에 게시글 API 경로 권한 설정 추가 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
+- [x] T050 [P] SecurityConfig에 게시글 API 경로 권한 설정 추가 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
   - /api/v1/boards/*/posts/** - 인증 필요 (ASSOCIATE 이상)
 
-- [ ] T051 [P] Swagger API 문서 검토 및 보완 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
+- [x] T051 [P] Swagger API 문서 검토 및 보완 in `backend/src/main/java/igrus/web/board/controller/PostController.java`
   - 모든 엔드포인트에 적절한 설명 추가
   - 요청/응답 예시 추가
   - 에러 응답 케이스 문서화
