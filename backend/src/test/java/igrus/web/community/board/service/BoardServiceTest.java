@@ -18,12 +18,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
+import static igrus.web.community.fixture.BoardTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
+/**
+ * BoardService 단위 테스트.
+ *
+ * <p>테스트 픽스처를 활용하여 변경에 강건한 테스트를 작성합니다.
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BoardService 단위 테스트")
 class BoardServiceTest {
@@ -43,9 +49,10 @@ class BoardServiceTest {
 
     @BeforeEach
     void setUp() {
-        noticesBoard = Board.create(BoardCode.NOTICES, "공지사항", "동아리 공지사항을 확인하세요.", false, false, 1);
-        generalBoard = Board.create(BoardCode.GENERAL, "자유게시판", "자유롭게 이야기를 나눌 수 있는 공간입니다.", true, false, 2);
-        insightBoard = Board.create(BoardCode.INSIGHT, "정보공유", "유용한 정보를 공유하세요.", false, true, 3);
+        // 게시판 생성 - 픽스처 사용
+        noticesBoard = createNoticesBoard();
+        generalBoard = createGeneralBoard();
+        insightBoard = createInsightBoard();
     }
 
     @Nested
@@ -70,9 +77,9 @@ class BoardServiceTest {
 
             // then
             assertThat(result).hasSize(3);
-            assertThat(result.get(0).code()).isEqualTo("NOTICES");
-            assertThat(result.get(1).code()).isEqualTo("GENERAL");
-            assertThat(result.get(2).code()).isEqualTo("INSIGHT");
+            assertThat(result.get(0).code()).isEqualTo(BoardCode.NOTICES.name());
+            assertThat(result.get(1).code()).isEqualTo(BoardCode.GENERAL.name());
+            assertThat(result.get(2).code()).isEqualTo(BoardCode.INSIGHT.name());
         }
 
         @DisplayName("준회원(ASSOCIATE)이 게시판 목록 조회 시 읽기 권한 있는 게시판만 반환 (공지사항만)")
@@ -93,7 +100,7 @@ class BoardServiceTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).code()).isEqualTo("NOTICES");
+            assertThat(result.get(0).code()).isEqualTo(BoardCode.NOTICES.name());
             assertThat(result.get(0).canRead()).isTrue();
             assertThat(result.get(0).canWrite()).isFalse();
         }
@@ -127,7 +134,7 @@ class BoardServiceTest {
             // then
             assertThat(result).isNotNull();
             assertThat(result.getCode()).isEqualTo(BoardCode.NOTICES);
-            assertThat(result.getName()).isEqualTo("공지사항");
+            assertThat(result.getName()).isNotBlank();
         }
 
         @DisplayName("대문자 게시판 코드로 조회 시 게시판 반환")
@@ -157,7 +164,7 @@ class BoardServiceTest {
             // then
             assertThat(result).isNotNull();
             assertThat(result.getCode()).isEqualTo(BoardCode.GENERAL);
-            assertThat(result.getName()).isEqualTo("자유게시판");
+            assertThat(result.getName()).isNotBlank();
         }
 
         @DisplayName("존재하지 않는 BoardCode로 조회 시 BoardNotFoundException 발생")

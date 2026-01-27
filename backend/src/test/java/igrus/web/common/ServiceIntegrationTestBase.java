@@ -103,6 +103,7 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
 
             // Phase 2: Board 계층 (자식 먼저)
+            entityManager.createNativeQuery("DELETE FROM post_views").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM board_permissions").executeUpdate();

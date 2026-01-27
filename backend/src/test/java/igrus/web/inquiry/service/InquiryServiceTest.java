@@ -74,6 +74,7 @@ class InquiryServiceTest {
             entityManager.createNativeQuery("DELETE FROM user_positions").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM user_role_history").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM post_views").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM users").executeUpdate();

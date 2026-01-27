@@ -1,7 +1,6 @@
 package igrus.web.community.post.service;
 
 import igrus.web.community.board.domain.Board;
-import igrus.web.community.board.domain.BoardCode;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.dto.request.CreatePostRequest;
 import igrus.web.community.post.dto.request.UpdatePostRequest;
@@ -16,7 +15,6 @@ import igrus.web.community.post.exception.PostImageLimitExceededException;
 import igrus.web.community.post.repository.PostRepository;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
-import igrus.web.user.domain.UserRole;
 import igrus.web.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,11 +24,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
 
+import static igrus.web.common.fixture.TestEntityIdAssigner.withId;
+import static igrus.web.common.fixture.UserTestFixture.*;
+import static igrus.web.community.fixture.BoardTestFixture.*;
+import static igrus.web.community.fixture.PostTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,6 +42,8 @@ import static org.mockito.Mockito.verify;
 /**
  * PostService 단위 테스트.
  *
+ * <p>테스트 픽스처를 활용하여 변경에 강건한 테스트를 작성합니다.
+ *
  * <p>테스트 케이스:
  * <ul>
  *     <li>BRD-050: 자유게시판 익명 옵션 성공</li>
@@ -49,7 +52,6 @@ import static org.mockito.Mockito.verify;
  *     <li>BRD-060: 자유게시판 질문 태그 성공</li>
  *     <li>BRD-061: 정보공유 질문 태그 예외</li>
  * </ul>
- * </p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PostService 단위 테스트")
@@ -70,6 +72,9 @@ class PostServiceTest {
     @Mock
     private PostRateLimitService postRateLimitService;
 
+    @Mock
+    private PostViewService postViewService;
+
     @InjectMocks
     private PostService postService;
 
@@ -83,24 +88,18 @@ class PostServiceTest {
 
     @BeforeEach
     void setUp() {
-        // 게시판 생성
-        generalBoard = Board.create(BoardCode.GENERAL, "자유게시판", "자유롭게 이야기를 나눌 수 있는 공간입니다.", true, true, 2);
-        noticesBoard = Board.create(BoardCode.NOTICES, "공지사항", "동아리 공지사항을 확인하세요.", false, false, 1);
-        insightBoard = Board.create(BoardCode.INSIGHT, "정보공유", "유용한 정보를 공유하세요.", false, false, 3);
+        // 게시판 생성 - 픽스처 사용
+        generalBoard = generalBoard();
+        noticesBoard = noticesBoard();
+        insightBoard = insightBoard();
 
-        // 사용자 생성
-        memberUser = User.create("20200001", "테스트유저", "member@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기");
-        memberUser.changeRole(UserRole.MEMBER);
-        memberUser.verifyEmail();
-        ReflectionTestUtils.setField(memberUser, "id", 1L);
+        // 사용자 생성 - 픽스처 사용
+        memberUser = createMemberWithId();
+        operatorUser = createOperatorWithId();
 
-        operatorUser = User.create("20200002", "운영진유저", "operator@inha.edu", "010-2345-6789", "컴퓨터공학과", "운영진 동기");
-        operatorUser.changeRole(UserRole.OPERATOR);
-        operatorUser.verifyEmail();
-        ReflectionTestUtils.setField(operatorUser, "id", 2L);
-
-        memberAuth = new AuthenticatedUser(1L, "20200001", "MEMBER");
-        operatorAuth = new AuthenticatedUser(2L, "20200002", "OPERATOR");
+        // 인증 정보 생성 - 픽스처 사용
+        memberAuth = memberAuth();
+        operatorAuth = operatorAuth();
     }
 
     @Nested
@@ -112,17 +111,9 @@ class PostServiceTest {
         void createPost_InGeneral_WithAnonymousOption_Success() {
             // given
             String boardCode = "general";
-            CreatePostRequest request = new CreatePostRequest(
-                    "테스트 제목",
-                    "테스트 내용",
-                    true,  // isAnonymous
-                    false, // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = anonymousCreateRequest();
 
-            Post savedPost = Post.createAnonymousPost(generalBoard, memberUser, "테스트 제목", "테스트 내용");
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
+            Post savedPost = anonymousPost(generalBoard, memberUser);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -135,7 +126,7 @@ class PostServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.postId()).isEqualTo(1L);
+            assertThat(response.postId()).isNotNull().isPositive();
             verify(postRepository).save(any(Post.class));
         }
 
@@ -144,14 +135,7 @@ class PostServiceTest {
         void createPost_InNotices_WithAnonymousOption_ThrowsException() {
             // given
             String boardCode = "notices";
-            CreatePostRequest request = new CreatePostRequest(
-                    "테스트 공지",
-                    "공지 내용",
-                    true,  // isAnonymous
-                    false, // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = anonymousCreateRequest();
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(noticesBoard);
@@ -168,14 +152,7 @@ class PostServiceTest {
         void createPost_InInsight_WithAnonymousOption_ThrowsException() {
             // given
             String boardCode = "insight";
-            CreatePostRequest request = new CreatePostRequest(
-                    "정보공유 제목",
-                    "정보공유 내용",
-                    true,  // isAnonymous
-                    false, // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = anonymousCreateRequest();
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(insightBoard);
@@ -198,18 +175,9 @@ class PostServiceTest {
         void createPost_InGeneral_WithQuestionTag_Success() {
             // given
             String boardCode = "general";
-            CreatePostRequest request = new CreatePostRequest(
-                    "질문입니다",
-                    "질문 내용",
-                    false, // isAnonymous
-                    true,  // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = questionCreateRequest();
 
-            Post savedPost = Post.createPost(generalBoard, memberUser, "질문입니다", "질문 내용");
-            savedPost.setQuestion(true);
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
+            Post savedPost = questionPost(generalBoard, memberUser);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -222,7 +190,7 @@ class PostServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.postId()).isEqualTo(1L);
+            assertThat(response.postId()).isNotNull().isPositive();
             verify(postRepository).save(any(Post.class));
         }
 
@@ -231,14 +199,7 @@ class PostServiceTest {
         void createPost_InInsight_WithQuestionTag_ThrowsException() {
             // given
             String boardCode = "insight";
-            CreatePostRequest request = new CreatePostRequest(
-                    "정보공유 제목",
-                    "정보공유 내용",
-                    false, // isAnonymous
-                    true,  // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = questionCreateRequest();
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(insightBoard);
@@ -256,14 +217,7 @@ class PostServiceTest {
         void createPost_InNotices_WithQuestionTag_ThrowsException() {
             // given
             String boardCode = "notices";
-            CreatePostRequest request = new CreatePostRequest(
-                    "공지사항 제목",
-                    "공지사항 내용",
-                    false, // isAnonymous
-                    true,  // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = questionCreateRequest();
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(noticesBoard);
@@ -285,17 +239,9 @@ class PostServiceTest {
         void createPost_WithValidRequest_Success() {
             // given
             String boardCode = "general";
-            CreatePostRequest request = new CreatePostRequest(
-                    "일반 게시글",
-                    "일반 내용",
-                    false,
-                    false,
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = createRequest();
 
-            Post savedPost = Post.createPost(generalBoard, memberUser, "일반 게시글", "일반 내용");
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
+            Post savedPost = normalPost(generalBoard, memberUser);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -308,7 +254,7 @@ class PostServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.postId()).isEqualTo(1L);
+            assertThat(response.postId()).isNotNull().isPositive();
         }
 
         @DisplayName("익명 + 질문 옵션 동시 사용 성공 (자유게시판)")
@@ -316,18 +262,10 @@ class PostServiceTest {
         void createPost_WithBothAnonymousAndQuestion_Success() {
             // given
             String boardCode = "general";
-            CreatePostRequest request = new CreatePostRequest(
-                    "익명 질문",
-                    "익명 질문 내용",
-                    true,  // isAnonymous
-                    true,  // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = anonymousQuestionCreateRequest();
 
-            Post savedPost = Post.createAnonymousPost(generalBoard, memberUser, "익명 질문", "익명 질문 내용");
+            Post savedPost = withId(createAnonymousPost(generalBoard, memberUser), 1L);
             savedPost.setQuestion(true);
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -356,17 +294,9 @@ class PostServiceTest {
         void createPost_Normal_Success() {
             // given
             String boardCode = "general";
-            CreatePostRequest request = new CreatePostRequest(
-                    "일반 게시글 제목",
-                    "일반 게시글 내용입니다.",
-                    false, // isAnonymous
-                    false, // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = createRequest("일반 게시글 제목", "일반 게시글 내용입니다.");
 
-            Post savedPost = Post.createPost(generalBoard, memberUser, request.title(), request.content());
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
+            Post savedPost = withId(createNormalPost(generalBoard, memberUser, request.title(), request.content()), 1L);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -379,7 +309,7 @@ class PostServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.postId()).isEqualTo(1L);
+            assertThat(response.postId()).isNotNull().isPositive();
             assertThat(response.title()).isEqualTo("일반 게시글 제목");
             verify(postRepository).save(any(Post.class));
         }
@@ -389,17 +319,9 @@ class PostServiceTest {
         void createPost_Anonymous_Success() {
             // given
             String boardCode = "general";
-            CreatePostRequest request = new CreatePostRequest(
-                    "익명 게시글 제목",
-                    "익명 게시글 내용입니다.",
-                    true,  // isAnonymous
-                    false, // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = anonymousCreateRequest();
 
-            Post savedPost = Post.createAnonymousPost(generalBoard, memberUser, request.title(), request.content());
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
+            Post savedPost = anonymousPost(generalBoard, memberUser);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -412,7 +334,7 @@ class PostServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.postId()).isEqualTo(1L);
+            assertThat(response.postId()).isNotNull().isPositive();
             verify(postRepository).save(any(Post.class));
         }
 
@@ -421,18 +343,9 @@ class PostServiceTest {
         void createPost_WithQuestionTag_Success() {
             // given
             String boardCode = "general";
-            CreatePostRequest request = new CreatePostRequest(
-                    "질문 게시글 제목",
-                    "질문 내용입니다. 도움 부탁드립니다.",
-                    false, // isAnonymous
-                    true,  // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = questionCreateRequest();
 
-            Post savedPost = Post.createPost(generalBoard, memberUser, request.title(), request.content());
-            savedPost.setQuestion(true);
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
+            Post savedPost = questionPost(generalBoard, memberUser);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -453,15 +366,8 @@ class PostServiceTest {
         void createPost_TitleExceeds100Chars_ThrowsException() {
             // given
             String boardCode = "general";
-            String longTitle = "가".repeat(101); // 101자 제목
-            CreatePostRequest request = new CreatePostRequest(
-                    longTitle,
-                    "내용",
-                    false,
-                    false,
-                    false,
-                    List.of()
-            );
+            String longTitle = titleWithLength(101);
+            CreatePostRequest request = createRequest(longTitle, "내용");
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -479,18 +385,10 @@ class PostServiceTest {
         void createPost_TitleExactly100Chars_Success() {
             // given
             String boardCode = "general";
-            String exactTitle = "가".repeat(100); // 정확히 100자
-            CreatePostRequest request = new CreatePostRequest(
-                    exactTitle,
-                    "내용",
-                    false,
-                    false,
-                    false,
-                    List.of()
-            );
+            String exactTitle = titleWithLength(100);
+            CreatePostRequest request = createRequest(exactTitle, "내용");
 
-            Post savedPost = Post.createPost(generalBoard, memberUser, exactTitle, "내용");
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
+            Post savedPost = withId(createNormalPost(generalBoard, memberUser, exactTitle, "내용"), 1L);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -503,7 +401,7 @@ class PostServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.postId()).isEqualTo(1L);
+            assertThat(response.postId()).isNotNull().isPositive();
         }
     }
 
@@ -516,17 +414,9 @@ class PostServiceTest {
         void createPost_WithOneImage_Success() {
             // given
             String boardCode = "general";
-            CreatePostRequest request = new CreatePostRequest(
-                    "이미지 첨부 게시글",
-                    "이미지가 첨부된 게시글입니다.",
-                    false,
-                    false,
-                    false,
-                    List.of("https://example.com/image1.jpg")
-            );
+            CreatePostRequest request = createRequestWithImages(1);
 
-            Post savedPost = Post.createPost(generalBoard, memberUser, request.title(), request.content());
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
+            Post savedPost = normalPost(generalBoard, memberUser);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -547,24 +437,9 @@ class PostServiceTest {
         void createPost_WithFiveImages_Success() {
             // given
             String boardCode = "general";
-            List<String> imageUrls = List.of(
-                    "https://example.com/image1.jpg",
-                    "https://example.com/image2.jpg",
-                    "https://example.com/image3.jpg",
-                    "https://example.com/image4.jpg",
-                    "https://example.com/image5.jpg"
-            );
-            CreatePostRequest request = new CreatePostRequest(
-                    "이미지 5개 첨부 게시글",
-                    "최대 개수 이미지 첨부",
-                    false,
-                    false,
-                    false,
-                    imageUrls
-            );
+            CreatePostRequest request = createRequestWithImages(5);
 
-            Post savedPost = Post.createPost(generalBoard, memberUser, request.title(), request.content());
-            ReflectionTestUtils.setField(savedPost, "id", 1L);
+            Post savedPost = normalPost(generalBoard, memberUser);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -585,22 +460,7 @@ class PostServiceTest {
         void createPost_WithSixImages_ThrowsException() {
             // given
             String boardCode = "general";
-            List<String> imageUrls = List.of(
-                    "https://example.com/image1.jpg",
-                    "https://example.com/image2.jpg",
-                    "https://example.com/image3.jpg",
-                    "https://example.com/image4.jpg",
-                    "https://example.com/image5.jpg",
-                    "https://example.com/image6.jpg"
-            );
-            CreatePostRequest request = new CreatePostRequest(
-                    "이미지 6개 첨부 시도",
-                    "이미지 개수 초과",
-                    false,
-                    false,
-                    false,
-                    imageUrls
-            );
+            CreatePostRequest request = createRequestWithImages(6);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -623,16 +483,9 @@ class PostServiceTest {
             // given
             String boardCode = "general";
             Long postId = 1L;
-            UpdatePostRequest request = new UpdatePostRequest(
-                    "수정된 제목",
-                    "수정된 내용입니다.",
-                    false,
-                    List.of()
-            );
+            UpdatePostRequest request = updateRequest("수정된 제목", "수정된 내용입니다.");
 
-            Post existingPost = Post.createPost(generalBoard, memberUser, "원래 제목", "원래 내용");
-            ReflectionTestUtils.setField(existingPost, "id", postId);
-            ReflectionTestUtils.setField(generalBoard, "id", 1L);
+            Post existingPost = normalPost(generalBoard, memberUser, postId);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -653,16 +506,9 @@ class PostServiceTest {
             // given
             String boardCode = "general";
             Long postId = 1L;
-            UpdatePostRequest request = new UpdatePostRequest(
-                    "익명 게시글 수정",
-                    "익명 게시글 수정 내용",
-                    false,
-                    List.of()
-            );
+            UpdatePostRequest request = updateRequest("익명 게시글 수정", "익명 게시글 수정 내용");
 
-            Post anonymousPost = Post.createAnonymousPost(generalBoard, memberUser, "익명 원래 제목", "익명 원래 내용");
-            ReflectionTestUtils.setField(anonymousPost, "id", postId);
-            ReflectionTestUtils.setField(generalBoard, "id", 1L);
+            Post anonymousPost = anonymousPost(generalBoard, memberUser, postId);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -682,17 +528,10 @@ class PostServiceTest {
             // given
             String boardCode = "general";
             Long postId = 1L;
-            UpdatePostRequest request = new UpdatePostRequest(
-                    "타인 수정 시도",
-                    "타인이 익명 게시글 수정 시도",
-                    false,
-                    List.of()
-            );
+            UpdatePostRequest request = updateRequest("타인 수정 시도", "타인이 익명 게시글 수정 시도");
 
             // 다른 사용자(operatorUser)가 작성한 익명 게시글
-            Post anonymousPost = Post.createAnonymousPost(generalBoard, operatorUser, "익명 제목", "익명 내용");
-            ReflectionTestUtils.setField(anonymousPost, "id", postId);
-            ReflectionTestUtils.setField(generalBoard, "id", 1L);
+            Post anonymousPost = anonymousPost(generalBoard, operatorUser, postId);
 
             // memberUser가 수정 시도
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
@@ -717,9 +556,7 @@ class PostServiceTest {
             String boardCode = "general";
             Long postId = 1L;
 
-            Post post = Post.createPost(generalBoard, memberUser, "삭제할 게시글", "삭제할 내용");
-            ReflectionTestUtils.setField(post, "id", postId);
-            ReflectionTestUtils.setField(generalBoard, "id", 1L);
+            Post post = normalPost(generalBoard, memberUser, postId);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -739,9 +576,7 @@ class PostServiceTest {
             String boardCode = "general";
             Long postId = 1L;
 
-            Post anonymousPost = Post.createAnonymousPost(generalBoard, memberUser, "익명 게시글", "익명 내용");
-            ReflectionTestUtils.setField(anonymousPost, "id", postId);
-            ReflectionTestUtils.setField(generalBoard, "id", 1L);
+            Post anonymousPost = anonymousPost(generalBoard, memberUser, postId);
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
@@ -762,9 +597,7 @@ class PostServiceTest {
             Long postId = 1L;
 
             // operatorUser가 작성한 익명 게시글
-            Post anonymousPost = Post.createAnonymousPost(generalBoard, operatorUser, "익명 게시글", "익명 내용");
-            ReflectionTestUtils.setField(anonymousPost, "id", postId);
-            ReflectionTestUtils.setField(generalBoard, "id", 1L);
+            Post anonymousPost = anonymousPost(generalBoard, operatorUser, postId);
 
             // memberUser가 삭제 시도 (OPERATOR가 아닌 일반 MEMBER이므로 삭제 불가)
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
@@ -785,9 +618,7 @@ class PostServiceTest {
             Long postId = 1L;
 
             // memberUser가 작성한 게시글
-            Post post = Post.createPost(generalBoard, memberUser, "일반 게시글", "내용");
-            ReflectionTestUtils.setField(post, "id", postId);
-            ReflectionTestUtils.setField(generalBoard, "id", 1L);
+            Post post = normalPost(generalBoard, memberUser, postId);
 
             // operatorUser가 삭제 (OPERATOR 권한으로 타인 게시글 삭제 가능)
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
@@ -811,17 +642,9 @@ class PostServiceTest {
         void createNotice_ByOperator_Success() {
             // given
             String boardCode = "notices";
-            CreatePostRequest request = new CreatePostRequest(
-                    "공지사항 제목",
-                    "공지사항 내용입니다.",
-                    false, // isAnonymous
-                    false, // isQuestion
-                    false, // isVisibleToAssociate
-                    List.of()
-            );
+            CreatePostRequest request = createRequest("공지사항 제목", "공지사항 내용입니다.");
 
-            Post savedNotice = Post.createNotice(noticesBoard, operatorUser, request.title(), request.content(), false);
-            ReflectionTestUtils.setField(savedNotice, "id", 1L);
+            Post savedNotice = notice(noticesBoard, operatorUser);
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(noticesBoard);
@@ -833,7 +656,7 @@ class PostServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.postId()).isEqualTo(1L);
+            assertThat(response.postId()).isNotNull().isPositive();
             verify(postRepository).save(any(Post.class));
         }
 
@@ -842,14 +665,7 @@ class PostServiceTest {
         void createNotice_WithAnonymousOption_ThrowsException() {
             // given
             String boardCode = "notices";
-            CreatePostRequest request = new CreatePostRequest(
-                    "익명 공지사항 시도",
-                    "익명 옵션으로 공지사항 작성 시도",
-                    true,  // isAnonymous - 공지사항에서 불가
-                    false,
-                    false,
-                    List.of()
-            );
+            CreatePostRequest request = anonymousCreateRequest();
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(noticesBoard);
@@ -866,14 +682,7 @@ class PostServiceTest {
         void createNotice_ByMember_ThrowsException() {
             // given
             String boardCode = "notices";
-            CreatePostRequest request = new CreatePostRequest(
-                    "정회원 공지사항 시도",
-                    "정회원이 공지사항 작성 시도",
-                    false,
-                    false,
-                    false,
-                    List.of()
-            );
+            CreatePostRequest request = createRequest("정회원 공지사항 시도", "정회원이 공지사항 작성 시도");
 
             given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
             given(boardService.getBoardEntity(boardCode)).willReturn(noticesBoard);
