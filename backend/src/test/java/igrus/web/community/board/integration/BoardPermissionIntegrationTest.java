@@ -1,10 +1,10 @@
-package igrus.web.board.integration;
+package igrus.web.community.board.integration;
 
-import igrus.web.board.domain.Board;
-import igrus.web.board.domain.BoardCode;
-import igrus.web.board.domain.BoardPermission;
-import igrus.web.board.repository.BoardPermissionRepository;
-import igrus.web.board.repository.BoardRepository;
+import igrus.web.community.board.domain.Board;
+import igrus.web.community.board.domain.BoardCode;
+import igrus.web.community.board.domain.BoardPermission;
+import igrus.web.community.board.repository.BoardPermissionRepository;
+import igrus.web.community.board.repository.BoardRepository;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.common.exception.ErrorCode;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;

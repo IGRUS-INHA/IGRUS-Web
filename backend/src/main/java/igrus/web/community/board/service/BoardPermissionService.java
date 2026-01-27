@@ -1,10 +1,10 @@
-package igrus.web.board.service;
+package igrus.web.community.board.service;
 
-import igrus.web.board.domain.Board;
-import igrus.web.board.domain.BoardPermission;
-import igrus.web.board.exception.BoardReadDeniedException;
-import igrus.web.board.exception.BoardWriteDeniedException;
-import igrus.web.board.repository.BoardPermissionRepository;
+import igrus.web.community.board.domain.Board;
+import igrus.web.community.board.domain.BoardPermission;
+import igrus.web.community.board.exception.BoardReadDeniedException;
+import igrus.web.community.board.exception.BoardWriteDeniedException;
+import igrus.web.community.board.repository.BoardPermissionRepository;
 import igrus.web.user.domain.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

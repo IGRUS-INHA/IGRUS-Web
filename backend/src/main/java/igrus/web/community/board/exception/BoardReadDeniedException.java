@@ -1,4 +1,4 @@
-package igrus.web.board.exception;
+package igrus.web.community.board.exception;
 
 import igrus.web.common.exception.CustomBaseException;
 import igrus.web.common.exception.ErrorCode;

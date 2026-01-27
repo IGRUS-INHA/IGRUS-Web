@@ -1,4 +1,4 @@
-package igrus.web.board.domain;
+package igrus.web.community.board.domain;
 
 import igrus.web.user.domain.UserRole;
 import jakarta.persistence.Column;
@@ -31,24 +31,30 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BoardPermission {
 
+    /** 게시판 권한 고유 식별자 */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** 권한이 적용되는 게시판 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
     private Board board;
 
+    /** 권한이 부여된 사용자 역할 */
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role;
 
+    /** 읽기 권한 여부 */
     @Column(name = "can_read", nullable = false)
     private Boolean canRead;
 
+    /** 쓰기 권한 여부 */
     @Column(name = "can_write", nullable = false)
     private Boolean canWrite;
 
+    /** 권한 생성 시각 */
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

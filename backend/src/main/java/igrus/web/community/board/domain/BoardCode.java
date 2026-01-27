@@ -1,4 +1,4 @@
-package igrus.web.board.domain;
+package igrus.web.community.board.domain;
 
 /**
  * 게시판 코드 enum.

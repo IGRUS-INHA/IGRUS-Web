@@ -1,8 +1,8 @@
-package igrus.web.board.controller;
+package igrus.web.community.board.controller;
 
-import igrus.web.board.dto.response.BoardDetailResponse;
-import igrus.web.board.dto.response.BoardListResponse;
-import igrus.web.board.service.BoardService;
+import igrus.web.community.board.dto.response.BoardDetailResponse;
+import igrus.web.community.board.dto.response.BoardListResponse;
+import igrus.web.community.board.service.BoardService;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.UserRole;

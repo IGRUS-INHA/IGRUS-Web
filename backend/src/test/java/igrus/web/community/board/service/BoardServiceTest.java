@@ -1,10 +1,10 @@
-package igrus.web.board.service;
+package igrus.web.community.board.service;
 
-import igrus.web.board.domain.Board;
-import igrus.web.board.domain.BoardCode;
-import igrus.web.board.dto.response.BoardListResponse;
-import igrus.web.board.exception.BoardNotFoundException;
-import igrus.web.board.repository.BoardRepository;
+import igrus.web.community.board.domain.Board;
+import igrus.web.community.board.domain.BoardCode;
+import igrus.web.community.board.dto.response.BoardListResponse;
+import igrus.web.community.board.exception.BoardNotFoundException;
+import igrus.web.community.board.repository.BoardRepository;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

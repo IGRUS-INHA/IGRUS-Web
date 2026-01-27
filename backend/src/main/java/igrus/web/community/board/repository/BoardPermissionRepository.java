@@ -1,7 +1,7 @@
-package igrus.web.board.repository;
+package igrus.web.community.board.repository;
 
-import igrus.web.board.domain.Board;
-import igrus.web.board.domain.BoardPermission;
+import igrus.web.community.board.domain.Board;
+import igrus.web.community.board.domain.BoardPermission;
 import igrus.web.user.domain.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
