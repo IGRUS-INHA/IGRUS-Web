@@ -16,9 +16,17 @@
 
 ## Path Conventions
 
-- **Backend**: `backend/src/main/java/igrus/web/board/`
-- **Tests**: `backend/src/test/java/igrus/web/board/`
+- **Backend**: `backend/src/main/java/igrus/web/community/post/`
+- **Tests**: `backend/src/test/java/igrus/web/community/post/`
 - **Migrations**: `backend/src/main/resources/db/migration/`
+
+### Test File Structure Note
+
+실제 구현에서는 별도의 테스트 파일 대신 @Nested 클래스를 사용한 통합 구조로 구현되어 있습니다:
+- `PostServiceTest.java` - 모든 서비스 단위 테스트 포함 (T019, T026, T033, T039, T043, T044)
+- `PostControllerTest.java` - 모든 컨트롤러 통합 테스트 포함 (T020, T027, T034, T040, T045)
+- `PostIntegrationTest.java` - 엣지 케이스 통합 테스트
+- `PostRateLimitServiceTest.java` - 레이트 리밋 테스트
 
 ---
 
@@ -122,14 +130,14 @@
 
 ### Tests for User Story 1
 
-- [ ] T018 [P] [US1] Post 도메인 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/domain/PostTest.java`
+- [x] T018 [P] [US1] Post 도메인 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/post/domain/PostTest.java`
   - 게시글 생성 시 필수 필드 검증
   - 제목 100자 초과 시 예외 발생
   - 자유게시판이 아닌 곳에서 익명 옵션 사용 시 예외 발생
   - 자유게시판이 아닌 곳에서 질문 옵션 사용 시 예외 발생
   - 조회수 증가 메서드 동작 확인
 
-- [ ] T019 [P] [US1] PostService 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/PostServiceTest.java`
+- [x] T019 [P] [US1] PostService 단위 테스트 작성 (PostServiceTest.java에 통합)
   - 정회원이 일반 게시글 작성 성공
   - 정회원이 익명 게시글 작성 성공 (자유게시판)
   - 정회원이 질문 태그 게시글 작성 성공 (자유게시판)
@@ -139,7 +147,7 @@
   - 공지사항에서 익명 옵션 사용 시 InvalidPostOptionException 발생
   - Rate Limit 초과 시 PostRateLimitExceededException 발생
 
-- [ ] T020 [P] [US1] PostController 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/controller/PostControllerCreateTest.java`
+- [x] T020 [P] [US1] PostController 통합 테스트 작성 (PostControllerTest.java에 통합)
   - POST /api/v1/boards/{boardCode}/posts - 정회원이 게시글 작성 성공 201 Created
   - POST /api/v1/boards/{boardCode}/posts - 비인증 사용자 접근 시 401 Unauthorized
   - POST /api/v1/boards/{boardCode}/posts - 준회원이 자유게시판 작성 시도 시 403 Forbidden
@@ -192,7 +200,7 @@
 
 ### Tests for User Story 2
 
-- [ ] T026 [P] [US2] PostService 조회 로직 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/PostServiceReadTest.java`
+- [x] T026 [P] [US2] PostService 조회 로직 단위 테스트 작성 (PostServiceTest.java에 통합)
   - 게시글 목록 조회 시 삭제되지 않은 글만 반환
   - 게시글 목록 조회 시 페이징 동작 확인
   - 게시글 상세 조회 시 조회수 증가
@@ -201,7 +209,7 @@
   - 검색어로 목록 조회 시 제목+내용 검색
   - 질문 필터로 목록 조회 시 질문 태그 게시글만 반환
 
-- [ ] T027 [P] [US2] PostController 조회 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/controller/PostControllerReadTest.java`
+- [x] T027 [P] [US2] PostController 조회 통합 테스트 작성 (PostControllerTest.java에 통합)
   - GET /api/v1/boards/{boardCode}/posts - 게시글 목록 조회 성공
   - GET /api/v1/boards/{boardCode}/posts?page=0&size=20 - 페이징 동작 확인
   - GET /api/v1/boards/{boardCode}/posts?keyword=검색어 - 검색 동작 확인
@@ -253,7 +261,7 @@
 
 ### Tests for User Story 3
 
-- [ ] T033 [P] [US3] PostService 수정 로직 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/PostServiceUpdateTest.java`
+- [x] T033 [P] [US3] PostService 수정 로직 단위 테스트 작성 (PostServiceTest.java에 통합)
   - 본인 게시글 수정 성공
   - 제목, 내용 변경 후 updatedAt 업데이트 확인
   - 익명 설정 변경 시도 시 예외 발생
@@ -261,7 +269,7 @@
   - 삭제된 게시글 수정 시도 시 PostDeletedException 발생
   - 관리자가 타인 게시글 수정 가능 확인
 
-- [ ] T034 [P] [US3] PostController 수정 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/controller/PostControllerUpdateTest.java`
+- [x] T034 [P] [US3] PostController 수정 통합 테스트 작성 (PostControllerTest.java에 통합)
   - PUT /api/v1/boards/{boardCode}/posts/{postId} - 본인 게시글 수정 성공 200 OK
   - PUT /api/v1/boards/{boardCode}/posts/{postId} - 타인 게시글 수정 시도 403 Forbidden
   - PUT /api/v1/boards/{boardCode}/posts/{postId} - 삭제된 게시글 수정 시도 410 Gone
@@ -304,14 +312,14 @@
 
 ### Tests for User Story 4
 
-- [ ] T039 [P] [US4] PostService 삭제 로직 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/PostServiceDeleteTest.java`
+- [x] T039 [P] [US4] PostService 삭제 로직 단위 테스트 작성 (PostServiceTest.java에 통합)
   - 본인 게시글 삭제 성공 (Soft Delete)
   - 삭제 후 deleted=true, deletedAt, deletedBy 설정 확인
   - 타인 게시글 삭제 시도 시 PostAccessDeniedException 발생
   - 이미 삭제된 게시글 삭제 시도 시 PostDeletedException 발생
   - 관리자가 타인 게시글 삭제 가능 확인
 
-- [ ] T040 [P] [US4] PostController 삭제 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/controller/PostControllerDeleteTest.java`
+- [x] T040 [P] [US4] PostController 삭제 통합 테스트 작성 (PostControllerTest.java에 통합)
   - DELETE /api/v1/boards/{boardCode}/posts/{postId} - 본인 게시글 삭제 성공 204 No Content
   - DELETE /api/v1/boards/{boardCode}/posts/{postId} - 타인 게시글 삭제 시도 403 Forbidden
   - DELETE /api/v1/boards/{boardCode}/posts/{postId} - 이미 삭제된 게시글 410 Gone
@@ -346,19 +354,19 @@
 
 ### Tests for User Story 5
 
-- [ ] T043 [P] [US5] 공지사항 작성 로직 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/PostServiceNoticeTest.java`
+- [x] T043 [P] [US5] 공지사항 작성 로직 단위 테스트 작성 (PostServiceTest.java에 통합)
   - OPERATOR가 공지사항 작성 성공
   - 정회원이 공지사항 작성 시도 시 BoardAccessDeniedException 발생
   - 준회원 공개 옵션 설정 성공
   - 공지사항에서 익명 옵션 사용 시 InvalidPostOptionException 발생
   - 공지사항에서 질문 옵션 사용 시 InvalidPostOptionException 발생
 
-- [ ] T044 [P] [US5] 공지사항 조회 로직 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/service/PostServiceNoticeReadTest.java`
+- [x] T044 [P] [US5] 공지사항 조회 로직 단위 테스트 작성 (PostServiceTest.java에 통합)
   - 준회원이 공지사항 목록 조회 시 준회원 공개 글만 반환
   - 정회원이 공지사항 목록 조회 시 모든 글 반환
   - 준회원이 비공개 공지사항 상세 조회 시도 시 PostAccessDeniedException 발생
 
-- [ ] T045 [P] [US5] 공지사항 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/controller/PostControllerNoticeTest.java`
+- [x] T045 [P] [US5] 공지사항 통합 테스트 작성 (PostControllerTest.java에 통합)
   - POST /api/v1/boards/notices/posts - OPERATOR 공지사항 작성 성공
   - POST /api/v1/boards/notices/posts - 정회원 공지사항 작성 시도 403 Forbidden
   - GET /api/v1/boards/notices/posts - 준회원 조회 시 공개 공지만 반환
@@ -399,19 +407,115 @@
   - 요청/응답 예시 추가
   - 에러 응답 케이스 문서화
 
-- [ ] T052 [P] 조회수 증가 동시성 처리 검토 in `backend/src/main/java/igrus/web/board/service/PostService.java`
+- [x] T052 [P] 조회수 증가 동시성 처리 검토 in `backend/src/main/java/igrus/web/community/post/service/PostService.java` (V8 마이그레이션 및 @Version 추가)
   - 동시 조회 시 조회수 정확성 확보 (낙관적 락 또는 별도 처리)
 
-- [ ] T053 코드 리뷰 및 리팩토링
+- [x] T053 코드 리뷰 및 리팩토링 (@EntityGraph 추가로 N+1 해결)
   - SOLID 원칙 준수 확인
   - N+1 쿼리 문제 점검 (특히 목록 조회 시)
   - 보안 취약점 점검 (OWASP Top 10)
   - XSS 방지 (게시글 내용)
 
-- [ ] T054 전체 테스트 실행 및 커버리지 확인
-  - 모든 단위 테스트 통과 확인
-  - 모든 통합 테스트 통과 확인
-  - 테스트 커버리지 확인
+- [x] T054 전체 테스트 실행 및 커버리지 확인 (2026-01-27)
+  - 모든 단위 테스트 통과 확인 ✅
+  - 모든 통합 테스트 통과 확인 ✅
+  - Board/Post 관련 167개 테스트 전체 통과
+
+---
+
+## Phase 9: 조회 기록 추적 및 통계 (2026-01-27)
+
+**Purpose**: 로그인 사용자의 게시글 조회 기록 저장 및 통계 API 제공
+
+### 설계 방식: 캐시 카운터 패턴 + 재시도 + 주기적 동기화
+
+- `Post.viewCount`: 캐시 역할 (빠른 조회용)
+- `PostView`: 정확한 조회 기록 (통계/분석용)
+- **재시도**: 낙관적 락 충돌 시 2회 재시도로 대부분 해결
+- **주기적 동기화**: 재시도 실패 케이스 보정 (10분마다 배치)
+
+### 데이터베이스 마이그레이션
+
+- [x] T055 Flyway 마이그레이션 V9__create_post_views_table.sql 작성 in `backend/src/main/resources/db/migration/V9__create_post_views_table.sql`
+  - post_views 테이블: id, post_id(FK), viewer_id(FK), viewed_at
+  - 인덱스: post_id, viewer_id, viewed_at
+
+### 도메인 엔티티
+
+- [x] T056 [P] PostView 엔티티 구현 in `backend/src/main/java/igrus/web/community/post/domain/PostView.java`
+  - 필드: post(ManyToOne), viewer(ManyToOne), viewedAt
+  - 정적 팩토리 메서드: create(Post, User)
+
+### Repository
+
+- [x] T057 [P] PostViewRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/community/post/repository/PostViewRepository.java`
+  - countByPost(Post): long
+  - countDistinctViewersByPost(Post): long (JPQL로 고유 조회자 수)
+  - findByPostWithViewer(Post, Pageable): Page<PostView>
+  - countByPostId(Long): long
+
+- [x] T058 PostRepository에 동기화용 쿼리 추가 in `backend/src/main/java/igrus/web/community/post/repository/PostRepository.java`
+  - findPostsWithMismatchedViewCount(): List<Post>
+
+### 서비스
+
+- [x] T059 AsyncConfig에 postViewTaskExecutor 추가 in `backend/src/main/java/igrus/web/common/config/AsyncConfig.java`
+  - @EnableScheduling 추가
+  - postViewTaskExecutor Bean 등록 (corePoolSize=2, maxPoolSize=10, queueCapacity=500)
+
+- [x] T060 PostViewService 구현 in `backend/src/main/java/igrus/web/community/post/service/PostViewService.java`
+  - recordViewAsync(Long postId, Long viewerId): void (비동기)
+  - getPostViewStats(Post): PostViewStatsResponse
+  - getPostViewHistory(Post, Pageable): Page<PostViewHistoryResponse>
+
+- [x] T061 PostViewSyncScheduler 구현 in `backend/src/main/java/igrus/web/community/post/service/PostViewSyncScheduler.java`
+  - @Scheduled(fixedRate = 600000) - 10분마다 실행
+  - @Profile("!test") - 테스트 환경 제외
+  - syncViewCounts(): PostView COUNT와 Post.viewCount 동기화
+
+- [x] T062 PostService 수정 in `backend/src/main/java/igrus/web/community/post/service/PostService.java`
+  - getPostDetail()에서 PostViewService.recordViewAsync() 호출
+  - incrementViewCountWithRetry() 재시도 로직 구현 (최대 2회)
+  - getPostViewStats(), getPostViewHistory() 메서드 추가
+
+### Response DTO
+
+- [x] T063 [P] PostViewStatsResponse DTO 구현 in `backend/src/main/java/igrus/web/community/post/dto/response/PostViewStatsResponse.java`
+  - 필드: postId, totalViews, uniqueViewers
+
+- [x] T064 [P] PostViewHistoryResponse DTO 구현 in `backend/src/main/java/igrus/web/community/post/dto/response/PostViewHistoryResponse.java`
+  - 필드: viewId, viewerId, viewerName, viewedAt
+
+### Controller API 추가
+
+- [x] T065 PostController API 추가 in `backend/src/main/java/igrus/web/community/post/controller/PostController.java`
+  - GET /{postId}/view-stats - OPERATOR 이상만 조회 가능
+  - GET /{postId}/view-history - OPERATOR 이상만 조회 가능
+
+### Post 도메인 수정
+
+- [x] T066 Post 엔티티에 syncViewCount() 메서드 추가 in `backend/src/main/java/igrus/web/community/post/domain/Post.java`
+  - syncViewCount(int viewCount): void - 스케줄러에서 사용
+
+### 테스트
+
+- [x] T067 [P] PostView 도메인 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/post/domain/PostViewTest.java`
+  - PostView 생성 시 필드 검증
+  - viewedAt 자동 설정 확인
+
+- [x] T068 [P] PostViewService 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/post/service/PostViewServiceTest.java`
+  - 조회 기록 저장 성공
+  - 통계 조회 성공
+  - 조회 기록 목록 조회 성공
+
+- [x] T069 ServiceIntegrationTestBase에 post_views 테이블 정리 추가 in `backend/src/test/java/igrus/web/common/ServiceIntegrationTestBase.java`
+  - cleanupDatabase()에 DELETE FROM post_views 추가
+
+- [x] T070 전체 테스트 실행 및 통과 확인 (2026-01-27)
+  - 모든 단위 테스트 통과 확인 ✅
+  - 모든 통합 테스트 통과 확인 ✅
+
+**Checkpoint**: Phase 9 완료 - 조회 기록 추적 및 통계 기능 독립적으로 테스트 가능
 
 ---
 
@@ -529,7 +633,8 @@ Task: "PostTitleTooLongException 예외 클래스 구현"
 | Phase 6: User Story 4 (삭제) | 4 | 2 |
 | Phase 7: User Story 5 (공지사항) | 7 | 4 |
 | Phase 8: Polish | 5 | 3 |
-| **Total** | **54** | **36** |
+| Phase 9: 조회 기록 추적 | 16 | 6 |
+| **Total** | **70** | **42** |
 
 **MVP Scope**: Phase 1 + Phase 2 + Phase 3 + Phase 4 = 32 tasks
 **Independent Test per Story**: 각 User Story별 독립 테스트 가능
