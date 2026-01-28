@@ -16,8 +16,8 @@
 
 ## Path Conventions
 
-- **Backend**: `backend/src/main/java/igrus/web/board/comment/`
-- **Tests**: `backend/src/test/java/igrus/web/board/comment/`
+- **Backend**: `backend/src/main/java/igrus/web/community/comment/`
+- **Tests**: `backend/src/test/java/igrus/web/community/comment/`
 - **Migrations**: `backend/src/main/resources/db/migration/`
 
 ## User Stories Overview
@@ -38,8 +38,8 @@
 
 **Purpose**: 댓글 도메인의 기본 패키지 구조 설정
 
-- [ ] T001 댓글 도메인 패키지 구조 생성: `board/comment/domain/`, `board/comment/repository/`, `board/comment/service/`, `board/comment/controller/`, `board/comment/dto/`, `board/comment/exception/`
-- [ ] T002 [P] Flyway 마이그레이션 버전 확인 (V6 이후 사용 가능 여부 확인)
+- [x] T001 댓글 도메인 패키지 구조 생성: `community/comment/domain/`, `community/comment/repository/`, `community/comment/service/`, `community/comment/controller/`, `community/comment/dto/`, `community/comment/exception/`
+- [x] T002 [P] Flyway 마이그레이션 버전 확인 (V10 이후 사용 → V11 사용)
 
 ---
 
@@ -53,7 +53,7 @@
 
 ### 2.1 데이터베이스 스키마
 
-- [ ] T003 Flyway 마이그레이션 VX__create_comment_tables.sql 작성 in `backend/src/main/resources/db/migration/VX__create_comment_tables.sql`
+- [x] T003 Flyway 마이그레이션 V11__create_comment_tables.sql 작성 in `backend/src/main/resources/db/migration/V11__create_comment_tables.sql`
   - comments 테이블: id, post_id(FK), parent_comment_id(FK, nullable), author_id(FK), content(VARCHAR 500), is_anonymous, is_deleted, deleted_at, deleted_by, created_at, updated_at
   - comment_likes 테이블: id, comment_id(FK), user_id(FK), created_at, UNIQUE(comment_id, user_id)
   - comment_reports 테이블: id, comment_id(FK), reporter_id(FK), reason(TEXT), status(ENUM: PENDING, RESOLVED, DISMISSED), resolved_at, resolved_by, created_at
@@ -61,55 +61,55 @@
 
 ### 2.2 핵심 도메인 엔티티
 
-- [ ] T004 [P] Comment 엔티티 구현 in `backend/src/main/java/igrus/web/board/comment/domain/Comment.java`
+- [x] T004 [P] Comment 엔티티 구현 in `backend/src/main/java/igrus/web/community/comment/domain/Comment.java`
   - SoftDeletableEntity 상속
   - 필드: post(ManyToOne), parentComment(ManyToOne, nullable), author(ManyToOne), content(max 500자), isAnonymous
   - 자기 참조 관계 설정 (대댓글)
   - 비즈니스 메서드: isReply(), canReplyTo(), validateContent()
 
-- [ ] T005 [P] CommentLike 엔티티 구현 in `backend/src/main/java/igrus/web/board/comment/domain/CommentLike.java`
+- [x] T005 [P] CommentLike 엔티티 구현 in `backend/src/main/java/igrus/web/community/comment/domain/CommentLike.java`
   - BaseEntity 상속
   - 필드: comment(ManyToOne), user(ManyToOne)
   - 복합 유니크 제약: (comment_id, user_id)
 
-- [ ] T006 [P] CommentReport 엔티티 구현 in `backend/src/main/java/igrus/web/board/comment/domain/CommentReport.java`
+- [x] T006 [P] CommentReport 엔티티 구현 in `backend/src/main/java/igrus/web/community/comment/domain/CommentReport.java`
   - BaseEntity 상속
   - 필드: comment(ManyToOne), reporter(ManyToOne), reason, status(ReportStatus), resolvedAt, resolvedBy
 
-- [ ] T007 [P] ReportStatus enum 구현 in `backend/src/main/java/igrus/web/board/comment/domain/ReportStatus.java`
+- [x] T007 [P] ReportStatus enum 구현 in `backend/src/main/java/igrus/web/community/comment/domain/ReportStatus.java`
   - PENDING, RESOLVED, DISMISSED
 
 ### 2.3 Repository
 
-- [ ] T008 [P] CommentRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/comment/repository/CommentRepository.java`
+- [x] T008 [P] CommentRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/community/comment/repository/CommentRepository.java`
   - findByPostIdOrderByCreatedAtAsc(Long postId): List<Comment>
   - findByPostIdAndDeletedFalseOrderByCreatedAtAsc(Long postId): List<Comment>
   - findByParentCommentId(Long parentCommentId): List<Comment>
   - countByPostIdAndDeletedFalse(Long postId): Long
   - existsByIdAndAuthorId(Long id, Long authorId): boolean
 
-- [ ] T009 [P] CommentLikeRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/comment/repository/CommentLikeRepository.java`
+- [x] T009 [P] CommentLikeRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/community/comment/repository/CommentLikeRepository.java`
   - findByCommentIdAndUserId(Long commentId, Long userId): Optional<CommentLike>
   - existsByCommentIdAndUserId(Long commentId, Long userId): boolean
   - countByCommentId(Long commentId): Long
   - deleteByCommentIdAndUserId(Long commentId, Long userId): void
 
-- [ ] T010 [P] CommentReportRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/comment/repository/CommentReportRepository.java`
+- [x] T010 [P] CommentReportRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/community/comment/repository/CommentReportRepository.java`
   - findByStatus(ReportStatus status): List<CommentReport>
   - findByCommentId(Long commentId): List<CommentReport>
   - existsByCommentIdAndReporterId(Long commentId, Long reporterId): boolean
 
 ### 2.4 예외 클래스
 
-- [ ] T011 [P] CommentNotFoundException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/comment/exception/CommentNotFoundException.java`
-- [ ] T012 [P] CommentAccessDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/comment/exception/CommentAccessDeniedException.java`
-- [ ] T013 [P] InvalidCommentException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/comment/exception/InvalidCommentException.java`
-- [ ] T014 [P] CommentLikeException 예외 클래스 구현 in `backend/src/main/java/igrus/web/board/comment/exception/CommentLikeException.java`
-- [ ] T015 [P] ErrorCode에 댓글 관련 에러 코드 추가 in `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`
+- [x] T011 [P] CommentNotFoundException 예외 클래스 구현 in `backend/src/main/java/igrus/web/community/comment/exception/CommentNotFoundException.java`
+- [x] T012 [P] CommentAccessDeniedException 예외 클래스 구현 in `backend/src/main/java/igrus/web/community/comment/exception/CommentAccessDeniedException.java`
+- [x] T013 [P] InvalidCommentException 예외 클래스 구현 in `backend/src/main/java/igrus/web/community/comment/exception/InvalidCommentException.java`
+- [x] T014 [P] CommentLikeException 예외 클래스 구현 in `backend/src/main/java/igrus/web/community/comment/exception/CommentLikeException.java`
+- [x] T015 [P] ErrorCode에 댓글 관련 에러 코드 추가 in `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`
   - COMMENT_NOT_FOUND, COMMENT_ACCESS_DENIED, COMMENT_CONTENT_TOO_LONG, COMMENT_CONTENT_EMPTY
   - REPLY_TO_REPLY_NOT_ALLOWED, POST_DELETED_CANNOT_COMMENT, ANONYMOUS_NOT_ALLOWED
   - CANNOT_LIKE_OWN_COMMENT, ALREADY_LIKED_COMMENT, LIKE_NOT_FOUND
-  - ALREADY_REPORTED_COMMENT, INVALID_REPORT_REASON
+  - ALREADY_REPORTED_COMMENT, INVALID_REPORT_REASON, COMMENT_REPORT_NOT_FOUND
 
 **Checkpoint**: Foundation 완료 - User Story 구현 시작 가능
 
@@ -131,7 +131,7 @@
 
 ### Tests for User Story 1
 
-- [ ] T016 [P] [US1] CommentService 댓글 작성 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/service/CommentServiceCreateTest.java`
+- [x] T016 [P] [US1] CommentService 댓글 작성 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/service/CommentServiceTest.java` (CreateComment 내부 클래스)
   - 정회원이 일반 댓글 작성 성공
   - 익명 허용 게시판에서 익명 댓글 작성 성공
   - 익명 비허용 게시판에서 익명 댓글 작성 시 실패
@@ -139,7 +139,7 @@
   - 빈 내용으로 작성 시 InvalidCommentException 발생
   - 삭제된 게시글에 댓글 작성 시 실패
 
-- [ ] T017 [P] [US1] CommentController 댓글 작성 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/controller/CommentControllerCreateTest.java`
+- [ ] T017 [P] [US1] CommentController 댓글 작성 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerCreateTest.java`
   - POST /api/v1/posts/{postId}/comments - 인증된 사용자가 댓글 작성 성공 (201 Created)
   - POST /api/v1/posts/{postId}/comments - 비인증 사용자가 접근 시 401 Unauthorized
   - POST /api/v1/posts/{postId}/comments - 준회원이 접근 시 403 Forbidden
@@ -148,27 +148,27 @@
 
 ### Implementation for User Story 1
 
-- [ ] T018 [P] [US1] CreateCommentRequest DTO 구현 in `backend/src/main/java/igrus/web/board/comment/dto/request/CreateCommentRequest.java`
+- [x] T018 [P] [US1] CreateCommentRequest DTO 구현 in `backend/src/main/java/igrus/web/community/comment/dto/request/CreateCommentRequest.java`
   - 필드: content(@NotBlank, @Size(max=500)), isAnonymous
   - Bean Validation 적용
 
-- [ ] T019 [P] [US1] CommentResponse DTO 구현 in `backend/src/main/java/igrus/web/board/comment/dto/response/CommentResponse.java`
+- [x] T019 [P] [US1] CommentResponse DTO 구현 in `backend/src/main/java/igrus/web/community/comment/dto/response/CommentResponse.java`
   - 필드: id, postId, content, authorId, authorName, isAnonymous, isDeleted, likeCount, isLikedByMe, createdAt
   - 익명인 경우 authorId=null, authorName="익명"으로 변환
 
-- [ ] T020 [US1] CommentService 댓글 작성 로직 구현 in `backend/src/main/java/igrus/web/board/comment/service/CommentService.java`
+- [x] T020 [US1] CommentService 댓글 작성 로직 구현 in `backend/src/main/java/igrus/web/community/comment/service/CommentService.java`
   - createComment(Long postId, CreateCommentRequest request, Long userId): CommentResponse
   - 게시글 존재 여부 및 삭제 상태 검증
-  - 익명 허용 게시판 검증 (BoardPermissionService 연동)
+  - 익명 허용 게시판 검증 (Board.allowsAnonymous() 사용)
   - 내용 길이 검증 (500자)
 
-- [ ] T021 [US1] CommentController 댓글 작성 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/comment/controller/CommentController.java`
+- [x] T021 [US1] CommentController 댓글 작성 엔드포인트 구현 in `backend/src/main/java/igrus/web/community/comment/controller/CommentController.java`
   - POST /api/v1/posts/{postId}/comments - 댓글 작성
   - Swagger 어노테이션 (@Operation, @ApiResponse) 추가
   - @Valid 적용
 
-- [ ] T022 [US1] SecurityConfig에 댓글 API 경로 권한 설정 추가 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
-  - /api/v1/posts/*/comments/** - 인증 필요 (REGULAR 이상)
+- [x] T022 [US1] SecurityConfig에 댓글 API 경로 권한 설정 추가 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
+  - /api/v1/posts/*/comments/** - 인증 필요 (MEMBER 이상)
 
 **Checkpoint**: User Story 1 완료 - 댓글 작성 기능 독립적으로 테스트 가능
 
@@ -188,25 +188,25 @@
 
 ### Tests for User Story 2
 
-- [ ] T023 [P] [US2] CommentService 대댓글 작성 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/service/CommentServiceReplyTest.java`
+- [x] T023 [P] [US2] CommentService 대댓글 작성 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/service/CommentServiceTest.java` (CreateReply 내부 클래스)
   - 댓글에 대댓글 작성 성공
   - 대댓글에 답글 작성 시 InvalidCommentException 발생
   - 삭제된 댓글에 대댓글 작성 시 실패
   - 익명 허용 게시판에서 익명 대댓글 작성 성공
 
-- [ ] T024 [P] [US2] CommentController 대댓글 작성 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/controller/CommentControllerReplyTest.java`
+- [ ] T024 [P] [US2] CommentController 대댓글 작성 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerReplyTest.java`
   - POST /api/v1/posts/{postId}/comments/{commentId}/replies - 대댓글 작성 성공 (201 Created)
   - POST /api/v1/posts/{postId}/comments/{commentId}/replies - 대댓글에 답글 시도 시 400 Bad Request
 
 ### Implementation for User Story 2
 
-- [ ] T025 [US2] CommentService 대댓글 작성 로직 구현 in `backend/src/main/java/igrus/web/board/comment/service/CommentService.java`
+- [x] T025 [US2] CommentService 대댓글 작성 로직 구현 in `backend/src/main/java/igrus/web/community/comment/service/CommentService.java`
   - createReply(Long postId, Long parentCommentId, CreateCommentRequest request, Long userId): CommentResponse
   - 부모 댓글 존재 여부 검증
   - 부모 댓글이 대댓글이 아닌지 검증 (depth 1단계 제한)
   - 부모 댓글 삭제 여부와 무관하게 대댓글 작성 가능 (기존 대댓글 유지 정책)
 
-- [ ] T026 [US2] CommentController 대댓글 작성 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/comment/controller/CommentController.java`
+- [x] T026 [US2] CommentController 대댓글 작성 엔드포인트 구현 in `backend/src/main/java/igrus/web/community/comment/controller/CommentController.java`
   - POST /api/v1/posts/{postId}/comments/{commentId}/replies - 대댓글 작성
   - Swagger 어노테이션 추가
 
@@ -230,37 +230,37 @@
 
 ### Tests for User Story 3
 
-- [ ] T027 [P] [US3] CommentService 댓글 조회 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/service/CommentServiceReadTest.java`
+- [x] T027 [P] [US3] CommentService 댓글 조회 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/service/CommentServiceTest.java` (GetCommentsByPostId 내부 클래스)
   - 게시글의 모든 댓글 조회 성공 (계층 구조)
   - 삭제된 댓글이 "삭제된 댓글입니다"로 표시
   - 삭제된 댓글의 대댓글이 정상 표시
   - 익명 댓글의 작성자 정보가 숨겨짐
   - 댓글이 등록순으로 정렬됨
 
-- [ ] T028 [P] [US3] CommentController 댓글 조회 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/controller/CommentControllerReadTest.java`
+- [ ] T028 [P] [US3] CommentController 댓글 조회 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerReadTest.java`
   - GET /api/v1/posts/{postId}/comments - 댓글 목록 조회 성공 (200 OK)
   - GET /api/v1/posts/{postId}/comments - 계층 구조로 반환됨 확인
   - GET /api/v1/posts/{postId}/comments - 존재하지 않는 게시글 조회 시 404 Not Found
 
 ### Implementation for User Story 3
 
-- [ ] T029 [P] [US3] CommentListResponse DTO 구현 in `backend/src/main/java/igrus/web/board/comment/dto/response/CommentListResponse.java`
+- [x] T029 [P] [US3] CommentListResponse DTO 구현 in `backend/src/main/java/igrus/web/community/comment/dto/response/CommentListResponse.java`
   - 필드: comments(List<CommentWithRepliesResponse>), totalCount
   - 계층 구조 (댓글 + 대댓글 리스트)
 
-- [ ] T030 [P] [US3] CommentWithRepliesResponse DTO 구현 in `backend/src/main/java/igrus/web/board/comment/dto/response/CommentWithRepliesResponse.java`
+- [x] T030 [P] [US3] CommentWithRepliesResponse DTO 구현 in `backend/src/main/java/igrus/web/community/comment/dto/response/CommentWithRepliesResponse.java`
   - CommentResponse 확장
   - 필드: replies(List<CommentResponse>)
   - 삭제된 댓글 처리 (content="삭제된 댓글입니다", authorId=null, authorName=null)
 
-- [ ] T031 [US3] CommentService 댓글 조회 로직 구현 in `backend/src/main/java/igrus/web/board/comment/service/CommentService.java`
+- [x] T031 [US3] CommentService 댓글 조회 로직 구현 in `backend/src/main/java/igrus/web/community/comment/service/CommentService.java`
   - getCommentsByPostId(Long postId, Long currentUserId): CommentListResponse
   - 계층 구조로 변환 (부모 댓글 + 대댓글 그룹핑)
   - 등록순 정렬 (createdAt ASC)
   - 삭제된 댓글 처리 (대댓글 있으면 "삭제된 댓글입니다"로 표시, 없으면 제외 가능)
   - 익명 댓글 작성자 정보 마스킹
 
-- [ ] T032 [US3] CommentController 댓글 조회 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/comment/controller/CommentController.java`
+- [x] T032 [US3] CommentController 댓글 조회 엔드포인트 구현 in `backend/src/main/java/igrus/web/community/comment/controller/CommentController.java`
   - GET /api/v1/posts/{postId}/comments - 댓글 목록 조회
   - Swagger 어노테이션 추가
 
@@ -283,14 +283,14 @@
 
 ### Tests for User Story 4
 
-- [ ] T033 [P] [US4] CommentService 댓글 삭제 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/service/CommentServiceDeleteTest.java`
+- [x] T033 [P] [US4] CommentService 댓글 삭제 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/service/CommentServiceTest.java` (DeleteComment 내부 클래스)
   - 본인 댓글 삭제 성공 (Soft Delete)
   - 대댓글이 있는 댓글 삭제 시 "삭제된 댓글입니다"로 표시, 대댓글 유지
   - 대댓글이 없는 댓글 삭제 성공
   - 타인 댓글 삭제 시 CommentAccessDeniedException 발생
   - 관리자가 타인 댓글 삭제 성공
 
-- [ ] T034 [P] [US4] CommentController 댓글 삭제 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/controller/CommentControllerDeleteTest.java`
+- [ ] T034 [P] [US4] CommentController 댓글 삭제 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerDeleteTest.java`
   - DELETE /api/v1/posts/{postId}/comments/{commentId} - 본인 댓글 삭제 성공 (204 No Content)
   - DELETE /api/v1/posts/{postId}/comments/{commentId} - 타인 댓글 삭제 시 403 Forbidden
   - DELETE /api/v1/posts/{postId}/comments/{commentId} - 관리자가 타인 댓글 삭제 성공
@@ -298,13 +298,13 @@
 
 ### Implementation for User Story 4
 
-- [ ] T035 [US4] CommentService 댓글 삭제 로직 구현 in `backend/src/main/java/igrus/web/board/comment/service/CommentService.java`
+- [x] T035 [US4] CommentService 댓글 삭제 로직 구현 in `backend/src/main/java/igrus/web/community/comment/service/CommentService.java`
   - deleteComment(Long postId, Long commentId, Long userId, UserRole role): void
   - 본인 댓글 또는 관리자 권한 검증
   - Soft Delete 적용 (SoftDeletableEntity.delete() 호출)
   - 대댓글 유무와 관계없이 부모 댓글만 삭제 처리
 
-- [ ] T036 [US4] CommentController 댓글 삭제 엔드포인트 구현 in `backend/src/main/java/igrus/web/board/comment/controller/CommentController.java`
+- [x] T036 [US4] CommentController 댓글 삭제 엔드포인트 구현 in `backend/src/main/java/igrus/web/community/comment/controller/CommentController.java`
   - DELETE /api/v1/posts/{postId}/comments/{commentId} - 댓글 삭제
   - Swagger 어노테이션 추가
 
@@ -327,28 +327,28 @@
 
 ### Tests for User Story 5
 
-- [ ] T037 [P] [US5] CommentLikeService 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/service/CommentLikeServiceTest.java`
+- [x] T037 [P] [US5] CommentLikeService 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/service/CommentLikeServiceTest.java`
   - 댓글 좋아요 성공
   - 좋아요 취소 성공
   - 본인 댓글에 좋아요 시 CommentLikeException 발생
   - 이미 좋아요한 댓글에 중복 좋아요 시 CommentLikeException 발생
-  - 좋아요하지 않은 댓글 취소 시 LikeNotFoundException 발생
+  - 좋아요하지 않은 댓글 취소 시 CommentLikeException 발생
 
-- [ ] T038 [P] [US5] CommentLikeController 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/controller/CommentLikeControllerTest.java`
+- [ ] T038 [P] [US5] CommentLikeController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentLikeControllerTest.java`
   - POST /api/v1/comments/{commentId}/likes - 좋아요 성공 (201 Created)
   - DELETE /api/v1/comments/{commentId}/likes - 좋아요 취소 성공 (204 No Content)
   - POST /api/v1/comments/{commentId}/likes - 본인 댓글 좋아요 시 400 Bad Request
 
 ### Implementation for User Story 5
 
-- [ ] T039 [US5] CommentLikeService 구현 in `backend/src/main/java/igrus/web/board/comment/service/CommentLikeService.java`
+- [x] T039 [US5] CommentLikeService 구현 in `backend/src/main/java/igrus/web/community/comment/service/CommentLikeService.java`
   - likeComment(Long commentId, Long userId): void
   - unlikeComment(Long commentId, Long userId): void
   - getLikeCount(Long commentId): Long
   - hasUserLiked(Long commentId, Long userId): boolean
   - 본인 댓글 좋아요 방지 검증
 
-- [ ] T040 [US5] CommentLikeController 구현 in `backend/src/main/java/igrus/web/board/comment/controller/CommentLikeController.java`
+- [x] T040 [US5] CommentLikeController 구현 in `backend/src/main/java/igrus/web/community/comment/controller/CommentLikeController.java`
   - POST /api/v1/comments/{commentId}/likes - 좋아요
   - DELETE /api/v1/comments/{commentId}/likes - 좋아요 취소
   - Swagger 어노테이션 추가
@@ -371,14 +371,14 @@
 
 ### Tests for User Story 6
 
-- [ ] T041 [P] [US6] CommentReportService 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/service/CommentReportServiceTest.java`
+- [x] T041 [P] [US6] CommentReportService 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/service/CommentReportServiceTest.java`
   - 댓글 신고 성공
   - 중복 신고 시 실패
   - 관리자가 신고 처리 (RESOLVED) 성공
   - 관리자가 신고 반려 (DISMISSED) 성공
   - PENDING 상태 신고 목록 조회 성공
 
-- [ ] T042 [P] [US6] CommentReportController 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/controller/CommentReportControllerTest.java`
+- [ ] T042 [P] [US6] CommentReportController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentReportControllerTest.java`
   - POST /api/v1/comments/{commentId}/reports - 신고 성공 (201 Created)
   - POST /api/v1/comments/{commentId}/reports - 중복 신고 시 400 Bad Request
   - GET /api/v1/admin/comment-reports - 관리자 신고 목록 조회 성공
@@ -386,28 +386,28 @@
 
 ### Implementation for User Story 6
 
-- [ ] T043 [P] [US6] CreateCommentReportRequest DTO 구현 in `backend/src/main/java/igrus/web/board/comment/dto/request/CreateCommentReportRequest.java`
+- [x] T043 [P] [US6] CreateCommentReportRequest DTO 구현 in `backend/src/main/java/igrus/web/community/comment/dto/request/CreateCommentReportRequest.java`
   - 필드: reason(@NotBlank)
 
-- [ ] T044 [P] [US6] CommentReportResponse DTO 구현 in `backend/src/main/java/igrus/web/board/comment/dto/response/CommentReportResponse.java`
+- [x] T044 [P] [US6] CommentReportResponse DTO 구현 in `backend/src/main/java/igrus/web/community/comment/dto/response/CommentReportResponse.java`
   - 필드: id, commentId, reporterId, reason, status, createdAt, resolvedAt
 
-- [ ] T045 [P] [US6] UpdateReportStatusRequest DTO 구현 in `backend/src/main/java/igrus/web/board/comment/dto/request/UpdateReportStatusRequest.java`
+- [x] T045 [P] [US6] UpdateReportStatusRequest DTO 구현 in `backend/src/main/java/igrus/web/community/comment/dto/request/UpdateReportStatusRequest.java`
   - 필드: status(ReportStatus)
 
-- [ ] T046 [US6] CommentReportService 구현 in `backend/src/main/java/igrus/web/board/comment/service/CommentReportService.java`
+- [x] T046 [US6] CommentReportService 구현 in `backend/src/main/java/igrus/web/community/comment/service/CommentReportService.java`
   - reportComment(Long commentId, CreateCommentReportRequest request, Long reporterId): CommentReportResponse
   - getPendingReports(): List<CommentReportResponse>
   - updateReportStatus(Long reportId, UpdateReportStatusRequest request, Long adminId): void
   - 중복 신고 방지 검증
 
-- [ ] T047 [US6] CommentReportController 구현 in `backend/src/main/java/igrus/web/board/comment/controller/CommentReportController.java`
+- [x] T047 [US6] CommentReportController 구현 in `backend/src/main/java/igrus/web/community/comment/controller/CommentReportController.java`
   - POST /api/v1/comments/{commentId}/reports - 댓글 신고
   - GET /api/v1/admin/comment-reports - 신고 목록 조회 (관리자)
   - PATCH /api/v1/admin/comment-reports/{reportId} - 신고 처리 (관리자)
   - Swagger 어노테이션 추가
 
-- [ ] T048 [US6] SecurityConfig에 관리자 API 경로 권한 설정 추가 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
+- [x] T048 [US6] SecurityConfig에 관리자 API 경로 권한 설정 추가 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
   - /api/v1/admin/comment-reports/** - OPERATOR 이상
 
 **Checkpoint**: User Story 6 완료 - 댓글 신고 기능 독립적으로 테스트 가능
@@ -428,25 +428,25 @@
 
 ### Tests for User Story 7
 
-- [ ] T049 [P] [US7] CommentMentionService 단위 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/service/CommentMentionServiceTest.java`
+- [ ] T049 [P] [US7] CommentMentionService 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/service/CommentMentionServiceTest.java`
   - 댓글 내용에서 멘션 파싱 성공 (@username 추출)
   - 유효한 정회원 사용자 멘션 시 알림 발송
   - 존재하지 않는 사용자 멘션 시 무시
   - 준회원 멘션 시 무시
 
-- [ ] T050 [P] [US7] 멘션 알림 통합 테스트 작성 in `backend/src/test/java/igrus/web/board/comment/integration/CommentMentionIntegrationTest.java`
+- [ ] T050 [P] [US7] 멘션 알림 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/integration/CommentMentionIntegrationTest.java`
   - 댓글 작성 시 멘션된 사용자에게 알림 발송 확인
 
 ### Implementation for User Story 7
 
-- [ ] T051 [US7] CommentMentionService 구현 in `backend/src/main/java/igrus/web/board/comment/service/CommentMentionService.java`
-  - extractMentions(String content): List<String> - @username 패턴 추출
-  - processMentions(Comment comment, List<String> mentionedUsernames): void
-  - 정회원 이상 사용자만 멘션 대상
-  - 알림 서비스 연동 (인앱 알림 + 이메일)
+- [x] T051 [US7] CommentMentionService 기본 구조 구현 in `backend/src/main/java/igrus/web/community/comment/service/CommentMentionService.java`
+  - extractMentions(String content): List<String> - @username 패턴 추출 (구현 완료)
+  - processMentions(Comment comment, List<String> mentionedUsernames): void (기본 구조, 알림 서비스 연동 TODO)
+  - 정회원 이상 사용자만 멘션 대상 (알림 서비스 연동 시 구현 필요)
+  - 알림 서비스 연동 (인앱 알림 + 이메일) - TODO: NotificationService 구현 필요
 
-- [ ] T052 [US7] CommentService에 멘션 처리 로직 통합 in `backend/src/main/java/igrus/web/board/comment/service/CommentService.java`
-  - 댓글/대댓글 작성 시 CommentMentionService 호출
+- [ ] T052 [US7] CommentService에 멘션 처리 로직 통합 in `backend/src/main/java/igrus/web/community/comment/service/CommentService.java`
+  - 댓글/대댓글 작성 시 CommentMentionService 호출 (TODO)
   - 비동기 처리 고려 (@Async)
 
 **Checkpoint**: User Story 7 완료 - 댓글 멘션 기능 독립적으로 테스트 가능
@@ -459,14 +459,15 @@
 
 - [ ] ~~T053 [P] Rate Limiting 설정 추가~~ (추후 구현으로 연기 - FR-011 Deferred)
 
-- [ ] T054 [P] GlobalExceptionHandler에 댓글 예외 핸들러 추가 in `backend/src/main/java/igrus/web/common/exception/GlobalExceptionHandler.java`
+- [x] T054 [P] GlobalExceptionHandler에 댓글 예외 핸들러 추가 in `backend/src/main/java/igrus/web/common/exception/GlobalExceptionHandler.java`
   - CommentNotFoundException → 404 Not Found
   - CommentAccessDeniedException → 403 Forbidden
   - InvalidCommentException → 400 Bad Request
   - CommentLikeException → 400 Bad Request
+  - CommentReportException → 400 Bad Request
 
-- [ ] T055 [P] Swagger API 문서 검토 및 보완
-  - 모든 엔드포인트에 적절한 설명 추가
+- [x] T055 [P] Swagger API 문서 검토 및 보완
+  - 모든 엔드포인트에 적절한 설명 추가 (CommentController, CommentLikeController, CommentReportController)
   - 요청/응답 예시 추가
   - 에러 응답 케이스 문서화
 

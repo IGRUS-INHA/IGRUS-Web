@@ -1,7 +1,7 @@
 # 댓글(Comment) 테스트 케이스
 
 **작성일**: 2026-01-26
-**버전**: 1.0
+**버전**: 1.2
 **관련 스펙**: [comment-spec.md](../../../../../docs/feature/community/comment-spec.md)
 **우선순위**: P1
 
@@ -127,19 +127,48 @@
 
 ## 4. 구현된 테스트 클래스
 
-> 테스트 구현 시 업데이트 예정
-
 ### 4.1 Service 테스트
-- **파일**: `backend/src/test/java/igrus/web/community/comment/service/CommentServiceTest.java`
-- **테스트 범위**: CMT-001 ~ CMT-073 (비즈니스 로직)
 
-### 4.2 Controller 테스트
+#### CommentServiceTest
+- **파일**: `backend/src/test/java/igrus/web/community/comment/service/CommentServiceTest.java`
+- **테스트 범위**: 댓글 CRUD 비즈니스 로직
+- **구현된 테스트 케이스**:
+  - `CreateComment` 내부 클래스: CMT-001, CMT-002, CMT-003, CMT-007, 존재하지 않는 게시글 예외 처리
+  - `CreateReply` 내부 클래스: CMT-010, CMT-011, CMT-014, 존재하지 않는 부모 댓글 예외 처리
+  - `GetComments` 내부 클래스: CMT-020, 존재하지 않는 게시글 예외 처리
+  - `DeleteComment` 내부 클래스: CMT-030, CMT-033, CMT-034, 존재하지 않는 댓글 예외 처리
+- **미구현 테스트 케이스**: CMT-004, CMT-005, CMT-006 (500자 제한 검증), CMT-012, CMT-013 (대댓글 익명/500자), CMT-021, CMT-022, CMT-023, CMT-025 (삭제된 댓글/정렬/익명 표시), CMT-031, CMT-032 (대댓글 있는 댓글 삭제/UI)
+
+#### CommentLikeServiceTest
+- **파일**: `backend/src/test/java/igrus/web/community/comment/service/CommentLikeServiceTest.java`
+- **테스트 범위**: 댓글 좋아요 비즈니스 로직
+- **구현된 테스트 케이스**:
+  - `LikeComment` 내부 클래스: CMT-040, CMT-042, 중복 좋아요 방지, 존재하지 않는 댓글 예외 처리
+  - `UnlikeComment` 내부 클래스: CMT-041, 좋아요하지 않은 댓글 취소 예외 처리, 존재하지 않는 댓글 예외 처리
+  - `GetLikeCount` 내부 클래스: 좋아요 수 조회 (CMT-043 관련)
+  - `HasUserLiked` 내부 클래스: 좋아요 여부 확인
+
+#### CommentReportServiceTest
+- **파일**: `backend/src/test/java/igrus/web/community/comment/service/CommentReportServiceTest.java`
+- **테스트 범위**: 댓글 신고 비즈니스 로직
+- **구현된 테스트 케이스**:
+  - `ReportComment` 내부 클래스: CMT-050, CMT-051, 존재하지 않는 댓글 신고 예외 처리
+  - `GetPendingReports` 내부 클래스: CMT-052
+  - `UpdateReportStatus` 내부 클래스: CMT-053, 신고 반려 (DISMISSED), 존재하지 않는 신고 예외 처리
+
+### 4.2 Controller 테스트 (TODO)
 - **파일**: `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerTest.java`
 - **테스트 범위**: CMT-001 ~ CMT-073 (HTTP 레이어)
+- **상태**: 미구현 - 향후 통합 테스트로 구현 예정
 
-### 4.3 통합 테스트
+### 4.3 통합 테스트 (TODO)
 - **파일**: `backend/src/test/java/igrus/web/community/comment/integration/CommentIntegrationTest.java`
 - **테스트 범위**: 전체 플로우 통합 테스트
+- **상태**: 미구현
+
+### 4.4 테스트 Fixture
+- **파일**: `backend/src/test/java/igrus/web/community/fixture/CommentTestFixture.java`
+- **내용**: Comment, CommentLike, CommentReport, CreateCommentRequest 팩토리 메서드 제공
 
 ---
 
@@ -148,3 +177,5 @@
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 1.0 | 2026-01-26 | - | 최초 작성 |
+| 1.1 | 2026-01-28 | - | Service 테스트 구현 완료 (CommentServiceTest, CommentLikeServiceTest, CommentReportServiceTest), 테스트 Fixture 추가 |
+| 1.2 | 2026-01-28 | - | 구현된 테스트 케이스 목록 실제 코드 기반으로 정확하게 수정, 미구현 테스트 케이스 명시 |
