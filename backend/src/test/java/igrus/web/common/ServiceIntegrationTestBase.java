@@ -114,7 +114,7 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM password_reset_tokens").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM privacy_consents").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_role_history").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM user_role_histories").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM user_suspensions").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM user_positions").executeUpdate();
 
