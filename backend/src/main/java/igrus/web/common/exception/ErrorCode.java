@@ -103,7 +103,15 @@ public enum ErrorCode {
     // Comment Report
     ALREADY_REPORTED_COMMENT(400, "이미 신고한 댓글입니다"),
     INVALID_REPORT_REASON(400, "신고 사유를 입력해 주세요"),
-    COMMENT_REPORT_NOT_FOUND(404, "신고 정보를 찾을 수 없습니다");
+    COMMENT_REPORT_NOT_FOUND(404, "신고 정보를 찾을 수 없습니다"),
+
+    // PostLike (게시글 좋아요)
+    POST_LIKE_ALREADY_EXISTS(409, "이미 좋아요한 게시글입니다"),
+    POST_LIKE_NOT_FOUND(404, "게시글 좋아요를 찾을 수 없습니다"),
+
+    // Bookmark
+    BOOKMARK_ALREADY_EXISTS(409, "이미 북마크한 게시글입니다"),
+    BOOKMARK_NOT_FOUND(404, "북마크를 찾을 수 없습니다");
 
     private final int status;
     private final String message;

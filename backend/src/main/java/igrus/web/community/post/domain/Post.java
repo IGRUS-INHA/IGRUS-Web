@@ -79,6 +79,10 @@ public class Post extends SoftDeletableEntity {
     @Column(name = "posts_view_count", nullable = false)
     private int viewCount = 0;
 
+    /** 좋아요 수 (기본값: 0) */
+    @Column(name = "like_count", nullable = false)
+    private int likeCount = 0;
+
     /** 낙관적 락을 위한 버전 (동시성 제어) */
     @Version
     @Column(name = "posts_version")
@@ -192,6 +196,23 @@ public class Post extends SoftDeletableEntity {
      */
     public void syncViewCount(int viewCount) {
         this.viewCount = viewCount;
+    }
+
+    /**
+     * 좋아요 수를 1 증가시킵니다.
+     */
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
+
+    /**
+     * 좋아요 수를 1 감소시킵니다.
+     * 좋아요 수가 0 미만이 되지 않도록 보장합니다.
+     */
+    public void decrementLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
     }
 
     /**

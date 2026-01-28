@@ -2,6 +2,8 @@ package igrus.web.community.post.service;
 
 import igrus.web.community.board.domain.Board;
 import igrus.web.community.board.domain.BoardCode;
+import igrus.web.community.bookmark.repository.BookmarkRepository;
+import igrus.web.community.like.postlike.repository.PostLikeRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.domain.PostImage;
 import igrus.web.community.post.dto.request.CreatePostRequest;
@@ -47,6 +49,8 @@ public class PostService {
     private final BoardPermissionService boardPermissionService;
     private final PostRateLimitService postRateLimitService;
     private final PostViewService postViewService;
+    private final PostLikeRepository postLikeRepository;
+    private final BookmarkRepository bookmarkRepository;
 
     /**
      * 게시글 작성
@@ -345,7 +349,11 @@ public class PostService {
         // 현재 사용자가 작성자인지 확인
         boolean isCurrentUserAuthor = post.getAuthor().getId().equals(currentUser.getId());
 
-        return PostDetailResponse.from(post, isCurrentUserAuthor);
+        // 좋아요/북마크 상태 조회
+        boolean liked = postLikeRepository.existsByPostIdAndUserId(postId, currentUser.getId());
+        boolean bookmarked = bookmarkRepository.existsByPostIdAndUserId(postId, currentUser.getId());
+
+        return PostDetailResponse.from(post, isCurrentUserAuthor, liked, bookmarked);
     }
 
     /**
