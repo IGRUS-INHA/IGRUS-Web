@@ -28,9 +28,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -151,6 +153,13 @@ class PostControllerTest extends ServiceIntegrationTestBase {
         Post post = Post.createPost(board, author, title, content);
         post.setQuestion(true);
         return postRepository.save(post);
+    }
+
+    private Post createAndSavePostWithCreatedAt(Board board, User author, String title, String content, Instant createdAt) {
+        Post post = Post.createPost(board, author, title, content);
+        Post savedPost = postRepository.save(post);
+        setField(savedPost, "createdAt", createdAt);
+        return postRepository.saveAndFlush(savedPost);
     }
 
     @Nested
@@ -358,10 +367,11 @@ class PostControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("BRD-042: 최신순 정렬")
         @Test
         void getPostList_DefaultOrder_SortedByCreatedAtDesc() throws Exception {
-            // given: 순차적으로 게시글 생성
-            createAndSavePost(generalBoard, memberUser, "첫번째 게시글", "내용1");
-            createAndSavePost(generalBoard, memberUser, "두번째 게시글", "내용2");
-            createAndSavePost(generalBoard, memberUser, "세번째 게시글", "내용3");
+            // given: 명시적으로 다른 시간에 생성된 게시글들
+            Instant baseTime = Instant.now();
+            createAndSavePostWithCreatedAt(generalBoard, memberUser, "첫번째 게시글", "내용1", baseTime.minusSeconds(20));
+            createAndSavePostWithCreatedAt(generalBoard, memberUser, "두번째 게시글", "내용2", baseTime.minusSeconds(10));
+            createAndSavePostWithCreatedAt(generalBoard, memberUser, "세번째 게시글", "내용3", baseTime);
 
             // when & then: 최신순으로 정렬되어야 함
             mockMvc.perform(get(BASE_URL + "/general/posts")
@@ -640,10 +650,11 @@ class PostControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("PST-024: 게시글 목록 최신순 정렬")
         @Test
         void getPostList_SortedByCreatedAtDesc() throws Exception {
-            // given
-            createAndSavePost(generalBoard, memberUser, "첫번째", "내용1");
-            createAndSavePost(generalBoard, memberUser, "두번째", "내용2");
-            createAndSavePost(generalBoard, memberUser, "세번째", "내용3");
+            // given: 명시적으로 다른 시간에 생성된 게시글들
+            Instant baseTime = Instant.now();
+            createAndSavePostWithCreatedAt(generalBoard, memberUser, "첫번째", "내용1", baseTime.minusSeconds(20));
+            createAndSavePostWithCreatedAt(generalBoard, memberUser, "두번째", "내용2", baseTime.minusSeconds(10));
+            createAndSavePostWithCreatedAt(generalBoard, memberUser, "세번째", "내용3", baseTime);
 
             // when & then: 최신순 정렬
             mockMvc.perform(get(BASE_URL + "/general/posts")
@@ -870,10 +881,11 @@ class PostControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("PST-072: 검색 결과 정렬")
         @Test
         void searchPosts_SortedByCreatedAtDesc() throws Exception {
-            // given
-            createAndSavePost(generalBoard, memberUser, "검색 첫번째", "내용");
-            createAndSavePost(generalBoard, memberUser, "검색 두번째", "내용");
-            createAndSavePost(generalBoard, memberUser, "검색 세번째", "내용");
+            // given: 명시적으로 다른 시간에 생성된 게시글들
+            Instant baseTime = Instant.now();
+            createAndSavePostWithCreatedAt(generalBoard, memberUser, "검색 첫번째", "내용", baseTime.minusSeconds(20));
+            createAndSavePostWithCreatedAt(generalBoard, memberUser, "검색 두번째", "내용", baseTime.minusSeconds(10));
+            createAndSavePostWithCreatedAt(generalBoard, memberUser, "검색 세번째", "내용", baseTime);
 
             // when & then: 검색 결과도 최신순 정렬
             mockMvc.perform(get(BASE_URL + "/general/posts")
