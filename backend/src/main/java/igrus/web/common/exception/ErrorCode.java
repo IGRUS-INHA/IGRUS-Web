@@ -105,7 +105,7 @@ public enum ErrorCode {
     INVALID_REPORT_REASON(400, "신고 사유를 입력해 주세요"),
     COMMENT_REPORT_NOT_FOUND(404, "신고 정보를 찾을 수 없습니다"),
 
-    // PostLike (게시글 좋아요)
+    // Post Like
     POST_LIKE_ALREADY_EXISTS(409, "이미 좋아요한 게시글입니다"),
     POST_LIKE_NOT_FOUND(404, "게시글 좋아요를 찾을 수 없습니다"),
 

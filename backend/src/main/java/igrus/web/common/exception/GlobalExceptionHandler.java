@@ -1,7 +1,7 @@
 package igrus.web.common.exception;
 
 import igrus.web.community.comment.exception.CommentAccessDeniedException;
-import igrus.web.community.comment.exception.CommentLikeException;
+import igrus.web.community.like.comment_like.exception.CommentLikeException;
 import igrus.web.community.comment.exception.CommentNotFoundException;
 import igrus.web.community.comment.exception.CommentReportException;
 import igrus.web.community.comment.exception.InvalidCommentException;

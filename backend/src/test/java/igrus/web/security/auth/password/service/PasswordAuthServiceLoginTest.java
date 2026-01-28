@@ -39,6 +39,8 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
     private static final long REFRESH_TOKEN_VALIDITY = 604800000L; // 7일
     private static final String TEST_STUDENT_ID = "12345678";
     private static final String TEST_PASSWORD = "password123!";
+    private static final String TEST_IP_ADDRESS = "192.168.1.100";
+    private static final String TEST_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
 
     @BeforeEach
     void setUp() {
@@ -104,7 +106,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            LoginResult response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // then
             assertThat(response).isNotNull();
@@ -128,7 +130,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            LoginResult response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.MEMBER);
@@ -144,7 +146,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            LoginResult response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.OPERATOR);
@@ -160,7 +162,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            LoginResult response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.ADMIN);
@@ -176,7 +178,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            LoginResult response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // then
             assertThat(response.accessTokenValidity()).isEqualTo(ACCESS_TOKEN_VALIDITY);
@@ -192,7 +194,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when
-            LoginResult response = passwordAuthService.login(request);
+            LoginResult response = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // then
             assertThat(response.name()).isEqualTo("홍길동");
@@ -210,7 +212,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest("99999999", TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(InvalidCredentialsException.class);
         }
 
@@ -224,7 +226,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, "wrongPassword");
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(InvalidCredentialsException.class);
         }
 
@@ -238,7 +240,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(EmailNotVerifiedException.class);
         }
 
@@ -252,7 +254,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(InvalidCredentialsException.class);
         }
     }
@@ -271,7 +273,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountSuspendedException.class);
         }
 
@@ -285,7 +287,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountWithdrawnException.class);
         }
     }
@@ -303,7 +305,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
 
             // 먼저 로그인하여 토큰 획득
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResponse = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             String refreshTokenString = loginResponse.refreshToken();
 
@@ -324,7 +326,7 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
 
             // 먼저 로그인하여 토큰 획득
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResponse = passwordAuthService.login(loginRequest);
+            LoginResult loginResponse = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
             String refreshTokenString = loginResponse.refreshToken();
 
             // 로그아웃
@@ -361,8 +363,8 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when - 두 번 로그인
-            LoginResult responseA = passwordAuthService.login(request);
-            LoginResult responseB = passwordAuthService.login(request);
+            LoginResult responseA = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult responseB = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // then - 서로 다른 토큰이 발급됨
             assertThat(responseA.accessToken()).isNotEqualTo(responseB.accessToken());
@@ -383,8 +385,8 @@ class PasswordAuthServiceLoginTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // 두 기기에서 로그인
-            LoginResult responseA = passwordAuthService.login(loginRequest);
-            LoginResult responseB = passwordAuthService.login(loginRequest);
+            LoginResult responseA = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult responseB = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // Device A 로그아웃
             passwordAuthService.logout(responseA.refreshToken());

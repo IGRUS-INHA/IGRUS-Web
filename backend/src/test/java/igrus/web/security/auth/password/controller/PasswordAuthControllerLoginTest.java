@@ -127,7 +127,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.associateLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -151,7 +151,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.memberLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -170,7 +170,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.operatorLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -189,7 +189,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.adminLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -208,7 +208,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.memberLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -234,7 +234,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.loginRequestWithInvalidStudentId();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new InvalidCredentialsException());
 
                 // when & then
@@ -253,7 +253,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.loginRequestWithInvalidPassword();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new InvalidCredentialsException());
 
                 // when & then
@@ -272,7 +272,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new EmailNotVerifiedException());
 
                 // when & then
@@ -361,7 +361,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new AccountSuspendedException());
 
                 // when & then
@@ -380,7 +380,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class)))
+                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new AccountWithdrawnException());
 
                 // when & then

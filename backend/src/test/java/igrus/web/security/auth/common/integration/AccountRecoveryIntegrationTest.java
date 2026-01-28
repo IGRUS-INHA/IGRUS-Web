@@ -48,6 +48,8 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
     private static final long REFRESH_TOKEN_VALIDITY = 604800000L; // 7일
     private static final String TEST_STUDENT_ID = "12345678";
     private static final String TEST_PASSWORD = "password123!";
+    private static final String TEST_IP_ADDRESS = "192.168.1.100";
+    private static final String TEST_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
     private static final Duration RECOVERY_PERIOD = Duration.ofDays(5);
 
     @BeforeEach
@@ -128,7 +130,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountRecoverableException.class)
                     .satisfies(ex -> {
                         AccountRecoverableException ace = (AccountRecoverableException) ex;
@@ -147,7 +149,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountRecoverableException.class)
                     .satisfies(ex -> {
                         AccountRecoverableException ace = (AccountRecoverableException) ex;
@@ -305,7 +307,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountWithdrawnException.class);
         }
 

@@ -2,6 +2,7 @@ package igrus.web.common;
 
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.security.auth.common.repository.LoginAttemptRepository;
+import igrus.web.security.auth.common.repository.LoginHistoryRepository;
 import igrus.web.security.auth.common.repository.PrivacyConsentRepository;
 import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
@@ -70,6 +71,9 @@ public abstract class ServiceIntegrationTestBase {
     @Autowired
     protected UserRoleHistoryRepository userRoleHistoryRepository;
 
+    @Autowired
+    protected LoginHistoryRepository loginHistoryRepository;
+
     protected TransactionTemplate transactionTemplate;
 
     /**
@@ -110,6 +114,7 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM boards").executeUpdate();
 
             // Phase 3: User 종속 테이블
+            entityManager.createNativeQuery("DELETE FROM login_histories").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM refresh_tokens").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_reset_tokens").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
