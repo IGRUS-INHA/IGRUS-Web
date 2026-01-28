@@ -1,10 +1,10 @@
-package igrus.web.community.like.postlike.controller;
+package igrus.web.community.like.post_like.controller;
 
 import igrus.web.common.exception.ErrorResponse;
-import igrus.web.community.like.postlike.dto.response.PostLikeStatusResponse;
-import igrus.web.community.like.postlike.dto.response.PostLikeToggleResponse;
-import igrus.web.community.like.postlike.dto.response.LikedPostResponse;
-import igrus.web.community.like.postlike.service.PostLikeService;
+import igrus.web.community.like.post_like.dto.response.PostLikeStatusResponse;
+import igrus.web.community.like.post_like.dto.response.PostLikeToggleResponse;
+import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
+import igrus.web.community.like.post_like.service.PostLikeService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

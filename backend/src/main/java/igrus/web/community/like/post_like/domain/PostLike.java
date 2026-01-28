@@ -1,4 +1,4 @@
-package igrus.web.community.like.postlike.domain;
+package igrus.web.community.like.post_like.domain;
 
 import igrus.web.common.domain.BaseEntity;
 import igrus.web.community.post.domain.Post;

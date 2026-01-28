@@ -1,4 +1,4 @@
-package igrus.web.community.like.postlike.exception;
+package igrus.web.community.like.post_like.exception;
 
 import igrus.web.common.exception.CustomBaseException;
 import igrus.web.common.exception.ErrorCode;

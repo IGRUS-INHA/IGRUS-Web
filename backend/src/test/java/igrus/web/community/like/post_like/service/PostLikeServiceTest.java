@@ -1,11 +1,11 @@
-package igrus.web.community.like.postlike.service;
+package igrus.web.community.like.post_like.service;
 
 import igrus.web.community.board.domain.Board;
-import igrus.web.community.like.postlike.domain.PostLike;
-import igrus.web.community.like.postlike.dto.response.PostLikeStatusResponse;
-import igrus.web.community.like.postlike.dto.response.PostLikeToggleResponse;
-import igrus.web.community.like.postlike.dto.response.LikedPostResponse;
-import igrus.web.community.like.postlike.repository.PostLikeRepository;
+import igrus.web.community.like.post_like.domain.PostLike;
+import igrus.web.community.like.post_like.dto.response.PostLikeStatusResponse;
+import igrus.web.community.like.post_like.dto.response.PostLikeToggleResponse;
+import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
+import igrus.web.community.like.post_like.repository.PostLikeRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.exception.PostDeletedException;
 import igrus.web.community.post.exception.PostNotFoundException;

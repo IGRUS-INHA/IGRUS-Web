@@ -1,4 +1,4 @@
-package igrus.web.community.like.postlike.dto.response;
+package igrus.web.community.like.post_like.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

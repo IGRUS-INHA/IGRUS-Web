@@ -3,7 +3,7 @@ package igrus.web.community.post.service;
 import igrus.web.community.board.domain.Board;
 import igrus.web.community.board.domain.BoardCode;
 import igrus.web.community.bookmark.repository.BookmarkRepository;
-import igrus.web.community.like.postlike.repository.PostLikeRepository;
+import igrus.web.community.like.post_like.repository.PostLikeRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.domain.PostImage;
 import igrus.web.community.post.dto.request.CreatePostRequest;

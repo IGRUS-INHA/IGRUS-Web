@@ -1,6 +1,6 @@
-package igrus.web.community.like.postlike.repository;
+package igrus.web.community.like.post_like.repository;
 
-import igrus.web.community.like.postlike.domain.PostLike;
+import igrus.web.community.like.post_like.domain.PostLike;
 import igrus.web.community.post.domain.Post;
 import igrus.web.user.domain.User;
 import org.springframework.data.domain.Page;
