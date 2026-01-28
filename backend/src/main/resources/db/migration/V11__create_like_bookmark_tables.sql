@@ -12,7 +12,7 @@ CREATE TABLE likes (
     likes_updated_by BIGINT,
 
     CONSTRAINT uk_likes_post_user UNIQUE (likes_post_id, likes_user_id),
-    CONSTRAINT fk_likes_post FOREIGN KEY (likes_post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_likes_post FOREIGN KEY (likes_post_id) REFERENCES posts(posts_id) ON DELETE CASCADE,
     CONSTRAINT fk_likes_user FOREIGN KEY (likes_user_id) REFERENCES users(users_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -27,7 +27,7 @@ CREATE TABLE bookmarks (
     bookmarks_updated_by BIGINT,
 
     CONSTRAINT uk_bookmarks_post_user UNIQUE (bookmarks_post_id, bookmarks_user_id),
-    CONSTRAINT fk_bookmarks_post FOREIGN KEY (bookmarks_post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_bookmarks_post FOREIGN KEY (bookmarks_post_id) REFERENCES posts(posts_id) ON DELETE CASCADE,
     CONSTRAINT fk_bookmarks_user FOREIGN KEY (bookmarks_user_id) REFERENCES users(users_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

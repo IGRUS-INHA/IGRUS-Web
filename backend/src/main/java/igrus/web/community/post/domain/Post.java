@@ -80,7 +80,7 @@ public class Post extends SoftDeletableEntity {
     private int viewCount = 0;
 
     /** 좋아요 수 (기본값: 0) */
-    @Column(name = "like_count", nullable = false)
+    @Column(name = "posts_like_count", nullable = false)
     private int likeCount = 0;
 
     /** 낙관적 락을 위한 버전 (동시성 제어) */
