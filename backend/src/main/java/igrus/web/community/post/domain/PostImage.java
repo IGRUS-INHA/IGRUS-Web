@@ -1,6 +1,8 @@
 package igrus.web.community.post.domain;
 
 import igrus.web.common.domain.BaseEntity;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,6 +22,12 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "post_images")
+@AttributeOverrides({
+        @AttributeOverride(name = "createdAt", column = @Column(name = "post_images_created_at", nullable = false, updatable = false)),
+        @AttributeOverride(name = "updatedAt", column = @Column(name = "post_images_updated_at", nullable = false)),
+        @AttributeOverride(name = "createdBy", column = @Column(name = "post_images_created_by", updatable = false)),
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "post_images_updated_by"))
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostImage extends BaseEntity {
@@ -27,19 +35,20 @@ public class PostImage extends BaseEntity {
     /** 게시글 이미지 고유 식별자 */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "post_images_id")
     private Long id;
 
     /** 이미지가 속한 게시글 */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "post_images_post_id", nullable = false)
     private Post post;
 
     /** 이미지 URL (최대 500자) */
-    @Column(name = "image_url", nullable = false, length = 500)
+    @Column(name = "post_images_image_url", nullable = false, length = 500)
     private String imageUrl;
 
     /** 이미지 표시 순서 (0부터 시작) */
-    @Column(name = "display_order", nullable = false)
+    @Column(name = "post_images_display_order", nullable = false)
     private int displayOrder = 0;
 
     private PostImage(Post post, String imageUrl, int displayOrder) {

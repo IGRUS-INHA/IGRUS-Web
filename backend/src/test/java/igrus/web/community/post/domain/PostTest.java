@@ -118,7 +118,7 @@ class PostTest {
             // when & then
             assertThatThrownBy(() -> Post.createAnonymousPost(board, author, title, content))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("자유게시판");
+                    .hasMessageContaining("익명 게시글을 작성할 수 없습니다");
         }
 
         @Test
@@ -133,7 +133,7 @@ class PostTest {
             // when & then
             assertThatThrownBy(() -> Post.createAnonymousPost(board, author, title, content))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("자유게시판");
+                    .hasMessageContaining("익명 게시글을 작성할 수 없습니다");
         }
     }
 
@@ -514,7 +514,7 @@ class PostTest {
             // when & then
             assertThatThrownBy(() -> post.setQuestion(true))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("자유게시판");
+                    .hasMessageContaining("질문 태그를 사용할 수 없습니다");
         }
 
         @Test
@@ -528,7 +528,7 @@ class PostTest {
             // when & then
             assertThatThrownBy(() -> post.setQuestion(true))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("자유게시판");
+                    .hasMessageContaining("질문 태그를 사용할 수 없습니다");
         }
     }
 

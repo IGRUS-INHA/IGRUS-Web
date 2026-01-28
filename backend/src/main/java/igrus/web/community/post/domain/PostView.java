@@ -1,6 +1,9 @@
 package igrus.web.community.post.domain;
 
+import igrus.web.common.domain.BaseEntity;
 import igrus.web.user.domain.User;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -23,27 +26,34 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "post_views")
+@AttributeOverrides({
+        @AttributeOverride(name = "createdAt", column = @Column(name = "post_views_created_at", nullable = false, updatable = false)),
+        @AttributeOverride(name = "updatedAt", column = @Column(name = "post_views_updated_at", nullable = false)),
+        @AttributeOverride(name = "createdBy", column = @Column(name = "post_views_created_by", updatable = false)),
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "post_views_updated_by"))
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PostView {
+public class PostView extends BaseEntity {
 
     /** 조회 기록 고유 식별자 */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "post_views_id")
     private Long id;
 
     /** 조회된 게시글 */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "post_views_post_id", nullable = false)
     private Post post;
 
     /** 조회한 사용자 */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "viewer_id", nullable = false)
+    @JoinColumn(name = "post_views_viewer_id", nullable = false)
     private User viewer;
 
     /** 조회 시각 */
-    @Column(name = "viewed_at", nullable = false)
+    @Column(name = "post_views_viewed_at", nullable = false)
     private Instant viewedAt;
 
     private PostView(Post post, User viewer) {

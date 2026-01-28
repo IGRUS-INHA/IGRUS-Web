@@ -4,6 +4,8 @@ import igrus.web.community.board.domain.Board;
 import igrus.web.community.board.domain.BoardCode;
 import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.user.domain.User;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,6 +32,15 @@ import java.util.List;
  */
 @Entity
 @Table(name = "posts")
+@AttributeOverrides({
+        @AttributeOverride(name = "createdAt", column = @Column(name = "posts_created_at", nullable = false, updatable = false)),
+        @AttributeOverride(name = "updatedAt", column = @Column(name = "posts_updated_at", nullable = false)),
+        @AttributeOverride(name = "createdBy", column = @Column(name = "posts_created_by", updatable = false)),
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "posts_updated_by")),
+        @AttributeOverride(name = "deleted", column = @Column(name = "posts_deleted", nullable = false)),
+        @AttributeOverride(name = "deletedAt", column = @Column(name = "posts_deleted_at")),
+        @AttributeOverride(name = "deletedBy", column = @Column(name = "posts_deleted_by"))
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Post extends SoftDeletableEntity {
@@ -43,45 +54,46 @@ public class Post extends SoftDeletableEntity {
     /** 게시글 고유 식별자 */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "posts_id")
     private Long id;
 
     /** 게시글이 속한 게시판 */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id", nullable = false)
+    @JoinColumn(name = "posts_board_id", nullable = false)
     private Board board;
 
     /** 게시글 작성자 */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "posts_author_id", nullable = false)
     private User author;
 
     /** 게시글 제목 (최대 100자) */
-    @Column(name = "title", nullable = false, length = 100)
+    @Column(name = "posts_title", nullable = false, length = 100)
     private String title;
 
     /** 게시글 본문 내용 */
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "posts_content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     /** 조회수 (기본값: 0) */
-    @Column(name = "view_count", nullable = false)
+    @Column(name = "posts_view_count", nullable = false)
     private int viewCount = 0;
 
     /** 낙관적 락을 위한 버전 (동시성 제어) */
     @Version
-    @Column(name = "version")
+    @Column(name = "posts_version")
     private Long version;
 
     /** 익명 여부. 자유게시판(GENERAL)에서만 true 가능 */
-    @Column(name = "is_anonymous", nullable = false)
+    @Column(name = "posts_is_anonymous", nullable = false)
     private boolean isAnonymous = false;
 
     /** 질문글 여부. 자유게시판(GENERAL)에서만 true 가능 */
-    @Column(name = "is_question", nullable = false)
+    @Column(name = "posts_is_question", nullable = false)
     private boolean isQuestion = false;
 
     /** 준회원 공개 여부. 공지사항(NOTICES)에서만 사용 */
-    @Column(name = "is_visible_to_associate", nullable = false)
+    @Column(name = "posts_is_visible_to_associate", nullable = false)
     private boolean isVisibleToAssociate = false;
 
     /** 첨부 이미지 목록 (최대 5개) */
@@ -262,14 +274,14 @@ public class Post extends SoftDeletableEntity {
     }
 
     private static void validateAnonymousOption(Board board) {
-        if (board.getCode() != BoardCode.GENERAL) {
-            throw new IllegalArgumentException("익명 옵션은 자유게시판에서만 사용 가능합니다");
+        if (!board.getAllowsAnonymous()) {
+            throw new IllegalArgumentException("이 게시판에서는 익명 게시글을 작성할 수 없습니다");
         }
     }
 
     private static void validateQuestionOption(Board board) {
-        if (board.getCode() != BoardCode.GENERAL) {
-            throw new IllegalArgumentException("질문 옵션은 자유게시판에서만 사용 가능합니다");
+        if (!board.getAllowsQuestionTag()) {
+            throw new IllegalArgumentException("이 게시판에서는 질문 태그를 사용할 수 없습니다");
         }
     }
 
