@@ -1,6 +1,7 @@
-package igrus.web.community.comment.domain;
+package igrus.web.community.like.comment_like.domain;
 
 import igrus.web.common.domain.BaseEntity;
+import igrus.web.community.comment.domain.Comment;
 import igrus.web.user.domain.User;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;

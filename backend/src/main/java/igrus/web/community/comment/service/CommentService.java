@@ -8,7 +8,7 @@ import igrus.web.community.comment.dto.response.CommentWithRepliesResponse;
 import igrus.web.community.comment.exception.CommentAccessDeniedException;
 import igrus.web.community.comment.exception.CommentNotFoundException;
 import igrus.web.community.comment.exception.InvalidCommentException;
-import igrus.web.community.comment.repository.CommentLikeRepository;
+import igrus.web.community.like.comment_like.repository.CommentLikeRepository;
 import igrus.web.community.comment.repository.CommentRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.exception.PostNotFoundException;

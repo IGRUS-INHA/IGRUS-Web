@@ -1,7 +1,7 @@
 package igrus.web.community.fixture;
 
 import igrus.web.community.comment.domain.Comment;
-import igrus.web.community.comment.domain.CommentLike;
+import igrus.web.community.like.comment_like.domain.CommentLike;
 import igrus.web.community.comment.domain.CommentReport;
 import igrus.web.community.comment.dto.request.CreateCommentRequest;
 import igrus.web.community.post.domain.Post;

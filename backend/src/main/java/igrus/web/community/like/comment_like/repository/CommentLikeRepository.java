@@ -1,6 +1,6 @@
-package igrus.web.community.comment.repository;
+package igrus.web.community.like.comment_like.repository;
 
-import igrus.web.community.comment.domain.CommentLike;
+import igrus.web.community.like.comment_like.domain.CommentLike;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

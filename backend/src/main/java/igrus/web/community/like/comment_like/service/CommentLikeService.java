@@ -1,11 +1,11 @@
-package igrus.web.community.comment.service;
+package igrus.web.community.like.comment_like.service;
 
 import igrus.web.community.comment.domain.Comment;
-import igrus.web.community.comment.domain.CommentLike;
-import igrus.web.community.comment.exception.CommentLikeException;
 import igrus.web.community.comment.exception.CommentNotFoundException;
-import igrus.web.community.comment.repository.CommentLikeRepository;
 import igrus.web.community.comment.repository.CommentRepository;
+import igrus.web.community.like.comment_like.domain.CommentLike;
+import igrus.web.community.like.comment_like.exception.CommentLikeException;
+import igrus.web.community.like.comment_like.repository.CommentLikeRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

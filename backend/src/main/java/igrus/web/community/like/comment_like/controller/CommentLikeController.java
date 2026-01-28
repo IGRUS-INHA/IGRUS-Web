@@ -1,6 +1,6 @@
-package igrus.web.community.comment.controller;
+package igrus.web.community.like.comment_like.controller;
 
-import igrus.web.community.comment.service.CommentLikeService;
+import igrus.web.community.like.comment_like.service.CommentLikeService;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
