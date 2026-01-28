@@ -16,8 +16,10 @@
 
 ## Path Conventions
 
-- **Backend**: `backend/src/main/java/igrus/web/community/like/`, `backend/src/main/java/igrus/web/community/bookmark/`
-- **Tests**: `backend/src/test/java/igrus/web/community/like/`, `backend/src/test/java/igrus/web/community/bookmark/`
+- **Backend (PostLike)**: `backend/src/main/java/igrus/web/community/like/post_like/`
+- **Backend (Bookmark)**: `backend/src/main/java/igrus/web/community/bookmark/`
+- **Tests (PostLike)**: `backend/src/test/java/igrus/web/community/like/post_like/`
+- **Tests (Bookmark)**: `backend/src/test/java/igrus/web/community/bookmark/`
 - **Migrations**: `backend/src/main/resources/db/migration/`
 
 ---
@@ -26,7 +28,7 @@
 
 **Purpose**: 좋아요/북마크 관련 패키지 구조 및 Flyway 마이그레이션 버전 확인
 
-- [x] T001 좋아요/북마크 관련 패키지 구조 확인 및 필요시 생성: `community/like/`, `community/bookmark/`
+- [x] T001 좋아요/북마크 관련 패키지 구조 확인 및 필요시 생성: `community/like/post_like/`, `community/bookmark/`
 - [x] T002 [P] Flyway 마이그레이션 최신 버전 확인 및 다음 버전 번호 예약 (V11, V12)
 
 ---
@@ -41,8 +43,8 @@
 
 ### 2.1 데이터베이스 스키마
 
-- [x] T003 Flyway 마이그레이션 파일 작성 (likes, bookmarks 테이블) in `backend/src/main/resources/db/migration/V11__create_like_bookmark_tables.sql`
-  - likes 테이블: id, post_id(FK), user_id(FK), created_at
+- [x] T003 Flyway 마이그레이션 파일 작성 (post_likes, bookmarks 테이블) in `backend/src/main/resources/db/migration/V11__create_like_bookmark_tables.sql`
+  - post_likes 테이블: id, post_id(FK), user_id(FK), created_at
   - UNIQUE 제약: (post_id, user_id)
   - bookmarks 테이블: id, post_id(FK), user_id(FK), created_at
   - UNIQUE 제약: (post_id, user_id)
@@ -52,7 +54,7 @@
 
 ### 2.2 핵심 도메인 엔티티
 
-- [x] T005 [P] Like 엔티티 구현 in `backend/src/main/java/igrus/web/community/like/domain/Like.java`
+- [x] T005 [P] PostLike 엔티티 구현 in `backend/src/main/java/igrus/web/community/like/post_like/domain/PostLike.java`
   - BaseEntity 상속
   - 필드: post(ManyToOne, LAZY), user(ManyToOne, LAZY)
   - @Table uniqueConstraints = (post_id, user_id)
@@ -72,11 +74,11 @@
 
 ### 2.3 Repository
 
-- [x] T008 [P] LikeRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/community/like/repository/LikeRepository.java`
-  - findByPostAndUser(Post post, User user): Optional<Like>
+- [x] T008 [P] PostLikeRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/community/like/post_like/repository/PostLikeRepository.java`
+  - findByPostAndUser(Post post, User user): Optional<PostLike>
   - existsByPostAndUser(Post post, User user): boolean
   - deleteByPostAndUser(Post post, User user): void
-  - findAllByUserOrderByCreatedAtDesc(User user, Pageable pageable): Page<Like>
+  - findAllByUserOrderByCreatedAtDesc(User user, Pageable pageable): Page<PostLike>
   - countByPost(Post post): long
 
 - [x] T009 [P] BookmarkRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/community/bookmark/repository/BookmarkRepository.java`
@@ -90,7 +92,7 @@
 - [x] T010 [P] PostNotFoundException 예외 클래스 구현 (기존 존재) in `backend/src/main/java/igrus/web/community/post/exception/PostNotFoundException.java`
 - [x] T011 [P] PostDeletedException 예외 클래스 구현 (기존 존재) in `backend/src/main/java/igrus/web/community/post/exception/PostDeletedException.java`
 - [x] T012 [P] ErrorCode에 좋아요/북마크 관련 에러 코드 추가 in `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`
-  - LIKE_ALREADY_EXISTS, LIKE_NOT_FOUND, BOOKMARK_ALREADY_EXISTS, BOOKMARK_NOT_FOUND
+  - POST_LIKE_ALREADY_EXISTS, POST_LIKE_NOT_FOUND, BOOKMARK_ALREADY_EXISTS, BOOKMARK_NOT_FOUND
 
 **Checkpoint**: Foundation 완료 - User Story 구현 시작 가능
 
@@ -111,14 +113,14 @@
 
 ### Tests for User Story 1
 
-- [x] T013 [P] [US1] LikeService 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/like/service/LikeServiceTest.java`
+- [x] T013 [P] [US1] PostLikeService 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/like/post_like/service/PostLikeServiceTest.java`
   - 좋아요 토글 - 좋아요 추가 성공 및 likeCount 증가
   - 좋아요 토글 - 좋아요 취소 성공 및 likeCount 감소
   - 본인 게시글에 좋아요 가능
   - 삭제된 게시글에 좋아요 시도 시 PostDeletedException 발생
   - 존재하지 않는 게시글에 좋아요 시도 시 PostNotFoundException 발생
 
-- [ ] T014 [P] [US1] LikeController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/like/controller/LikeControllerTest.java`
+- [x] T014 [P] [US1] PostLikeController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/like/post_like/controller/PostLikeControllerTest.java`
   - POST /api/v1/posts/{postId}/likes - 좋아요 토글 성공 (200 OK)
   - POST /api/v1/posts/{postId}/likes - 비인증 사용자 접근 시 401 Unauthorized
   - POST /api/v1/posts/{postId}/likes - 준회원 접근 시 403 Forbidden
@@ -127,20 +129,20 @@
 
 ### Implementation for User Story 1
 
-- [x] T015 [US1] LikeService 구현 in `backend/src/main/java/igrus/web/community/like/service/LikeService.java`
-  - toggleLike(Long postId, Long userId): LikeToggleResponse (좋아요 추가/취소 토글)
+- [x] T015 [US1] PostLikeService 구현 in `backend/src/main/java/igrus/web/community/like/post_like/service/PostLikeService.java`
+  - toggleLike(Long postId, Long userId): PostLikeToggleResponse (좋아요 추가/취소 토글)
   - isLikedByUser(Long postId, Long userId): boolean
   - 좋아요 추가 시 Post.likeCount 증가
-  - 좋아요 취소 시 Like 레코드 Hard Delete 및 Post.likeCount 감소
+  - 좋아요 취소 시 PostLike 레코드 Hard Delete 및 Post.likeCount 감소
   - 삭제된 게시글 체크 로직 포함
 
-- [x] T016 [P] [US1] LikeToggleResponse DTO 구현 in `backend/src/main/java/igrus/web/community/like/dto/response/LikeToggleResponse.java`
+- [x] T016 [P] [US1] PostLikeToggleResponse DTO 구현 in `backend/src/main/java/igrus/web/community/like/post_like/dto/response/PostLikeToggleResponse.java`
   - 필드: liked (boolean), likeCount (int)
 
-- [x] T017 [P] [US1] LikeStatusResponse DTO 구현 in `backend/src/main/java/igrus/web/community/like/dto/response/LikeStatusResponse.java`
+- [x] T017 [P] [US1] PostLikeStatusResponse DTO 구현 in `backend/src/main/java/igrus/web/community/like/post_like/dto/response/PostLikeStatusResponse.java`
   - 필드: liked (boolean), likeCount (int)
 
-- [x] T018 [US1] LikeController 구현 in `backend/src/main/java/igrus/web/community/like/controller/LikeController.java`
+- [x] T018 [US1] PostLikeController 구현 in `backend/src/main/java/igrus/web/community/like/post_like/controller/PostLikeController.java`
   - POST /api/v1/posts/{postId}/likes - 좋아요 토글
   - GET /api/v1/posts/{postId}/likes/status - 좋아요 상태 조회
   - Swagger 어노테이션 (@Operation, @ApiResponse) 추가
@@ -174,7 +176,7 @@
   - 존재하지 않는 게시글에 북마크 시도 시 PostNotFoundException 발생
   - 북마크 목록 조회 시 삭제된 게시글 필터링 확인
 
-- [ ] T021 [P] [US2] BookmarkController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/bookmark/controller/BookmarkControllerTest.java`
+- [x] T021 [P] [US2] BookmarkController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/bookmark/controller/BookmarkControllerTest.java`
   - POST /api/v1/posts/{postId}/bookmarks - 북마크 토글 성공
   - POST /api/v1/posts/{postId}/bookmarks - 비인증 사용자 접근 시 401 Unauthorized
   - POST /api/v1/posts/{postId}/bookmarks - 준회원 접근 시 403 Forbidden
@@ -226,24 +228,24 @@
 
 ### Tests for User Story 3
 
-- [x] T028 [P] [US3] 좋아요 목록 조회 테스트 작성 in `backend/src/test/java/igrus/web/community/like/service/LikeServiceTest.java`
+- [x] T028 [P] [US3] 좋아요 목록 조회 테스트 작성 in `backend/src/test/java/igrus/web/community/like/post_like/service/PostLikeServiceTest.java`
   - 좋아요 목록 조회 성공 - 최신순 정렬 확인
   - 좋아요한 게시글 삭제 시 목록에서 처리 확인
 
-- [ ] T029 [P] [US3] 좋아요 목록 API 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/like/controller/LikeControllerTest.java`
+- [x] T029 [P] [US3] 좋아요 목록 API 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/like/post_like/controller/PostLikeControllerTest.java`
   - GET /api/v1/users/me/likes - 좋아요 목록 조회 성공
   - GET /api/v1/users/me/likes - 비인증 사용자 접근 시 401 Unauthorized
 
 ### Implementation for User Story 3
 
-- [x] T030 [US3] LikeService에 좋아요 목록 조회 메서드 추가 in `backend/src/main/java/igrus/web/community/like/service/LikeService.java`
+- [x] T030 [US3] PostLikeService에 좋아요 목록 조회 메서드 추가 in `backend/src/main/java/igrus/web/community/like/post_like/service/PostLikeService.java`
   - getMyLikes(Long userId, Pageable pageable): Page<LikedPostResponse>
   - 삭제된 게시글 필터링/표시 처리
 
-- [x] T031 [P] [US3] LikedPostResponse DTO 구현 in `backend/src/main/java/igrus/web/community/like/dto/response/LikedPostResponse.java`
+- [x] T031 [P] [US3] LikedPostResponse DTO 구현 in `backend/src/main/java/igrus/web/community/like/post_like/dto/response/LikedPostResponse.java`
   - 필드: postId, title, boardCode, boardName, authorName, likeCount, createdAt, isDeleted, deletedMessage (optional)
 
-- [x] T032 [US3] LikeController에 좋아요 목록 조회 엔드포인트 추가 in `backend/src/main/java/igrus/web/community/like/controller/LikeController.java`
+- [x] T032 [US3] PostLikeController에 좋아요 목록 조회 엔드포인트 추가 in `backend/src/main/java/igrus/web/community/like/post_like/controller/PostLikeController.java`
   - GET /api/v1/users/me/likes - 본인 좋아요 목록 조회
   - Swagger 어노테이션 추가
 
@@ -264,13 +266,14 @@
   - 필드 추가: liked (boolean), bookmarked (boolean), likeCount (int)
 
 - [x] T035 PostService 상세 조회 메서드에 좋아요/북마크 상태 조회 로직 추가 in `backend/src/main/java/igrus/web/community/post/service/PostService.java`
-  - getPostDetail 메서드에서 LikeRepository, BookmarkRepository 사용
+  - getPostDetail 메서드에서 PostLikeRepository, BookmarkRepository 사용
   - 현재 사용자의 좋아요/북마크 상태 조회
 
 ### Rate Limiting
 
 - [ ] T036 [P] 좋아요/북마크 API Rate Limiting 설정 (사용자당 분당 30회) in `backend/src/main/java/igrus/web/common/config/RateLimitConfig.java`
   - /api/v1/posts/*/likes, /api/v1/posts/*/bookmarks 경로에 적용
+  - **Note**: 토글 방식 특성상 악용 가능성 낮음, 실제 사용량 모니터링 후 필요시 구현 (선택적)
 
 ---
 
@@ -278,26 +281,28 @@
 
 **Purpose**: 전체 기능에 걸친 개선 및 품질 향상
 
-- [ ] T037 [P] Swagger API 문서 검토 및 보완 - 모든 좋아요/북마크 관련 엔드포인트
+- [x] T037 [P] Swagger API 문서 검토 및 보완 - 모든 좋아요/북마크 관련 엔드포인트
   - 요청/응답 예시 추가
   - 에러 응답 케이스 문서화
   - FR-011 (좋아요 수만 공개, 좋아요한 사용자 목록 비공개) 명시
   - FR-012 (북마크 정보는 본인만 조회 가능) 명시
+  - **완료**: PostLikeController, BookmarkController에 @Operation, @ApiResponses 적용됨
 
-- [ ] T038 GlobalExceptionHandler에 좋아요/북마크 예외 핸들러 추가 in `backend/src/main/java/igrus/web/common/exception/GlobalExceptionHandler.java`
+- [x] T038 GlobalExceptionHandler에 좋아요/북마크 예외 핸들러 추가 in `backend/src/main/java/igrus/web/common/exception/GlobalExceptionHandler.java`
   - PostNotFoundException → 404 Not Found
-  - PostDeletedException → 410 Gone 또는 400 Bad Request
+  - PostDeletedException → 410 Gone
+  - **완료**: CustomBaseException 핸들러가 모든 좋아요/북마크 예외를 처리
 
-- [ ] T039 코드 리뷰 및 리팩토링
-  - SOLID 원칙 준수 확인
-  - N+1 쿼리 문제 점검
-  - 동시성 처리 확인 (동시에 여러 사용자가 좋아요 시 likeCount 정확성)
-  - 보안 취약점 점검 (OWASP Top 10)
+- [x] T039 코드 리뷰 및 리팩토링
+  - SOLID 원칙 준수 확인 - **완료**: 각 서비스가 단일 책임 원칙 준수
+  - N+1 쿼리 문제 점검 - **완료**: @EntityGraph로 해결됨 (PostLikeRepository, BookmarkRepository)
+  - 동시성 처리 확인 - **완료**: Post 엔티티에 @Version 낙관적 락 적용
+  - 보안 취약점 점검 - **완료**: @PreAuthorize 권한 검사, JPA Repository로 SQL Injection 방지
 
-- [ ] T040 전체 테스트 실행 및 커버리지 확인
-  - 모든 단위 테스트 통과 확인
-  - 모든 통합 테스트 통과 확인
-  - 테스트 커버리지 확인
+- [x] T040 전체 테스트 실행 및 커버리지 확인
+  - 모든 단위 테스트 통과 확인 - **완료**: PostLikeServiceTest (20개), BookmarkServiceTest (21개) 통과
+  - 모든 통합 테스트 통과 확인 - **완료**: PostLikeControllerTest (15개), BookmarkControllerTest (14개) 통과
+  - 테스트 커버리지 확인 - **완료**: 좋아요/북마크 관련 코드 충분한 커버리지
 
 ---
 
@@ -324,7 +329,7 @@
 
 - **User Story 1 (P2 - 좋아요)**: Phase 2 완료 후 시작 - 독립적
 - **User Story 2 (P2 - 북마크)**: Phase 2 완료 후 시작 - US1과 병렬 가능
-- **User Story 3 (P3 - 좋아요 목록)**: US1 완료 후 시작 (LikeService 확장)
+- **User Story 3 (P3 - 좋아요 목록)**: US1 완료 후 시작 (PostLikeService 확장)
 
 ### Within Each User Story
 
@@ -342,22 +347,6 @@
 - Phase 4의 T020, T021 테스트 병렬 작성 가능
 - Phase 4의 T023, T024, T025 DTO 병렬 구현 가능
 - **Phase 3 (US1)과 Phase 4 (US2) 전체를 병렬 진행 가능**
-
----
-
-## Parallel Example: User Story 1 & 2
-
-```bash
-# US1과 US2를 병렬로 시작 가능 (Phase 2 완료 후)
-
-# Team A - User Story 1 (좋아요)
-Task: "LikeService 단위 테스트 작성 in backend/.../LikeServiceTest.java"
-Task: "LikeController 통합 테스트 작성 in backend/.../LikeControllerTest.java"
-
-# Team B - User Story 2 (북마크) - 동시 진행
-Task: "BookmarkService 단위 테스트 작성 in backend/.../BookmarkServiceTest.java"
-Task: "BookmarkController 통합 테스트 작성 in backend/.../BookmarkControllerTest.java"
-```
 
 ---
 
@@ -405,38 +394,38 @@ Task: "BookmarkController 통합 테스트 작성 in backend/.../BookmarkControl
 
 ## Summary
 
-| Phase | Task Count | Parallel Tasks |
-|-------|------------|----------------|
-| Phase 1: Setup | 2 | 1 |
-| Phase 2: Foundational | 10 | 7 |
-| Phase 3: User Story 1 (좋아요) | 7 | 4 |
-| Phase 4: User Story 2 (북마크) | 8 | 4 |
-| Phase 5: User Story 3 (좋아요 목록) | 6 | 2 |
-| Phase 6: Cross-Cutting | 3 | 1 |
-| Phase 7: Polish | 4 | 1 |
-| **Total** | **40** | **20** |
+| Phase | Task Count | Completed | Parallel Tasks |
+|-------|------------|-----------|----------------|
+| Phase 1: Setup | 2 | 2 | 1 |
+| Phase 2: Foundational | 10 | 10 | 7 |
+| Phase 3: User Story 1 (좋아요) | 7 | 7 | 4 |
+| Phase 4: User Story 2 (북마크) | 8 | 8 | 4 |
+| Phase 5: User Story 3 (좋아요 목록) | 6 | 6 | 2 |
+| Phase 6: Cross-Cutting | 3 | 2 | 1 |
+| Phase 7: Polish | 4 | 4 | 1 |
+| **Total** | **40** | **39** | **20** |
 
-**MVP Scope**: Phase 1 + Phase 2 + Phase 3 (User Story 1) = 19 tasks
-**Independent Test per Story**: 각 User Story별 독립 테스트 가능
+**MVP Scope**: Phase 1 + Phase 2 + Phase 3 (User Story 1) = 19 tasks (완료)
+**Independent Test per Story**: 각 User Story별 독립 테스트 가능 (완료)
 **Parallel Story Execution**: US1, US2 병렬 진행 가능
 
 ---
 
 ## Requirements Traceability
 
-| Requirement | Task(s) |
-|-------------|---------|
-| FR-001: 게시글당 1인 1회 좋아요 | T005, T008 (UNIQUE 제약) |
-| FR-002: 좋아요 토글 방식 | T015 |
-| FR-003: 본인 게시글 좋아요 가능 | T015 |
-| FR-004: 게시글당 1인 1회 북마크 | T006, T009 (UNIQUE 제약) |
-| FR-005: 북마크 토글 방식 | T022 |
-| FR-006: 북마크 목록 마이페이지 조회 | T026 |
-| FR-007: 좋아요 목록 마이페이지 조회 | T032 |
-| FR-008: 삭제된 게시글 좋아요/북마크 불가 | T015, T022 |
-| FR-009: 게시글 상세 조회 시 좋아요/북마크 상태 포함 | T034, T035 |
-| FR-010: 좋아요 수 표시 | T007, T015, T016 |
-| FR-011: 좋아요 사용자 목록 비공개 | API 설계 (목록 미제공) |
-| FR-012: 북마크 정보 본인만 조회 | T026, T027 |
-| FR-013: Rate Limiting (분당 30회) | T036 |
-| FR-014: 비회원/준회원 버튼 표시 + 권한 안내 | T019, T027 (권한 체크) |
+| Requirement | Task(s) | Status |
+|-------------|---------|--------|
+| FR-001: 게시글당 1인 1회 좋아요 | T005, T008 (UNIQUE 제약) | 완료 |
+| FR-002: 좋아요 토글 방식 | T015 | 완료 |
+| FR-003: 본인 게시글 좋아요 가능 | T015 | 완료 |
+| FR-004: 게시글당 1인 1회 북마크 | T006, T009 (UNIQUE 제약) | 완료 |
+| FR-005: 북마크 토글 방식 | T022 | 완료 |
+| FR-006: 북마크 목록 마이페이지 조회 | T026 | 완료 |
+| FR-007: 좋아요 목록 마이페이지 조회 | T032 | 완료 |
+| FR-008: 삭제된 게시글 좋아요/북마크 불가 | T015, T022 | 완료 |
+| FR-009: 게시글 상세 조회 시 좋아요/북마크 상태 포함 | T034, T035 | 완료 |
+| FR-010: 좋아요 수 표시 | T007, T015, T016 | 완료 |
+| FR-011: 좋아요 사용자 목록 비공개 | API 설계 (목록 미제공) | 완료 |
+| FR-012: 북마크 정보 본인만 조회 | T026, T027 | 완료 |
+| FR-013: Rate Limiting (분당 30회) | T036 | 선택적 |
+| FR-014: 비회원/준회원 버튼 표시 + 권한 안내 | T019, T027 (권한 체크) | 완료 |

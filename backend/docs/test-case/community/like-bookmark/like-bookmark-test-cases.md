@@ -1,7 +1,7 @@
 # 좋아요/북마크 (Like/Bookmark) 테스트 케이스
 
 **작성일**: 2026-01-26
-**버전**: 1.2
+**버전**: 1.3
 **관련 스펙**: [like-bookmark-spec.md](../../../../../docs/feature/community/like-bookmark-spec.md)
 **우선순위**: P2
 
@@ -148,10 +148,30 @@
   - 총 19개 테스트 케이스
   - 커버리지: LKB-010, LKB-011, LKB-013, LKB-020, LKB-021, LKB-022, LKB-024, LKB-041, LKB-091, LKB-093
 
-### 4.2 Controller 테스트 (미구현)
-- **파일**: `backend/src/test/java/igrus/web/community/like/controller/LikeControllerTest.java` - TODO
-- **파일**: `backend/src/test/java/igrus/web/community/bookmark/controller/BookmarkControllerTest.java` - TODO
-- **테스트 범위**: HTTP 레이어 통합 테스트
+### 4.2 Controller 테스트 (구현 완료)
+
+#### PostLikeControllerTest
+- **파일**: `backend/src/test/java/igrus/web/community/like/post_like/controller/PostLikeControllerTest.java`
+- **테스트 범위**: 게시글 좋아요 HTTP 레이어 통합 테스트
+- **구현된 테스트 케이스**:
+  - `ToggleLikeTest` 내부 클래스: LKB-001, LKB-002, LKB-003, LKB-040, 존재하지 않는 게시글 좋아요 시도, 준회원 접근 거부
+  - `GetLikeStatusTest` 내부 클래스: 좋아요 상태 조회, 좋아요 안 한 상태 조회
+  - `GetMyLikesTest` 내부 클래스: LKB-030, LKB-032, 빈 목록 조회
+
+#### BookmarkControllerTest
+- **파일**: `backend/src/test/java/igrus/web/community/bookmark/controller/BookmarkControllerTest.java`
+- **테스트 범위**: 북마크 HTTP 레이어 통합 테스트
+- **구현된 테스트 케이스**:
+  - `ToggleBookmarkTest` 내부 클래스: LKB-010, LKB-011, LKB-041, 존재하지 않는 게시글 북마크 시도, 준회원 접근 거부
+  - `GetBookmarkStatusTest` 내부 클래스: 북마크 상태 조회, 북마크 안 한 상태 조회
+  - `GetMyBookmarksTest` 내부 클래스: LKB-020, LKB-022, 빈 목록 조회
+
+#### CommentLikeControllerTest
+- **파일**: `backend/src/test/java/igrus/web/community/like/comment_like/controller/CommentLikeControllerTest.java`
+- **테스트 범위**: 댓글 좋아요 HTTP 레이어 통합 테스트
+- **구현된 테스트 케이스**:
+  - `LikeCommentTest` 내부 클래스: 좋아요 추가, 본인 댓글 좋아요 불가, 중복 좋아요 방지, 존재하지 않는 댓글 좋아요, 준회원 접근 거부
+  - `UnlikeCommentTest` 내부 클래스: 좋아요 취소, 좋아요하지 않은 댓글 취소 시도, 존재하지 않는 댓글 좋아요 취소, 준회원 접근 거부
 
 ### 4.3 통합 테스트 (미구현)
 - **파일**: `backend/src/test/java/igrus/web/community/like/integration/LikeIntegrationTest.java` - TODO
@@ -167,3 +187,4 @@
 | 1.0 | 2026-01-26 | - | 최초 작성 |
 | 1.1 | 2026-01-28 | - | Service 단위 테스트 구현 완료, Controller/통합 테스트 미구현 표시 |
 | 1.2 | 2026-01-28 | - | 테스트 케이스 상태 업데이트 (21개 완료), 커버리지 정보 갱신 |
+| 1.3 | 2026-01-28 | - | Controller 통합 테스트 구현 완료 (PostLikeControllerTest, BookmarkControllerTest, CommentLikeControllerTest), 테스트 클래스 목록 상세화 |

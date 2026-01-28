@@ -106,7 +106,12 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM member_inquiries").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
 
-            // Phase 2: Board 계층 (자식 먼저)
+            // Phase 2: Community 계층 (자식 먼저)
+            entityManager.createNativeQuery("DELETE FROM comment_reports").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM comment_likes").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM comments").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM likes").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM bookmarks").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM post_views").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();

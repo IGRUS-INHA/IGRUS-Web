@@ -1,5 +1,6 @@
 package igrus.web.community.comment.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
@@ -19,5 +20,6 @@ public class CreateCommentRequest {
     @Size(max = 500, message = "댓글은 500자 이내여야 합니다")
     private String content;
 
+    @JsonProperty("anonymous")
     private boolean isAnonymous;
 }

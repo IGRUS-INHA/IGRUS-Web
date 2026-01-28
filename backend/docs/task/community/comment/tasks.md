@@ -139,7 +139,7 @@
   - 빈 내용으로 작성 시 InvalidCommentException 발생
   - 삭제된 게시글에 댓글 작성 시 실패
 
-- [ ] T017 [P] [US1] CommentController 댓글 작성 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerCreateTest.java`
+- [x] T017 [P] [US1] CommentController 댓글 작성 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerTest.java` (CreateCommentTest 내부 클래스)
   - POST /api/v1/posts/{postId}/comments - 인증된 사용자가 댓글 작성 성공 (201 Created)
   - POST /api/v1/posts/{postId}/comments - 비인증 사용자가 접근 시 401 Unauthorized
   - POST /api/v1/posts/{postId}/comments - 준회원이 접근 시 403 Forbidden
@@ -194,7 +194,7 @@
   - 삭제된 댓글에 대댓글 작성 시 실패
   - 익명 허용 게시판에서 익명 대댓글 작성 성공
 
-- [ ] T024 [P] [US2] CommentController 대댓글 작성 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerReplyTest.java`
+- [x] T024 [P] [US2] CommentController 대댓글 작성 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerTest.java` (CreateReplyTest 내부 클래스)
   - POST /api/v1/posts/{postId}/comments/{commentId}/replies - 대댓글 작성 성공 (201 Created)
   - POST /api/v1/posts/{postId}/comments/{commentId}/replies - 대댓글에 답글 시도 시 400 Bad Request
 
@@ -237,7 +237,7 @@
   - 익명 댓글의 작성자 정보가 숨겨짐
   - 댓글이 등록순으로 정렬됨
 
-- [ ] T028 [P] [US3] CommentController 댓글 조회 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerReadTest.java`
+- [x] T028 [P] [US3] CommentController 댓글 조회 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerTest.java` (GetCommentsTest 내부 클래스)
   - GET /api/v1/posts/{postId}/comments - 댓글 목록 조회 성공 (200 OK)
   - GET /api/v1/posts/{postId}/comments - 계층 구조로 반환됨 확인
   - GET /api/v1/posts/{postId}/comments - 존재하지 않는 게시글 조회 시 404 Not Found
@@ -290,7 +290,7 @@
   - 타인 댓글 삭제 시 CommentAccessDeniedException 발생
   - 관리자가 타인 댓글 삭제 성공
 
-- [ ] T034 [P] [US4] CommentController 댓글 삭제 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerDeleteTest.java`
+- [x] T034 [P] [US4] CommentController 댓글 삭제 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentControllerTest.java` (DeleteCommentTest 내부 클래스)
   - DELETE /api/v1/posts/{postId}/comments/{commentId} - 본인 댓글 삭제 성공 (204 No Content)
   - DELETE /api/v1/posts/{postId}/comments/{commentId} - 타인 댓글 삭제 시 403 Forbidden
   - DELETE /api/v1/posts/{postId}/comments/{commentId} - 관리자가 타인 댓글 삭제 성공
@@ -334,7 +334,7 @@
   - 이미 좋아요한 댓글에 중복 좋아요 시 CommentLikeException 발생
   - 좋아요하지 않은 댓글 취소 시 CommentLikeException 발생
 
-- [ ] T038 [P] [US5] CommentLikeController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentLikeControllerTest.java`
+- [x] T038 [P] [US5] CommentLikeController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/like/comment_like/controller/CommentLikeControllerTest.java`
   - POST /api/v1/comments/{commentId}/likes - 좋아요 성공 (201 Created)
   - DELETE /api/v1/comments/{commentId}/likes - 좋아요 취소 성공 (204 No Content)
   - POST /api/v1/comments/{commentId}/likes - 본인 댓글 좋아요 시 400 Bad Request
@@ -378,7 +378,7 @@
   - 관리자가 신고 반려 (DISMISSED) 성공
   - PENDING 상태 신고 목록 조회 성공
 
-- [ ] T042 [P] [US6] CommentReportController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentReportControllerTest.java`
+- [x] T042 [P] [US6] CommentReportController 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/controller/CommentReportControllerTest.java`
   - POST /api/v1/comments/{commentId}/reports - 신고 성공 (201 Created)
   - POST /api/v1/comments/{commentId}/reports - 중복 신고 시 400 Bad Request
   - GET /api/v1/admin/comment-reports - 관리자 신고 목록 조회 성공
@@ -428,13 +428,13 @@
 
 ### Tests for User Story 7
 
-- [ ] T049 [P] [US7] CommentMentionService 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/service/CommentMentionServiceTest.java`
+- [x] T049 [P] [US7] CommentMentionService 단위 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/service/CommentMentionServiceTest.java`
   - 댓글 내용에서 멘션 파싱 성공 (@username 추출)
   - 유효한 정회원 사용자 멘션 시 알림 발송
   - 존재하지 않는 사용자 멘션 시 무시
   - 준회원 멘션 시 무시
 
-- [ ] T050 [P] [US7] 멘션 알림 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/integration/CommentMentionIntegrationTest.java`
+- [x] T050 [P] [US7] 멘션 알림 통합 테스트 작성 in `backend/src/test/java/igrus/web/community/comment/integration/CommentMentionIntegrationTest.java`
   - 댓글 작성 시 멘션된 사용자에게 알림 발송 확인
 
 ### Implementation for User Story 7
@@ -471,12 +471,12 @@
   - 요청/응답 예시 추가
   - 에러 응답 케이스 문서화
 
-- [ ] T056 코드 리뷰 및 리팩토링
+- [x] T056 코드 리뷰 및 리팩토링
   - SOLID 원칙 준수 확인
   - N+1 쿼리 문제 점검 (댓글 + 대댓글 + 좋아요 수 조회)
   - 보안 취약점 점검 (OWASP Top 10)
 
-- [ ] T057 전체 테스트 실행 및 커버리지 확인
+- [x] T057 전체 테스트 실행 및 커버리지 확인
   - 모든 단위 테스트 통과 확인
   - 모든 통합 테스트 통과 확인
   - 테스트 커버리지 확인
