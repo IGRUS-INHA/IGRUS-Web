@@ -1,5 +1,10 @@
 package igrus.web.common.exception;
 
+import igrus.web.community.comment.exception.CommentAccessDeniedException;
+import igrus.web.community.comment.exception.CommentLikeException;
+import igrus.web.community.comment.exception.CommentNotFoundException;
+import igrus.web.community.comment.exception.CommentReportException;
+import igrus.web.community.comment.exception.InvalidCommentException;
 import igrus.web.community.post.exception.InvalidPostOptionException;
 import igrus.web.community.post.exception.PostAccessDeniedException;
 import igrus.web.community.post.exception.PostDeletedException;
@@ -134,6 +139,63 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .body(ErrorResponse.of(errorCode));
+    }
+
+    // ========== Comment 관련 예외 ==========
+
+    /**
+     * 댓글을 찾을 수 없을 때 발생하는 예외 처리.
+     */
+    @ExceptionHandler(CommentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCommentNotFoundException(CommentNotFoundException e) {
+        log.warn("CommentNotFoundException: {}", e.getMessage());
+        ErrorCode errorCode = e.getErrorCode();
+        ErrorResponse response = ErrorResponse.of(errorCode);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    /**
+     * 댓글 접근 권한이 없을 때 발생하는 예외 처리.
+     */
+    @ExceptionHandler(CommentAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleCommentAccessDeniedException(CommentAccessDeniedException e) {
+        log.warn("CommentAccessDeniedException: {}", e.getMessage());
+        ErrorCode errorCode = e.getErrorCode();
+        ErrorResponse response = ErrorResponse.of(errorCode);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    /**
+     * 잘못된 댓글 요청일 때 발생하는 예외 처리.
+     */
+    @ExceptionHandler(InvalidCommentException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCommentException(InvalidCommentException e) {
+        log.warn("InvalidCommentException: {}", e.getMessage());
+        ErrorCode errorCode = e.getErrorCode();
+        ErrorResponse response = ErrorResponse.of(errorCode);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * 댓글 좋아요 관련 예외 처리.
+     */
+    @ExceptionHandler(CommentLikeException.class)
+    public ResponseEntity<ErrorResponse> handleCommentLikeException(CommentLikeException e) {
+        log.warn("CommentLikeException: {}", e.getMessage());
+        ErrorCode errorCode = e.getErrorCode();
+        ErrorResponse response = ErrorResponse.of(errorCode);
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
+
+    /**
+     * 댓글 신고 관련 예외 처리.
+     */
+    @ExceptionHandler(CommentReportException.class)
+    public ResponseEntity<ErrorResponse> handleCommentReportException(CommentReportException e) {
+        log.warn("CommentReportException: {}", e.getMessage());
+        ErrorCode errorCode = e.getErrorCode();
+        ErrorResponse response = ErrorResponse.of(errorCode);
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
     }
 
     @ExceptionHandler(CustomBaseException.class)

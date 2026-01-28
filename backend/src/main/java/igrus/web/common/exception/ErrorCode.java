@@ -84,7 +84,26 @@ public enum ErrorCode {
     POST_INVALID_QUESTION_OPTION(400, "질문 옵션은 자유게시판에서만 사용 가능합니다"),
     POST_INVALID_VISIBILITY_OPTION(400, "준회원 공개 옵션은 공지사항에서만 사용 가능합니다"),
     POST_DELETED(410, "삭제된 게시글입니다"),
-    POST_ANONYMOUS_UNCHANGEABLE(400, "익명 설정은 변경할 수 없습니다");
+    POST_ANONYMOUS_UNCHANGEABLE(400, "익명 설정은 변경할 수 없습니다"),
+
+    // Comment
+    COMMENT_NOT_FOUND(404, "댓글을 찾을 수 없습니다"),
+    COMMENT_ACCESS_DENIED(403, "댓글에 대한 접근 권한이 없습니다"),
+    COMMENT_CONTENT_TOO_LONG(400, "댓글은 500자 이내여야 합니다"),
+    COMMENT_CONTENT_EMPTY(400, "내용을 입력해 주세요"),
+    REPLY_TO_REPLY_NOT_ALLOWED(400, "대댓글에는 답글을 달 수 없습니다"),
+    POST_DELETED_CANNOT_COMMENT(400, "삭제된 게시글에는 댓글을 작성할 수 없습니다"),
+    ANONYMOUS_NOT_ALLOWED(400, "이 게시판에서는 익명 댓글을 작성할 수 없습니다"),
+
+    // Comment Like
+    CANNOT_LIKE_OWN_COMMENT(400, "본인 댓글에는 좋아요를 할 수 없습니다"),
+    ALREADY_LIKED_COMMENT(400, "이미 좋아요한 댓글입니다"),
+    LIKE_NOT_FOUND(404, "좋아요 정보를 찾을 수 없습니다"),
+
+    // Comment Report
+    ALREADY_REPORTED_COMMENT(400, "이미 신고한 댓글입니다"),
+    INVALID_REPORT_REASON(400, "신고 사유를 입력해 주세요"),
+    COMMENT_REPORT_NOT_FOUND(404, "신고 정보를 찾을 수 없습니다");
 
     private final int status;
     private final String message;
