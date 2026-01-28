@@ -54,6 +54,8 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
     protected static final String TEST_PHONE = "010-1234-5678";
     protected static final String TEST_DEPARTMENT = "컴퓨터공학과";
     protected static final String TEST_MOTIVATION = "동아리 활동을 열심히 하고 싶습니다.";
+    protected static final String TEST_IP_ADDRESS = "192.168.1.100";
+    protected static final String TEST_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
 
     @Autowired
     protected MockMvc mockMvc;

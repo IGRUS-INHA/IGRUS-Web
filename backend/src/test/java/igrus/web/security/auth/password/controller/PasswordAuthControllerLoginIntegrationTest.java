@@ -208,7 +208,7 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
             // given - 로그인하여 토큰 획득
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // when & then - 쿠키로 로그아웃
             mockMvc.perform(post(API_BASE_PATH + "/logout")
@@ -225,7 +225,7 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
             // given - 로그인 후 로그아웃
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest);
+            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             passwordAuthService.logout(loginResult.refreshToken());
 
@@ -267,8 +267,8 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when - 두 번 로그인
-            LoginResult result1 = passwordAuthService.login(request);
-            LoginResult result2 = passwordAuthService.login(request);
+            LoginResult result1 = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult result2 = passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // then - 서로 다른 토큰 발급
             assertThat(result1.accessToken()).isNotEqualTo(result2.accessToken());
@@ -287,8 +287,8 @@ class PasswordAuthControllerLoginIntegrationTest extends ControllerIntegrationTe
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // 두 기기에서 로그인
-            LoginResult deviceA = passwordAuthService.login(loginRequest);
-            LoginResult deviceB = passwordAuthService.login(loginRequest);
+            LoginResult deviceA = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult deviceB = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // when - Device A 로그아웃 (쿠키로)
             mockMvc.perform(post(API_BASE_PATH + "/logout")

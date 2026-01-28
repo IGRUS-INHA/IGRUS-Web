@@ -91,8 +91,12 @@ public class PasswordAuthController {
     @PostMapping("/login")
     public ResponseEntity<PasswordLoginResponse> login(
             @Valid @RequestBody PasswordLoginRequest request,
+            HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
-        LoginResult result = passwordAuthService.login(request);
+        String ipAddress = extractIpAddress(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+
+        LoginResult result = passwordAuthService.login(request, ipAddress, userAgent);
 
         ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
                 result.refreshToken(),
@@ -101,6 +105,24 @@ public class PasswordAuthController {
         httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ResponseEntity.ok(result.toResponse());
+    }
+
+    /**
+     * 클라이언트의 실제 IP 주소를 추출합니다.
+     * 프록시/로드밸런서를 고려하여 X-Forwarded-For 헤더를 우선 확인합니다.
+     */
+    private String extractIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp;
+        }
+
+        return request.getRemoteAddr();
     }
 
     @Operation(summary = "로그아웃", description = "리프레시 토큰을 무효화하여 로그아웃합니다.")

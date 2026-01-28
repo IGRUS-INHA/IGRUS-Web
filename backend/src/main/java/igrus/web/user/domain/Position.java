@@ -10,7 +10,10 @@ import org.hibernate.annotations.SQLRestriction;
 import java.util.ArrayList;
 import java.util.List;
 
-// 직책 (기술부, 기술부장, 회장 등)
+/**
+ * 직책 엔티티.
+ * 동아리 내 직책(기술부, 기술부장, 회장 등) 정보를 관리합니다.
+ */
 @Entity
 @Table(name = "positions")
 @SQLRestriction("positions_deleted = false")
@@ -27,24 +30,25 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Position extends SoftDeletableEntity {
 
+    /** 직책 고유 식별자 */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "positions_id")
     private Long id;
 
-    // 직책명 (기술부, 기술부장, 회장 등)
+    /** 직책명 (기술부, 기술부장, 회장 등, 최대 20자, 고유값) */
     @Column(name = "positions_name", unique = true, nullable = false, length = 20)
     private String name;
 
-    // 직책 이미지 경로
+    /** 직책 이미지 URL */
     @Column(name = "positions_image_url")
     private String imageUrl;
 
-    // 표시 순서
+    /** 표시 순서 (낮을수록 상단에 표시) */
     @Column(name = "positions_display_order")
     private Integer displayOrder;
 
-    // 이 직책을 가진 사용자들 (양방향)
+    /** 이 직책을 보유한 사용자 목록 (양방향 관계) */
     @OneToMany(mappedBy = "position")
     private List<UserPosition> userPositions = new ArrayList<>();
 

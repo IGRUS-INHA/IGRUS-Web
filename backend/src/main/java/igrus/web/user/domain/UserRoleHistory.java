@@ -9,17 +9,17 @@ import lombok.NoArgsConstructor;
 
 // 사용자 역할 변경 이력
 @Entity
-@Table(name = "user_role_history", indexes = {
-        @Index(name = "idx_user_role_history_user_id", columnList = "user_role_history_user_id"),
-        @Index(name = "idx_user_role_history_new_role", columnList = "user_role_history_new_role"),
-        @Index(name = "idx_user_role_history_created_at", columnList = "user_role_history_created_at"),
-        @Index(name = "idx_user_role_history_created_by", columnList = "user_role_history_created_by")
+@Table(name = "user_role_histories", indexes = {
+        @Index(name = "idx_user_role_histories_user_id", columnList = "user_role_histories_user_id"),
+        @Index(name = "idx_user_role_histories_new_role", columnList = "user_role_histories_new_role"),
+        @Index(name = "idx_user_role_histories_created_at", columnList = "user_role_histories_created_at"),
+        @Index(name = "idx_user_role_histories_created_by", columnList = "user_role_histories_created_by")
 })
 @AttributeOverrides({
-        @AttributeOverride(name = "createdAt", column = @Column(name = "user_role_history_created_at", nullable = false, updatable = false)),
-        @AttributeOverride(name = "updatedAt", column = @Column(name = "user_role_history_updated_at", nullable = false)),
-        @AttributeOverride(name = "createdBy", column = @Column(name = "user_role_history_created_by", updatable = false)),
-        @AttributeOverride(name = "updatedBy", column = @Column(name = "user_role_history_updated_by"))
+        @AttributeOverride(name = "createdAt", column = @Column(name = "user_role_histories_created_at", nullable = false, updatable = false)),
+        @AttributeOverride(name = "updatedAt", column = @Column(name = "user_role_histories_updated_at", nullable = false)),
+        @AttributeOverride(name = "createdBy", column = @Column(name = "user_role_histories_created_by", updatable = false)),
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "user_role_histories_updated_by"))
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -27,22 +27,22 @@ public class UserRoleHistory extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_role_history_id")
+    @Column(name = "user_role_histories_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_role_history_user_id", nullable = false)
+    @JoinColumn(name = "user_role_histories_user_id", nullable = false)
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "user_role_history_previous_role", nullable = false)
+    @Column(name = "user_role_histories_previous_role", nullable = false)
     private UserRole previousRole;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "user_role_history_new_role", nullable = false)
+    @Column(name = "user_role_histories_new_role", nullable = false)
     private UserRole newRole;
 
-    @Column(name = "user_role_history_reason")
+    @Column(name = "user_role_histories_reason")
     private String reason;
 
     private UserRoleHistory(User user, UserRole previousRole, UserRole newRole, String reason) {
