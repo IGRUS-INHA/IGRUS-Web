@@ -24,7 +24,9 @@ public record PostDetailResponse(
     List<String> imageUrls,
     Instant createdAt,
     Instant updatedAt,
-    boolean isAuthor
+    boolean isAuthor,
+    boolean liked,
+    boolean bookmarked
 ) {
     /**
      * Post 엔티티로부터 PostDetailResponse를 생성합니다.
@@ -32,9 +34,11 @@ public record PostDetailResponse(
      *
      * @param post              게시글 엔티티
      * @param isCurrentUserAuthor 현재 사용자가 작성자인지 여부
+     * @param liked             현재 사용자가 좋아요했는지 여부
+     * @param bookmarked        현재 사용자가 북마크했는지 여부
      * @return PostDetailResponse
      */
-    public static PostDetailResponse from(Post post, boolean isCurrentUserAuthor) {
+    public static PostDetailResponse from(Post post, boolean isCurrentUserAuthor, boolean liked, boolean bookmarked) {
         List<String> imageUrls = post.getImages().stream()
             .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
             .map(PostImage::getImageUrl)
@@ -50,12 +54,26 @@ public record PostDetailResponse(
             post.isAnonymous(),
             post.isQuestion(),
             post.getViewCount(),
-            0,  // likeCount - 추후 구현
+            post.getLikeCount(),
             0,  // commentCount - 추후 구현
             imageUrls,
             post.getCreatedAt(),
             post.getUpdatedAt(),
-            isCurrentUserAuthor
+            isCurrentUserAuthor,
+            liked,
+            bookmarked
         );
+    }
+
+    /**
+     * Post 엔티티로부터 PostDetailResponse를 생성합니다.
+     * 좋아요/북마크 상태 없이 생성합니다 (기본값: false).
+     *
+     * @param post              게시글 엔티티
+     * @param isCurrentUserAuthor 현재 사용자가 작성자인지 여부
+     * @return PostDetailResponse
+     */
+    public static PostDetailResponse from(Post post, boolean isCurrentUserAuthor) {
+        return from(post, isCurrentUserAuthor, false, false);
     }
 }

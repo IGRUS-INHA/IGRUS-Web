@@ -84,7 +84,15 @@ public enum ErrorCode {
     POST_INVALID_QUESTION_OPTION(400, "질문 옵션은 자유게시판에서만 사용 가능합니다"),
     POST_INVALID_VISIBILITY_OPTION(400, "준회원 공개 옵션은 공지사항에서만 사용 가능합니다"),
     POST_DELETED(410, "삭제된 게시글입니다"),
-    POST_ANONYMOUS_UNCHANGEABLE(400, "익명 설정은 변경할 수 없습니다");
+    POST_ANONYMOUS_UNCHANGEABLE(400, "익명 설정은 변경할 수 없습니다"),
+
+    // PostLike (게시글 좋아요)
+    POST_LIKE_ALREADY_EXISTS(409, "이미 좋아요한 게시글입니다"),
+    POST_LIKE_NOT_FOUND(404, "게시글 좋아요를 찾을 수 없습니다"),
+
+    // Bookmark
+    BOOKMARK_ALREADY_EXISTS(409, "이미 북마크한 게시글입니다"),
+    BOOKMARK_NOT_FOUND(404, "북마크를 찾을 수 없습니다");
 
     private final int status;
     private final String message;
