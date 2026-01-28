@@ -13,7 +13,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import igrus.web.common.config.SwaggerConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +32,7 @@ import java.util.List;
  * 게시판 목록 조회 및 상세 조회 API를 제공합니다.
  */
 @Tag(name = "Board", description = "게시판 API")
+@SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/boards")

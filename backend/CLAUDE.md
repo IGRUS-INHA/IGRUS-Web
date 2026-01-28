@@ -250,6 +250,7 @@ public class UserService {
 - Controller 메서드에 `@Operation`, `@ApiResponse` 어노테이션
     - 컨트롤러에는 꼭 Swagger/OpenAPI 관련 어노테이션을 붙여서 문서화 할 것
 - 새로운 기능 구현, 기능 수정 이후에는 Swagger 관련 코드를 업데이트 해서 문서화 상태를 항상 최신으로 유지할 것
+- 인증이 필요한 엔드포인트에는 `@SecurityRequirement` 를 붙일 것
 
 ### 12. SOLID 원칙 준수
 - SRP(Single Responsibility Principle): 단일 책임 원칙

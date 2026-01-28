@@ -12,7 +12,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import igrus.web.common.config.SwaggerConfig;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +82,7 @@ public class CommentReportController {
                     )
             )
     })
+    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PostMapping("/api/v1/comments/{commentId}/reports")
     public ResponseEntity<CommentReportResponse> reportComment(
             @Parameter(description = "댓글 ID", example = "1")
@@ -119,6 +122,7 @@ public class CommentReportController {
                     )
             )
     })
+    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     @GetMapping("/api/v1/admin/comment-reports")
     public ResponseEntity<List<CommentReportResponse>> getPendingReports(
@@ -172,6 +176,7 @@ public class CommentReportController {
                     )
             )
     })
+    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     @PatchMapping("/api/v1/admin/comment-reports/{reportId}")
     public ResponseEntity<Void> updateReportStatus(

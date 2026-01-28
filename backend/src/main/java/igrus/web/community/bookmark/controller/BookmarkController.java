@@ -12,7 +12,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import igrus.web.common.config.SwaggerConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -84,6 +86,7 @@ public class BookmarkController {
                     )
             )
     })
+    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PostMapping("/api/v1/posts/{postId}/bookmarks")
     @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
     public ResponseEntity<BookmarkToggleResponse> toggleBookmark(
@@ -127,6 +130,7 @@ public class BookmarkController {
                     )
             )
     })
+    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @GetMapping("/api/v1/posts/{postId}/bookmarks/status")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BookmarkStatusResponse> getBookmarkStatus(
@@ -158,6 +162,7 @@ public class BookmarkController {
                     )
             )
     })
+    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @GetMapping("/api/v1/users/me/bookmarks")
     @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
     public ResponseEntity<Page<BookmarkedPostResponse>> getMyBookmarks(
