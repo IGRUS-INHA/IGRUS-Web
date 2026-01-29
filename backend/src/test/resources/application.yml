@@ -1,4 +1,8 @@
 spring:
+  cloud:
+    aws:
+      secretsmanager:
+        enabled: false
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
@@ -12,7 +16,21 @@ spring:
       hibernate:
         format_sql: true
     database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+
+springdoc:
+  server-url: localhost:8080
+  
+
+app:
   jwt:
-    secret: test-secret-key-for-testing-purposes-only
+    secret: test-secret-key-for-testing-purposes-only-must-be-at-least-256-bits
     access-token-validity: 3600000
     refresh-token-validity: 604800000
+    issuer: igrus-api
+    audience: igrus-web
+  mail:
+    verification-code-expiry: 600000
+    verification-max-attempts: 5
+    password-reset-expiry: 1800000

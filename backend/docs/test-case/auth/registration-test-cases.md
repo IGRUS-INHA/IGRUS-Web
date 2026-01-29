@@ -1,0 +1,166 @@
+# 회원가입 테스트 케이스
+
+**작성일**: 2026-01-23
+**버전**: 1.0
+**관련 스펙**: [auth-spec.md](../../../../docs/feature/auth/auth-spec.md)
+**우선순위**: P1
+
+---
+
+## 1. 개요
+
+회원가입 기능에 대한 테스트 케이스입니다. 비회원이 IGRUS 동아리 웹사이트에 가입하여 준회원이 되는 과정을 검증합니다.
+
+---
+
+## 2. 테스트 케이스
+
+### 2.1 개인정보 동의
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| REG-001 | 개인정보 동의 미체크 시 가입 불가 | 비회원이 회원가입 페이지 접속 | 개인정보 수집·이용 동의를 체크하지 않고 가입 시도 | 가입 버튼이 비활성화되어 있음 | ✅ |
+| REG-002 | 개인정보 동의 체크 시 가입 진행 가능 | 비회원이 회원가입 페이지 접속 | 개인정보 수집·이용 동의를 체크 | 가입 버튼이 활성화됨 | ✅ |
+| REG-003 | 개인정보 처리방침 링크 제공 | 비회원이 회원가입 페이지 접속 | 개인정보 처리방침 링크 클릭 | 개인정보 처리방침 전문 페이지로 이동 | ✅ |
+| REG-004 | 동의한 정책 버전 기록 | 개인정보 동의 완료 상태 | 회원가입 완료 | 동의한 개인정보 처리방침 버전이 기록됨 | ✅ |
+
+### 2.2 필수 정보 입력 및 검증
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| REG-010 | 모든 필수 정보 입력 시 가입 성공 | 개인정보 동의 완료 | 학번(8자리), 본명, 비밀번호, 이메일, 전화번호, 학과, 가입 동기 입력 후 제출 | 인증 코드가 이메일로 발송됨 | ✅ |
+| REG-011 | 학번 8자리 미만 입력 시 오류 | 개인정보 동의 완료 | 7자리 학번 입력 후 제출 | 학번 형식 오류 메시지 표시 | ✅ |
+| REG-012 | 학번 8자리 초과 입력 시 오류 | 개인정보 동의 완료 | 9자리 학번 입력 후 제출 | 학번 형식 오류 메시지 표시 | ✅ |
+| REG-013 | 학번 숫자 외 문자 입력 시 오류 | 개인정보 동의 완료 | 문자 포함 학번 입력 후 제출 | 학번 형식 오류 메시지 표시 | ✅ |
+| REG-014 | 본명 미입력 시 오류 | 개인정보 동의 완료 | 본명 필드 비워두고 제출 | 필수 필드 오류 메시지 표시 | ✅ |
+| REG-015 | 이메일 형식 오류 시 검증 실패 | 개인정보 동의 완료 | 잘못된 형식 이메일 입력 | 이메일 형식 오류 메시지 표시 | ✅ |
+| REG-016 | 전화번호 형식 오류 시 검증 실패 | 개인정보 동의 완료 | 잘못된 형식 전화번호 입력 | 전화번호 형식 오류 메시지 표시 | ✅ |
+| REG-017 | 학과 미입력 시 오류 | 개인정보 동의 완료 | 학과 필드 비워두고 제출 | 필수 필드 오류 메시지 표시 | ✅ |
+| REG-018 | 가입 동기 미입력 시 오류 | 개인정보 동의 완료 | 가입 동기 필드 비워두고 제출 | 필수 필드 오류 메시지 표시 | ✅ |
+
+### 2.3 비밀번호 검증
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| REG-020 | 유효한 비밀번호 입력 시 성공 | 개인정보 동의 완료 | 영문 대/소문자 + 숫자 + 특수문자, 8자 이상 비밀번호 입력 | 비밀번호 검증 통과 | ✅ |
+| REG-021 | 8자 미만 비밀번호 입력 시 오류 | 개인정보 동의 완료 | 7자 비밀번호 입력 | "비밀번호는 8자 이상이어야 합니다" 메시지 표시 | ✅ |
+| REG-022 | 대문자 미포함 비밀번호 입력 시 오류 | 개인정보 동의 완료 | 대문자 없는 비밀번호 입력 | "비밀번호는 대문자를 포함해야 합니다" 메시지 표시 | ✅ |
+| REG-023 | 소문자 미포함 비밀번호 입력 시 오류 | 개인정보 동의 완료 | 소문자 없는 비밀번호 입력 | "비밀번호는 소문자를 포함해야 합니다" 메시지 표시 | ✅ |
+| REG-024 | 숫자 미포함 비밀번호 입력 시 오류 | 개인정보 동의 완료 | 숫자 없는 비밀번호 입력 | "비밀번호는 숫자를 포함해야 합니다" 메시지 표시 | ✅ |
+| REG-025 | 특수문자 미포함 비밀번호 입력 시 오류 | 개인정보 동의 완료 | 특수문자 없는 비밀번호 입력 | "비밀번호는 특수문자를 포함해야 합니다" 메시지 표시 | ✅ |
+| REG-026 | 비밀번호 BCrypt 해시 저장 확인 | 회원가입 완료 | DB에서 비밀번호 확인 | 비밀번호가 BCrypt 해시로 저장됨 | ✅ |
+
+### 2.4 중복 검사
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| REG-030 | 이미 가입된 학번으로 가입 시도 | 학번 20230001로 이미 가입된 사용자 존재 | 동일 학번으로 가입 시도 | "이미 가입된 계정입니다" 메시지 표시 | ✅ |
+| REG-031 | 이미 등록된 이메일로 가입 시도 | test@inha.edu로 이미 가입된 사용자 존재 | 동일 이메일로 가입 시도 | "이미 사용 중인 이메일입니다" 메시지 표시 | ✅ |
+| REG-032 | 이미 등록된 전화번호로 가입 시도 | 010-1234-5678로 이미 가입된 사용자 존재 | 동일 전화번호로 가입 시도 | "이미 사용 중인 전화번호입니다" 메시지 표시 | ✅ |
+
+### 2.5 이메일 인증
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| REG-040 | 6자리 인증 코드 발송 | 유효한 회원정보 입력 완료 | 가입 정보 제출 | 입력한 이메일로 6자리 숫자 인증 코드 발송 | ✅ |
+| REG-041 | 10분 이내 올바른 인증 코드 입력 시 가입 완료 | 인증 코드 수신 | 10분 이내에 올바른 인증 코드 입력 | 준회원(ASSOCIATE)으로 등록, 로그인 가능 | ✅ |
+| REG-042 | 10분 경과 후 인증 코드 입력 시 만료 | 인증 코드 수신 후 10분 경과 | 인증 코드 입력 | "인증 코드가 만료되었습니다. 재발송해주세요" 메시지 표시 | ✅ |
+| REG-043 | 5회 이상 잘못된 인증 코드 입력 시 차단 | 인증 코드 수신 | 5회 잘못된 인증 코드 입력 후 재시도 | "인증 시도 횟수를 초과했습니다. 새 코드를 발급받아주세요" 메시지 표시 | ✅ |
+| REG-044 | 인증 코드 재발송 시 1분 대기 | 인증 코드 발송 직후 | 즉시 재발송 요청 | "1분 후에 다시 시도해주세요" 메시지 표시 | ✅ |
+| REG-045 | 1분 경과 후 인증 코드 재발송 성공 | 인증 코드 발송 후 1분 경과 | 재발송 요청 | 새로운 인증 코드 발송 성공 | ✅ |
+
+### 2.6 Edge Cases
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| REG-050 | 이메일 발송 실패 시 자동 재시도 | 이메일 서버 일시 오류 | 인증 코드 발송 요청 | 최대 3회 자동 재시도 (1분, 5분, 15분 간격) | ✅ |
+| REG-051 | 인증 미완료 24시간 경과 시 데이터 삭제 | 인증 미완료 상태로 24시간 경과 | 배치 작업 실행 | 임시 회원 데이터 자동 삭제 | ✅ |
+| REG-052 | 탈퇴 후 5일 이내 재가입 시도 시 차단 | 5일 이내에 탈퇴한 학번 | 해당 학번으로 가입 시도 | "탈퇴 후 5일이 지나야 재가입할 수 있습니다" 메시지와 재가입 가능일 표시 | ✅ |
+
+---
+
+## 3. 관련 Functional Requirements
+
+| ID | 요구사항 | 관련 테스트 케이스 |
+|----|---------|------------------|
+| FR-001 | 개인정보 수집·이용 동의 필수 | REG-001, REG-002 |
+| FR-002 | 필수 입력 항목 검증 | REG-010 ~ REG-018 |
+| FR-003 | 비밀번호 복잡도 검증 | REG-020 ~ REG-026 |
+| FR-004 | 중복 가입 방지 | REG-030 ~ REG-032 |
+| FR-005 | 6자리 인증 코드 발송 | REG-040 |
+| FR-006 | 인증 코드 10분 유효 | REG-041, REG-042 |
+| FR-007 | 인증 코드 재발송 1분 대기 | REG-044, REG-045 |
+| FR-008 | 인증 시도 횟수 5회 제한 | REG-043 |
+| FR-009 | 인증 완료 시 준회원 등록 | REG-041 |
+| FR-010 | 인증 미완료 24시간 후 삭제 | REG-051 |
+| FR-029 | 개인정보 처리방침 링크 제공 | REG-003 |
+| FR-030 | 동의 정책 버전 기록 | REG-004 |
+| FR-031 | BCrypt 해시 저장 | REG-026 |
+
+---
+
+## 4. 구현된 테스트 클래스
+
+### 4.1 Service 테스트
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/service/PasswordSignupServiceTest.java`
+- **테스트 범위**: REG-001 ~ REG-052 (비즈니스 로직)
+
+### 4.2 Controller 테스트
+- **회원가입**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerSignupTest.java`
+- **이메일 인증**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerVerificationTest.java`
+
+```java
+// 회원가입 컨트롤러 테스트
+@WebMvcTest(PasswordAuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
+@DisplayName("PasswordAuthController 회원가입 테스트")
+class PasswordAuthControllerSignupTest {
+    @Nested class SignupSuccessTest { /* REG-010 */ }
+    @Nested class StudentIdValidationTest { /* REG-011 ~ REG-013 */ }
+    @Nested class RequiredFieldValidationTest { /* REG-014 ~ REG-018 */ }
+    @Nested class PasswordValidationTest { /* REG-021 ~ REG-025 */ }
+    @Nested class DuplicateCheckTest { /* REG-030 ~ REG-032 */ }
+    @Nested class PrivacyConsentValidationTest { /* 개인정보 동의 검증 */ }
+}
+
+// 이메일 인증 컨트롤러 테스트
+@WebMvcTest(PasswordAuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
+@DisplayName("PasswordAuthController 이메일 인증 테스트")
+class PasswordAuthControllerVerificationTest {
+    @Nested class VerifyEmailTest {
+        @Nested class VerifySuccessTest { /* REG-041 */ }
+        @Nested class VerifyFailureTest { /* REG-042 ~ REG-043 */ }
+    }
+    @Nested class ResendVerificationTest { /* REG-044 ~ REG-045 */ }
+}
+```
+
+### 4.3 통합 테스트
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordSignupIntegrationTest.java`
+- **테스트 범위**: REG-004, REG-010, REG-020, REG-026, REG-030 ~ REG-045 (서비스 통합 테스트)
+- **테스트 수**: 42개
+
+```java
+@DisplayName("회원가입 통합 테스트")
+class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
+    @Nested class PrivacyConsentTest { /* REG-004 */ }
+    @Nested class RequiredFieldsTest { /* REG-010 */ }
+    @Nested class PasswordValidationTest { /* REG-020, REG-026 */ }
+    @Nested class DuplicationCheckTest { /* REG-030 ~ REG-032 */ }
+    @Nested class EmailVerificationTest { /* REG-040 ~ REG-045 */ }
+    @Nested class EdgeCasesTest { /* Edge Cases */ }
+}
+```
+
+---
+
+## 5. 변경 이력
+
+| 버전 | 날짜 | 작성자 | 변경 내용 |
+|------|------|--------|----------|
+| 1.0 | 2026-01-23 | - | 최초 작성 |
+| 1.1 | 2026-01-24 | - | 컨트롤러 레벨 테스트 구현 정보 추가 |
+| 1.2 | 2026-01-25 | - | 통합 테스트(PasswordSignupIntegrationTest) 구현 정보 추가 |

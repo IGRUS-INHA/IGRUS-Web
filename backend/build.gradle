@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.0.1'
+	id 'org.springframework.boot' version '3.5.9'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -31,9 +31,25 @@ dependencies {
 	implementation 'org.flywaydb:flyway-mysql'
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.retry:spring-retry:2.0.11'
+	implementation 'org.springframework:spring-aspects'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+
+	// Jackson 2.x - Spring Boot가 버전을 관리함 (JSR-310 지원을 위해 JavaTimeModule 등록 필요)
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	testImplementation 'io.jsonwebtoken:jjwt-impl:0.12.6'
+
+	// Spring Cloud AWS Secrets Manager
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-secrets-manager:3.4.0'
+
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'
@@ -46,4 +62,8 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.named('bootJar') {
+	archiveFileName = 'igrus-web-server.jar'
 }

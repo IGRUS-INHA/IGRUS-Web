@@ -30,41 +30,59 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends SoftDeletableEntity {
 
+    /** 사용자 고유 식별자 */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "users_id")
     private Long id;
 
-    // 학번
-    @Column(name = "users_student_id", unique = true, nullable = false, length = 8)
+    /** 학번 (8자리 숫자, 고유값) */
+    @Column(name = "users_student_id", unique = true, nullable = false, length = 20)
     private String studentId;
 
-    // 본명
+    /** 사용자 본명 (최대 50자) */
     @Column(name = "users_name", nullable = false, length = 50)
     private String name;
 
-    // 이메일
+    /** 사용자 이메일 (고유값) */
     @Column(name = "users_email", unique = true, nullable = false)
     private String email;
 
-    // 전화번호
-    @Column(name = "users_phone_number", unique = true, nullable = false, length = 20)
+    /** 전화번호 (최대 20자, 익명화 시 null) */
+    @Column(name = "users_phone_number", unique = true, length = 20)
     private String phoneNumber;
 
-    // 학과
-    @Column(name = "users_department", nullable = false, length = 50)
+    /** 학과 (최대 50자, 익명화 시 null) */
+    @Column(name = "users_department", length = 50)
     private String department;
 
-    // 가입 동기
-    @Column(name = "users_motivation", nullable = false, columnDefinition = "TEXT")
+    /** 가입 동기 (익명화 시 null) */
+    @Column(name = "users_motivation", columnDefinition = "TEXT")
     private String motivation;
 
-    // 역할
+    /** 사용자 역할 (ASSOCIATE, MEMBER, OPERATOR, ADMIN). 기본값: ASSOCIATE */
     @Enumerated(EnumType.STRING)
     @Column(name = "users_role", nullable = false)
     private UserRole role = UserRole.ASSOCIATE;
 
-    // 직책 (다대다: 한 유저가 여러 직책 보유 가능)
+    /** 사용자 상태 (PENDING_VERIFICATION, ACTIVE, SUSPENDED, WITHDRAWN). 기본값: PENDING_VERIFICATION */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "users_status", nullable = false)
+    private UserStatus status = UserStatus.PENDING_VERIFICATION;
+
+    /**
+     * 익명화 처리 완료 여부.
+     * <p>
+     * 탈퇴 후 복구 가능 기간(5일) 만료 시 개인정보 영구 삭제 스케줄러에 의해 true로 설정됩니다.
+     * 스케줄러가 매일 실행될 때, 이미 익명화된 사용자를 중복 처리하지 않도록 구분하는 용도입니다.
+     * </p>
+     *
+     * @see igrus.web.security.auth.common.scheduler.WithdrawnUserCleanupScheduler
+     */
+    @Column(name = "users_anonymized", nullable = false)
+    private boolean anonymized = false;
+
+    /** 사용자 직책 목록 (다대다 관계: 한 사용자가 여러 직책 보유 가능) */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserPosition> userPositions = new ArrayList<>();
 
@@ -143,6 +161,44 @@ public class User extends SoftDeletableEntity {
         return this.role == UserRole.ASSOCIATE;
     }
 
+    // === 상태 확인 ===
+
+    public boolean isActive() {
+        return this.status == UserStatus.ACTIVE;
+    }
+
+    public boolean isSuspended() {
+        return this.status == UserStatus.SUSPENDED;
+    }
+
+    public boolean isWithdrawn() {
+        return this.status == UserStatus.WITHDRAWN;
+    }
+
+    public boolean isPendingVerification() {
+        return this.status == UserStatus.PENDING_VERIFICATION;
+    }
+
+    // === 상태 변경 ===
+
+    public void activate() {
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void suspend() {
+        this.status = UserStatus.SUSPENDED;
+    }
+
+    public void withdraw() {
+        this.status = UserStatus.WITHDRAWN;
+    }
+
+    public void verifyEmail() {
+        if (this.status == UserStatus.PENDING_VERIFICATION) {
+            this.status = UserStatus.ACTIVE;
+        }
+    }
+
     // === 직책 관련 ===
 
     public void addPosition(Position position) {
@@ -191,6 +247,31 @@ public class User extends SoftDeletableEntity {
 
     public void updateEmail(String email) {
         this.email = email;
+    }
+
+    // === 익명화 ===
+
+    /**
+     * 사용자 개인정보를 익명화합니다.
+     * <p>
+     * 탈퇴 후 복구 가능 기간 만료 시 호출됩니다.
+     * 이름, 이메일, 학번을 익명 값으로 대체하고, 전화번호/학과/가입동기는 null로 설정합니다.
+     * </p>
+     *
+     * @param hash 익명화에 사용할 고유 해시값 (예: UUID 앞 8자리)
+     */
+    public void anonymize(String hash) {
+        this.name = "탈퇴회원_" + hash;
+        this.email = "deleted_" + hash + "@deleted.local";
+        this.studentId = "DELETED_" + this.id;
+        this.phoneNumber = null;
+        this.department = null;
+        this.motivation = null;
+        this.anonymized = true;
+    }
+
+    public boolean isAnonymized() {
+        return this.anonymized;
     }
 
 }

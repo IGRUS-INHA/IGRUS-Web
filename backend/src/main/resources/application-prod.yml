@@ -1,16 +1,43 @@
+# 여기 없는 값들은 AWS Secrets Manager에 있음
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://igrus-web-mysql-rds.chw2emo2eysf.ap-northeast-2.rds.amazonaws.com:3306/igrus_web
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    database: mysql
     hibernate:
       ddl-auto: validate
-    show-sql: false
     properties:
       hibernate:
-        format_sql: false
+        default_batch_fetch_size: 100
+  task:
+    scheduling:
+      pool:
+        size: 5  # 스케줄러 스레드 풀 크기
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      secretsmanager:
+        enabled: true
+  config:
+    import: "aws-secretsmanager:igrus/web/server/prod"
+  mail:
+    host: smtp.gmail.com  # SMTP 서버 호스트
+    port: 587   # SMTP 서버 포트
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+springdoc:
+  server-url: http://igrus-web-alb-535342735.ap-northeast-2.elb.amazonaws.com
 
 app:
-  jwt:
-    secret: ${JWT_SECRET}
+  cookie:
+    secure: true
+    same-site: None
+    # same-site: Strict
+    # domain: igrus.org

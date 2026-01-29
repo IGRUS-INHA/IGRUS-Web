@@ -8,7 +8,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
-// User-Position 다대다 관계를 위한 중간 테이블
+/**
+ * 사용자-직책 중간 테이블 엔티티.
+ * User와 Position 간의 다대다 관계를 관리합니다.
+ */
 @Entity
 @Table(name = "user_positions")
 @AttributeOverrides({
@@ -21,20 +24,23 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserPosition extends BaseEntity {
 
+    /** 사용자-직책 관계 고유 식별자 */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_positions_id")
     private Long id;
 
+    /** 직책을 보유한 사용자 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_positions_user_id", nullable = false)
     private User user;
 
+    /** 사용자에게 부여된 직책 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_positions_position_id", nullable = false)
     private Position position;
 
-    // 직책 부여일
+    /** 직책 부여 시각 */
     @Column(name = "user_positions_assigned_at", nullable = false)
     private Instant assignedAt;
 

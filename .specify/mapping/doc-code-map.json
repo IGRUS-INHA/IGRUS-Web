@@ -1,0 +1,117 @@
+{
+  "version": "1.0.0",
+  "description": "IGRUS-Web 문서-코드 매핑 정의",
+  "rules": [
+    {
+      "pattern": "backend/.*/(user|auth)/",
+      "documents": [
+        "docs/feature/auth/user-entity-design.md",
+        "backend/docs/test-case/user/"
+      ],
+      "docType": "domain",
+      "description": "User/Auth 도메인 관련 파일"
+    },
+    {
+      "pattern": "backend/.*/(board|post)/",
+      "documents": [
+        "docs/feature/board/"
+      ],
+      "docType": "domain",
+      "description": "Board/Post 도메인 관련 파일"
+    },
+    {
+      "pattern": "backend/.*/(event)/",
+      "documents": [
+        "docs/feature/event/"
+      ],
+      "docType": "domain",
+      "description": "Event 도메인 관련 파일"
+    },
+    {
+      "pattern": "backend/.*/domain/",
+      "documents": [
+        "specs/{branch}/data-model.md"
+      ],
+      "docType": "model",
+      "description": "도메인 모델 파일"
+    },
+    {
+      "pattern": "backend/.*/entity/",
+      "documents": [
+        "specs/{branch}/data-model.md"
+      ],
+      "docType": "model",
+      "description": "엔티티 파일"
+    },
+    {
+      "pattern": "backend/.*/(controller|api)/",
+      "documents": [
+        "specs/{branch}/contracts/"
+      ],
+      "docType": "api",
+      "description": "API 컨트롤러 파일"
+    },
+    {
+      "pattern": "backend/.*/service/",
+      "documents": [
+        "specs/{branch}/plan.md"
+      ],
+      "docType": "service",
+      "description": "서비스 레이어 파일"
+    },
+    {
+      "pattern": "backend/.*/repository/",
+      "documents": [
+        "specs/{branch}/data-model.md"
+      ],
+      "docType": "repository",
+      "description": "레포지토리 파일"
+    },
+    {
+      "pattern": "backend/src/test/",
+      "documents": [
+        "backend/docs/test-case/"
+      ],
+      "docType": "test",
+      "description": "백엔드 테스트 파일"
+    },
+    {
+      "pattern": "frontend/.*/components/",
+      "documents": [
+        "frontend/docs/components/"
+      ],
+      "docType": "component",
+      "description": "프론트엔드 컴포넌트"
+    },
+    {
+      "pattern": "frontend/.*/pages/",
+      "documents": [
+        "frontend/docs/pages/",
+        "specs/{branch}/spec.md"
+      ],
+      "docType": "page",
+      "description": "프론트엔드 페이지"
+    },
+    {
+      "pattern": "frontend/.*/hooks/",
+      "documents": [
+        "frontend/docs/hooks/"
+      ],
+      "docType": "hook",
+      "description": "프론트엔드 커스텀 훅"
+    },
+    {
+      "pattern": "frontend/.*/api/",
+      "documents": [
+        "specs/{branch}/contracts/"
+      ],
+      "docType": "api-client",
+      "description": "프론트엔드 API 클라이언트"
+    }
+  ],
+  "globalDocuments": [
+    "CLAUDE.md",
+    "docs/feature/common/IGRUS_WEB_PRD_V2.md",
+    ".specify/memory/constitution.md"
+  ]
+}

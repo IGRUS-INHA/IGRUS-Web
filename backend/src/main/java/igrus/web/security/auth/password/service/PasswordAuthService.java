@@ -1,0 +1,250 @@
+package igrus.web.security.auth.password.service;
+
+import igrus.web.security.auth.common.domain.LoginFailureReason;
+import igrus.web.security.auth.common.domain.RefreshToken;
+import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
+import igrus.web.security.auth.common.exception.account.AccountLockedException;
+import igrus.web.security.auth.common.repository.RefreshTokenRepository;
+import igrus.web.security.auth.common.exception.account.AccountRecoverableException;
+import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
+import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
+import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
+import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.LoginHistoryService;
+import igrus.web.security.auth.password.dto.internal.LoginResult;
+import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
+import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
+import igrus.web.security.auth.password.exception.InvalidCredentialsException;
+import igrus.web.security.auth.common.exception.account.AccountSuspendedException;
+import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
+import igrus.web.security.auth.common.service.LoginAttemptService;
+import igrus.web.security.jwt.JwtTokenProvider;
+import igrus.web.security.auth.password.domain.PasswordCredential;
+import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
+import igrus.web.user.domain.User;
+import igrus.web.user.domain.UserStatus;
+import igrus.web.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class PasswordAuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordCredentialRepository passwordCredentialRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final LoginAttemptService loginAttemptService;
+    private final LoginHistoryService loginHistoryService;
+    private final AccountRecoveryService accountRecoveryService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.jwt.access-token-validity}")
+    private long accessTokenValidity;
+
+    @Value("${app.jwt.refresh-token-validity}")
+    private long refreshTokenValidity;
+
+    /**
+     * 로그인을 수행합니다.
+     *
+     * @param request 로그인 요청 (학번, 비밀번호)
+     * @param ipAddress 클라이언트 IP 주소
+     * @param userAgent 클라이언트 User-Agent
+     * @return 로그인 결과 (토큰 및 사용자 정보)
+     * @throws AccountLockedException 계정이 잠금 상태인 경우
+     * @throws InvalidCredentialsException 학번 또는 비밀번호가 올바르지 않은 경우
+     * @throws AccountSuspendedException 계정이 정지된 경우
+     * @throws AccountWithdrawnException 계정이 탈퇴 상태이고 복구 불가능한 경우
+     * @throws AccountRecoverableException 계정이 탈퇴 상태이지만 복구 가능한 경우
+     * @throws EmailNotVerifiedException 이메일 인증이 완료되지 않은 경우
+     */
+    public LoginResult login(PasswordLoginRequest request, String ipAddress, String userAgent) {
+        log.info("로그인 시도: studentId={}, ip={}", request.studentId(), ipAddress);
+
+        // 0. 계정 잠금 상태 확인
+        try {
+            loginAttemptService.checkAccountLocked(request.studentId());
+        } catch (AccountLockedException e) {
+            loginHistoryService.recordFailure(request.studentId(), ipAddress, userAgent,
+                    LoginFailureReason.ACCOUNT_LOCKED);
+            throw e;
+        }
+
+        // 1. 사용자 조회 (soft delete 포함하여 탈퇴 계정 복구 가능 여부 확인)
+        User user = userRepository.findByStudentId(request.studentId())
+                .orElseGet(() -> checkWithdrawnAccountRecovery(request.studentId(), ipAddress, userAgent));
+
+        // 2. 비밀번호 조회 및 검증
+        PasswordCredential credential = passwordCredentialRepository.findByUserId(user.getId())
+                .or(() -> passwordCredentialRepository.findByUserIdIncludingDeleted(user.getId()))
+                .orElseThrow(() -> {
+                    log.warn("로그인 실패 - 비밀번호 정보 없음: userId={}", user.getId());
+                    loginAttemptService.recordFailedAttempt(request.studentId());
+                    loginHistoryService.recordFailure(user, request.studentId(), ipAddress, userAgent,
+                            LoginFailureReason.INVALID_CREDENTIALS);
+                    return new InvalidCredentialsException();
+                });
+
+        if (!passwordEncoder.matches(request.password(), credential.getPasswordHash())) {
+            log.warn("로그인 실패 - 비밀번호 불일치: studentId={}", request.studentId());
+            loginAttemptService.recordFailedAttempt(request.studentId());
+            loginHistoryService.recordFailure(user, request.studentId(), ipAddress, userAgent,
+                    LoginFailureReason.INVALID_CREDENTIALS);
+            throw new InvalidCredentialsException();
+        }
+
+        // 3. 계정 상태 확인
+        if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+            log.warn("로그인 실패 - 이메일 미인증: studentId={}, email={}", request.studentId(), user.getEmail());
+            loginAttemptService.recordFailedAttempt(request.studentId());
+            loginHistoryService.recordFailure(user, request.studentId(), ipAddress, userAgent,
+                    LoginFailureReason.EMAIL_NOT_VERIFIED);
+            throw new EmailNotVerifiedException();
+        }
+
+        if (user.getStatus() == UserStatus.SUSPENDED) {
+            log.warn("로그인 실패 - 계정 정지: studentId={}", request.studentId());
+            loginAttemptService.recordFailedAttempt(request.studentId());
+            loginHistoryService.recordFailure(user, request.studentId(), ipAddress, userAgent,
+                    LoginFailureReason.ACCOUNT_SUSPENDED);
+            throw new AccountSuspendedException();
+        }
+
+        if (user.getStatus() == UserStatus.WITHDRAWN) {
+            // 복구 가능 여부 확인
+            RecoveryEligibilityResponse eligibility = accountRecoveryService.checkRecoveryEligibility(request.studentId());
+            if (eligibility.recoverable()) {
+                log.info("복구 가능한 탈퇴 계정: studentId={}, recoveryDeadline={}", request.studentId(), eligibility.recoveryDeadline());
+                loginHistoryService.recordFailure(user, request.studentId(), ipAddress, userAgent,
+                        LoginFailureReason.ACCOUNT_RECOVERABLE);
+                throw new AccountRecoverableException(request.studentId(), eligibility.recoveryDeadline());
+            }
+            log.warn("로그인 실패 - 계정 탈퇴 (복구 불가): studentId={}", request.studentId());
+            loginAttemptService.recordFailedAttempt(request.studentId());
+            loginHistoryService.recordFailure(user, request.studentId(), ipAddress, userAgent,
+                    LoginFailureReason.ACCOUNT_WITHDRAWN);
+            throw new AccountWithdrawnException();
+        }
+
+        // 5. 로그인 성공 - 시도 기록 초기화
+        loginAttemptService.resetAttempts(request.studentId());
+
+        // 6. 로그인 히스토리 기록
+        loginHistoryService.recordSuccess(user, request.studentId(), ipAddress, userAgent);
+
+        // 7. 토큰 발급
+        String accessToken = jwtTokenProvider.createAccessToken(
+                user.getId(),
+                user.getStudentId(),
+                user.getRole().name()
+        );
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+        // 8. RefreshToken 저장
+        RefreshToken refreshTokenEntity = RefreshToken.create(user, refreshToken, refreshTokenValidity);
+        refreshTokenRepository.save(refreshTokenEntity);
+
+        log.info("로그인 성공: studentId={}, userId={}", request.studentId(), user.getId());
+
+        return new LoginResult(
+                accessToken,
+                refreshToken,
+                user.getId(),
+                user.getStudentId(),
+                user.getName(),
+                user.getRole(),
+                accessTokenValidity,
+                refreshTokenValidity
+        );
+    }
+
+    /**
+     * 로그아웃을 수행합니다.
+     *
+     * @param refreshTokenValue 리프레시 토큰
+     * @throws RefreshTokenInvalidException 리프레시 토큰이 유효하지 않은 경우
+     */
+    public void logout(String refreshTokenValue) {
+        log.info("로그아웃 시도");
+
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenAndRevokedFalse(refreshTokenValue)
+                .orElseThrow(() -> {
+                    log.warn("로그아웃 실패 - 유효하지 않은 리프레시 토큰");
+                    return new RefreshTokenInvalidException();
+                });
+
+        refreshToken.revoke();
+
+        log.info("로그아웃 성공: userId={}", refreshToken.getUser().getId());
+    }
+
+    /**
+     * 리프레시 토큰으로 새로운 액세스 토큰을 발급합니다.
+     *
+     * @param refreshTokenValue 리프레시 토큰
+     * @return 새로운 액세스 토큰 응답
+     * @throws RefreshTokenInvalidException 리프레시 토큰이 유효하지 않은 경우
+     * @throws RefreshTokenExpiredException 리프레시 토큰이 만료된 경우
+     */
+    @Transactional(readOnly = true)
+    public TokenRefreshResponse refreshToken(String refreshTokenValue) {
+        log.info("토큰 갱신 시도");
+
+        // 1. DB에서 Refresh Token 조회 (revoked가 아닌 토큰)
+        RefreshToken refreshTokenEntity = refreshTokenRepository.findByTokenAndRevokedFalse(refreshTokenValue)
+                .orElseThrow(() -> {
+                    log.warn("토큰 갱신 실패 - 유효하지 않은 리프레시 토큰");
+                    return new RefreshTokenInvalidException();
+                });
+
+        // 2. 만료 여부 확인
+        if (refreshTokenEntity.isExpired()) {
+            log.warn("토큰 갱신 실패 - 리프레시 토큰 만료: userId={}", refreshTokenEntity.getUser().getId());
+            throw new RefreshTokenExpiredException();
+        }
+
+        // 3. 새 Access Token 발급
+        User user = refreshTokenEntity.getUser();
+        String newAccessToken = jwtTokenProvider.createAccessToken(
+                user.getId(),
+                user.getStudentId(),
+                user.getRole().name()
+        );
+
+        log.info("토큰 갱신 성공: userId={}", user.getId());
+
+        return TokenRefreshResponse.of(newAccessToken, accessTokenValidity);
+    }
+
+    /**
+     * 탈퇴 계정 복구 가능 여부를 확인하고, 복구 가능하면 해당 사용자를 반환합니다.
+     * soft delete된 사용자를 조회하여 복구 가능 여부를 판단합니다.
+     *
+     * @param studentId 학번
+     * @param ipAddress 클라이언트 IP 주소
+     * @param userAgent 클라이언트 User-Agent
+     * @return 탈퇴 상태의 사용자 (복구 가능한 경우)
+     * @throws InvalidCredentialsException 사용자가 존재하지 않는 경우
+     */
+    private User checkWithdrawnAccountRecovery(String studentId, String ipAddress, String userAgent) {
+        // soft delete 포함하여 사용자 조회
+        User user = userRepository.findByStudentIdIncludingDeleted(studentId)
+                .orElseThrow(() -> {
+                    log.warn("로그인 실패 - 사용자 없음: studentId={}", studentId);
+                    loginAttemptService.recordFailedAttempt(studentId);
+                    loginHistoryService.recordFailure(studentId, ipAddress, userAgent,
+                            LoginFailureReason.INVALID_CREDENTIALS);
+                    return new InvalidCredentialsException();
+                });
+
+        return user;
+    }
+}
