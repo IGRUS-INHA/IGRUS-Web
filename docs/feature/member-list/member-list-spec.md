@@ -2,7 +2,7 @@
 
 **Created**: 2026-01-25
 **Updated**: 2026-01-31
-**Status**: Draft
+**Status**: In Progress
 **Input**: 익명화를 제거하고 학기별 멤버십 기록을 추가하여 과거 회원 명단 조회 지원
 
 ---
