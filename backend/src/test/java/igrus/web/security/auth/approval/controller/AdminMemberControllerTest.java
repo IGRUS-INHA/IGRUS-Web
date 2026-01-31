@@ -12,14 +12,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    private final JsonMapper jsonMapper = JsonMapper.builder().build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String BASE_URL = "/api/v1/admin/members";
 
@@ -190,7 +190,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .with(withAuth(adminUser))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.approvedCount").value(3))
@@ -217,7 +217,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .with(withAuth(adminUser))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.approvedCount").value(2))
@@ -271,7 +271,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .with(withAuth(memberUser))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isForbidden());
         }
@@ -287,7 +287,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
             // Note: 인증 없이 CSRF 토큰도 없으면 CSRF 필터에서 403 반환
             mockMvc.perform(post(BASE_URL + "/approve/bulk")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isForbidden());
         }

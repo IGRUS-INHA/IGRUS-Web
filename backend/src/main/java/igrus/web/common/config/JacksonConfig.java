@@ -1,20 +1,25 @@
 package igrus.web.common.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Jackson 3.x JsonMapper 설정.
+ * Jackson 2.x ObjectMapper 설정.
  *
- * <p>Jackson 3.x에서는 JSR-310 (Java Time API) 지원이
- * jackson-databind에 내장되어 있습니다.</p>
+ * <p>Jackson 2.x에서는 JSR-310 (Java Time API) 지원을 위해
+ * JavaTimeModule을 명시적으로 등록해야 합니다.</p>
  */
 @Configuration
 public class JacksonConfig {
 
     @Bean
-    public JsonMapper jsonMapper() {
-        return JsonMapper.builder().build();
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return objectMapper;
     }
 }

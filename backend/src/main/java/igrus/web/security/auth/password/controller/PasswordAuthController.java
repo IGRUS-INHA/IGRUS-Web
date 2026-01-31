@@ -1,17 +1,19 @@
 package igrus.web.security.auth.password.controller;
 
+import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.request.AccountRecoveryRequest;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
+import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.util.CookieUtil;
+import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.request.PasswordLogoutRequest;
 import igrus.web.security.auth.password.dto.request.PasswordResetConfirmRequest;
 import igrus.web.security.auth.password.dto.request.PasswordResetRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
-import igrus.web.security.auth.password.dto.request.TokenRefreshRequest;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
@@ -26,10 +28,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,6 +44,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Duration;
 
 @RestController
 @RequestMapping("/api/v1/auth/password")
@@ -50,6 +58,7 @@ public class PasswordAuthController {
     private final PasswordSignupService passwordSignupService;
     private final PasswordResetService passwordResetService;
     private final AccountRecoveryService accountRecoveryService;
+    private final CookieUtil cookieUtil;
 
     @Operation(summary = "로그인", description = "학번과 비밀번호로 로그인합니다.")
     @ApiResponses(value = {
@@ -80,9 +89,40 @@ public class PasswordAuthController {
             )
     })
     @PostMapping("/login")
-    public ResponseEntity<PasswordLoginResponse> login(@Valid @RequestBody PasswordLoginRequest request) {
-        PasswordLoginResponse response = passwordAuthService.login(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<PasswordLoginResponse> login(
+            @Valid @RequestBody PasswordLoginRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        String ipAddress = extractIpAddress(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+
+        LoginResult result = passwordAuthService.login(request, ipAddress, userAgent);
+
+        ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
+                result.refreshToken(),
+                Duration.ofMillis(result.refreshTokenValidity())
+        );
+        httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return ResponseEntity.ok(result.toResponse());
+    }
+
+    /**
+     * 클라이언트의 실제 IP 주소를 추출합니다.
+     * 프록시/로드밸런서를 고려하여 X-Forwarded-For 헤더를 우선 확인합니다.
+     */
+    private String extractIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp;
+        }
+
+        return request.getRemoteAddr();
     }
 
     @Operation(summary = "로그아웃", description = "리프레시 토큰을 무효화하여 로그아웃합니다.")
@@ -103,8 +143,17 @@ public class PasswordAuthController {
             )
     })
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody PasswordLogoutRequest request) {
-        passwordAuthService.logout(request);
+    public ResponseEntity<Void> logout(
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        String refreshToken = cookieUtil.getRefreshTokenFromCookies(httpRequest)
+                .orElseThrow(RefreshTokenInvalidException::new);
+
+        passwordAuthService.logout(refreshToken);
+
+        ResponseCookie deleteCookie = cookieUtil.deleteRefreshTokenCookie();
+        httpResponse.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+
         return ResponseEntity.ok().build();
     }
 
@@ -127,8 +176,11 @@ public class PasswordAuthController {
             )
     })
     @PostMapping("/refresh")
-    public ResponseEntity<TokenRefreshResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
-        TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+    public ResponseEntity<TokenRefreshResponse> refreshToken(HttpServletRequest httpRequest) {
+        String refreshToken = cookieUtil.getRefreshTokenFromCookies(httpRequest)
+                .orElseThrow(RefreshTokenInvalidException::new);
+
+        TokenRefreshResponse response = passwordAuthService.refreshToken(refreshToken);
         return ResponseEntity.ok(response);
     }
 
@@ -251,9 +303,18 @@ public class PasswordAuthController {
             )
     })
     @PostMapping("/account/recover")
-    public ResponseEntity<AccountRecoveryResponse> recoverAccount(@Valid @RequestBody AccountRecoveryRequest request) {
-        AccountRecoveryResponse response = accountRecoveryService.recoverAccount(request.studentId(), request.password());
-        return ResponseEntity.ok(response);
+    public ResponseEntity<AccountRecoveryResponse> recoverAccount(
+            @Valid @RequestBody AccountRecoveryRequest request,
+            HttpServletResponse httpResponse) {
+        RecoveryResult result = accountRecoveryService.recoverAccount(request.studentId(), request.password());
+
+        ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
+                result.refreshToken(),
+                Duration.ofMillis(result.refreshTokenValidity())
+        );
+        httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return ResponseEntity.ok(result.toResponse());
     }
 
     @Operation(

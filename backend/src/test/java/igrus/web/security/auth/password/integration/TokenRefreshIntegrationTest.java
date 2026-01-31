@@ -4,7 +4,6 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.RefreshToken;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
-import igrus.web.security.auth.password.dto.request.TokenRefreshRequest;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.jwt.JwtTokenProvider;
@@ -84,10 +83,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response).isNotNull();
@@ -103,10 +100,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response.expiresIn()).isEqualTo(ACCESS_TOKEN_VALIDITY);
@@ -120,10 +115,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response.accessToken()).isNotNull();
@@ -141,10 +134,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response).isNotNull();
@@ -159,11 +150,9 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when
-            TokenRefreshResponse response1 = passwordAuthService.refreshToken(request);
-            TokenRefreshResponse response2 = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response1 = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response2 = passwordAuthService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response1.accessToken()).isNotEqualTo(response2.accessToken());
@@ -184,10 +173,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveExpiredRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(refreshTokenString))
                     .isInstanceOf(RefreshTokenExpiredException.class);
         }
 
@@ -195,10 +182,10 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[TKN-011] 유효하지 않은 Refresh Token으로 갱신 시도 시 예외 발생")
         void refreshToken_withInvalidToken_throwsException() {
             // given
-            TokenRefreshRequest request = new TokenRefreshRequest("invalid-refresh-token");
+            String tokenString = "invalid-refresh-token";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -206,10 +193,10 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[TKN-012] 변조된 Refresh Token으로 갱신 시도 시 예외 발생")
         void refreshToken_withTamperedToken_throwsException() {
             // given
-            TokenRefreshRequest request = new TokenRefreshRequest("tampered-token-payload-modified");
+            String tokenString = "tampered-token-payload-modified";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -217,10 +204,10 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[TKN-013] 빈 Refresh Token으로 갱신 시도 시 예외 발생")
         void refreshToken_withEmptyToken_throwsException() {
             // given
-            TokenRefreshRequest request = new TokenRefreshRequest("");
+            String tokenString = "";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -236,10 +223,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             refreshToken.revoke();
             refreshTokenRepository.save(refreshToken);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(refreshTokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -251,10 +236,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             // DB에 저장하지 않음
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(refreshTokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
     }
@@ -269,10 +252,10 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[TKN-020] 토큰이 존재하지 않는 경우 갱신 실패")
         void refreshToken_whenTokenNotExists_throwsException() {
             // given
-            TokenRefreshRequest request = new TokenRefreshRequest("non-existent-token");
+            String tokenString = "non-existent-token";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -289,10 +272,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
                     refreshTokenRepository.revokeAllByUserId(user.getId())
             );
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(request))
+            assertThatThrownBy(() -> passwordAuthService.refreshToken(refreshTokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -313,10 +294,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String newRefreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, newRefreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(newRefreshTokenString);
-
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(newRefreshTokenString);
 
             // then
             assertThat(response).isNotNull();
@@ -338,10 +317,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
 
             // then - 유효한 토큰은 검증 통과
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
@@ -356,10 +333,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
 
             // then
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
@@ -375,10 +350,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
 
             // then
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
@@ -394,10 +367,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            TokenRefreshRequest request = new TokenRefreshRequest(refreshTokenString);
-
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(request);
+            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
 
             // then
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());

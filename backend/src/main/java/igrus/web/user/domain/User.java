@@ -30,41 +30,42 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends SoftDeletableEntity {
 
+    /** 사용자 고유 식별자 */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "users_id")
     private Long id;
 
-    // 학번
+    /** 학번 (8자리 숫자, 고유값) */
     @Column(name = "users_student_id", unique = true, nullable = false, length = 20)
     private String studentId;
 
-    // 본명
+    /** 사용자 본명 (최대 50자) */
     @Column(name = "users_name", nullable = false, length = 50)
     private String name;
 
-    // 이메일
+    /** 사용자 이메일 (고유값) */
     @Column(name = "users_email", unique = true, nullable = false)
     private String email;
 
-    // 전화번호 (익명화 시 null 가능)
+    /** 전화번호 (최대 20자, 익명화 시 null) */
     @Column(name = "users_phone_number", unique = true, length = 20)
     private String phoneNumber;
 
-    // 학과 (익명화 시 null 가능)
+    /** 학과 (최대 50자, 익명화 시 null) */
     @Column(name = "users_department", length = 50)
     private String department;
 
-    // 가입 동기 (익명화 시 null 가능)
+    /** 가입 동기 (익명화 시 null) */
     @Column(name = "users_motivation", columnDefinition = "TEXT")
     private String motivation;
 
-    // 역할
+    /** 사용자 역할 (ASSOCIATE, MEMBER, OPERATOR, ADMIN). 기본값: ASSOCIATE */
     @Enumerated(EnumType.STRING)
     @Column(name = "users_role", nullable = false)
     private UserRole role = UserRole.ASSOCIATE;
 
-    // 상태
+    /** 사용자 상태 (PENDING_VERIFICATION, ACTIVE, SUSPENDED, WITHDRAWN). 기본값: PENDING_VERIFICATION */
     @Enumerated(EnumType.STRING)
     @Column(name = "users_status", nullable = false)
     private UserStatus status = UserStatus.PENDING_VERIFICATION;
@@ -81,7 +82,7 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_anonymized", nullable = false)
     private boolean anonymized = false;
 
-    // 직책 (다대다: 한 유저가 여러 직책 보유 가능)
+    /** 사용자 직책 목록 (다대다 관계: 한 사용자가 여러 직책 보유 가능) */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserPosition> userPositions = new ArrayList<>();
 

@@ -54,7 +54,7 @@ class PrivacyConsentRepositoryTest {
             entityManager.createNativeQuery("DELETE FROM password_reset_tokens").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM user_positions").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_role_history").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM user_role_histories").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM user_suspensions").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM inquiry_memos").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM inquiry_replies").executeUpdate();

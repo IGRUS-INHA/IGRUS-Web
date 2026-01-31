@@ -1,6 +1,6 @@
 package igrus.web.security.auth.password.controller;
 
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.exception.ErrorCode;
 import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
@@ -8,6 +8,7 @@ import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberExcep
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.common.service.AccountStatusService;
+import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -42,7 +43,7 @@ class PasswordAuthControllerSignupTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final JsonMapper jsonMapper = JsonMapper.builder().build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
     private PasswordAuthService passwordAuthService;
@@ -61,6 +62,9 @@ class PasswordAuthControllerSignupTest {
 
     @MockitoBean
     private AccountStatusService accountStatusService;
+
+    @MockitoBean
+    private CookieUtil cookieUtil;
 
     private static final String SIGNUP_URL = "/api/v1/auth/password/signup";
 
@@ -206,7 +210,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.email").value(VALID_EMAIL))
@@ -227,7 +231,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -242,7 +246,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -257,7 +261,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -277,7 +281,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -292,7 +296,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -312,7 +316,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -332,7 +336,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -352,7 +356,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -372,7 +376,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -392,7 +396,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -407,7 +411,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -422,7 +426,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -437,7 +441,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -452,7 +456,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -472,7 +476,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -487,7 +491,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
@@ -510,7 +514,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_STUDENT_ID.getCode()));
@@ -528,7 +532,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_EMAIL.getCode()));
@@ -546,7 +550,7 @@ class PasswordAuthControllerSignupTest {
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_PHONE_NUMBER.getCode()));

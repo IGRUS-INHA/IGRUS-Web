@@ -1,6 +1,6 @@
 package igrus.web.security.auth.password.controller;
 
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.exception.ErrorCode;
 import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
@@ -11,6 +11,7 @@ import igrus.web.security.auth.common.exception.verification.VerificationCodeInv
 import igrus.web.security.auth.common.exception.verification.VerificationResendRateLimitedException;
 import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.common.service.AccountStatusService;
+import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
@@ -24,7 +25,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -45,7 +46,7 @@ class PasswordAuthControllerVerificationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final JsonMapper jsonMapper = JsonMapper.builder().build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
     private PasswordAuthService passwordAuthService;
@@ -64,6 +65,9 @@ class PasswordAuthControllerVerificationTest {
 
     @MockitoBean
     private AccountStatusService accountStatusService;
+
+    @MockitoBean
+    private CookieUtil cookieUtil;
 
     private static final String VALID_EMAIL = "test@inha.edu";
     private static final String VALID_CODE = "123456";
@@ -91,7 +95,7 @@ class PasswordAuthControllerVerificationTest {
                 // when & then
                 mockMvc.perform(post(VERIFY_EMAIL_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request))
+                                .content(objectMapper.writeValueAsString(request))
                                 )
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.email").value(VALID_EMAIL))
@@ -115,7 +119,7 @@ class PasswordAuthControllerVerificationTest {
                 // when & then
                 mockMvc.perform(post(VERIFY_EMAIL_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request))
+                                .content(objectMapper.writeValueAsString(request))
                                 )
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.VERIFICATION_CODE_EXPIRED.getCode()));
@@ -133,7 +137,7 @@ class PasswordAuthControllerVerificationTest {
                 // when & then
                 mockMvc.perform(post(VERIFY_EMAIL_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request))
+                                .content(objectMapper.writeValueAsString(request))
                                 )
                         .andExpect(status().isTooManyRequests())
                         .andExpect(jsonPath("$.code").value(ErrorCode.VERIFICATION_ATTEMPTS_EXCEEDED.getCode()));
@@ -151,7 +155,7 @@ class PasswordAuthControllerVerificationTest {
                 // when & then
                 mockMvc.perform(post(VERIFY_EMAIL_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonMapper.writeValueAsString(request))
+                                .content(objectMapper.writeValueAsString(request))
                                 )
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.code").value(ErrorCode.VERIFICATION_CODE_INVALID.getCode()));
@@ -276,7 +280,7 @@ class PasswordAuthControllerVerificationTest {
             // when & then
             mockMvc.perform(post(RESEND_VERIFICATION_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request))
+                            .content(objectMapper.writeValueAsString(request))
                             )
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.email").value(VALID_EMAIL))
@@ -295,7 +299,7 @@ class PasswordAuthControllerVerificationTest {
             // when & then
             mockMvc.perform(post(RESEND_VERIFICATION_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(jsonMapper.writeValueAsString(request))
+                            .content(objectMapper.writeValueAsString(request))
                             )
                     .andExpect(status().isTooManyRequests())
                     .andExpect(jsonPath("$.code").value(ErrorCode.VERIFICATION_RESEND_RATE_LIMITED.getCode()));

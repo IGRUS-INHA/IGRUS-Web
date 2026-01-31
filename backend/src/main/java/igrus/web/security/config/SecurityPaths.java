@@ -10,6 +10,7 @@ public final class SecurityPaths {
      * 인증 없이 접근 가능한 API 경로 목록
      */
     public static final String[] PUBLIC_PATHS = {
+            "/api/health",               // 헬스체크
             "/api/v1/auth/password/**",  // 비밀번호 기반 인증 (로그인, 회원가입, 토큰 갱신)
             "/api/privacy/policy",       // 개인정보 처리방침
             "/api/v1/inquiries/guest",   // 문의 작성 (비로그인 가능)

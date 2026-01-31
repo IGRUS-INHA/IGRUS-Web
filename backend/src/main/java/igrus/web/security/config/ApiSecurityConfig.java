@@ -39,11 +39,19 @@ public class ApiSecurityConfig {
                 // 운영진 이상 (더 구체적인 경로를 먼저 배치)
                 .requestMatchers(
                         "/api/admin/dashboard",
-                        "/api/events/*/registrations"
+                        "/api/events/*/registrations",
+                        "/api/v1/admin/comment-reports/**"
                 ).hasAnyRole("OPERATOR", "ADMIN")
 
                 // 관리자 전용
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // 댓글 API - MEMBER 이상 (정회원)
+                .requestMatchers("/api/v1/posts/*/comments/**").hasAnyRole("MEMBER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/v1/comments/**").hasAnyRole("MEMBER", "OPERATOR", "ADMIN")
+
+                // 게시글 API - ASSOCIATE 이상
+                .requestMatchers("/api/v1/boards/*/posts/**").hasAnyRole("ASSOCIATE", "MEMBER", "OPERATOR", "ADMIN")
 
                 // 그 외 모든 요청은 인증 필요
                 .anyRequest().authenticated()

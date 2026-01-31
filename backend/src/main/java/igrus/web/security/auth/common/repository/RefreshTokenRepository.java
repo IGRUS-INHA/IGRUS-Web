@@ -31,4 +31,14 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
      * @param userId 사용자 ID
      */
     void deleteByUserId(Long userId);
+
+    /**
+     * 특정 사용자의 모든 리프레시 토큰을 물리적으로 삭제합니다 (hard delete).
+     * User의 @SQLRestriction을 우회하여 soft deleted 사용자의 데이터도 삭제합니다.
+     *
+     * @param userId 사용자 ID
+     */
+    @Modifying(flushAutomatically = true)
+    @Query(value = "DELETE FROM refresh_tokens WHERE refresh_tokens_user_id = :userId", nativeQuery = true)
+    void hardDeleteByUserId(@Param("userId") Long userId);
 }

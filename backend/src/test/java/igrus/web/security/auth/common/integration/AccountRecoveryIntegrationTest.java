@@ -1,8 +1,7 @@
 package igrus.web.security.auth.common.integration;
 
 import igrus.web.common.ServiceIntegrationTestBase;
-import igrus.web.security.auth.common.dto.request.AccountRecoveryRequest;
-import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
+import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.account.AccountRecoverableException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
@@ -10,7 +9,6 @@ import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.common.service.AccountRecoveryService.ReRegistrationCheckResult;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.user.domain.User;
@@ -50,6 +48,8 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
     private static final long REFRESH_TOKEN_VALIDITY = 604800000L; // 7일
     private static final String TEST_STUDENT_ID = "12345678";
     private static final String TEST_PASSWORD = "password123!";
+    private static final String TEST_IP_ADDRESS = "192.168.1.100";
+    private static final String TEST_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
     private static final Duration RECOVERY_PERIOD = Duration.ofDays(5);
 
     @BeforeEach
@@ -130,7 +130,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountRecoverableException.class)
                     .satisfies(ex -> {
                         AccountRecoverableException ace = (AccountRecoverableException) ex;
@@ -149,7 +149,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountRecoverableException.class)
                     .satisfies(ex -> {
                         AccountRecoverableException ace = (AccountRecoverableException) ex;
@@ -168,12 +168,11 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.accessToken()).isNotNull();
             assertThat(response.refreshToken()).isNotNull();
-            assertThat(response.message()).isEqualTo("계정이 성공적으로 복구되었습니다");
 
             // 복구 후 상태 확인
             User recoveredUser = userRepository.findByStudentIdIncludingDeleted(TEST_STUDENT_ID).orElseThrow();
@@ -190,12 +189,12 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.accessToken()).isNotNull();
             assertThat(response.refreshToken()).isNotNull();
-            assertThat(response.expiresIn()).isEqualTo(ACCESS_TOKEN_VALIDITY);
+            assertThat(response.accessTokenValidity()).isEqualTo(ACCESS_TOKEN_VALIDITY);
 
             // RefreshToken이 DB에 저장되었는지 확인
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(response.refreshToken())).isPresent();
@@ -210,7 +209,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.MEMBER);
@@ -228,7 +227,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.OPERATOR);
@@ -243,7 +242,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.role()).isEqualTo(UserRole.ADMIN);
@@ -308,7 +307,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.login(request))
+            assertThatThrownBy(() -> passwordAuthService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountWithdrawnException.class);
         }
 
@@ -428,7 +427,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.accessToken()).isNotNull();
@@ -445,7 +444,7 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveWithdrawnCredential(user, deletedAt);
 
             // when
-            AccountRecoveryResponse response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult response = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // then
             assertThat(response.accessToken()).isNotBlank();

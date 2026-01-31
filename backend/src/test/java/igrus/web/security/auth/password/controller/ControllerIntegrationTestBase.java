@@ -1,6 +1,6 @@
 package igrus.web.security.auth.password.controller;
 
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.service.AuthEmailService;
@@ -12,7 +12,7 @@ import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -54,11 +54,13 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
     protected static final String TEST_PHONE = "010-1234-5678";
     protected static final String TEST_DEPARTMENT = "컴퓨터공학과";
     protected static final String TEST_MOTIVATION = "동아리 활동을 열심히 하고 싶습니다.";
+    protected static final String TEST_IP_ADDRESS = "192.168.1.100";
+    protected static final String TEST_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
 
     @Autowired
     protected MockMvc mockMvc;
 
-    protected final JsonMapper jsonMapper = JsonMapper.builder().build();
+    protected final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     protected PasswordAuthService passwordAuthService;
@@ -100,7 +102,7 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
     protected ResultActions performPost(String endpoint, Object requestBody) throws Exception {
         return mockMvc.perform(post(API_BASE_PATH + endpoint)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(jsonMapper.writeValueAsString(requestBody)));
+                .content(objectMapper.writeValueAsString(requestBody)));
     }
 
     /**
@@ -132,7 +134,7 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
     protected ResultActions performPostWithAuth(String endpoint, Object requestBody, String accessToken) throws Exception {
         return mockMvc.perform(post(API_BASE_PATH + endpoint)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(jsonMapper.writeValueAsString(requestBody))
+                .content(objectMapper.writeValueAsString(requestBody))
                 .header("Authorization", "Bearer " + accessToken));
     }
 

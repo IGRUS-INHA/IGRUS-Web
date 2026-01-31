@@ -2,6 +2,7 @@ package igrus.web.common;
 
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.security.auth.common.repository.LoginAttemptRepository;
+import igrus.web.security.auth.common.repository.LoginHistoryRepository;
 import igrus.web.security.auth.common.repository.PrivacyConsentRepository;
 import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
@@ -70,6 +71,9 @@ public abstract class ServiceIntegrationTestBase {
     @Autowired
     protected UserRoleHistoryRepository userRoleHistoryRepository;
 
+    @Autowired
+    protected LoginHistoryRepository loginHistoryRepository;
+
     protected TransactionTemplate transactionTemplate;
 
     /**
@@ -102,12 +106,25 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM member_inquiries").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
 
-            // Phase 2: User 종속 테이블
+            // Phase 2: Community 계층 (자식 먼저)
+            entityManager.createNativeQuery("DELETE FROM comment_reports").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM comment_likes").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM comments").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM likes").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM bookmarks").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM post_views").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM board_permissions").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM boards").executeUpdate();
+
+            // Phase 3: User 종속 테이블
+            entityManager.createNativeQuery("DELETE FROM login_histories").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM refresh_tokens").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_reset_tokens").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM privacy_consents").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_role_history").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM user_role_histories").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM user_suspensions").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM user_positions").executeUpdate();
 

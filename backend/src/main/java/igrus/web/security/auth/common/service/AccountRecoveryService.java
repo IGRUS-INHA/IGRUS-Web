@@ -1,7 +1,7 @@
 package igrus.web.security.auth.common.service;
 
 import igrus.web.security.auth.common.domain.RefreshToken;
-import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
+import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.account.AccountNotRecoverableException;
 import igrus.web.security.auth.common.repository.RefreshTokenRepository;
@@ -96,11 +96,11 @@ public class AccountRecoveryService {
      *
      * @param studentId 학번
      * @param password  비밀번호
-     * @return 계정 복구 응답 (토큰 및 사용자 정보)
+     * @return 계정 복구 결과 (토큰 및 사용자 정보)
      * @throws InvalidCredentialsException    학번 또는 비밀번호가 올바르지 않은 경우
      * @throws AccountNotRecoverableException 복구 기간이 만료된 경우
      */
-    public AccountRecoveryResponse recoverAccount(String studentId, String password) {
+    public RecoveryResult recoverAccount(String studentId, String password) {
         log.info("계정 복구 시도: studentId={}", studentId);
 
         // 1. 사용자 조회 (soft delete 포함)
@@ -157,14 +157,15 @@ public class AccountRecoveryService {
 
         log.info("계정 복구 성공: studentId={}, userId={}, role={}", studentId, user.getId(), user.getRole());
 
-        return AccountRecoveryResponse.of(
+        return new RecoveryResult(
                 accessToken,
                 refreshToken,
                 user.getId(),
                 user.getStudentId(),
                 user.getName(),
                 user.getRole(),
-                accessTokenValidity
+                accessTokenValidity,
+                refreshTokenValidity
         );
     }
 

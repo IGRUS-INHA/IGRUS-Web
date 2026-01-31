@@ -2,6 +2,7 @@ package igrus.web.common.config;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -10,6 +11,7 @@ import java.util.Optional;
 public class AuditorAwareImpl implements AuditorAware<Long> {
 
     @Override
+    @NonNull
     public Optional<Long> getCurrentAuditor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -19,7 +21,7 @@ public class AuditorAwareImpl implements AuditorAware<Long> {
 
         Object principal = authentication.getPrincipal();
 
-        if (principal instanceof String && "anonymousUser".equals(principal)) {
+        if ("anonymousUser".equals(principal)) {
             return Optional.empty();
         }
 
