@@ -105,8 +105,8 @@ jobs:
 
       - name: Validate migration file integrity
         run: |
-          chmod +x scripts/validate-flyway-files.sh
-          bash scripts/validate-flyway-files.sh "origin/${{ github.base_ref }}"
+          chmod +x .github/workflows/flyway-validate/validate-flyway-files.sh
+          bash .github/workflows/flyway-validate/validate-flyway-files.sh "origin/${{ github.base_ref }}"
 
       - name: Download Flyway CLI
         run: |
