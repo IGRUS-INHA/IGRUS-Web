@@ -2,6 +2,7 @@ package igrus.web.community.post.domain;
 
 import igrus.web.community.board.domain.Board;
 import igrus.web.community.board.domain.BoardCode;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,14 +25,14 @@ class PostViewTest {
     }
 
     private User createMemberUser() {
-        User user = User.create("20231234", "테스트멤버", "member@inha.edu", "010-1234-5678", "컴퓨터공학과", "가입동기");
+        User user = User.create("20231234", "테스트멤버", "member@inha.edu", "010-1234-5678", "컴퓨터공학과", "가입동기", Gender.MALE, 1);
         ReflectionTestUtils.setField(user, "id", 1L);
         user.promoteToMember();
         return user;
     }
 
     private User createAnotherMemberUser() {
-        User user = User.create("20234567", "다른멤버", "another@inha.edu", "010-4567-8901", "컴퓨터공학과", "가입동기");
+        User user = User.create("20234567", "다른멤버", "another@inha.edu", "010-4567-8901", "컴퓨터공학과", "가입동기", Gender.MALE, 1);
         ReflectionTestUtils.setField(user, "id", 2L);
         user.promoteToMember();
         return user;

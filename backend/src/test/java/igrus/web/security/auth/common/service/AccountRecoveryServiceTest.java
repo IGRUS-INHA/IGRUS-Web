@@ -8,6 +8,7 @@ import igrus.web.security.auth.common.service.AccountRecoveryService.ReRegistrat
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.jwt.JwtTokenProvider;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -55,7 +56,9 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
                 "test@inha.edu",
                 "010-1234-5678",
                 "컴퓨터공학과",
-                "테스트 동기"
+                "테스트 동기",
+                Gender.MALE,
+                1
         );
         user.changeRole(role);
         User savedUser = userRepository.save(user);
@@ -76,7 +79,9 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
                 "test@inha.edu",
                 "010-1234-5678",
                 "컴퓨터공학과",
-                "테스트 동기"
+                "테스트 동기",
+                Gender.MALE,
+                1
         );
         user.changeRole(role);
         return userRepository.save(user);
@@ -533,7 +538,9 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
                     "test@inha.edu",
                     "010-1234-5678",
                     "컴퓨터공학과",
-                    "테스트 동기"
+                    "테스트 동기",
+                    Gender.MALE,
+                    1
             );
             user.changeRole(UserRole.OPERATOR);
             User savedUser = userRepository.save(user);
@@ -569,7 +576,9 @@ class AccountRecoveryServiceTest extends ServiceIntegrationTestBase {
                     "test@inha.edu",
                     "010-1234-5678",
                     "컴퓨터공학과",
-                    "테스트 동기"
+                    "테스트 동기",
+                    Gender.MALE,
+                    1
             );
             user.changeRole(UserRole.ADMIN);
             User savedUser = userRepository.save(user);

@@ -18,6 +18,8 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,9 +63,10 @@ public class Comment extends SoftDeletableEntity {
     @JoinColumn(name = "comments_parent_comment_id")
     private Comment parentComment;
 
-    /** 댓글 작성자 */
+    /** 댓글 작성자. 탈퇴(soft-deleted) 사용자는 @SQLRestriction에 의해 로딩 불가하므로 @NotFound로 null 허용 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comments_author_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private User author;
 
     /** 댓글 내용 (최대 500자) */

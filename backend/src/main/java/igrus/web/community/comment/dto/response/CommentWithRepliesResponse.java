@@ -1,6 +1,7 @@
 package igrus.web.community.comment.dto.response;
 
 import igrus.web.community.comment.domain.Comment;
+import igrus.web.user.domain.User;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -60,8 +61,8 @@ public class CommentWithRepliesResponse {
                 .id(comment.getId())
                 .postId(comment.getPost().getId())
                 .content(comment.getContent())
-                .authorId(comment.isAnonymous() ? null : comment.getAuthor().getId())
-                .authorName(comment.isAnonymous() ? ANONYMOUS_NAME : comment.getAuthor().getName())
+                .authorId(comment.isAnonymous() ? null : (comment.getAuthor() != null ? comment.getAuthor().getDisplayId() : null))
+                .authorName(comment.isAnonymous() ? ANONYMOUS_NAME : (comment.getAuthor() != null ? comment.getAuthor().getDisplayName() : User.WITHDRAWN_DISPLAY_NAME))
                 .isAnonymous(comment.isAnonymous())
                 .isDeleted(false)
                 .likeCount(likeCount)

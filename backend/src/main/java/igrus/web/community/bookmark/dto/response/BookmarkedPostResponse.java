@@ -2,6 +2,7 @@ package igrus.web.community.bookmark.dto.response;
 
 import igrus.web.community.bookmark.domain.Bookmark;
 import igrus.web.community.post.domain.Post;
+import igrus.web.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
@@ -44,7 +45,7 @@ public record BookmarkedPostResponse(
             isDeleted ? null : post.getTitle(),
             post.getBoard().getCode().name(),
             post.getBoard().getName(),
-            isDeleted ? null : (post.isAnonymous() ? "익명" : post.getAuthor().getName()),
+            isDeleted ? null : (post.isAnonymous() ? "익명" : (post.getAuthor() != null ? post.getAuthor().getDisplayName() : User.WITHDRAWN_DISPLAY_NAME)),
             post.getCreatedAt(),
             isDeleted,
             isDeleted ? "삭제된 게시글입니다" : null

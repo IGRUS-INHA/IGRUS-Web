@@ -7,6 +7,7 @@ import igrus.web.security.auth.common.repository.PrivacyConsentRepository;
 import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.security.auth.password.repository.PasswordResetTokenRepository;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.repository.UserRepository;
@@ -118,6 +119,9 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM board_permissions").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM boards").executeUpdate();
 
+            // Phase 2.5: Semester Members (User 종속)
+            entityManager.createNativeQuery("DELETE FROM semester_members").executeUpdate();
+
             // Phase 3: User 종속 테이블
             entityManager.createNativeQuery("DELETE FROM login_histories").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM refresh_tokens").executeUpdate();
@@ -157,7 +161,9 @@ public abstract class ServiceIntegrationTestBase {
                 email,
                 "010-" + studentId,
                 "컴퓨터공학과",
-                "테스트 동기"
+                "테스트 동기",
+                Gender.MALE,
+                1
         );
         user.changeRole(role);
         user.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE (테스트에서 기본적으로 ACTIVE 상태 사용)

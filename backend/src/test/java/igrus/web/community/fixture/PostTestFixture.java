@@ -1,5 +1,6 @@
 package igrus.web.community.fixture;
 
+import igrus.web.common.fixture.UserTestFixture;
 import igrus.web.community.board.domain.Board;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.dto.request.CreatePostRequest;
@@ -7,6 +8,7 @@ import igrus.web.community.post.dto.request.UpdatePostRequest;
 import igrus.web.user.domain.User;
 
 import igrus.web.common.fixture.TestConstants;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -115,6 +117,36 @@ public final class PostTestFixture {
         return Post.createNotice(board, author, DEFAULT_POST_TITLE, DEFAULT_POST_CONTENT, true);
     }
 
+    // ==================== 탈퇴 사용자 게시글 생성 (author = null) ====================
+
+    /**
+     * 탈퇴한 사용자의 일반 게시글을 생성합니다.
+     * author 필드를 null로 설정하여 탈퇴한 사용자를 시뮬레이션합니다.
+     *
+     * @param board 게시판
+     * @return author가 null인 일반 게시글
+     */
+    public static Post createNormalPostWithNullAuthor(Board board) {
+        User dummyAuthor = UserTestFixture.createMember();
+        Post post = Post.createPost(board, dummyAuthor, DEFAULT_POST_TITLE, DEFAULT_POST_CONTENT);
+        ReflectionTestUtils.setField(post, "author", null);
+        return post;
+    }
+
+    /**
+     * 탈퇴한 사용자의 익명 게시글을 생성합니다.
+     * author 필드를 null로 설정하여 탈퇴한 사용자를 시뮬레이션합니다.
+     *
+     * @param board 게시판 (자유게시판이어야 함)
+     * @return author가 null인 익명 게시글
+     */
+    public static Post createAnonymousPostWithNullAuthor(Board board) {
+        User dummyAuthor = UserTestFixture.createMember();
+        Post post = Post.createAnonymousPost(board, dummyAuthor, DEFAULT_POST_TITLE, DEFAULT_POST_CONTENT);
+        ReflectionTestUtils.setField(post, "author", null);
+        return post;
+    }
+
     // ==================== Post 생성 (ID 포함) ====================
 
     /**
@@ -138,6 +170,37 @@ public final class PostTestFixture {
      */
     public static Post normalPost(Board board, User author, Long id) {
         return withId(createNormalPost(board, author), id);
+    }
+
+    /**
+     * ID가 설정된 탈퇴한 사용자의 일반 게시글을 생성합니다.
+     *
+     * @param board 게시판
+     * @return ID가 설정된 author가 null인 일반 게시글
+     */
+    public static Post normalPostWithNullAuthor(Board board) {
+        return withId(createNormalPostWithNullAuthor(board), DEFAULT_POST_ID);
+    }
+
+    /**
+     * 지정된 ID가 설정된 탈퇴한 사용자의 일반 게시글을 생성합니다.
+     *
+     * @param board 게시판
+     * @param id    설정할 ID
+     * @return ID가 설정된 author가 null인 일반 게시글
+     */
+    public static Post normalPostWithNullAuthor(Board board, Long id) {
+        return withId(createNormalPostWithNullAuthor(board), id);
+    }
+
+    /**
+     * ID가 설정된 탈퇴한 사용자의 익명 게시글을 생성합니다.
+     *
+     * @param board 게시판 (자유게시판이어야 함)
+     * @return ID가 설정된 author가 null인 익명 게시글
+     */
+    public static Post anonymousPostWithNullAuthor(Board board) {
+        return withId(createAnonymousPostWithNullAuthor(board), DEFAULT_POST_ID);
     }
 
     /**

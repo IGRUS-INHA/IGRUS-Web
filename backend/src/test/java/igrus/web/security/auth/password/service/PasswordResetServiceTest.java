@@ -8,6 +8,7 @@ import igrus.web.security.auth.password.domain.PasswordResetToken;
 import igrus.web.security.auth.password.exception.InvalidPasswordFormatException;
 import igrus.web.security.auth.password.exception.PasswordResetTokenExpiredException;
 import igrus.web.security.auth.password.exception.PasswordResetTokenInvalidException;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +57,9 @@ class PasswordResetServiceTest extends ServiceIntegrationTestBase {
                 email,
                 "010-1234-5678",
                 "컴퓨터공학과",
-                "테스트 동기"
+                "테스트 동기",
+                Gender.MALE,
+                1
         );
         user.changeRole(UserRole.MEMBER);
         return userRepository.save(user);

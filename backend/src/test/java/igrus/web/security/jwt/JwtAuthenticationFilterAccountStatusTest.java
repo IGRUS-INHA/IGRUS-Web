@@ -3,6 +3,7 @@ package igrus.web.security.jwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.password.domain.PasswordCredential;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -203,7 +204,9 @@ class JwtAuthenticationFilterAccountStatusTest extends ServiceIntegrationTestBas
                 "test@inha.edu",
                 "010-1234-5678",
                 "컴퓨터공학과",
-                "테스트 동기"
+                "테스트 동기",
+                Gender.MALE,
+                1
         );
         user.changeRole(UserRole.ADMIN);  // ADMIN 권한으로 설정
         applyUserStatus(user, status);

@@ -1,16 +1,95 @@
-# React + Vite
+# IGRUS Web Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+IGRUS 동아리 웹사이트 프론트엔드
 
-Currently, two official plugins are available:
+## 기술 스택
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19 + Vite 7
+- TypeScript
+- Tanstack Query + Orval
+- Tailwind CSS
+- Zustand
+- React Hook Form + Zod
 
-## React Compiler
+## 시작하기
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+### 1. 의존성 설치
 
-## Expanding the ESLint configuration
+```bash
+pnpm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2. 환경 변수 설정
+
+`.env.local` 파일 생성:
+
+```bash
+VITE_API_URL=http://localhost:8080
+VITE_SWAGGER_URL=http://localhost:8080/v3/api-docs
+```
+
+### 3. 개발 서버 실행
+
+```bash
+pnpm dev
+```
+
+http://localhost:5173 에서 확인
+
+## 스크립트
+
+| 명령어 | 설명 |
+|--------|------|
+| `pnpm dev` | 개발 서버 실행 |
+| `pnpm build` | 프로덕션 빌드 |
+| `pnpm preview` | 빌드 결과 미리보기 |
+| `pnpm orval` | API 클라이언트 생성 |
+
+## Orval (API 클라이언트 생성)
+
+백엔드 OpenAPI 스펙을 기반으로 API 호출 훅을 자동 생성합니다.
+
+### 사용법
+
+1. **백엔드 서버 실행** (OpenAPI 스펙 제공 필요)
+
+2. **Orval 실행**
+   ```bash
+   pnpm orval
+   ```
+
+3. **생성된 파일 확인**
+   - `src/api/model/` 폴더에 생성됨
+   - 자동 생성된 파일은 직접 수정하지 말 것
+
+### 생성된 훅 사용 예시
+
+```tsx
+import { useGetUsers, useCreateUser } from "@/api";
+
+// 조회
+const { data, isLoading } = useGetUsers();
+
+// 생성
+const { mutate } = useCreateUser();
+mutate({ data: { name: "홍길동" } });
+```
+
+## 폴더 구조
+
+```
+src/
+├── api/           # API 클라이언트 (Orval 생성)
+│   ├── client.ts  # fetch 설정
+│   └── model/     # 자동 생성 (수정 금지)
+├── assets/        # 정적 파일
+├── components/    # 컴포넌트
+├── hooks/         # 커스텀 훅
+├── pages/         # 페이지
+├── stores/        # Zustand 스토어
+└── utils/         # 유틸리티
+```
+
+## 개발 규칙
+
+자세한 내용은 `CLAUDE.md` 참고

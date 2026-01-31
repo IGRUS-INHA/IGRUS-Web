@@ -2,6 +2,7 @@ package igrus.web.community.post.dto.response;
 
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.domain.PostImage;
+import igrus.web.user.domain.User;
 import java.time.Instant;
 import java.util.List;
 
@@ -49,8 +50,8 @@ public record PostDetailResponse(
             post.getBoard().getCode().name(),
             post.getTitle(),
             post.getContent(),
-            post.isAnonymous() ? null : post.getAuthor().getId(),
-            post.isAnonymous() ? "익명" : post.getAuthor().getName(),
+            post.isAnonymous() ? null : (post.getAuthor() != null ? post.getAuthor().getDisplayId() : null),
+            post.isAnonymous() ? "익명" : (post.getAuthor() != null ? post.getAuthor().getDisplayName() : User.WITHDRAWN_DISPLAY_NAME),
             post.isAnonymous(),
             post.isQuestion(),
             post.getViewCount(),

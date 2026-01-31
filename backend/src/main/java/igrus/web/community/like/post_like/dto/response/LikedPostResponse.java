@@ -2,6 +2,7 @@ package igrus.web.community.like.post_like.dto.response;
 
 import igrus.web.community.like.post_like.domain.PostLike;
 import igrus.web.community.post.domain.Post;
+import igrus.web.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
@@ -47,7 +48,7 @@ public record LikedPostResponse(
             isDeleted ? null : post.getTitle(),
             post.getBoard().getCode().name(),
             post.getBoard().getName(),
-            isDeleted ? null : (post.isAnonymous() ? "익명" : post.getAuthor().getName()),
+            isDeleted ? null : (post.isAnonymous() ? "익명" : (post.getAuthor() != null ? post.getAuthor().getDisplayName() : User.WITHDRAWN_DISPLAY_NAME)),
             post.getLikeCount(),
             post.getCreatedAt(),
             isDeleted,
