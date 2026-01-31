@@ -26,7 +26,9 @@ jobs:
               per_page: 100
             });
             const backendChanged = files.some(f =>
-              (f.filename.startsWith('backend/') && !f.filename.startsWith('backend/docs/')) || f.filename === '.github/workflows/backend-ci.yaml'
+              (f.filename.startsWith('backend/') && !f.filename.startsWith('backend/docs/')) ||
+               f.filename === '.github/workflows/backend-ci.yaml' ||
+               f.filename === '.github/workflows/flyway-validate/validate-flyway-files.sh'
             );
             core.setOutput('backend', backendChanged ? 'true' : 'false');
 
@@ -77,3 +79,44 @@ jobs:
         if: always()
         with:
           files: "**/build/test-results/test/TEST-*.xml"
+
+  flyway-validate:
+    needs: check-changes
+    if: needs.check-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: igrus
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate migration file integrity
+        run: |
+          chmod +x scripts/validate-flyway-files.sh
+          bash scripts/validate-flyway-files.sh "origin/${{ github.base_ref }}"
+
+      - name: Download Flyway CLI
+        run: |
+          wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/10.22.0/flyway-commandline-10.22.0-linux-x64.tar.gz | tar xz
+
+      - name: Run Flyway migration against MySQL
+        run: |
+          ./flyway-10.22.0/flyway \
+            -url="jdbc:mysql://127.0.0.1:3306/igrus?permitMysqlScheme=true&allowPublicKeyRetrieval=true" \
+            -user=root \
+            -password=testpassword \
+            -locations=filesystem:backend/src/main/resources/db/migration \
+            migrate
