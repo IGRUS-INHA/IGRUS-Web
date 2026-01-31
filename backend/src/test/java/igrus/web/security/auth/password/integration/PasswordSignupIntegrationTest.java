@@ -18,6 +18,7 @@ import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -90,6 +91,8 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -103,6 +106,8 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -116,6 +121,8 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -129,6 +136,8 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 phone,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -377,7 +386,9 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     "other@inha.edu",
                     VALID_PHONE,
                     "기타학과",
-                    "동기"
+                    "동기",
+                    Gender.MALE,
+                    1
             );
             userRepository.save(existingUser);
 
@@ -427,7 +438,9 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     "other@inha.edu",
                     "010-1234-5678",
                     "기타학과",
-                    "동기"
+                    "동기",
+                    Gender.MALE,
+                    1
             );
             userRepository.save(existingUser);
 
@@ -834,6 +847,8 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     "010-9999-9999",
                     VALID_DEPARTMENT,
                     VALID_MOTIVATION,
+                    Gender.MALE,
+                    1,
                     true
             );
 

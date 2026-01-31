@@ -4,6 +4,7 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.exception.account.AccountSuspendedException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.exception.UserNotFoundException;
@@ -126,7 +127,9 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 "test@inha.edu",
                 "010-1234-5678",
                 "컴퓨터공학과",
-                "테스트 동기"
+                "테스트 동기",
+                Gender.MALE,
+                1
         );
         user.changeRole(UserRole.ASSOCIATE);
         user.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
@@ -143,7 +146,9 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 "pending@inha.edu",
                 "010-1234-5679",
                 "컴퓨터공학과",
-                "테스트 동기"
+                "테스트 동기",
+                Gender.MALE,
+                1
         );
         user.changeRole(UserRole.ASSOCIATE);
         // verifyEmail() 호출하지 않아 PENDING_VERIFICATION 상태 유지

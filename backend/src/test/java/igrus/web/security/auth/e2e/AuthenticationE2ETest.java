@@ -18,6 +18,7 @@ import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordResetService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
 import igrus.web.security.jwt.JwtTokenProvider;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -111,6 +112,8 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                 TEST_PHONE,
                 TEST_DEPARTMENT,
                 TEST_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -388,7 +391,9 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     TEST_EMAIL,
                     TEST_PHONE,
                     TEST_DEPARTMENT,
-                    TEST_MOTIVATION
+                    TEST_MOTIVATION,
+                    Gender.MALE,
+                    1
             );
             user.changeRole(UserRole.MEMBER);
             user.verifyEmail();
@@ -421,7 +426,9 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     TEST_EMAIL,
                     TEST_PHONE,
                     TEST_DEPARTMENT,
-                    TEST_MOTIVATION
+                    TEST_MOTIVATION,
+                    Gender.MALE,
+                    1
             );
             user.changeRole(UserRole.MEMBER);
             user.verifyEmail();
@@ -469,7 +476,9 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     TEST_EMAIL,
                     TEST_PHONE,
                     TEST_DEPARTMENT,
-                    TEST_MOTIVATION
+                    TEST_MOTIVATION,
+                    Gender.MALE,
+                    1
             );
             user.changeRole(UserRole.OPERATOR);
             user.verifyEmail();
@@ -502,7 +511,9 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     TEST_EMAIL,
                     TEST_PHONE,
                     TEST_DEPARTMENT,
-                    TEST_MOTIVATION
+                    TEST_MOTIVATION,
+                    Gender.MALE,
+                    1
             );
             user.changeRole(UserRole.MEMBER);
             user.verifyEmail();

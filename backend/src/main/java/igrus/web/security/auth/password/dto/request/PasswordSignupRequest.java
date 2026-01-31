@@ -1,5 +1,6 @@
 package igrus.web.security.auth.password.dto.request;
 
+import igrus.web.user.domain.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
@@ -42,6 +43,15 @@ public record PasswordSignupRequest(
     @Schema(description = "동아리 가입 동기", example = "웹 개발 역량을 키우고 싶습니다.")
     @NotBlank(message = "가입 동기는 필수입니다")
     String motivation,
+
+    @Schema(description = "성별", example = "MALE")
+    @NotNull(message = "성별은 필수입니다")
+    Gender gender,
+
+    @Schema(description = "학년 (1 이상)", example = "1")
+    @NotNull(message = "학년은 필수입니다")
+    @Min(value = 1, message = "학년은 1 이상이어야 합니다")
+    Integer grade,
 
     @Schema(description = "개인정보 처리방침 동의 여부", example = "true")
     @NotNull(message = "개인정보 동의는 필수입니다")

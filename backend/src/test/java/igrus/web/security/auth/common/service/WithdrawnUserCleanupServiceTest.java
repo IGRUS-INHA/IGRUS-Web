@@ -5,6 +5,7 @@ import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.domain.PrivacyConsent;
 import igrus.web.security.auth.common.domain.RefreshToken;
 import igrus.web.security.auth.password.domain.PasswordCredential;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -42,7 +43,9 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
                     TEST_EMAIL,
                     "010-1234-5678",
                     "컴퓨터공학과",
-                    "테스트 동기"
+                    "테스트 동기",
+                    Gender.MALE,
+                    3
             );
             user.changeRole(UserRole.MEMBER);
             User savedUser = userRepository.save(user);
@@ -80,12 +83,12 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
     }
 
     @Nested
-    @DisplayName("5일 경과 사용자 익명화")
-    class AnonymizeExpiredUsersTest {
+    @DisplayName("5일 경과 사용자 인증 데이터 정리")
+    class CleanupExpiredUsersTest {
 
         @Test
-        @DisplayName("탈퇴 후 5일 경과한 사용자의 개인정보가 익명화된다")
-        void anonymizeExpiredWithdrawnUsers_afterFiveDays_anonymizesUser() {
+        @DisplayName("탈퇴 후 5일 경과한 사용자의 인증 데이터가 삭제된다")
+        void cleanupExpiredWithdrawnUsers_afterFiveDays_deletesAuthData() {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(6));
             User user = createAndSaveWithdrawnUser(deletedAt);
@@ -95,37 +98,34 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
             createAndSaveRefreshToken(user);
 
             // when
-            int processedCount = withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            int processedCount = withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(processedCount).isEqualTo(1);
-
-            // 사용자 정보가 익명화되었는지 확인
-            User anonymizedUser = userRepository.findByIdIncludingDeleted(user.getId()).orElseThrow();
-            assertThat(anonymizedUser.getName()).startsWith("탈퇴회원_");
-            assertThat(anonymizedUser.getEmail()).matches("deleted_[a-f0-9]{8}@deleted\\.local");
-            assertThat(anonymizedUser.getStudentId()).isEqualTo("DELETED_" + user.getId());
-            assertThat(anonymizedUser.getPhoneNumber()).isNull();
-            assertThat(anonymizedUser.getDepartment()).isNull();
-            assertThat(anonymizedUser.getMotivation()).isNull();
-            assertThat(anonymizedUser.isAnonymized()).isTrue();
 
             // 연관 데이터가 삭제되었는지 확인
             assertThat(passwordCredentialRepository.findByUserId(user.getId())).isEmpty();
             assertThat(privacyConsentRepository.findByUserId(user.getId())).isEmpty();
             assertThat(refreshTokenRepository.findByUserIdAndRevokedFalse(user.getId())).isEmpty();
+
+            // 학번, 이메일, 전화번호가 익명화되었는지 확인
+            User cleanedUser = userRepository.findByIdIncludingDeleted(user.getId()).orElseThrow();
+            assertThat(cleanedUser.getStudentId()).startsWith(TEST_STUDENT_ID + "_");
+            assertThat(cleanedUser.getStudentId()).hasSize(17); // 8 + 1 + 8
+            assertThat(cleanedUser.getEmail()).startsWith(TEST_EMAIL + "_");
+            assertThat(cleanedUser.getPhoneNumber()).isNull();
         }
 
         @Test
-        @DisplayName("탈퇴 후 5일 미경과 사용자는 익명화되지 않는다")
-        void anonymizeExpiredWithdrawnUsers_withinFiveDays_doesNotAnonymize() {
+        @DisplayName("탈퇴 후 5일 미경과 사용자는 정리되지 않는다")
+        void cleanupExpiredWithdrawnUsers_withinFiveDays_doesNotCleanup() {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(3));
             User user = createAndSaveWithdrawnUser(deletedAt);
             createAndSavePasswordCredential(user);
 
             // when
-            int processedCount = withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            int processedCount = withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(processedCount).isEqualTo(0);
@@ -134,75 +134,46 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
             User unchangedUser = userRepository.findByIdIncludingDeleted(user.getId()).orElseThrow();
             assertThat(unchangedUser.getName()).isEqualTo("홍길동");
             assertThat(unchangedUser.getEmail()).isEqualTo(TEST_EMAIL);
-            assertThat(unchangedUser.isAnonymized()).isFalse();
 
             // 연관 데이터도 그대로인지 확인
             assertThat(passwordCredentialRepository.findByUserIdIncludingDeleted(user.getId())).isPresent();
         }
 
         @Test
-        @DisplayName("이미 익명화된 사용자는 중복 처리되지 않는다")
-        void anonymizeExpiredWithdrawnUsers_alreadyAnonymized_skips() {
-            // given
-            Instant deletedAt = Instant.now().minus(Duration.ofDays(6));
-            User user = createAndSaveWithdrawnUser(deletedAt);
-            Long userId = user.getId();
-
-            // 이미 익명화 처리 - 트랜잭션 내에서 수행
-            transactionTemplate.execute(status -> {
-                User reloadedUser = userRepository.findByIdIncludingDeleted(userId).orElseThrow();
-                reloadedUser.anonymize("test1234");
-                return null;
-            });
-
-            // when
-            int processedCount = withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
-
-            // then
-            assertThat(processedCount).isEqualTo(0);
-        }
-
-        @Test
         @DisplayName("처리 대상이 없으면 0을 반환한다")
-        void anonymizeExpiredWithdrawnUsers_noTargets_returnsZero() {
+        void cleanupExpiredWithdrawnUsers_noTargets_returnsZero() {
             // given - 데이터 없음
 
             // when
-            int processedCount = withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            int processedCount = withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(processedCount).isEqualTo(0);
         }
 
         @Test
-        @DisplayName("여러 사용자가 익명화 대상이면 모두 처리된다")
-        void anonymizeExpiredWithdrawnUsers_multipleUsers_processesAll() {
+        @DisplayName("여러 사용자가 정리 대상이면 모두 처리된다")
+        void cleanupExpiredWithdrawnUsers_multipleUsers_processesAll() {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(6));
 
-            User user1 = User.create("11111111", "유저1", "user1@inha.edu", "010-1111-1111", "컴퓨터공학과", "동기1");
+            User user1 = User.create("11111111", "유저1", "user1@inha.edu", "010-1111-1111", "컴퓨터공학과", "동기1", Gender.MALE, 2);
             user1.withdraw();
             setField(user1, "deleted", true);
             setField(user1, "deletedAt", deletedAt);
             userRepository.save(user1);
 
-            User user2 = User.create("22222222", "유저2", "user2@inha.edu", "010-2222-2222", "전자공학과", "동기2");
+            User user2 = User.create("22222222", "유저2", "user2@inha.edu", "010-2222-2222", "전자공학과", "동기2", Gender.FEMALE, 1);
             user2.withdraw();
             setField(user2, "deleted", true);
             setField(user2, "deletedAt", deletedAt);
             userRepository.save(user2);
 
             // when
-            int processedCount = withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            int processedCount = withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(processedCount).isEqualTo(2);
-
-            User anonymizedUser1 = userRepository.findByIdIncludingDeleted(user1.getId()).orElseThrow();
-            User anonymizedUser2 = userRepository.findByIdIncludingDeleted(user2.getId()).orElseThrow();
-
-            assertThat(anonymizedUser1.isAnonymized()).isTrue();
-            assertThat(anonymizedUser2.isAnonymized()).isTrue();
         }
     }
 
@@ -212,14 +183,14 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
 
         @Test
         @DisplayName("비밀번호 자격 증명이 삭제된다")
-        void anonymizeExpiredWithdrawnUsers_deletesPasswordCredential() {
+        void cleanupExpiredWithdrawnUsers_deletesPasswordCredential() {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(6));
             User user = createAndSaveWithdrawnUser(deletedAt);
             PasswordCredential credential = createAndSavePasswordCredential(user);
 
             // when
-            withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(passwordCredentialRepository.findById(credential.getId())).isEmpty();
@@ -227,14 +198,14 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
 
         @Test
         @DisplayName("개인정보 동의 기록이 삭제된다")
-        void anonymizeExpiredWithdrawnUsers_deletesPrivacyConsent() {
+        void cleanupExpiredWithdrawnUsers_deletesPrivacyConsent() {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(6));
             User user = createAndSaveWithdrawnUser(deletedAt);
             PrivacyConsent consent = createAndSavePrivacyConsent(user);
 
             // when
-            withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(privacyConsentRepository.findById(consent.getId())).isEmpty();
@@ -242,14 +213,14 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
 
         @Test
         @DisplayName("이메일 인증 기록이 삭제된다")
-        void anonymizeExpiredWithdrawnUsers_deletesEmailVerification() {
+        void cleanupExpiredWithdrawnUsers_deletesEmailVerification() {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(6));
             createAndSaveWithdrawnUser(deletedAt);
             EmailVerification verification = createAndSaveEmailVerification(TEST_EMAIL);
 
             // when
-            withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(emailVerificationRepository.findById(verification.getId())).isEmpty();
@@ -257,14 +228,14 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
 
         @Test
         @DisplayName("리프레시 토큰이 삭제된다")
-        void anonymizeExpiredWithdrawnUsers_deletesRefreshToken() {
+        void cleanupExpiredWithdrawnUsers_deletesRefreshToken() {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(6));
             User user = createAndSaveWithdrawnUser(deletedAt);
             RefreshToken token = createAndSaveRefreshToken(user);
 
             // when
-            withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(refreshTokenRepository.findById(token.getId())).isEmpty();
@@ -276,48 +247,47 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
     class BoundaryConditionsTest {
 
         @Test
-        @DisplayName("정확히 5일 경과 시 익명화된다")
-        void anonymizeExpiredWithdrawnUsers_exactlyFiveDays_anonymizes() {
+        @DisplayName("정확히 5일 경과 시 정리된다")
+        void cleanupExpiredWithdrawnUsers_exactlyFiveDays_cleansUp() {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(5).plusSeconds(1));
             createAndSaveWithdrawnUser(deletedAt);
 
             // when
-            int processedCount = withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            int processedCount = withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(processedCount).isEqualTo(1);
         }
 
         @Test
-        @DisplayName("4일 23시간 59분 경과 시 익명화되지 않는다")
-        void anonymizeExpiredWithdrawnUsers_almostFiveDays_doesNotAnonymize() {
+        @DisplayName("4일 23시간 59분 경과 시 정리되지 않는다")
+        void cleanupExpiredWithdrawnUsers_almostFiveDays_doesNotCleanup() {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(4).plusHours(23).plusMinutes(59));
             createAndSaveWithdrawnUser(deletedAt);
 
             // when
-            int processedCount = withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            int processedCount = withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(processedCount).isEqualTo(0);
         }
 
         @Test
-        @DisplayName("활성 상태 사용자는 익명화 대상이 아니다")
-        void anonymizeExpiredWithdrawnUsers_activeUser_notAffected() {
+        @DisplayName("활성 상태 사용자는 정리 대상이 아니다")
+        void cleanupExpiredWithdrawnUsers_activeUser_notAffected() {
             // given
             User activeUser = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
 
             // when
-            int processedCount = withdrawnUserCleanupService.anonymizeExpiredWithdrawnUsers();
+            int processedCount = withdrawnUserCleanupService.cleanupExpiredWithdrawnUsers();
 
             // then
             assertThat(processedCount).isEqualTo(0);
 
             User unchangedUser = userRepository.findById(activeUser.getId()).orElseThrow();
             assertThat(unchangedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
-            assertThat(unchangedUser.isAnonymized()).isFalse();
         }
     }
 }

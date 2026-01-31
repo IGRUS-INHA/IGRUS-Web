@@ -17,6 +17,7 @@ import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -73,6 +74,8 @@ class PasswordSignupServiceTest extends ServiceIntegrationTestBase {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -198,7 +201,9 @@ class PasswordSignupServiceTest extends ServiceIntegrationTestBase {
                     "other@inha.edu",
                     VALID_PHONE,
                     "기타학과",
-                    "동기"
+                    "동기",
+                    Gender.MALE,
+                    1
             );
             userRepository.save(existingUser);
 

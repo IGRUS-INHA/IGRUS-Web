@@ -11,6 +11,7 @@ import igrus.web.inquiry.exception.*;
 import igrus.web.inquiry.repository.GuestInquiryRepository;
 import igrus.web.inquiry.repository.InquiryRepository;
 import igrus.web.inquiry.repository.MemberInquiryRepository;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -85,7 +86,7 @@ class InquiryServiceTest {
     }
 
     private User createAndSaveUser(String studentId, String email, String phoneNumber) {
-        User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기");
+        User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", Gender.MALE, 1);
         return userRepository.save(user);
     }
 
