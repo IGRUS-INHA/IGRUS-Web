@@ -1,68 +1,224 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   IGRUS Design System
+   ============================================ */
+
+@theme inline {
+  /* Radius */
+  --radius-r1: 4px;
+  --radius-r2: 8px;
+  --radius-r3: 12px;
+  --radius-r4: 16px;
+  --radius-full: 100px;
+
+  /* Spacing */
+  --spacing-s1: 4px;
+  --spacing-s2: 8px;
+  --spacing-s3: 12px;
+  --spacing-s4: 16px;
+  --spacing-s5: 24px;
+  --spacing-s6: 32px;
+  --spacing-s7: 48px;
+  --spacing-s8: 56px;
+
+  /* Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand Colors */
+  --color-brand-l1: var(--brand-l1);
+  --color-brand-l2: var(--brand-l2);
+  --color-brand-l3: var(--brand-l3);
+  --color-brand-l4: var(--brand-l4);
+  --color-brand-l5: var(--brand-l5);
+  --color-brand-l6: var(--brand-l6);
+  --color-brand-l7: var(--brand-l7);
+  --color-brand-l8: var(--brand-l8);
+
+  /* Gray Scale */
+  --color-gray-1: var(--gray-1);
+  --color-gray-2: var(--gray-2);
+  --color-gray-3: var(--gray-3);
+  --color-gray-4: var(--gray-4);
+  --color-gray-5: var(--gray-5);
+  --color-gray-6: var(--gray-6);
+  --color-gray-7: var(--gray-7);
+  --color-gray-8: var(--gray-8);
+
+  /* State Colors */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+}
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* Brand Colors - Main (#03A69E) */
+  --brand-l1: #E6F6F5;
+  --brand-l2: #B3E5E2;
+  --brand-l3: #66CBC5;
+  --brand-l4: #03A69E;
+  --brand-l5: #03958E;
+  --brand-l6: #027A75;
+  --brand-l7: #015F5B;
+  --brand-l8: #013E3B;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Gray Scale */
+  --gray-1: #F8F9FA;  /* 전체 배경색, 아주 연한 구분선 */
+  --gray-2: #E9ECEF;  /* 비활성 버튼 배경, 입력창 배경 */
+  --gray-3: #DEE2E6;  /* 일반적인 구분선(Divider), 테두리 */
+  --gray-4: #ADB5BD;  /* 비활성 텍스트, 아이콘 (Placeholder) */
+  --gray-5: #6C757D;  /* 보조 설명 텍스트, 메타 정보 */
+  --gray-6: #495057;  /* 일반 본문 텍스트 (Body Text) */
+  --gray-7: #343A40;  /* 강조 텍스트, 서브 타이틀 */
+  --gray-8: #212529;  /* 메인 타이틀, 가장 어두운 텍스트 */
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  /* State Colors */
+  --success: #28A745;
+  --warning: #FFC107;
+  --destructive: #DC3545;
+  --info: #17A2B8;
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+  /* Semantic Colors - Light Mode */
+  --background: #FFFFFF;
+  --foreground: #212529;           /* gray-8: 메인 텍스트 */
+  --card: #FFFFFF;
+  --card-foreground: #212529;      /* gray-8 */
+  --popover: #FFFFFF;
+  --popover-foreground: #212529;   /* gray-8 */
+  --primary: #03A69E;              /* brand-l4 */
+  --primary-foreground: #FFFFFF;
+  --secondary: #F8F9FA;            /* gray-1 */
+  --secondary-foreground: #495057; /* gray-6 */
+  --muted: #F8F9FA;                /* gray-1 */
+  --muted-foreground: #6C757D;     /* gray-5: 보조 텍스트 */
+  --accent: #E6F6F5;               /* brand-l1 */
+  --accent-foreground: #03958E;    /* brand-l5 */
+  --border: #DEE2E6;               /* gray-3: 테두리 */
+  --input: #E9ECEF;                /* gray-2: 입력창 배경 */
+  --ring: #03A69E;                 /* brand-l4 */
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  /* Radius */
+  --radius: 8px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+.dark {
+  /* Semantic Colors - Dark Mode */
+  --background: #212529;           /* gray-8: 가장 어두운 배경 */
+  --foreground: #F8F9FA;           /* gray-1: 밝은 텍스트 */
+  --card: #343A40;                 /* gray-7 */
+  --card-foreground: #F8F9FA;      /* gray-1 */
+  --popover: #343A40;              /* gray-7 */
+  --popover-foreground: #F8F9FA;   /* gray-1 */
+  --primary: #66CBC5;              /* brand-l3 */
+  --primary-foreground: #212529;   /* gray-8 */
+  --secondary: #343A40;            /* gray-7 */
+  --secondary-foreground: #E9ECEF; /* gray-2 */
+  --muted: #343A40;                /* gray-7 */
+  --muted-foreground: #ADB5BD;     /* gray-4: 보조 텍스트 */
+  --accent: #015F5B;               /* brand-l7 */
+  --accent-foreground: #E6F6F5;    /* brand-l1 */
+  --border: #495057;               /* gray-6: 테두리 */
+  --input: #343A40;                /* gray-7: 입력창 배경 */
+  --ring: #66CBC5;                 /* brand-l3 */
+}
+
+/* ============================================
+   Typography - Inter Font
+   ============================================ */
+
+@layer base {
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
   }
-  a:hover {
-    color: #747bff;
+
+  * {
+    @apply border-border outline-ring/50;
   }
-  button {
-    background-color: #f9f9f9;
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* Heading 1 - Bold / 42px / 1.2 */
+  h1, .text-h1 {
+    font-weight: 700;
+    font-size: 42px;
+    line-height: 1.2;
+  }
+
+  /* Heading 2 - Bold / 28px / 1.3 */
+  h2, .text-h2 {
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.3;
+  }
+
+  /* Heading 3 - Semi Bold / 22px / 1.3 */
+  h3, .text-h3 {
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.3;
+  }
+
+  /* Body 1 - Regular / 16px / 1.5 */
+  .text-b1 {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* Body 2 - Regular / 14px / 1.5 */
+  .text-b2 {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Label - Medium / 13px / Auto */
+  .text-label {
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  /* Caption 1 - Medium / 12px / Auto */
+  .text-c1 {
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  /* Caption 2 - Regular / 10px / Auto */
+  .text-c2 {
+    font-weight: 400;
+    font-size: 10px;
   }
 }
