@@ -48,6 +48,14 @@ public class Event extends BaseEntity {
     @Column(name = "event_description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    /** 행사 시작 일시 */
+    @Column(name = "event_start_at", nullable = false)
+    private Instant eventStartAt;
+
+    /** 행사 종료 일시 */
+    @Column(name = "event_end_at", nullable = false)
+    private Instant eventEndAt;
+
     /** 신청 시작일 */
     @Column(name = "event_registration_start_at", nullable = false)
     private Instant registrationStartAt;
@@ -92,6 +100,7 @@ public class Event extends BaseEntity {
      * @throws InvalidEventCapacityException 정원이 1 미만인 경우
      */
     public static Event create(User user, String title, String description,
+                               Instant eventStartAt, Instant eventEndAt,
                                Instant registrationStartAt, Instant registrationEndAt,
                                Integer capacity, EventRegistrationType registrationType) {
         validateCapacity(capacity);
@@ -100,6 +109,8 @@ public class Event extends BaseEntity {
         event.user = user;
         event.title = title;
         event.description = description;
+        event.eventStartAt = eventStartAt;
+        event.eventEndAt = eventEndAt;
         event.registrationStartAt = registrationStartAt;
         event.registrationEndAt = registrationEndAt;
         event.capacity = capacity;
@@ -268,6 +279,18 @@ public class Event extends BaseEntity {
         return this.registrationType == EventRegistrationType.SELECTION;
     }
 
+    /**
+     * 다른 행사와 시간이 겹치는지 확인합니다.
+     *
+     * @param otherStartAt 다른 행사 시작 시간
+     * @param otherEndAt   다른 행사 종료 시간
+     * @return 시간이 겹치면 true
+     */
+    public boolean overlaps(Instant otherStartAt, Instant otherEndAt) {
+        // 겹침 조건: 내 시작 < 상대 종료 && 내 종료 > 상대 시작
+        return this.eventStartAt.isBefore(otherEndAt) && this.eventEndAt.isAfter(otherStartAt);
+    }
+
     // === 수정 메서드 ===
 
     /**
@@ -277,6 +300,7 @@ public class Event extends BaseEntity {
      * @throws InvalidEventCapacityException 정원이 1 미만인 경우
      */
     public void update(String title, String description,
+                       Instant eventStartAt, Instant eventEndAt,
                        Instant registrationStartAt, Instant registrationEndAt,
                        Integer capacity) {
         if (!this.status.isEditable()) {
@@ -286,6 +310,8 @@ public class Event extends BaseEntity {
 
         this.title = title;
         this.description = description;
+        this.eventStartAt = eventStartAt;
+        this.eventEndAt = eventEndAt;
         this.registrationStartAt = registrationStartAt;
         this.registrationEndAt = registrationEndAt;
         this.capacity = capacity;
