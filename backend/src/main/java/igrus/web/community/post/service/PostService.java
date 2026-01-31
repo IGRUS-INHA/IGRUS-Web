@@ -346,8 +346,9 @@ public class PostService {
         // 조회수 증가 (재시도 2회)
         incrementViewCountWithRetry(post, 2);
 
-        // 현재 사용자가 작성자인지 확인
-        boolean isCurrentUserAuthor = post.getAuthor().getId().equals(currentUser.getId());
+        // 현재 사용자가 작성자인지 확인 (탈퇴한 사용자는 author가 null일 수 있음)
+        boolean isCurrentUserAuthor = post.getAuthor() != null
+                && post.getAuthor().getId().equals(currentUser.getId());
 
         // 좋아요/북마크 상태 조회
         boolean liked = postLikeRepository.existsByPostIdAndUserId(postId, currentUser.getId());

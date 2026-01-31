@@ -1,6 +1,7 @@
 package igrus.web.community.post.dto.response;
 
 import igrus.web.community.post.domain.Post;
+import igrus.web.user.domain.User;
 import java.time.Instant;
 
 /**
@@ -29,7 +30,7 @@ public record PostListResponse(
         return new PostListResponse(
             post.getId(),
             post.getTitle(),
-            post.isAnonymous() ? "익명" : post.getAuthor().getName(),
+            post.isAnonymous() ? "익명" : (post.getAuthor() != null ? post.getAuthor().getDisplayName() : User.WITHDRAWN_DISPLAY_NAME),
             post.isAnonymous(),
             post.isQuestion(),
             post.getViewCount(),
