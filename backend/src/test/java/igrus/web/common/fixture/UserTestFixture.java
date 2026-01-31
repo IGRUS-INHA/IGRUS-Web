@@ -74,7 +74,9 @@ public final class UserTestFixture {
                 email,
                 DEFAULT_PHONE,
                 DEFAULT_DEPARTMENT,
-                DEFAULT_MOTIVATION
+                DEFAULT_MOTIVATION,
+                DEFAULT_GENDER,
+                DEFAULT_GRADE
         );
         user.changeRole(role);
         user.verifyEmail();
@@ -147,6 +149,28 @@ public final class UserTestFixture {
      */
     public static User createAnotherMemberWithId() {
         return withId(createAnotherMember(), ANOTHER_MEMBER_ID);
+    }
+
+    // ==================== 탈퇴 사용자 생성 ====================
+
+    /**
+     * 탈퇴(WITHDRAWN) 상태의 정회원 User를 생성합니다.
+     *
+     * @return 탈퇴 상태 User
+     */
+    public static User createWithdrawnMember() {
+        User user = createMember();
+        user.withdraw();
+        return user;
+    }
+
+    /**
+     * ID가 설정된 탈퇴(WITHDRAWN) 상태의 정회원 User를 생성합니다.
+     *
+     * @return ID가 설정된 탈퇴 상태 User
+     */
+    public static User createWithdrawnMemberWithId() {
+        return withId(createWithdrawnMember(), DEFAULT_MEMBER_ID);
     }
 
     // ==================== AuthenticatedUser 생성 ====================

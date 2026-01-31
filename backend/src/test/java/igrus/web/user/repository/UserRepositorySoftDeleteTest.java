@@ -1,6 +1,7 @@
 package igrus.web.user.repository;
 
 import igrus.web.common.ServiceIntegrationTestBase;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +22,7 @@ class UserRepositorySoftDeleteTest extends ServiceIntegrationTestBase {
 
     private User createAndSaveUser(String studentId, String email, String phoneNumber) {
         return transactionTemplate.execute(status -> {
-            User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기");
+            User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", Gender.MALE, 1);
             return userRepository.save(user);
         });
     }

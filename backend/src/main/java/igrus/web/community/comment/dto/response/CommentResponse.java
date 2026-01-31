@@ -1,6 +1,7 @@
 package igrus.web.community.comment.dto.response;
 
 import igrus.web.community.comment.domain.Comment;
+import igrus.web.user.domain.User;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -58,8 +59,8 @@ public class CommentResponse {
                 .postId(comment.getPost().getId())
                 .parentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null)
                 .content(comment.getContent())
-                .authorId(comment.isAnonymous() ? null : comment.getAuthor().getId())
-                .authorName(comment.isAnonymous() ? ANONYMOUS_NAME : comment.getAuthor().getName())
+                .authorId(comment.isAnonymous() ? null : (comment.getAuthor() != null ? comment.getAuthor().getDisplayId() : null))
+                .authorName(comment.isAnonymous() ? ANONYMOUS_NAME : (comment.getAuthor() != null ? comment.getAuthor().getDisplayName() : User.WITHDRAWN_DISPLAY_NAME))
                 .isAnonymous(comment.isAnonymous())
                 .isDeleted(false)
                 .likeCount(likeCount)
@@ -84,8 +85,8 @@ public class CommentResponse {
                     .postId(comment.getPost().getId())
                     .parentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null)
                     .content(DELETED_CONTENT)
-                    .authorId(comment.getAuthor().getId())
-                    .authorName(comment.getAuthor().getName())
+                    .authorId(comment.getAuthor() != null ? comment.getAuthor().getId() : null)
+                    .authorName(comment.getAuthor() != null ? comment.getAuthor().getName() : User.WITHDRAWN_DISPLAY_NAME)
                     .isAnonymous(comment.isAnonymous())
                     .isDeleted(true)
                     .likeCount(likeCount)
@@ -99,8 +100,8 @@ public class CommentResponse {
                 .postId(comment.getPost().getId())
                 .parentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null)
                 .content(comment.getContent())
-                .authorId(comment.getAuthor().getId())
-                .authorName(comment.getAuthor().getName())
+                .authorId(comment.getAuthor() != null ? comment.getAuthor().getId() : null)
+                .authorName(comment.getAuthor() != null ? comment.getAuthor().getName() : User.WITHDRAWN_DISPLAY_NAME)
                 .isAnonymous(comment.isAnonymous())
                 .isDeleted(false)
                 .likeCount(likeCount)

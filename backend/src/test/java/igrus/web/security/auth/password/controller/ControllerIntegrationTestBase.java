@@ -8,6 +8,7 @@ import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordSignupService;
 import igrus.web.security.jwt.JwtTokenProvider;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -150,7 +151,9 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
                 email,
                 "010-" + studentId,
                 TEST_DEPARTMENT,
-                TEST_MOTIVATION
+                TEST_MOTIVATION,
+                Gender.MALE,
+                1
         );
         user.changeRole(role);
         applyUserStatus(user, status);

@@ -10,6 +10,7 @@ import igrus.web.security.auth.common.service.AccountRecoveryService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
+import igrus.web.user.domain.Gender;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.service.PasswordAuthService;
 import igrus.web.security.auth.password.service.PasswordResetService;
@@ -86,6 +87,8 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -99,6 +102,8 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -112,6 +117,8 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -125,6 +132,8 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -138,6 +147,8 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -151,6 +162,8 @@ class PasswordAuthControllerSignupTest {
                 phone,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -164,6 +177,8 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 department,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -177,6 +192,8 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 motivation,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -190,6 +207,8 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                Gender.MALE,
+                1,
                 privacyConsent
         );
     }

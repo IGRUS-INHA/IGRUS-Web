@@ -14,13 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.UUID;
 
 /**
- * 탈퇴 사용자 개인정보 정리 서비스.
+ * 탈퇴 사용자 인증 데이터 정리 서비스.
  *
- * <p>탈퇴 후 복구 가능 기간(5일)이 경과한 사용자의 개인정보를 영구 삭제합니다.
- * 개인정보보호법 준수 및 데이터 최소화 원칙을 따릅니다.</p>
+ * <p>탈퇴 후 복구 가능 기간(5일)이 경과한 사용자의 인증 데이터를 영구 삭제합니다.</p>
  *
  * <h3>완전 삭제 대상:</h3>
  * <ul>
@@ -28,14 +26,6 @@ import java.util.UUID;
  *   <li>개인정보 동의 기록 (PrivacyConsent)</li>
  *   <li>이메일 인증 기록 (EmailVerification)</li>
  *   <li>Refresh Token</li>
- * </ul>
- *
- * <h3>익명화 처리 대상:</h3>
- * <ul>
- *   <li>이름: "탈퇴회원_" + 랜덤 해시</li>
- *   <li>이메일: "deleted_" + 랜덤 해시 + "@deleted.local"</li>
- *   <li>학번: "DELETED_" + 사용자 ID</li>
- *   <li>전화번호, 학과, 가입동기: null</li>
  * </ul>
  *
  * @see igrus.web.security.auth.common.scheduler.WithdrawnUserCleanupScheduler
@@ -55,18 +45,18 @@ public class WithdrawnUserCleanupService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     /**
-     * 탈퇴 후 복구 기간이 만료된 사용자의 개인정보를 익명화합니다.
+     * 탈퇴 후 복구 기간이 만료된 사용자의 인증 데이터를 정리합니다.
      *
      * @return 처리된 사용자 수
      */
-    public int anonymizeExpiredWithdrawnUsers() {
+    public int cleanupExpiredWithdrawnUsers() {
         Instant cutoffTime = Instant.now().minus(RECOVERY_PERIOD_DAYS, ChronoUnit.DAYS);
 
-        List<User> usersToAnonymize = userRepository.findWithdrawnUsersBeforeAndNotAnonymized(cutoffTime);
+        List<User> usersToCleanup = userRepository.findWithdrawnUsersBefore(cutoffTime);
 
         int count = 0;
-        for (User user : usersToAnonymize) {
-            anonymizeUser(user);
+        for (User user : usersToCleanup) {
+            cleanupUser(user);
             count++;
         }
 
@@ -74,34 +64,23 @@ public class WithdrawnUserCleanupService {
     }
 
     /**
-     * 단일 사용자의 개인정보를 익명화합니다.
+     * 단일 사용자의 인증 데이터를 정리합니다.
      *
-     * @param user 익명화할 사용자
+     * @param user 정리할 사용자
      */
-    private void anonymizeUser(User user) {
+    private void cleanupUser(User user) {
         Long userId = user.getId();
         String email = user.getEmail();
-        String anonymousHash = generateAnonymousHash();
 
-        // 1. 연관 데이터 삭제 (hard delete - soft deleted User의 연관 데이터도 삭제)
+        // 연관 인증 데이터 삭제 (hard delete)
         passwordCredentialRepository.hardDeleteByUserId(userId);
         privacyConsentRepository.hardDeleteByUserId(userId);
         emailVerificationRepository.deleteByEmail(email);
         refreshTokenRepository.hardDeleteByUserId(userId);
 
-        // 2. 사용자 정보 익명화
-        user.anonymize(anonymousHash);
-        userRepository.save(user);
+        // 재가입 시 unique 제약조건 충돌 방지를 위한 익명화
+        user.anonymizeForCleanup();
 
-        log.info("탈퇴 사용자 익명화 완료: userId={}", userId);
-    }
-
-    /**
-     * 익명화에 사용할 랜덤 해시를 생성합니다.
-     *
-     * @return 8자리 랜덤 해시
-     */
-    private String generateAnonymousHash() {
-        return UUID.randomUUID().toString().substring(0, 8);
+        log.info("탈퇴 사용자 인증 데이터 정리 완료: userId={}", userId);
     }
 }

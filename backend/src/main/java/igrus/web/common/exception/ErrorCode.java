@@ -19,6 +19,7 @@ public enum ErrorCode {
     SAME_ROLE_CHANGE(400, "이전 역할과 새 역할이 동일합니다"),
     INVALID_STUDENT_ID(400, "학번은 8자리 숫자여야 합니다"),
     INVALID_EMAIL_FORMAT(400, "유효하지 않은 이메일 형식입니다"),
+    INVALID_GRADE(400, "학년은 1 이상이어야 합니다"),
 
     // Inquiry
     INQUIRY_NOT_FOUND(404, "문의를 찾을 수 없습니다"),
@@ -111,7 +112,13 @@ public enum ErrorCode {
 
     // Bookmark
     BOOKMARK_ALREADY_EXISTS(409, "이미 북마크한 게시글입니다"),
-    BOOKMARK_NOT_FOUND(404, "북마크를 찾을 수 없습니다");
+    BOOKMARK_NOT_FOUND(404, "북마크를 찾을 수 없습니다"),
+
+    // Semester Member
+    SEMESTER_MEMBER_NOT_FOUND(404, "해당 학기에 등록된 회원을 찾을 수 없습니다"),
+    SEMESTER_MEMBER_ALREADY_EXISTS(409, "이미 해당 학기에 등록된 회원입니다"),
+    SEMESTER_INVALID_SEMESTER(400, "학기는 1 또는 2만 가능합니다"),
+    SEMESTER_INVALID_YEAR(400, "유효하지 않은 연도입니다");
 
     private final int status;
     private final String message;

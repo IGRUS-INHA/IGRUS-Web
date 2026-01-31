@@ -2,6 +2,7 @@ package igrus.web.user.domain;
 
 import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.user.exception.InvalidEmailException;
+import igrus.web.user.exception.InvalidGradeException;
 import igrus.web.user.exception.InvalidStudentIdException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -12,6 +13,7 @@ import org.hibernate.annotations.SQLRestriction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 // 사용자 기본정보
 @Entity
@@ -48,17 +50,26 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_email", unique = true, nullable = false)
     private String email;
 
-    /** 전화번호 (최대 20자, 익명화 시 null) */
+    /** 전화번호 (최대 20자) */
     @Column(name = "users_phone_number", unique = true, length = 20)
     private String phoneNumber;
 
-    /** 학과 (최대 50자, 익명화 시 null) */
+    /** 학과 (최대 50자) */
     @Column(name = "users_department", length = 50)
     private String department;
 
-    /** 가입 동기 (익명화 시 null) */
+    /** 가입 동기 */
     @Column(name = "users_motivation", columnDefinition = "TEXT")
     private String motivation;
+
+    /** 성별 (MALE, FEMALE) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "users_gender", nullable = false, length = 10)
+    private Gender gender;
+
+    /** 학년 (1 이상) */
+    @Column(name = "users_grade", nullable = false)
+    private Integer grade;
 
     /** 사용자 역할 (ASSOCIATE, MEMBER, OPERATOR, ADMIN). 기본값: ASSOCIATE */
     @Enumerated(EnumType.STRING)
@@ -70,18 +81,6 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_status", nullable = false)
     private UserStatus status = UserStatus.PENDING_VERIFICATION;
 
-    /**
-     * 익명화 처리 완료 여부.
-     * <p>
-     * 탈퇴 후 복구 가능 기간(5일) 만료 시 개인정보 영구 삭제 스케줄러에 의해 true로 설정됩니다.
-     * 스케줄러가 매일 실행될 때, 이미 익명화된 사용자를 중복 처리하지 않도록 구분하는 용도입니다.
-     * </p>
-     *
-     * @see igrus.web.security.auth.common.scheduler.WithdrawnUserCleanupScheduler
-     */
-    @Column(name = "users_anonymized", nullable = false)
-    private boolean anonymized = false;
-
     /** 사용자 직책 목록 (다대다 관계: 한 사용자가 여러 직책 보유 가능) */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserPosition> userPositions = new ArrayList<>();
@@ -89,9 +88,11 @@ public class User extends SoftDeletableEntity {
     // === 정적 팩토리 메서드 ===
 
     public static User create(String studentId, String name, String email,
-                              String phoneNumber, String department, String motivation) {
+                              String phoneNumber, String department, String motivation,
+                              Gender gender, int grade) {
         validateStudentId(studentId);
         validateEmail(email);
+        validateGrade(grade);
 
         User user = new User();
         user.studentId = studentId;
@@ -100,6 +101,8 @@ public class User extends SoftDeletableEntity {
         user.phoneNumber = phoneNumber;
         user.department = department;
         user.motivation = motivation;
+        user.gender = gender;
+        user.grade = grade;
         user.role = UserRole.ASSOCIATE;
         return user;
     }
@@ -114,6 +117,12 @@ public class User extends SoftDeletableEntity {
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
         if (email == null || !email.matches(emailRegex)) {
             throw new InvalidEmailException(email);
+        }
+    }
+
+    private static void validateGrade(int grade) {
+        if (grade < 1) {
+            throw new InvalidGradeException(grade);
         }
     }
 
@@ -159,6 +168,27 @@ public class User extends SoftDeletableEntity {
 
     public boolean isAssociate() {
         return this.role == UserRole.ASSOCIATE;
+    }
+
+    // === 표시용 상수 및 메서드 ===
+
+    /** 탈퇴한 사용자 표시 이름 */
+    public static final String WITHDRAWN_DISPLAY_NAME = "탈퇴한 사용자";
+
+    /**
+     * 게시글/댓글에서 표시할 작성자 이름을 반환합니다.
+     * 탈퇴한 사용자는 "탈퇴한 사용자"를 반환합니다.
+     */
+    public String getDisplayName() {
+        return isWithdrawn() ? WITHDRAWN_DISPLAY_NAME : name;
+    }
+
+    /**
+     * 게시글/댓글에서 표시할 작성자 ID를 반환합니다.
+     * 탈퇴한 사용자는 null을 반환합니다.
+     */
+    public Long getDisplayId() {
+        return isWithdrawn() ? null : id;
     }
 
     // === 상태 확인 ===
@@ -237,41 +267,33 @@ public class User extends SoftDeletableEntity {
         return Collections.unmodifiableList(this.userPositions);
     }
 
+    // === 탈퇴 사용자 익명화 ===
+
+    /**
+     * 탈퇴 사용자의 학번, 이메일, 전화번호를 익명화합니다.
+     * 각 값 뒤에 '_{랜덤문자열}'을 추가하여 unique 제약조건 충돌을 방지합니다.
+     */
+    public void anonymizeForCleanup() {
+        String suffix = "_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        this.studentId = this.studentId + suffix;
+        this.email = this.email + suffix;
+        this.phoneNumber = null;
+    }
+
     // === 프로필 수정 ===
 
-    public void updateProfile(String name, String phoneNumber, String department) {
+    public void updateProfile(String name, String phoneNumber, String department,
+                              Gender gender, int grade) {
+        validateGrade(grade);
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.department = department;
+        this.gender = gender;
+        this.grade = grade;
     }
 
     public void updateEmail(String email) {
         this.email = email;
-    }
-
-    // === 익명화 ===
-
-    /**
-     * 사용자 개인정보를 익명화합니다.
-     * <p>
-     * 탈퇴 후 복구 가능 기간 만료 시 호출됩니다.
-     * 이름, 이메일, 학번을 익명 값으로 대체하고, 전화번호/학과/가입동기는 null로 설정합니다.
-     * </p>
-     *
-     * @param hash 익명화에 사용할 고유 해시값 (예: UUID 앞 8자리)
-     */
-    public void anonymize(String hash) {
-        this.name = "탈퇴회원_" + hash;
-        this.email = "deleted_" + hash + "@deleted.local";
-        this.studentId = "DELETED_" + this.id;
-        this.phoneNumber = null;
-        this.department = null;
-        this.motivation = null;
-        this.anonymized = true;
-    }
-
-    public boolean isAnonymized() {
-        return this.anonymized;
     }
 
 }

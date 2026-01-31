@@ -1,10 +1,14 @@
 package igrus.web.community.post.service;
 
 import igrus.web.community.board.domain.Board;
+import igrus.web.community.bookmark.repository.BookmarkRepository;
+import igrus.web.community.like.post_like.repository.PostLikeRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.dto.request.CreatePostRequest;
 import igrus.web.community.post.dto.request.UpdatePostRequest;
 import igrus.web.community.post.dto.response.PostCreateResponse;
+import igrus.web.community.post.dto.response.PostDetailResponse;
+import igrus.web.community.post.dto.response.PostListPageResponse;
 import igrus.web.community.post.dto.response.PostUpdateResponse;
 import igrus.web.community.board.exception.BoardWriteDeniedException;
 import igrus.web.community.board.service.BoardService;
@@ -24,10 +28,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
 
+import static igrus.web.common.fixture.TestConstants.*;
 import static igrus.web.common.fixture.TestEntityIdAssigner.withId;
 import static igrus.web.common.fixture.UserTestFixture.*;
 import static igrus.web.community.fixture.BoardTestFixture.*;
@@ -35,6 +44,7 @@ import static igrus.web.community.fixture.PostTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
@@ -74,6 +84,12 @@ class PostServiceTest {
 
     @Mock
     private PostViewService postViewService;
+
+    @Mock
+    private PostLikeRepository postLikeRepository;
+
+    @Mock
+    private BookmarkRepository bookmarkRepository;
 
     @InjectMocks
     private PostService postService;
@@ -691,6 +707,109 @@ class PostServiceTest {
             // when & then
             assertThatThrownBy(() -> postService.createPost(boardCode, request, memberAuth))
                     .isInstanceOf(BoardWriteDeniedException.class);
+        }
+    }
+
+    // ============================================================
+    // 탈퇴 사용자 게시글 조회 테스트
+    // ============================================================
+
+    @Nested
+    @DisplayName("탈퇴 사용자 게시글 상세 조회 테스트")
+    class WithdrawnUserPostDetailTest {
+
+        @DisplayName("탈퇴한 사용자의 게시글 상세 조회 시 authorId=null, authorName='탈퇴한 사용자', isAuthor=false")
+        @Test
+        void getPostDetail_WithdrawnAuthor_ReturnsWithdrawnDisplayName() {
+            // given
+            String boardCode = "general";
+            Long postId = DEFAULT_POST_ID;
+
+            Post post = normalPostWithNullAuthor(generalBoard);
+
+            given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
+            given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
+            doNothing().when(boardPermissionService).checkReadPermission(generalBoard, memberUser.getRole());
+            given(postRepository.findByBoardAndIdAndDeletedFalse(generalBoard, postId)).willReturn(Optional.of(post));
+            doNothing().when(postViewService).recordViewAsync(post.getId(), memberUser.getId());
+            given(postRepository.saveAndFlush(any(Post.class))).willReturn(post);
+            given(postLikeRepository.existsByPostIdAndUserId(postId, memberUser.getId())).willReturn(false);
+            given(bookmarkRepository.existsByPostIdAndUserId(postId, memberUser.getId())).willReturn(false);
+
+            // when
+            PostDetailResponse response = postService.getPostDetail(boardCode, postId, memberAuth);
+
+            // then
+            assertThat(response.authorId()).isNull();
+            assertThat(response.authorName()).isEqualTo(User.WITHDRAWN_DISPLAY_NAME);
+            assertThat(response.isAuthor()).isFalse();
+            assertThat(response.title()).isEqualTo(DEFAULT_POST_TITLE);
+            assertThat(response.content()).isEqualTo(DEFAULT_POST_CONTENT);
+        }
+
+        @DisplayName("탈퇴한 사용자의 익명 게시글 상세 조회 시 authorId=null, authorName='익명'")
+        @Test
+        void getPostDetail_WithdrawnAuthor_AnonymousPost_ReturnsAnonymousName() {
+            // given
+            String boardCode = "general";
+            Long postId = DEFAULT_POST_ID;
+
+            Post post = anonymousPostWithNullAuthor(generalBoard);
+
+            given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
+            given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
+            doNothing().when(boardPermissionService).checkReadPermission(generalBoard, memberUser.getRole());
+            given(postRepository.findByBoardAndIdAndDeletedFalse(generalBoard, postId)).willReturn(Optional.of(post));
+            doNothing().when(postViewService).recordViewAsync(post.getId(), memberUser.getId());
+            given(postRepository.saveAndFlush(any(Post.class))).willReturn(post);
+            given(postLikeRepository.existsByPostIdAndUserId(postId, memberUser.getId())).willReturn(false);
+            given(bookmarkRepository.existsByPostIdAndUserId(postId, memberUser.getId())).willReturn(false);
+
+            // when
+            PostDetailResponse response = postService.getPostDetail(boardCode, postId, memberAuth);
+
+            // then
+            assertThat(response.authorId()).isNull();
+            assertThat(response.authorName()).isEqualTo("익명");
+            assertThat(response.isAuthor()).isFalse();
+            assertThat(response.isAnonymous()).isTrue();
+            assertThat(response.content()).isEqualTo(DEFAULT_POST_CONTENT);
+        }
+    }
+
+    @Nested
+    @DisplayName("탈퇴 사용자 게시글 목록 조회 테스트")
+    class WithdrawnUserPostListTest {
+
+        @DisplayName("목록에 탈퇴한 사용자의 게시글이 포함된 경우 authorName='탈퇴한 사용자'")
+        @Test
+        void getPostList_IncludesWithdrawnAuthorPost_ReturnsWithdrawnDisplayName() {
+            // given
+            String boardCode = "general";
+            Pageable pageable = PageRequest.of(0, 10);
+
+            Post normalPostEntity = normalPost(generalBoard, memberUser, 2L);
+            Post withdrawnPost = normalPostWithNullAuthor(generalBoard, 3L);
+
+            Page<Post> postPage = new PageImpl<>(
+                    List.of(normalPostEntity, withdrawnPost),
+                    pageable,
+                    2
+            );
+
+            given(userRepository.findById(memberAuth.userId())).willReturn(Optional.of(memberUser));
+            given(boardService.getBoardEntity(boardCode)).willReturn(generalBoard);
+            doNothing().when(boardPermissionService).checkReadPermission(generalBoard, memberUser.getRole());
+            given(postRepository.findByBoardAndDeletedFalseOrderByCreatedAtDesc(eq(generalBoard), any(Pageable.class)))
+                    .willReturn(postPage);
+
+            // when
+            PostListPageResponse response = postService.getPostList(boardCode, memberAuth, null, null, pageable);
+
+            // then
+            assertThat(response.posts()).hasSize(2);
+            assertThat(response.posts().get(0).authorName()).isEqualTo(DEFAULT_NAME);
+            assertThat(response.posts().get(1).authorName()).isEqualTo(User.WITHDRAWN_DISPLAY_NAME);
         }
     }
 }
