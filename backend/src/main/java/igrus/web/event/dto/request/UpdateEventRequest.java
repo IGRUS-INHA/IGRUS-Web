@@ -13,6 +13,7 @@ import java.time.Instant;
  *
  * @param title               행사 제목 (필수, 최대 100자)
  * @param description         행사 설명 (필수)
+ * @param location            행사 장소 (필수, 최대 200자)
  * @param eventStartAt        행사 시작일시 (필수)
  * @param eventEndAt          행사 종료일시 (필수)
  * @param registrationStartAt 신청 시작일 (필수)
@@ -26,6 +27,10 @@ public record UpdateEventRequest(
 
         @NotBlank(message = "행사 설명을 입력해 주세요")
         String description,
+
+        @NotBlank(message = "행사 장소를 입력해 주세요")
+        @Size(max = 200, message = "행사 장소는 200자 이내여야 합니다")
+        String location,
 
         @NotNull(message = "행사 시작일을 입력해 주세요")
         Instant eventStartAt,

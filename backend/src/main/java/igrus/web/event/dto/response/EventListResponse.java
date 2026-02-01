@@ -12,6 +12,7 @@ import java.time.Instant;
  *
  * @param id                  행사 ID
  * @param title               행사 제목
+ * @param location            행사 장소
  * @param eventStartAt        행사 시작일시
  * @param eventEndAt          행사 종료일시
  * @param registrationEndAt   신청 마감일시
@@ -25,6 +26,7 @@ import java.time.Instant;
 public record EventListResponse(
         Long id,
         String title,
+        String location,
         Instant eventStartAt,
         Instant eventEndAt,
         Instant registrationEndAt,
@@ -45,6 +47,7 @@ public record EventListResponse(
         return new EventListResponse(
                 event.getId(),
                 event.getTitle(),
+                event.getLocation(),
                 event.getEventStartAt(),
                 event.getEventEndAt(),
                 event.getRegistrationEndAt(),
