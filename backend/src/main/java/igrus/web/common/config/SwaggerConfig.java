@@ -8,6 +8,7 @@ import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 
 import java.util.List;
 
@@ -30,6 +31,38 @@ public class SwaggerConfig {
                 .info(apiInfo())
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME, securityScheme()));
+    }
+
+    @Bean
+    public OpenApiCustomizer pageableDescriptionCustomizer() {
+        return openApi -> {
+            if (openApi.getPaths() == null) return;
+
+            openApi.getPaths().values().forEach(pathItem ->
+                    pathItem.readOperations().forEach(op -> {
+                        if (op.getParameters() == null) return;
+                        op.getParameters().forEach(p -> {
+                            switch (p.getName()) {
+                                case "page" -> {
+                                    p.setDescription("페이지 번호 (0부터 시작)");
+                                    p.setExample("0");
+                                }
+                                case "size" -> {
+                                    p.setDescription("페이지당 항목 수");
+                                    p.setExample("20");
+                                }
+                                case "sort" -> {
+                                    p.setDescription(
+                                            "정렬 조건. " +
+                                                    "여러 정렬은 sort를 여러 번 지정합니다. (sort=createdAt,DESC&sort=id,ASC)"
+                                    );
+                                    p.setExample("createdAt,desc");
+                                }
+                            }
+                        });
+                    })
+            );
+        };
     }
 
     private Info apiInfo() {
