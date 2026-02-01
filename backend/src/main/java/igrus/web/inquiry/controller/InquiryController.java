@@ -16,6 +16,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -99,17 +101,13 @@ public class InquiryController {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요")
     })
-    @Parameters({
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "페이지당 항목 수", example = "20"),
-            @Parameter(name = "sort", description = "정렬 기준 (예: createdAt,desc)", example = "createdAt,desc")
-    })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/my")
     public ResponseEntity<Page<InquiryListResponse>> getMyInquiries(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable
     ) {
         Page<InquiryListResponse> response = inquiryService.getMyInquiries(user.userId(), pageable);
         return ResponseEntity.ok(response);
@@ -149,9 +147,6 @@ public class InquiryController {
     @Parameters({
             @Parameter(name = "type", description = "문의 유형 필터", example = "JOIN"),
             @Parameter(name = "status", description = "처리 상태 필터", example = "PENDING"),
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "페이지당 항목 수", example = "20"),
-            @Parameter(name = "sort", description = "정렬 기준 (예: createdAt,desc)", example = "createdAt,desc")
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
@@ -159,7 +154,8 @@ public class InquiryController {
     public ResponseEntity<Page<InquiryListResponse>> getAllInquiries(
             @RequestParam(required = false) InquiryType type,
             @RequestParam(required = false) InquiryStatus status,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable
     ) {
         Page<InquiryListResponse> response = inquiryService.getAllInquiries(type, status, pageable);
         return ResponseEntity.ok(response);
