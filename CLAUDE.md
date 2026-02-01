@@ -18,11 +18,14 @@ IGRUS-Web/
 ### 서브 프로젝트별 가이드
 
 각 서브 프로젝트의 상세한 개발 규칙은 해당 디렉토리의 CLAUDE.md 참조:
+
+- `frontend/CLAUDE.md` - 프론트엔드 개발 규칙, TypeScript, React 가이드
 - `backend/CLAUDE.md` - 백엔드 개발 규칙, 아키텍처, 테스트 가이드
 
 ## 기술 스택
 
 ### Backend
+
 - Java 21
 - Spring Boot 4.0.1
 - Spring Data JPA
@@ -31,9 +34,13 @@ IGRUS-Web/
 - Gradle
 
 ### Frontend
+
 - React 19
 - TypeScript
 - Vite 7
+- React Router DOM (라우팅)
+- Zustand (상태관리)
+- Orval + TanStack Query (API 클라이언트)
 
 ## 커밋 규칙
 
@@ -78,9 +85,11 @@ refactor(api): 유저 서비스 코드 정리
 ```
 
 ### 기타
+
 - 커밋과 PR 시, Co-Authored-By 를 제외할 것
 
 ## 문서화
+
 - 코드 수정 이후에는 항상 문서화를 할 것.
 - 이미 작성되어 있는 문서를 찾고, 그 문서를 업데이트 할 것.
 - 문서화 과정에서는 speckit을 적절하게 사용할 것.
