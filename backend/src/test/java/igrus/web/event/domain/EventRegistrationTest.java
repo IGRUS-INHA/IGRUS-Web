@@ -17,8 +17,11 @@ class EventRegistrationTest {
 
     private static final String TITLE = "테스트 행사";
     private static final String DESCRIPTION = "행사 설명입니다.";
-    private static final Instant START_AT = Instant.now();
-    private static final Instant END_AT = Instant.now().plus(7, ChronoUnit.DAYS);
+    private static final String LOCATION = "동아리방";
+    private static final Instant REGISTRATION_START_AT = Instant.now();
+    private static final Instant REGISTRATION_END_AT = Instant.now().plus(7, ChronoUnit.DAYS);
+    private static final Instant EVENT_START_AT = Instant.now().plus(14, ChronoUnit.DAYS);
+    private static final Instant EVENT_END_AT = Instant.now().plus(15, ChronoUnit.DAYS);
     private static final Integer CAPACITY = 30;
 
     @Nested
@@ -244,6 +247,8 @@ class EventRegistrationTest {
 
     private Event createEvent(EventRegistrationType type) {
         User operator = createMockUser(1L, "운영자");
-        return Event.create(operator, TITLE, DESCRIPTION, START_AT, END_AT, CAPACITY, type);
+        return Event.create(operator, TITLE, DESCRIPTION, LOCATION,
+                EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                CAPACITY, type);
     }
 }

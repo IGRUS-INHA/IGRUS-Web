@@ -21,8 +21,11 @@ class EventTest {
 
     private static final String TITLE = "테스트 행사";
     private static final String DESCRIPTION = "행사 설명입니다.";
-    private static final Instant START_AT = Instant.now();
-    private static final Instant END_AT = Instant.now().plus(7, ChronoUnit.DAYS);
+    private static final String LOCATION = "동아리방";
+    private static final Instant REGISTRATION_START_AT = Instant.now();
+    private static final Instant REGISTRATION_END_AT = Instant.now().plus(7, ChronoUnit.DAYS);
+    private static final Instant EVENT_START_AT = Instant.now().plus(14, ChronoUnit.DAYS);
+    private static final Instant EVENT_END_AT = Instant.now().plus(15, ChronoUnit.DAYS);
     private static final Integer CAPACITY = 30;
 
     @Nested
@@ -36,13 +39,15 @@ class EventTest {
             User mockUser = createMockUser();
 
             // when
-            Event event = Event.create(mockUser, TITLE, DESCRIPTION, START_AT, END_AT,
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                     CAPACITY, EventRegistrationType.FIRST_COME);
 
             // then
             assertThat(event).isNotNull();
             assertThat(event.getTitle()).isEqualTo(TITLE);
             assertThat(event.getDescription()).isEqualTo(DESCRIPTION);
+            assertThat(event.getLocation()).isEqualTo(LOCATION);
             assertThat(event.getCapacity()).isEqualTo(CAPACITY);
             assertThat(event.getCurrentCount()).isEqualTo(0);
             assertThat(event.getStatus()).isEqualTo(EventStatus.UPCOMING);
@@ -58,7 +63,8 @@ class EventTest {
             User mockUser = createMockUser();
 
             // when
-            Event event = Event.create(mockUser, TITLE, DESCRIPTION, START_AT, END_AT,
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                     CAPACITY, EventRegistrationType.SELECTION);
 
             // then
@@ -74,7 +80,8 @@ class EventTest {
             User mockUser = createMockUser();
 
             // when & then
-            assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, START_AT, END_AT,
+            assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                     0, EventRegistrationType.FIRST_COME))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
@@ -86,7 +93,8 @@ class EventTest {
             User mockUser = createMockUser();
 
             // when & then
-            assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, START_AT, END_AT,
+            assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                     -1, EventRegistrationType.FIRST_COME))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
@@ -98,7 +106,8 @@ class EventTest {
             User mockUser = createMockUser();
 
             // when & then
-            assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, START_AT, END_AT,
+            assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                     null, EventRegistrationType.FIRST_COME))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
@@ -242,7 +251,8 @@ class EventTest {
         void incrementCurrentCount_WhenFull_AutoCloses() {
             // given
             User mockUser = createMockUser();
-            Event event = Event.create(mockUser, TITLE, DESCRIPTION, START_AT, END_AT,
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                     2, EventRegistrationType.FIRST_COME);
             event.open();
 
@@ -278,7 +288,8 @@ class EventTest {
         void decrementCurrentCount_WhenCapacityFullClosed_ReopensAutomatically() {
             // given
             User mockUser = createMockUser();
-            Event event = Event.create(mockUser, TITLE, DESCRIPTION, START_AT, END_AT,
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                     2, EventRegistrationType.FIRST_COME);
             event.open();
             event.incrementCurrentCount();
@@ -330,7 +341,8 @@ class EventTest {
         void isRegistrable_WhenOpenButFull_ReturnsFalse() {
             // given
             User mockUser = createMockUser();
-            Event event = Event.create(mockUser, TITLE, DESCRIPTION, START_AT, END_AT,
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                     1, EventRegistrationType.FIRST_COME);
             event.open();
             event.incrementCurrentCount();
@@ -367,7 +379,8 @@ class EventTest {
         void getRemainingCapacity_WhenOverCapacity_ReturnsZero() {
             // given
             User mockUser = createMockUser();
-            Event event = Event.create(mockUser, TITLE, DESCRIPTION, START_AT, END_AT,
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                     1, EventRegistrationType.FIRST_COME);
             event.open();
             event.incrementCurrentCount();
@@ -391,7 +404,8 @@ class EventTest {
             Integer newCapacity = 50;
 
             // when
-            event.update(newTitle, newDescription, START_AT, END_AT, newCapacity);
+            event.update(newTitle, newDescription, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, newCapacity);
 
             // then
             assertThat(event.getTitle()).isEqualTo(newTitle);
@@ -407,7 +421,8 @@ class EventTest {
             event.open();
 
             // when
-            event.update("새 제목", "새 설명", START_AT, END_AT, 40);
+            event.update("새 제목", "새 설명", LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 40);
 
             // then
             assertThat(event.getTitle()).isEqualTo("새 제목");
@@ -422,7 +437,8 @@ class EventTest {
             event.complete();
 
             // when & then
-            assertThatThrownBy(() -> event.update("새 제목", "새 설명", START_AT, END_AT, 40))
+            assertThatThrownBy(() -> event.update("새 제목", "새 설명", LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 40))
                     .isInstanceOf(EventNotEditableException.class);
         }
 
@@ -434,7 +450,8 @@ class EventTest {
             event.cancel();
 
             // when & then
-            assertThatThrownBy(() -> event.update("새 제목", "새 설명", START_AT, END_AT, 40))
+            assertThatThrownBy(() -> event.update("새 제목", "새 설명", LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 40))
                     .isInstanceOf(EventNotEditableException.class);
         }
 
@@ -445,7 +462,8 @@ class EventTest {
             Event event = createTestEvent();
 
             // when & then
-            assertThatThrownBy(() -> event.update("새 제목", "새 설명", START_AT, END_AT, 0))
+            assertThatThrownBy(() -> event.update("새 제목", "새 설명", LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 0))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
     }
@@ -460,7 +478,8 @@ class EventTest {
     }
 
     private Event createTestEvent() {
-        return Event.create(createMockUser(), TITLE, DESCRIPTION, START_AT, END_AT,
+        return Event.create(createMockUser(), TITLE, DESCRIPTION, LOCATION,
+                EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
                 CAPACITY, EventRegistrationType.FIRST_COME);
     }
 }

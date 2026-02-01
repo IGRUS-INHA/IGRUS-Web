@@ -1,20 +1,29 @@
 package igrus.web.event.repository;
 
 import igrus.web.event.domain.Event;
+import igrus.web.event.domain.EventStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 
 /**
  * 행사 Repository.
- *
- * <p>기본 제공 메서드:</p>
- * <ul>
- *   <li>{@code save(Event)} - 행사 저장</li>
- *   <li>{@code findById(Long)} - ID로 행사 조회</li>
- *   <li>{@code delete(Event)} - 행사 삭제</li>
- *   <li>{@code findAll()} - 전체 행사 조회</li>
- * </ul>
  */
 public interface EventRepository extends JpaRepository<Event, Long> {
 
-    // TODO: 기능 분석 후 필요한 메서드 추가
+    /**
+     * 특정 상태의 행사 목록을 조회합니다.
+     *
+     * @param status 행사 상태
+     * @return 해당 상태의 행사 목록
+     */
+    List<Event> findByStatus(EventStatus status);
+
+    /**
+     * 특정 사용자(운영자)가 생성한 행사 목록을 조회합니다.
+     *
+     * @param userId 사용자 ID
+     * @return 해당 사용자가 생성한 행사 목록
+     */
+    List<Event> findByUserId(Long userId);
 }
