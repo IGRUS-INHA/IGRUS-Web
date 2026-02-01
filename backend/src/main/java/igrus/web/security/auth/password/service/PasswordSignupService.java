@@ -81,7 +81,9 @@ public class PasswordSignupService {
             request.email(),
             request.phoneNumber(),
             request.department(),
-            request.motivation()
+            request.motivation(),
+            request.gender(),
+            request.grade()
         );
         userRepository.save(user);
 

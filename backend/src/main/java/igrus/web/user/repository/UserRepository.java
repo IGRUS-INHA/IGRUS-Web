@@ -50,12 +50,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // === 탈퇴 사용자 정리용 (native query로 @SQLRestriction 우회) ===
 
     /**
-     * 탈퇴 후 지정 시간이 경과하고 아직 익명화되지 않은 사용자를 조회합니다.
+     * 탈퇴 후 지정 시간이 경과한 사용자를 조회합니다.
      *
      * @param cutoffTime 기준 시간 (이 시간 이전에 삭제된 사용자 대상)
-     * @return 익명화 대상 사용자 목록
+     * @return 정리 대상 사용자 목록
      */
     @Query(value = "SELECT * FROM users u WHERE u.users_status = 'WITHDRAWN' " +
-           "AND u.users_deleted_at < :cutoffTime AND u.users_anonymized = false", nativeQuery = true)
-    List<User> findWithdrawnUsersBeforeAndNotAnonymized(@Param("cutoffTime") Instant cutoffTime);
+           "AND u.users_deleted_at < :cutoffTime", nativeQuery = true)
+    List<User> findWithdrawnUsersBefore(@Param("cutoffTime") Instant cutoffTime);
 }

@@ -1,5 +1,7 @@
 package igrus.web.common.fixture;
 
+import igrus.web.user.domain.Gender;
+
 /**
  * 테스트에서 사용되는 공통 상수를 정의하는 클래스.
  *
@@ -27,6 +29,8 @@ public final class TestConstants {
     public static final String DEFAULT_PHONE = "010-1234-5678";
     public static final String DEFAULT_DEPARTMENT = "컴퓨터공학과";
     public static final String DEFAULT_MOTIVATION = "테스트 동기";
+    public static final Gender DEFAULT_GENDER = Gender.MALE;
+    public static final int DEFAULT_GRADE = 1;
 
     // ==================== Board 관련 상수 ====================
 

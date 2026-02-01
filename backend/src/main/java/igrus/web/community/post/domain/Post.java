@@ -21,6 +21,8 @@ import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,9 +64,10 @@ public class Post extends SoftDeletableEntity {
     @JoinColumn(name = "posts_board_id", nullable = false)
     private Board board;
 
-    /** 게시글 작성자 */
+    /** 게시글 작성자. 탈퇴(soft-deleted) 사용자는 @SQLRestriction에 의해 로딩 불가하므로 @NotFound로 null 허용 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "posts_author_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private User author;
 
     /** 게시글 제목 (최대 100자) */

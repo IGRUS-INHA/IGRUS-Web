@@ -4,6 +4,7 @@ import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,8 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
                 TEST_PHONE,
                 TEST_DEPARTMENT,
                 TEST_MOTIVATION,
+                Gender.MALE,
+                1,
                 true
         );
     }
@@ -57,7 +60,7 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
                                                        String password, String phone, String department,
                                                        String motivation, Boolean privacyConsent) {
         return new PasswordSignupRequest(
-                studentId, name, email, password, phone, department, motivation, privacyConsent
+                studentId, name, email, password, phone, department, motivation, Gender.MALE, 1, privacyConsent
         );
     }
 

@@ -1,5 +1,6 @@
 package igrus.web.security.auth.common.domain;
 
+import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.DisplayName;
@@ -240,7 +241,9 @@ class LoginHistoryTest {
                 "test@inha.edu",
                 "010-1234-5678",
                 "컴퓨터공학과",
-                "테스트 동기"
+                "테스트 동기",
+                Gender.MALE,
+                1
         );
         user.changeRole(UserRole.MEMBER);
         ReflectionTestUtils.setField(user, "id", 1L);

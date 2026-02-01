@@ -36,6 +36,12 @@ public class ApiSecurityConfig {
                 // 인증 없이 접근 가능 (SecurityPaths에서 중앙 관리)
                 .requestMatchers(SecurityPaths.PUBLIC_PATHS).permitAll()
 
+                // 학기별 회원 명단 조회 (운영진 이상)
+                .requestMatchers("/api/v1/semesters/**").hasAnyRole("OPERATOR", "ADMIN")
+
+                // 학기별 회원 관리 (관리자 전용)
+                .requestMatchers("/api/v1/admin/semesters/**").hasRole("ADMIN")
+
                 // 운영진 이상 (더 구체적인 경로를 먼저 배치)
                 .requestMatchers(
                         "/api/admin/dashboard",
