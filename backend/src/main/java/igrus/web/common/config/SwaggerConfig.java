@@ -103,11 +103,9 @@ public class SwaggerConfig {
 
     private SecurityScheme securityScheme() {
         return new SecurityScheme()
-                .name("Authorization")
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
                 .bearerFormat("JWT")
-                .in(SecurityScheme.In.HEADER)
                 .description("""
                         JWT Access Token을 입력하세요.
 
