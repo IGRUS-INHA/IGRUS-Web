@@ -1,4 +1,6 @@
-export const MOCK_POSTS = [
+import type { Post } from '@/types';
+
+export const MOCK_POSTS: Post[] = [
   {
     id: '1',
     board: 'notices',
@@ -53,7 +55,7 @@ export const MOCK_POSTS = [
   },
 ];
 
-export const FEATURED_POSTS = [
+export const FEATURED_POSTS: Post[] = [
   {
     id: '1',
     board: 'notices',

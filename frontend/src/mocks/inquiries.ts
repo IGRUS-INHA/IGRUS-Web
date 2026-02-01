@@ -1,4 +1,6 @@
-export const MOCK_INQUIRIES = [
+import type { Inquiry } from '@/types';
+
+export const MOCK_INQUIRIES: Inquiry[] = [
   {
     id: '1',
     inquiryNumber: 'INQ-20260131001',

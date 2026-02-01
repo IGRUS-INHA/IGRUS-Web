@@ -1,4 +1,6 @@
-export const MOCK_EVENTS = [
+import type { Event } from '@/types';
+
+export const MOCK_EVENTS: Event[] = [
   {
     id: '1',
     title: 'Spring Networking Night',
