@@ -23,8 +23,10 @@ import igrus.web.common.config.SwaggerConfig;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -159,7 +161,8 @@ public class PostController {
             @RequestParam(required = false) String keyword,
             @Parameter(description = "질문글만 조회 여부")
             @RequestParam(required = false) Boolean questionOnly,
-            @PageableDefault(size = 20) Pageable pageable,
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
         log.info("게시글 목록 조회 요청 - boardCode: {}, keyword: {}, questionOnly: {}, page: {}, size: {}",
@@ -426,7 +429,8 @@ public class PostController {
             @PathVariable String boardCode,
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
-            @PageableDefault(size = 20) Pageable pageable,
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
         log.info("게시글 조회 기록 요청 - boardCode: {}, postId: {}, userId: {}, page: {}, size: {}",
