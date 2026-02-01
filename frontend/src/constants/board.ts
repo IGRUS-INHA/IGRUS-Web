@@ -7,44 +7,44 @@ export const BOARDS = {
   NOTICES: 'notices',
   GENERAL: 'general',
   INSIGHT: 'insight',
-};
+} as const;
 
 export const BOARD_LABELS = {
   [BOARDS.NOTICES]: '공지사항',
   [BOARDS.GENERAL]: '자유게시판',
   [BOARDS.INSIGHT]: '정보공유',
-};
+} as const;
 
 // 검색 타입
 export const SEARCH_TYPE = {
   TITLE: 'title',
   CONTENT: 'content',
   TITLE_CONTENT: 'title_content', // 제목+내용
-};
+} as const;
 
 export const SEARCH_TYPE_LABELS = {
   [SEARCH_TYPE.TITLE]: '제목',
   [SEARCH_TYPE.CONTENT]: '내용',
   [SEARCH_TYPE.TITLE_CONTENT]: '제목+내용',
-};
+} as const;
 
 // 정렬 옵션
 export const SORT_TYPE = {
   LATEST: 'latest', // 최신순
   POPULAR: 'popular', // 인기순 (좋아요)
-};
+} as const;
 
 export const SORT_TYPE_LABELS = {
   [SORT_TYPE.LATEST]: '최신순',
   [SORT_TYPE.POPULAR]: '인기순',
-};
+} as const;
 
 // 페이지네이션
 export const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_SIZE: 20,
   PAGE_SIZES: [10, 20, 30, 50],
-};
+} as const;
 
 // 신고 관련
 export const REPORT = {
@@ -59,7 +59,7 @@ export const REPORT = {
 
   // 블라인드 처리 기준 (신고 N회 이상)
   BLIND_THRESHOLD: 5,
-};
+} as const;
 
 export const REPORT_REASON_LABELS = {
   [REPORT.REASONS.SPAM]: '스팸/광고',
@@ -67,14 +67,14 @@ export const REPORT_REASON_LABELS = {
   [REPORT.REASONS.INAPPROPRIATE]: '부적절한 내용',
   [REPORT.REASONS.COPYRIGHT]: '저작권 침해',
   [REPORT.REASONS.OTHER]: '기타',
-};
+} as const;
 
 // 게시글 상태
 export const POST_STATUS = {
   NORMAL: 'NORMAL',
   BLINDED: 'BLINDED', // 신고로 블라인드
   DELETED: 'DELETED', // 삭제됨
-};
+} as const;
 
 // 게시판별 카테고리
 export const BOARD_CATEGORIES = {
@@ -94,7 +94,7 @@ export const BOARD_CATEGORIES = {
     { value: 'study', label: '스터디' },
     { value: 'review', label: '후기' },
   ],
-};
+} as const;
 
 // 글 작성 옵션
 export const POST_OPTIONS = {
@@ -103,4 +103,4 @@ export const POST_OPTIONS = {
 
   // 질문글 허용 게시판
   ALLOW_QUESTION: [BOARDS.GENERAL, BOARDS.INSIGHT],
-};
+} as const;
