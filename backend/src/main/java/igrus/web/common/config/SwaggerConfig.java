@@ -15,7 +15,7 @@ import java.util.List;
 @Configuration
 public class SwaggerConfig {
 
-    public static final String SECURITY_SCHEME_NAME = "Bearer Authentication";
+    public static final String SECURITY_SCHEME_NAME = "BearerAuthentication";
 
     @Value("${springdoc.server-url}")
     private String serverUrl;
