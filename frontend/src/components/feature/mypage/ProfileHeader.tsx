@@ -2,8 +2,18 @@ import { useUIStore } from '@/stores';
 import { User, Mail, Calendar, Edit3, Shield } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { ROLE_LABELS } from '@/constants';
+import type { User as UserType } from '@/types/entities';
 
-export default function ProfileHeader({ user }) {
+interface ProfileUser extends UserType {
+  postCount?: number;
+  likeCount?: number;
+}
+
+interface ProfileHeaderProps {
+  user: ProfileUser;
+}
+
+export default function ProfileHeader({ user }: ProfileHeaderProps) {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 
@@ -19,7 +29,10 @@ export default function ProfileHeader({ user }) {
         <div className="w-32 h-32 rounded-[2.5rem] bg-primary/20 border border-primary/50 flex items-center justify-center">
           <User size={64} className="text-primary" />
         </div>
-        <button className="absolute -bottom-2 -right-2 w-10 h-10 bg-foreground text-background rounded-r4 flex items-center justify-center hover:bg-primary transition border-2 border-background">
+        <button
+          type="button"
+          className="absolute -bottom-2 -right-2 w-10 h-10 bg-foreground text-background rounded-r4 flex items-center justify-center hover:bg-primary transition border-2 border-background cursor-pointer"
+        >
           <Edit3 size={16} />
         </button>
       </div>
@@ -49,11 +62,11 @@ export default function ProfileHeader({ user }) {
 
       <div className="flex gap-s3">
         <div className="text-center px-s5 py-s4 rounded-[2rem] bg-white/5 border border-border">
-          <div className="text-h2 text-primary">{user.postCount || 0}</div>
+          <div className="text-h2 text-primary">{user.postCount ?? 0}</div>
           <div className="text-c2 text-muted-foreground uppercase font-bold tracking-widest">게시글</div>
         </div>
         <div className="text-center px-s5 py-s4 rounded-[2rem] bg-white/5 border border-border">
-          <div className="text-h2 text-primary">{user.likeCount || 0}</div>
+          <div className="text-h2 text-primary">{user.likeCount ?? 0}</div>
           <div className="text-c2 text-muted-foreground uppercase font-bold tracking-widest">좋아요</div>
         </div>
       </div>

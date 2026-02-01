@@ -2,6 +2,13 @@ import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  className?: string;
+}
+
 /**
  * 페이지네이션 컴포넌트
  */
@@ -10,12 +17,12 @@ export function Pagination({
   totalPages,
   onPageChange,
   className,
-}) {
-  if (totalPages <= 1) return null;
+}: PaginationProps) {
+  if (totalPages <= 1) return undefined;
 
   // 표시할 페이지 번호 계산 (최대 5개)
   const getPageNumbers = () => {
-    const pages = [];
+    const pages: number[] = [];
     const maxVisible = 5;
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let end = Math.min(totalPages, start + maxVisible - 1);
@@ -58,7 +65,7 @@ export function Pagination({
             1
           </Button>
           {pageNumbers[0] > 2 && (
-            <span className="px-2 text-muted-foreground">...</span>
+            <span className="px-s2 text-muted-foreground">...</span>
           )}
         </>
       )}
@@ -80,7 +87,7 @@ export function Pagination({
       {pageNumbers[pageNumbers.length - 1] < totalPages && (
         <>
           {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
-            <span className="px-2 text-muted-foreground">...</span>
+            <span className="px-s2 text-muted-foreground">...</span>
           )}
           <Button
             variant={currentPage === totalPages ? 'default' : 'outline'}

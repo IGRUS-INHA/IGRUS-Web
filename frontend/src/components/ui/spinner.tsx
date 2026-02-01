@@ -1,11 +1,14 @@
 import { cn } from '@/lib/utils';
 
+interface SpinnerProps {
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}
+
 /**
  * 로딩 스피너
- * @param {string} size - 'sm' | 'md' | 'lg'
- * @param {string} className - 추가 클래스
  */
-export function Spinner({ size = 'md', className }) {
+export function Spinner({ size = 'md', className }: SpinnerProps) {
   const sizeClasses = {
     sm: 'h-4 w-4 border-2',
     md: 'h-6 w-6 border-2',
@@ -37,6 +40,6 @@ export function FullPageSpinner() {
 /**
  * 버튼 내부 로딩 (텍스트와 함께)
  */
-export function ButtonSpinner({ className }) {
-  return <Spinner size="sm" className={cn('mr-2', className)} />;
+export function ButtonSpinner({ className }: { className?: string }) {
+  return <Spinner size="sm" className={cn('mr-s2', className)} />;
 }

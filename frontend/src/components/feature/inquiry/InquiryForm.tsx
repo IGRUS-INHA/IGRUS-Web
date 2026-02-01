@@ -3,14 +3,25 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-export default function InquiryForm({ onSubmit, loading = false }) {
-  const handleSubmit = (e) => {
+interface InquiryFormData {
+  type: string;
+  title: string;
+  content: string;
+}
+
+interface InquiryFormProps {
+  onSubmit?: (data: InquiryFormData) => void;
+  loading?: boolean;
+}
+
+export default function InquiryForm({ onSubmit, loading = false }: InquiryFormProps) {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    const formData = new FormData(e.currentTarget);
     onSubmit?.({
-      type: formData.get('type'),
-      title: formData.get('title'),
-      content: formData.get('content'),
+      type: formData.get('type') as string,
+      title: formData.get('title') as string,
+      content: formData.get('content') as string,
     });
   };
 

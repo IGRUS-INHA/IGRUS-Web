@@ -1,6 +1,14 @@
 import { Card } from '@/components/ui/card';
+import type { ReactNode } from 'react';
 
-export default function StatCard({ label, value, icon, colorClass = 'text-primary' }) {
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: ReactNode;
+  colorClass?: string;
+}
+
+export default function StatCard({ label, value, icon, colorClass = 'text-primary' }: StatCardProps) {
   return (
     <Card className="p-s6 rounded-[2.5rem] border bg-card border-border shadow-sm">
       <div className={`${colorClass} mb-s4`}>{icon}</div>

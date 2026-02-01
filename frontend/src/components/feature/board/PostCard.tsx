@@ -1,14 +1,25 @@
 import { Link } from 'react-router-dom';
 import { useUIStore } from '@/stores';
+import type { Post } from '@/types/entities';
 
-export default function PostCard({ post, linkTo }) {
+interface PostCardProps {
+  post: Pick<Post, 'title' | 'author' | 'date' | 'category'> & {
+    image?: string;
+    tag?: string;
+  };
+  linkTo?: string;
+}
+
+export default function PostCard({ post, linkTo }: PostCardProps) {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
+
+  const authorName = typeof post.author === 'string' ? post.author : post.author.name;
 
   const content = (
     <div className="group cursor-pointer">
       <div
-        className={`relative aspect-[4/3] rounded-r4 overflow-hidden mb-3 transition-colors duration-300 ${
+        className={`relative aspect-[4/3] rounded-r4 overflow-hidden mb-s3 transition-colors duration-300 ${
           isDark ? 'bg-card' : 'bg-muted'
         }`}
       >
@@ -22,7 +33,7 @@ export default function PostCard({ post, linkTo }) {
           />
         )}
         {post.tag && (
-          <span className="absolute top-4 right-4 bg-background text-foreground text-c2 font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider">
+          <span className="absolute top-4 right-4 bg-background text-foreground text-c2 font-bold px-s2 py-s1 rounded shadow-lg uppercase tracking-wider">
             {post.tag}
           </span>
         )}
@@ -39,14 +50,14 @@ export default function PostCard({ post, linkTo }) {
           <h4 className="font-bold text-b1 leading-tight mb-1 transition-colors group-hover:text-primary">
             {post.title}
           </h4>
-          <div className="flex items-center gap-2">
-            <p className="text-c1 text-muted-foreground">{post.author}</p>
+          <div className="flex items-center gap-s2">
+            <p className="text-c1 text-muted-foreground">{authorName}</p>
             <span className="w-1 h-1 rounded-full bg-muted-foreground" />
             <p className="text-c1 text-muted-foreground">{post.date}</p>
           </div>
         </div>
         <span
-          className={`text-c2 border px-2 py-1 rounded-full whitespace-nowrap uppercase tracking-widest group-hover:border-primary/50 group-hover:text-primary transition-colors ${
+          className={`text-c2 border px-s2 py-s1 rounded-full whitespace-nowrap uppercase tracking-widest group-hover:border-primary/50 group-hover:text-primary transition-colors ${
             isDark ? 'text-muted-foreground border-border' : 'text-muted-foreground border-border'
           }`}
         >

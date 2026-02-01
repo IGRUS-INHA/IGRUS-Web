@@ -2,11 +2,22 @@ import { useUIStore } from '@/stores';
 import { Layers } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
-export default function ActivityList({ activities = [] }) {
+interface Activity {
+  id: number | string;
+  board: string;
+  date: string;
+  title: string;
+}
+
+interface ActivityListProps {
+  activities?: Activity[];
+}
+
+export default function ActivityList({ activities = [] }: ActivityListProps) {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 
-  const mockActivities = activities.length > 0 ? activities : [
+  const mockActivities: Activity[] = activities.length > 0 ? activities : [
     { id: 1, board: '자유게시판', date: '2일 전', title: 'Next.js 프로젝트 최적화 팁 공유합니다' },
     { id: 2, board: '정보공유', date: '5일 전', title: '웹 보안 입문자를 위한 추천 강의' },
     { id: 3, board: '자유게시판', date: '1주 전', title: '이번 주말 CTF 참가자 모집' },

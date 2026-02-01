@@ -1,7 +1,30 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import type { User } from '@/types/entities';
 
-export default function UserTable({ users = [], title = '부원 관리', onExport, onViewAll, onEdit }) {
+interface UserTableUser extends Partial<User> {
+  id: string;
+  studentId?: string;
+  name: string;
+  status?: string;
+  role: string;
+}
+
+interface UserTableProps {
+  users?: UserTableUser[];
+  title?: string;
+  onExport?: () => void;
+  onViewAll?: () => void;
+  onEdit?: (user: UserTableUser) => void;
+}
+
+export default function UserTable({
+  users = [],
+  title = '부원 관리',
+  onExport,
+  onViewAll,
+  onEdit,
+}: UserTableProps) {
   return (
     <Card className="p-s6 rounded-[2.5rem] border bg-card border-border shadow-sm">
       <div className="flex justify-between items-center mb-s5">
@@ -34,7 +57,7 @@ export default function UserTable({ users = [], title = '부원 관리', onExpor
           <tbody className="divide-y divide-border">
             {users.map((user) => (
               <tr key={user.id} className="group">
-                <td className="py-s4 text-b2 font-medium">{user.studentId || user.id}</td>
+                <td className="py-s4 text-b2 font-medium">{user.studentId ?? user.id}</td>
                 <td className="py-s4 text-b2 font-bold">{user.name}</td>
                 <td className="py-s4">
                   <span
@@ -50,7 +73,8 @@ export default function UserTable({ users = [], title = '부원 관리', onExpor
                 <td className="py-s4 text-b2 text-muted-foreground">{user.role}</td>
                 <td className="py-s4 text-right">
                   <button
-                    className="text-primary hover:underline text-c1 font-bold"
+                    type="button"
+                    className="text-primary hover:underline text-c1 font-bold cursor-pointer"
                     onClick={() => onEdit?.(user)}
                   >
                     수정

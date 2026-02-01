@@ -10,10 +10,18 @@ import {
   Sun,
   Moon,
   X,
-  Code
+  Code,
 } from 'lucide-react';
 
-const MenuItem = ({ to, icon, label, active, onClick }) => {
+interface MenuItemProps {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+const MenuItem = ({ to, icon, label, active, onClick }: MenuItemProps) => {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 
@@ -40,13 +48,18 @@ const MenuItem = ({ to, icon, label, active, onClick }) => {
   );
 };
 
-export default function Sidebar({ isOpen, onClose }) {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { user, isAuthenticated } = useAuthStore();
   const { theme, toggleTheme } = useUIStore();
   const isDark = theme === 'dark';
 
-  const isActive = (path) => {
+  const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
@@ -84,6 +97,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <button
             onClick={onClose}
             className="lg:hidden p-2 text-muted-foreground hover:text-primary transition-colors"
+            type="button"
           >
             <X size={20} />
           </button>
@@ -131,6 +145,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 ? 'text-muted-foreground hover:text-foreground hover:bg-white/5'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
+            type="button"
           >
             {isDark ? (
               <Sun size={20} className="text-warning" />

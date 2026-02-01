@@ -9,11 +9,19 @@ import {
   Menu,
   X,
   LogOut,
-  Code
+  Code,
 } from 'lucide-react';
 import { useState } from 'react';
 
-const AdminMenuItem = ({ to, icon, label, active, onClick }) => {
+interface AdminMenuItemProps {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+const AdminMenuItem = ({ to, icon, label, active, onClick }: AdminMenuItemProps) => {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 
@@ -47,7 +55,7 @@ export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isDark = theme === 'dark';
 
-  const isActive = (path) => {
+  const isActive = (path: string) => {
     if (path === '/admin' && location.pathname === '/admin') return true;
     if (path === '/admin') return false;
     return location.pathname.startsWith(path);
@@ -87,6 +95,7 @@ export default function AdminLayout() {
           <button
             onClick={() => setIsSidebarOpen(false)}
             className="lg:hidden p-2 text-muted-foreground hover:text-primary transition-colors"
+            type="button"
           >
             <X size={20} />
           </button>
@@ -95,7 +104,7 @@ export default function AdminLayout() {
         {/* Admin Badge */}
         <div className="px-4 py-3 bg-primary/10 rounded-r3 border border-primary/20">
           <p className="text-c1 text-muted-foreground mb-1">관리자 모드</p>
-          <p className="text-label font-semibold text-foreground">{user?.name || '관리자'}</p>
+          <p className="text-label font-semibold text-foreground">{user?.name ?? '관리자'}</p>
           <p className="text-c2 text-muted-foreground">{user?.email}</p>
         </div>
 
@@ -158,6 +167,7 @@ export default function AdminLayout() {
                 ? 'text-destructive hover:bg-destructive/10'
                 : 'text-destructive hover:bg-destructive/10'
             }`}
+            type="button"
           >
             <LogOut size={20} />
             <span className="text-label">로그아웃</span>
@@ -172,6 +182,7 @@ export default function AdminLayout() {
           <button
             onClick={() => setIsSidebarOpen(true)}
             className="p-2 text-muted-foreground hover:text-primary transition-colors"
+            type="button"
           >
             <Menu size={24} />
           </button>

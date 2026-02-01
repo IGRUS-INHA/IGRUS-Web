@@ -3,11 +3,21 @@ import { Award } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-export default function AppliedEventList({ events = [] }) {
+interface AppliedEvent {
+  id: number | string;
+  title: string;
+  status: string;
+}
+
+interface AppliedEventListProps {
+  events?: AppliedEvent[];
+}
+
+export default function AppliedEventList({ events = [] }: AppliedEventListProps) {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 
-  const mockEvents = events.length > 0 ? events : [
+  const mockEvents: AppliedEvent[] = events.length > 0 ? events : [
     { id: 1, title: '월간 웹 개발 세미나', status: '신청 완료' },
   ];
 

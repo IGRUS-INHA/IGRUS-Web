@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SEARCH_TYPE, SEARCH_TYPE_LABELS } from '@/constants/board';
+
+interface SearchBarProps {
+  onSearch: (keyword: string, searchType: string) => void;
+  onClear?: () => void;
+  initialKeyword?: string;
+  initialSearchType?: string;
+  placeholder?: string;
+}
 
 /**
  * 검색바 컴포넌트
@@ -13,11 +21,11 @@ export function SearchBar({
   initialKeyword = '',
   initialSearchType = SEARCH_TYPE.TITLE_CONTENT,
   placeholder = '검색어를 입력하세요',
-}) {
+}: SearchBarProps) {
   const [keyword, setKeyword] = useState(initialKeyword);
   const [searchType, setSearchType] = useState(initialSearchType);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (keyword.trim()) {
       onSearch(keyword.trim(), searchType);
@@ -29,12 +37,20 @@ export function SearchBar({
     onClear?.();
   };
 
+  const handleKeywordChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setKeyword(e.target.value);
+  };
+
+  const handleSearchTypeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setSearchType(e.target.value);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
       {/* 검색 타입 선택 */}
       <select
         value={searchType}
-        onChange={(e) => setSearchType(e.target.value)}
+        onChange={handleSearchTypeChange}
         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
       >
         {Object.entries(SEARCH_TYPE_LABELS).map(([value, label]) => (
@@ -50,7 +66,7 @@ export function SearchBar({
         <Input
           type="text"
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
+          onChange={handleKeywordChange}
           placeholder={placeholder}
           className="pl-9 pr-9"
         />
@@ -71,17 +87,31 @@ export function SearchBar({
   );
 }
 
+interface SimpleSearchBarProps {
+  onSearch: (keyword: string) => void;
+  onClear?: () => void;
+  initialKeyword?: string;
+}
+
 /**
  * 간단한 검색바 (검색 타입 없음)
  */
-export function SimpleSearchBar({ onSearch, onClear, initialKeyword = '' }) {
+export function SimpleSearchBar({
+  onSearch,
+  onClear,
+  initialKeyword = '',
+}: SimpleSearchBarProps) {
   const [keyword, setKeyword] = useState(initialKeyword);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (keyword.trim()) {
       onSearch(keyword.trim());
     }
+  };
+
+  const handleKeywordChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setKeyword(e.target.value);
   };
 
   return (
@@ -91,7 +121,7 @@ export function SimpleSearchBar({ onSearch, onClear, initialKeyword = '' }) {
         <Input
           type="text"
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
+          onChange={handleKeywordChange}
           placeholder="검색"
           className="pl-9"
         />

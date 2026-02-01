@@ -1,8 +1,10 @@
 import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import type { Inquiry, InquiryStatus } from '@/types/entities';
+import type { LucideIcon } from 'lucide-react';
 
 // 카테고리 한글 변환
-const CATEGORY_LABELS = {
+const CATEGORY_LABELS: Record<string, string> = {
   TECHNICAL: '기술',
   ACCOUNT: '계정',
   EVENT: '행사',
@@ -10,7 +12,7 @@ const CATEGORY_LABELS = {
 };
 
 // 날짜 포맷팅
-const formatDate = (dateString) => {
+const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleDateString('ko-KR', {
@@ -23,7 +25,13 @@ const formatDate = (dateString) => {
 };
 
 // 상태별 스타일 및 아이콘
-const getStatusInfo = (status) => {
+interface StatusInfo {
+  icon: LucideIcon;
+  label: string;
+  className: string;
+}
+
+const getStatusInfo = (status: InquiryStatus): StatusInfo => {
   switch (status) {
     case 'ANSWERED':
       return {
@@ -47,7 +55,11 @@ const getStatusInfo = (status) => {
   }
 };
 
-export default function InquiryListItem({ inquiry }) {
+interface InquiryListItemProps {
+  inquiry: Inquiry;
+}
+
+export default function InquiryListItem({ inquiry }: InquiryListItemProps) {
   const statusInfo = getStatusInfo(inquiry.status);
   const StatusIcon = statusInfo.icon;
 
@@ -57,7 +69,7 @@ export default function InquiryListItem({ inquiry }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-c2 text-muted-foreground font-bold uppercase tracking-widest">
-              {CATEGORY_LABELS[inquiry.category] || inquiry.category}
+              {CATEGORY_LABELS[inquiry.category] ?? inquiry.category}
             </span>
             <span className="text-c2 text-muted-foreground">
               {inquiry.inquiryNumber}

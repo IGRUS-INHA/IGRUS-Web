@@ -2,10 +2,19 @@ import { Link } from 'react-router-dom';
 import { useUIStore } from '@/stores';
 import { MessageCircle, Heart, Bookmark, EyeOff, HelpCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import type { Post } from '@/types/entities';
 
-export default function PostListItem({ post, linkTo }) {
+interface PostListItemProps {
+  post: Post;
+  linkTo?: string;
+}
+
+export default function PostListItem({ post, linkTo }: PostListItemProps) {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
+
+  const authorName = typeof post.author === 'string' ? post.author : post.author.name;
+  const authorInitial = authorName[0];
 
   const content = (
     <Card
@@ -14,9 +23,9 @@ export default function PostListItem({ post, linkTo }) {
       }`}
     >
       <div className="flex justify-between items-start mb-s4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-s3">
           <span
-            className={`px-3 py-1 rounded-full text-c2 font-bold uppercase tracking-widest ${
+            className={`px-s3 py-1 rounded-full text-c2 font-bold uppercase tracking-widest ${
               isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
             }`}
           >
@@ -36,19 +45,19 @@ export default function PostListItem({ post, linkTo }) {
         <p className="text-c1 text-muted-foreground">{post.date}</p>
       </div>
 
-      <h3 className="text-h3 mb-2 group-hover:text-primary transition-colors">{post.title}</h3>
+      <h3 className="text-h3 mb-s2 group-hover:text-primary transition-colors">{post.title}</h3>
       <p className="text-b2 mb-s5 line-clamp-2 text-muted-foreground">{post.content}</p>
 
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-s2">
           <div
             className={`w-6 h-6 rounded-full flex items-center justify-center text-c2 font-bold ${
               isDark ? 'bg-white/10' : 'bg-muted'
             }`}
           >
-            {post.author[0]}
+            {authorInitial}
           </div>
-          <span className="text-c1 font-medium text-muted-foreground">{post.author}</span>
+          <span className="text-c1 font-medium text-muted-foreground">{authorName}</span>
         </div>
 
         <div className="flex items-center gap-s4 text-muted-foreground">
@@ -60,7 +69,7 @@ export default function PostListItem({ post, linkTo }) {
             <MessageCircle size={16} />
             <span className="text-c1">{post.comments}</span>
           </div>
-          <Bookmark size={16} className="hover:text-primary transition-colors" />
+          <Bookmark size={16} className="hover:text-primary transition-colors cursor-pointer" />
         </div>
       </div>
     </Card>
