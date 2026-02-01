@@ -17,7 +17,7 @@ IGRUS Web 프론트엔드 - React + Vite 기반 SPA
 
 * **절대로 개발 서버 실행 금지** (`pnpm dev` 등 금지)
 * **패키지 매니저는 pnpm 고정**
-* **코드 포맷팅/타입 체크 명령 실행 금지** (`pnpm biome`, `pnpm tsc --noEmit` 등 금지 - VSCode에서 자동 처리)
+* **코드 포맷팅/타입 체크 명령 실행 금지** (`pnpm format`, `pnpm lint`, `pnpm tsc --noEmit` 등 금지 - VSCode에서 자동 처리)
 
 ---
 
@@ -220,11 +220,18 @@ import spotifyIcon from "@/assets/icons/spotify.svg";
 
 # 4. 포맷팅 & 개발 도구
 
-## 4.1 Biome (포맷팅 & 린팅)
+## 4.1 ESLint + Prettier (린팅 & 포맷팅)
 
-* **VSCode 익스텐션 설치 필수**: `biomejs.biome`
-* 프로젝트 루트에 `biome.json` 설정 파일 사용
+* **VSCode 익스텐션 설치 필수**: `dbaeumer.vscode-eslint`, `esbenp.prettier-vscode`
+* ESLint: 코드 품질 검사 (`eslint.config.js`)
+* Prettier: 코드 포맷팅 (`.prettierrc`)
 * 저장 시 자동 포맷팅 권장
+
+```bash
+# 수동 실행 (필요 시)
+pnpm lint     # ESLint 검사
+pnpm format   # Prettier 포맷팅
+```
 
 ## 4.2 Orval (API 클라이언트 생성)
 
