@@ -17,8 +17,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import igrus.web.common.config.SwaggerConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -166,7 +168,8 @@ public class PostLikeController {
     @GetMapping("/api/v1/users/me/likes")
     @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
     public ResponseEntity<Page<LikedPostResponse>> getMyLikes(
-            @PageableDefault(size = 20) Pageable pageable,
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
         log.info("내 게시글 좋아요 목록 조회 요청 - userId: {}, page: {}, size: {}",
