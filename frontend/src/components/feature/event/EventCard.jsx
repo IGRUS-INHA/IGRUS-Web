@@ -1,0 +1,75 @@
+import { Link } from 'react-router-dom';
+import { Calendar, MapPin, Users, ArrowUpRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+const STATUS_STYLES = {
+  Open: 'bg-primary text-primary-foreground',
+  UPCOMING: 'bg-primary text-primary-foreground',
+  Full: 'bg-warning text-foreground',
+  CLOSED: 'bg-muted text-muted-foreground',
+  Closed: 'bg-muted text-muted-foreground',
+  COMPLETED: 'bg-muted text-muted-foreground',
+  ONGOING: 'bg-primary text-primary-foreground',
+};
+
+const STATUS_LABELS = {
+  Open: '신청 가능',
+  UPCOMING: '신청 가능',
+  Full: '마감',
+  CLOSED: '마감',
+  Closed: '종료',
+  COMPLETED: '종료',
+  ONGOING: '진행중',
+};
+
+export default function EventCard({ event }) {
+  return (
+    <div className="rounded-[2.5rem] overflow-hidden border transition-all hover:scale-[1.01] bg-card border-border shadow-xl shadow-black/5 dark:shadow-none">
+
+      <div className="h-48 relative">
+        {event.image && (
+          <img src={event.image} alt={event.title} className="w-full h-full object-cover opacity-80" />
+        )}
+        <div
+          className={`absolute top-4 right-4 px-3 py-1 rounded-full text-c2 font-bold uppercase tracking-wider ${
+            STATUS_STYLES[event.status] || STATUS_STYLES.Closed
+          }`}
+        >
+          {STATUS_LABELS[event.status] || event.status}
+        </div>
+      </div>
+
+      <div className="p-8">
+        <h3 className="text-2xl font-bold mb-4">{event.title}</h3>
+
+        <div className="space-y-3 mb-8">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <Calendar size={18} className="text-primary" />
+            <span className="text-sm">{event.date}</span>
+          </div>
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <MapPin size={18} className="text-primary" />
+            <span className="text-sm">{event.location}</span>
+          </div>
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <Users size={18} className="text-primary" />
+            <span className="text-sm">
+              {event.attendees || event.currentCount || 0} / {event.maxCapacity || event.capacity || 'Unlimited'} applied
+            </span>
+          </div>
+        </div>
+
+        <div
+          className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${
+            event.status === 'Open' || event.status === 'UPCOMING'
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20'
+              : 'bg-muted text-muted-foreground cursor-not-allowed'
+          }`}
+        >
+          {event.status === 'Open' || event.status === 'UPCOMING' ? 'Apply Now' : 'Application Unavailable'}
+          {(event.status === 'Open' || event.status === 'UPCOMING') && <ArrowUpRight size={18} />}
+        </div>
+      </div>
+    </div>
+  );
+}
