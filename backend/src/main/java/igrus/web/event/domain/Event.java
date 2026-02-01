@@ -48,6 +48,10 @@ public class Event extends BaseEntity {
     @Column(name = "event_description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    /** 행사 장소 */
+    @Column(name = "event_location", nullable = false, length = 200)
+    private String location;
+
     /** 행사 시작 일시 */
     @Column(name = "event_start_at", nullable = false)
     private Instant eventStartAt;
@@ -99,7 +103,7 @@ public class Event extends BaseEntity {
      *
      * @throws InvalidEventCapacityException 정원이 1 미만인 경우
      */
-    public static Event create(User user, String title, String description,
+    public static Event create(User user, String title, String description, String location,
                                Instant eventStartAt, Instant eventEndAt,
                                Instant registrationStartAt, Instant registrationEndAt,
                                Integer capacity, EventRegistrationType registrationType) {
@@ -109,6 +113,7 @@ public class Event extends BaseEntity {
         event.user = user;
         event.title = title;
         event.description = description;
+        event.location = location;
         event.eventStartAt = eventStartAt;
         event.eventEndAt = eventEndAt;
         event.registrationStartAt = registrationStartAt;
@@ -299,7 +304,7 @@ public class Event extends BaseEntity {
      * @throws EventNotEditableException 수정 불가능한 상태인 경우
      * @throws InvalidEventCapacityException 정원이 1 미만인 경우
      */
-    public void update(String title, String description,
+    public void update(String title, String description, String location,
                        Instant eventStartAt, Instant eventEndAt,
                        Instant registrationStartAt, Instant registrationEndAt,
                        Integer capacity) {
@@ -310,6 +315,7 @@ public class Event extends BaseEntity {
 
         this.title = title;
         this.description = description;
+        this.location = location;
         this.eventStartAt = eventStartAt;
         this.eventEndAt = eventEndAt;
         this.registrationStartAt = registrationStartAt;
