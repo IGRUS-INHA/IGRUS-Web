@@ -18,7 +18,6 @@ import java.time.Instant;
  * @param registrationEndAt   신청 마감일시
  * @param capacity            정원
  * @param currentCount        현재 신청자 수
- * @param remainingCapacity   남은 자리 수
  * @param status              행사 상태
  * @param registrationType    신청 방식 (선착순/선발제)
  * @param isRegistrable       신청 가능 여부
@@ -32,7 +31,6 @@ public record EventListResponse(
         Instant registrationEndAt,
         int capacity,
         int currentCount,
-        int remainingCapacity,
         EventStatus status,
         EventRegistrationType registrationType,
         boolean isRegistrable
@@ -53,7 +51,6 @@ public record EventListResponse(
                 event.getRegistrationEndAt(),
                 event.getCapacity(),
                 event.getCurrentCount(),
-                event.getRemainingCapacity(),
                 event.getStatus(),
                 event.getRegistrationType(),
                 event.isRegistrable()

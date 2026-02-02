@@ -22,13 +22,15 @@ import java.time.Instant;
  * @param registrationEndAt   신청 마감일시
  * @param capacity            정원
  * @param currentCount        현재 신청자 수
- * @param remainingCapacity   남은 자리 수
  * @param status              행사 상태
  * @param closeReason         마감 사유 (CLOSED 상태일 때만)
  * @param registrationType    신청 방식 (선착순/선발제)
  * @param isRegistrable       신청 가능 여부
  * @param createdAt           생성일시
  * @param updatedAt           수정일시
+ * @param isAuthor            현재 사용자가 작성자인지 여부
+ * @param canEdit             현재 사용자가 수정 가능한지 여부
+ * @param isRegistered        현재 사용자가 신청했는지 여부
  */
 public record EventDetailResponse(
         Long id,
@@ -42,21 +44,27 @@ public record EventDetailResponse(
         Instant registrationEndAt,
         int capacity,
         int currentCount,
-        int remainingCapacity,
         EventStatus status,
         EventCloseReason closeReason,
         EventRegistrationType registrationType,
         boolean isRegistrable,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        boolean isAuthor,
+        boolean canEdit,
+        boolean isRegistered
 ) {
     /**
      * Event 엔티티로부터 EventDetailResponse를 생성합니다.
+     * 사용자 권한 정보 포함 버전.
      *
-     * @param event 행사 엔티티
+     * @param event        행사 엔티티
+     * @param isAuthor     현재 사용자가 작성자인지 여부
+     * @param canEdit      현재 사용자가 수정 가능한지 여부
+     * @param isRegistered 현재 사용자가 신청했는지 여부
      * @return EventDetailResponse
      */
-    public static EventDetailResponse from(Event event) {
+    public static EventDetailResponse from(Event event, boolean isAuthor, boolean canEdit, boolean isRegistered) {
         return new EventDetailResponse(
                 event.getId(),
                 event.getTitle(),
@@ -69,13 +77,26 @@ public record EventDetailResponse(
                 event.getRegistrationEndAt(),
                 event.getCapacity(),
                 event.getCurrentCount(),
-                event.getRemainingCapacity(),
                 event.getStatus(),
                 event.getCloseReason(),
                 event.getRegistrationType(),
                 event.isRegistrable(),
                 event.getCreatedAt(),
-                event.getUpdatedAt()
+                event.getUpdatedAt(),
+                isAuthor,
+                canEdit,
+                isRegistered
         );
+    }
+
+    /**
+     * Event 엔티티로부터 EventDetailResponse를 생성합니다.
+     * 사용자 권한 정보 없이 생성 (기본값: false).
+     *
+     * @param event 행사 엔티티
+     * @return EventDetailResponse
+     */
+    public static EventDetailResponse from(Event event) {
+        return from(event, false, false, false);
     }
 }
