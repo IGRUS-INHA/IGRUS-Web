@@ -17,7 +17,9 @@ import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -61,7 +63,13 @@ import static org.mockito.Mockito.verify;
 class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
 
     @Autowired
-    private PasswordSignupService passwordSignupService;
+    private SignupService signupService;
+
+    @Autowired
+    private VerifyEmailService verifyEmailService;
+
+    @Autowired
+    private ResendVerificationService resendVerificationService;
 
     @MockitoBean
     private AuthEmailService authEmailService;
@@ -77,9 +85,10 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
-        ReflectionTestUtils.setField(passwordSignupService, "verificationCodeExpiry", 600000L);
-        ReflectionTestUtils.setField(passwordSignupService, "maxAttempts", 5);
-        ReflectionTestUtils.setField(passwordSignupService, "resendRateLimitSeconds", 60L);
+        ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", 600000L);
+        ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", 5);
+        ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", 600000L);
+        ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", 60L);
     }
 
     private PasswordSignupRequest createValidSignupRequest() {
@@ -155,7 +164,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -176,7 +185,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -201,7 +210,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            PasswordSignupResponse response = passwordSignupService.signup(request);
+            PasswordSignupResponse response = signupService.signup(request);
 
             // then
             assertThat(response).isNotNull();
@@ -225,7 +234,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -240,7 +249,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -257,7 +266,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             Optional<EmailVerification> verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL);
@@ -272,7 +281,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -293,7 +302,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            PasswordSignupResponse response = passwordSignupService.signup(request);
+            PasswordSignupResponse response = signupService.signup(request);
 
             // then
             assertThat(response).isNotNull();
@@ -309,7 +318,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -330,7 +339,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -354,7 +363,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.signup(request))
+            assertThatThrownBy(() -> signupService.signup(request))
                     .isInstanceOf(DuplicateStudentIdException.class);
 
             // 새 사용자가 저장되지 않았는지 확인
@@ -369,7 +378,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.signup(request))
+            assertThatThrownBy(() -> signupService.signup(request))
                     .isInstanceOf(DuplicateEmailException.class);
 
             // 새 사용자가 저장되지 않았는지 확인
@@ -395,7 +404,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.signup(request))
+            assertThatThrownBy(() -> signupService.signup(request))
                     .isInstanceOf(DuplicatePhoneNumberException.class);
 
             // 새 사용자가 저장되지 않았는지 확인
@@ -411,7 +420,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createSignupRequestWithStudentId(VALID_STUDENT_ID);
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.signup(request))
+            assertThatThrownBy(() -> signupService.signup(request))
                     .isInstanceOf(DuplicateStudentIdException.class);
         }
 
@@ -424,7 +433,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createSignupRequestWithEmail("test@inha.edu");
 
             // when & then - 다른 이메일이면 성공해야 함
-            PasswordSignupResponse response = passwordSignupService.signup(request);
+            PasswordSignupResponse response = signupService.signup(request);
             assertThat(response).isNotNull();
         }
 
@@ -447,7 +456,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createSignupRequestWithPhone("010-1234-5678");
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.signup(request))
+            assertThatThrownBy(() -> signupService.signup(request))
                     .isInstanceOf(DuplicatePhoneNumberException.class);
         }
     }
@@ -466,7 +475,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             verify(authEmailService).sendVerificationEmail(anyString(), codeCaptor.capture());
@@ -480,13 +489,13 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         void verifyEmail_withValidCode_completesSignup() {
             // given
             PasswordSignupRequest signupRequest = createValidSignupRequest();
-            passwordSignupService.signup(signupRequest);
+            signupService.signup(signupRequest);
 
             EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL).orElseThrow();
             EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, verification.getCode());
 
             // when
-            PasswordSignupResponse response = passwordSignupService.verifyEmail(request);
+            PasswordSignupResponse response = verifyEmailService.verifyEmail(request);
 
             // then
             assertThat(response).isNotNull();
@@ -503,13 +512,13 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         void verifyEmail_setsUserAsAssociate() {
             // given
             PasswordSignupRequest signupRequest = createValidSignupRequest();
-            passwordSignupService.signup(signupRequest);
+            signupService.signup(signupRequest);
 
             EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL).orElseThrow();
             EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, verification.getCode());
 
             // when
-            passwordSignupService.verifyEmail(request);
+            verifyEmailService.verifyEmail(request);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -522,13 +531,13 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         void verifyEmail_userStatus_becomesActive() {
             // given
             PasswordSignupRequest signupRequest = createValidSignupRequest();
-            passwordSignupService.signup(signupRequest);
+            signupService.signup(signupRequest);
 
             EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL).orElseThrow();
             EmailVerificationRequest verifyRequest = new EmailVerificationRequest(VALID_EMAIL, verification.getCode());
 
             // when
-            passwordSignupService.verifyEmail(verifyRequest);
+            verifyEmailService.verifyEmail(verifyRequest);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -541,13 +550,13 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         void verifyEmail_credentialStatus_becomesActive() {
             // given
             PasswordSignupRequest signupRequest = createValidSignupRequest();
-            passwordSignupService.signup(signupRequest);
+            signupService.signup(signupRequest);
 
             EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL).orElseThrow();
             EmailVerificationRequest verifyRequest = new EmailVerificationRequest(VALID_EMAIL, verification.getCode());
 
             // when
-            passwordSignupService.verifyEmail(verifyRequest);
+            verifyEmailService.verifyEmail(verifyRequest);
 
             // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
@@ -566,7 +575,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, "123456");
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.verifyEmail(request))
+            assertThatThrownBy(() -> verifyEmailService.verifyEmail(request))
                     .isInstanceOf(VerificationCodeExpiredException.class);
         }
 
@@ -583,7 +592,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, "123456");
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.verifyEmail(request))
+            assertThatThrownBy(() -> verifyEmailService.verifyEmail(request))
                     .isInstanceOf(VerificationAttemptsExceededException.class);
         }
 
@@ -597,7 +606,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, "000000");
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.verifyEmail(request))
+            assertThatThrownBy(() -> verifyEmailService.verifyEmail(request))
                     .isInstanceOf(VerificationCodeInvalidException.class);
 
             EmailVerification savedVerification = emailVerificationRepository.findById(verification.getId()).orElseThrow();
@@ -614,7 +623,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.resendVerification(request))
+            assertThatThrownBy(() -> resendVerificationService.resendVerification(request))
                     .isInstanceOf(VerificationResendRateLimitedException.class);
 
             verify(authEmailService, never()).sendVerificationEmail(anyString(), anyString());
@@ -627,7 +636,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             // when
-            VerificationResendResponse response = passwordSignupService.resendVerification(request);
+            VerificationResendResponse response = resendVerificationService.resendVerification(request);
 
             // then
             assertThat(response).isNotNull();
@@ -664,7 +673,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             // when
-            passwordSignupService.resendVerification(request);
+            resendVerificationService.resendVerification(request);
 
             // then - 기존 레코드는 삭제됨
             assertThat(emailVerificationRepository.findById(oldVerificationId)).isEmpty();
@@ -683,7 +692,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
 
             // when
-            passwordSignupService.resendVerification(request);
+            resendVerificationService.resendVerification(request);
 
             // then
             verify(authEmailService).sendVerificationEmail(anyString(), codeCaptor.capture());
@@ -716,7 +725,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             // when
-            passwordSignupService.resendVerification(request);
+            resendVerificationService.resendVerification(request);
 
             // then
             Optional<EmailVerification> newVerification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL);
@@ -738,7 +747,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             EmailVerificationRequest request = new EmailVerificationRequest("nonexistent@inha.edu", "123456");
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.verifyEmail(request))
+            assertThatThrownBy(() -> verifyEmailService.verifyEmail(request))
                     .isInstanceOf(VerificationCodeInvalidException.class);
         }
 
@@ -753,7 +762,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then - 기존 레코드는 삭제됨
             assertThat(emailVerificationRepository.findById(existingId)).isEmpty();
@@ -771,7 +780,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             verify(authEmailService).sendVerificationEmail(eq(VALID_EMAIL), anyString());
@@ -784,7 +793,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL).orElseThrow();
@@ -798,7 +807,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // then
             EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL).orElseThrow();
@@ -811,10 +820,10 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         void signup_withSameInfo_secondAttemptFails() {
             // given
             PasswordSignupRequest request = createValidSignupRequest();
-            passwordSignupService.signup(request);
+            signupService.signup(request);
 
             // when & then - 동일한 학번으로 두 번째 시도
-            assertThatThrownBy(() -> passwordSignupService.signup(request))
+            assertThatThrownBy(() -> signupService.signup(request))
                     .isInstanceOf(DuplicateStudentIdException.class);
         }
 
@@ -823,12 +832,12 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         void signup_withDifferentEmailSameStudentId_failsOnStudentId() {
             // given
             PasswordSignupRequest firstRequest = createValidSignupRequest();
-            passwordSignupService.signup(firstRequest);
+            signupService.signup(firstRequest);
 
             PasswordSignupRequest secondRequest = createSignupRequestWithEmail("different@inha.edu");
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.signup(secondRequest))
+            assertThatThrownBy(() -> signupService.signup(secondRequest))
                     .isInstanceOf(DuplicateStudentIdException.class);
         }
 
@@ -837,7 +846,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         void signup_withDifferentStudentIdSameEmail_failsOnEmail() {
             // given
             PasswordSignupRequest firstRequest = createValidSignupRequest();
-            passwordSignupService.signup(firstRequest);
+            signupService.signup(firstRequest);
 
             PasswordSignupRequest secondRequest = new PasswordSignupRequest(
                     "99999999",
@@ -853,7 +862,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             );
 
             // when & then
-            assertThatThrownBy(() -> passwordSignupService.signup(secondRequest))
+            assertThatThrownBy(() -> signupService.signup(secondRequest))
                     .isInstanceOf(DuplicateEmailException.class);
         }
     }

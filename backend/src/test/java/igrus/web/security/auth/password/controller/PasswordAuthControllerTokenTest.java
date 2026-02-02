@@ -4,13 +4,20 @@ import igrus.web.common.exception.ErrorCode;
 import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
-import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
+import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
-import igrus.web.security.auth.password.service.PasswordAuthService;
-import igrus.web.security.auth.password.service.PasswordResetService;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
+import igrus.web.security.auth.password.service.reset.ResetPasswordService;
+import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
+import igrus.web.security.auth.password.service.auth.LoginService;
+import igrus.web.security.auth.password.service.auth.LogoutService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,19 +50,40 @@ class PasswordAuthControllerTokenTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private PasswordAuthService passwordAuthService;
+    private LoginService loginService;
 
     @MockitoBean
-    private PasswordSignupService passwordSignupService;
+    private LogoutService logoutService;
 
     @MockitoBean
-    private PasswordResetService passwordResetService;
+    private RefreshTokenService refreshTokenService;
+
+    @MockitoBean
+    private SignupService signupService;
+
+    @MockitoBean
+    private VerifyEmailService verifyEmailService;
+
+    @MockitoBean
+    private ResendVerificationService resendVerificationService;
+
+    @MockitoBean
+    private RequestPasswordResetService requestPasswordResetService;
+
+    @MockitoBean
+    private ResetPasswordService resetPasswordService;
+
+    @MockitoBean
+    private ValidateResetTokenService validateResetTokenService;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private AccountRecoveryService accountRecoveryService;
+    private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
+
+    @MockitoBean
+    private RecoverAccountService recoverAccountService;
 
     @MockitoBean
     private AccountStatusService accountStatusService;
@@ -87,7 +115,7 @@ class PasswordAuthControllerTokenTest {
         void refreshToken_withValidToken_returns200() throws Exception {
             // given
             TokenRefreshResponse response = TokenRefreshResponse.of("new.access.token", EXPIRES_IN);
-            given(passwordAuthService.refreshToken(anyString()))
+            given(refreshTokenService.refreshToken(anyString()))
                 .willReturn(response);
 
             // when & then
@@ -103,7 +131,7 @@ class PasswordAuthControllerTokenTest {
         void refreshToken_withValidToken_returnsExpiresInGreaterThanZero() throws Exception {
             // given
             TokenRefreshResponse response = TokenRefreshResponse.of("new.access.token", EXPIRES_IN);
-            given(passwordAuthService.refreshToken(anyString()))
+            given(refreshTokenService.refreshToken(anyString()))
                 .willReturn(response);
 
             // when & then
@@ -120,7 +148,7 @@ class PasswordAuthControllerTokenTest {
             // given
             String newAccessToken = "valid.new.access.token.for.api.calls";
             TokenRefreshResponse response = TokenRefreshResponse.of(newAccessToken, EXPIRES_IN);
-            given(passwordAuthService.refreshToken(anyString()))
+            given(refreshTokenService.refreshToken(anyString()))
                 .willReturn(response);
 
             // when & then
@@ -140,7 +168,7 @@ class PasswordAuthControllerTokenTest {
         @DisplayName("만료된 Refresh Token으로 갱신 시도 시 401 반환 [TKN-010]")
         void refreshToken_withExpiredToken_returns401() throws Exception {
             // given
-            given(passwordAuthService.refreshToken(anyString()))
+            given(refreshTokenService.refreshToken(anyString()))
                 .willThrow(new RefreshTokenExpiredException());
 
             // when & then
@@ -155,7 +183,7 @@ class PasswordAuthControllerTokenTest {
         @DisplayName("유효하지 않은 Refresh Token으로 갱신 시도 시 401 반환 [TKN-011]")
         void refreshToken_withInvalidToken_returns401() throws Exception {
             // given
-            given(passwordAuthService.refreshToken(anyString()))
+            given(refreshTokenService.refreshToken(anyString()))
                 .willThrow(new RefreshTokenInvalidException());
 
             // when & then
@@ -170,7 +198,7 @@ class PasswordAuthControllerTokenTest {
         @DisplayName("위조된 Refresh Token으로 갱신 시도 시 401 반환 [TKN-012]")
         void refreshToken_withForgedToken_returns401() throws Exception {
             // given
-            given(passwordAuthService.refreshToken(anyString()))
+            given(refreshTokenService.refreshToken(anyString()))
                 .willThrow(new RefreshTokenInvalidException());
 
             // when & then
@@ -198,7 +226,7 @@ class PasswordAuthControllerTokenTest {
         @DisplayName("로그아웃된 (무효화된) Refresh Token으로 갱신 시도 시 401 반환 [TKN-014]")
         void refreshToken_withRevokedToken_returns401() throws Exception {
             // given
-            given(passwordAuthService.refreshToken(anyString()))
+            given(refreshTokenService.refreshToken(anyString()))
                 .willThrow(new RefreshTokenInvalidException());
 
             // when & then

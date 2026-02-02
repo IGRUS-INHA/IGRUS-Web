@@ -5,8 +5,12 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
-import igrus.web.security.auth.password.service.PasswordAuthService;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
+import igrus.web.security.auth.password.service.auth.LoginService;
+import igrus.web.security.auth.password.service.auth.LogoutService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
@@ -64,10 +68,22 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
-    protected PasswordAuthService passwordAuthService;
+    protected LoginService loginService;
 
     @Autowired
-    protected PasswordSignupService passwordSignupService;
+    protected LogoutService logoutService;
+
+    @Autowired
+    protected RefreshTokenService refreshTokenService;
+
+    @Autowired
+    protected SignupService signupService;
+
+    @Autowired
+    protected VerifyEmailService verifyEmailService;
+
+    @Autowired
+    protected ResendVerificationService resendVerificationService;
 
     @Autowired
     protected JwtTokenProvider jwtTokenProvider;
@@ -88,11 +104,13 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
      * 서비스 속성을 설정합니다.
      */
     protected void configureServiceProperties() {
-        ReflectionTestUtils.setField(passwordAuthService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
-        ReflectionTestUtils.setField(passwordAuthService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
-        ReflectionTestUtils.setField(passwordSignupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(passwordSignupService, "maxAttempts", MAX_VERIFICATION_ATTEMPTS);
-        ReflectionTestUtils.setField(passwordSignupService, "resendRateLimitSeconds", RESEND_RATE_LIMIT_SECONDS);
+        ReflectionTestUtils.setField(loginService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(loginService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", MAX_VERIFICATION_ATTEMPTS);
+        ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", RESEND_RATE_LIMIT_SECONDS);
     }
 
     // ==================== HTTP Request Helper Methods ====================

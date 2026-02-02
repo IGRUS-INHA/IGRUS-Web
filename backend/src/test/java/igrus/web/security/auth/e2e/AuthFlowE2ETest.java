@@ -9,9 +9,13 @@ import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
-import igrus.web.security.auth.password.service.PasswordAuthService;
+import igrus.web.security.auth.password.service.auth.LoginService;
+import igrus.web.security.auth.password.service.auth.LogoutService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.user.domain.Gender;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -73,10 +77,22 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
-    private PasswordAuthService passwordAuthService;
+    private LoginService loginService;
 
     @Autowired
-    private PasswordSignupService passwordSignupService;
+    private LogoutService logoutService;
+
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    @Autowired
+    private SignupService signupService;
+
+    @Autowired
+    private VerifyEmailService verifyEmailService;
+
+    @Autowired
+    private ResendVerificationService resendVerificationService;
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -87,11 +103,13 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
-        ReflectionTestUtils.setField(passwordAuthService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
-        ReflectionTestUtils.setField(passwordAuthService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
-        ReflectionTestUtils.setField(passwordSignupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(passwordSignupService, "maxAttempts", 5);
-        ReflectionTestUtils.setField(passwordSignupService, "resendRateLimitSeconds", 0L); // 테스트용으로 비활성화
+        ReflectionTestUtils.setField(loginService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(loginService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", 5);
+        ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", 0L); // 테스트용으로 비활성화
     }
 
     /**
