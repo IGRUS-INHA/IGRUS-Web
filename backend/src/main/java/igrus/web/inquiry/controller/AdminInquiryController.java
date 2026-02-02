@@ -5,7 +5,9 @@ import igrus.web.inquiry.domain.InquiryStatus;
 import igrus.web.inquiry.domain.InquiryType;
 import igrus.web.inquiry.dto.request.*;
 import igrus.web.inquiry.dto.response.*;
-import igrus.web.inquiry.service.InquiryService;
+import igrus.web.inquiry.service.manage.*;
+import igrus.web.inquiry.service.read.GetAllInquiriesService;
+import igrus.web.inquiry.service.read.GetInquiryDetailService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,7 +18,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,112 +29,23 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 관리자 문의 컨트롤러.
+ * OPERATOR 또는 ADMIN 권한 필요.
+ */
 @RestController
 @RequestMapping("/api/v1/inquiries")
 @RequiredArgsConstructor
 @Tag(name = "Inquiry", description = "문의 API")
-public class InquiryController {
+public class AdminInquiryController {
 
-    private final InquiryService inquiryService;
-
-    // ==================== 공개 API ====================
-
-    @Operation(
-            summary = "비회원 문의 작성",
-            description = "비회원이 문의를 작성합니다. 이메일, 이름, 비밀번호가 필수입니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "문의 생성 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (유효성 검증 실패)")
-    })
-    @PostMapping("/guest")
-    public ResponseEntity<CreateInquiryResponse> createGuestInquiry(
-            @Valid @RequestBody CreateGuestInquiryRequest request
-    ) {
-        CreateInquiryResponse response = inquiryService.createGuestInquiry(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @Operation(
-            summary = "회원 문의 작성",
-            description = "로그인한 회원이 문의를 작성합니다. JWT 인증이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "문의 생성 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (유효성 검증 실패)"),
-            @ApiResponse(responseCode = "401", description = "인증 필요")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
-    @PreAuthorize("isAuthenticated()")
-    @PostMapping("/member")
-    public ResponseEntity<CreateInquiryResponse> createMemberInquiry(
-            @Valid @RequestBody CreateMemberInquiryRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
-        CreateInquiryResponse response = inquiryService.createMemberInquiry(request, user.userId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @Operation(
-            summary = "비회원 문의 조회",
-            description = "문의번호, 이메일, 비밀번호로 비회원 문의를 조회합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "비밀번호 불일치"),
-            @ApiResponse(responseCode = "404", description = "문의를 찾을 수 없음")
-    })
-    @PostMapping("/lookup")
-    public ResponseEntity<InquiryResponse> lookupGuestInquiry(
-            @Valid @RequestBody GuestInquiryLookupRequest request
-    ) {
-        InquiryResponse response = inquiryService.lookupGuestInquiry(request);
-        return ResponseEntity.ok(response);
-    }
-
-    // ==================== 회원 전용 API ====================
-
-    @Operation(
-            summary = "내 문의 목록 조회",
-            description = "로그인한 회원의 문의 목록을 조회합니다. JWT 인증이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/my")
-    public ResponseEntity<Page<InquiryListResponse>> getMyInquiries(
-            @AuthenticationPrincipal AuthenticatedUser user,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable
-    ) {
-        Page<InquiryListResponse> response = inquiryService.getMyInquiries(user.userId(), pageable);
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(
-            summary = "내 문의 상세 조회",
-            description = "로그인한 회원의 특정 문의 상세 정보를 조회합니다. JWT 인증이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "404", description = "문의를 찾을 수 없음")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/my/{id}")
-    public ResponseEntity<InquiryResponse> getMyInquiry(
-            @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
-        InquiryResponse response = inquiryService.getMyInquiry(id, user.userId());
-        return ResponseEntity.ok(response);
-    }
-
-    // ==================== 관리자 전용 API ====================
+    private final GetAllInquiriesService getAllInquiriesService;
+    private final GetInquiryDetailService getInquiryDetailService;
+    private final UpdateInquiryStatusService updateInquiryStatusService;
+    private final CreateInquiryReplyService createInquiryReplyService;
+    private final UpdateInquiryReplyService updateInquiryReplyService;
+    private final CreateInquiryMemoService createInquiryMemoService;
+    private final DeleteInquiryService deleteInquiryService;
 
     @Operation(
             summary = "전체 문의 목록 조회",
@@ -157,7 +69,7 @@ public class InquiryController {
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {
-        Page<InquiryListResponse> response = inquiryService.getAllInquiries(type, status, pageable);
+        Page<InquiryListResponse> response = getAllInquiriesService.getAllInquiries(type, status, pageable);
         return ResponseEntity.ok(response);
     }
 
@@ -177,7 +89,7 @@ public class InquiryController {
     public ResponseEntity<InquiryDetailResponse> getInquiryDetail(
             @Parameter(description = "문의 ID", required = true) @PathVariable Long id
     ) {
-        InquiryDetailResponse response = inquiryService.getInquiryDetail(id);
+        InquiryDetailResponse response = getInquiryDetailService.getInquiryDetail(id);
         return ResponseEntity.ok(response);
     }
 
@@ -198,7 +110,7 @@ public class InquiryController {
             @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
             @Valid @RequestBody UpdateInquiryStatusRequest request
     ) {
-        inquiryService.updateInquiryStatus(id, request);
+        updateInquiryStatusService.updateInquiryStatus(id, request);
         return ResponseEntity.ok().build();
     }
 
@@ -221,7 +133,7 @@ public class InquiryController {
             @Valid @RequestBody CreateInquiryReplyRequest request,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        InquiryReplyResponse response = inquiryService.createReply(id, request, user.userId());
+        InquiryReplyResponse response = createInquiryReplyService.createReply(id, request, user.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -243,7 +155,7 @@ public class InquiryController {
             @Valid @RequestBody UpdateInquiryReplyRequest request,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        InquiryReplyResponse response = inquiryService.updateReply(id, request, user.userId());
+        InquiryReplyResponse response = updateInquiryReplyService.updateReply(id, request, user.userId());
         return ResponseEntity.ok(response);
     }
 
@@ -265,7 +177,7 @@ public class InquiryController {
             @Valid @RequestBody CreateInquiryMemoRequest request,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        InquiryMemoResponse response = inquiryService.createMemo(id, request, user.userId());
+        InquiryMemoResponse response = createInquiryMemoService.createMemo(id, request, user.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -286,7 +198,7 @@ public class InquiryController {
             @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        inquiryService.deleteInquiry(id, user.userId());
+        deleteInquiryService.deleteInquiry(id, user.userId());
         return ResponseEntity.noContent().build();
     }
 }

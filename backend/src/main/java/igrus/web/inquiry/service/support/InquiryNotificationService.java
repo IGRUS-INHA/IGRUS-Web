@@ -1,4 +1,4 @@
-package igrus.web.inquiry.service;
+package igrus.web.inquiry.service.support;
 
 public interface InquiryNotificationService {
 

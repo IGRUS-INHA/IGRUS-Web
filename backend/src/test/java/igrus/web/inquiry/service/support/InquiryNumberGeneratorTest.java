@@ -1,4 +1,4 @@
-package igrus.web.inquiry.service;
+package igrus.web.inquiry.service.support;
 
 import igrus.web.inquiry.repository.InquiryRepository;
 import org.junit.jupiter.api.BeforeEach;

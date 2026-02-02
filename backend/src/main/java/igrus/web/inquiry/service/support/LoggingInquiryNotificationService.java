@@ -1,12 +1,14 @@
-package igrus.web.inquiry.service;
+package igrus.web.inquiry.service.support;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @Profile({"local", "test"})
+@Transactional
 public class LoggingInquiryNotificationService implements InquiryNotificationService {
 
     @Override
