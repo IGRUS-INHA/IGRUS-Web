@@ -1,6 +1,7 @@
 package igrus.web.user.domain;
 
 import igrus.web.user.domain.Gender;
+import igrus.web.user.exception.InvalidSuspensionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -74,7 +75,7 @@ class UserSuspensionTest {
 
             // when & then
             assertThatThrownBy(() -> UserSuspension.create(user, "사유", suspendedAt, suspendedUntil, 1L))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidSuspensionException.class)
                     .hasMessageContaining("정지 종료일은 정지 시작일 이후여야 합니다");
         }
     }
@@ -131,7 +132,7 @@ class UserSuspensionTest {
 
             // when & then
             assertThatThrownBy(() -> suspension.lift(3L))
-                    .isInstanceOf(IllegalStateException.class)
+                    .isInstanceOf(InvalidSuspensionException.class)
                     .hasMessageContaining("이미 해제된 정지입니다");
         }
     }
@@ -285,7 +286,7 @@ class UserSuspensionTest {
 
             // when & then
             assertThatThrownBy(() -> suspension.updateReason(null))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidSuspensionException.class)
                     .hasMessageContaining("정지 사유는 필수입니다");
         }
 
@@ -299,7 +300,7 @@ class UserSuspensionTest {
 
             // when & then
             assertThatThrownBy(() -> suspension.updateReason("   "))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidSuspensionException.class)
                     .hasMessageContaining("정지 사유는 필수입니다");
         }
     }
@@ -335,7 +336,7 @@ class UserSuspensionTest {
 
             // when & then
             assertThatThrownBy(() -> suspension.extendSuspension(Instant.now().plus(14, ChronoUnit.DAYS)))
-                    .isInstanceOf(IllegalStateException.class)
+                    .isInstanceOf(InvalidSuspensionException.class)
                     .hasMessageContaining("해제된 정지는 연장할 수 없습니다");
         }
 
@@ -350,7 +351,7 @@ class UserSuspensionTest {
 
             // when & then
             assertThatThrownBy(() -> suspension.extendSuspension(earlierDate))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidSuspensionException.class)
                     .hasMessageContaining("새로운 종료일은 기존 종료일 이후여야 합니다");
         }
     }
