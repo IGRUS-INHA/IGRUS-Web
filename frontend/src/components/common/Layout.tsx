@@ -12,13 +12,13 @@ export default function Layout() {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col">
         {/* Header */}
         <Header />
 
         {/* Page Content */}
-        <main className="p-6">
-          <div className="max-w-7xl mx-auto">
+        <main className="px-6 pb-6 flex-1">
+          <div className="max-w-7xl mx-auto h-full">
             <Outlet />
           </div>
         </main>

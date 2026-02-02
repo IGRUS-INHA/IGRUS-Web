@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,7 +17,7 @@ const FEATURED_POSTS: Post[] = [
     content: '인하대학교 IGRUS 동아리에서 새로운 멤버를 모집합니다.',
     date: '2시간 전',
     image:
-      'https://images.unsplash.com/photo-1522071823991-b99c22303091?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800',
     isAnonymous: false,
     isQuestion: false,
     likes: 120,
@@ -59,29 +58,14 @@ const FEATURED_POSTS: Post[] = [
 
 export default function HomePage() {
   const theme = useUIStore((state) => state.theme);
-  const [aiSummary, setAiSummary] = useState<string>(
-    '최신 소식을 불러오는 중...'
-  );
   const isDark = theme === 'dark';
 
-  useEffect(() => {
-    // AI 요약 기능은 추후 구현 예정
-    // 현재는 임시 텍스트로 대체
-    const timer = setTimeout(() => {
-      setAiSummary(
-        'IGRUS에서 신입 회원 모집이 시작되었습니다. 3명의 새로운 운영진이 합류했으며, 다음 주 금요일 게임 개발 전시회가 예정되어 있습니다.'
-      );
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
-    <div className="space-y-12 animate-in fade-in duration-500">
+    <div className="animate-in fade-in duration-500">
       {/* Hero Section */}
       <section
         className={cn(
-          'relative w-full h-80 rounded-r4 border p-s7 flex flex-col justify-center overflow-hidden group transition-all duration-300',
+          'relative w-full h-96 rounded-r4 border py-s8 px-s7 flex flex-col justify-center overflow-hidden group transition-all duration-300',
           isDark
             ? 'bg-gradient-to-br from-[#1E1E1E] to-[#121212] border-white/5'
             : 'bg-gradient-to-br from-[#F3F4F6] to-white border-gray-100'
@@ -97,7 +81,7 @@ export default function HomePage() {
             )}
           >
             <Sparkles size={12} className="text-[#03A69E]" />
-            활발한 커뮤니티
+            혁신적인 개발
           </div>
           <h2
             className={cn(
@@ -105,10 +89,10 @@ export default function HomePage() {
               isDark ? 'text-white' : 'text-black'
             )}
           >
-            게임을 만들고,
+            웹을 개발하고,
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#03A69E] to-[#027d77]">
-              열정을 나누세요.
+              미래를 만드세요.
             </span>
           </h2>
           <p
@@ -117,8 +101,8 @@ export default function HomePage() {
               isDark ? 'text-gray-400' : 'text-gray-600'
             )}
           >
-            인하대학교 게임 개발 동아리 IGRUS에서 여러분의 아이디어를 현실로
-            만들어보세요. 함께 성장하는 크리에이터들의 커뮤니티입니다.
+            인하대학교 웹 개발 동아리 IGRUS에서 최신 기술로 프로젝트를
+            구현하세요. 함께 성장하는 개발자들의 커뮤니티입니다.
           </p>
           <Button
             asChild
@@ -140,14 +124,7 @@ export default function HomePage() {
         </div>
 
         {/* Decorative Elements */}
-        <div
-          className={cn(
-            'absolute top-[-20%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000',
-            isDark
-              ? 'bg-[#03A69E]/10 group-hover:bg-primary/20'
-              : 'bg-[#03A69E]/5 group-hover:bg-primary/10'
-          )}
-        />
+        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000 bg-[#03A69E]/20 group-hover:bg-primary/30" />
         <div className="absolute right-20 top-1/2 -translate-y-1/2 opacity-20 select-none pointer-events-none">
           <div
             className={cn(
@@ -165,36 +142,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* AI Summary Banner */}
-      <section
-        className={cn(
-          'border p-s6 rounded-r4 flex items-center gap-s6 transition-colors',
-          isDark
-            ? 'bg-white/5 border-white/10'
-            : 'bg-gray-50 border-gray-100'
-        )}
-      >
-        <div className="w-12 h-12 bg-[#03A69E]/20 rounded-2xl flex items-center justify-center shrink-0">
-          <Sparkles className="text-[#03A69E]" />
-        </div>
-        <div>
-          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-s1">
-            AI 스마트 요약
-          </h4>
-          <p
-            className={cn(
-              'italic font-medium leading-relaxed transition-colors',
-              isDark ? 'text-gray-200' : 'text-gray-700'
-            )}
-          >
-            &quot;{aiSummary}&quot;
-          </p>
-        </div>
-      </section>
-
       {/* Featured Section */}
-      <section>
-        <div className="flex justify-between items-end mb-s8">
+      <section className="mt-s6">
+        <div className="flex justify-between items-center mb-s6">
           <div>
             <h3
               className={cn(
@@ -215,7 +165,7 @@ export default function HomePage() {
             전체 게시글 보기
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-s8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-s7 items-stretch">
           {FEATURED_POSTS.map((post) => (
             <PostCard key={post.id} post={post} theme={theme} />
           ))}
@@ -223,7 +173,7 @@ export default function HomePage() {
       </section>
 
       {/* Mini Stats / Upcoming Mini Card */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-s6">
+      <section className="mt-s5 grid grid-cols-1 md:grid-cols-2 gap-s6">
         <div
           className={cn(
             'p-s8 rounded-r4 border transition-colors',
@@ -264,34 +214,6 @@ export default function HomePage() {
             예정된 행사
           </div>
         </div>
-        <div
-          className={cn(
-            'p-s8 rounded-r4 border flex flex-col justify-between transition-colors',
-            isDark
-              ? 'bg-gradient-to-br from-[#03A69E]/20 to-white/5 border-white/5'
-              : 'bg-gradient-to-br from-[#03A69E]/5 to-[#03A69E]/10 border-gray-100 shadow-sm'
-          )}
-        >
-          <div
-            className={cn(
-              'text-lg font-bold',
-              isDark ? 'text-white' : 'text-black'
-            )}
-          >
-            함께 하고 싶으신가요?
-          </div>
-          <Button
-            asChild
-            className={cn(
-              'mt-s4 px-s4 py-s2 rounded-r3 text-xs font-bold transition-all',
-              isDark
-                ? 'bg-white text-black hover:bg-primary hover:text-white'
-                : 'bg-black text-white hover:bg-primary'
-            )}
-          >
-            <Link to="/inquiry">가입 문의하기</Link>
-          </Button>
-        </div>
       </section>
     </div>
   );
@@ -307,17 +229,17 @@ function PostCard({ post, theme }: PostCardProps) {
   const isDark = theme === 'dark';
 
   return (
-    <Link to={`/board/${post.board}/${post.id}`}>
+    <Link to={`/board/${post.board}/${post.id}`} className="h-full">
       <Card
         className={cn(
-          'overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02]',
+          'h-full flex flex-col overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02]',
           isDark
             ? 'bg-[#1A1A1A] border-white/5 hover:border-[#03A69E]/30'
             : 'bg-white border-gray-100 hover:border-[#03A69E]/30 hover:shadow-lg'
         )}
       >
         {post.image && (
-          <div className="relative h-48 overflow-hidden">
+          <div className="relative h-64 overflow-hidden">
             <img
               src={post.image}
               alt={post.title}
@@ -330,8 +252,8 @@ function PostCard({ post, theme }: PostCardProps) {
             )}
           </div>
         )}
-        <CardContent className="p-s6">
-          <div className="space-y-3">
+        <CardContent className="p-s4 flex-1 flex flex-col">
+          <div className="space-y-4 flex-1 flex flex-col">
             <div
               className={cn(
                 'text-xs font-bold uppercase tracking-widest',
@@ -342,7 +264,7 @@ function PostCard({ post, theme }: PostCardProps) {
             </div>
             <h3
               className={cn(
-                'text-xl font-bold line-clamp-2 transition-colors',
+                'text-2xl font-bold line-clamp-2 transition-colors',
                 isDark ? 'text-white' : 'text-black'
               )}
             >

@@ -79,12 +79,12 @@ export default function InquiryPage() {
   return (
     <div className="max-w-3xl mx-auto animate-in fade-in duration-300">
       {/* View Toggle Buttons */}
-      <div className="flex gap-s4 mb-s8">
+      <div className="flex gap-s4 mb-s5">
         <button
           type="button"
           onClick={() => setView('form')}
           className={cn(
-            'flex-1 py-s3 rounded-r4 font-bold transition-all border cursor-pointer',
+            'flex-1 py-s3 rounded-r4 font-bold transition-all border cursor-pointer text-xs',
             view === 'form'
               ? 'bg-primary text-primary-foreground border-primary'
               : isDark
@@ -98,7 +98,7 @@ export default function InquiryPage() {
           type="button"
           onClick={() => setView('history')}
           className={cn(
-            'flex-1 py-s3 rounded-r4 font-bold transition-all border cursor-pointer',
+            'flex-1 py-s3 rounded-r4 font-bold transition-all border cursor-pointer text-xs',
             view === 'history'
               ? 'bg-primary text-primary-foreground border-primary'
               : isDark

@@ -14,9 +14,10 @@ export default function SearchBar({ className = '' }: SearchBarProps) {
       <input
         type="text"
         placeholder="Search..."
-        className="border border-border rounded-full pl-s7 pr-s4 py-s2 text-sm w-48 lg:w-80
+        className="border border-border rounded-full pl-s7 pr-s4 py-s2 text-sm
+                   w-56 md:w-72 lg:w-96 xl:w-[500px]
                    bg-background text-foreground focus:outline-none focus:border-primary/50
-                   transition-all focus:lg:w-96"
+                   transition-all focus:xl:w-[600px]"
       />
     </div>
   );

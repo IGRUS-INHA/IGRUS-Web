@@ -22,7 +22,7 @@ export default function EventListPage() {
 
   return (
     <div className="animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-center mb-s8">
+      <div className="flex justify-between items-center mb-s6">
         <h2 className="text-2xl font-bold">Upcoming Events</h2>
         {canCreateEvent && (
           <button

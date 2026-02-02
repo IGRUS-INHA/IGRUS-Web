@@ -84,9 +84,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <nav
-        className={`fixed lg:sticky top-0 left-0 z-50 w-64 border-r p-s5 flex flex-col gap-s6 h-screen transition-transform duration-300 ease-in-out
+        className={`fixed lg:sticky top-0 left-0 z-50 w-64 border-r p-s5 flex flex-col gap-s6 h-screen transition-transform duration-300 ease-in-out backdrop-blur-md
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          ${isDark ? 'border-border bg-background' : 'border-border bg-background'}`}
+          ${isDark ? 'border-white/10 bg-background/80' : 'border-gray-200/30 bg-white/95'}`}
       >
         {/* Logo */}
         <div className="flex justify-between items-center">

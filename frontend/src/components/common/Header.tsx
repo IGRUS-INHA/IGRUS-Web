@@ -1,6 +1,5 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useAuthStore, useUIStore } from '@/stores';
-import { Button } from '@/components/ui/button';
+import { useLocation } from 'react-router-dom';
+import { useUIStore } from '@/stores';
 import SearchBar from './SearchBar';
 import { getPageTitle } from '@/constants/routes';
 import { formatHeaderDate } from '@/utils';
@@ -8,15 +7,19 @@ import { Menu } from 'lucide-react';
 
 export default function Header() {
   const location = useLocation();
-  const { isAuthenticated } = useAuthStore();
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { sidebarOpen, toggleSidebar, theme } = useUIStore();
 
   const pageTitle = getPageTitle(location.pathname);
   const currentDate = formatHeaderDate();
+  const isDark = theme === 'dark';
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-md py-s5 mb-s6 transition-colors bg-white/80">
-      <div className="container mx-auto px-s6">
+    <header className={`sticky top-0 backdrop-blur-md py-s5 mb-s3 transition-colors ${
+      sidebarOpen ? 'z-30' : 'z-40'
+    } ${
+      isDark ? 'bg-background/80' : 'bg-white/80'
+    }`}>
+      <div className="w-full px-s4 lg:px-s7">
         {/* 상단 행: 메뉴 + 제목 + 인증 버튼 */}
         <div className="flex justify-between items-center">
           {/* 왼쪽: 메뉴 + 제목 */}
@@ -40,19 +43,10 @@ export default function Header() {
             </div>
           </div>
 
-          {/* 오른쪽: 검색 + 인증 */}
-          <div className="flex items-center gap-s3 md:gap-s6">
+          {/* 오른쪽: 검색 */}
+          <div className="flex items-center">
             {/* 검색창 (모바일: 작게, 데스크톱: 크게) */}
             <SearchBar />
-
-            {/* 인증 UI */}
-            {!isAuthenticated && (
-              <Link to="/login">
-                <Button className="bg-primary text-white px-s4 lg:px-s6 py-s2 rounded-full text-sm font-bold hover:bg-primary/90 transition">
-                  Sign In
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
       </div>
