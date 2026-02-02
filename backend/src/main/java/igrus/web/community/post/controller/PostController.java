@@ -8,7 +8,13 @@ import igrus.web.community.post.dto.response.PostListPageResponse;
 import igrus.web.community.post.dto.response.PostUpdateResponse;
 import igrus.web.community.post.dto.response.PostViewHistoryResponse;
 import igrus.web.community.post.dto.response.PostViewStatsResponse;
-import igrus.web.community.post.service.PostService;
+import igrus.web.community.post.service.read.GetPostDetailService;
+import igrus.web.community.post.service.read.GetPostListService;
+import igrus.web.community.post.service.read.GetPostViewHistoryService;
+import igrus.web.community.post.service.read.GetPostViewStatsService;
+import igrus.web.community.post.service.write.CreatePostService;
+import igrus.web.community.post.service.write.DeletePostService;
+import igrus.web.community.post.service.write.UpdatePostService;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,7 +51,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class PostController {
 
-    private final PostService postService;
+    private final CreatePostService createPostService;
+    private final UpdatePostService updatePostService;
+    private final DeletePostService deletePostService;
+    private final GetPostListService getPostListService;
+    private final GetPostDetailService getPostDetailService;
+    private final GetPostViewStatsService getPostViewStatsService;
+    private final GetPostViewHistoryService getPostViewHistoryService;
 
     @Operation(
             summary = "게시글 작성",
@@ -111,7 +123,7 @@ public class PostController {
         log.info("게시글 작성 요청 - boardCode: {}, userId: {}, title: {}",
                 boardCode, user.userId(), request.title());
 
-        PostCreateResponse response = postService.createPost(boardCode, request, user);
+        PostCreateResponse response = createPostService.createPost(boardCode, request, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -168,7 +180,7 @@ public class PostController {
         log.info("게시글 목록 조회 요청 - boardCode: {}, keyword: {}, questionOnly: {}, page: {}, size: {}",
                 boardCode, keyword, questionOnly, pageable.getPageNumber(), pageable.getPageSize());
 
-        PostListPageResponse response = postService.getPostList(boardCode, user, keyword, questionOnly, pageable);
+        PostListPageResponse response = getPostListService.getPostList(boardCode, user, keyword, questionOnly, pageable);
         return ResponseEntity.ok(response);
     }
 
@@ -221,7 +233,7 @@ public class PostController {
         log.info("게시글 상세 조회 요청 - boardCode: {}, postId: {}, userId: {}",
                 boardCode, postId, user.userId());
 
-        PostDetailResponse response = postService.getPostDetail(boardCode, postId, user);
+        PostDetailResponse response = getPostDetailService.getPostDetail(boardCode, postId, user);
         return ResponseEntity.ok(response);
     }
 
@@ -283,7 +295,7 @@ public class PostController {
         log.info("게시글 수정 요청 - boardCode: {}, postId: {}, userId: {}, title: {}",
                 boardCode, postId, user.userId(), request.title());
 
-        PostUpdateResponse response = postService.updatePost(boardCode, postId, request, user);
+        PostUpdateResponse response = updatePostService.updatePost(boardCode, postId, request, user);
         return ResponseEntity.ok(response);
     }
 
@@ -332,7 +344,7 @@ public class PostController {
         log.info("게시글 삭제 요청 - boardCode: {}, postId: {}, userId: {}",
                 boardCode, postId, user.userId());
 
-        postService.deletePost(boardCode, postId, user);
+        deletePostService.deletePost(boardCode, postId, user);
         return ResponseEntity.noContent().build();
     }
 
@@ -385,7 +397,7 @@ public class PostController {
         log.info("게시글 조회 통계 요청 - boardCode: {}, postId: {}, userId: {}",
                 boardCode, postId, user.userId());
 
-        PostViewStatsResponse response = postService.getPostViewStats(boardCode, postId, user);
+        PostViewStatsResponse response = getPostViewStatsService.getPostViewStats(boardCode, postId, user);
         return ResponseEntity.ok(response);
     }
 
@@ -436,7 +448,7 @@ public class PostController {
         log.info("게시글 조회 기록 요청 - boardCode: {}, postId: {}, userId: {}, page: {}, size: {}",
                 boardCode, postId, user.userId(), pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<PostViewHistoryResponse> response = postService.getPostViewHistory(boardCode, postId, user, pageable);
+        Page<PostViewHistoryResponse> response = getPostViewHistoryService.getPostViewHistory(boardCode, postId, user, pageable);
         return ResponseEntity.ok(response);
     }
 }

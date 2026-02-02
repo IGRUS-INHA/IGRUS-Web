@@ -2,7 +2,8 @@ package igrus.web.community.board.controller;
 
 import igrus.web.community.board.dto.response.BoardDetailResponse;
 import igrus.web.community.board.dto.response.BoardListResponse;
-import igrus.web.community.board.service.BoardService;
+import igrus.web.community.board.service.read.GetBoardByCodeService;
+import igrus.web.community.board.service.read.GetBoardListService;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.UserRole;
@@ -39,7 +40,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BoardController {
 
-    private final BoardService boardService;
+    private final GetBoardListService getBoardListService;
+    private final GetBoardByCodeService getBoardByCodeService;
 
     @Operation(
             summary = "게시판 목록 조회",
@@ -70,7 +72,7 @@ public class BoardController {
         log.info("게시판 목록 조회 요청 - userId: {}, role: {}", user.userId(), user.role());
 
         UserRole role = UserRole.valueOf(user.role());
-        List<BoardListResponse> boards = boardService.getBoardList(role);
+        List<BoardListResponse> boards = getBoardListService.getBoardList(role);
 
         return ResponseEntity.ok(boards);
     }
@@ -114,7 +116,7 @@ public class BoardController {
         log.info("게시판 상세 조회 요청 - code: {}, userId: {}, role: {}", code, user.userId(), user.role());
 
         UserRole role = UserRole.valueOf(user.role());
-        BoardDetailResponse board = boardService.getBoardByCode(code, role);
+        BoardDetailResponse board = getBoardByCodeService.getBoardByCode(code, role);
 
         return ResponseEntity.ok(board);
     }

@@ -1,5 +1,6 @@
 package igrus.web.community.comment.domain;
 
+import igrus.web.community.comment.exception.InvalidCommentException;
 import igrus.web.community.post.domain.Post;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.DisplayName;
@@ -75,7 +76,7 @@ class CommentTest {
         }
 
         @Test
-        @DisplayName("내용이 500자를 초과하면 IllegalArgumentException 발생")
+        @DisplayName("내용이 500자를 초과하면 InvalidCommentException 발생")
         void createComment_WithContentOver500Chars_ThrowsException() {
             // given
             Post post = normalPost(generalBoard(), createMemberWithId());
@@ -84,12 +85,12 @@ class CommentTest {
 
             // when & then
             assertThatThrownBy(() -> Comment.createComment(post, author, content, false))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidCommentException.class)
                     .hasMessageContaining("500");
         }
 
         @Test
-        @DisplayName("내용이 비어있으면 IllegalArgumentException 발생")
+        @DisplayName("내용이 비어있으면 InvalidCommentException 발생")
         void createComment_WithEmptyContent_ThrowsException() {
             // given
             Post post = normalPost(generalBoard(), createMemberWithId());
@@ -97,12 +98,12 @@ class CommentTest {
 
             // when & then
             assertThatThrownBy(() -> Comment.createComment(post, author, "", false))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidCommentException.class)
                     .hasMessageContaining("내용");
         }
 
         @Test
-        @DisplayName("내용이 공백만 있으면 IllegalArgumentException 발생")
+        @DisplayName("내용이 공백만 있으면 InvalidCommentException 발생")
         void createComment_WithBlankContent_ThrowsException() {
             // given
             Post post = normalPost(generalBoard(), createMemberWithId());
@@ -110,12 +111,12 @@ class CommentTest {
 
             // when & then
             assertThatThrownBy(() -> Comment.createComment(post, author, "   ", false))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidCommentException.class)
                     .hasMessageContaining("내용");
         }
 
         @Test
-        @DisplayName("내용이 null이면 IllegalArgumentException 발생")
+        @DisplayName("내용이 null이면 InvalidCommentException 발생")
         void createComment_WithNullContent_ThrowsException() {
             // given
             Post post = normalPost(generalBoard(), createMemberWithId());
@@ -123,7 +124,7 @@ class CommentTest {
 
             // when & then
             assertThatThrownBy(() -> Comment.createComment(post, author, null, false))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidCommentException.class)
                     .hasMessageContaining("내용");
         }
     }
@@ -152,7 +153,7 @@ class CommentTest {
         }
 
         @Test
-        @DisplayName("대댓글에 대댓글을 달면 IllegalArgumentException 발생")
+        @DisplayName("대댓글에 대댓글을 달면 InvalidCommentException 발생")
         void createReply_ToReply_ThrowsException() {
             // given
             Post post = normalPost(generalBoard(), createMemberWithId());
@@ -163,7 +164,7 @@ class CommentTest {
 
             // when & then
             assertThatThrownBy(() -> Comment.createReply(post, existingReply, newReplyAuthor, "대댓글의 대댓글", false))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(InvalidCommentException.class)
                     .hasMessageContaining("대댓글에는 답글을 달 수 없습니다");
         }
     }
