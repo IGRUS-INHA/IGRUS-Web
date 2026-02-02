@@ -292,6 +292,10 @@ public class User extends SoftDeletableEntity {
         this.grade = grade;
     }
 
+    public void updateMotivation(String motivation) {
+        this.motivation = motivation;
+    }
+
     public void updateEmail(String email) {
         this.email = email;
     }

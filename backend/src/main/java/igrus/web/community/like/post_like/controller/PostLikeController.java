@@ -4,7 +4,9 @@ import igrus.web.common.exception.ErrorResponse;
 import igrus.web.community.like.post_like.dto.response.PostLikeStatusResponse;
 import igrus.web.community.like.post_like.dto.response.PostLikeToggleResponse;
 import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
-import igrus.web.community.like.post_like.service.PostLikeService;
+import igrus.web.community.like.post_like.service.read.GetMyLikedPostsService;
+import igrus.web.community.like.post_like.service.read.GetPostLikeStatusService;
+import igrus.web.community.like.post_like.service.write.TogglePostLikeService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,7 +42,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PostLikeController {
 
-    private final PostLikeService postLikeService;
+    private final TogglePostLikeService togglePostLikeService;
+    private final GetPostLikeStatusService getPostLikeStatusService;
+    private final GetMyLikedPostsService getMyLikedPostsService;
 
     @Operation(
             summary = "게시글 좋아요 토글",
@@ -98,7 +102,7 @@ public class PostLikeController {
     ) {
         log.info("게시글 좋아요 토글 요청 - postId: {}, userId: {}", postId, user.userId());
 
-        PostLikeToggleResponse response = postLikeService.toggleLike(postId, user.userId());
+        PostLikeToggleResponse response = togglePostLikeService.toggleLike(postId, user.userId());
         return ResponseEntity.ok(response);
     }
 
@@ -142,7 +146,7 @@ public class PostLikeController {
     ) {
         log.info("게시글 좋아요 상태 조회 요청 - postId: {}, userId: {}", postId, user.userId());
 
-        PostLikeStatusResponse response = postLikeService.getLikeStatus(postId, user.userId());
+        PostLikeStatusResponse response = getPostLikeStatusService.getLikeStatus(postId, user.userId());
         return ResponseEntity.ok(response);
     }
 
@@ -175,7 +179,7 @@ public class PostLikeController {
         log.info("내 게시글 좋아요 목록 조회 요청 - userId: {}, page: {}, size: {}",
                 user.userId(), pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<LikedPostResponse> response = postLikeService.getMyLikes(user.userId(), pageable);
+        Page<LikedPostResponse> response = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
         return ResponseEntity.ok(response);
     }
 }

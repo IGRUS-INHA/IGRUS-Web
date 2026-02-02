@@ -3,6 +3,9 @@ package igrus.web.community.post.domain;
 import igrus.web.community.board.domain.Board;
 import igrus.web.community.board.domain.BoardCode;
 import igrus.web.common.domain.SoftDeletableEntity;
+import igrus.web.community.post.exception.InvalidPostOptionException;
+import igrus.web.community.post.exception.PostImageLimitExceededException;
+import igrus.web.community.post.exception.PostTitleTooLongException;
 import igrus.web.user.domain.User;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -248,13 +251,16 @@ public class Post extends SoftDeletableEntity {
 
     /**
      * 질문 여부를 설정합니다.
-     * 자유게시판(GENERAL)에서만 설정 가능합니다.
+     * 질문을 활성화하는 경우, 해당 게시판에서 질문 태그를 지원해야 합니다.
+     * 비활성화(false)는 어느 게시판에서든 허용됩니다.
      *
      * @param isQuestion 질문 여부
-     * @throws IllegalArgumentException 자유게시판이 아닌 경우
+     * @throws InvalidPostOptionException 질문 태그를 지원하지 않는 게시판에서 활성화 시도 시
      */
     public void setQuestion(boolean isQuestion) {
-        validateQuestionOption(this.board);
+        if (isQuestion) {
+            validateQuestionOption(this.board);
+        }
         this.isQuestion = isQuestion;
     }
 
@@ -268,7 +274,7 @@ public class Post extends SoftDeletableEntity {
      */
     public void addImage(PostImage image) {
         if (this.images.size() >= MAX_IMAGE_COUNT) {
-            throw new IllegalArgumentException("이미지는 최대 " + MAX_IMAGE_COUNT + "개까지 첨부 가능합니다");
+            throw new PostImageLimitExceededException(MAX_IMAGE_COUNT, this.images.size() + 1);
         }
         this.images.add(image);
     }
@@ -293,25 +299,25 @@ public class Post extends SoftDeletableEntity {
 
     private static void validateTitle(String title) {
         if (title != null && title.length() > MAX_TITLE_LENGTH) {
-            throw new IllegalArgumentException("제목은 " + MAX_TITLE_LENGTH + "자 이내여야 합니다");
+            throw new PostTitleTooLongException(title.length());
         }
     }
 
     private static void validateAnonymousOption(Board board) {
         if (!board.getAllowsAnonymous()) {
-            throw new IllegalArgumentException("이 게시판에서는 익명 게시글을 작성할 수 없습니다");
+            throw new InvalidPostOptionException("익명", board.getCode().name());
         }
     }
 
     private static void validateQuestionOption(Board board) {
         if (!board.getAllowsQuestionTag()) {
-            throw new IllegalArgumentException("이 게시판에서는 질문 태그를 사용할 수 없습니다");
+            throw new InvalidPostOptionException("질문", board.getCode().name());
         }
     }
 
     private static void validateVisibilityOption(Board board) {
         if (board.getCode() != BoardCode.NOTICES) {
-            throw new IllegalArgumentException("준회원 공개 옵션은 공지사항에서만 사용 가능합니다");
+            throw new InvalidPostOptionException("준회원 공개", board.getCode().name());
         }
     }
 

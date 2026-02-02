@@ -23,4 +23,8 @@ public interface SemesterMemberWithUserProjection {
     String getMemberRole();
 
     Boolean getDeleted();
+
+    Integer getGrade();
+
+    String getMotivation();
 }

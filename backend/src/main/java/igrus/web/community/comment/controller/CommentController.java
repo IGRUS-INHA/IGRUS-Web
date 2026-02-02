@@ -3,7 +3,10 @@ package igrus.web.community.comment.controller;
 import igrus.web.community.comment.dto.request.CreateCommentRequest;
 import igrus.web.community.comment.dto.response.CommentListResponse;
 import igrus.web.community.comment.dto.response.CommentResponse;
-import igrus.web.community.comment.service.CommentService;
+import igrus.web.community.comment.service.read.GetCommentsByPostService;
+import igrus.web.community.comment.service.write.CreateCommentReplyService;
+import igrus.web.community.comment.service.write.CreateCommentService;
+import igrus.web.community.comment.service.write.DeleteCommentService;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,7 +46,10 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
 public class CommentController {
 
-    private final CommentService commentService;
+    private final CreateCommentService createCommentService;
+    private final CreateCommentReplyService createCommentReplyService;
+    private final GetCommentsByPostService getCommentsByPostService;
+    private final DeleteCommentService deleteCommentService;
 
     @Operation(
             summary = "댓글 작성",
@@ -101,7 +107,7 @@ public class CommentController {
         log.info("댓글 작성 요청 - postId: {}, userId: {}, isAnonymous: {}",
                 postId, user.userId(), request.isAnonymous());
 
-        CommentResponse response = commentService.createComment(postId, request, user.userId());
+        CommentResponse response = createCommentService.createComment(postId, request, user.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -163,7 +169,7 @@ public class CommentController {
         log.info("대댓글 작성 요청 - postId: {}, parentCommentId: {}, userId: {}, isAnonymous: {}",
                 postId, commentId, user.userId(), request.isAnonymous());
 
-        CommentResponse response = commentService.createReply(postId, commentId, request, user.userId());
+        CommentResponse response = createCommentReplyService.createReply(postId, commentId, request, user.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -199,7 +205,7 @@ public class CommentController {
                 postId, user != null ? user.userId() : null);
 
         Long currentUserId = user != null ? user.userId() : null;
-        CommentListResponse response = commentService.getCommentsByPostId(postId, currentUserId);
+        CommentListResponse response = getCommentsByPostService.getCommentsByPostId(postId, currentUserId);
         return ResponseEntity.ok(response);
     }
 
@@ -248,7 +254,7 @@ public class CommentController {
         log.info("댓글 삭제 요청 - postId: {}, commentId: {}, userId: {}",
                 postId, commentId, user.userId());
 
-        commentService.deleteComment(postId, commentId, user.userId());
+        deleteCommentService.deleteComment(postId, commentId, user.userId());
         return ResponseEntity.noContent().build();
     }
 }

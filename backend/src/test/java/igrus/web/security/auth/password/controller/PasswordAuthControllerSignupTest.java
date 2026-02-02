@@ -6,15 +6,22 @@ import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
-import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
+import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.user.domain.Gender;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
-import igrus.web.security.auth.password.service.PasswordAuthService;
-import igrus.web.security.auth.password.service.PasswordResetService;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
+import igrus.web.security.auth.password.service.reset.ResetPasswordService;
+import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
+import igrus.web.security.auth.password.service.auth.LoginService;
+import igrus.web.security.auth.password.service.auth.LogoutService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.config.ApiSecurityConfig;
 import igrus.web.security.config.SecurityConfigUtil;
 import igrus.web.security.jwt.JwtAuthenticationFilter;
@@ -47,19 +54,40 @@ class PasswordAuthControllerSignupTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
-    private PasswordAuthService passwordAuthService;
+    private LoginService loginService;
 
     @MockitoBean
-    private PasswordSignupService passwordSignupService;
+    private LogoutService logoutService;
 
     @MockitoBean
-    private PasswordResetService passwordResetService;
+    private RefreshTokenService refreshTokenService;
+
+    @MockitoBean
+    private SignupService signupService;
+
+    @MockitoBean
+    private VerifyEmailService verifyEmailService;
+
+    @MockitoBean
+    private ResendVerificationService resendVerificationService;
+
+    @MockitoBean
+    private RequestPasswordResetService requestPasswordResetService;
+
+    @MockitoBean
+    private ResetPasswordService resetPasswordService;
+
+    @MockitoBean
+    private ValidateResetTokenService validateResetTokenService;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private AccountRecoveryService accountRecoveryService;
+    private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
+
+    @MockitoBean
+    private RecoverAccountService recoverAccountService;
 
     @MockitoBean
     private AccountStatusService accountStatusService;
@@ -224,7 +252,7 @@ class PasswordAuthControllerSignupTest {
             PasswordSignupRequest request = createValidRequest();
             PasswordSignupResponse response = PasswordSignupResponse.pendingVerification(VALID_EMAIL);
 
-            given(passwordSignupService.signup(any(PasswordSignupRequest.class))).willReturn(response);
+            given(signupService.signup(any(PasswordSignupRequest.class))).willReturn(response);
 
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
@@ -527,7 +555,7 @@ class PasswordAuthControllerSignupTest {
             // given
             PasswordSignupRequest request = createValidRequest();
 
-            given(passwordSignupService.signup(any(PasswordSignupRequest.class)))
+            given(signupService.signup(any(PasswordSignupRequest.class)))
                     .willThrow(new DuplicateStudentIdException());
 
             // when & then
@@ -545,7 +573,7 @@ class PasswordAuthControllerSignupTest {
             // given
             PasswordSignupRequest request = createValidRequest();
 
-            given(passwordSignupService.signup(any(PasswordSignupRequest.class)))
+            given(signupService.signup(any(PasswordSignupRequest.class)))
                     .willThrow(new DuplicateEmailException());
 
             // when & then
@@ -563,7 +591,7 @@ class PasswordAuthControllerSignupTest {
             // given
             PasswordSignupRequest request = createValidRequest();
 
-            given(passwordSignupService.signup(any(PasswordSignupRequest.class)))
+            given(signupService.signup(any(PasswordSignupRequest.class)))
                     .willThrow(new DuplicatePhoneNumberException());
 
             // when & then

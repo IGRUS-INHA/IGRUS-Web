@@ -1,0 +1,198 @@
+package igrus.web.security.auth.approval.service.write;
+
+import igrus.web.common.ServiceIntegrationTestBase;
+import igrus.web.security.auth.approval.exception.AdminRequiredException;
+import igrus.web.security.auth.approval.exception.UserNotAssociateException;
+import igrus.web.security.auth.password.domain.PasswordCredential;
+import igrus.web.user.domain.User;
+import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.UserRoleHistory;
+import igrus.web.user.exception.UserNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@DisplayName("ApproveAssociateService 통합 테스트")
+class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
+
+    @Autowired
+    private ApproveAssociateService approveAssociateService;
+
+    private User adminUser;
+    private User associateUser;
+    private User memberUser;
+    private User operatorUser;
+
+    @BeforeEach
+    void setUp() {
+        setUpBase();
+
+        adminUser = createAndSaveUser("20200001", "admin@inha.edu", UserRole.ADMIN);
+        associateUser = createAndSaveUser("20230001", "associate@inha.edu", UserRole.ASSOCIATE);
+        memberUser = createAndSaveUser("20220001", "member@inha.edu", UserRole.MEMBER);
+        operatorUser = createAndSaveUser("20210001", "operator@inha.edu", UserRole.OPERATOR);
+    }
+
+    @Nested
+    @DisplayName("개별 승인")
+    class IndividualApprovalTest {
+
+        @Test
+        @DisplayName("관리자 개별 승인 성공 - 역할이 MEMBER로 변경됨 [APR-010]")
+        void approveAssociate_WithAdminRole_ChangesRoleToMember() {
+            // given
+            PasswordCredential credential = PasswordCredential.create(associateUser, "hashedPassword");
+            transactionTemplate.execute(status -> {
+                passwordCredentialRepository.save(credential);
+                return null;
+            });
+
+            // when
+            approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
+
+            // then
+            User updatedUser = userRepository.findById(associateUser.getId()).orElseThrow();
+            assertThat(updatedUser.getRole()).isEqualTo(UserRole.MEMBER);
+            assertThat(updatedUser.isMember()).isTrue();
+        }
+
+        @Test
+        @DisplayName("승인 후 역할 변경 확인 - ASSOCIATE에서 MEMBER로 [APR-011]")
+        void approveAssociate_RoleChangedFromAssociateToMember() {
+            // given
+            assertThat(associateUser.getRole()).isEqualTo(UserRole.ASSOCIATE);
+            PasswordCredential credential = PasswordCredential.create(associateUser, "hashedPassword");
+            transactionTemplate.execute(status -> {
+                passwordCredentialRepository.save(credential);
+                return null;
+            });
+
+            // when
+            approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
+
+            // then
+            User updatedUser = userRepository.findById(associateUser.getId()).orElseThrow();
+            assertThat(updatedUser.getRole()).isEqualTo(UserRole.MEMBER);
+        }
+
+        @Test
+        @DisplayName("승인일 정확히 기록 - PasswordCredential에 approvedAt, approvedBy 설정 [APR-012]")
+        void approveAssociate_SetsApprovalInfo() {
+            // given
+            PasswordCredential credential = PasswordCredential.create(associateUser, "hashedPassword");
+            assertThat(credential.getApprovedAt()).isNull();
+            assertThat(credential.getApprovedBy()).isNull();
+            transactionTemplate.execute(status -> {
+                passwordCredentialRepository.save(credential);
+                return null;
+            });
+
+            // when
+            approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
+
+            // then
+            PasswordCredential updatedCredential = passwordCredentialRepository.findByUserId(associateUser.getId()).orElseThrow();
+            assertThat(updatedCredential.getApprovedAt()).isNotNull();
+            assertThat(updatedCredential.getApprovedBy()).isEqualTo(adminUser.getId());
+            assertThat(updatedCredential.isApproved()).isTrue();
+        }
+
+        @Test
+        @DisplayName("역할 변경 감사 이력 기록 - UserRoleHistory에 ASSOCIATE -> MEMBER 기록 [APR-013]")
+        void approveAssociate_RecordsRoleChangeHistory() {
+            // given
+            PasswordCredential credential = PasswordCredential.create(associateUser, "hashedPassword");
+            transactionTemplate.execute(status -> {
+                passwordCredentialRepository.save(credential);
+                return null;
+            });
+
+            // when
+            approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
+
+            // then
+            List<UserRoleHistory> histories = userRoleHistoryRepository.findAll();
+            assertThat(histories).hasSize(1);
+
+            UserRoleHistory history = histories.get(0);
+            assertThat(history.getUser().getId()).isEqualTo(associateUser.getId());
+            assertThat(history.getPreviousRole()).isEqualTo(UserRole.ASSOCIATE);
+            assertThat(history.getNewRole()).isEqualTo(UserRole.MEMBER);
+            assertThat(history.getReason()).contains("정회원 전환");
+        }
+    }
+
+    @Nested
+    @DisplayName("권한 검증")
+    class AuthorizationTest {
+
+        @Test
+        @DisplayName("운영진 승인 시도 시 거부 - AdminRequiredException 발생 [APR-030]")
+        void approveAssociate_WithOperatorRole_ThrowsAdminRequiredException() {
+            // when & then
+            assertThatThrownBy(() -> approveAssociateService.approveAssociate(associateUser.getId(), operatorUser.getId()))
+                    .isInstanceOf(AdminRequiredException.class);
+        }
+
+        @Test
+        @DisplayName("정회원 승인 시도 시 거부 - AdminRequiredException 발생 [APR-031]")
+        void approveAssociate_WithMemberRole_ThrowsAdminRequiredException() {
+            // when & then
+            assertThatThrownBy(() -> approveAssociateService.approveAssociate(associateUser.getId(), memberUser.getId()))
+                    .isInstanceOf(AdminRequiredException.class);
+        }
+
+        @Test
+        @DisplayName("준회원 승인 시도 시 거부 - AdminRequiredException 발생 [APR-032]")
+        void approveAssociate_WithAssociateRole_ThrowsAdminRequiredException() {
+            // given
+            User anotherAssociate = createAndSaveUser("20230100", "another@inha.edu", UserRole.ASSOCIATE);
+
+            // when & then
+            assertThatThrownBy(() -> approveAssociateService.approveAssociate(anotherAssociate.getId(), associateUser.getId()))
+                    .isInstanceOf(AdminRequiredException.class);
+        }
+
+        @Test
+        @DisplayName("비로그인 상태 승인 시도 시 거부 - UserNotFoundException 발생 [APR-033]")
+        void approveAssociate_WithNonExistentUser_ThrowsUserNotFoundException() {
+            // given
+            Long nonExistentUserId = 999L;
+
+            // when & then
+            assertThatThrownBy(() -> approveAssociateService.approveAssociate(associateUser.getId(), nonExistentUserId))
+                    .isInstanceOf(UserNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("엣지 케이스")
+    class EdgeCaseTest {
+
+        @Test
+        @DisplayName("이미 MEMBER인 사용자 승인 시도 시 UserNotAssociateException 발생")
+        void approveAssociate_AlreadyMember_ThrowsException() {
+            // when & then
+            assertThatThrownBy(() -> approveAssociateService.approveAssociate(memberUser.getId(), adminUser.getId()))
+                    .isInstanceOf(UserNotAssociateException.class);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 사용자 승인 시도 시 UserNotFoundException 발생")
+        void approveAssociate_NonExistentUser_ThrowsException() {
+            // given
+            Long nonExistentUserId = 999L;
+
+            // when & then
+            assertThatThrownBy(() -> approveAssociateService.approveAssociate(nonExistentUserId, adminUser.getId()))
+                    .isInstanceOf(UserNotFoundException.class);
+        }
+    }
+}

@@ -1,6 +1,9 @@
 package igrus.web.community.post.domain;
 
 import igrus.web.community.board.domain.Board;
+import igrus.web.community.post.exception.InvalidPostOptionException;
+import igrus.web.community.post.exception.PostImageLimitExceededException;
+import igrus.web.community.post.exception.PostTitleTooLongException;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -66,7 +69,7 @@ class PostTest {
         }
 
         @Test
-        @DisplayName("제목이 100자를 초과하면 IllegalArgumentException 발생")
+        @DisplayName("제목이 100자를 초과하면 PostTitleTooLongException 발생")
         void createPost_WithTitleOver100Chars_ThrowsException() {
             // given
             Board board = generalBoard();
@@ -76,8 +79,8 @@ class PostTest {
 
             // when & then
             assertThatThrownBy(() -> Post.createPost(board, author, title, content))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("100");
+                    .isInstanceOf(PostTitleTooLongException.class)
+                    .hasMessageContaining("제목이 너무 깁니다");
         }
     }
 
@@ -107,7 +110,7 @@ class PostTest {
         }
 
         @Test
-        @DisplayName("공지사항 게시판에서 익명 게시글 생성 시 IllegalArgumentException 발생")
+        @DisplayName("공지사항 게시판에서 익명 게시글 생성 시 InvalidPostOptionException 발생")
         void createAnonymousPost_InNoticesBoard_ThrowsException() {
             // given
             Board board = noticesBoard();
@@ -117,12 +120,12 @@ class PostTest {
 
             // when & then
             assertThatThrownBy(() -> Post.createAnonymousPost(board, author, title, content))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("익명 게시글을 작성할 수 없습니다");
+                    .isInstanceOf(InvalidPostOptionException.class)
+                    .hasMessageContaining("익명");
         }
 
         @Test
-        @DisplayName("인사이트 게시판에서 익명 게시글 생성 시 IllegalArgumentException 발생")
+        @DisplayName("인사이트 게시판에서 익명 게시글 생성 시 InvalidPostOptionException 발생")
         void createAnonymousPost_InInsightBoard_ThrowsException() {
             // given
             Board board = insightBoard();
@@ -132,8 +135,8 @@ class PostTest {
 
             // when & then
             assertThatThrownBy(() -> Post.createAnonymousPost(board, author, title, content))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("익명 게시글을 작성할 수 없습니다");
+                    .isInstanceOf(InvalidPostOptionException.class)
+                    .hasMessageContaining("익명");
         }
     }
 
@@ -177,7 +180,7 @@ class PostTest {
         }
 
         @Test
-        @DisplayName("자유게시판에서 공지사항 생성 시 IllegalArgumentException 발생")
+        @DisplayName("자유게시판에서 공지사항 생성 시 InvalidPostOptionException 발생")
         void createNotice_InGeneralBoard_ThrowsException() {
             // given
             Board board = generalBoard();
@@ -187,12 +190,12 @@ class PostTest {
 
             // when & then
             assertThatThrownBy(() -> Post.createNotice(board, author, title, content, true))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("공지사항");
+                    .isInstanceOf(InvalidPostOptionException.class)
+                    .hasMessageContaining("준회원 공개");
         }
 
         @Test
-        @DisplayName("인사이트 게시판에서 공지사항 생성 시 IllegalArgumentException 발생")
+        @DisplayName("인사이트 게시판에서 공지사항 생성 시 InvalidPostOptionException 발생")
         void createNotice_InInsightBoard_ThrowsException() {
             // given
             Board board = insightBoard();
@@ -202,8 +205,8 @@ class PostTest {
 
             // when & then
             assertThatThrownBy(() -> Post.createNotice(board, author, title, content, false))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("공지사항");
+                    .isInstanceOf(InvalidPostOptionException.class)
+                    .hasMessageContaining("준회원 공개");
         }
     }
 
@@ -230,7 +233,7 @@ class PostTest {
         }
 
         @Test
-        @DisplayName("제목이 100자를 초과하면 IllegalArgumentException 발생")
+        @DisplayName("제목이 100자를 초과하면 PostTitleTooLongException 발생")
         void updateContent_WithTitleOver100Chars_ThrowsException() {
             // given
             Board board = generalBoard();
@@ -241,8 +244,8 @@ class PostTest {
 
             // when & then
             assertThatThrownBy(() -> post.updateContent(newTitle, newContent))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("100");
+                    .isInstanceOf(PostTitleTooLongException.class)
+                    .hasMessageContaining("제목이 너무 깁니다");
         }
 
         @Test
@@ -504,7 +507,7 @@ class PostTest {
         }
 
         @Test
-        @DisplayName("공지사항 게시판에서 질문 플래그 설정 시 IllegalArgumentException 발생")
+        @DisplayName("공지사항 게시판에서 질문 플래그 설정 시 InvalidPostOptionException 발생")
         void setQuestion_InNoticesBoard_ThrowsException() {
             // given
             Board board = noticesBoard();
@@ -513,12 +516,12 @@ class PostTest {
 
             // when & then
             assertThatThrownBy(() -> post.setQuestion(true))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("질문 태그를 사용할 수 없습니다");
+                    .isInstanceOf(InvalidPostOptionException.class)
+                    .hasMessageContaining("질문");
         }
 
         @Test
-        @DisplayName("인사이트 게시판에서 질문 플래그 설정 시 IllegalArgumentException 발생")
+        @DisplayName("인사이트 게시판에서 질문 플래그 설정 시 InvalidPostOptionException 발생")
         void setQuestion_InInsightBoard_ThrowsException() {
             // given
             Board board = insightBoard();
@@ -527,8 +530,8 @@ class PostTest {
 
             // when & then
             assertThatThrownBy(() -> post.setQuestion(true))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("질문 태그를 사용할 수 없습니다");
+                    .isInstanceOf(InvalidPostOptionException.class)
+                    .hasMessageContaining("질문");
         }
     }
 
@@ -576,7 +579,7 @@ class PostTest {
             }
 
             @Test
-            @DisplayName("이미지 6개 추가 시 IllegalArgumentException 발생")
+            @DisplayName("이미지 6개 추가 시 PostImageLimitExceededException 발생")
             void addImage_6thImage_ThrowsException() {
                 // given
                 Board board = generalBoard();
@@ -592,7 +595,7 @@ class PostTest {
 
                 // when & then
                 assertThatThrownBy(() -> post.addImage(sixthImage))
-                        .isInstanceOf(IllegalArgumentException.class)
+                        .isInstanceOf(PostImageLimitExceededException.class)
                         .hasMessageContaining("5");
             }
         }

@@ -4,7 +4,8 @@ import igrus.web.common.config.SwaggerConfig;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.semester.dto.response.SemesterMemberListResponse;
 import igrus.web.user.semester.dto.response.SemesterSummaryResponse;
-import igrus.web.user.semester.service.SemesterMemberService;
+import igrus.web.user.semester.service.read.GetSemesterListService;
+import igrus.web.user.semester.service.read.GetSemesterMemberListService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,7 +29,8 @@ import java.util.List;
 @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 public class SemesterMemberController {
 
-    private final SemesterMemberService semesterMemberService;
+    private final GetSemesterListService getSemesterListService;
+    private final GetSemesterMemberListService getSemesterMemberListService;
 
     @Operation(summary = "학기 목록 조회",
             description = "멤버십 기록이 존재하는 학기 목록을 회원 수와 함께 최신순으로 조회합니다.")
@@ -41,7 +43,7 @@ public class SemesterMemberController {
     public ResponseEntity<List<SemesterSummaryResponse>> getSemesterList(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        List<SemesterSummaryResponse> semesters = semesterMemberService.getSemesterList();
+        List<SemesterSummaryResponse> semesters = getSemesterListService.getSemesterList();
         return ResponseEntity.ok(semesters);
     }
 
@@ -60,7 +62,7 @@ public class SemesterMemberController {
             @Parameter(description = "검색 키워드 (학번, 이름)") @RequestParam(required = false) String keyword,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        List<SemesterMemberListResponse> members = semesterMemberService.getMemberList(year, semester, keyword);
+        List<SemesterMemberListResponse> members = getSemesterMemberListService.getMemberList(year, semester, keyword);
         return ResponseEntity.ok(members);
     }
 }

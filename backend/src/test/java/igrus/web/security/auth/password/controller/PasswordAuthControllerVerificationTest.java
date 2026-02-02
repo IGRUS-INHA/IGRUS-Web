@@ -9,14 +9,21 @@ import igrus.web.security.auth.common.exception.verification.VerificationAttempt
 import igrus.web.security.auth.common.exception.verification.VerificationCodeExpiredException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeInvalidException;
 import igrus.web.security.auth.common.exception.verification.VerificationResendRateLimitedException;
-import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
+import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
-import igrus.web.security.auth.password.service.PasswordAuthService;
-import igrus.web.security.auth.password.service.PasswordResetService;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
+import igrus.web.security.auth.password.service.reset.ResetPasswordService;
+import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
+import igrus.web.security.auth.password.service.auth.LoginService;
+import igrus.web.security.auth.password.service.auth.LogoutService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.config.ApiSecurityConfig;
 import igrus.web.security.config.SecurityConfigUtil;
 import igrus.web.security.jwt.JwtAuthenticationFilter;
@@ -49,19 +56,40 @@ class PasswordAuthControllerVerificationTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
-    private PasswordAuthService passwordAuthService;
+    private LoginService loginService;
 
     @MockitoBean
-    private PasswordSignupService passwordSignupService;
+    private LogoutService logoutService;
 
     @MockitoBean
-    private PasswordResetService passwordResetService;
+    private RefreshTokenService refreshTokenService;
+
+    @MockitoBean
+    private SignupService signupService;
+
+    @MockitoBean
+    private VerifyEmailService verifyEmailService;
+
+    @MockitoBean
+    private ResendVerificationService resendVerificationService;
+
+    @MockitoBean
+    private RequestPasswordResetService requestPasswordResetService;
+
+    @MockitoBean
+    private ResetPasswordService resetPasswordService;
+
+    @MockitoBean
+    private ValidateResetTokenService validateResetTokenService;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private AccountRecoveryService accountRecoveryService;
+    private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
+
+    @MockitoBean
+    private RecoverAccountService recoverAccountService;
 
     @MockitoBean
     private AccountStatusService accountStatusService;
@@ -89,7 +117,7 @@ class PasswordAuthControllerVerificationTest {
                 EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, VALID_CODE);
                 PasswordSignupResponse response = PasswordSignupResponse.verified(VALID_EMAIL);
 
-                given(passwordSignupService.verifyEmail(any(EmailVerificationRequest.class)))
+                given(verifyEmailService.verifyEmail(any(EmailVerificationRequest.class)))
                         .willReturn(response);
 
                 // when & then
@@ -114,7 +142,7 @@ class PasswordAuthControllerVerificationTest {
                 EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, VALID_CODE);
 
                 willThrow(new VerificationCodeExpiredException())
-                        .given(passwordSignupService).verifyEmail(any(EmailVerificationRequest.class));
+                        .given(verifyEmailService).verifyEmail(any(EmailVerificationRequest.class));
 
                 // when & then
                 mockMvc.perform(post(VERIFY_EMAIL_URL)
@@ -132,7 +160,7 @@ class PasswordAuthControllerVerificationTest {
                 EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, VALID_CODE);
 
                 willThrow(new VerificationAttemptsExceededException())
-                        .given(passwordSignupService).verifyEmail(any(EmailVerificationRequest.class));
+                        .given(verifyEmailService).verifyEmail(any(EmailVerificationRequest.class));
 
                 // when & then
                 mockMvc.perform(post(VERIFY_EMAIL_URL)
@@ -150,7 +178,7 @@ class PasswordAuthControllerVerificationTest {
                 EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, "000000");
 
                 willThrow(new VerificationCodeInvalidException())
-                        .given(passwordSignupService).verifyEmail(any(EmailVerificationRequest.class));
+                        .given(verifyEmailService).verifyEmail(any(EmailVerificationRequest.class));
 
                 // when & then
                 mockMvc.perform(post(VERIFY_EMAIL_URL)
@@ -274,7 +302,7 @@ class PasswordAuthControllerVerificationTest {
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
             VerificationResendResponse response = VerificationResendResponse.success(VALID_EMAIL);
 
-            given(passwordSignupService.resendVerification(any(ResendVerificationRequest.class)))
+            given(resendVerificationService.resendVerification(any(ResendVerificationRequest.class)))
                     .willReturn(response);
 
             // when & then
@@ -294,7 +322,7 @@ class PasswordAuthControllerVerificationTest {
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             willThrow(new VerificationResendRateLimitedException())
-                    .given(passwordSignupService).resendVerification(any(ResendVerificationRequest.class));
+                    .given(resendVerificationService).resendVerification(any(ResendVerificationRequest.class));
 
             // when & then
             mockMvc.perform(post(RESEND_VERIFICATION_URL)

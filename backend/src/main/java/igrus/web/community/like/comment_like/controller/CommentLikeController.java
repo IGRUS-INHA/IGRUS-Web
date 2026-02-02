@@ -1,6 +1,7 @@
 package igrus.web.community.like.comment_like.controller;
 
-import igrus.web.community.like.comment_like.service.CommentLikeService;
+import igrus.web.community.like.comment_like.service.write.LikeCommentService;
+import igrus.web.community.like.comment_like.service.write.UnlikeCommentService;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,7 +38,8 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
 public class CommentLikeController {
 
-    private final CommentLikeService commentLikeService;
+    private final LikeCommentService likeCommentService;
+    private final UnlikeCommentService unlikeCommentService;
 
     @Operation(
             summary = "댓글 좋아요",
@@ -81,7 +83,7 @@ public class CommentLikeController {
     ) {
         log.info("댓글 좋아요 요청 - commentId: {}, userId: {}", commentId, user.userId());
 
-        commentLikeService.likeComment(commentId, user.userId());
+        likeCommentService.likeComment(commentId, user.userId());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -119,7 +121,7 @@ public class CommentLikeController {
     ) {
         log.info("댓글 좋아요 취소 요청 - commentId: {}, userId: {}", commentId, user.userId());
 
-        commentLikeService.unlikeComment(commentId, user.userId());
+        unlikeCommentService.unlikeComment(commentId, user.userId());
         return ResponseEntity.noContent().build();
     }
 }
