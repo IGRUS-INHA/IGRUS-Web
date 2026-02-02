@@ -8,6 +8,17 @@ import type {
   InquiryType,
 } from './common';
 
+// Re-export common types
+export type {
+  Role,
+  UserStatus,
+  BoardType,
+  EventStatus,
+  RegistrationStatus,
+  InquiryStatus,
+  InquiryType,
+};
+
 // =============================================================================
 // User Entity
 // =============================================================================

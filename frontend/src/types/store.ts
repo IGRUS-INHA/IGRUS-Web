@@ -7,9 +7,9 @@ import type { Theme, Toast, ToastInput } from './common';
 // =============================================================================
 
 export interface AuthState {
-  user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
+  user: User | undefined;
+  accessToken: string | undefined;
+  refreshToken: string | undefined;
   isAuthenticated: boolean;
 }
 
@@ -34,7 +34,7 @@ export type AuthStore = AuthState & AuthActions;
 export interface UIState {
   sidebarOpen: boolean;
   modalOpen: boolean;
-  modalContent: ReactNode | null;
+  modalContent: ReactNode | undefined;
   toasts: Toast[];
   theme: Theme;
 }
@@ -57,9 +57,9 @@ export type UIStore = UIState & UIActions;
 // =============================================================================
 
 export interface AuthPersistState {
-  user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
+  user: User | undefined;
+  accessToken: string | undefined;
+  refreshToken: string | undefined;
   isAuthenticated: boolean;
 }
 
