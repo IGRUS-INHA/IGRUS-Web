@@ -26,11 +26,11 @@
 |------|----------|
 | JWT | `JwtTokenProvider.java`, `JwtAuthenticationFilter.java`, `jwt/exception/*.java` |
 | Security Config | `ApiSecurityConfig.java`, `PublicResourceSecurityConfig.java`, `SecurityConfigUtil.java`, `SecurityPaths.java` |
-| Password Auth | `PasswordAuthService.java`, `PasswordSignupService.java`, `PasswordAuthController.java` |
+| Password Auth | `PasswordAuthService.java`, `SignupService/VerifyEmailService/ResendVerificationService.java`, `PasswordAuthController.java` |
 | Brute Force 방어 | `LoginAttempt.java`, `LoginAttemptService.java`, `LoginAttemptRepository.java` |
 | 계정 상태 검증 | `AccountStatusService.java`, `account/exception/*.java` |
 | 도메인/공통 서비스 | `EmailVerification.java`, `RefreshToken.java`, `PrivacyConsent.java`, `SmtpEmailService.java`, `RetryConfig.java`, `AsyncConfig.java` 등 |
-| 테스트 | `JwtTokenProviderTest.java`, `JwtAuthenticationFilterTest.java`, `JwtAuthenticationFilterAccountStatusTest.java`, `AccountStatusServiceTest.java`, `PasswordAuthServiceLoginTest.java`, `PasswordSignupServiceTest.java`, `LoginAttemptServiceTest.java`, `SmtpEmailServiceRetryTest.java` 등 |
+| 테스트 | `JwtTokenProviderTest.java`, `JwtAuthenticationFilterTest.java`, `JwtAuthenticationFilterAccountStatusTest.java`, `AccountStatusServiceTest.java`, `PasswordAuthServiceLoginTest.java`, `SignupService/VerifyEmailService/ResendVerificationServiceTest.java`, `LoginAttemptServiceTest.java`, `SmtpEmailServiceRetryTest.java` 등 |
 
 ### 1.2 리뷰 관점
 
@@ -105,7 +105,7 @@ return Jwts.builder()
 
 ### 2.3 Timing Attack 취약점
 
-**파일**: `PasswordSignupService.java`
+**파일**: `SignupService/VerifyEmailService/ResendVerificationService.java`
 
 **상태**: ✅ **해결됨** - 2026-01-25
 
@@ -336,7 +336,7 @@ public void configSecurityHeaders(HttpSecurity http) throws Exception {
 
 | 파일 | 테스트 유형 | 테스트 수 | 상태 |
 |------|------------|---------|------|
-| `PasswordSignupServiceTest.java` | 서비스 Mock | 20개 | ✅ 양호 |
+| `SignupService/VerifyEmailService/ResendVerificationServiceTest.java` | 서비스 Mock | 20개 | ✅ 양호 |
 | `PasswordAuthServiceLoginTest.java` | 서비스 Mock | 22개 | ✅ 양호 |
 | `PasswordAuthServiceTokenTest.java` | 서비스 Mock | 11개 | ✅ 양호 |
 | `LoginAttemptServiceTest.java` | 서비스 Mock | 10개 | ✅ 양호 |
@@ -401,7 +401,7 @@ public void configSecurityHeaders(HttpSecurity http) throws Exception {
 - [x] PrivacyConsentRepository N+1 문제 해결 - **2026-01-24 완료**
 - [x] `PrivacyConsentRepositoryTest`에서 `@Transactional` 제거 - **2026-01-24 완료**
 - [x] `PasswordAuthService` 테스트 작성 (33 케이스) - **2026-01-24 완료**
-- [x] `PasswordSignupService` 테스트 작성 (20 케이스) - **2026-01-24 완료**
+- [x] `SignupService/VerifyEmailService/ResendVerificationService` 테스트 작성 (20 케이스) - **2026-01-24 완료**
 - [x] JWT 표준 클레임 추가 (issuer, audience) - **2026-01-25 완료**
 - [x] Timing Attack 완화 (MessageDigest.isEqual 적용) - **2026-01-25 완료**
 - [x] Brute Force 방어 구현 (DB 기반 로그인 실패 추적) - **2026-01-25 완료**
