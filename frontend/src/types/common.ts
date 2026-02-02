@@ -11,11 +11,11 @@ export const ROLES = {
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
-export type RoleOrNull = Role | null;
+export type RoleOrNull = Role | undefined;
 
 /** Role hierarchy for permission checking */
-export const ROLE_HIERARCHY: readonly RoleOrNull[] = [
-  null,
+export const ROLE_HIERARCHY: readonly (Role | undefined)[] = [
+  undefined,
   'ASSOCIATE',
   'MEMBER',
   'OPERATOR',
