@@ -76,10 +76,6 @@ public class Event extends BaseEntity {
     @Column(name = "event_current_count", nullable = false)
     private int currentCount = 0;
 
-    /** 낙관적 락을 위한 버전 (동시성 제어) */
-    @Version
-    @Column(name = "event_version")
-    private Long version;
 
     /** 행사 상태 */
     @Enumerated(EnumType.STRING)
@@ -290,17 +286,17 @@ public class Event extends BaseEntity {
     }
 
     /**
-     * 선착순 방식인지 확인합니다.
+     * 자동 승인(선착순) 방식인지 확인합니다.
      */
-    public boolean isFirstCome() {
-        return this.registrationType == EventRegistrationType.FIRST_COME;
+    public boolean isAutoApprove() {
+        return this.registrationType == EventRegistrationType.AUTO_APPROVE;
     }
 
     /**
-     * 선발제 방식인지 확인합니다.
+     * 수동 승인(선발제) 방식인지 확인합니다.
      */
-    public boolean isSelection() {
-        return this.registrationType == EventRegistrationType.SELECTION;
+    public boolean isManualApprove() {
+        return this.registrationType == EventRegistrationType.MANUAL_APPROVE;
     }
 
     /**

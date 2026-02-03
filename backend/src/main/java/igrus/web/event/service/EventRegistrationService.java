@@ -73,8 +73,8 @@ public class EventRegistrationService {
      * @throws EventCapacityFullException       정원이 초과된 경우 (선착순)
      */
     public RegistrationResponse registerEvent(Long eventId, Long userId) {
-        // 1. 행사 조회
-        Event event = eventRepository.findById(eventId)
+        // 1. 행사 조회 (비관적 락으로 동시성 제어)
+        Event event = eventRepository.findByIdWithLock(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회
@@ -99,7 +99,7 @@ public class EventRegistrationService {
         validateRegistrationPeriod(event);
 
         // 7. 정원 확인 (선착순인 경우에만)
-        if (event.isFirstCome() && event.isFull()) {
+        if (event.isAutoApprove() && event.isFull()) {
             throw new EventCapacityFullException();
         }
 
@@ -108,7 +108,7 @@ public class EventRegistrationService {
         EventRegistration savedRegistration = eventRegistrationRepository.save(registration);
 
         // 9. 행사 신청자 수 증가 (선착순인 경우)
-        if (event.isFirstCome()) {
+        if (event.isAutoApprove()) {
             event.incrementCurrentCount();
         }
 
@@ -126,23 +126,32 @@ public class EventRegistrationService {
      * @throws EventRegistrationNotFoundException 신청을 찾을 수 없는 경우
      */
     public RegistrationResponse cancelRegistration(Long eventId, Long userId) {
-        // 1. 행사 조회
-        Event event = eventRepository.findById(eventId)
+        // 1. 행사 조회 (비관적 락으로 동시성 제어)
+        Event event = eventRepository.findByIdWithLock(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 신청 조회
         EventRegistration registration = eventRegistrationRepository.findByEventIdAndUserId(eventId, userId)
                 .orElseThrow(EventRegistrationNotFoundException::new);
 
-        // 3. 신청 취소 (상태 변경)
+        // 3. 이미 취소된 신청인지 확인
+        if (registration.isCanceled()) {
+            throw new EventAccessDeniedException("이미 취소된 신청입니다");
+        }
+
+        // 4. 신청자 수 감소 여부 판단 (취소 전에 확인)
+        // REGISTERED(선착순) 또는 APPROVED(선발제 승인) 상태였으면 카운트 감소
+        boolean shouldDecrementCount = registration.isActive(); // 선착순 신청이 확정되어있거나 선발제가 승인된 상태라면 TRUE
+
+        // 5. 신청 취소 (상태 변경)
         registration.cancel();
 
-        // 4. 신청자 수 감소 (선착순이고 기존 상태가 REGISTERED였던 경우)
-        if (event.isFirstCome() && registration.getStatus() == EventRegistrationStatus.CANCELED) {
+        // 6. 신청자 수 감소
+        if (shouldDecrementCount) {
             event.decrementCurrentCount();
         }
 
-        // 5. 응답 반환
+        // 7. 응답 반환
         return RegistrationResponse.from(registration);
     }
 
@@ -207,20 +216,39 @@ public class EventRegistrationService {
         EventRegistration registration = eventRegistrationRepository.findById(registrationId)
                 .orElseThrow(EventRegistrationNotFoundException::new);
 
-        // 2. 사용자 조회
+        // 2. 행사 조회 (비관적 락으로 동시성 제어)
+        Event event = eventRepository.findByIdWithLock(registration.getEvent().getId())
+                .orElseThrow(() -> new EventNotFoundException(registration.getEvent().getId()));
+
+        // 3. 사용자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 3. 권한 확인 (작성자 또는 관리자)
-        validateEventOwnerOrAdmin(registration.getEvent(), user);
+        // 4. 권한 확인 (작성자 또는 관리자)
+        validateEventOwnerOrAdmin(event, user);
 
-        // 4. 승인 처리
+        // 5. 선발제 행사인지 확인
+        if (!event.isManualApprove()) {
+            throw new EventAccessDeniedException("선발제 행사만 승인할 수 있습니다");
+        }
+
+        // 6. WAITING 상태인지 확인
+        if (registration.getStatus() != EventRegistrationStatus.WAITING) {
+            throw new EventAccessDeniedException("대기 중인 신청만 승인할 수 있습니다");
+        }
+
+        // 7. 정원 확인
+        if (event.isFull()) {
+            throw new EventCapacityFullException();
+        }
+
+        // 8. 승인 처리
         registration.approve();
 
-        // 5. 신청자 수 증가
-        registration.getEvent().incrementCurrentCount();
+        // 9. 신청자 수 증가
+        event.incrementCurrentCount();
 
-        // 6. 응답 반환
+        // 10. 응답 반환
         return RegistrationResponse.from(registration);
     }
 
@@ -239,17 +267,31 @@ public class EventRegistrationService {
         EventRegistration registration = eventRegistrationRepository.findById(registrationId)
                 .orElseThrow(EventRegistrationNotFoundException::new);
 
-        // 2. 사용자 조회
+        // 2. 행사 조회
+        Event event = eventRepository.findById(registration.getEvent().getId())
+                .orElseThrow(() -> new EventNotFoundException(registration.getEvent().getId()));
+
+        // 3. 사용자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 3. 권한 확인 (작성자 또는 관리자)
-        validateEventOwnerOrAdmin(registration.getEvent(), user);
+        // 4. 권한 확인 (작성자 또는 관리자)
+        validateEventOwnerOrAdmin(event, user);
 
-        // 4. 거절 처리
+        // 5. 선발제 행사인지 확인
+        if (!event.isManualApprove()) {
+            throw new EventAccessDeniedException("선발제 행사만 거절할 수 있습니다");
+        }
+
+        // 6. WAITING 상태인지 확인
+        if (registration.getStatus() != EventRegistrationStatus.WAITING) {
+            throw new EventAccessDeniedException("대기 중인 신청만 거절할 수 있습니다");
+        }
+
+        // 7. 거절 처리
         registration.reject();
 
-        // 5. 응답 반환
+        // 8. 응답 반환
         return RegistrationResponse.from(registration);
     }
 
@@ -295,7 +337,7 @@ public class EventRegistrationService {
         validateRegistrationPeriod(event);
 
         // 정원 확인 (선착순인 경우)
-        if (event.isFirstCome() && event.isFull()) {
+        if (event.isAutoApprove() && event.isFull()) {
             throw new EventCapacityFullException();
         }
 
@@ -303,7 +345,7 @@ public class EventRegistrationService {
         registration.reRegister();
 
         // 신청자 수 증가 (선착순인 경우)
-        if (event.isFirstCome()) {
+        if (event.isAutoApprove()) {
             event.incrementCurrentCount();
         }
 

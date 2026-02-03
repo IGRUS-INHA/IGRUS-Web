@@ -58,15 +58,15 @@ public class EventRegistration extends BaseEntity {
 
     /**
      * 행사 신청을 생성합니다.
-     * 선착순(FIRST_COME): 바로 REGISTERED
-     * 선발제(SELECTION): WAITING (승인 대기)
+     * 자동 승인(AUTO_APPROVE): 바로 REGISTERED
+     * 수동 승인(MANUAL_APPROVE): WAITING (승인 대기)
      */
     public static EventRegistration create(Event event, User user) {
         EventRegistration registration = new EventRegistration();
         registration.event = event;
         registration.user = user;
         registration.registeredAt = Instant.now();
-        registration.status = event.isFirstCome()
+        registration.status = event.isAutoApprove()
                 ? EventRegistrationStatus.REGISTERED
                 : EventRegistrationStatus.WAITING;
         return registration;
@@ -97,8 +97,8 @@ public class EventRegistration extends BaseEntity {
 
     /**
      * 재신청합니다. (취소된 신청만 가능)
-     * 선착순(FIRST_COME): REGISTERED로 복원
-     * 선발제(SELECTION): WAITING으로 복원
+     * 자동 승인(AUTO_APPROVE): REGISTERED로 복원
+     * 수동 승인(MANUAL_APPROVE): WAITING으로 복원
      *
      * @throws IllegalStateException 취소 상태가 아닌 경우
      */
@@ -106,7 +106,7 @@ public class EventRegistration extends BaseEntity {
         if (!this.isCanceled()) {
             throw new IllegalStateException("취소된 신청만 재신청 가능합니다");
         }
-        this.status = event.isFirstCome()
+        this.status = event.isAutoApprove()
                 ? EventRegistrationStatus.REGISTERED
                 : EventRegistrationStatus.WAITING;
         this.registeredAt = Instant.now();
