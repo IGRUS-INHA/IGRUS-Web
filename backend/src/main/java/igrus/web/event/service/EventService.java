@@ -30,10 +30,10 @@ import java.util.List;
  *   <li>{@link #createEvent} - 행사 생성 (운영진 이상)</li>
  *   <li>{@link #getEvent} - 행사 단건 조회</li>
  *   <li>{@link #getEventList} - 행사 목록 조회 (상태 필터 가능)</li>
- *   <li>{@link #updateEvent} - 행사 수정 (작성자/관리자)</li>
- *   <li>{@link #deleteEvent} - 행사 삭제 (작성자/관리자)</li>
- *   <li>{@link #closeEvent} - 행사 수동 마감 (작성자/관리자)</li>
- *   <li>{@link #cancelEvent} - 행사 취소 (작성자/관리자)</li>
+ *   <li>{@link #updateEvent} - 행사 수정 (운영진 이상)</li>
+ *   <li>{@link #deleteEvent} - 행사 삭제 (운영진 이상)</li>
+ *   <li>{@link #closeEvent} - 행사 수동 마감 (운영진 이상)</li>
+ *   <li>{@link #cancelEvent} - 행사 취소 (운영진 이상)</li>
  * </ul>
  *
  * @see EventRegistrationService 행사 신청 관련 기능
@@ -107,7 +107,7 @@ public class EventService {
 
         // 권한 정보 계산
         boolean isAuthor = event.getUser().getId().equals(userId);
-        boolean canEdit = isAuthor || user.isAdmin();
+        boolean canEdit = user.isOperatorOrAbove();
         boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserId(eventId, userId);
 
         return EventDetailResponse.from(event, isAuthor, canEdit, isRegistered);
@@ -157,7 +157,7 @@ public class EventService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 3. 권한 확인 (작성자 또는 관리자만 수정 가능)
+        // 3. 권한 확인 (운영진 이상만 수정 가능)
         validateEditPermission(user);
 
         // 4. 날짜 유효성 검증
@@ -196,7 +196,7 @@ public class EventService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 3. 권한 확인 (작성자 또는 관리자만 삭제 가능)
+        // 3. 권한 확인 (운영진 이상만 삭제 가능)
         validateEditPermission(user);
 
         // 4. 삭제 실행
@@ -221,7 +221,7 @@ public class EventService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 3. 권한 확인 (작성자 또는 관리자만 마감 가능)
+        // 3. 권한 확인 (운영진 이상만 마감 가능)
         validateEditPermission(user);
 
         // 4. 행사 마감 (도메인 메서드 호출)
@@ -249,7 +249,7 @@ public class EventService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 3. 권한 확인 (작성자 또는 관리자만 취소 가능)
+        // 3. 권한 확인 (운영진 이상만 취소 가능)
         validateEditPermission(user);
 
         // 4. 행사 취소 (도메인 메서드 호출)

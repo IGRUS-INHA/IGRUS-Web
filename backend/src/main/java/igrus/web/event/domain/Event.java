@@ -242,11 +242,13 @@ public class Event extends BaseEntity {
 
     /**
      * 정원 마감 상태에서 자리가 생기면 다시 모집 상태로 변경합니다.
+     * 단, 신청 마감일이 지났으면 다시 열지 않습니다.
      */
     private void reopenIfCapacityAvailable() {
         if (this.status == EventStatus.CLOSED
                 && this.closeReason == EventCloseReason.CAPACITY_FULL
-                && !isFull()) {
+                && !isFull()
+                && Instant.now().isBefore(this.registrationEndAt)) {
             open();
         }
     }

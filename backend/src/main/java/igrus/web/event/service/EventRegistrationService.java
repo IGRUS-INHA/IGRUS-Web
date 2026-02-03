@@ -7,12 +7,18 @@ import igrus.web.event.domain.EventStatus;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.dto.response.RegistrationListResponse;
 import igrus.web.event.dto.response.RegistrationResponse;
+import igrus.web.event.exception.AlreadyCanceledException;
 import igrus.web.event.exception.AlreadyRegisteredException;
-import igrus.web.event.exception.EventAccessDeniedException;
+import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventCapacityFullException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.EventRegistrationClosedException;
+import igrus.web.event.exception.EventNotInRegistrationPeriodException;
+import igrus.web.event.exception.EventNotOpenException;
 import igrus.web.event.exception.EventRegistrationNotFoundException;
+import igrus.web.event.exception.InvalidRegistrationStatusException;
+import igrus.web.event.exception.NotManualApproveEventException;
+import igrus.web.event.exception.OperatorPermissionRequiredException;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventRegistrationRepository;
 import igrus.web.user.domain.User;
@@ -34,9 +40,9 @@ import java.util.List;
  *   <li>{@link #registerEvent} - 행사 신청 (정회원 이상)</li>
  *   <li>{@link #cancelRegistration} - 신청 취소 (신청자 본인)</li>
  *   <li>{@link #getMyRegistrations} - 내 신청 목록 조회</li>
- *   <li>{@link #getRegistrationList} - 신청자 목록 조회 (작성자/관리자)</li>
- *   <li>{@link #approveRegistration} - 신청 승인 - 선발제 (작성자/관리자)</li>
- *   <li>{@link #rejectRegistration} - 신청 거절 - 선발제 (작성자/관리자)</li>
+ *   <li>{@link #getRegistrationList} - 신청자 목록 조회 (운영진 이상)</li>
+ *   <li>{@link #approveRegistration} - 신청 승인 - 선발제 (운영진 이상)</li>
+ *   <li>{@link #rejectRegistration} - 신청 거절 - 선발제 (운영진 이상)</li>
  * </ul>
  *
  * @see EventService 행사 CRUD 관련 기능
@@ -65,12 +71,13 @@ public class EventRegistrationService {
      * @param eventId 행사 ID
      * @param userId  신청자 ID
      * @return 신청 결과 응답 DTO
-     * @throws EventNotFoundException           행사를 찾을 수 없는 경우
-     * @throws UserNotFoundException            사용자를 찾을 수 없는 경우
-     * @throws EventAccessDeniedException       준회원인 경우
-     * @throws AlreadyRegisteredException       이미 신청한 경우
-     * @throws EventRegistrationClosedException 신청 기간이 아니거나 행사가 OPEN 상태가 아닌 경우
-     * @throws EventCapacityFullException       정원이 초과된 경우 (선착순)
+     * @throws EventNotFoundException               행사를 찾을 수 없는 경우
+     * @throws UserNotFoundException                사용자를 찾을 수 없는 경우
+     * @throws AssociateMemberNotAllowedException   준회원인 경우
+     * @throws AlreadyRegisteredException           이미 신청한 경우
+     * @throws EventNotOpenException                행사가 OPEN 상태가 아닌 경우
+     * @throws EventNotInRegistrationPeriodException 신청 기간이 아닌 경우
+     * @throws EventCapacityFullException           정원이 초과된 경우 (자동 승인)
      */
     public RegistrationResponse registerEvent(Long eventId, Long userId) {
         // 1. 행사 조회 (비관적 락으로 동시성 제어)
@@ -83,7 +90,7 @@ public class EventRegistrationService {
 
         // 3. 권한 확인 (정회원 이상)
         if (user.isAssociate()) {
-            throw new EventAccessDeniedException("준회원은 행사에 신청할 수 없습니다");
+            throw new AssociateMemberNotAllowedException();
         }
 
         // 4. 기존 신청 기록 확인 (재신청 여부 판단)
@@ -136,7 +143,7 @@ public class EventRegistrationService {
 
         // 3. 이미 취소된 신청인지 확인
         if (registration.isCanceled()) {
-            throw new EventAccessDeniedException("이미 취소된 신청입니다");
+            throw new AlreadyCanceledException();
         }
 
         // 4. 신청자 수 감소 여부 판단 (취소 전에 확인)
@@ -176,9 +183,9 @@ public class EventRegistrationService {
      * @param eventId 행사 ID
      * @param userId  요청자 ID
      * @return 신청자 목록
-     * @throws EventNotFoundException       행사를 찾을 수 없는 경우
-     * @throws UserNotFoundException        사용자를 찾을 수 없는 경우
-     * @throws EventAccessDeniedException   권한이 없는 경우
+     * @throws EventNotFoundException               행사를 찾을 수 없는 경우
+     * @throws UserNotFoundException                사용자를 찾을 수 없는 경우
+     * @throws OperatorPermissionRequiredException  운영진 권한이 없는 경우
      */
     @Transactional(readOnly = true)
     public List<RegistrationListResponse> getRegistrationList(Long eventId, Long userId) {
@@ -190,7 +197,7 @@ public class EventRegistrationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 3. 권한 확인 (작성자 또는 관리자)
+        // 3. 권한 확인 (운영진 이상)
         validateOperatorPermission(user);
 
         // 4. 신청자 목록 조회
@@ -207,9 +214,12 @@ public class EventRegistrationService {
      * @param registrationId 신청 ID
      * @param userId         요청자 ID (작성자/관리자)
      * @return 승인된 신청 응답 DTO
-     * @throws EventRegistrationNotFoundException 신청을 찾을 수 없는 경우
-     * @throws UserNotFoundException              사용자를 찾을 수 없는 경우
-     * @throws EventAccessDeniedException         권한이 없는 경우
+     * @throws EventRegistrationNotFoundException   신청을 찾을 수 없는 경우
+     * @throws UserNotFoundException               사용자를 찾을 수 없는 경우
+     * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
+     * @throws NotManualApproveEventException      수동 승인 행사가 아닌 경우
+     * @throws InvalidRegistrationStatusException  대기 상태가 아닌 경우
+     * @throws EventCapacityFullException          정원이 초과된 경우
      */
     public RegistrationResponse approveRegistration(Long registrationId, Long userId) {
         // 1. 신청 조회
@@ -224,17 +234,17 @@ public class EventRegistrationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 4. 권한 확인 (작성자 또는 관리자)
+        // 4. 권한 확인 (운영진 이상)
         validateOperatorPermission(user);
 
         // 5. 선발제 행사인지 확인
         if (!event.isManualApprove()) {
-            throw new EventAccessDeniedException("선발제 행사만 승인할 수 있습니다");
+            throw new NotManualApproveEventException();
         }
 
         // 6. WAITING 상태인지 확인
         if (registration.getStatus() != EventRegistrationStatus.WAITING) {
-            throw new EventAccessDeniedException("대기 중인 신청만 승인할 수 있습니다");
+            throw new InvalidRegistrationStatusException();
         }
 
         // 7. 정원 확인
@@ -258,9 +268,11 @@ public class EventRegistrationService {
      * @param registrationId 신청 ID
      * @param userId         요청자 ID (작성자/관리자)
      * @return 거절된 신청 응답 DTO
-     * @throws EventRegistrationNotFoundException 신청을 찾을 수 없는 경우
-     * @throws UserNotFoundException              사용자를 찾을 수 없는 경우
-     * @throws EventAccessDeniedException         권한이 없는 경우
+     * @throws EventRegistrationNotFoundException   신청을 찾을 수 없는 경우
+     * @throws UserNotFoundException               사용자를 찾을 수 없는 경우
+     * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
+     * @throws NotManualApproveEventException      수동 승인 행사가 아닌 경우
+     * @throws InvalidRegistrationStatusException  대기 상태가 아닌 경우
      */
     public RegistrationResponse rejectRegistration(Long registrationId, Long userId) {
         // 1. 신청 조회
@@ -275,17 +287,17 @@ public class EventRegistrationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 4. 권한 확인 (작성자 또는 관리자)
+        // 4. 권한 확인 (운영진 이상)
         validateOperatorPermission(user);
 
         // 5. 선발제 행사인지 확인
         if (!event.isManualApprove()) {
-            throw new EventAccessDeniedException("선발제 행사만 거절할 수 있습니다");
+            throw new NotManualApproveEventException();
         }
 
         // 6. WAITING 상태인지 확인
         if (registration.getStatus() != EventRegistrationStatus.WAITING) {
-            throw new EventAccessDeniedException("대기 중인 신청만 거절할 수 있습니다");
+            throw new InvalidRegistrationStatusException();
         }
 
         // 7. 거절 처리
@@ -302,11 +314,11 @@ public class EventRegistrationService {
      * 신청자 목록 조회, 승인/거절 시 사용.
      *
      * @param user  사용자
-     * @throws EventAccessDeniedException 권한이 없을 경우
+     * @throws OperatorPermissionRequiredException 권한이 없을 경우
      */
     private void validateOperatorPermission(User user) {
         if (!user.isOperatorOrAbove()) {
-            throw new EventAccessDeniedException("운영진 이상만 접근할 수 있습니다");
+            throw new OperatorPermissionRequiredException();
         }
     }
 
@@ -353,11 +365,11 @@ public class EventRegistrationService {
      * 행사가 신청 가능한 상태인지 검증합니다.
      *
      * @param event 행사
-     * @throws EventRegistrationClosedException OPEN 상태가 아닌 경우
+     * @throws EventNotOpenException OPEN 상태가 아닌 경우
      */
     private void validateEventIsOpen(Event event) {
         if (event.getStatus() != EventStatus.OPEN) {
-            throw new EventRegistrationClosedException("신청 가능한 상태가 아닙니다");
+            throw new EventNotOpenException();
         }
     }
 
@@ -365,12 +377,12 @@ public class EventRegistrationService {
      * 신청 기간 내인지 검증합니다.
      *
      * @param event 행사
-     * @throws EventRegistrationClosedException 신청 기간이 아닌 경우
+     * @throws EventNotInRegistrationPeriodException 신청 기간이 아닌 경우
      */
     private void validateRegistrationPeriod(Event event) {
         Instant now = Instant.now();
         if (now.isBefore(event.getRegistrationStartAt()) || now.isAfter(event.getRegistrationEndAt())) {
-            throw new EventRegistrationClosedException("신청 기간이 아닙니다");
+            throw new EventNotInRegistrationPeriodException();
         }
     }
 
