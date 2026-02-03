@@ -96,10 +96,11 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
 
         @Test
         @DisplayName("만료된 인증 코드 입력 시 만료 오류 [REG-042]")
-        void verifyEmail_WithExpiredCode_ThrowsException() {
-            // given
-            EmailVerification verification = EmailVerification.create(VALID_EMAIL, "123456", 0);
+        void verifyEmail_WithExpiredCode_ThrowsException() throws InterruptedException {
+            // given: 만료 시간이 1ms인 인증 코드 생성 후, 확실한 만료를 위해 대기
+            EmailVerification verification = EmailVerification.create(VALID_EMAIL, "123456", 1);
             emailVerificationRepository.save(verification);
+            Thread.sleep(10); // 확실한 만료를 위해 10ms 대기
 
             EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, "123456");
 

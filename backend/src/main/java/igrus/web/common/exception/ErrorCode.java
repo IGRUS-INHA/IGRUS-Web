@@ -136,7 +136,14 @@ public enum ErrorCode {
     EVENT_ALREADY_REGISTERED(409, "이미 신청한 행사입니다"),
     EVENT_REGISTRATION_CLOSED(400, "신청이 마감된 행사입니다"),
     EVENT_REGISTRATION_NOT_FOUND(404, "행사 신청 정보를 찾을 수 없습니다"),
-    EVENT_CAPACITY_FULL(400, "정원이 초과되었습니다");
+    EVENT_CAPACITY_FULL(400, "정원이 초과되었습니다"),
+    EVENT_ASSOCIATE_NOT_ALLOWED(403, "준회원은 행사에 신청할 수 없습니다"),
+    EVENT_ALREADY_CANCELED(400, "이미 취소된 신청입니다"),
+    EVENT_NOT_MANUAL_APPROVE(400, "수동 승인(선발제) 행사가 아닙니다"),
+    EVENT_INVALID_REGISTRATION_STATUS(400, "유효하지 않은 신청 상태입니다"),
+    EVENT_OPERATOR_REQUIRED(403, "운영진 이상만 접근할 수 있습니다"),
+    EVENT_NOT_OPEN(400, "신청 가능한 상태가 아닙니다"),
+    EVENT_NOT_IN_REGISTRATION_PERIOD(400, "신청 기간이 아닙니다");
 
     private final int status;
     private final String message;
