@@ -24,6 +24,19 @@ import java.util.List;
 /**
  * 행사 서비스.
  * 행사 관련 비즈니스 로직을 처리합니다.
+ *
+ * <p>제공 기능:</p>
+ * <ul>
+ *   <li>{@link #createEvent} - 행사 생성 (운영진 이상)</li>
+ *   <li>{@link #getEvent} - 행사 단건 조회</li>
+ *   <li>{@link #getEventList} - 행사 목록 조회 (상태 필터 가능)</li>
+ *   <li>{@link #updateEvent} - 행사 수정 (작성자/관리자)</li>
+ *   <li>{@link #deleteEvent} - 행사 삭제 (작성자/관리자)</li>
+ *   <li>{@link #closeEvent} - 행사 수동 마감 (작성자/관리자)</li>
+ *   <li>{@link #cancelEvent} - 행사 취소 (작성자/관리자)</li>
+ * </ul>
+ *
+ * @see EventRegistrationService 행사 신청 관련 기능
  */
 @Transactional
 @RequiredArgsConstructor
