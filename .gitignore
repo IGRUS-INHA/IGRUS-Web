@@ -49,3 +49,5 @@ frontend/*.lcov
 
 # Claude
 .claude/settings.local.json
+
+nul
