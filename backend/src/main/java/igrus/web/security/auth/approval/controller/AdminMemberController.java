@@ -4,7 +4,9 @@ import igrus.web.common.config.SwaggerConfig;
 import igrus.web.security.auth.approval.dto.request.BulkApprovalRequest;
 import igrus.web.security.auth.approval.dto.response.AssociateInfoResponse;
 import igrus.web.security.auth.approval.dto.response.BulkApprovalResultResponse;
-import igrus.web.security.auth.approval.service.MemberApprovalService;
+import igrus.web.security.auth.approval.service.read.GetPendingAssociatesService;
+import igrus.web.security.auth.approval.service.write.ApproveAssociateService;
+import igrus.web.security.auth.approval.service.write.BulkApproveAssociatesService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,8 +18,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,7 +41,9 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 public class AdminMemberController {
 
-    private final MemberApprovalService memberApprovalService;
+    private final GetPendingAssociatesService getPendingAssociatesService;
+    private final ApproveAssociateService approveAssociateService;
+    private final BulkApproveAssociatesService bulkApproveAssociatesService;
 
     @Operation(
             summary = "승인 대기 준회원 목록 조회",
@@ -61,10 +68,11 @@ public class AdminMemberController {
     })
     @GetMapping("/pending")
     public ResponseEntity<Page<AssociateInfoResponse>> getPendingAssociates(
-            @Parameter(description = "페이지 정보 (page, size, sort)") Pageable pageable,
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        Page<AssociateInfoResponse> pendingAssociates = memberApprovalService.getPendingAssociates(
+        Page<AssociateInfoResponse> pendingAssociates = getPendingAssociatesService.getPendingAssociates(
                 pageable,
                 authenticatedUser.userId()
         );
@@ -106,7 +114,7 @@ public class AdminMemberController {
             @Parameter(description = "승인할 사용자 ID", required = true, example = "1") @PathVariable("id") Long userId,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        memberApprovalService.approveAssociate(userId, authenticatedUser.userId());
+        approveAssociateService.approveAssociate(userId, authenticatedUser.userId());
         return ResponseEntity.ok().build();
     }
 
@@ -142,7 +150,7 @@ public class AdminMemberController {
             @Valid @RequestBody BulkApprovalRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        int approvedCount = memberApprovalService.approveBulk(
+        int approvedCount = bulkApproveAssociatesService.approveBulk(
                 request.userIds(),
                 authenticatedUser.userId()
         );

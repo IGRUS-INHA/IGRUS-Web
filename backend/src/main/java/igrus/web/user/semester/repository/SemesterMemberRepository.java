@@ -30,10 +30,11 @@ public interface SemesterMemberRepository extends JpaRepository<SemesterMember, 
      * User의 @SQLRestriction 필터를 우회하여 탈퇴 회원 포함 전체 조회.
      * Native 쿼리로 semester_members와 users를 직접 JOIN합니다.
      */
-    @Query(value = "SELECT u.users_id AS userId, u.users_student_id AS studentId, " +
-            "u.users_name AS name, u.users_department AS department, " +
+    @Query(value = "SELECT u.users_id AS userId, sm.semester_members_student_id AS studentId, " +
+            "sm.semester_members_name AS name, sm.semester_members_department AS department, " +
             "u.users_email AS email, u.users_phone_number AS phoneNumber, " +
-            "sm.semester_members_role AS memberRole, u.users_deleted AS deleted " +
+            "sm.semester_members_role AS memberRole, u.users_deleted AS deleted, " +
+            "sm.semester_members_grade AS grade, sm.semester_members_motivation AS motivation " +
             "FROM semester_members sm " +
             "JOIN users u ON sm.semester_members_user_id = u.users_id " +
             "WHERE sm.semester_members_year = :year AND sm.semester_members_semester = :semester",

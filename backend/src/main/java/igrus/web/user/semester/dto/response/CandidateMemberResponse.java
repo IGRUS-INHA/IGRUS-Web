@@ -17,7 +17,9 @@ public record CandidateMemberResponse(
         @Schema(description = "현재 역할", example = "MEMBER")
         UserRole role,
         @Schema(description = "해당 학기 등록 여부")
-        boolean alreadyRegistered
+        boolean alreadyRegistered,
+        @Schema(description = "가입 동기", example = "웹 개발 역량을 키우고 싶습니다.")
+        String motivation
 ) {
     public static CandidateMemberResponse from(User user, boolean alreadyRegistered) {
         return new CandidateMemberResponse(
@@ -26,7 +28,8 @@ public record CandidateMemberResponse(
                 user.getName(),
                 user.getDepartment(),
                 user.getRole(),
-                alreadyRegistered
+                alreadyRegistered,
+                user.getMotivation()
         );
     }
 }

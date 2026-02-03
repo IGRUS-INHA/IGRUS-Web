@@ -1,6 +1,7 @@
 package igrus.web.community.comment.domain;
 
 import igrus.web.common.domain.BaseEntity;
+import igrus.web.community.comment.exception.CommentReportException;
 import igrus.web.user.domain.User;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -129,7 +130,7 @@ public class CommentReport extends BaseEntity {
 
     private static void validateReason(String reason) {
         if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("신고 사유를 입력해 주세요");
+            throw CommentReportException.invalidReason();
         }
     }
 }

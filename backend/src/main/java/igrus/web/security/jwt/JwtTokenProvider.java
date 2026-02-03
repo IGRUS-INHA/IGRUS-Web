@@ -3,6 +3,7 @@ package igrus.web.security.jwt;
 import igrus.web.security.jwt.exception.AccessTokenExpiredException;
 import igrus.web.security.jwt.exception.AccessTokenInvalidException;
 import igrus.web.security.jwt.exception.InvalidTokenTypeException;
+import igrus.web.security.jwt.exception.JwtSecretKeyTooShortException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -36,7 +38,7 @@ public class JwtTokenProvider {
     ) {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < MINIMUM_SECRET_KEY_LENGTH) {
-            throw new IllegalArgumentException("JWT 비밀키는 최소 " + MINIMUM_SECRET_KEY_LENGTH + "바이트 필요");
+            throw new JwtSecretKeyTooShortException(MINIMUM_SECRET_KEY_LENGTH);
         }
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenValidity = accessTokenValidity;
@@ -47,8 +49,8 @@ public class JwtTokenProvider {
 
     // Access Token 생성
     public String createAccessToken(Long userId, String studentId, String role) {
-        Date now = new Date();
-        Date expiry = new Date(now.getTime() + accessTokenValidity);
+        Instant now = Instant.now();
+        Instant expiry = now.plusMillis(accessTokenValidity);
 
         return Jwts.builder()
                 .id(UUID.randomUUID().toString()) // 각 토큰을 고유하게 식별하기 위한 jti 클레임
@@ -58,16 +60,16 @@ public class JwtTokenProvider {
                 .claim("studentId", studentId)
                 .claim("role", role)
                 .claim("type", "access")
-                .issuedAt(now)
-                .expiration(expiry)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiry))
                 .signWith(secretKey)
                 .compact();
     }
 
     // Refresh Token 생성
     public String createRefreshToken(Long userId) {
-        Date now = new Date();
-        Date expiry = new Date(now.getTime() + refreshTokenValidity);
+        Instant now = Instant.now();
+        Instant expiry = now.plusMillis(refreshTokenValidity);
 
         return Jwts.builder()
                 .id(UUID.randomUUID().toString()) // 각 토큰을 고유하게 식별하기 위한 jti 클레임
@@ -75,8 +77,8 @@ public class JwtTokenProvider {
                 .issuer(issuer)
                 .audience().add(audience).and()
                 .claim("type", "refresh")
-                .issuedAt(now)
-                .expiration(expiry)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiry))
                 .signWith(secretKey)
                 .compact();
     }
@@ -299,8 +301,8 @@ public class JwtTokenProvider {
     @Deprecated(since = "1.0", forRemoval = true)
     public boolean isTokenExpired(String token) {
         try {
-            Date expiration = getClaims(token).getExpiration();
-            return expiration.before(new Date());
+            Instant expiration = getClaims(token).getExpiration().toInstant();
+            return expiration.isBefore(Instant.now());
         } catch (ExpiredJwtException e) {
             return true;
         }

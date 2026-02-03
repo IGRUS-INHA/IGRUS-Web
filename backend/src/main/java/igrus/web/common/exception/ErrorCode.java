@@ -34,7 +34,15 @@ public enum ErrorCode {
     INQUIRY_REPLY_NOT_FOUND(404, "답변을 찾을 수 없습니다"),
     INVALID_STATUS_TRANSITION(400, "허용되지 않은 상태 변경입니다"),
 
+    // User Suspension
+    SUSPENSION_INVALID_PERIOD(400, "정지 종료일은 정지 시작일 이후여야 합니다"),
+    SUSPENSION_ALREADY_LIFTED(400, "이미 해제된 정지입니다"),
+    SUSPENSION_REASON_REQUIRED(400, "정지 사유는 필수입니다"),
+    SUSPENSION_CANNOT_EXTEND(400, "해제된 정지는 연장할 수 없습니다"),
+    SUSPENSION_EXTEND_INVALID_DATE(400, "새로운 종료일은 기존 종료일 이후여야 합니다"),
+
     // JWT
+    JWT_SECRET_KEY_TOO_SHORT(500, "JWT 비밀키 길이가 최소 요구사항을 충족하지 않습니다"),
     ACCESS_TOKEN_INVALID(401, "유효하지 않은 액세스 토큰입니다"),
     ACCESS_TOKEN_EXPIRED(401, "액세스 토큰이 만료되었습니다"),
     INVALID_TOKEN_TYPE(401, "올바르지 않은 토큰 타입입니다"),

@@ -1,6 +1,7 @@
 package igrus.web.community.comment.domain;
 
 import igrus.web.common.domain.SoftDeletableEntity;
+import igrus.web.community.comment.exception.InvalidCommentException;
 import igrus.web.community.post.domain.Post;
 import igrus.web.user.domain.User;
 import jakarta.persistence.AttributeOverride;
@@ -119,7 +120,7 @@ public class Comment extends SoftDeletableEntity {
      */
     public static Comment createReply(Post post, Comment parentComment, User author, String content, boolean isAnonymous) {
         if (parentComment.isReply()) {
-            throw new IllegalArgumentException("대댓글에는 답글을 달 수 없습니다");
+            throw InvalidCommentException.replyToReplyNotAllowed();
         }
         return new Comment(post, parentComment, author, content, isAnonymous);
     }
@@ -182,10 +183,10 @@ public class Comment extends SoftDeletableEntity {
 
     private static void validateContent(String content) {
         if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("내용을 입력해 주세요");
+            throw InvalidCommentException.contentEmpty();
         }
         if (content.length() > MAX_CONTENT_LENGTH) {
-            throw new IllegalArgumentException("댓글은 " + MAX_CONTENT_LENGTH + "자 이내여야 합니다");
+            throw InvalidCommentException.contentTooLong();
         }
     }
 }

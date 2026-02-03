@@ -5,7 +5,7 @@ import igrus.web.security.auth.common.domain.RefreshToken;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
-import igrus.web.security.auth.password.service.PasswordAuthService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
 
     @Autowired
-    private PasswordAuthService passwordAuthService;
+    private RefreshTokenService refreshTokenService;
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -49,8 +49,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
-        ReflectionTestUtils.setField(passwordAuthService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
-        ReflectionTestUtils.setField(passwordAuthService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
     }
 
     private User createAndSaveTestUser() {
@@ -84,7 +83,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response).isNotNull();
@@ -101,7 +100,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response.expiresIn()).isEqualTo(ACCESS_TOKEN_VALIDITY);
@@ -116,7 +115,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response.accessToken()).isNotNull();
@@ -135,7 +134,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response).isNotNull();
@@ -151,8 +150,8 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response1 = passwordAuthService.refreshToken(refreshTokenString);
-            TokenRefreshResponse response2 = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response1 = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response2 = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
             assertThat(response1.accessToken()).isNotEqualTo(response2.accessToken());
@@ -174,7 +173,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveExpiredRefreshToken(user, refreshTokenString);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(refreshTokenString))
+            assertThatThrownBy(() -> refreshTokenService.refreshToken(refreshTokenString))
                     .isInstanceOf(RefreshTokenExpiredException.class);
         }
 
@@ -185,7 +184,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String tokenString = "invalid-refresh-token";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
+            assertThatThrownBy(() -> refreshTokenService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -196,7 +195,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String tokenString = "tampered-token-payload-modified";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
+            assertThatThrownBy(() -> refreshTokenService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -207,7 +206,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String tokenString = "";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
+            assertThatThrownBy(() -> refreshTokenService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -224,7 +223,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             refreshTokenRepository.save(refreshToken);
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(refreshTokenString))
+            assertThatThrownBy(() -> refreshTokenService.refreshToken(refreshTokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -237,7 +236,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             // DB에 저장하지 않음
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(refreshTokenString))
+            assertThatThrownBy(() -> refreshTokenService.refreshToken(refreshTokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
     }
@@ -255,7 +254,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String tokenString = "non-existent-token";
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(tokenString))
+            assertThatThrownBy(() -> refreshTokenService.refreshToken(tokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -273,7 +272,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             );
 
             // when & then
-            assertThatThrownBy(() -> passwordAuthService.refreshToken(refreshTokenString))
+            assertThatThrownBy(() -> refreshTokenService.refreshToken(refreshTokenString))
                     .isInstanceOf(RefreshTokenInvalidException.class);
         }
 
@@ -295,7 +294,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, newRefreshTokenString);
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(newRefreshTokenString);
+            TokenRefreshResponse response = refreshTokenService.refreshToken(newRefreshTokenString);
 
             // then
             assertThat(response).isNotNull();
@@ -318,7 +317,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
 
             // then - 유효한 토큰은 검증 통과
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
@@ -334,7 +333,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
@@ -351,7 +350,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
@@ -368,7 +367,7 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = passwordAuthService.refreshToken(refreshTokenString);
+            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());

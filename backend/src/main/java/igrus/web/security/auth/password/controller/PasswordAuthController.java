@@ -7,7 +7,8 @@ import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
-import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
+import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
@@ -18,9 +19,15 @@ import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
-import igrus.web.security.auth.password.service.PasswordAuthService;
-import igrus.web.security.auth.password.service.PasswordResetService;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
+import igrus.web.security.auth.password.service.reset.ResetPasswordService;
+import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.auth.LoginService;
+import igrus.web.security.auth.password.service.auth.LogoutService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -54,10 +61,17 @@ import java.time.Duration;
 @Tag(name = "Password Authentication", description = "비밀번호 기반 인증 관련 API")
 public class PasswordAuthController {
 
-    private final PasswordAuthService passwordAuthService;
-    private final PasswordSignupService passwordSignupService;
-    private final PasswordResetService passwordResetService;
-    private final AccountRecoveryService accountRecoveryService;
+    private final LoginService loginService;
+    private final LogoutService logoutService;
+    private final RefreshTokenService refreshTokenService;
+    private final SignupService signupService;
+    private final VerifyEmailService verifyEmailService;
+    private final ResendVerificationService resendVerificationService;
+    private final RequestPasswordResetService requestPasswordResetService;
+    private final ResetPasswordService resetPasswordService;
+    private final ValidateResetTokenService validateResetTokenService;
+    private final CheckRecoveryEligibilityService checkRecoveryEligibilityService;
+    private final RecoverAccountService recoverAccountService;
     private final CookieUtil cookieUtil;
 
     @Operation(summary = "로그인", description = "학번과 비밀번호로 로그인합니다.")
@@ -96,7 +110,7 @@ public class PasswordAuthController {
         String ipAddress = extractIpAddress(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
 
-        LoginResult result = passwordAuthService.login(request, ipAddress, userAgent);
+        LoginResult result = loginService.login(request, ipAddress, userAgent);
 
         ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
                 result.refreshToken(),
@@ -149,7 +163,7 @@ public class PasswordAuthController {
         String refreshToken = cookieUtil.getRefreshTokenFromCookies(httpRequest)
                 .orElseThrow(RefreshTokenInvalidException::new);
 
-        passwordAuthService.logout(refreshToken);
+        logoutService.logout(refreshToken);
 
         ResponseCookie deleteCookie = cookieUtil.deleteRefreshTokenCookie();
         httpResponse.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
@@ -180,7 +194,7 @@ public class PasswordAuthController {
         String refreshToken = cookieUtil.getRefreshTokenFromCookies(httpRequest)
                 .orElseThrow(RefreshTokenInvalidException::new);
 
-        TokenRefreshResponse response = passwordAuthService.refreshToken(refreshToken);
+        TokenRefreshResponse response = refreshTokenService.refreshToken(refreshToken);
         return ResponseEntity.ok(response);
     }
 
@@ -204,7 +218,7 @@ public class PasswordAuthController {
     })
     @PostMapping("/signup")
     public ResponseEntity<PasswordSignupResponse> signup(@Valid @RequestBody PasswordSignupRequest request) {
-        PasswordSignupResponse response = passwordSignupService.signup(request);
+        PasswordSignupResponse response = signupService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -228,7 +242,7 @@ public class PasswordAuthController {
     })
     @PostMapping("/verify-email")
     public ResponseEntity<PasswordSignupResponse> verifyEmail(@Valid @RequestBody EmailVerificationRequest request) {
-        PasswordSignupResponse response = passwordSignupService.verifyEmail(request);
+        PasswordSignupResponse response = verifyEmailService.verifyEmail(request);
         return ResponseEntity.ok(response);
     }
 
@@ -252,7 +266,7 @@ public class PasswordAuthController {
     })
     @PostMapping("/resend-verification")
     public ResponseEntity<VerificationResendResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
-        VerificationResendResponse response = passwordSignupService.resendVerification(request);
+        VerificationResendResponse response = resendVerificationService.resendVerification(request);
         return ResponseEntity.ok(response);
     }
 
@@ -276,7 +290,7 @@ public class PasswordAuthController {
     public ResponseEntity<RecoveryEligibilityResponse> checkRecoveryEligibility(
             @Parameter(description = "복구 가능 여부를 확인할 학번 (8자리 숫자)", example = "12345678", required = true)
             @RequestParam @Pattern(regexp = "^\\d{8}$", message = "학번은 8자리 숫자여야 합니다") String studentId) {
-        RecoveryEligibilityResponse response = accountRecoveryService.checkRecoveryEligibility(studentId);
+        RecoveryEligibilityResponse response = checkRecoveryEligibilityService.checkRecoveryEligibility(studentId);
         return ResponseEntity.ok(response);
     }
 
@@ -306,7 +320,7 @@ public class PasswordAuthController {
     public ResponseEntity<AccountRecoveryResponse> recoverAccount(
             @Valid @RequestBody AccountRecoveryRequest request,
             HttpServletResponse httpResponse) {
-        RecoveryResult result = accountRecoveryService.recoverAccount(request.studentId(), request.password());
+        RecoveryResult result = recoverAccountService.recoverAccount(request.studentId(), request.password());
 
         ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
                 result.refreshToken(),
@@ -334,7 +348,7 @@ public class PasswordAuthController {
     })
     @PostMapping("/reset-request")
     public ResponseEntity<Void> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
-        passwordResetService.requestPasswordReset(request.studentId());
+        requestPasswordResetService.requestPasswordReset(request.studentId());
         return ResponseEntity.ok().build();
     }
 
@@ -355,7 +369,7 @@ public class PasswordAuthController {
     })
     @PostMapping("/reset-confirm")
     public ResponseEntity<Void> confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
-        passwordResetService.resetPassword(request.token(), request.newPassword());
+        resetPasswordService.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.ok().build();
     }
 
@@ -378,7 +392,7 @@ public class PasswordAuthController {
     public ResponseEntity<Void> validateResetToken(
             @Parameter(description = "검증할 재설정 토큰", required = true)
             @RequestParam String token) {
-        passwordResetService.validateResetToken(token);
+        validateResetTokenService.validateResetToken(token);
         return ResponseEntity.ok().build();
     }
 }

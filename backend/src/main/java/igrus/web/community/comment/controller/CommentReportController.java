@@ -3,7 +3,9 @@ package igrus.web.community.comment.controller;
 import igrus.web.community.comment.dto.request.CreateCommentReportRequest;
 import igrus.web.community.comment.dto.request.UpdateReportStatusRequest;
 import igrus.web.community.comment.dto.response.CommentReportResponse;
-import igrus.web.community.comment.service.CommentReportService;
+import igrus.web.community.comment.service.support.GetPendingReportsService;
+import igrus.web.community.comment.service.support.ReportCommentService;
+import igrus.web.community.comment.service.support.UpdateReportStatusService;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,7 +44,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommentReportController {
 
-    private final CommentReportService commentReportService;
+    private final ReportCommentService reportCommentService;
+    private final GetPendingReportsService getPendingReportsService;
+    private final UpdateReportStatusService updateReportStatusService;
 
     @Operation(
             summary = "댓글 신고",
@@ -92,7 +96,7 @@ public class CommentReportController {
     ) {
         log.info("댓글 신고 요청 - commentId: {}, userId: {}", commentId, user.userId());
 
-        CommentReportResponse response = commentReportService.reportComment(commentId, request, user.userId());
+        CommentReportResponse response = reportCommentService.reportComment(commentId, request, user.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -130,7 +134,7 @@ public class CommentReportController {
     ) {
         log.info("신고 목록 조회 요청 - userId: {}", user.userId());
 
-        List<CommentReportResponse> reports = commentReportService.getPendingReports();
+        List<CommentReportResponse> reports = getPendingReportsService.getPendingReports();
         return ResponseEntity.ok(reports);
     }
 
@@ -188,7 +192,7 @@ public class CommentReportController {
         log.info("신고 처리 요청 - reportId: {}, status: {}, userId: {}",
                 reportId, request.getStatus(), user.userId());
 
-        commentReportService.updateReportStatus(reportId, request, user.userId());
+        updateReportStatusService.updateReportStatus(reportId, request, user.userId());
         return ResponseEntity.noContent().build();
     }
 }
