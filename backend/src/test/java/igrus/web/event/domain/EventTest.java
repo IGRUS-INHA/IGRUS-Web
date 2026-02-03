@@ -41,7 +41,7 @@ class EventTest {
             // when
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    CAPACITY, EventRegistrationType.FIRST_COME);
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE);
 
             // then
             assertThat(event).isNotNull();
@@ -51,9 +51,9 @@ class EventTest {
             assertThat(event.getCapacity()).isEqualTo(CAPACITY);
             assertThat(event.getCurrentCount()).isEqualTo(0);
             assertThat(event.getStatus()).isEqualTo(EventStatus.UPCOMING);
-            assertThat(event.getRegistrationType()).isEqualTo(EventRegistrationType.FIRST_COME);
-            assertThat(event.isFirstCome()).isTrue();
-            assertThat(event.isSelection()).isFalse();
+            assertThat(event.getRegistrationType()).isEqualTo(EventRegistrationType.AUTO_APPROVE);
+            assertThat(event.isAutoApprove()).isTrue();
+            assertThat(event.isManualApprove()).isFalse();
         }
 
         @Test
@@ -65,12 +65,12 @@ class EventTest {
             // when
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    CAPACITY, EventRegistrationType.SELECTION);
+                    CAPACITY, EventRegistrationType.MANUAL_APPROVE);
 
             // then
-            assertThat(event.getRegistrationType()).isEqualTo(EventRegistrationType.SELECTION);
-            assertThat(event.isFirstCome()).isFalse();
-            assertThat(event.isSelection()).isTrue();
+            assertThat(event.getRegistrationType()).isEqualTo(EventRegistrationType.MANUAL_APPROVE);
+            assertThat(event.isAutoApprove()).isFalse();
+            assertThat(event.isManualApprove()).isTrue();
         }
 
         @Test
@@ -82,7 +82,7 @@ class EventTest {
             // when & then
             assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    0, EventRegistrationType.FIRST_COME))
+                    0, EventRegistrationType.AUTO_APPROVE))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
 
@@ -95,7 +95,7 @@ class EventTest {
             // when & then
             assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    -1, EventRegistrationType.FIRST_COME))
+                    -1, EventRegistrationType.AUTO_APPROVE))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
 
@@ -108,7 +108,7 @@ class EventTest {
             // when & then
             assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    null, EventRegistrationType.FIRST_COME))
+                    null, EventRegistrationType.AUTO_APPROVE))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
     }
@@ -253,7 +253,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.FIRST_COME);
+                    2, EventRegistrationType.AUTO_APPROVE);
             event.open();
 
             // when
@@ -290,7 +290,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.FIRST_COME);
+                    2, EventRegistrationType.AUTO_APPROVE);
             event.open();
             event.incrementCurrentCount();
             event.incrementCurrentCount();
@@ -343,7 +343,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    1, EventRegistrationType.FIRST_COME);
+                    1, EventRegistrationType.AUTO_APPROVE);
             event.open();
             event.incrementCurrentCount();
 
@@ -381,7 +381,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    1, EventRegistrationType.FIRST_COME);
+                    1, EventRegistrationType.AUTO_APPROVE);
             event.open();
             event.incrementCurrentCount();
 
@@ -480,6 +480,6 @@ class EventTest {
     private Event createTestEvent() {
         return Event.create(createMockUser(), TITLE, DESCRIPTION, LOCATION,
                 EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                CAPACITY, EventRegistrationType.FIRST_COME);
+                CAPACITY, EventRegistrationType.AUTO_APPROVE);
     }
 }

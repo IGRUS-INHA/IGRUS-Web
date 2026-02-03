@@ -32,7 +32,7 @@ class EventRegistrationTest {
         @DisplayName("선착순 행사 신청 시 REGISTERED 상태로 생성")
         void create_WithFirstComeEvent_ReturnsRegisteredStatus() {
             // given
-            Event event = createEvent(EventRegistrationType.FIRST_COME);
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
             User user = createMockUser(2L, "신청자");
 
             // when
@@ -51,7 +51,7 @@ class EventRegistrationTest {
         @DisplayName("선발제 행사 신청 시 WAITING 상태로 생성")
         void create_WithSelectionEvent_ReturnsWaitingStatus() {
             // given
-            Event event = createEvent(EventRegistrationType.SELECTION);
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
             User user = createMockUser(2L, "신청자");
 
             // when
@@ -67,7 +67,7 @@ class EventRegistrationTest {
         @DisplayName("신청 시 registeredAt이 설정됨")
         void create_SetsRegisteredAt() {
             // given
-            Event event = createEvent(EventRegistrationType.FIRST_COME);
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
             User user = createMockUser(2L, "신청자");
             Instant before = Instant.now();
 
@@ -88,7 +88,7 @@ class EventRegistrationTest {
         @DisplayName("WAITING 상태에서 approve 호출 시 APPROVED로 변경")
         void approve_FromWaiting_ChangesToApproved() {
             // given
-            Event event = createEvent(EventRegistrationType.SELECTION);
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
             assertThat(registration.isWaiting()).isTrue();
@@ -106,7 +106,7 @@ class EventRegistrationTest {
         @DisplayName("WAITING 상태에서 reject 호출 시 REJECTED로 변경")
         void reject_FromWaiting_ChangesToRejected() {
             // given
-            Event event = createEvent(EventRegistrationType.SELECTION);
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
 
@@ -122,7 +122,7 @@ class EventRegistrationTest {
         @DisplayName("REGISTERED 상태에서 cancel 호출 시 CANCELED로 변경")
         void cancel_FromRegistered_ChangesToCanceled() {
             // given
-            Event event = createEvent(EventRegistrationType.FIRST_COME);
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
             assertThat(registration.isRegistered()).isTrue();
@@ -140,7 +140,7 @@ class EventRegistrationTest {
         @DisplayName("APPROVED 상태에서 cancel 호출 시 CANCELED로 변경")
         void cancel_FromApproved_ChangesToCanceled() {
             // given
-            Event event = createEvent(EventRegistrationType.SELECTION);
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
             registration.approve();
@@ -156,7 +156,7 @@ class EventRegistrationTest {
         @DisplayName("WAITING 상태에서 cancel 호출 시 CANCELED로 변경")
         void cancel_FromWaiting_ChangesToCanceled() {
             // given
-            Event event = createEvent(EventRegistrationType.SELECTION);
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
 
@@ -176,7 +176,7 @@ class EventRegistrationTest {
         @DisplayName("REGISTERED 상태는 isActive가 true")
         void isActive_WhenRegistered_ReturnsTrue() {
             // given
-            Event event = createEvent(EventRegistrationType.FIRST_COME);
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
 
@@ -188,7 +188,7 @@ class EventRegistrationTest {
         @DisplayName("APPROVED 상태는 isActive가 true")
         void isActive_WhenApproved_ReturnsTrue() {
             // given
-            Event event = createEvent(EventRegistrationType.SELECTION);
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
             registration.approve();
@@ -201,7 +201,7 @@ class EventRegistrationTest {
         @DisplayName("WAITING 상태는 isActive가 false")
         void isActive_WhenWaiting_ReturnsFalse() {
             // given
-            Event event = createEvent(EventRegistrationType.SELECTION);
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
 
@@ -213,7 +213,7 @@ class EventRegistrationTest {
         @DisplayName("REJECTED 상태는 isActive가 false")
         void isActive_WhenRejected_ReturnsFalse() {
             // given
-            Event event = createEvent(EventRegistrationType.SELECTION);
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
             registration.reject();
@@ -226,7 +226,7 @@ class EventRegistrationTest {
         @DisplayName("CANCELED 상태는 isActive가 false")
         void isActive_WhenCanceled_ReturnsFalse() {
             // given
-            Event event = createEvent(EventRegistrationType.FIRST_COME);
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
             User user = createMockUser(2L, "신청자");
             EventRegistration registration = EventRegistration.create(event, user);
             registration.cancel();
