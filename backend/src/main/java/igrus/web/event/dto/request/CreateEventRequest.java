@@ -20,7 +20,7 @@ import java.time.Instant;
  * @param registrationStartAt 신청 시작일시 (필수)
  * @param registrationEndAt   신청 마감일시 (필수)
  * @param capacity            정원 (필수, 1명 이상)
- * @param registrationType    신청 방식 (필수, FIRST_COME: 선착순, SELECTION: 선발제)
+ * @param registrationType    신청 방식 (필수, AUTO_APPROVE: 자동 승인/선착순, MANUAL_APPROVE: 수동 승인/선발제)
  */
 public record CreateEventRequest(
         @NotBlank(message = "제목은 필수입니다")
