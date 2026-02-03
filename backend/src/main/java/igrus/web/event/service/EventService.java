@@ -158,7 +158,7 @@ public class EventService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         // 3. 권한 확인 (작성자 또는 관리자만 수정 가능)
-        validateEditPermission(event, user);
+        validateEditPermission(user);
 
         // 4. 날짜 유효성 검증
         validateEventDates(request);
@@ -197,7 +197,7 @@ public class EventService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         // 3. 권한 확인 (작성자 또는 관리자만 삭제 가능)
-        validateEditPermission(event, user);
+        validateEditPermission(user);
 
         // 4. 삭제 실행
         eventRepository.delete(event);
@@ -222,7 +222,7 @@ public class EventService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         // 3. 권한 확인 (작성자 또는 관리자만 마감 가능)
-        validateEditPermission(event, user);
+        validateEditPermission(user);
 
         // 4. 행사 마감 (도메인 메서드 호출)
         event.closeManually();
@@ -250,7 +250,7 @@ public class EventService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         // 3. 권한 확인 (작성자 또는 관리자만 취소 가능)
-        validateEditPermission(event, user);
+        validateEditPermission(user);
 
         // 4. 행사 취소 (도메인 메서드 호출)
         event.cancel();
@@ -274,18 +274,14 @@ public class EventService {
 
     /**
      * 행사 수정/삭제 권한을 검증합니다.
-     * 작성자이거나 관리자만 수정/삭제 가능.
+     * 운영진(OPERATOR) 이상만 수정/삭제 가능.
      *
-     * @param event 행사
      * @param user  사용자
      * @throws EventAccessDeniedException 권한이 없을 경우
      */
-    private void validateEditPermission(Event event, User user) {
-        boolean isAuthor = event.getUser().getId().equals(user.getId());
-        boolean canEdit = isAuthor || user.isAdmin();
-
-        if (!canEdit) {
-            throw new EventAccessDeniedException("행사 수정/삭제는 작성자 또는 관리자만 가능합니다");
+    private void validateEditPermission(User user) {
+        if (!user.isOperatorOrAbove()) {
+            throw new EventAccessDeniedException("행사 수정/삭제는 운영진 이상만 가능합니다");
         }
     }
 

@@ -191,7 +191,7 @@ public class EventRegistrationService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         // 3. 권한 확인 (작성자 또는 관리자)
-        validateEventOwnerOrAdmin(event, user);
+        validateOperatorPermission(user);
 
         // 4. 신청자 목록 조회
         List<EventRegistration> registrations = eventRegistrationRepository.findByEventId(eventId);
@@ -225,7 +225,7 @@ public class EventRegistrationService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         // 4. 권한 확인 (작성자 또는 관리자)
-        validateEventOwnerOrAdmin(event, user);
+        validateOperatorPermission(user);
 
         // 5. 선발제 행사인지 확인
         if (!event.isManualApprove()) {
@@ -276,7 +276,7 @@ public class EventRegistrationService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         // 4. 권한 확인 (작성자 또는 관리자)
-        validateEventOwnerOrAdmin(event, user);
+        validateOperatorPermission(user);
 
         // 5. 선발제 행사인지 확인
         if (!event.isManualApprove()) {
@@ -298,18 +298,15 @@ public class EventRegistrationService {
     // === Private 메서드 ===
 
     /**
-     * 행사 작성자 또는 관리자 권한을 검증합니다.
+     * 운영진 이상 권한을 검증합니다.
+     * 신청자 목록 조회, 승인/거절 시 사용.
      *
-     * @param event 행사
      * @param user  사용자
      * @throws EventAccessDeniedException 권한이 없을 경우
      */
-    private void validateEventOwnerOrAdmin(Event event, User user) {
-        boolean isOwner = event.getUser().getId().equals(user.getId());
-        boolean isAdmin = user.isAdmin();
-
-        if (!isOwner && !isAdmin) {
-            throw new EventAccessDeniedException("행사 작성자 또는 관리자만 접근할 수 있습니다");
+    private void validateOperatorPermission(User user) {
+        if (!user.isOperatorOrAbove()) {
+            throw new EventAccessDeniedException("운영진 이상만 접근할 수 있습니다");
         }
     }
 
