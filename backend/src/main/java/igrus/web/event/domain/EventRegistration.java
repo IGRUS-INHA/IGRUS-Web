@@ -95,6 +95,23 @@ public class EventRegistration extends BaseEntity {
         this.status = EventRegistrationStatus.CANCELED;
     }
 
+    /**
+     * 재신청합니다. (취소된 신청만 가능)
+     * 선착순(FIRST_COME): REGISTERED로 복원
+     * 선발제(SELECTION): WAITING으로 복원
+     *
+     * @throws IllegalStateException 취소 상태가 아닌 경우
+     */
+    public void reRegister() {
+        if (!this.isCanceled()) {
+            throw new IllegalStateException("취소된 신청만 재신청 가능합니다");
+        }
+        this.status = event.isFirstCome()
+                ? EventRegistrationStatus.REGISTERED
+                : EventRegistrationStatus.WAITING;
+        this.registeredAt = Instant.now();
+    }
+
     // === 조회 메서드 ===
 
     /**
