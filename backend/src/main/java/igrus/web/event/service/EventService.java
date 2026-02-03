@@ -88,16 +88,19 @@ public class EventService {
 
     /**
      * 행사를 단건 조회합니다.
+     * 조회 시 현재 시간에 따라 행사 상태가 자동 갱신됩니다. (Lazy Evaluation)
      *
      * @param eventId 행사 ID
      * @param userId  현재 사용자 ID
      * @return 행사 상세 응답 DTO
      * @throws EventNotFoundException 행사를 찾을 수 없는 경우
      */
-    @Transactional(readOnly = true)
     public EventDetailResponse getEvent(Long eventId, Long userId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
+        event.updateStatusIfNeeded(Instant.now());
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
@@ -112,11 +115,11 @@ public class EventService {
 
     /**
      * 행사 목록을 조회합니다.
+     * 조회 시 현재 시간에 따라 행사 상태가 자동 갱신됩니다. (Lazy Evaluation)
      *
      * @param status 행사 상태 필터 (null이면 전체 조회)
      * @return 행사 목록 응답 DTO 리스트
      */
-    @Transactional(readOnly = true)
     public List<EventListResponse> getEventList(EventStatus status) {
         List<Event> events;
 
@@ -125,6 +128,10 @@ public class EventService {
         } else {
             events = eventRepository.findByStatus(status);
         }
+
+        // 각 행사의 상태를 시간에 따라 자동 갱신 (Lazy Evaluation)
+        Instant now = Instant.now();
+        events.forEach(event -> event.updateStatusIfNeeded(now));
 
         return events.stream()
                 .map(EventListResponse::from)

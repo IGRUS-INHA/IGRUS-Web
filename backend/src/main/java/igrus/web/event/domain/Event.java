@@ -201,6 +201,25 @@ public class Event extends BaseEntity {
         }
     }
 
+    /**
+     * 현재 시간에 따라 상태를 자동 갱신합니다. (Lazy Evaluation)
+     * - UPCOMING → OPEN: 신청 시작일이 지났을 때
+     * - OPEN → CLOSED (DEADLINE_PASSED): 신청 마감일이 지났을 때
+     *
+     * @param now 현재 시간
+     */
+    public void updateStatusIfNeeded(Instant now) {
+        // UPCOMING 상태에서 신청 시작일이 지났으면 OPEN으로 변경
+        if (this.status == EventStatus.UPCOMING && !now.isBefore(this.registrationStartAt)) {
+            this.status = EventStatus.OPEN;
+        }
+
+        // OPEN 상태에서 신청 마감일이 지났으면 CLOSED로 변경
+        if (this.status == EventStatus.OPEN && now.isAfter(this.registrationEndAt)) {
+            closeByDeadline();
+        }
+    }
+
     // === 신청자 수 관리 ===
 
     /**
