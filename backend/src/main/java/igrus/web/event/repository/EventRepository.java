@@ -16,24 +16,30 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     /**
      * 신청자 수를 원자적으로 1 증가시킵니다.
-     * 정원이 남아있을 때만 증가합니다.
+     * 정원이 남아있고 행사가 OPEN 상태일 때만 증가합니다.
+     *
+     * <p>clearAutomatically: UPDATE 후 영속성 컨텍스트를 자동 초기화하여
+     * 이후 조회 시 DB의 최신 값을 가져오도록 합니다.</p>
      *
      * @param id 행사 ID
-     * @return 변경된 행 수 (1이면 성공, 0이면 정원 초과)
+     * @return 변경된 행 수 (1이면 성공, 0이면 정원 초과 또는 OPEN 아님)
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount + 1 " +
-           "WHERE e.id = :id AND e.currentCount < e.capacity")
+           "WHERE e.id = :id AND e.currentCount < e.capacity AND e.status = 'OPEN'")
     int incrementCurrentCountIfAvailable(@Param("id") Long id);
 
     /**
      * 신청자 수를 원자적으로 1 감소시킵니다.
      * 현재 신청자 수가 0보다 클 때만 감소합니다.
      *
+     * <p>clearAutomatically: UPDATE 후 영속성 컨텍스트를 자동 초기화하여
+     * 이후 조회 시 DB의 최신 값을 가져오도록 합니다.</p>
+     *
      * @param id 행사 ID
      * @return 변경된 행 수 (1이면 성공, 0이면 이미 0명)
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount - 1 " +
            "WHERE e.id = :id AND e.currentCount > 0")
     int decrementCurrentCount(@Param("id") Long id);
