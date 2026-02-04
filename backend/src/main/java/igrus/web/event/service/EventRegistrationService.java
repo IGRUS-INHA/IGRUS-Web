@@ -68,6 +68,8 @@ public class EventRegistrationService {
      *   <li>정원이 남아있어야 함 (선착순의 경우)</li>
      * </ul>
      *
+     * <p>동시성 제어: 원자적 UPDATE 방식 사용</p>
+     *
      * @param eventId 행사 ID
      * @param userId  신청자 ID
      * @return 신청 결과 응답 DTO
@@ -80,8 +82,8 @@ public class EventRegistrationService {
      * @throws EventCapacityFullException           정원이 초과된 경우 (자동 승인)
      */
     public RegistrationResponse registerEvent(Long eventId, Long userId) {
-        // 1. 행사 조회 (비관적 락으로 동시성 제어)
-        Event event = eventRepository.findByIdWithLock(eventId)
+        // 1. 행사 조회 (락 없이)
+        Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회
@@ -96,7 +98,7 @@ public class EventRegistrationService {
         // 4. 기존 신청 기록 확인 (재신청 여부 판단)
         var existingRegistration = eventRegistrationRepository.findByEventIdAndUserId(eventId, userId);
         if (existingRegistration.isPresent()) {
-            return handleReRegistration(existingRegistration.get(), event);
+            return handleReRegistration(existingRegistration.get(), event, eventId);
         }
 
         // 5. 행사 상태 확인 (OPEN 상태인지)
@@ -105,26 +107,28 @@ public class EventRegistrationService {
         // 6. 신청 기간 확인
         validateRegistrationPeriod(event);
 
-        // 7. 정원 확인 (선착순인 경우에만)
-        if (event.isAutoApprove() && event.isFull()) {
-            throw new EventCapacityFullException();
+        // 7. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
+        if (event.isAutoApprove()) {
+            int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
+            if (updated == 0) {
+                throw new EventCapacityFullException();
+            }
+            // 정원이 찼으면 상태 변경
+            updateEventStatusAfterIncrement(eventId);
         }
 
         // 8. 신청 생성 및 저장
         EventRegistration registration = EventRegistration.create(event, user);
         EventRegistration savedRegistration = eventRegistrationRepository.save(registration);
 
-        // 9. 행사 신청자 수 증가 (선착순인 경우)
-        if (event.isAutoApprove()) {
-            event.incrementCurrentCount();
-        }
-
-        // 10. 응답 반환
+        // 9. 응답 반환
         return RegistrationResponse.from(savedRegistration);
     }
 
     /**
      * 신청을 취소합니다.
+     *
+     * <p>동시성 제어: 원자적 UPDATE 방식 사용</p>
      *
      * @param eventId 행사 ID
      * @param userId  신청자 ID (본인)
@@ -133,9 +137,10 @@ public class EventRegistrationService {
      * @throws EventRegistrationNotFoundException 신청을 찾을 수 없는 경우
      */
     public RegistrationResponse cancelRegistration(Long eventId, Long userId) {
-        // 1. 행사 조회 (비관적 락으로 동시성 제어)
-        Event event = eventRepository.findByIdWithLock(eventId)
-                .orElseThrow(() -> new EventNotFoundException(eventId));
+        // 1. 행사 존재 확인
+        if (!eventRepository.existsById(eventId)) {
+            throw new EventNotFoundException(eventId);
+        }
 
         // 2. 신청 조회
         EventRegistration registration = eventRegistrationRepository.findByEventIdAndUserId(eventId, userId)
@@ -148,14 +153,16 @@ public class EventRegistrationService {
 
         // 4. 신청자 수 감소 여부 판단 (취소 전에 확인)
         // REGISTERED(선착순) 또는 APPROVED(선발제 승인) 상태였으면 카운트 감소
-        boolean shouldDecrementCount = registration.isActive(); // 선착순 신청이 확정되어있거나 선발제가 승인된 상태라면 TRUE
+        boolean shouldDecrementCount = registration.isActive();
 
         // 5. 신청 취소 (상태 변경)
         registration.cancel();
 
-        // 6. 신청자 수 감소
+        // 6. 신청자 수 감소 (원자적 UPDATE)
         if (shouldDecrementCount) {
-            event.decrementCurrentCount();
+            eventRepository.decrementCurrentCount(eventId);
+            // 자리가 생겼으면 상태 변경 (정원 마감 → OPEN)
+            updateEventStatusAfterDecrement(eventId);
         }
 
         // 7. 응답 반환
@@ -211,6 +218,8 @@ public class EventRegistrationService {
     /**
      * 신청을 승인합니다. (선발제 전용)
      *
+     * <p>동시성 제어: 원자적 UPDATE 방식 사용</p>
+     *
      * @param registrationId 신청 ID
      * @param userId         요청자 ID (작성자/관리자)
      * @return 승인된 신청 응답 DTO
@@ -226,9 +235,11 @@ public class EventRegistrationService {
         EventRegistration registration = eventRegistrationRepository.findById(registrationId)
                 .orElseThrow(EventRegistrationNotFoundException::new);
 
-        // 2. 행사 조회 (비관적 락으로 동시성 제어)
-        Event event = eventRepository.findByIdWithLock(registration.getEvent().getId())
-                .orElseThrow(() -> new EventNotFoundException(registration.getEvent().getId()));
+        Long eventId = registration.getEvent().getId();
+
+        // 2. 행사 조회 (락 없이)
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 3. 사용자 조회
         User user = userRepository.findById(userId)
@@ -247,16 +258,17 @@ public class EventRegistrationService {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 7. 정원 확인
-        if (event.isFull()) {
+        // 7. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함)
+        int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
+        if (updated == 0) {
             throw new EventCapacityFullException();
         }
 
         // 8. 승인 처리
         registration.approve();
 
-        // 9. 신청자 수 증가
-        event.incrementCurrentCount();
+        // 9. 정원이 찼으면 상태 변경
+        updateEventStatusAfterIncrement(eventId);
 
         // 10. 응답 반환
         return RegistrationResponse.from(registration);
@@ -328,12 +340,13 @@ public class EventRegistrationService {
      *
      * @param registration 기존 신청 기록
      * @param event        행사
+     * @param eventId      행사 ID (원자적 UPDATE용)
      * @return 재신청 결과 응답 DTO
      * @throws AlreadyRegisteredException       취소 상태가 아닌 경우
      * @throws EventRegistrationClosedException 신청 불가 상태인 경우
      * @throws EventCapacityFullException       정원 초과인 경우
      */
-    private RegistrationResponse handleReRegistration(EventRegistration registration, Event event) {
+    private RegistrationResponse handleReRegistration(EventRegistration registration, Event event, Long eventId) {
         // 취소 상태가 아니면 이미 신청 중
         if (!registration.isCanceled()) {
             throw new AlreadyRegisteredException();
@@ -345,18 +358,18 @@ public class EventRegistrationService {
         // 신청 기간 확인
         validateRegistrationPeriod(event);
 
-        // 정원 확인 (선착순인 경우)
-        if (event.isAutoApprove() && event.isFull()) {
-            throw new EventCapacityFullException();
+        // 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
+        if (event.isAutoApprove()) {
+            int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
+            if (updated == 0) {
+                throw new EventCapacityFullException();
+            }
+            // 정원이 찼으면 상태 변경
+            updateEventStatusAfterIncrement(eventId);
         }
 
         // 재신청 처리
         registration.reRegister();
-
-        // 신청자 수 증가 (선착순인 경우)
-        if (event.isAutoApprove()) {
-            event.incrementCurrentCount();
-        }
 
         return RegistrationResponse.from(registration);
     }
@@ -383,6 +396,32 @@ public class EventRegistrationService {
         Instant now = Instant.now();
         if (now.isBefore(event.getRegistrationStartAt()) || now.isAfter(event.getRegistrationEndAt())) {
             throw new EventNotInRegistrationPeriodException();
+        }
+    }
+
+    /**
+     * 신청자 수 증가 후 행사 상태를 업데이트합니다.
+     * 정원이 찼으면 CLOSED 상태로 변경합니다.
+     *
+     * @param eventId 행사 ID
+     */
+    private void updateEventStatusAfterIncrement(Long eventId) {
+        Event event = eventRepository.findById(eventId).orElse(null);
+        if (event != null && event.isFull()) {
+            event.closeByCapacity();
+        }
+    }
+
+    /**
+     * 신청자 수 감소 후 행사 상태를 업데이트합니다.
+     * 정원 마감 상태에서 자리가 생기면 OPEN 상태로 변경합니다.
+     *
+     * @param eventId 행사 ID
+     */
+    private void updateEventStatusAfterDecrement(Long eventId) {
+        Event event = eventRepository.findById(eventId).orElse(null);
+        if (event != null) {
+            event.reopenIfNeeded();
         }
     }
 

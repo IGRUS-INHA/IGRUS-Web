@@ -253,6 +253,14 @@ public class Event extends BaseEntity {
         }
     }
 
+    /**
+     * 정원 마감 상태에서 자리가 생겼을 때 다시 모집 상태로 변경합니다.
+     * 원자적 UPDATE 후 상태 갱신을 위해 사용합니다.
+     */
+    public void reopenIfNeeded() {
+        reopenIfCapacityAvailable();
+    }
+
     // === 조회 메서드 ===
 
     /**

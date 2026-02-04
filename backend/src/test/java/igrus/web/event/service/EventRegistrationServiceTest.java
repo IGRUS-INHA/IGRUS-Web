@@ -115,9 +115,10 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-001] 정회원이 자동 승인 행사에 신청하면 REGISTERED 상태로 신청됨")
         void registerEvent_MemberToAutoApprove_ReturnsRegisteredStatus() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
 
             EventRegistration savedRegistration = mock(EventRegistration.class);
             when(savedRegistration.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
@@ -130,7 +131,7 @@ class EventRegistrationServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            verify(autoApproveEvent).incrementCurrentCount();
+            verify(eventRepository).incrementCurrentCountIfAvailable(EVENT_ID);
             verify(eventRegistrationRepository).save(any(EventRegistration.class));
         }
 
@@ -141,7 +142,7 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-002] 정회원이 수동 승인 행사에 신청하면 WAITING 상태로 신청됨")
         void registerEvent_MemberToManualApprove_ReturnsWaitingStatus() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
 
@@ -156,7 +157,7 @@ class EventRegistrationServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            verify(manualApproveEvent, never()).incrementCurrentCount();
+            verify(eventRepository, never()).incrementCurrentCountIfAvailable(any());
             verify(eventRegistrationRepository).save(any(EventRegistration.class));
         }
 
@@ -167,7 +168,7 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-003] 준회원이 신청하면 AssociateMemberNotAllowedException 발생")
         void registerEvent_AssociateMember_ThrowsException() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(4L)).thenReturn(Optional.of(associateMember));
 
             // when & then
@@ -182,7 +183,7 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-004] 존재하지 않는 행사에 신청하면 EventNotFoundException 발생")
         void registerEvent_EventNotFound_ThrowsException() {
             // given
-            when(eventRepository.findByIdWithLock(999L)).thenReturn(Optional.empty());
+            when(eventRepository.findById(999L)).thenReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> eventRegistrationService.registerEvent(999L, USER_ID))
@@ -196,7 +197,7 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-005] 존재하지 않는 사용자가 신청하면 UserNotFoundException 발생")
         void registerEvent_UserNotFound_ThrowsException() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
             // when & then
@@ -211,7 +212,7 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-006] 이미 신청한 사용자가 재신청하면 AlreadyRegisteredException 발생")
         void registerEvent_AlreadyRegistered_ThrowsException() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
 
             EventRegistration existingRegistration = mock(EventRegistration.class);
@@ -232,7 +233,7 @@ class EventRegistrationServiceTest {
         void registerEvent_EventNotOpen_ThrowsException() {
             // given
             when(autoApproveEvent.getStatus()).thenReturn(EventStatus.UPCOMING);
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
 
@@ -249,7 +250,7 @@ class EventRegistrationServiceTest {
         void registerEvent_BeforeRegistrationPeriod_ThrowsException() {
             // given
             when(autoApproveEvent.getRegistrationStartAt()).thenReturn(Instant.now().plus(1, ChronoUnit.DAYS));
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
 
@@ -266,7 +267,7 @@ class EventRegistrationServiceTest {
         void registerEvent_AfterRegistrationPeriod_ThrowsException() {
             // given
             when(autoApproveEvent.getRegistrationEndAt()).thenReturn(Instant.now().minus(1, ChronoUnit.DAYS));
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
 
@@ -276,16 +277,16 @@ class EventRegistrationServiceTest {
         }
 
         /**
-         * SVC-010: 정원 초과 선착순 신청 거부
+         * SVC-010: 정원 초과 선착순 신청 거부 (원자적 UPDATE 실패)
          */
         @Test
         @DisplayName("[SVC-010] 정원이 찬 선착순 행사에 신청하면 EventCapacityFullException 발생")
         void registerEvent_CapacityFull_ThrowsException() {
             // given
-            when(autoApproveEvent.isFull()).thenReturn(true);
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(0); // 원자적 UPDATE 실패
 
             // when & then
             assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
@@ -299,8 +300,9 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-011] 취소된 신청이 있으면 재신청 처리됨")
         void registerEvent_CanceledRegistrationExists_ReRegisters() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
 
             EventRegistration canceledRegistration = mock(EventRegistration.class);
             when(canceledRegistration.isCanceled()).thenReturn(true);
@@ -316,7 +318,7 @@ class EventRegistrationServiceTest {
             // then
             assertThat(response).isNotNull();
             verify(canceledRegistration).reRegister();
-            verify(autoApproveEvent).incrementCurrentCount();
+            verify(eventRepository).incrementCurrentCountIfAvailable(EVENT_ID);
         }
     }
 
@@ -331,7 +333,9 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-020] REGISTERED 상태의 신청을 취소하면 카운트 감소")
         void cancelRegistration_FromRegistered_DecrementsCount() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.existsById(EVENT_ID)).thenReturn(true);
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
 
             EventRegistration registration = mock(EventRegistration.class);
             when(registration.isCanceled()).thenReturn(false);
@@ -348,7 +352,7 @@ class EventRegistrationServiceTest {
             // then
             assertThat(response).isNotNull();
             verify(registration).cancel();
-            verify(autoApproveEvent).decrementCurrentCount();
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
         }
 
         /**
@@ -358,7 +362,7 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-021] WAITING 상태의 신청을 취소하면 카운트 감소 없음")
         void cancelRegistration_FromWaiting_NoCountChange() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(eventRepository.existsById(EVENT_ID)).thenReturn(true);
 
             EventRegistration registration = mock(EventRegistration.class);
             when(registration.isCanceled()).thenReturn(false);
@@ -375,7 +379,7 @@ class EventRegistrationServiceTest {
             // then
             assertThat(response).isNotNull();
             verify(registration).cancel();
-            verify(manualApproveEvent, never()).decrementCurrentCount();
+            verify(eventRepository, never()).decrementCurrentCount(any());
         }
 
         /**
@@ -385,7 +389,7 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-022] 이미 취소된 신청을 취소하면 AlreadyCanceledException 발생")
         void cancelRegistration_AlreadyCanceled_ThrowsException() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.existsById(EVENT_ID)).thenReturn(true);
 
             EventRegistration registration = mock(EventRegistration.class);
             when(registration.isCanceled()).thenReturn(true);
@@ -404,7 +408,7 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-023] 존재하지 않는 신청을 취소하면 EventRegistrationNotFoundException 발생")
         void cancelRegistration_NotFound_ThrowsException() {
             // given
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.existsById(EVENT_ID)).thenReturn(true);
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.empty());
 
@@ -545,8 +549,9 @@ class EventRegistrationServiceTest {
             when(registration.getRegisteredAt()).thenReturn(Instant.now());
 
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
 
             // Mock approve 후 상태 변경
             doAnswer(invocation -> {
@@ -560,7 +565,7 @@ class EventRegistrationServiceTest {
             // then
             assertThat(response).isNotNull();
             verify(registration).approve();
-            verify(manualApproveEvent).incrementCurrentCount();
+            verify(eventRepository).incrementCurrentCountIfAvailable(EVENT_ID);
         }
 
         /**
@@ -575,7 +580,7 @@ class EventRegistrationServiceTest {
             when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
 
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
             // when & then
@@ -595,7 +600,7 @@ class EventRegistrationServiceTest {
             when(registration.getStatus()).thenReturn(EventRegistrationStatus.APPROVED); // 이미 승인됨
 
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
             // when & then
@@ -604,21 +609,20 @@ class EventRegistrationServiceTest {
         }
 
         /**
-         * SVC-033: 정원 초과 상태에서 승인 거부
+         * SVC-033: 정원 초과 상태에서 승인 거부 (원자적 UPDATE 실패)
          */
         @Test
         @DisplayName("[SVC-033] 정원이 찬 상태에서 승인하면 EventCapacityFullException 발생")
         void approveRegistration_CapacityFull_ThrowsException() {
             // given
-            when(manualApproveEvent.isFull()).thenReturn(true);
-
             EventRegistration registration = mock(EventRegistration.class);
             when(registration.getEvent()).thenReturn(manualApproveEvent);
             when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
 
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(0); // 원자적 UPDATE 실패
 
             // when & then
             assertThatThrownBy(() -> eventRegistrationService.approveRegistration(REGISTRATION_ID, OPERATOR_ID))
@@ -636,7 +640,7 @@ class EventRegistrationServiceTest {
             when(registration.getEvent()).thenReturn(manualApproveEvent);
 
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
-            when(eventRepository.findByIdWithLock(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
 
             // when & then
