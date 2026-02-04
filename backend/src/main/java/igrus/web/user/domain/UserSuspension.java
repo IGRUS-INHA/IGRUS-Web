@@ -1,6 +1,7 @@
 package igrus.web.user.domain;
 
 import igrus.web.common.domain.BaseEntity;
+import igrus.web.user.exception.InvalidSuspensionException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -108,7 +109,7 @@ public class UserSuspension extends BaseEntity {
 
     private static void validateSuspensionPeriod(Instant suspendedAt, Instant suspendedUntil) {
         if (suspendedUntil.isBefore(suspendedAt)) {
-            throw new IllegalArgumentException("정지 종료일은 정지 시작일 이후여야 합니다");
+            throw InvalidSuspensionException.invalidPeriod();
         }
     }
 
@@ -121,7 +122,7 @@ public class UserSuspension extends BaseEntity {
      */
     public void lift(Long liftedBy) {
         if (isLifted()) {
-            throw new IllegalStateException("이미 해제된 정지입니다");
+            throw InvalidSuspensionException.alreadyLifted();
         }
         this.liftedAt = Instant.now();
         this.liftedBy = liftedBy;
@@ -135,7 +136,7 @@ public class UserSuspension extends BaseEntity {
      */
     public void lift(Instant liftedAt, Long liftedBy) {
         if (isLifted()) {
-            throw new IllegalStateException("이미 해제된 정지입니다");
+            throw InvalidSuspensionException.alreadyLifted();
         }
         this.liftedAt = liftedAt;
         this.liftedBy = liftedBy;
@@ -182,7 +183,7 @@ public class UserSuspension extends BaseEntity {
      */
     public void updateReason(String reason) {
         if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("정지 사유는 필수입니다");
+            throw InvalidSuspensionException.reasonRequired();
         }
         this.reason = reason;
     }
@@ -194,10 +195,10 @@ public class UserSuspension extends BaseEntity {
      */
     public void extendSuspension(Instant newSuspendedUntil) {
         if (isLifted()) {
-            throw new IllegalStateException("해제된 정지는 연장할 수 없습니다");
+            throw InvalidSuspensionException.cannotExtend();
         }
         if (newSuspendedUntil.isBefore(this.suspendedUntil)) {
-            throw new IllegalArgumentException("새로운 종료일은 기존 종료일 이후여야 합니다");
+            throw InvalidSuspensionException.extendInvalidDate();
         }
         this.suspendedUntil = newSuspendedUntil;
     }

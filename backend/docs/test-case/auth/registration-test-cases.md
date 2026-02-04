@@ -102,7 +102,7 @@
 ## 4. 구현된 테스트 클래스
 
 ### 4.1 Service 테스트
-- **파일**: `backend/src/test/java/igrus/web/security/auth/password/service/PasswordSignupServiceTest.java`
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/service/signup/SignupServiceTest.java`, `VerifyEmailServiceTest.java`, `ResendVerificationServiceTest.java`
 - **테스트 범위**: REG-001 ~ REG-052 (비즈니스 로직)
 
 ### 4.2 Controller 테스트

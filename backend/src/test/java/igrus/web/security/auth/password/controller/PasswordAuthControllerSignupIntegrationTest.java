@@ -125,7 +125,7 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
             String originalCode = getVerificationCode(TEST_EMAIL);
 
             // 재발송 rate limit 비활성화
-            ReflectionTestUtils.setField(passwordSignupService, "resendRateLimitSeconds", 0L);
+            ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", 0L);
 
             ResendVerificationRequest resendRequest = new ResendVerificationRequest(TEST_EMAIL);
 

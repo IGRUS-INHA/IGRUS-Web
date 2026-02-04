@@ -49,7 +49,7 @@
 - BCryptPasswordEncoder
 
 ### 추가 구현 완료 (이 태스크에서)
-- ✅ Auth Controller (PasswordAuthController), Service (PasswordAuthService, PasswordSignupService)
+- ✅ Auth Controller (PasswordAuthController), Service (PasswordAuthService, SignupService, VerifyEmailService, ResendVerificationService)
 - ✅ EmailVerification 엔티티 및 기능
 - ✅ RefreshToken 엔티티 및 관리
 - ✅ PrivacyConsent 엔티티 및 서비스 (PrivacyConsentService)
@@ -132,7 +132,7 @@
 
 ### Service for User Story 1
 
-- [x] T021 [US1] SignupService 생성 - 회원가입 비즈니스 로직 in `backend/src/main/java/igrus/web/security/auth/password/service/PasswordSignupService.java`
+- [x] T021 [US1] SignupService 생성 - 회원가입 비즈니스 로직 in `backend/src/main/java/igrus/web/security/auth/password/service/SignupService, VerifyEmailService, ResendVerificationService.java`
   - ✅ 개인정보 동의 검증
   - ✅ 중복 검증 (학번, 이메일, 전화번호)
   - ✅ 비밀번호 정책 검증 (영문 대/소문자 + 숫자 + 특수문자, 8자 이상)
@@ -151,7 +151,7 @@
 
 ### Test for User Story 1
 
-- [x] T023 [P] [US1] SignupService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/PasswordSignupServiceTest.java`
+- [x] T023 [P] [US1] SignupService 단위 테스트 in `backend/src/test/java/igrus/web/security/auth/password/service/SignupService, VerifyEmailService, ResendVerificationServiceTest.java`
 - [x] T024 [P] [US1] AuthController 회원가입 통합 테스트 in `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordSignupIntegrationTest.java`
 
 **Checkpoint**: ✅ 회원가입 기능 완료
@@ -390,7 +390,7 @@
   - ✅ EmailService 인터페이스에 `WithRetry` 메서드 추가
   - ✅ SmtpEmailService에 `@Retryable`, `@Async` 적용 (최대 4회 시도, 지수 백오프)
   - ✅ LoggingEmailService 동일하게 수정 (테스트용)
-  - ✅ 기존 서비스(PasswordSignupService, PasswordResetService)에서 `WithRetry` 메서드 호출로 변경
+  - ✅ 기존 서비스(SignupService, VerifyEmailService, ResendVerificationService, PasswordResetService)에서 `WithRetry` 메서드 호출로 변경
   - ✅ 단위 테스트 작성 (SmtpEmailServiceRetryTest)
 
 ### 보안 강화
@@ -604,7 +604,7 @@ Task: "AuthController 회원가입 통합 테스트 in backend/src/test/java/igr
 - `AccountStatusServiceTest.java`
 - `PasswordAuthServiceLoginTest.java`
 - `PasswordAuthServiceTokenTest.java`
-- `PasswordSignupServiceTest.java`
+- `SignupService, VerifyEmailService, ResendVerificationServiceTest.java`
 - `PasswordResetServiceTest.java`
 - `RefreshTokenCleanupServiceTest.java`
 - `WithdrawnUserCleanupServiceTest.java`

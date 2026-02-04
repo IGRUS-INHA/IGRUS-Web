@@ -44,12 +44,37 @@ public class SemesterMember extends BaseEntity {
     @Column(name = "semester_members_role", nullable = false, length = 20)
     private UserRole role;
 
+    /** 등록 시점 스냅샷: 사용자 본명 */
+    @Column(name = "semester_members_name", nullable = false, length = 50)
+    private String name;
+
+    /** 등록 시점 스냅샷: 학번 */
+    @Column(name = "semester_members_student_id", nullable = false, length = 20)
+    private String studentId;
+
+    /** 등록 시점 스냅샷: 학과 */
+    @Column(name = "semester_members_department", length = 50)
+    private String department;
+
+    /** 등록 시점 스냅샷: 학년 */
+    @Column(name = "semester_members_grade", nullable = false)
+    private Integer grade;
+
+    /** 등록 시점 스냅샷: 가입 동기 */
+    @Column(name = "semester_members_motivation", columnDefinition = "TEXT")
+    private String motivation;
+
     public static SemesterMember create(User user, int year, int semester, UserRole role) {
         SemesterMember member = new SemesterMember();
         member.user = user;
         member.year = year;
         member.semester = semester;
         member.role = role;
+        member.name = user.getName();
+        member.studentId = user.getStudentId();
+        member.department = user.getDepartment();
+        member.grade = user.getGrade();
+        member.motivation = user.getMotivation();
         return member;
     }
 }

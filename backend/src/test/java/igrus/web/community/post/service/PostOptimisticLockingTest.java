@@ -8,6 +8,7 @@ import igrus.web.community.board.repository.BoardPermissionRepository;
 import igrus.web.community.board.repository.BoardRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.community.post.service.read.GetPostDetailService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -59,7 +60,7 @@ class PostOptimisticLockingTest extends ServiceIntegrationTestBase {
     private PostRepository postRepository;
 
     @Autowired
-    private PostService postService;
+    private GetPostDetailService getPostDetailService;
 
     private User memberUser;
     private Board generalBoard;
@@ -383,7 +384,7 @@ class PostOptimisticLockingTest extends ServiceIntegrationTestBase {
                 executorService.submit(() -> {
                     try {
                         startLatch.await();
-                        postService.getPostDetail(generalBoard.getCode().name(), postId, authUser);
+                        getPostDetailService.getPostDetail(generalBoard.getCode().name(), postId, authUser);
                         successCount.incrementAndGet();
                     } catch (Exception e) {
                         exceptionCount.incrementAndGet();
@@ -418,7 +419,7 @@ class PostOptimisticLockingTest extends ServiceIntegrationTestBase {
             AuthenticatedUser authUser = toAuthenticatedUser(memberUser);
 
             // when
-            postService.getPostDetail(generalBoard.getCode().name(), postId, authUser);
+            getPostDetailService.getPostDetail(generalBoard.getCode().name(), postId, authUser);
 
             // then
             entityManager.clear();
@@ -438,7 +439,7 @@ class PostOptimisticLockingTest extends ServiceIntegrationTestBase {
 
             // when - 순차적으로 getPostDetail 호출
             for (int i = 0; i < callCount; i++) {
-                postService.getPostDetail(generalBoard.getCode().name(), postId, authUser);
+                getPostDetailService.getPostDetail(generalBoard.getCode().name(), postId, authUser);
                 entityManager.clear();
             }
 

@@ -6,7 +6,7 @@ import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.exception.account.AccountRecoverableException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
-import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
@@ -14,9 +14,15 @@ import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
-import igrus.web.security.auth.password.service.PasswordAuthService;
-import igrus.web.security.auth.password.service.PasswordResetService;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
+import igrus.web.security.auth.password.service.reset.ResetPasswordService;
+import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
+import igrus.web.security.auth.password.service.auth.LoginService;
+import igrus.web.security.auth.password.service.auth.LogoutService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
@@ -57,16 +63,34 @@ import static org.mockito.Mockito.verify;
 class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
     @Autowired
-    private PasswordSignupService passwordSignupService;
+    private SignupService signupService;
 
     @Autowired
-    private PasswordAuthService passwordAuthService;
+    private VerifyEmailService verifyEmailService;
 
     @Autowired
-    private PasswordResetService passwordResetService;
+    private ResendVerificationService resendVerificationService;
 
     @Autowired
-    private AccountRecoveryService accountRecoveryService;
+    private LoginService loginService;
+
+    @Autowired
+    private LogoutService logoutService;
+
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    @Autowired
+    private RequestPasswordResetService requestPasswordResetService;
+
+    @Autowired
+    private ResetPasswordService resetPasswordService;
+
+    @Autowired
+    private ValidateResetTokenService validateResetTokenService;
+
+    @Autowired
+    private RecoverAccountService recoverAccountService;
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -92,15 +116,17 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
-        ReflectionTestUtils.setField(passwordAuthService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
-        ReflectionTestUtils.setField(passwordAuthService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
-        ReflectionTestUtils.setField(passwordSignupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(passwordSignupService, "maxAttempts", 5);
-        ReflectionTestUtils.setField(passwordSignupService, "resendRateLimitSeconds", 60L);
-        ReflectionTestUtils.setField(passwordResetService, "passwordResetExpiry", PASSWORD_RESET_EXPIRY);
-        ReflectionTestUtils.setField(passwordResetService, "frontendUrl", "http://localhost:5173");
-        ReflectionTestUtils.setField(accountRecoveryService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
-        ReflectionTestUtils.setField(accountRecoveryService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(loginService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(loginService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", 5);
+        ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", 60L);
+        ReflectionTestUtils.setField(requestPasswordResetService, "passwordResetExpiry", PASSWORD_RESET_EXPIRY);
+        ReflectionTestUtils.setField(requestPasswordResetService, "frontendUrl", "http://localhost:5173");
+        ReflectionTestUtils.setField(recoverAccountService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(recoverAccountService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
     }
 
     private PasswordSignupRequest createSignupRequest() {
@@ -129,7 +155,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
         void fullSignupToLoginFlow_succeeds() {
             // === Step 1: 회원가입 ===
             PasswordSignupRequest signupRequest = createSignupRequest();
-            PasswordSignupResponse signupResponse = passwordSignupService.signup(signupRequest);
+            PasswordSignupResponse signupResponse = signupService.signup(signupRequest);
 
             assertThat(signupResponse).isNotNull();
             assertThat(signupResponse.email()).isEqualTo(TEST_EMAIL);
@@ -146,7 +172,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(TEST_EMAIL).orElseThrow();
             EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, verification.getCode());
 
-            PasswordSignupResponse verifyResponse = passwordSignupService.verifyEmail(verifyRequest);
+            PasswordSignupResponse verifyResponse = verifyEmailService.verifyEmail(verifyRequest);
 
             assertThat(verifyResponse).isNotNull();
             assertThat(verifyResponse.requiresVerification()).isFalse();
@@ -158,7 +184,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
             // === Step 3: 로그인 ===
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             assertThat(loginResult).isNotNull();
             assertThat(loginResult.accessToken()).isNotNull();
@@ -191,7 +217,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
             // === Step 1: 로그인 ===
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             assertThat(loginResult.accessToken()).isNotNull();
             String refreshToken = loginResult.refreshToken();
@@ -205,7 +231,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             assertThat(userId).isEqualTo(user.getId());
 
             // === Step 3: 로그아웃 ===
-            passwordAuthService.logout(refreshToken);
+            logoutService.logout(refreshToken);
 
             // === Step 4: 토큰 무효화 확인 ===
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(refreshToken)).isEmpty();
@@ -222,14 +248,14 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
             // === Step 1: 여러 기기에서 로그인 ===
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult deviceAResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
-            LoginResult deviceBResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult deviceAResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult deviceBResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // 서로 다른 토큰 발급
             assertThat(deviceAResult.refreshToken()).isNotEqualTo(deviceBResult.refreshToken());
 
             // === Step 2: Device A 로그아웃 ===
-            passwordAuthService.logout(deviceAResult.refreshToken());
+            logoutService.logout(deviceAResult.refreshToken());
 
             // === Step 3: Device A 토큰은 무효화, Device B 토큰은 유효 ===
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(deviceAResult.refreshToken())).isEmpty();
@@ -253,7 +279,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             passwordCredentialRepository.save(credential);
 
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             String originalAccessToken = loginResult.accessToken();
             String refreshToken = loginResult.refreshToken();
@@ -262,7 +288,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             // 실제 만료를 기다릴 수 없으므로, 새로운 토큰 발급으로 시뮬레이션
 
             // === Step 2: Refresh Token으로 새 Access Token 발급 ===
-            TokenRefreshResponse refreshResponse = passwordAuthService.refreshToken(refreshToken);
+            TokenRefreshResponse refreshResponse = refreshTokenService.refreshToken(refreshToken);
 
             assertThat(refreshResponse).isNotNull();
             assertThat(refreshResponse.accessToken()).isNotNull();
@@ -285,14 +311,14 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             passwordCredentialRepository.save(credential);
 
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             String refreshToken = loginResult.refreshToken();
 
             // === 여러 번 갱신 ===
-            TokenRefreshResponse response1 = passwordAuthService.refreshToken(refreshToken);
-            TokenRefreshResponse response2 = passwordAuthService.refreshToken(refreshToken);
-            TokenRefreshResponse response3 = passwordAuthService.refreshToken(refreshToken);
+            TokenRefreshResponse response1 = refreshTokenService.refreshToken(refreshToken);
+            TokenRefreshResponse response2 = refreshTokenService.refreshToken(refreshToken);
+            TokenRefreshResponse response3 = refreshTokenService.refreshToken(refreshToken);
 
             // 매번 다른 Access Token
             assertThat(response1.accessToken()).isNotEqualTo(response2.accessToken());
@@ -317,31 +343,31 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
             // 기존 세션 생성
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
             String oldRefreshToken = loginResult.refreshToken();
 
             // === Step 1: 비밀번호 재설정 요청 ===
             ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
-            passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
+            requestPasswordResetService.requestPasswordReset(TEST_STUDENT_ID);
 
             verify(authEmailService).sendPasswordResetEmail(eq(TEST_EMAIL), linkCaptor.capture());
             String resetLink = linkCaptor.getValue();
             String resetToken = resetLink.substring(resetLink.indexOf("token=") + 6);
 
             // === Step 2: 토큰 검증 ===
-            boolean isValid = passwordResetService.validateResetToken(resetToken);
+            boolean isValid = validateResetTokenService.validateResetToken(resetToken);
             assertThat(isValid).isTrue();
 
             // === Step 3: 비밀번호 변경 ===
             String newPassword = "NewSecure1!@";
-            passwordResetService.resetPassword(resetToken, newPassword);
+            resetPasswordService.resetPassword(resetToken, newPassword);
 
             // === Step 4: 기존 세션 무효화 확인 ===
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(oldRefreshToken)).isEmpty();
 
             // === Step 5: 새 비밀번호로 재로그인 성공 ===
             PasswordLoginRequest newLoginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, newPassword);
-            LoginResult newLoginResult = passwordAuthService.login(newLoginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult newLoginResult = loginService.login(newLoginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             assertThat(newLoginResult).isNotNull();
             assertThat(newLoginResult.accessToken()).isNotNull();
@@ -359,18 +385,18 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
             // === 비밀번호 재설정 ===
             ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
-            passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
+            requestPasswordResetService.requestPasswordReset(TEST_STUDENT_ID);
             verify(authEmailService).sendPasswordResetEmail(eq(TEST_EMAIL), linkCaptor.capture());
 
             String resetLink = linkCaptor.getValue();
             String resetToken = resetLink.substring(resetLink.indexOf("token=") + 6);
 
             String newPassword = "NewSecure1!@";
-            passwordResetService.resetPassword(resetToken, newPassword);
+            resetPasswordService.resetPassword(resetToken, newPassword);
 
             // === 이전 비밀번호로 로그인 시도 ===
             PasswordLoginRequest oldLoginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            assertThatThrownBy(() -> passwordAuthService.login(oldLoginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT))
+            assertThatThrownBy(() -> loginService.login(oldLoginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(Exception.class);
         }
     }
@@ -412,7 +438,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
             // === 로그인 시도 시 AccountRecoverableException 발생 ===
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            assertThatThrownBy(() -> passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT))
+            assertThatThrownBy(() -> loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountRecoverableException.class);
         }
 
@@ -445,7 +471,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             passwordCredentialRepository.save(credential);
 
             // === Step 1: 계정 복구 ===
-            RecoveryResult recoveryResult = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult recoveryResult = recoverAccountService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             assertThat(recoveryResult).isNotNull();
             assertThat(recoveryResult.accessToken()).isNotNull();
@@ -460,7 +486,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
             // === Step 3: 복구 후 정상 로그인 가능 ===
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             assertThat(loginResult).isNotNull();
             assertThat(loginResult.accessToken()).isNotNull();
@@ -495,7 +521,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             passwordCredentialRepository.save(credential);
 
             // === 계정 복구 ===
-            RecoveryResult recoveryResult = accountRecoveryService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
+            RecoveryResult recoveryResult = recoverAccountService.recoverAccount(TEST_STUDENT_ID, TEST_PASSWORD);
 
             // === 기존 역할(OPERATOR) 유지 확인 ===
             assertThat(recoveryResult.role()).isEqualTo(UserRole.OPERATOR);
@@ -532,7 +558,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
             // === 로그인 시 AccountWithdrawnException 발생 (복구 불가) ===
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            assertThatThrownBy(() -> passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT))
+            assertThatThrownBy(() -> loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT))
                     .isInstanceOf(AccountWithdrawnException.class);
         }
 
@@ -546,7 +572,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             passwordCredentialRepository.save(credential);
 
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
             String oldRefreshToken = loginResult.refreshToken();
 
             // === 탈퇴 처리 (모든 토큰 무효화 시뮬레이션) ===
