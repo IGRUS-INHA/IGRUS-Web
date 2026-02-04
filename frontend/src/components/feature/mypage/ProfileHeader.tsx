@@ -1,19 +1,17 @@
 import { useUIStore } from '@/stores';
-import { User, Mail, Calendar, Edit3, Shield } from 'lucide-react';
+import { User, Mail, Calendar, Edit3, Shield, Lock, LogOut } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ROLE_LABELS } from '@/constants';
 import type { User as UserType } from '@/types/entities';
 
-interface ProfileUser extends UserType {
-  postCount?: number;
-  likeCount?: number;
-}
-
 interface ProfileHeaderProps {
-  user: ProfileUser;
+  user: UserType;
+  onChangePassword?: () => void;
+  onLogout?: () => void;
 }
 
-export default function ProfileHeader({ user }: ProfileHeaderProps) {
+export default function ProfileHeader({ user, onChangePassword, onLogout }: ProfileHeaderProps) {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 
@@ -58,17 +56,33 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
             가입일 {user.joinedDate}
           </div>
         </div>
-      </div>
 
-      <div className="flex gap-s3">
-        <div className="text-center px-s5 py-s4 rounded-[2rem] bg-white/5 border border-border">
-          <div className="text-h2 text-primary">{user.postCount ?? 0}</div>
-          <div className="text-c2 text-muted-foreground uppercase font-bold tracking-widest">게시글</div>
-        </div>
-        <div className="text-center px-s5 py-s4 rounded-[2rem] bg-white/5 border border-border">
-          <div className="text-h2 text-primary">{user.likeCount ?? 0}</div>
-          <div className="text-c2 text-muted-foreground uppercase font-bold tracking-widest">좋아요</div>
-        </div>
+        {(onChangePassword || onLogout) && (
+          <div className="flex flex-wrap justify-center md:justify-start gap-s3 mt-s4">
+            {onChangePassword && (
+              <Button
+                type="button"
+                onClick={onChangePassword}
+                variant="outline"
+                className={`flex items-center gap-s2 rounded-r3 text-xs font-bold ${
+                  isDark ? 'border-border hover:bg-white/5' : 'border-border hover:bg-muted'
+                }`}
+              >
+                <Lock size={14} /> 비밀번호 변경
+              </Button>
+            )}
+            {onLogout && (
+              <Button
+                type="button"
+                onClick={onLogout}
+                variant="outline"
+                className="flex items-center gap-s2 rounded-r3 text-xs font-bold border-destructive/30 text-destructive hover:bg-destructive/10"
+              >
+                <LogOut size={14} /> 로그아웃
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );
