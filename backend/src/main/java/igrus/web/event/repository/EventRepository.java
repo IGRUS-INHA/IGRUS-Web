@@ -30,6 +30,21 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     int incrementCurrentCountIfAvailable(@Param("id") Long id);
 
     /**
+     * 신청자 수를 원자적으로 1 증가시킵니다. (선발제 승인 전용)
+     * 정원이 남아있을 때만 증가합니다. 행사 상태는 체크하지 않습니다.
+     *
+     * <p>선발제 승인은 신청 기간이 종료된 후에도 가능해야 하므로
+     * 행사 상태(OPEN/CLOSED)와 관계없이 정원만 체크합니다.</p>
+     *
+     * @param id 행사 ID
+     * @return 변경된 행 수 (1이면 성공, 0이면 정원 초과)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Event e SET e.currentCount = e.currentCount + 1 " +
+           "WHERE e.id = :id AND e.currentCount < e.capacity")
+    int incrementCurrentCountForApproval(@Param("id") Long id);
+
+    /**
      * 신청자 수를 원자적으로 1 감소시킵니다.
      * 현재 신청자 수가 0보다 클 때만 감소합니다.
      *

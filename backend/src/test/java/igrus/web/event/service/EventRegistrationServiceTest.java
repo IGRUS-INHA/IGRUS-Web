@@ -551,7 +551,7 @@ class EventRegistrationServiceTest {
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
             when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
-            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
+            when(eventRepository.incrementCurrentCountForApproval(EVENT_ID)).thenReturn(1);
 
             // Mock approve 후 상태 변경
             doAnswer(invocation -> {
@@ -565,7 +565,7 @@ class EventRegistrationServiceTest {
             // then
             assertThat(response).isNotNull();
             verify(registration).approve();
-            verify(eventRepository).incrementCurrentCountIfAvailable(EVENT_ID);
+            verify(eventRepository).incrementCurrentCountForApproval(EVENT_ID);
         }
 
         /**
@@ -622,7 +622,7 @@ class EventRegistrationServiceTest {
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
             when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
-            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(0); // 원자적 UPDATE 실패
+            when(eventRepository.incrementCurrentCountForApproval(EVENT_ID)).thenReturn(0); // 원자적 UPDATE 실패
 
             // when & then
             assertThatThrownBy(() -> eventRegistrationService.approveRegistration(REGISTRATION_ID, OPERATOR_ID))

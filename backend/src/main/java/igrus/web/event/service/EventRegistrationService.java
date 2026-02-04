@@ -258,8 +258,9 @@ public class EventRegistrationService {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 7. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함)
-        int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
+        // 7. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
+        // 선발제 승인은 신청 기간 종료 후에도 가능해야 하므로 상태와 관계없이 정원만 체크
+        int updated = eventRepository.incrementCurrentCountForApproval(eventId);
         if (updated == 0) {
             throw new EventCapacityFullException();
         }
