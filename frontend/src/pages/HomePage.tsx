@@ -172,49 +172,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Mini Stats / Upcoming Mini Card */}
-      <section className="mt-s5 grid grid-cols-1 md:grid-cols-2 gap-s6">
-        <div
-          className={cn(
-            'p-s8 rounded-r4 border transition-colors',
-            isDark
-              ? 'bg-[#1A1A1A] border-white/5 hover:border-[#03A69E]/30'
-              : 'bg-white border-gray-100 hover:border-[#03A69E]/30 shadow-sm'
-          )}
-        >
-          <div
-            className={cn(
-              'text-3xl font-bold mb-s1',
-              isDark ? 'text-white' : 'text-black'
-            )}
-          >
-            150+
-          </div>
-          <div className="text-xs text-gray-500 uppercase tracking-widest">
-            활동 회원
-          </div>
-        </div>
-        <div
-          className={cn(
-            'p-s8 rounded-r4 border transition-colors',
-            isDark
-              ? 'bg-[#1A1A1A] border-white/5 hover:border-[#03A69E]/30'
-              : 'bg-white border-gray-100 hover:border-[#03A69E]/30 shadow-sm'
-          )}
-        >
-          <div
-            className={cn(
-              'text-3xl font-bold mb-s1',
-              isDark ? 'text-white' : 'text-black'
-            )}
-          >
-            8
-          </div>
-          <div className="text-xs text-gray-500 uppercase tracking-widest">
-            예정된 행사
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
