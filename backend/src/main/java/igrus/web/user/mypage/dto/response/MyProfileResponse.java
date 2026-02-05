@@ -20,6 +20,9 @@ public record MyProfileResponse(
         @Schema(description = "이메일", example = "hong@example.com")
         String email,
 
+        @Schema(description = "전화번호", example = "010-1234-5678")
+        String phoneNumber,
+
         @Schema(description = "학과", example = "컴퓨터공학과")
         String department,
 
@@ -37,6 +40,7 @@ public record MyProfileResponse(
                 user.getStudentId(),
                 user.getName(),
                 user.getEmail(),
+                user.getPhoneNumber(),
                 user.getDepartment(),
                 user.getRole(),
                 user.getCreatedAt(),

@@ -2,6 +2,7 @@ package igrus.web.user.mypage.service.write;
 
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
+import igrus.web.security.auth.password.exception.SamePasswordException;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.security.auth.password.service.support.ValidatePasswordFormatService;
 import igrus.web.user.exception.UserNotFoundException;
@@ -35,10 +36,16 @@ public class ChangeMyPasswordService {
             throw new InvalidCredentialsException();
         }
 
-        // 3. 새 비밀번호 형식 검증
+        // 3. 현재 비밀번호와 새 비밀번호 동일 여부 체크
+        if (passwordEncoder.matches(request.newPassword(), credential.getPasswordHash())) {
+            log.warn("현재 비밀번호와 동일한 새 비밀번호 - userId: {}", userId);
+            throw new SamePasswordException();
+        }
+
+        // 4. 새 비밀번호 형식 검증
         validatePasswordFormatService.validatePasswordFormat(request.newPassword());
 
-        // 4. 새 비밀번호 해시해서 저장
+        // 5. 새 비밀번호 해시해서 저장
         String newPasswordHash = passwordEncoder.encode(request.newPassword());
         credential.changePassword(newPasswordHash);
 
