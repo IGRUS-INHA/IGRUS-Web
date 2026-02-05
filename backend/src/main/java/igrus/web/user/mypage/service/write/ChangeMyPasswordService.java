@@ -1,5 +1,6 @@
 package igrus.web.user.mypage.service.write;
 
+import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.exception.SamePasswordException;
@@ -22,6 +23,7 @@ public class ChangeMyPasswordService {
     private final PasswordCredentialRepository passwordCredentialRepository;
     private final PasswordEncoder passwordEncoder;
     private final ValidatePasswordFormatService validatePasswordFormatService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public void changePassword(Long userId, ChangePasswordRequest request) {
         log.info("비밀번호 변경 요청 - userId: {}", userId);
@@ -48,6 +50,9 @@ public class ChangeMyPasswordService {
         // 5. 새 비밀번호 해시해서 저장
         String newPasswordHash = passwordEncoder.encode(request.newPassword());
         credential.changePassword(newPasswordHash);
+
+        // 6. 기존 리프레시 토큰 전부 무효화
+        refreshTokenRepository.revokeAllByUserId(userId);
 
         log.info("비밀번호 변경 완료 - userId: {}", userId);
     }

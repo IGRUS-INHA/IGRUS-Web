@@ -1,5 +1,6 @@
 package igrus.web.user.mypage.service.write;
 
+import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.exception.InvalidPasswordFormatException;
@@ -51,6 +52,9 @@ class ChangeMyPasswordServiceTest {
     @Mock
     private ValidatePasswordFormatService validatePasswordFormatService;
 
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
     @InjectMocks
     private ChangeMyPasswordService changeMyPasswordService;
 
@@ -85,6 +89,7 @@ class ChangeMyPasswordServiceTest {
             // then
             verify(validatePasswordFormatService).validatePasswordFormat("NewPassword1!");
             verify(credential).changePassword("hashedNewPw");
+            verify(refreshTokenRepository).revokeAllByUserId(userId);
         }
 
         @DisplayName("MP-011: 현재 비밀번호 불일치 시 InvalidCredentialsException 발생")
