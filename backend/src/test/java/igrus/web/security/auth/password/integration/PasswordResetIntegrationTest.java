@@ -8,7 +8,9 @@ import igrus.web.security.auth.password.domain.PasswordResetToken;
 import igrus.web.security.auth.password.exception.InvalidPasswordFormatException;
 import igrus.web.security.auth.password.exception.PasswordResetTokenExpiredException;
 import igrus.web.security.auth.password.exception.PasswordResetTokenInvalidException;
-import igrus.web.security.auth.password.service.PasswordResetService;
+import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
+import igrus.web.security.auth.password.service.reset.ResetPasswordService;
+import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -48,7 +50,13 @@ import static org.mockito.Mockito.*;
 class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
 
     @Autowired
-    private PasswordResetService passwordResetService;
+    private RequestPasswordResetService requestPasswordResetService;
+
+    @Autowired
+    private ResetPasswordService resetPasswordService;
+
+    @Autowired
+    private ValidateResetTokenService validateResetTokenService;
 
     @MockitoBean
     private AuthEmailService authEmailService;
@@ -62,8 +70,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
-        ReflectionTestUtils.setField(passwordResetService, "passwordResetExpiry", PASSWORD_RESET_EXPIRY);
-        ReflectionTestUtils.setField(passwordResetService, "frontendUrl", "http://localhost:5173");
+        ReflectionTestUtils.setField(requestPasswordResetService, "passwordResetExpiry", PASSWORD_RESET_EXPIRY);
+        ReflectionTestUtils.setField(requestPasswordResetService, "frontendUrl", "http://localhost:5173");
     }
 
     private User createAndSaveTestUser() {
@@ -122,7 +130,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
 
             // when
-            passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
+            requestPasswordResetService.requestPasswordReset(TEST_STUDENT_ID);
 
             // then
             verify(authEmailService).sendPasswordResetEmail(emailCaptor.capture(), linkCaptor.capture());
@@ -137,7 +145,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             String nonExistentStudentId = "99999999";
 
             // when
-            passwordResetService.requestPasswordReset(nonExistentStudentId);
+            requestPasswordResetService.requestPasswordReset(nonExistentStudentId);
 
             // then - 이메일이 발송되지 않음 (보안상 동일한 응답)
             verify(authEmailService, never()).sendPasswordResetEmail(anyString(), anyString());
@@ -153,7 +161,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
 
             // when
-            passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
+            requestPasswordResetService.requestPasswordReset(TEST_STUDENT_ID);
 
             // then
             verify(authEmailService).sendPasswordResetEmail(eq(TEST_EMAIL), linkCaptor.capture());
@@ -178,10 +186,10 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveCredential(user);
 
             // 첫 번째 요청
-            passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
+            requestPasswordResetService.requestPasswordReset(TEST_STUDENT_ID);
 
             // when - 두 번째 요청
-            passwordResetService.requestPasswordReset(TEST_STUDENT_ID);
+            requestPasswordResetService.requestPasswordReset(TEST_STUDENT_ID);
 
             // then - 이메일이 두 번 발송됨
             verify(authEmailService, times(2)).sendPasswordResetEmail(eq(TEST_EMAIL), anyString());
@@ -204,7 +212,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidResetToken(user, tokenString);
 
             // when
-            boolean result = passwordResetService.validateResetToken(tokenString);
+            boolean result = validateResetTokenService.validateResetToken(tokenString);
 
             // then
             assertThat(result).isTrue();
@@ -217,7 +225,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             String invalidToken = "invalid-token";
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.validateResetToken(invalidToken))
+            assertThatThrownBy(() -> validateResetTokenService.validateResetToken(invalidToken))
                     .isInstanceOf(PasswordResetTokenInvalidException.class);
         }
 
@@ -231,7 +239,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveExpiredResetToken(user, tokenString);
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.validateResetToken(tokenString))
+            assertThatThrownBy(() -> validateResetTokenService.validateResetToken(tokenString))
                     .isInstanceOf(PasswordResetTokenExpiredException.class);
         }
     }
@@ -252,7 +260,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidResetToken(user, tokenString);
 
             // when
-            passwordResetService.resetPassword(tokenString, VALID_NEW_PASSWORD);
+            resetPasswordService.resetPassword(tokenString, VALID_NEW_PASSWORD);
 
             // then
             PasswordCredential credential = passwordCredentialRepository.findByUserId(user.getId()).orElseThrow();
@@ -270,7 +278,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             PasswordResetToken resetToken = createAndSaveValidResetToken(user, tokenString);
 
             // when
-            passwordResetService.resetPassword(tokenString, VALID_NEW_PASSWORD);
+            resetPasswordService.resetPassword(tokenString, VALID_NEW_PASSWORD);
 
             // then
             PasswordResetToken updatedToken = passwordResetTokenRepository.findById(resetToken.getId()).orElseThrow();
@@ -291,7 +299,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveRefreshToken(user, "refresh-token-2");
 
             // when
-            passwordResetService.resetPassword(tokenString, VALID_NEW_PASSWORD);
+            resetPasswordService.resetPassword(tokenString, VALID_NEW_PASSWORD);
 
             // then - 모든 RefreshToken이 무효화됨
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse("refresh-token-1")).isEmpty();
@@ -308,7 +316,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidResetToken(user, tokenString);
 
             // when
-            passwordResetService.resetPassword(tokenString, VALID_NEW_PASSWORD);
+            resetPasswordService.resetPassword(tokenString, VALID_NEW_PASSWORD);
 
             // then
             PasswordCredential credential = passwordCredentialRepository.findByUserId(user.getId()).orElseThrow();
@@ -333,7 +341,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveExpiredResetToken(user, tokenString);
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.resetPassword(tokenString, VALID_NEW_PASSWORD))
+            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, VALID_NEW_PASSWORD))
                     .isInstanceOf(PasswordResetTokenExpiredException.class);
         }
 
@@ -349,7 +357,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             passwordResetTokenRepository.save(resetToken);
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.resetPassword(tokenString, VALID_NEW_PASSWORD))
+            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, VALID_NEW_PASSWORD))
                     .isInstanceOf(PasswordResetTokenInvalidException.class);
         }
 
@@ -360,7 +368,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             String tamperedToken = "tampered-invalid-token";
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.resetPassword(tamperedToken, VALID_NEW_PASSWORD))
+            assertThatThrownBy(() -> resetPasswordService.resetPassword(tamperedToken, VALID_NEW_PASSWORD))
                     .isInstanceOf(PasswordResetTokenInvalidException.class);
         }
     }
@@ -382,7 +390,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             String shortPassword = "Pass1!";
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.resetPassword(tokenString, shortPassword))
+            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, shortPassword))
                     .isInstanceOf(InvalidPasswordFormatException.class);
         }
 
@@ -397,7 +405,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             String noUppercasePassword = "password1!";
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.resetPassword(tokenString, noUppercasePassword))
+            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, noUppercasePassword))
                     .isInstanceOf(InvalidPasswordFormatException.class);
         }
 
@@ -412,7 +420,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             String noLowercasePassword = "PASSWORD1!";
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.resetPassword(tokenString, noLowercasePassword))
+            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, noLowercasePassword))
                     .isInstanceOf(InvalidPasswordFormatException.class);
         }
 
@@ -427,7 +435,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             String noNumberPassword = "Password!@";
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.resetPassword(tokenString, noNumberPassword))
+            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, noNumberPassword))
                     .isInstanceOf(InvalidPasswordFormatException.class);
         }
 
@@ -442,7 +450,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             String noSpecialCharPassword = "Password123";
 
             // when & then
-            assertThatThrownBy(() -> passwordResetService.resetPassword(tokenString, noSpecialCharPassword))
+            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, noSpecialCharPassword))
                     .isInstanceOf(InvalidPasswordFormatException.class);
         }
 
@@ -457,7 +465,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             String validPassword = "ValidPass1!@";
 
             // when
-            passwordResetService.resetPassword(tokenString, validPassword);
+            resetPasswordService.resetPassword(tokenString, validPassword);
 
             // then
             PasswordCredential credential = passwordCredentialRepository.findByUserId(user.getId()).orElseThrow();

@@ -47,7 +47,7 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given - 로그인하여 토큰 획득
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // when & then - 쿠키로 토큰 갱신
             mockMvc.perform(post(API_BASE_PATH + "/refresh")
@@ -63,12 +63,12 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             String originalAccessToken = loginResult.accessToken();
 
             // when
-            var newTokenResponse = passwordAuthService.refreshToken(loginResult.refreshToken());
+            var newTokenResponse = refreshTokenService.refreshToken(loginResult.refreshToken());
 
             // then - 새로운 Access Token이 발급됨
             assertThat(newTokenResponse.accessToken()).isNotEqualTo(originalAccessToken);
@@ -80,14 +80,14 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             String refreshToken = loginResult.refreshToken();
 
             // when
-            var response1 = passwordAuthService.refreshToken(refreshToken);
-            var response2 = passwordAuthService.refreshToken(refreshToken);
-            var response3 = passwordAuthService.refreshToken(refreshToken);
+            var response1 = refreshTokenService.refreshToken(refreshToken);
+            var response2 = refreshTokenService.refreshToken(refreshToken);
+            var response3 = refreshTokenService.refreshToken(refreshToken);
 
             // then - 모든 Access Token이 서로 다름
             assertThat(response1.accessToken())
@@ -109,7 +109,7 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given - 로그인하여 토큰 획득
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // Refresh Token 만료 시뮬레이션
             RefreshToken refreshToken = refreshTokenRepository.findByTokenAndRevokedFalse(loginResult.refreshToken())
@@ -150,10 +150,10 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given - 로그인 후 로그아웃
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // 로그아웃으로 토큰 무효화
-            passwordAuthService.logout(loginResult.refreshToken());
+            logoutService.logout(loginResult.refreshToken());
 
             // when & then - 쿠키로 토큰 갱신 시도
             mockMvc.perform(post(API_BASE_PATH + "/refresh")
@@ -182,10 +182,10 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // when
-            var newTokenResponse = passwordAuthService.refreshToken(loginResult.refreshToken());
+            var newTokenResponse = refreshTokenService.refreshToken(loginResult.refreshToken());
 
             // then - 새 토큰에서 사용자 정보 추출
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(newTokenResponse.accessToken());
@@ -199,7 +199,7 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
             // given
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-            LoginResult loginResult = passwordAuthService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
+            LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // when & then - 쿠키로 토큰 갱신
             mockMvc.perform(post(API_BASE_PATH + "/refresh")

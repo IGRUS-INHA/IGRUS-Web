@@ -6,7 +6,9 @@ import igrus.web.user.semester.dto.request.RegisterSemesterMembersRequest;
 import igrus.web.user.semester.dto.request.RemoveSemesterMembersRequest;
 import igrus.web.user.semester.dto.response.CandidateMemberResponse;
 import igrus.web.user.semester.dto.response.RegisterSemesterMembersResponse;
-import igrus.web.user.semester.service.SemesterMemberService;
+import igrus.web.user.semester.service.read.GetCandidateMembersService;
+import igrus.web.user.semester.service.write.RegisterSemesterMembersService;
+import igrus.web.user.semester.service.write.RemoveSemesterMembersService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,7 +33,9 @@ import java.util.List;
 @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 public class AdminSemesterMemberController {
 
-    private final SemesterMemberService semesterMemberService;
+    private final GetCandidateMembersService getCandidateMembersService;
+    private final RegisterSemesterMembersService registerSemesterMembersService;
+    private final RemoveSemesterMembersService removeSemesterMembersService;
 
     @Operation(summary = "등록 후보 회원 목록 조회",
             description = "특정 학기에 등록 가능한 회원 목록을 조회합니다. ASSOCIATE 이상 + ACTIVE 상태 회원이 대상입니다.")
@@ -47,7 +51,7 @@ public class AdminSemesterMemberController {
             @Parameter(description = "학기 (1 또는 2)", example = "1") @PathVariable int semester,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        List<CandidateMemberResponse> candidates = semesterMemberService.getCandidateMembers(year, semester);
+        List<CandidateMemberResponse> candidates = getCandidateMembersService.getCandidateMembers(year, semester);
         return ResponseEntity.ok(candidates);
     }
 
@@ -66,7 +70,7 @@ public class AdminSemesterMemberController {
             @Valid @RequestBody RegisterSemesterMembersRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        RegisterSemesterMembersResponse response = semesterMemberService.registerMembers(year, semester, request.userIds());
+        RegisterSemesterMembersResponse response = registerSemesterMembersService.registerMembers(year, semester, request.userIds());
         return ResponseEntity.ok(response);
     }
 
@@ -85,7 +89,7 @@ public class AdminSemesterMemberController {
             @Valid @RequestBody RemoveSemesterMembersRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        int removedCount = semesterMemberService.removeMembers(year, semester, request.userIds());
+        int removedCount = removeSemesterMembersService.removeMembers(year, semester, request.userIds());
         return ResponseEntity.ok(removedCount);
     }
 }

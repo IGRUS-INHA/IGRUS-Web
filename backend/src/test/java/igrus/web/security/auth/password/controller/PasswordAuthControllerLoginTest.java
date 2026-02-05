@@ -6,16 +6,23 @@ import igrus.web.security.auth.common.exception.account.AccountSuspendedExceptio
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
-import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
+import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.controller.fixture.PasswordAuthTestFixture;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
-import igrus.web.security.auth.password.service.PasswordAuthService;
-import igrus.web.security.auth.password.service.PasswordResetService;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
+import igrus.web.security.auth.password.service.reset.ResetPasswordService;
+import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
+import igrus.web.security.auth.password.service.auth.LoginService;
+import igrus.web.security.auth.password.service.auth.LogoutService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.config.ApiSecurityConfig;
 import igrus.web.security.config.SecurityConfigUtil;
 import igrus.web.security.jwt.JwtAuthenticationFilter;
@@ -63,13 +70,31 @@ class PasswordAuthControllerLoginTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
-    private PasswordAuthService passwordAuthService;
+    private LoginService loginService;
 
     @MockitoBean
-    private PasswordSignupService passwordSignupService;
+    private LogoutService logoutService;
 
     @MockitoBean
-    private PasswordResetService passwordResetService;
+    private RefreshTokenService refreshTokenService;
+
+    @MockitoBean
+    private SignupService signupService;
+
+    @MockitoBean
+    private VerifyEmailService verifyEmailService;
+
+    @MockitoBean
+    private ResendVerificationService resendVerificationService;
+
+    @MockitoBean
+    private RequestPasswordResetService requestPasswordResetService;
+
+    @MockitoBean
+    private ResetPasswordService resetPasswordService;
+
+    @MockitoBean
+    private ValidateResetTokenService validateResetTokenService;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
@@ -81,7 +106,10 @@ class PasswordAuthControllerLoginTest {
     private SecurityConfigUtil securityConfigUtil;
 
     @MockitoBean
-    private AccountRecoveryService accountRecoveryService;
+    private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
+
+    @MockitoBean
+    private RecoverAccountService recoverAccountService;
 
     @MockitoBean
     private AccountStatusService accountStatusService;
@@ -127,7 +155,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.associateLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -151,7 +179,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.memberLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -170,7 +198,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.operatorLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -189,7 +217,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.adminLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -208,7 +236,7 @@ class PasswordAuthControllerLoginTest {
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
                 LoginResult result = PasswordAuthTestFixture.memberLoginResult();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willReturn(result);
 
                 // when & then
@@ -234,7 +262,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.loginRequestWithInvalidStudentId();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new InvalidCredentialsException());
 
                 // when & then
@@ -253,7 +281,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.loginRequestWithInvalidPassword();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new InvalidCredentialsException());
 
                 // when & then
@@ -272,7 +300,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new EmailNotVerifiedException());
 
                 // when & then
@@ -361,7 +389,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new AccountSuspendedException());
 
                 // when & then
@@ -380,7 +408,7 @@ class PasswordAuthControllerLoginTest {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
 
-                given(passwordAuthService.login(any(PasswordLoginRequest.class), anyString(), any()))
+                given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
                         .willThrow(new AccountWithdrawnException());
 
                 // when & then
@@ -407,7 +435,7 @@ class PasswordAuthControllerLoginTest {
             @DisplayName("로그아웃 성공 - 200 OK [LOG-030]")
             void logout_withValidToken_returns200() throws Exception {
                 // given
-                willDoNothing().given(passwordAuthService).logout(anyString());
+                willDoNothing().given(logoutService).logout(anyString());
 
                 // when & then
                 mockMvc.perform(post(LOGOUT_URL)
@@ -426,7 +454,7 @@ class PasswordAuthControllerLoginTest {
             void logout_withInvalidToken_returns401() throws Exception {
                 // given
                 willThrow(new RefreshTokenInvalidException())
-                        .given(passwordAuthService).logout(anyString());
+                        .given(logoutService).logout(anyString());
 
                 // when & then
                 mockMvc.perform(post(LOGOUT_URL)

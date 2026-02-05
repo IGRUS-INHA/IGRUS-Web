@@ -6,14 +6,21 @@ import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.request.AccountRecoveryRequest;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.account.AccountNotRecoverableException;
-import igrus.web.security.auth.common.service.AccountRecoveryService;
+import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
+import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.controller.fixture.PasswordAuthTestFixture;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
-import igrus.web.security.auth.password.service.PasswordAuthService;
-import igrus.web.security.auth.password.service.PasswordResetService;
-import igrus.web.security.auth.password.service.PasswordSignupService;
+import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
+import igrus.web.security.auth.password.service.reset.ResetPasswordService;
+import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.VerifyEmailService;
+import igrus.web.security.auth.password.service.auth.LoginService;
+import igrus.web.security.auth.password.service.auth.LogoutService;
+import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.config.ApiSecurityConfig;
 import igrus.web.security.config.SecurityConfigUtil;
 import igrus.web.security.jwt.JwtAuthenticationFilter;
@@ -56,16 +63,37 @@ class PasswordAuthControllerAccountRecoveryTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
-    private PasswordAuthService passwordAuthService;
+    private LoginService loginService;
 
     @MockitoBean
-    private PasswordSignupService passwordSignupService;
+    private LogoutService logoutService;
 
     @MockitoBean
-    private PasswordResetService passwordResetService;
+    private RefreshTokenService refreshTokenService;
 
     @MockitoBean
-    private AccountRecoveryService accountRecoveryService;
+    private SignupService signupService;
+
+    @MockitoBean
+    private VerifyEmailService verifyEmailService;
+
+    @MockitoBean
+    private ResendVerificationService resendVerificationService;
+
+    @MockitoBean
+    private RequestPasswordResetService requestPasswordResetService;
+
+    @MockitoBean
+    private ResetPasswordService resetPasswordService;
+
+    @MockitoBean
+    private ValidateResetTokenService validateResetTokenService;
+
+    @MockitoBean
+    private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
+
+    @MockitoBean
+    private RecoverAccountService recoverAccountService;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
@@ -109,7 +137,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // given
                 RecoveryEligibilityResponse response = PasswordAuthTestFixture.recoverableResponse();
 
-                given(accountRecoveryService.checkRecoveryEligibility(PasswordAuthTestFixture.VALID_STUDENT_ID))
+                given(checkRecoveryEligibilityService.checkRecoveryEligibility(PasswordAuthTestFixture.VALID_STUDENT_ID))
                         .willReturn(response);
 
                 // when & then
@@ -128,7 +156,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // given
                 RecoveryEligibilityResponse response = PasswordAuthTestFixture.notRecoverableResponse();
 
-                given(accountRecoveryService.checkRecoveryEligibility(PasswordAuthTestFixture.VALID_STUDENT_ID))
+                given(checkRecoveryEligibilityService.checkRecoveryEligibility(PasswordAuthTestFixture.VALID_STUDENT_ID))
                         .willReturn(response);
 
                 // when & then
@@ -147,7 +175,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // given
                 RecoveryEligibilityResponse response = PasswordAuthTestFixture.notWithdrawnResponse();
 
-                given(accountRecoveryService.checkRecoveryEligibility(PasswordAuthTestFixture.VALID_STUDENT_ID))
+                given(checkRecoveryEligibilityService.checkRecoveryEligibility(PasswordAuthTestFixture.VALID_STUDENT_ID))
                         .willReturn(response);
 
                 // when & then
@@ -200,7 +228,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 AccountRecoveryRequest request = PasswordAuthTestFixture.validRecoveryRequest();
                 RecoveryResult result = PasswordAuthTestFixture.recoverySuccessResult();
 
-                given(accountRecoveryService.recoverAccount(
+                given(recoverAccountService.recoverAccount(
                         PasswordAuthTestFixture.VALID_STUDENT_ID,
                         PasswordAuthTestFixture.VALID_PASSWORD))
                         .willReturn(result);
@@ -231,7 +259,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // given
                 AccountRecoveryRequest request = PasswordAuthTestFixture.recoveryRequestWithInvalidPassword();
 
-                given(accountRecoveryService.recoverAccount(
+                given(recoverAccountService.recoverAccount(
                         PasswordAuthTestFixture.VALID_STUDENT_ID,
                         PasswordAuthTestFixture.INVALID_PASSWORD))
                         .willThrow(new InvalidCredentialsException());
@@ -255,7 +283,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                         PasswordAuthTestFixture.VALID_PASSWORD
                 );
 
-                given(accountRecoveryService.recoverAccount(
+                given(recoverAccountService.recoverAccount(
                         PasswordAuthTestFixture.INVALID_STUDENT_ID,
                         PasswordAuthTestFixture.VALID_PASSWORD))
                         .willThrow(new InvalidCredentialsException());
@@ -280,7 +308,7 @@ class PasswordAuthControllerAccountRecoveryTest {
                 // given
                 AccountRecoveryRequest request = PasswordAuthTestFixture.validRecoveryRequest();
 
-                given(accountRecoveryService.recoverAccount(
+                given(recoverAccountService.recoverAccount(
                         PasswordAuthTestFixture.VALID_STUDENT_ID,
                         PasswordAuthTestFixture.VALID_PASSWORD))
                         .willThrow(new AccountNotRecoverableException());
