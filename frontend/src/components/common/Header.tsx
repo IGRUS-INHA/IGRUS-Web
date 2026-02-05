@@ -1,9 +1,9 @@
-import { useLocation } from 'react-router-dom';
-import { useUIStore } from '@/stores';
-import SearchBar from './SearchBar';
-import { getPageTitle } from '@/constants/routes';
-import { formatHeaderDate } from '@/utils';
-import { Menu } from 'lucide-react';
+import { useLocation } from "react-router-dom";
+import { useUIStore } from "@/stores";
+import SearchBar from "./SearchBar";
+import { getPageTitle } from "@/constants/routes";
+import { formatHeaderDate } from "@/utils";
+import { Menu } from "lucide-react";
 
 export default function Header() {
   const location = useLocation();
@@ -11,14 +11,14 @@ export default function Header() {
 
   const pageTitle = getPageTitle(location.pathname);
   const currentDate = formatHeaderDate();
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
 
   return (
-    <header className={`sticky top-0 backdrop-blur-md py-s5 mb-s3 transition-colors ${
-      sidebarOpen ? 'z-30' : 'z-40'
-    } ${
-      isDark ? 'bg-background/80' : 'bg-white/80'
-    }`}>
+    <header
+      className={`sticky top-0 backdrop-blur-md py-s5 mb-s3 transition-colors ${
+        sidebarOpen ? "z-30" : "z-40"
+      } ${isDark ? "bg-background/80" : "bg-white/80"}`}
+    >
       <div className="w-full px-s4 lg:px-s7">
         {/* 상단 행: 메뉴 + 제목 + 인증 버튼 */}
         <div className="flex justify-between items-center">

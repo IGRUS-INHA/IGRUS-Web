@@ -222,3 +222,45 @@
     font-size: 10px;
   }
 }
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(3, 166, 158, 0.5);
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(3, 166, 158, 0.7);
+}
+
+/* Dark mode */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(102, 203, 197, 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 203, 197, 0.7);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(3, 166, 158, 0.5) transparent;
+}
+
+.dark * {
+  scrollbar-color: rgba(102, 203, 197, 0.5) transparent;
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
-import { Lock, LogOut, Layers, Heart, Bookmark, Award } from 'lucide-react';
+import { Layers, Heart, Bookmark, Award } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import ProfileHeader from '@/components/feature/mypage/ProfileHeader';
@@ -44,38 +44,7 @@ export default function MyPage() {
   return (
     <div className="space-y-s8 animate-in fade-in duration-300">
       {/* Profile Header */}
-      <div
-        className={cn(
-          'p-10 rounded-[3rem] border flex flex-col md:flex-row items-center gap-10',
-          isDark
-            ? 'bg-gradient-to-br from-card to-background border-border'
-            : 'bg-card border-border shadow-xl shadow-black/5'
-        )}
-      >
-        <ProfileHeader user={user} />
-
-        <div className="flex flex-wrap justify-center md:justify-start gap-s3 w-full md:w-auto">
-          <Button
-            type="button"
-            onClick={handleChangePassword}
-            variant="outline"
-            className={cn(
-              'flex items-center gap-s2 rounded-r3 text-xs font-bold',
-              isDark ? 'border-border hover:bg-white/5' : 'border-border hover:bg-muted'
-            )}
-          >
-            <Lock size={14} /> 비밀번호 변경
-          </Button>
-          <Button
-            type="button"
-            onClick={handleLogout}
-            variant="outline"
-            className="flex items-center gap-s2 rounded-r3 text-xs font-bold border-destructive/30 text-destructive hover:bg-destructive/10"
-          >
-            <LogOut size={14} /> 로그아웃
-          </Button>
-        </div>
-      </div>
+      <ProfileHeader user={user} onChangePassword={handleChangePassword} onLogout={handleLogout} />
 
       {/* Tabs */}
       <div className="flex gap-s4 overflow-x-auto pb-2">

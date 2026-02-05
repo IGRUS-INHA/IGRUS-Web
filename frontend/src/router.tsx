@@ -28,6 +28,9 @@ import EventEditPage from '@/pages/event/EventEditPage';
 import InquiryPage from '@/pages/inquiry/InquiryPage';
 import InquiryLookupPage from '@/pages/inquiry/InquiryLookupPage';
 
+// 법적 페이지
+import { PrivacyPolicyPage, TermsOfServicePage } from '@/pages/legal';
+
 // 마이페이지
 import MyPage from '@/pages/mypage/MyPage';
 
@@ -52,6 +55,10 @@ const routes: RouteObject[] = [
       { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'inquiry', element: <InquiryPage /> },
       { path: 'inquiry/lookup', element: <InquiryLookupPage /> },
+
+      // 법적 페이지
+      { path: 'privacy', element: <PrivacyPolicyPage /> },
+      { path: 'terms', element: <TermsOfServicePage /> },
 
       // 게시판
       { path: 'board/:boardType', element: <BoardListPage /> },
