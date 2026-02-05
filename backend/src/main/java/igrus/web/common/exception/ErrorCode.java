@@ -126,7 +126,24 @@ public enum ErrorCode {
     SEMESTER_MEMBER_NOT_FOUND(404, "해당 학기에 등록된 회원을 찾을 수 없습니다"),
     SEMESTER_MEMBER_ALREADY_EXISTS(409, "이미 해당 학기에 등록된 회원입니다"),
     SEMESTER_INVALID_SEMESTER(400, "학기는 1 또는 2만 가능합니다"),
-    SEMESTER_INVALID_YEAR(400, "유효하지 않은 연도입니다");
+    SEMESTER_INVALID_YEAR(400, "유효하지 않은 연도입니다"),
+
+    // Event
+    EVENT_NOT_FOUND(404, "행사를 찾을 수 없습니다"),
+    EVENT_ACCESS_DENIED(403, "행사에 대한 접근 권한이 없습니다"),
+    EVENT_INVALID_DATE(400, "행사 날짜가 유효하지 않습니다"),
+    EVENT_INVALID_CAPACITY(400, "행사 정원이 유효하지 않습니다"),
+    EVENT_ALREADY_REGISTERED(409, "이미 신청한 행사입니다"),
+    EVENT_REGISTRATION_CLOSED(400, "신청이 마감된 행사입니다"),
+    EVENT_REGISTRATION_NOT_FOUND(404, "행사 신청 정보를 찾을 수 없습니다"),
+    EVENT_CAPACITY_FULL(400, "정원이 초과되었습니다"),
+    EVENT_ASSOCIATE_NOT_ALLOWED(403, "준회원은 행사에 신청할 수 없습니다"),
+    EVENT_ALREADY_CANCELED(400, "이미 취소된 신청입니다"),
+    EVENT_NOT_MANUAL_APPROVE(400, "수동 승인(선발제) 행사가 아닙니다"),
+    EVENT_INVALID_REGISTRATION_STATUS(400, "유효하지 않은 신청 상태입니다"),
+    EVENT_OPERATOR_REQUIRED(403, "운영진 이상만 접근할 수 있습니다"),
+    EVENT_NOT_OPEN(400, "신청 가능한 상태가 아닙니다"),
+    EVENT_NOT_IN_REGISTRATION_PERIOD(400, "신청 기간이 아닙니다");
 
     private final int status;
     private final String message;
