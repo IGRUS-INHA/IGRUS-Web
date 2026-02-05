@@ -28,7 +28,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTimeout;
@@ -155,11 +154,18 @@ class PostControllerTest extends ServiceIntegrationTestBase {
         return postRepository.save(post);
     }
 
-    private Post createAndSavePostWithCreatedAt(Board board, User author, String title, String content, Instant createdAt) {
+    /**
+     * 시간 차이를 두고 게시글을 생성하기 위한 헬퍼 메서드.
+     * 각 호출마다 실제 시간 차이(50ms)를 두어 정렬 테스트에서 일관된 순서를 보장합니다.
+     */
+    private Post createAndSavePostWithDelay(Board board, User author, String title, String content) {
+        try {
+            Thread.sleep(50); // 50ms 딜레이로 확실한 시간 차이 생성
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         Post post = Post.createPost(board, author, title, content);
-        Post savedPost = postRepository.save(post);
-        setField(savedPost, "createdAt", createdAt);
-        return postRepository.saveAndFlush(savedPost);
+        return postRepository.saveAndFlush(post);
     }
 
     @Nested
@@ -367,11 +373,10 @@ class PostControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("BRD-042: 최신순 정렬")
         @Test
         void getPostList_DefaultOrder_SortedByCreatedAtDesc() throws Exception {
-            // given: 명시적으로 다른 시간에 생성된 게시글들
-            Instant baseTime = Instant.now();
-            createAndSavePostWithCreatedAt(generalBoard, memberUser, "첫번째 게시글", "내용1", baseTime.minusSeconds(20));
-            createAndSavePostWithCreatedAt(generalBoard, memberUser, "두번째 게시글", "내용2", baseTime.minusSeconds(10));
-            createAndSavePostWithCreatedAt(generalBoard, memberUser, "세번째 게시글", "내용3", baseTime);
+            // given: 시간 순으로 게시글 생성 (딜레이를 통해 확실한 시간 차이 확보)
+            createAndSavePostWithDelay(generalBoard, memberUser, "첫번째 게시글", "내용1");
+            createAndSavePostWithDelay(generalBoard, memberUser, "두번째 게시글", "내용2");
+            createAndSavePostWithDelay(generalBoard, memberUser, "세번째 게시글", "내용3");
 
             // when & then: 최신순으로 정렬되어야 함
             mockMvc.perform(get(BASE_URL + "/general/posts")
@@ -650,11 +655,10 @@ class PostControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("PST-024: 게시글 목록 최신순 정렬")
         @Test
         void getPostList_SortedByCreatedAtDesc() throws Exception {
-            // given: 명시적으로 다른 시간에 생성된 게시글들
-            Instant baseTime = Instant.now();
-            createAndSavePostWithCreatedAt(generalBoard, memberUser, "첫번째", "내용1", baseTime.minusSeconds(20));
-            createAndSavePostWithCreatedAt(generalBoard, memberUser, "두번째", "내용2", baseTime.minusSeconds(10));
-            createAndSavePostWithCreatedAt(generalBoard, memberUser, "세번째", "내용3", baseTime);
+            // given: 시간 순으로 게시글 생성 (딜레이를 통해 확실한 시간 차이 확보)
+            createAndSavePostWithDelay(generalBoard, memberUser, "첫번째", "내용1");
+            createAndSavePostWithDelay(generalBoard, memberUser, "두번째", "내용2");
+            createAndSavePostWithDelay(generalBoard, memberUser, "세번째", "내용3");
 
             // when & then: 최신순 정렬
             mockMvc.perform(get(BASE_URL + "/general/posts")
@@ -881,11 +885,10 @@ class PostControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("PST-072: 검색 결과 정렬")
         @Test
         void searchPosts_SortedByCreatedAtDesc() throws Exception {
-            // given: 명시적으로 다른 시간에 생성된 게시글들
-            Instant baseTime = Instant.now();
-            createAndSavePostWithCreatedAt(generalBoard, memberUser, "검색 첫번째", "내용", baseTime.minusSeconds(20));
-            createAndSavePostWithCreatedAt(generalBoard, memberUser, "검색 두번째", "내용", baseTime.minusSeconds(10));
-            createAndSavePostWithCreatedAt(generalBoard, memberUser, "검색 세번째", "내용", baseTime);
+            // given: 시간 순으로 게시글 생성 (딜레이를 통해 확실한 시간 차이 확보)
+            createAndSavePostWithDelay(generalBoard, memberUser, "검색 첫번째", "내용");
+            createAndSavePostWithDelay(generalBoard, memberUser, "검색 두번째", "내용");
+            createAndSavePostWithDelay(generalBoard, memberUser, "검색 세번째", "내용");
 
             // when & then: 검색 결과도 최신순 정렬
             mockMvc.perform(get(BASE_URL + "/general/posts")
