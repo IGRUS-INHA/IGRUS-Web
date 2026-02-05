@@ -3,9 +3,6 @@ package igrus.web.community.bookmark.service.read;
 import igrus.web.community.bookmark.domain.Bookmark;
 import igrus.web.community.bookmark.dto.response.BookmarkedPostResponse;
 import igrus.web.community.bookmark.repository.BookmarkRepository;
-import igrus.web.user.domain.User;
-import igrus.web.user.exception.UserNotFoundException;
-import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetMyBookmarksService {
 
     private final BookmarkRepository bookmarkRepository;
-    private final UserRepository userRepository;
 
     /**
      * 사용자가 북마크한 게시글 목록을 조회합니다.
@@ -35,10 +31,7 @@ public class GetMyBookmarksService {
      */
     @Transactional(readOnly = true)
     public Page<BookmarkedPostResponse> getMyBookmarks(Long userId, Pageable pageable) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-
-        Page<Bookmark> bookmarks = bookmarkRepository.findAllByUserOrderByCreatedAtDesc(user, pageable);
+        Page<Bookmark> bookmarks = bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
         return bookmarks.map(BookmarkedPostResponse::from);
     }
 }

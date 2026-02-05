@@ -41,8 +41,8 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
      * 사용자가 좋아요한 게시글 목록을 최신순으로 조회합니다.
      */
     @EntityGraph(attributePaths = {"post", "post.board", "post.author"})
-    @Query("SELECT l FROM PostLike l WHERE l.user = :user ORDER BY l.createdAt DESC")
-    Page<PostLike> findAllByUserOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
+    @Query("SELECT l FROM PostLike l WHERE l.user.id = :userId ORDER BY l.createdAt DESC")
+    Page<PostLike> findAllByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 
     /**
      * 특정 게시글의 좋아요 수를 조회합니다.

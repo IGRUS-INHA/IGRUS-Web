@@ -30,12 +30,9 @@ public record MyProfileResponse(
         UserRole role,
 
         @Schema(description = "가입일")
-        Instant createdAt,
-
-        @Schema(description = "정회원 승인일 (준회원인 경우 null)")
-        Instant approvedAt
+        Instant createdAt
 ) {
-    public static MyProfileResponse from(User user, Instant approvedAt) {
+    public static MyProfileResponse from(User user) {
         return new MyProfileResponse(
                 user.getStudentId(),
                 user.getName(),
@@ -43,8 +40,7 @@ public record MyProfileResponse(
                 user.getPhoneNumber(),
                 user.getDepartment(),
                 user.getRole(),
-                user.getCreatedAt(),
-                approvedAt
+                user.getCreatedAt()
         );
     }
 }

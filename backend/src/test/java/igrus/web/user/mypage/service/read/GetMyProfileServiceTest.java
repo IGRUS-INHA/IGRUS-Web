@@ -1,7 +1,5 @@
 package igrus.web.user.mypage.service.read;
 
-import igrus.web.security.auth.password.domain.PasswordCredential;
-import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.mypage.dto.response.MyProfileResponse;
@@ -15,14 +13,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
 import java.util.Optional;
 
 import static igrus.web.common.fixture.UserTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 
 /**
  * GetMyProfileService 단위 테스트.
@@ -30,7 +26,6 @@ import static org.mockito.Mockito.mock;
  * <p>테스트 케이스:
  * <ul>
  *     <li>MP-001: 프로필 조회 성공</li>
- *     <li>MP-002: 승인일 없는 프로필 조회</li>
  *     <li>MP-003: 존재하지 않는 사용자 프로필 조회</li>
  * </ul>
  */
@@ -40,9 +35,6 @@ class GetMyProfileServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
-    @Mock
-    private PasswordCredentialRepository passwordCredentialRepository;
 
     @InjectMocks
     private GetMyProfileService getMyProfileService;
@@ -58,18 +50,13 @@ class GetMyProfileServiceTest {
     @DisplayName("프로필 조회 테스트")
     class GetMyProfileTest {
 
-        @DisplayName("MP-001: 정회원 프로필 조회 성공 - 승인일 포함")
+        @DisplayName("MP-001: 프로필 조회 성공")
         @Test
-        void getMyProfile_WithApprovedAt_ReturnsProfileWithApprovedAt() {
+        void getMyProfile_ReturnsProfile() {
             // given
             Long userId = memberUser.getId();
-            Instant approvedAt = Instant.parse("2025-03-01T00:00:00Z");
-
-            PasswordCredential credential = mock(PasswordCredential.class);
-            given(credential.getApprovedAt()).willReturn(approvedAt);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(passwordCredentialRepository.findByUserId(userId)).willReturn(Optional.of(credential));
 
             // when
             MyProfileResponse response = getMyProfileService.getMyProfile(userId);
@@ -82,25 +69,6 @@ class GetMyProfileServiceTest {
             assertThat(response.phoneNumber()).isEqualTo(memberUser.getPhoneNumber());
             assertThat(response.department()).isEqualTo(memberUser.getDepartment());
             assertThat(response.role()).isEqualTo(memberUser.getRole());
-            assertThat(response.approvedAt()).isEqualTo(approvedAt);
-        }
-
-        @DisplayName("MP-002: 준회원 프로필 조회 - 승인일 null")
-        @Test
-        void getMyProfile_WithoutApprovedAt_ReturnsProfileWithNullApprovedAt() {
-            // given
-            Long userId = memberUser.getId();
-
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(passwordCredentialRepository.findByUserId(userId)).willReturn(Optional.empty());
-
-            // when
-            MyProfileResponse response = getMyProfileService.getMyProfile(userId);
-
-            // then
-            assertThat(response).isNotNull();
-            assertThat(response.studentId()).isEqualTo(memberUser.getStudentId());
-            assertThat(response.approvedAt()).isNull();
         }
 
         @DisplayName("MP-003: 존재하지 않는 사용자 프로필 조회 시 UserNotFoundException 발생")
