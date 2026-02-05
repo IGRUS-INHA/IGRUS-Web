@@ -10,7 +10,7 @@
 ## 1. 개요
 
 마이페이지 기능에 대한 테스트 케이스입니다.
-프로필 조회/수정, 비밀번호 변경, 회원 탈퇴, 내 활동(게시글/댓글/행사 신청) 조회를 다룹니다.
+프로필 조회/수정, 비밀번호 변경, 회원 탈퇴, 내 활동(게시글/댓글/행사 신청/좋아요/북마크/문의) 조회를 다룹니다.
 
 ---
 
@@ -37,28 +37,28 @@
 | MP-006 | 내 댓글 목록 조회 성공 | 사용자가 작성한 댓글 2개 존재 | userId와 pageable로 조회 | 댓글 2개가 담긴 Page 반환, 게시글 제목 포함 | ⬜ |
 | MP-007 | 댓글 없는 경우 빈 페이지 반환 | 사용자가 작성한 댓글 없음 | userId와 pageable로 조회 | 빈 Page 반환, totalElements = 0 | ⬜ |
 
-### 2.4 내 행사 신청 목록 조회 (GetMyRegistrationsService)
+### 2.4 내 행사 신청 목록 조회 (EventRegistrationService)
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
 | MP-008 | 내 행사 신청 목록 조회 성공 | 사용자가 신청한 행사 2건 존재 | userId로 조회 | 신청 2건이 담긴 List 반환, 행사 제목/상태 포함 | ⬜ |
 | MP-009 | 신청 없는 경우 빈 리스트 반환 | 사용자가 신청한 행사 없음 | userId로 조회 | 빈 List 반환 | ⬜ |
 
-### 2.5 좋아요한 게시글 목록 조회 (GetMyLikesService)
+### 2.5 좋아요한 게시글 목록 조회 (GetMyLikedPostsService)
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
 | MP-022 | 좋아요한 게시글 목록 조회 성공 | 사용자 존재, 좋아요한 게시글 2개 | userId와 pageable로 조회 | 게시글 2개가 담긴 Page 반환, 게시글 제목/게시판 정보 포함 | ⬜ |
 | MP-023 | 좋아요한 게시글 없는 경우 빈 페이지 반환 | 사용자 존재, 좋아요한 게시글 없음 | userId와 pageable로 조회 | 빈 Page 반환, totalElements = 0 | ⬜ |
 
-### 2.6 북마크한 게시글 목록 조회 (GetMyBookmarksService)
+### 2.6 북마크한 게시글 목록 조회 (bookmark/GetMyBookmarksService)
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
 | MP-025 | 북마크한 게시글 목록 조회 성공 | 사용자 존재, 북마크한 게시글 2개 | userId와 pageable로 조회 | 게시글 2개가 담긴 Page 반환, 게시글 제목/게시판 정보 포함 | ⬜ |
 | MP-026 | 북마크한 게시글 없는 경우 빈 페이지 반환 | 사용자 존재, 북마크한 게시글 없음 | userId와 pageable로 조회 | 빈 Page 반환, totalElements = 0 | ⬜ |
 
-### 2.7 내 문의 목록 조회 (GetMyInquiriesService)
+### 2.7 내 문의 목록 조회 (inquiry/GetMyInquiriesService)
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
@@ -120,18 +120,21 @@
 
 ## 4. 구현된 테스트 클래스
 
-### 4.1 Service 테스트
+### 4.1 mypage 패키지 Service 테스트
 
-- **GetMyProfileServiceTest** - MP-001, MP-003
-- **GetMyPostsServiceTest** - MP-004, MP-005
-- **GetMyCommentsServiceTest** - MP-006, MP-007
-- **GetMyRegistrationsServiceTest** - MP-008, MP-009
-- **GetMyLikesServiceTest** - MP-022, MP-023
-- **GetMyBookmarksServiceTest** - MP-025, MP-026
-- **GetMyInquiriesServiceTest** - MP-028, MP-029
-- **ChangeMyPasswordServiceTest** - MP-010 ~ MP-013, MP-021
-- **UpdateMyProfileServiceTest** - MP-014 ~ MP-020
-- **WithdrawServiceTest** - WD-001 ~ WD-006
+- **GetMyProfileServiceTest** (`user/mypage`) - MP-001, MP-003
+- **GetMyPostsServiceTest** (`user/mypage`) - MP-004, MP-005
+- **GetMyCommentsServiceTest** (`user/mypage`) - MP-006, MP-007
+- **ChangeMyPasswordServiceTest** (`user/mypage`) - MP-010 ~ MP-013, MP-021
+- **UpdateMyProfileServiceTest** (`user/mypage`) - MP-014 ~ MP-020
+
+### 4.2 도메인 패키지 Service 테스트 (마이페이지에서 직접 사용)
+
+- **EventRegistrationServiceTest** (`event`) - MP-008, MP-009
+- **GetMyLikedPostsServiceTest** (`community/like`) - MP-022, MP-023
+- **GetMyBookmarksServiceTest** (`community/bookmark`) - MP-025, MP-026
+- **GetMyInquiriesServiceTest** (`inquiry`) - MP-028, MP-029
+- **WithdrawServiceTest** (`user/withdrawal`) - WD-001 ~ WD-006
 
 ---
 
@@ -141,3 +144,4 @@
 |------|------|--------|----------|
 | 1.0 | 2026-02-05 | - | 최초 작성 |
 | 1.1 | 2026-02-05 | - | 회원 탈퇴(WD-001~WD-006) 추가, 비밀번호 변경 시 리프레시 토큰 무효화 반영 |
+| 1.2 | 2026-02-05 | - | 좋아요/북마크/문의/행사 신청을 기존 도메인 서비스 직접 사용으로 변경 (방법 B→A), mypage wrapper 서비스 삭제, 테스트 클래스를 mypage/도메인 패키지로 구분 |
