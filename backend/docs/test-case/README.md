@@ -18,6 +18,7 @@
 | [user-domain-test-cases.md](user/user-domain-test-cases.md) | User 도메인 관련 테스트 케이스 | `UserRoleHistoryTest.java` |
 | [soft-delete-test-cases.md](user/soft-delete-test-cases.md) | Soft Delete 기능 테스트 케이스 | `SoftDeletableEntityTest.java`, `UserRepositorySoftDeleteTest.java` |
 | [auth/README.md](auth/README.md) | 인증 기능 테스트 케이스 (회원가입, 로그인, 토큰 등) | 구현 예정 |
+| [event/event-test-cases.md](event/event-test-cases.md) | 행사 기능 테스트 케이스 (행사 CRUD, 신청/취소, 승인/거절) | `EventTest.java`, `EventRegistrationTest.java`, `EventRegistrationServiceTest.java` |
 
 ---
 
