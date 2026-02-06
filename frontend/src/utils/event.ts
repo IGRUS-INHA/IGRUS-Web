@@ -1,3 +1,5 @@
+import type { Event, EventRegistration, User } from '@/types/entities';
+import type { Role } from '@/types/common';
 import {
   EVENT_STATUS,
   REGISTRATION_STATUS,
@@ -7,14 +9,37 @@ import {
 } from '@/constants/event';
 import { canRegisterEvent } from '@/constants/permissions';
 
+interface RegistrationCheckResult {
+  canRegister: boolean;
+  error?: string;
+  errorMessage?: string;
+}
+
+interface CancelCheckResult {
+  canCancel: boolean;
+  error?: string;
+  deadline?: Date;
+}
+
+interface AvailabilityInfo {
+  remaining: number | undefined;
+  isFull: boolean;
+  waitlistCount: number;
+}
+
+interface BadgeInfo {
+  label: string;
+  variant: string;
+}
+
 /**
  * 행사 신청 가능 여부 확인
- * @param {Object} event - 행사 정보
- * @param {Object} user - 사용자 정보 (null이면 비로그인)
- * @param {Object|null} registration - 현재 신청 정보 (없으면 null)
- * @returns {{ canRegister: boolean, error?: string, errorMessage?: string }}
  */
-export function checkCanRegister(event, user, registration = null) {
+export function checkCanRegister(
+  event: Event,
+  user: User | undefined,
+  registration?: EventRegistration
+): RegistrationCheckResult {
   // 로그인 체크
   if (!user) {
     return {
@@ -41,7 +66,7 @@ export function checkCanRegister(event, user, registration = null) {
 
   // 행사 상태 체크
   const now = new Date();
-  const eventStart = new Date(event.startDate);
+  const eventStart = new Date(event.startDate ?? event.date);
   const registrationDeadline = event.registrationDeadline
     ? new Date(event.registrationDeadline)
     : eventStart;
@@ -79,23 +104,24 @@ export function checkCanRegister(event, user, registration = null) {
 
 /**
  * 대기열 여부 확인 (정원 초과 시)
- * @param {Object} event - 행사 정보
- * @returns {boolean} 대기열 등록인지 여부
  */
-export function willBeWaitlisted(event) {
+export function willBeWaitlisted(event: Event): boolean {
   if (!EVENT_POLICY.USE_WAITLIST) return false;
-  if (!event.capacity) return false; // 정원 제한 없음
+  if (!event.capacity && !event.maxCapacity) return false; // 정원 제한 없음
 
-  return event.currentCount >= event.capacity;
+  const capacity = event.capacity ?? event.maxCapacity ?? 0;
+  const currentCount = event.currentCount ?? event.attendees ?? 0;
+
+  return currentCount >= capacity;
 }
 
 /**
  * 신청 취소 가능 여부 확인
- * @param {Object} event - 행사 정보
- * @param {Object} registration - 신청 정보
- * @returns {{ canCancel: boolean, error?: string, deadline?: Date }}
  */
-export function checkCanCancel(event, registration) {
+export function checkCanCancel(
+  event: Event,
+  registration: EventRegistration | undefined
+): CancelCheckResult {
   // 신청 안 함
   if (!registration) {
     return {
@@ -113,7 +139,7 @@ export function checkCanCancel(event, registration) {
   }
 
   const now = new Date();
-  const eventStart = new Date(event.startDate);
+  const eventStart = new Date(event.startDate ?? event.date);
 
   // 이미 시작됨
   if (now >= eventStart) {
@@ -144,31 +170,29 @@ export function checkCanCancel(event, registration) {
 
 /**
  * 취소 가능 기한 계산
- * @param {Date|string} eventStartDate - 행사 시작 일시
- * @returns {Date} 취소 가능 마감 시간
  */
-export function getCancelDeadline(eventStartDate) {
+export function getCancelDeadline(eventStartDate: Date | string): Date {
   const start = new Date(eventStartDate);
   return new Date(start.getTime() - EVENT_POLICY.CANCEL_DEADLINE_MS);
 }
 
 /**
  * 남은 자리 계산
- * @param {Object} event - 행사 정보
- * @returns {{ remaining: number|null, isFull: boolean, waitlistCount: number }}
  */
-export function getAvailability(event) {
+export function getAvailability(event: Event): AvailabilityInfo {
   // 정원 제한 없음
-  if (!event.capacity) {
+  const capacity = event.capacity ?? event.maxCapacity;
+  if (!capacity) {
     return {
-      remaining: null,
+      remaining: undefined,
       isFull: false,
       waitlistCount: 0,
     };
   }
 
-  const remaining = Math.max(0, event.capacity - event.currentCount);
-  const waitlistCount = Math.max(0, event.currentCount - event.capacity);
+  const currentCount = event.currentCount ?? event.attendees ?? 0;
+  const remaining = Math.max(0, capacity - currentCount);
+  const waitlistCount = Math.max(0, currentCount - capacity);
 
   return {
     remaining,
@@ -179,10 +203,8 @@ export function getAvailability(event) {
 
 /**
  * 신청 상태 뱃지 정보
- * @param {string} status - 신청 상태
- * @returns {{ label: string, variant: string }}
  */
-export function getRegistrationBadge(status) {
+export function getRegistrationBadge(status: string): BadgeInfo {
   switch (status) {
     case REGISTRATION_STATUS.CONFIRMED:
       return { label: '신청 완료', variant: 'default' };
@@ -197,10 +219,8 @@ export function getRegistrationBadge(status) {
 
 /**
  * 행사 상태 뱃지 정보
- * @param {Object} event - 행사 정보
- * @returns {{ label: string, variant: string }}
  */
-export function getEventStatusBadge(event) {
+export function getEventStatusBadge(event: Event): BadgeInfo {
   const { isFull } = getAvailability(event);
 
   if (event.status === EVENT_STATUS.CLOSED) {

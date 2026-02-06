@@ -6,8 +6,8 @@
 export const WARNING_MESSAGES = {
   // 행사
   WAITLIST_REGISTRATION: '정원이 마감되어 대기 신청됩니다.',
-  CANCEL_DEADLINE_SOON: (hours) => `취소 가능 시간이 ${hours}시간 미만 남았습니다.`,
-  EVENT_ALMOST_FULL: (remaining) => `남은 자리가 ${remaining}명입니다.`,
+  CANCEL_DEADLINE_SOON: (hours: number): string => `취소 가능 시간이 ${hours}시간 미만 남았습니다.`,
+  EVENT_ALMOST_FULL: (remaining: number): string => `남은 자리가 ${remaining}명입니다.`,
 
   // 글 작성
   UNSAVED_CHANGES: '저장하지 않은 내용이 있습니다.',
@@ -15,7 +15,7 @@ export const WARNING_MESSAGES = {
 
   // 일반
   SESSION_EXPIRING: '로그인 세션이 곧 만료됩니다.',
-};
+} as const;
 
 // 성공 메시지 (success 토스트용)
 export const SUCCESS_MESSAGES = {
@@ -39,10 +39,10 @@ export const SUCCESS_MESSAGES = {
   // 일반
   SAVED: '저장되었습니다.',
   COPIED: '클립보드에 복사되었습니다.',
-};
+} as const;
 
 // HTTP 상태 코드별 기본 메시지
-const HTTP_ERROR_MESSAGES = {
+const HTTP_ERROR_MESSAGES: Record<number, string> = {
   400: '잘못된 요청입니다.',
   401: '로그인이 필요합니다.',
   403: '접근 권한이 없습니다.',
@@ -56,7 +56,7 @@ const HTTP_ERROR_MESSAGES = {
 };
 
 // 서버 에러 코드별 메시지 (백엔드와 맞춰야 함)
-const API_ERROR_MESSAGES = {
+const API_ERROR_MESSAGES: Record<string, string> = {
   // 인증
   INVALID_CREDENTIALS: '학번 또는 비밀번호가 올바르지 않습니다.',
   TOKEN_EXPIRED: '로그인이 만료되었습니다. 다시 로그인해주세요.',
@@ -88,12 +88,23 @@ const API_ERROR_MESSAGES = {
   VALIDATION_ERROR: '입력값을 확인해주세요.',
 };
 
+interface ApiErrorResponse {
+  code?: string;
+  message?: string;
+}
+
+interface ApiError extends Error {
+  response?: {
+    status: number;
+    data?: ApiErrorResponse;
+  };
+  code?: string;
+}
+
 /**
  * API 에러에서 사용자 친화적 메시지 추출
- * @param {Error} error - Axios 에러 또는 일반 에러
- * @returns {string} 사용자에게 표시할 메시지
  */
-export function getErrorMessage(error) {
+export function getErrorMessage(error: ApiError): string {
   // 네트워크 에러
   if (!error.response) {
     if (error.code === 'ECONNABORTED') {
@@ -115,13 +126,13 @@ export function getErrorMessage(error) {
   }
 
   // HTTP 상태 코드 기반 기본 메시지
-  return HTTP_ERROR_MESSAGES[status] || '오류가 발생했습니다.';
+  return HTTP_ERROR_MESSAGES[status] ?? '오류가 발생했습니다.';
 }
 
 /**
  * 에러가 인증 관련인지 확인
  */
-export function isAuthError(error) {
+export function isAuthError(error: ApiError): boolean {
   const status = error.response?.status;
   return status === 401 || status === 403;
 }
@@ -129,31 +140,29 @@ export function isAuthError(error) {
 /**
  * 에러가 네트워크 관련인지 확인
  */
-export function isNetworkError(error) {
+export function isNetworkError(error: ApiError): boolean {
   return !error.response;
 }
 
 /**
  * 에러가 유효성 검사 관련인지 확인
  */
-export function isValidationError(error) {
+export function isValidationError(error: ApiError): boolean {
   const status = error.response?.status;
   return status === 400 || status === 422;
 }
 
 /**
  * 유효성 검사 에러에서 필드별 에러 추출
- * @param {Error} error
- * @returns {Object} { fieldName: errorMessage }
  */
-export function getFieldErrors(error) {
+export function getFieldErrors(error: ApiError): Record<string, string> {
   if (!isValidationError(error)) return {};
 
   const data = error.response?.data;
 
   // 백엔드 응답 형식에 따라 조정 필요
   if (data?.errors && typeof data.errors === 'object') {
-    return data.errors;
+    return data.errors as Record<string, string>;
   }
 
   return {};
