@@ -102,5 +102,19 @@ export const POST_OPTIONS = {
   ALLOW_ANONYMOUS: [BOARDS.GENERAL],
 
   // 질문글 허용 게시판
-  ALLOW_QUESTION: [BOARDS.GENERAL, BOARDS.INSIGHT],
+  ALLOW_QUESTION: [BOARDS.GENERAL],
 } as const;
+
+// 게시글 폼 검증 스키마 (PostWritePage, PostEditPage 공유)
+import { z } from 'zod';
+
+export const postFormSchema = z.object({
+  title: z.string().min(1, '제목을 입력해주세요').max(100, '제목은 100자 이내로 입력해주세요'),
+  content: z.string().min(1, '내용을 입력해주세요'),
+  category: z.string().min(1, '카테고리를 선택해주세요'),
+  isAnonymous: z.boolean().optional(),
+  isQuestion: z.boolean().optional(),
+  isVisibleToAssociate: z.boolean().optional(),
+});
+
+export type PostFormData = z.infer<typeof postFormSchema>;
