@@ -21,7 +21,7 @@ export default function Footer() {
     >
       <div className="px-4 lg:px-7 py-4">
         {/* Main content - 2 columns on desktop, stack on mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 gap-6 max-w-7xl mx-auto">
           {/* Left: Club Info & Address */}
           <div className="space-y-2" data-testid="club-info">
             <div>
@@ -64,7 +64,7 @@ export default function Footer() {
           </div>
 
           {/* Right: Contact & SNS */}
-          <div className="lg:text-right" data-testid="contact-info">
+          <div className="text-right" data-testid="contact-info">
             <h4
               className={cn(
                 'text-sm font-semibold mb-2',
@@ -76,7 +76,7 @@ export default function Footer() {
 
             <div className="space-y-2">
             {/* Email */}
-            <div className="flex items-center gap-1.5 lg:justify-end">
+            <div className="flex items-center gap-1.5 justify-end">
               <Mail
                 size={14}
                 className={cn(
@@ -96,7 +96,7 @@ export default function Footer() {
             </div>
 
             {/* Phone */}
-            <div className="flex items-center gap-1.5 lg:justify-end">
+            <div className="flex items-center gap-1.5 justify-end">
               <Phone
                 size={14}
                 className={cn(
@@ -125,7 +125,7 @@ export default function Footer() {
               >
                 소셜 미디어
               </h5>
-              <div className="flex gap-2 lg:justify-end">
+              <div className="flex gap-2 justify-end">
                 <a
                   href={SNS_LINKS.instagram}
                   target="_blank"
@@ -166,7 +166,7 @@ export default function Footer() {
 
         {/* Bottom section: Legal links & Copyright */}
         <div
-          className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2"
+          className="max-w-7xl mx-auto flex flex-row justify-between items-center gap-2"
           data-testid="legal-links"
         >
           {/* Copyright */}
