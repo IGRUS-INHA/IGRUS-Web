@@ -7,12 +7,15 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("RefreshToken 도메인")
 class RefreshTokenTest {
+
+    private static final String TEST_TOKEN_FAMILY = "test-family-uuid";
 
     private User createTestUser() {
         return User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기", Gender.MALE, 1);
@@ -28,15 +31,16 @@ class RefreshTokenTest {
             // given
             User user = createTestUser();
             String token = "test-refresh-token";
-            long expiryMillis = 604800000L; // 7일
+            long expiryMillis = 259200000L; // 3일
 
             // when
-            RefreshToken refreshToken = RefreshToken.create(user, token, expiryMillis);
+            RefreshToken refreshToken = RefreshToken.create(user, token, expiryMillis, TEST_TOKEN_FAMILY);
 
             // then
             assertThat(refreshToken).isNotNull();
             assertThat(refreshToken.getUser()).isEqualTo(user);
             assertThat(refreshToken.getToken()).isEqualTo(token);
+            assertThat(refreshToken.getTokenFamily()).isEqualTo(TEST_TOKEN_FAMILY);
         }
 
         @Test
@@ -45,12 +49,12 @@ class RefreshTokenTest {
             // given
             User user = createTestUser();
             String token = "test-refresh-token";
-            long expiryMillis = 604800000L; // 7일
+            long expiryMillis = 259200000L; // 3일
 
             Instant beforeCreate = Instant.now();
 
             // when
-            RefreshToken refreshToken = RefreshToken.create(user, token, expiryMillis);
+            RefreshToken refreshToken = RefreshToken.create(user, token, expiryMillis, TEST_TOKEN_FAMILY);
 
             // then
             Instant afterCreate = Instant.now();
@@ -68,13 +72,46 @@ class RefreshTokenTest {
             // given
             User user = createTestUser();
             String token = "test-refresh-token";
-            long expiryMillis = 604800000L;
+            long expiryMillis = 259200000L;
 
             // when
-            RefreshToken refreshToken = RefreshToken.create(user, token, expiryMillis);
+            RefreshToken refreshToken = RefreshToken.create(user, token, expiryMillis, TEST_TOKEN_FAMILY);
 
             // then
             assertThat(refreshToken.isRevoked()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("createInitial 정적 팩토리 메서드")
+    class CreateInitialTest {
+
+        @Test
+        @DisplayName("createInitial로 생성 시 tokenFamily가 자동 생성")
+        void createInitial_GeneratesTokenFamily() {
+            // given
+            User user = createTestUser();
+
+            // when
+            RefreshToken refreshToken = RefreshToken.createInitial(user, "token", 259200000L);
+
+            // then
+            assertThat(refreshToken.getTokenFamily()).isNotNull();
+            assertThat(refreshToken.getTokenFamily()).isNotEmpty();
+        }
+
+        @Test
+        @DisplayName("createInitial로 두 번 생성 시 서로 다른 tokenFamily")
+        void createInitial_TwoCalls_DifferentFamilies() {
+            // given
+            User user = createTestUser();
+
+            // when
+            RefreshToken token1 = RefreshToken.createInitial(user, "token1", 259200000L);
+            RefreshToken token2 = RefreshToken.createInitial(user, "token2", 259200000L);
+
+            // then
+            assertThat(token1.getTokenFamily()).isNotEqualTo(token2.getTokenFamily());
         }
     }
 
@@ -87,7 +124,7 @@ class RefreshTokenTest {
         void isExpired_WhenExpired_ReturnsTrue() throws Exception {
             // given
             User user = createTestUser();
-            RefreshToken refreshToken = RefreshToken.create(user, "token", 1000L);
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 1000L, TEST_TOKEN_FAMILY);
 
             // 리플렉션으로 expiresAt을 과거 시간으로 설정
             Field expiresAtField = RefreshToken.class.getDeclaredField("expiresAt");
@@ -106,7 +143,7 @@ class RefreshTokenTest {
         void isExpired_WhenNotExpired_ReturnsFalse() {
             // given
             User user = createTestUser();
-            RefreshToken refreshToken = RefreshToken.create(user, "token", 604800000L); // 7일
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 259200000L, TEST_TOKEN_FAMILY);
 
             // when
             boolean expired = refreshToken.isExpired();
@@ -125,7 +162,7 @@ class RefreshTokenTest {
         void isValid_WhenNotExpiredAndNotRevoked_ReturnsTrue() {
             // given
             User user = createTestUser();
-            RefreshToken refreshToken = RefreshToken.create(user, "token", 604800000L);
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 259200000L, TEST_TOKEN_FAMILY);
 
             // when
             boolean valid = refreshToken.isValid();
@@ -139,7 +176,7 @@ class RefreshTokenTest {
         void isValid_WhenExpired_ReturnsFalse() throws Exception {
             // given
             User user = createTestUser();
-            RefreshToken refreshToken = RefreshToken.create(user, "token", 1000L);
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 1000L, TEST_TOKEN_FAMILY);
 
             // 리플렉션으로 expiresAt을 과거 시간으로 설정
             Field expiresAtField = RefreshToken.class.getDeclaredField("expiresAt");
@@ -158,7 +195,7 @@ class RefreshTokenTest {
         void isValid_WhenRevoked_ReturnsFalse() {
             // given
             User user = createTestUser();
-            RefreshToken refreshToken = RefreshToken.create(user, "token", 604800000L);
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 259200000L, TEST_TOKEN_FAMILY);
             refreshToken.revoke();
 
             // when
@@ -173,7 +210,7 @@ class RefreshTokenTest {
         void isValid_WhenExpiredAndRevoked_ReturnsFalse() throws Exception {
             // given
             User user = createTestUser();
-            RefreshToken refreshToken = RefreshToken.create(user, "token", 1000L);
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 1000L, TEST_TOKEN_FAMILY);
             refreshToken.revoke();
 
             // 리플렉션으로 expiresAt을 과거 시간으로 설정
@@ -194,18 +231,23 @@ class RefreshTokenTest {
     class RevokeTest {
 
         @Test
-        @DisplayName("revoke 호출 시 revoked가 true로 변경")
-        void revoke_ChangesRevokedToTrue() {
+        @DisplayName("revoke 호출 시 revoked가 true로 변경되고 revokedAt이 설정")
+        void revoke_ChangesRevokedToTrueAndSetsRevokedAt() {
             // given
             User user = createTestUser();
-            RefreshToken refreshToken = RefreshToken.create(user, "token", 604800000L);
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 259200000L, TEST_TOKEN_FAMILY);
             assertThat(refreshToken.isRevoked()).isFalse();
+            assertThat(refreshToken.getRevokedAt()).isNull();
+
+            Instant beforeRevoke = Instant.now();
 
             // when
             refreshToken.revoke();
 
             // then
             assertThat(refreshToken.isRevoked()).isTrue();
+            assertThat(refreshToken.getRevokedAt()).isNotNull();
+            assertThat(refreshToken.getRevokedAt()).isAfterOrEqualTo(beforeRevoke);
         }
 
         @Test
@@ -213,7 +255,7 @@ class RefreshTokenTest {
         void revoke_WhenAlreadyRevoked_StaysRevoked() {
             // given
             User user = createTestUser();
-            RefreshToken refreshToken = RefreshToken.create(user, "token", 604800000L);
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 259200000L, TEST_TOKEN_FAMILY);
             refreshToken.revoke();
 
             // when
@@ -221,6 +263,84 @@ class RefreshTokenTest {
 
             // then
             assertThat(refreshToken.isRevoked()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("rotateWith 메서드")
+    class RotateWithTest {
+
+        @Test
+        @DisplayName("rotateWith 호출 시 토큰이 폐기되고 교체 토큰이 기록")
+        void rotateWith_RevokesAndRecordsReplacement() {
+            // given
+            User user = createTestUser();
+            RefreshToken refreshToken = RefreshToken.create(user, "old-token", 259200000L, TEST_TOKEN_FAMILY);
+            String newToken = "new-token";
+
+            Instant beforeRotate = Instant.now();
+
+            // when
+            refreshToken.rotateWith(newToken);
+
+            // then
+            assertThat(refreshToken.isRevoked()).isTrue();
+            assertThat(refreshToken.getRevokedAt()).isAfterOrEqualTo(beforeRotate);
+            assertThat(refreshToken.getReplacedByToken()).isEqualTo(newToken);
+        }
+    }
+
+    @Nested
+    @DisplayName("isWithinGracePeriod 메서드")
+    class IsWithinGracePeriodTest {
+
+        @Test
+        @DisplayName("폐기되지 않은 토큰은 Grace Period 내가 아님")
+        void isWithinGracePeriod_WhenNotRevoked_ReturnsFalse() {
+            // given
+            User user = createTestUser();
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 259200000L, TEST_TOKEN_FAMILY);
+
+            // when
+            boolean withinGracePeriod = refreshToken.isWithinGracePeriod(Duration.ofSeconds(10));
+
+            // then
+            assertThat(withinGracePeriod).isFalse();
+        }
+
+        @Test
+        @DisplayName("폐기 직후 토큰은 Grace Period 내")
+        void isWithinGracePeriod_WhenJustRevoked_ReturnsTrue() {
+            // given
+            User user = createTestUser();
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 259200000L, TEST_TOKEN_FAMILY);
+            refreshToken.revoke();
+
+            // when
+            boolean withinGracePeriod = refreshToken.isWithinGracePeriod(Duration.ofSeconds(10));
+
+            // then
+            assertThat(withinGracePeriod).isTrue();
+        }
+
+        @Test
+        @DisplayName("Grace Period가 지난 토큰은 false 반환")
+        void isWithinGracePeriod_WhenPastGracePeriod_ReturnsFalse() throws Exception {
+            // given
+            User user = createTestUser();
+            RefreshToken refreshToken = RefreshToken.create(user, "token", 259200000L, TEST_TOKEN_FAMILY);
+            refreshToken.revoke();
+
+            // revokedAt을 과거로 설정 (11초 전)
+            Field revokedAtField = RefreshToken.class.getDeclaredField("revokedAt");
+            revokedAtField.setAccessible(true);
+            revokedAtField.set(refreshToken, Instant.now().minusSeconds(11));
+
+            // when
+            boolean withinGracePeriod = refreshToken.isWithinGracePeriod(Duration.ofSeconds(10));
+
+            // then
+            assertThat(withinGracePeriod).isFalse();
         }
     }
 }

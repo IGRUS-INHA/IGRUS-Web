@@ -8,7 +8,7 @@ import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilitySe
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
-import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
+import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
 import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
@@ -25,11 +25,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -98,12 +100,20 @@ class PasswordAuthControllerTokenTest {
     private static final String FORGED_REFRESH_TOKEN = "forged.malicious.token";
     private static final String REVOKED_REFRESH_TOKEN = "revoked.logout.token";
     private static final long EXPIRES_IN = 3600000L; // 1 hour
+    private static final long REFRESH_TOKEN_VALIDITY = 604800000L; // 7 days
 
     @BeforeEach
     void setUp() {
         // Mock for refresh - getRefreshTokenFromCookies returns the token from cookie
         given(cookieUtil.getRefreshTokenFromCookies(any()))
                 .willReturn(Optional.of(VALID_REFRESH_TOKEN));
+
+        // Mock for refresh - createRefreshTokenCookie returns a cookie
+        given(cookieUtil.createRefreshTokenCookie(anyString(), any(Duration.class)))
+                .willReturn(ResponseCookie.from("refreshToken", "new.refresh.token")
+                        .httpOnly(true)
+                        .path("/api/v1/auth")
+                        .build());
     }
 
     @Nested
@@ -114,9 +124,9 @@ class PasswordAuthControllerTokenTest {
         @DisplayName("유효한 Refresh Token으로 갱신 시 새 Access Token 반환 [TKN-001]")
         void refreshToken_withValidToken_returns200() throws Exception {
             // given
-            TokenRefreshResponse response = TokenRefreshResponse.of("new.access.token", EXPIRES_IN);
+            TokenRotationResult result = new TokenRotationResult("new.access.token", "new.refresh.token", EXPIRES_IN, REFRESH_TOKEN_VALIDITY);
             given(refreshTokenService.refreshToken(anyString()))
-                .willReturn(response);
+                .willReturn(result);
 
             // when & then
             mockMvc.perform(post("/api/v1/auth/password/refresh")
@@ -130,9 +140,9 @@ class PasswordAuthControllerTokenTest {
         @DisplayName("새 Access Token 유효기간 확인 [TKN-002]")
         void refreshToken_withValidToken_returnsExpiresInGreaterThanZero() throws Exception {
             // given
-            TokenRefreshResponse response = TokenRefreshResponse.of("new.access.token", EXPIRES_IN);
+            TokenRotationResult result = new TokenRotationResult("new.access.token", "new.refresh.token", EXPIRES_IN, REFRESH_TOKEN_VALIDITY);
             given(refreshTokenService.refreshToken(anyString()))
-                .willReturn(response);
+                .willReturn(result);
 
             // when & then
             mockMvc.perform(post("/api/v1/auth/password/refresh")
@@ -147,9 +157,9 @@ class PasswordAuthControllerTokenTest {
         void refreshToken_withValidToken_returnsValidAccessToken() throws Exception {
             // given
             String newAccessToken = "valid.new.access.token.for.api.calls";
-            TokenRefreshResponse response = TokenRefreshResponse.of(newAccessToken, EXPIRES_IN);
+            TokenRotationResult result = new TokenRotationResult(newAccessToken, "new.refresh.token", EXPIRES_IN, REFRESH_TOKEN_VALIDITY);
             given(refreshTokenService.refreshToken(anyString()))
-                .willReturn(response);
+                .willReturn(result);
 
             // when & then
             mockMvc.perform(post("/api/v1/auth/password/refresh")

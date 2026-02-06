@@ -110,7 +110,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
     }
 
     private RefreshToken createAndSaveRefreshToken(User user, String token) {
-        RefreshToken refreshToken = RefreshToken.create(user, token, 604800000L);
+        RefreshToken refreshToken = RefreshToken.createInitial(user, token, 604800000L);
         return refreshTokenRepository.save(refreshToken);
     }
 

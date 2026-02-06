@@ -13,7 +13,7 @@ import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
-import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
+import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
 import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
@@ -100,6 +100,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
 
     private static final long ACCESS_TOKEN_VALIDITY = 3600000L; // 1시간
     private static final long REFRESH_TOKEN_VALIDITY = 604800000L; // 7일
+    private static final long REFRESH_TOKEN_GRACE_PERIOD = 10000L; // 10초
     private static final long VERIFICATION_CODE_EXPIRY = 600000L; // 10분
     private static final long PASSWORD_RESET_EXPIRY = 1800000L; // 30분
 
@@ -119,6 +120,8 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
         ReflectionTestUtils.setField(loginService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(loginService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "gracePeriodMillis", REFRESH_TOKEN_GRACE_PERIOD);
         ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
         ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", 5);
         ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
@@ -270,7 +273,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
     class TokenRefreshFlowTest {
 
         @Test
-        @DisplayName("Access Token 만료 후 Refresh Token으로 갱신 성공")
+        @DisplayName("Access Token 만료 후 Refresh Token으로 갱신 성공 (로테이션 포함)")
         void accessTokenExpired_refreshSucceeds() {
             // === Setup: 인증된 사용자 생성 및 로그인 ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
@@ -284,25 +287,23 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             String originalAccessToken = loginResult.accessToken();
             String refreshToken = loginResult.refreshToken();
 
-            // === Step 1: Access Token 만료 시뮬레이션 (실제로 만료된 것처럼 가정) ===
-            // 실제 만료를 기다릴 수 없으므로, 새로운 토큰 발급으로 시뮬레이션
+            // === Step 1: Refresh Token으로 새 Access Token + 새 Refresh Token 발급 ===
+            TokenRotationResult rotationResult = refreshTokenService.refreshToken(refreshToken);
 
-            // === Step 2: Refresh Token으로 새 Access Token 발급 ===
-            TokenRefreshResponse refreshResponse = refreshTokenService.refreshToken(refreshToken);
+            assertThat(rotationResult).isNotNull();
+            assertThat(rotationResult.accessToken()).isNotNull();
+            assertThat(rotationResult.accessToken()).isNotEqualTo(originalAccessToken);
+            assertThat(rotationResult.accessTokenValidity()).isEqualTo(ACCESS_TOKEN_VALIDITY);
+            assertThat(rotationResult.newRefreshToken()).isNotNull().isNotEqualTo(refreshToken);
 
-            assertThat(refreshResponse).isNotNull();
-            assertThat(refreshResponse.accessToken()).isNotNull();
-            assertThat(refreshResponse.accessToken()).isNotEqualTo(originalAccessToken);
-            assertThat(refreshResponse.expiresIn()).isEqualTo(ACCESS_TOKEN_VALIDITY);
-
-            // === Step 3: 새 Access Token으로 API 호출 가능 확인 ===
-            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(refreshResponse.accessToken());
+            // === Step 2: 새 Access Token으로 API 호출 가능 확인 ===
+            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(rotationResult.accessToken());
             assertThat(jwtTokenProvider.getUserIdFromClaims(claims)).isEqualTo(user.getId());
             assertThat(jwtTokenProvider.getStudentIdFromClaims(claims)).isEqualTo(TEST_STUDENT_ID);
         }
 
         @Test
-        @DisplayName("여러 번 토큰 갱신해도 항상 새로운 Access Token 발급")
+        @DisplayName("연쇄 토큰 갱신 시 매번 새로운 Access Token 및 Refresh Token 발급")
         void multipleRefreshes_alwaysNewAccessToken() {
             // === Setup ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
@@ -313,16 +314,16 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
             LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
-            String refreshToken = loginResult.refreshToken();
+            // === 연쇄 갱신 - 매번 새 Refresh Token 사용 ===
+            TokenRotationResult response1 = refreshTokenService.refreshToken(loginResult.refreshToken());
+            TokenRotationResult response2 = refreshTokenService.refreshToken(response1.newRefreshToken());
+            TokenRotationResult response3 = refreshTokenService.refreshToken(response2.newRefreshToken());
 
-            // === 여러 번 갱신 ===
-            TokenRefreshResponse response1 = refreshTokenService.refreshToken(refreshToken);
-            TokenRefreshResponse response2 = refreshTokenService.refreshToken(refreshToken);
-            TokenRefreshResponse response3 = refreshTokenService.refreshToken(refreshToken);
-
-            // 매번 다른 Access Token
+            // 매번 다른 Access Token 및 Refresh Token
             assertThat(response1.accessToken()).isNotEqualTo(response2.accessToken());
             assertThat(response2.accessToken()).isNotEqualTo(response3.accessToken());
+            assertThat(response1.newRefreshToken()).isNotEqualTo(response2.newRefreshToken());
+            assertThat(response2.newRefreshToken()).isNotEqualTo(response3.newRefreshToken());
         }
     }
 
