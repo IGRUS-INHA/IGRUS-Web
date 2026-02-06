@@ -2,7 +2,27 @@ import { useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DEFAULT_PAGE_SIZE } from '@/constants';
 
-export const usePagination = (initialPage = 1, initialLimit = DEFAULT_PAGE_SIZE) => {
+interface PaginationData {
+  totalCount?: number;
+  totalPages?: number;
+}
+
+interface UsePaginationReturn {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  setPage: (newPage: number) => void;
+  setLimit: (newLimit: number) => void;
+  updatePagination: (data: PaginationData) => void;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+export const usePagination = (
+  initialPage = 1,
+  initialLimit = DEFAULT_PAGE_SIZE
+): UsePaginationReturn => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const page = Number(searchParams.get('page')) || initialPage;
@@ -12,7 +32,7 @@ export const usePagination = (initialPage = 1, initialLimit = DEFAULT_PAGE_SIZE)
   const [totalPages, setTotalPages] = useState(0);
 
   const setPage = useCallback(
-    (newPage) => {
+    (newPage: number) => {
       setSearchParams((prev) => {
         prev.set('page', String(newPage));
         return prev;
@@ -22,7 +42,7 @@ export const usePagination = (initialPage = 1, initialLimit = DEFAULT_PAGE_SIZE)
   );
 
   const setLimit = useCallback(
-    (newLimit) => {
+    (newLimit: number) => {
       setSearchParams((prev) => {
         prev.set('limit', String(newLimit));
         prev.set('page', '1');
@@ -32,9 +52,9 @@ export const usePagination = (initialPage = 1, initialLimit = DEFAULT_PAGE_SIZE)
     [setSearchParams]
   );
 
-  const updatePagination = useCallback((data) => {
-    setTotalCount(data.totalCount || 0);
-    setTotalPages(data.totalPages || 0);
+  const updatePagination = useCallback((data: PaginationData) => {
+    setTotalCount(data.totalCount ?? 0);
+    setTotalPages(data.totalPages ?? 0);
   }, []);
 
   return {
