@@ -1,12 +1,77 @@
 # 아이그루스 시스템 명세서 V2
 
-**버전**: 2.0
+**버전**: 2.1
 **작성일**: 2026-01-22
-**상태**: Draft
+**최종 수정일**: 2026-02-06
+**상태**: In Progress
+
+---
+
+## 구현 현황 요약
+
+> 이 섹션은 현재 구현 상태를 반영합니다. (2026-02-05 기준)
+
+### 백엔드 구현 현황
+
+| 기능 | 엔티티 | API | 서비스 | 상태 |
+|------|--------|-----|--------|------|
+| 회원가입/로그인/토큰 | ✅ | ✅ | ✅ | 완전 구현 |
+| 게시판/게시글/댓글 | ✅ | ✅ | ✅ | 완전 구현 |
+| 좋아요/북마크 | ✅ | ✅ | ✅ | 완전 구현 |
+| 행사/신청 | ✅ | ✅ | ✅ | 완전 구현 |
+| 문의 (회원/비회원/관리) | ✅ | ✅ | ✅ | 완전 구현 |
+| 관리자 기능 | ✅ | ✅ | ✅ | 완전 구현 |
+| 학기별 회원 명단 | ✅ | ✅ | ✅ | 완전 구현 |
+| 인증/보안 | ✅ | ✅ | ✅ | 완전 구현 |
+| 건의 사항 | ❌ | ❌ | ❌ | 미구현 |
+
+### 프론트엔드 구현 현황
+
+| 기능 | 구현 상태 | 비고 |
+|------|----------|------|
+| 로그인/회원가입 | ✅ 완전 구현 | 이메일 인증 flow 포함 |
+| 비밀번호 찾기/재설정 | ✅ 완전 구현 | |
+| 게시판/게시글 | ✅ 완전 구현 | 검색, 정렬, 페이지네이션 |
+| 좋아요/북마크 | ✅ 완전 구현 | |
+| 댓글 | ⚠️ 부분 구현 | API 연동 진행 중 |
+| 행사 목록/상세 | ✅ 완전 구현 | 신청/취소 기능 포함 |
+| 행사 작성/수정 | ⚠️ 부분 구현 | 페이지 정의됨 |
+| 문의 | ✅ 완전 구현 | 회원/비회원 구분 |
+| 마이페이지 | ⚠️ 부분 구현 | Mock 데이터 사용 중 |
+| 관리자 대시보드 | ⚠️ 부분 구현 | 기본 UI 구현 |
+| 관리자 회원관리 | ❌ 미구현 | 스텁만 존재 |
+| 관리자 문의관리 | ❌ 미구현 | 스텁만 존재 |
+| 건의 사항 작성 | ❌ 미구현 | |
+| 건의 사항 관리 (운영진) | ❌ 미구현 | |
 
 ---
 
 ## Clarifications
+
+### Session 2026-02-06 (9차)
+- 건의 사항 기능 추가 (기능 명세 9번)
+  - 정회원 이상 작성 가능
+  - 익명/실명 선택 가능
+  - 익명 건의: 운영진은 작성자 확인 불가, 관리자만 확인 가능
+  - 건의 목록 조회: 운영진 이상만 가능
+  - 정회원: 본인 건의만 마이페이지에서 조회 가능
+  - 답변 시 작성자에게 이메일 자동 발송
+- 구현 현황: 백엔드/프론트엔드 모두 미구현 상태
+- API: `/api/v1/suggestions` 경로 명세 추가
+
+### Session 2026-02-05 (8차)
+- Q: PRD와 실제 구현 상태 정합성 검토? → A: 구현 현황 섹션 추가, 실제 구현된 엔티티/API 반영
+- 추가 구현된 기능:
+  - 댓글 좋아요 (CommentLike 엔티티)
+  - 댓글 신고 (CommentReport 엔티티, 관리자 검토 기능)
+  - 댓글 멘션 (@사용자명 기능, 인앱/이메일 알림)
+  - 조회수 중복 방지 (PostView 엔티티)
+  - 로그인 시도 제한 (LoginAttempt 엔티티, 계정 잠금)
+  - 학기별 회원 명단 (SemesterMember 엔티티)
+  - 행사 선착순/선발제 구분 (EventRegistrationType)
+  - 비회원 문의 비밀번호 검증 (GuestInquiry)
+- API 버전: `/api/v1/` prefix 적용
+- 이메일 발송: SMTP 또는 로깅 방식으로 구현
 
 ### Session 2026-01-22 (7차)
 - Q: PRD와 백엔드 구현 정합성 검토? → A: 백엔드 구현에 맞게 PRD 데이터 모델 수정
@@ -254,20 +319,41 @@ IGRUS(인하대학교 컴퓨터 연구 동아리) 회원들을 위한 웹 기반
 
 ### 5. 행사
 
-#### 5.1 운영 기능 (OPERATOR 이상)
-- 행사 등록: 제목, 설명, 시작/종료 일시, 장소, 정원, 신청 마감일
+#### 5.1 행사 유형 (구현 완료)
+
+| 유형 | 코드 | 설명 |
+|------|------|------|
+| 선착순 | AUTO_APPROVE | 신청 즉시 승인, 정원 도달 시 자동 마감 |
+| 선발제 | MANUAL_APPROVE | 관리자 수동 승인, 대기 상태로 신청 |
+
+#### 5.2 행사 상태
+
+| 상태 | 코드 | 설명 |
+|------|------|------|
+| 예정 | UPCOMING | 신청 시작 전 |
+| 신청중 | OPEN | 신청 가능 |
+| 마감 | CLOSED | 정원/마감일/수동 마감 |
+| 완료 | COMPLETED | 행사 종료 |
+| 취소 | CANCELED | 행사 취소 |
+
+#### 5.3 운영 기능 (OPERATOR 이상)
+- 행사 등록: 제목, 설명, 시작/종료 일시, 장소, 정원, 신청 마감일, **신청 유형(선착순/선발제)**
 - 행사 수정: 모든 필드 수정 가능 (진행 중인 행사도 수정 가능)
 - 행사 삭제: 신청자가 있어도 삭제 가능 (삭제 전 경고)
+- 행사 취소: 진행 중인 행사를 취소 처리
 - 조기 마감: 마감일 전에 수동으로 신청 종료
 - 신청자 목록: 엑셀 다운로드 지원
+- **선발제 행사**: 신청자 승인/거절 처리
 
-#### 5.2 회원 기능 (정회원 이상)
+#### 5.4 회원 기능 (정회원 이상)
 - 신청: 마감 전, 정원 미달 시 신청 가능
 - 취소: 마감일 전까지 취소 가능
 - 중복 신청 불가
 - **준회원은 행사 신청 불가**
+- **선착순**: 신청 즉시 APPROVED 상태
+- **선발제**: 신청 시 PENDING 상태, 관리자 승인 대기
 
-#### 5.3 신청 불가 조건
+#### 5.5 신청 불가 조건
 - 정원 초과
 - 신청 마감일 경과
 - 관리자 조기 마감
@@ -416,6 +502,120 @@ IGRUS(인하대학교 컴퓨터 연구 동아리) 회원들을 위한 웹 기반
 
 ---
 
+### 9. 건의 사항
+
+**목적**
+정회원 이상의 회원이 동아리 운영에 대한 건의사항, 개선 요청, 불만 사항 등을 제출할 수 있는 기능. 작성자는 익명 또는 실명을 선택할 수 있으며, 건의사항은 운영진 이상만 조회 가능하다. 익명 선택 시 운영진에게는 익명으로 표시되고 관리자만 작성자를 확인할 수 있다. 답변 시 작성자에게 이메일로 자동 알림이 발송된다.
+
+**핵심 흐름**
+1. 정회원 이상이 건의 사항 작성 페이지 접근
+2. 익명/실명 여부 선택
+3. 카테고리 선택 및 건의 내용 작성
+4. 제출 → 접수 확인 이메일 발송 (작성자에게)
+5. 운영진/관리자가 건의 사항 목록 조회 및 처리
+6. 처리 결과를 공개 답변으로 작성 → 답변 알림 이메일 발송 (작성자에게)
+
+**공개 유형**
+| 유형 | 코드 | 설명 | 작성자 표시 |
+|------|------|------|------------|
+| 익명 | ANONYMOUS | 작성자 정보 비공개 | 운영진: "익명", 관리자: 작성자 확인 가능 |
+| 실명 | IDENTIFIED | 작성자 정보 공개 | 운영진/관리자에게 작성자명 표시 |
+
+**건의 카테고리**
+| 카테고리 | 코드 | 설명 |
+|---------|------|------|
+| 행사 건의 | EVENT | 행사 기획/운영 관련 건의 |
+| 시설/장비 | FACILITY | 동아리 공간, 장비 관련 건의 |
+| 운영 방식 | OPERATION | 동아리 운영 방식 개선 건의 |
+| 홈페이지 | WEBSITE | 웹사이트 기능/UI 개선 건의 |
+| 기타 | OTHER | 기타 건의 사항 |
+
+**작성 규칙**
+- 작성 권한: 정회원(MEMBER) 이상
+- 준회원(ASSOCIATE)은 작성 불가 (정회원 승인 후 이용 가능)
+- 공개 유형: 필수 선택 (익명/실명)
+- 제목: 필수, 최대 100자
+- 내용: 필수, 최대 2000자
+- 카테고리: 필수 선택
+- 첨부파일: 최대 3개 (이미지, 문서)
+- 건의 번호: 자동 생성 (SUG-YYYYMMDD#####)
+
+**조회 권한**
+| 역할 | 건의 사항 목록 조회 | 본인 건의 조회 |
+|------|-------------------|---------------|
+| 정회원 (MEMBER) | 불가 | 본인이 작성한 건의만 조회 가능 |
+| 운영진 (OPERATOR) | 가능 | - |
+| 관리자 (ADMIN) | 가능 | - |
+
+**익명성 정책 (익명 건의 선택 시)**
+| 역할 | 작성자 정보 조회 |
+|------|-----------------|
+| 운영진 (OPERATOR) | 불가 - "익명"으로 표시 |
+| 관리자 (ADMIN) | 가능 - 악용 방지 및 조치 목적 |
+
+- 익명 건의의 작성자 ID는 데이터베이스에 저장됨
+- OPERATOR에게는 익명 건의의 작성자 정보가 API 응답에서 제외됨
+- ADMIN은 익명 건의 상세 조회 시 작성자 정보 확인 가능
+- 관리자의 작성자 확인 이력 로깅 (누가, 언제, 어떤 건의의 작성자를 조회했는지 기록)
+
+**실명 공개 정책 (실명 건의 선택 시)**
+- 운영진/관리자에게 작성자 이름 표시
+- 작성자 본인이 실명 공개를 선택한 것이므로 별도 동의 불필요
+
+**처리 상태**
+| 상태 | 코드 | 설명 |
+|------|------|------|
+| 접수 | PENDING | 건의 등록 완료 |
+| 검토중 | REVIEWING | 운영진 검토 중 |
+| 처리완료 | RESOLVED | 처리 완료 (답변 작성됨) |
+| 반려 | REJECTED | 부적절한 건의로 반려 |
+
+**이메일 알림**
+| 시점 | 수신자 | 이메일 내용 |
+|------|-------|------------|
+| 건의 접수 시 | 작성자 | 건의 번호, 접수 확인, 처리 예상 안내 |
+| 답변 작성 시 | 작성자 | 건의 번호, 답변 내용, 상태 변경 알림 |
+| 상태 변경 시 | 작성자 | 건의 번호, 변경된 상태 알림 |
+
+**운영진 기능 (OPERATOR)**
+- 건의 사항 목록 조회 (필터: 카테고리, 상태, 공개 유형, 기간)
+- 상태 변경 (PENDING → REVIEWING → RESOLVED/REJECTED)
+- 공개 답변 작성 (작성자에게 이메일 발송)
+- 내부 메모 추가 (운영진/관리자만 조회 가능)
+- 부적절한 건의 반려 처리 (사유 기록)
+- **익명 건의의 작성자 확인 불가**
+
+**관리자 기능 (ADMIN)**
+- 운영진의 모든 기능 포함
+- **익명 건의의 작성자 정보 조회 가능** (학번, 이름)
+- 악용 회원에 대한 경고/제재 조치 가능
+- 작성자 조회 이력 확인
+
+**정회원 기능 (MEMBER)**
+- 건의 사항 작성
+- 본인이 작성한 건의 사항 목록 조회 (마이페이지)
+- 본인 건의의 처리 상태 및 답변 확인
+
+**악용 방지**
+- 동일 사용자 1시간 내 최대 5건 작성 제한
+- 욕설, 비방, 명예훼손 등 부적절한 내용 신고 기능
+- 관리자가 익명 건의 작성자 확인 후 경고 또는 제재 가능
+- 반복적 악용 시 건의 작성 권한 제한 가능
+
+**Acceptance Scenarios**
+1. Given 정회원이 로그인한 상태에서, When 익명을 선택하여 건의 사항을 제출하면, Then 건의가 등록되고 접수 확인 이메일이 작성자에게 발송된다
+2. Given 정회원이 로그인한 상태에서, When 실명을 선택하여 건의 사항을 제출하면, Then 건의가 등록되고 운영진이 조회 시 작성자 이름이 표시된다
+3. Given 준회원이 로그인한 상태에서, When 건의 사항 작성 페이지에 접근하면, Then "정회원 승인 후 이용 가능합니다" 메시지가 표시된다
+4. Given 정회원이 건의 사항 목록 페이지에 접근하려 할 때, When 접근을 시도하면, Then "권한이 없습니다" 메시지가 표시된다
+5. Given 정회원이 마이페이지에서 본인 건의 목록을 조회할 때, When 목록을 확인하면, Then 본인이 작성한 건의 사항과 처리 상태를 확인할 수 있다
+6. Given 운영진이 익명 건의 사항 상세를 조회할 때, When 작성자 정보를 확인하려 하면, Then 작성자 정보는 표시되지 않고 "익명"으로만 표시된다
+7. Given 관리자가 익명 건의 사항 상세를 조회할 때, When 작성자 정보를 확인하면, Then 작성자의 학번과 이름이 표시되고 조회 이력이 기록된다
+8. Given 운영진이 건의 사항에 답변을 작성하면, When 답변이 등록되면, Then 작성자에게 답변 내용이 포함된 이메일이 자동 발송된다
+9. Given 정회원이 1시간 내에 5건의 건의 사항을 작성한 후, When 추가로 건의 사항을 작성하려 하면, Then "잠시 후 다시 시도해주세요" 메시지가 표시된다
+10. Given 관리자가 익명 건의에서 악용 사례를 발견했을 때, When 해당 건의의 작성자를 확인하고 제재 조치하면, Then 해당 회원의 건의 작성 권한이 제한된다
+
+---
+
 ## 비기능 요구사항
 
 ### 성능
@@ -529,19 +729,23 @@ IGRUS(인하대학교 컴퓨터 연구 동아리) 회원들을 위한 웹 기반
 
 ## API 명세
 
-### 인증 `/api/auth`
+> **Note**: 모든 API는 `/api/v1/` prefix를 사용합니다. (구현 완료)
+
+### 인증 `/api/v1/auth/password`
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | POST | /signup | 회원가입 정보 입력 및 인증 코드 발송 |
-| POST | /signup/verify | 이메일 인증 코드 확인 및 준회원 등록 |
-| POST | /signup/resend | 인증 코드 재발송 |
+| POST | /verify-email | 이메일 인증 코드 확인 및 준회원 등록 |
+| POST | /resend-verification | 인증 코드 재발송 |
 | POST | /login | 로그인 |
 | POST | /logout | 로그아웃 |
 | POST | /refresh | 토큰 갱신 |
-| POST | /recover | 탈퇴 계정 복구 (5일 이내) |
-| POST | /password/reset-request | 비밀번호 재설정 요청 |
-| POST | /password/reset | 비밀번호 재설정 |
+| GET | /account/recovery-check | 탈퇴 계정 복구 가능 여부 확인 |
+| POST | /account/recover | 탈퇴 계정 복구 (5일 이내) |
+| POST | /reset-request | 비밀번호 재설정 요청 |
+| POST | /reset-confirm | 비밀번호 재설정 확인 |
+| GET | /reset-validate | 재설정 토큰 검증 |
 
 **POST /signup**
 ```json
@@ -1105,6 +1309,252 @@ IGRUS(인하대학교 컴퓨터 연구 동아리) 회원들을 위한 웹 기반
 
 // Error 400 - 이미 답변 존재
 { "code": "INQUIRY003", "message": "이미 답변이 등록된 문의입니다" }
+```
+
+---
+
+### 건의 사항 `/api/v1/suggestions`
+
+| Method | Endpoint | 설명 | 권한 |
+|--------|----------|------|------|
+| POST | / | 건의 작성 | MEMBER 이상 |
+| GET | /my | 내 건의 목록 | MEMBER 이상 (본인 건의만) |
+| GET | /my/:id | 내 건의 상세 | MEMBER 이상 (본인 건의만) |
+| GET | / | 전체 목록 | OPERATOR 이상 |
+| GET | /:id | 상세 | OPERATOR 이상 |
+| PUT | /:id/status | 상태 변경 | OPERATOR 이상 |
+| POST | /:id/reply | 답변 작성 | OPERATOR 이상 |
+| POST | /:id/memo | 내부 메모 추가 | OPERATOR 이상 |
+| GET | /:id/author | 익명 건의 작성자 조회 | ADMIN 전용 |
+
+**POST /** (MEMBER 이상)
+```json
+// Request
+{
+  "category": "EVENT",
+  "visibility": "ANONYMOUS",
+  "title": "행사 개선 건의",
+  "content": "환영회 시간대를 저녁으로 변경해주시면 좋겠습니다.",
+  "attachments": [
+    { "url": "https://..." }
+  ]
+}
+
+// Response 201
+{
+  "id": 1,
+  "suggestionNumber": "SUG-2025012100001",
+  "status": "PENDING",
+  "message": "건의가 접수되었습니다. 확인 이메일이 발송되었습니다."
+}
+
+// Error 400 - 제목 길이 초과
+{ "code": "SUG001", "message": "제목은 100자 이내여야 합니다" }
+
+// Error 400 - 내용 길이 초과
+{ "code": "SUG002", "message": "내용은 2000자 이내여야 합니다" }
+
+// Error 403 - 준회원 접근 불가
+{ "code": "SUG003", "message": "정회원 승인 후 이용 가능합니다" }
+
+// Error 429 - 작성 제한 초과
+{ "code": "SUG004", "message": "잠시 후 다시 시도해주세요" }
+```
+
+**GET /my** (MEMBER 이상) `?status=PENDING&category=EVENT&page=1`
+```json
+// Response 200
+{
+  "suggestions": [
+    {
+      "id": 1,
+      "suggestionNumber": "SUG-2025012100001",
+      "category": "EVENT",
+      "visibility": "ANONYMOUS",
+      "title": "행사 개선 건의",
+      "status": "REVIEWING",
+      "hasReply": false,
+      "createdAt": "2025-01-21T10:00:00Z"
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 1,
+    "totalCount": 3
+  }
+}
+```
+
+**GET /my/:id** (MEMBER 이상, 본인 건의만)
+```json
+// Response 200
+{
+  "id": 1,
+  "suggestionNumber": "SUG-2025012100001",
+  "category": "EVENT",
+  "visibility": "ANONYMOUS",
+  "title": "행사 개선 건의",
+  "content": "환영회 시간대를 저녁으로 변경해주시면 좋겠습니다.",
+  "status": "RESOLVED",
+  "createdAt": "2025-01-21T10:00:00Z",
+  "attachments": [
+    { "url": "https://..." }
+  ],
+  "reply": {
+    "content": "검토 결과 다음 행사부터 저녁 시간대로 조정하겠습니다.",
+    "createdAt": "2025-01-22T09:00:00Z"
+  }
+}
+
+// Error 403 - 본인 건의가 아님
+{ "code": "SUG005", "message": "본인의 건의만 조회할 수 있습니다" }
+```
+
+**GET /** (OPERATOR 이상) `?status=PENDING&category=EVENT&visibility=ANONYMOUS&page=1`
+```json
+// Response 200
+{
+  "suggestions": [
+    {
+      "id": 1,
+      "suggestionNumber": "SUG-2025012100001",
+      "category": "EVENT",
+      "visibility": "ANONYMOUS",
+      "title": "행사 개선 건의",
+      "author": "익명",  // ANONYMOUS인 경우
+      "status": "PENDING",
+      "hasReply": false,
+      "createdAt": "2025-01-21T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "suggestionNumber": "SUG-2025012100002",
+      "category": "OPERATION",
+      "visibility": "IDENTIFIED",
+      "title": "운영 방식 건의",
+      "author": "홍길동",  // IDENTIFIED인 경우
+      "status": "REVIEWING",
+      "hasReply": false,
+      "createdAt": "2025-01-21T11:00:00Z"
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 3,
+    "totalCount": 25
+  }
+}
+```
+
+**GET /:id** (OPERATOR 이상)
+```json
+// Response 200 - OPERATOR가 익명 건의 조회
+{
+  "id": 1,
+  "suggestionNumber": "SUG-2025012100001",
+  "category": "EVENT",
+  "visibility": "ANONYMOUS",
+  "title": "행사 개선 건의",
+  "content": "환영회 시간대를 저녁으로 변경해주시면 좋겠습니다.",
+  "author": "익명",
+  "status": "PENDING",
+  "createdAt": "2025-01-21T10:00:00Z",
+  "attachments": [
+    { "url": "https://..." }
+  ],
+  "memos": [
+    {
+      "id": 1,
+      "content": "다음 임원 회의에서 논의 예정",
+      "createdBy": "관리자명",
+      "createdAt": "2025-01-22T10:00:00Z"
+    }
+  ]
+}
+
+// Response 200 - OPERATOR가 실명 건의 조회
+{
+  "id": 2,
+  "suggestionNumber": "SUG-2025012100002",
+  "category": "OPERATION",
+  "visibility": "IDENTIFIED",
+  "title": "운영 방식 건의",
+  "content": "정기 모임 요일을 변경해주세요.",
+  "author": "홍길동",
+  "authorId": 123,
+  "status": "REVIEWING",
+  "createdAt": "2025-01-21T11:00:00Z",
+  "attachments": [],
+  "memos": []
+}
+```
+
+**GET /:id/author** (ADMIN 전용 - 익명 건의 작성자 조회)
+```json
+// Response 200
+{
+  "authorId": 123,
+  "studentId": "20231234",
+  "name": "홍길동",
+  "viewedAt": "2025-01-22T15:00:00Z"
+}
+
+// Error 400 - 실명 건의
+{ "code": "SUG006", "message": "실명 건의는 작성자 정보가 이미 공개되어 있습니다" }
+
+// Error 403 - ADMIN 권한 필요
+{ "code": "SUG007", "message": "관리자만 익명 건의 작성자를 조회할 수 있습니다" }
+```
+
+**PUT /:id/status** (OPERATOR 이상)
+```json
+// Request
+{
+  "status": "REVIEWING"
+}
+
+// Response 200
+{
+  "id": 1,
+  "status": "REVIEWING",
+  "updatedAt": "2025-01-22T10:00:00Z",
+  "emailSent": true
+}
+```
+
+**POST /:id/reply** (OPERATOR 이상)
+```json
+// Request
+{
+  "content": "검토 결과 다음 행사부터 저녁 시간대로 조정하겠습니다."
+}
+
+// Response 201
+{
+  "id": 1,
+  "content": "검토 결과 다음 행사부터 저녁 시간대로 조정하겠습니다.",
+  "createdAt": "2025-01-22T09:00:00Z",
+  "emailSent": true
+}
+
+// Error 400 - 이미 답변 존재
+{ "code": "SUG008", "message": "이미 답변이 등록된 건의입니다" }
+```
+
+**POST /:id/memo** (OPERATOR 이상)
+```json
+// Request
+{
+  "content": "다음 임원 회의에서 논의 예정"
+}
+
+// Response 201
+{
+  "id": 1,
+  "content": "다음 임원 회의에서 논의 예정",
+  "createdBy": "관리자명",
+  "createdAt": "2025-01-22T10:00:00Z"
+}
 ```
 
 ---
@@ -1721,6 +2171,80 @@ User (1) ─────── (1) PasswordCredential
 | sentAt | DateTime | 발송 시각 (nullable) |
 | createdAt | DateTime | 생성일 |
 
+### PostView (게시글 조회 기록 - 조회수 중복 방지)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | PK |
+| postId | Long | 게시글 FK |
+| userId | Long | 사용자 FK (nullable, 비회원 조회 시 null) |
+| ipAddress | String | 접속 IP (비회원 조회 시 사용) |
+| viewedAt | DateTime | 조회 일시 |
+
+※ 동일 사용자/IP의 중복 조회수 증가 방지
+
+### CommentLike (댓글 좋아요)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | PK |
+| commentId | Long | 댓글 FK |
+| userId | Long | 사용자 FK |
+| createdAt | DateTime | 생성일 |
+
+※ UNIQUE 제약: (comment_id, user_id)
+※ 본인 댓글에는 좋아요 불가
+
+### CommentReport (댓글 신고)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | PK |
+| commentId | Long | 댓글 FK |
+| reporterId | Long | 신고자 FK |
+| reason | String | 신고 사유 |
+| status | Enum | PENDING, APPROVED, REJECTED |
+| processedAt | DateTime | 처리 일시 (nullable) |
+| processedBy | Long | 처리자 ID (nullable) |
+| createdAt | DateTime | 생성일 |
+
+※ 관리자(OPERATOR 이상) 검토 대기열에 추가
+
+### LoginAttempt (로그인 시도 제한 - Brute Force 방지)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | PK |
+| studentId | String | 학번 |
+| attemptCount | Integer | 시도 횟수 |
+| lastAttemptAt | DateTime | 마지막 시도 일시 |
+| lockedUntil | DateTime | 잠금 해제 시각 (nullable) |
+| createdAt | DateTime | 생성일 |
+
+※ 5회 연속 실패 시 계정 잠금 (15분간)
+※ 로그인 성공 시 시도 횟수 초기화
+
+### PasswordResetToken (비밀번호 재설정 토큰)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | PK |
+| userId | Long | 사용자 FK |
+| token | String | 재설정 토큰 (UUID) |
+| expiresAt | DateTime | 만료 시각 (기본 1시간) |
+| usedAt | DateTime | 사용 일시 (nullable) |
+| createdAt | DateTime | 생성일 |
+
+### SemesterMember (학기별 회원 명단)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | PK |
+| userId | Long | 사용자 FK |
+| year | Integer | 연도 (예: 2026) |
+| semester | Integer | 학기 (1 또는 2) |
+| role | Enum | 등록 시점 역할 (ASSOCIATE/MEMBER/OPERATOR/ADMIN) |
+| joinedAt | DateTime | 해당 학기 등록일 |
+| createdAt | DateTime | 생성일 |
+| createdBy | Long | 등록자 ID |
+
+※ UNIQUE 제약: (user_id, year, semester)
+※ 탈퇴 회원 포함하여 조회 가능 (soft delete 필터 우회)
+
 ---
 
 ## 성공 기준
@@ -1769,3 +2293,56 @@ User (1) ─────── (1) PasswordCredential
 - 모바일 앱
 - 결제 기능
 - 다국어 지원
+
+---
+
+## 변경 이력
+
+| 날짜 | 버전 | 변경 내용 | 작성자 |
+|------|------|----------|--------|
+| 2026-01-22 | 2.0 | 최초 작성 | - |
+| 2026-02-05 | 2.1 | 구현 현황 반영 | - |
+
+### v2.1 변경 상세 (2026-02-05)
+
+**추가된 엔티티:**
+- PostView (조회수 중복 방지)
+- CommentLike (댓글 좋아요)
+- CommentReport (댓글 신고)
+- LoginAttempt (로그인 시도 제한, Brute Force 방지)
+- PasswordResetToken (비밀번호 재설정 토큰)
+- SemesterMember (학기별 회원 명단)
+
+**추가된 기능:**
+- 댓글 좋아요/취소 (본인 댓글 불가)
+- 댓글 신고 및 관리자 검토
+- 댓글 멘션 (@사용자명) 및 알림
+- 조회수 중복 방지 (IP/사용자 기반)
+- 로그인 시도 횟수 제한 및 계정 잠금 (5회 실패 시 15분간)
+- 학기별 회원 등록/제외/조회 (ADMIN/OPERATOR)
+- 행사 선착순(AUTO_APPROVE)/선발제(MANUAL_APPROVE) 구분
+- 비회원 문의 비밀번호 검증
+
+**API 변경:**
+- 모든 API prefix를 `/api/v1/`로 통일
+- 인증 API path 변경: `/api/v1/auth/password/*`
+- 계정 복구 확인 API 추가: `GET /api/v1/auth/password/account/recovery-check`
+- 비밀번호 재설정 토큰 검증 API 추가: `GET /api/v1/auth/password/reset-validate`
+- 학기별 회원 API 추가: `/api/v1/semesters/*`, `/api/v1/admin/semesters/*`
+
+**상태 변경:**
+- 문서 상태: Draft → In Progress
+- 백엔드: 모든 기능 완전 구현
+- 프론트엔드: 주요 기능 구현 완료, 일부 관리자 페이지 개발 중
+
+---
+
+## 관련 문서
+
+- [인증 스펙](../auth/auth-spec.md)
+- [사용자 엔티티 설계](../auth/user-entity-design.md)
+- [게시판 스펙](../community/board-spec.md)
+- [게시글 스펙](../community/post-spec.md)
+- [댓글 스펙](../community/comment-spec.md)
+- [좋아요/북마크 스펙](../community/like-bookmark-spec.md)
+- [학기별 회원 명단 스펙](../member-list/member-list-spec.md)

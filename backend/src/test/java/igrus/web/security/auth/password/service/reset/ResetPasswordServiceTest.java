@@ -57,7 +57,7 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
     }
 
     private PasswordCredential createAndSaveCredential(User user) {
-        String encodedPassword = passwordEncoder.encode("OldPassword1!");
+        String encodedPassword = passwordEncoder.encode("oldpass12");
         PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
         return passwordCredentialRepository.save(credential);
     }
@@ -70,7 +70,7 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("30분 이내 유효한 토큰으로 비밀번호 변경 성공 [PWD-010]")
         void resetPassword_WithValidToken_ChangesPassword() {
             // given
-            String newPassword = "NewPassword1!";
+            String newPassword = "newpass12";
             User user = createAndSaveTestUser("20231234", "test@inha.edu");
             createAndSaveCredential(user);
 
@@ -94,7 +94,7 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("비밀번호 재설정 시 모든 기존 비밀번호 재설정 토큰 무효화 [PWD-013]")
         void resetPassword_InvalidatesAllPasswordResetTokens() {
             // given
-            String newPassword = "NewPassword1!";
+            String newPassword = "newpass12";
             User user = createAndSaveTestUser("20231234", "test@inha.edu");
             createAndSaveCredential(user);
 
@@ -118,7 +118,7 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("비밀번호 재설정 시 모든 리프레시 토큰 무효화 (모든 세션 종료) [PWD-013]")
         void resetPassword_RevokesAllRefreshTokens() {
             // given
-            String newPassword = "NewPassword1!";
+            String newPassword = "newpass12";
             User user = createAndSaveTestUser("20231234", "test@inha.edu");
             createAndSaveCredential(user);
 
@@ -149,7 +149,7 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("30분 경과 후 만료된 토큰으로 재설정 시도 시 실패 [PWD-020]")
         void resetPassword_WithExpiredToken_ThrowsException() {
             // given
-            String newPassword = "NewPassword1!";
+            String newPassword = "newpass12";
             User user = createAndSaveTestUser("20231234", "test@inha.edu");
             createAndSaveCredential(user);
 
@@ -168,7 +168,7 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("이미 사용된 토큰으로 재설정 시도 시 실패 [PWD-021]")
         void resetPassword_WithUsedToken_ThrowsException() {
             // given
-            String newPassword = "NewPassword1!";
+            String newPassword = "newpass12";
             User user = createAndSaveTestUser("20231234", "test@inha.edu");
             createAndSaveCredential(user);
 
@@ -187,7 +187,7 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         void resetPassword_WithInvalidToken_ThrowsException() {
             // given
             String token = "invalid-token-that-does-not-exist";
-            String newPassword = "NewPassword1!";
+            String newPassword = "newpass12";
 
             // when & then
             assertThatThrownBy(() -> resetPasswordService.resetPassword(token, newPassword))

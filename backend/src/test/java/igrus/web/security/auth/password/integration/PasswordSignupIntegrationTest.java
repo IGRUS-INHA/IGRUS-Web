@@ -77,7 +77,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
     private static final String VALID_STUDENT_ID = "20231234";
     private static final String VALID_NAME = "홍길동";
     private static final String VALID_EMAIL = "test@inha.edu";
-    private static final String VALID_PASSWORD = "Test1234!@";
+    private static final String VALID_PASSWORD = "testpass1";
     private static final String VALID_PHONE = "010-1234-5678";
     private static final String VALID_DEPARTMENT = "컴퓨터공학과";
     private static final String VALID_MOTIVATION = "프로그래밍을 배우고 싶습니다.";
