@@ -27,7 +27,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE RefreshToken r SET r.revoked = true, r.revokedAt = :now WHERE r.tokenFamily = :tokenFamily AND r.revoked = false")
-    void revokeAllByTokenFamily(@Param("tokenFamily") String tokenFamily, @Param("now") Instant now);
+    int revokeAllByTokenFamily(@Param("tokenFamily") String tokenFamily, @Param("now") Instant now);
 
     Optional<RefreshToken> findByTokenFamilyAndRevokedFalse(String tokenFamily);
 

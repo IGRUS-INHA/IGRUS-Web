@@ -94,7 +94,13 @@ class TogglePostLikeServiceTest {
             Long postId = DEFAULT_POST_ID;
             Long userId = DEFAULT_MEMBER_ID;
 
-            given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
+            // 원자적 UPDATE 후 재조회 시 반환할 게시글 (likeCount가 1로 증가된 상태)
+            Post reQueriedPost = normalPost(generalBoard, anotherMemberUser);
+            setField(reQueriedPost, "likeCount", 1);
+
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(normalPost))        // 최초 조회
+                    .willReturn(Optional.of(reQueriedPost));     // 원자적 UPDATE 후 재조회
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.empty());
             given(postLikeRepository.save(any(PostLike.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -123,7 +129,13 @@ class TogglePostLikeServiceTest {
             // 좋아요가 1개 있는 상태로 설정
             setField(normalPost, "likeCount", 1);
 
-            given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
+            // 원자적 UPDATE 후 재조회 시 반환할 게시글 (likeCount가 0으로 감소된 상태)
+            Post reQueriedPost = normalPost(generalBoard, anotherMemberUser);
+            setField(reQueriedPost, "likeCount", 0);
+
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(normalPost))        // 최초 조회
+                    .willReturn(Optional.of(reQueriedPost));     // 원자적 UPDATE 후 재조회
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.of(existingLike));
             given(postRepository.decrementLikeCount(postId)).willReturn(1);
@@ -148,7 +160,13 @@ class TogglePostLikeServiceTest {
             Long postId = DEFAULT_POST_ID;
             Long userId = DEFAULT_MEMBER_ID;
 
-            given(postRepository.findById(postId)).willReturn(Optional.of(ownPost));
+            // 원자적 UPDATE 후 재조회 시 반환할 게시글 (likeCount가 1로 증가된 상태)
+            Post reQueriedPost = normalPost(generalBoard, memberUser);
+            setField(reQueriedPost, "likeCount", 1);
+
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(ownPost))           // 최초 조회
+                    .willReturn(Optional.of(reQueriedPost));     // 원자적 UPDATE 후 재조회
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(ownPost, memberUser)).willReturn(Optional.empty());
             given(postLikeRepository.save(any(PostLike.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -277,7 +295,13 @@ class TogglePostLikeServiceTest {
             Long userId = DEFAULT_MEMBER_ID;
             int initialLikeCount = normalPost.getLikeCount();
 
-            given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
+            // 원자적 UPDATE 후 재조회 시 반환할 게시글
+            Post reQueriedPost = normalPost(generalBoard, anotherMemberUser);
+            setField(reQueriedPost, "likeCount", initialLikeCount + 1);
+
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(normalPost))        // 최초 조회
+                    .willReturn(Optional.of(reQueriedPost));     // 원자적 UPDATE 후 재조회
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.empty());
             given(postLikeRepository.save(any(PostLike.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -303,7 +327,13 @@ class TogglePostLikeServiceTest {
             setField(normalPost, "likeCount", 2); // 좋아요 2개 상태
             int initialLikeCount = normalPost.getLikeCount();
 
-            given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
+            // 원자적 UPDATE 후 재조회 시 반환할 게시글 (likeCount가 1로 감소된 상태)
+            Post reQueriedPost = normalPost(generalBoard, anotherMemberUser);
+            setField(reQueriedPost, "likeCount", initialLikeCount - 1);
+
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(normalPost))        // 최초 조회
+                    .willReturn(Optional.of(reQueriedPost));     // 원자적 UPDATE 후 재조회
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.of(existingLike));
             given(postRepository.decrementLikeCount(postId)).willReturn(1);

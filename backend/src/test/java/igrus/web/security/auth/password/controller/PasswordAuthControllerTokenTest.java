@@ -260,6 +260,23 @@ class PasswordAuthControllerTokenTest {
 
             verify(cookieUtil).deleteRefreshTokenCookie();
         }
+
+        @Test
+        @DisplayName("만료된 Refresh Token 시 401 반환 및 쿠키 삭제 [TKN-015]")
+        void refreshToken_withExpiredToken_returns401AndDeletesCookie() throws Exception {
+            // given
+            given(refreshTokenService.refreshToken(anyString()))
+                .willThrow(new RefreshTokenExpiredException());
+
+            // when & then
+            mockMvc.perform(post("/api/v1/auth/password/refresh")
+                    .cookie(new Cookie("refreshToken", EXPIRED_REFRESH_TOKEN)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_EXPIRED.getCode()))
+                .andExpect(header().exists("Set-Cookie"));
+
+            verify(cookieUtil).deleteRefreshTokenCookie();
+        }
     }
 
     @Nested

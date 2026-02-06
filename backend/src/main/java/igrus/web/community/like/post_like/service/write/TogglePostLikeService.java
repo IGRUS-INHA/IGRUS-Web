@@ -57,20 +57,30 @@ public class TogglePostLikeService {
         if (existingLike.isPresent()) {
             // 좋아요 취소 (Hard Delete)
             postLikeRepository.delete(existingLike.get());
-            postRepository.decrementLikeCount(postId);
+            int updated = postRepository.decrementLikeCount(postId);
+            if (updated == 0) {
+                log.warn("좋아요 카운터 감소 실패 - 게시글 없음 또는 카운트 이미 0: postId={}", postId);
+            }
 
-            int newLikeCount = Math.max(0, post.getLikeCount() - 1);
-            log.info("게시글 좋아요 취소 - postId: {}, userId: {}, likeCount: {}", postId, userId, newLikeCount);
-            return PostLikeToggleResponse.of(false, newLikeCount);
+            // 원자적 UPDATE 후 영속성 컨텍스트가 초기화되므로 재조회
+            post = postRepository.findById(postId)
+                    .orElseThrow(() -> new PostNotFoundException(postId));
+            log.info("게시글 좋아요 취소 - postId: {}, userId: {}, likeCount: {}", postId, userId, post.getLikeCount());
+            return PostLikeToggleResponse.of(false, post.getLikeCount());
         } else {
             // 좋아요 추가
             PostLike postLike = PostLike.create(post, user);
             postLikeRepository.save(postLike);
-            postRepository.incrementLikeCount(postId);
+            int updated = postRepository.incrementLikeCount(postId);
+            if (updated == 0) {
+                log.warn("좋아요 카운터 증가 실패 - 게시글 없음: postId={}", postId);
+            }
 
-            int newLikeCount = post.getLikeCount() + 1;
-            log.info("게시글 좋아요 추가 - postId: {}, userId: {}, likeCount: {}", postId, userId, newLikeCount);
-            return PostLikeToggleResponse.of(true, newLikeCount);
+            // 원자적 UPDATE 후 영속성 컨텍스트가 초기화되므로 재조회
+            post = postRepository.findById(postId)
+                    .orElseThrow(() -> new PostNotFoundException(postId));
+            log.info("게시글 좋아요 추가 - postId: {}, userId: {}, likeCount: {}", postId, userId, post.getLikeCount());
+            return PostLikeToggleResponse.of(true, post.getLikeCount());
         }
     }
 }

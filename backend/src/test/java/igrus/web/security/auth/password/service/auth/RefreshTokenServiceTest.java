@@ -305,6 +305,12 @@ class RefreshTokenServiceTest extends ServiceIntegrationTestBase {
             assertThat(result).isNotNull();
             assertThat(result.accessToken()).isNotNull().isNotEmpty();
             assertThat(result.newRefreshToken()).isNull();
+
+            // 발급된 Access Token이 활성 토큰의 사용자 정보를 포함하는지 검증
+            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(result.accessToken());
+            assertThat(jwtTokenProvider.getUserIdFromClaims(claims)).isEqualTo(user.getId());
+            assertThat(jwtTokenProvider.getStudentIdFromClaims(claims)).isEqualTo(user.getStudentId());
+            assertThat(jwtTokenProvider.getRoleFromClaims(claims)).isEqualTo(user.getRole().name());
         }
 
         @Test

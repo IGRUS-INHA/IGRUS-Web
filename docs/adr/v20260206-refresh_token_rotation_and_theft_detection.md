@@ -48,6 +48,18 @@
 - **Hibernate 6 JPQL 제약**: `CURRENT_TIMESTAMP`가 `Instant` 필드에 할당 불가 → 파라미터 `@Param("now") Instant now` + default 메서드 패턴으로 해결
 - **트랜잭션 롤백 방지**: 탈취 감지 시 Token Family 무효화가 롤백되지 않도록 `noRollbackFor` 적용
 
+### 리팩토링 (2026-02-07)
+
+PR #241 리뷰 반영 사항:
+
+- **`revokeAllByTokenFamily` 반환 타입**: `void` → `int` 변경. 탈취 감지 시 무효화된 토큰 수를 로깅하여 운영 가시성 확보
+- **Optimistic lock 예외 로깅**: `ObjectOptimisticLockingFailureException` catch 시 예외 객체(`e`)를 로그에 포함
+- **Grace Period 방어적 코딩**: `revokedToken.getUser()` 대신 `activeToken.getUser()`를 사용하여 JWT 발급. 토큰 패밀리 내 사용자 불일치 가능성에 대비
+- **`rotateWith()` 검증 강화**: `newToken` null 체크(`Objects.requireNonNull`) + 이미 revoked된 토큰에 대해 `IllegalStateException` throw (프로그래밍 에러 조기 감지). `revoke()`는 idempotent 유지
+- **`TokenRotationResult` 검증**: compact constructor에서 `accessToken` null 체크 + `accessTokenValidity > 0` 검증. `gracePeriod()` 팩토리 메서드 추가
+- **쿠키 정리 확장**: `PasswordAuthController`에서 `RefreshTokenExpiredException` 발생 시에도 만료된 쿠키를 삭제 (기존에는 `RefreshTokenTheftException`만 처리)
+- 전체 테스트 통과 (1317개, +8개 추가)
+
 ## 후속 조치
 
 - [ ] Refresh Token 정리 스케줄러: 만료된 토큰 체인(Token Family) 주기적 삭제
