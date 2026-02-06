@@ -1,13 +1,59 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useEvents } from '@/hooks/queries/useEvents';
 import EventCard from '@/components/feature/event/EventCard';
 import { useAuthStore } from '@/stores/authStore';
+import { FilterSelect } from '@/components/board/FilterSelect';
+import { EVENT_FILTER_STATUS, EVENT_FILTER_LABELS, type EventFilterStatus } from '@/constants/event';
+import type { GetEventListStatus } from '@/api/model/models/getEventListStatus';
+import type { EventListResponse } from '@/api/model/models/eventListResponse';
+import type { Event } from '@/types/entities';
 
 export default function EventListPage() {
   const navigate = useNavigate();
-  const { data: events, isLoading } = useEvents();
+  const [searchParams, setSearchParams] = useSearchParams();
   const user = useAuthStore((state) => state.user);
+
+  // URL 쿼리 파라미터에서 검색어 및 필터 상태 읽기
+  const searchKeyword = searchParams.get('search');
+  const filterStatus = (searchParams.get('status') as EventFilterStatus) ?? EVENT_FILTER_STATUS.ALL;
+
+  // 행사 목록 조회 (API에서 필터링)
+  const { data: eventsResponse, isLoading } = useEvents(
+    filterStatus === EVENT_FILTER_STATUS.ALL
+      ? { ...(searchKeyword && { keyword: searchKeyword }) }
+      : {
+          status: filterStatus as GetEventListStatus,
+          ...(searchKeyword && { keyword: searchKeyword })
+        }
+  );
+
+  // Extract and transform API response to Event type
+  const eventListData = (eventsResponse?.data as unknown as EventListResponse[]) ?? [];
+  const events: Event[] = eventListData.map((apiEvent) => ({
+    id: String(apiEvent.id ?? ''),
+    title: apiEvent.title ?? '',
+    description: '', // API doesn't provide description in list view
+    date: apiEvent.eventStartAt ?? '',
+    location: apiEvent.location ?? '',
+    status: (apiEvent.status as Event['status']) ?? 'UPCOMING',
+    ...(apiEvent.eventStartAt && { startDate: apiEvent.eventStartAt }),
+    ...(apiEvent.eventEndAt && { endDate: apiEvent.eventEndAt }),
+    ...(apiEvent.capacity !== undefined && { capacity: apiEvent.capacity }),
+    ...(apiEvent.currentCount !== undefined && { currentCount: apiEvent.currentCount }),
+    ...(apiEvent.registrationEndAt && { registrationDeadline: apiEvent.registrationEndAt }),
+  }));
+
+  // 필터 변경 핸들러
+  const handleFilterChange = (newStatus: EventFilterStatus) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (newStatus === EVENT_FILTER_STATUS.ALL) {
+      newParams.delete('status');
+    } else {
+      newParams.set('status', newStatus);
+    }
+    setSearchParams(newParams);
+  };
 
   // OPERATOR 이상만 행사 작성 가능
   const canCreateEvent = user?.role === 'OPERATOR' || user?.role === 'ADMIN';
@@ -21,9 +67,14 @@ export default function EventListPage() {
   }
 
   return (
-    <div className="animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-center mb-s6">
-        <h2 className="text-2xl font-bold">Upcoming Events</h2>
+    <div className="space-y-s8 animate-in fade-in duration-300">
+      {/* Header with Filter and Actions */}
+      <div className="flex items-center gap-s4 border-b border-border pb-s4">
+        <FilterSelect
+          value={filterStatus}
+          onChange={handleFilterChange}
+          options={EVENT_FILTER_LABELS}
+        />
         {canCreateEvent && (
           <button
             type="button"
@@ -35,6 +86,7 @@ export default function EventListPage() {
         )}
       </div>
 
+      {/* Event List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-s8">
         {events?.map((event) => (
           <div
@@ -47,9 +99,12 @@ export default function EventListPage() {
         ))}
       </div>
 
+      {/* Empty State */}
       {events?.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          등록된 행사가 없습니다.
+          {filterStatus !== EVENT_FILTER_STATUS.ALL || searchKeyword
+            ? '검색 조건에 맞는 행사가 없습니다.'
+            : '등록된 행사가 없습니다.'}
         </div>
       )}
     </div>
