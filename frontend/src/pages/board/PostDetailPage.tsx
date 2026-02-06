@@ -5,35 +5,44 @@ import {
   Heart,
   MessageCircle,
   MoreHorizontal,
-  Send,
-  User as UserIcon,
   AlertTriangle,
-  UserX,
   Bookmark,
+  Edit,
+  Trash2,
 } from 'lucide-react';
-import { useGetPostDetail } from '@/api/model/post/post';
+import { useGetPostDetail, useDeletePost } from '@/api/model/post/post';
 import { useToggleLike } from '@/api/model/post-like/post-like';
 import { useUIStore } from '@/stores';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
+import { CommentSection } from '@/components/feature/comment';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
+import { useMockData } from '@/hooks/useMockData';
+import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
 
 export default function PostDetailPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
   const navigate = useNavigate();
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
+  const isMockMode = useMockData();
 
-  // Fetch post data
-  const { data: response, isLoading } = useGetPostDetail(
+  // Fetch post data (Mock 또는 실제 API)
+  const realQuery = useGetPostDetail(
     boardType as string,
-    Number(postId)
+    Number(postId),
+    {
+      query: { enabled: !isMockMode },
+    }
   );
+  const mockQuery = useMockPostDetail(boardType as string, Number(postId));
+
+  const { data: response, isLoading } = isMockMode ? mockQuery : realQuery;
   const post = response?.data;
 
   // Local state
   const [isScrapped, setIsScrapped] = useState(false);
-  const [comment, setComment] = useState('');
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   // Refs
@@ -41,6 +50,8 @@ export default function PostDetailPage() {
 
   // Mutations
   const toggleLike = useToggleLike();
+  const queryClient = useQueryClient();
+  const deletePost = useDeletePost();
 
   // Click outside handler
   useEffect(() => {
@@ -78,22 +89,41 @@ export default function PostDetailPage() {
     // TODO: Implement report API call
   };
 
-  const handleBlock = () => {
-    if (!post?.authorName) return;
-    alert(`${post.authorName}님을 차단했습니다.`);
+  const handleEdit = () => {
+    navigate(`/board/${boardType}/${postId}/edit`);
     setIsMoreMenuOpen(false);
-    // TODO: Implement block API call
+  };
+
+  const handleDelete = () => {
+    if (!window.confirm('이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다.')) {
+      return;
+    }
+
+    deletePost.mutate(
+      {
+        boardCode: boardType as string,
+        postId: Number(postId),
+      },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({
+            queryKey: [`/api/v1/boards/${boardType}/posts`],
+          });
+          navigate(`/board/${boardType}`);
+        },
+        onError: (error: any) => {
+          let errorMessage = '게시글 삭제에 실패했습니다.';
+          if (error.message?.includes('403')) errorMessage = '삭제 권한이 없습니다.';
+          else if (error.message?.includes('404')) errorMessage = '게시글을 찾을 수 없습니다.';
+          alert(errorMessage);
+        },
+      }
+    );
+    setIsMoreMenuOpen(false);
   };
 
   const handleBack = () => {
     navigate(`/board/${boardType}`);
-  };
-
-  const handleCommentSubmit = () => {
-    if (!comment.trim()) return;
-    console.log('댓글 작성:', comment);
-    setComment('');
-    // TODO: Implement comment creation API call
   };
 
   if (isLoading) {
@@ -174,26 +204,40 @@ export default function PostDetailPage() {
                 <div
                   className={cn(
                     'absolute right-0 top-full mt-2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200',
-                    isDark ? 'bg-[#252525] border-white/10' : 'bg-background border-border'
+                    'bg-popover border-border'
                   )}
                 >
-                  <button
-                    onClick={handleReport}
-                    type="button"
-                    className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer"
-                  >
-                    <AlertTriangle size={16} /> 신고하기
-                  </button>
-                  <button
-                    onClick={handleBlock}
-                    type="button"
-                    className={cn(
-                      'w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer',
-                      isDark ? 'text-foreground hover:bg-white/5' : 'text-muted-foreground hover:bg-muted'
-                    )}
-                  >
-                    <UserX size={16} /> 작성자 차단
-                  </button>
+                  {post.isAuthor ? (
+                    // 작성자: 수정/삭제
+                    <>
+                      <button
+                        onClick={handleEdit}
+                        type="button"
+                        className={cn(
+                          'w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer',
+                          isDark ? 'text-foreground hover:bg-white/5' : 'text-foreground hover:bg-muted'
+                        )}
+                      >
+                        <Edit size={16} /> 수정하기
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        type="button"
+                        className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={16} /> 삭제하기
+                      </button>
+                    </>
+                  ) : (
+                    // 비작성자: 신고만
+                    <button
+                      onClick={handleReport}
+                      type="button"
+                      className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer"
+                    >
+                      <AlertTriangle size={16} /> 신고하기
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -253,7 +297,7 @@ export default function PostDetailPage() {
             )}
           >
             <MessageCircle size={20} />
-            {post.commentCount ?? 0}
+            {(post && 'commentCount' in post ? post.commentCount : 0) ?? 0}
           </button>
 
           <button
@@ -275,69 +319,13 @@ export default function PostDetailPage() {
       </article>
 
       {/* Comments Section */}
-      <Card className={cn('p-s8 rounded-[2.5rem] border', isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm')}>
-        <h3 className="text-xl font-bold mb-s6">댓글 ({post.commentCount ?? 0})</h3>
-
-        {/* Comment Input */}
-        <div className="flex gap-s4 mb-s8">
-          <div
-            className={cn(
-              'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-              isDark ? 'bg-white/10' : 'bg-muted'
-            )}
-          >
-            <UserIcon size={20} className="text-muted-foreground" />
-          </div>
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleCommentSubmit();
-                }
-              }}
-              placeholder="댓글을 입력하세요..."
-              className={cn(
-                'w-full rounded-r4 px-5 py-s3 pr-12 border focus:outline-none focus:border-primary transition-all',
-                isDark ? 'bg-white/5 border-border' : 'bg-muted/50 border-border'
-              )}
-            />
-            <button
-              onClick={handleCommentSubmit}
-              type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-s2 text-primary hover:bg-primary/10 rounded-lg transition cursor-pointer"
-            >
-              <Send size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Mock Comments List */}
-        <div className="space-y-s6">
-          {[1, 2].map((_, i) => (
-            <div key={i} className="flex gap-s4">
-              <div
-                className={cn(
-                  'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0',
-                  isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
-                )}
-              >
-                {i === 0 ? 'JD' : 'AL'}
-              </div>
-              <div>
-                <div className="flex items-center gap-s2 mb-1">
-                  <span className="font-bold text-sm">{i === 0 ? 'John Doe' : 'Alice Lee'}</span>
-                  <span className="text-xs text-muted-foreground">2시간 전</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {i === 0 ? '정말 유익한 정보네요! 공유 감사합니다.' : '세 번째 내용에 대해 좀 더 자세히 설명해주실 수 있나요?'}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+      <Card
+        className={cn(
+          'p-s8 rounded-[2.5rem] border',
+          isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'
+        )}
+      >
+        <CommentSection postId={Number(postId)} />
       </Card>
     </div>
   );
