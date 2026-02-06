@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -66,4 +67,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      */
     @Query("SELECT c FROM Comment c JOIN FETCH c.post WHERE c.author.id = :authorId AND c.deleted = false ORDER BY c.createdAt DESC")
     Page<Comment> findByAuthorIdAndDeletedFalseOrderByCreatedAtDesc(@Param("authorId") Long authorId, Pageable pageable);
+
+    /**
+     * 특정 시각 이후에 생성된 삭제되지 않은 댓글 수를 조회합니다.
+     *
+     * @param startTime 기준 시각
+     * @return 댓글 수
+     */
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.deleted = false AND c.createdAt >= :startTime")
+    long countByDeletedFalseAndCreatedAtAfter(@Param("startTime") Instant startTime);
 }
