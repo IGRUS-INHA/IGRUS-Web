@@ -20,6 +20,19 @@ IGRUS Web 프론트엔드 - React + Vite 기반 SPA
 * **패키지 매니저는 pnpm 고정**
 * **코드 포맷팅/타입 체크 명령 실행 금지** (`pnpm format`, `pnpm lint`, `pnpm tsc --noEmit` 등 금지 - VSCode에서 자동 처리)
 
+## 1.3 Git 커밋 규칙
+
+* **커밋 전 반드시 사용자에게 커밋 메시지 확인 받을 것**
+* 커밋 메시지를 작성한 후, 사용자에게 보여주고 승인을 받은 후에만 커밋 실행
+* 사용자 승인 없이 절대 커밋하지 말 것
+
+**커밋 프로세스:**
+1. `git status`, `git diff`로 변경사항 확인
+2. 커밋 메시지 초안 작성
+3. **사용자에게 커밋 메시지 확인 요청 (필수)**
+4. 사용자 승인 후 `git add` 및 `git commit` 실행
+5. `git status`로 커밋 완료 확인
+
 ---
 
 # 2. TypeScript 규칙
@@ -565,3 +578,116 @@ const { register } = useForm<EditUserForm>({
   },
 });
 ```
+
+---
+
+# 6. 테스트 가이드
+
+## 6.1 테스트 원칙
+
+* **모든 사용자 테스트 시나리오는 반드시 문서화**
+* **테스트 문서는 항상 최신 상태 유지**
+* **기능 추가/수정 시 테스트 시나리오도 함께 업데이트**
+
+## 6.2 테스트 문서 위치
+
+### 중앙 테스트 폴더
+**[docs/testing/](docs/testing/)** - 모든 E2E 테스트 가이드
+
+테스트 폴더 전체 개요는 **[docs/README.md](docs/README.md#testing---e2e-테스트-가이드)** 참고
+
+각 파일은 해당 기능의 **Playwright 자동화 테스트**와 **수동 브라우저 테스트** 시나리오를 포함합니다:
+
+- **[auth-test-guide.md](docs/testing/auth-test-guide.md)** - 인증 (회원가입, 이메일 인증, 로그인)
+- **[inquiries-test-guide.md](docs/testing/inquiries-test-guide.md)** - 문의 (문의 목록 조회, 문의 작성)
+- **[posts-test-guide.md](docs/testing/posts-test-guide.md)** - 게시판 (게시글 CRUD, 좋아요)
+- **events-test-guide.md** (예정) - 이벤트
+- **admin-test-guide.md** (예정) - 관리자
+
+### 기능별 마이그레이션 문서
+- [docs/migration/auth-inquiries-orval-migration.md](docs/migration/auth-inquiries-orval-migration.md) - Auth & Inquiries API 마이그레이션
+- [docs/migration/orval-api-migration.md](docs/migration/orval-api-migration.md) - Posts API 마이그레이션
+
+## 6.3 테스트 시나리오 작성 규칙
+
+새로운 기능을 추가하거나 기존 기능을 수정할 때는 반드시 다음 작업을 수행:
+
+1. **해당 기능의 테스트 가이드 파일에 테스트 시나리오 추가**
+   - Auth 기능: [auth-test-guide.md](docs/testing/auth-test-guide.md)
+   - Inquiries 기능: [inquiries-test-guide.md](docs/testing/inquiries-test-guide.md)
+   - Posts 기능: [posts-test-guide.md](docs/testing/posts-test-guide.md)
+   - 새로운 기능: 새 파일 생성 (예: events-test-guide.md)
+   - 수동 브라우저 테스트 섹션에 시나리오 추가
+   - Playwright 자동화 테스트 섹션에 예제 코드 추가
+
+2. **테스트 시나리오 구성 요소**:
+   - 시나리오 설명
+   - 테스트 단계 (1, 2, 3...)
+   - 예상 결과
+   - Network 탭 확인 사항
+   - Console 탭 확인 사항
+
+3. **예시**:
+   ```markdown
+   #### X.X 새로운 기능 테스트
+   **시나리오**: 기능 설명
+
+   1. 사용자 액션 1
+   2. 사용자 액션 2
+   3. **예상 결과**:
+      - UI 변화
+      - 상태 변화
+   4. **Network 탭 확인**:
+      - URL: `POST .../api/v1/...`
+      - Status: 200 OK
+   5. **Console 탭 확인**:
+      - 에러 없음
+   ```
+
+## 6.4 Playwright 설치 및 실행
+
+### 6.4.1 설치
+
+```bash
+pnpm add -D @playwright/test
+npx playwright install
+```
+
+### 6.4.2 테스트 실행
+
+```bash
+# 모든 테스트 실행
+npx playwright test
+
+# 특정 테스트 파일
+npx playwright test e2e/auth/signup.spec.ts
+
+# UI 모드 (디버깅)
+npx playwright test --ui
+
+# 헤드풀 모드 (브라우저 표시)
+npx playwright test --headed
+```
+
+## 6.5 테스트 커버리지
+
+현재 테스트 문서에 포함된 기능:
+
+- ✅ **Auth**: 회원가입, 이메일 인증, 로그인, 에러 처리
+- ✅ **Inquiries**: 문의 목록 조회, 문의 작성
+- ✅ **Posts**: 게시글 목록/상세 조회, 좋아요, 작성
+- ⏸️ **Events**: 문서화 예정
+- ⏸️ **Admin**: 문서화 예정
+
+## 6.6 테스트 업데이트 체크리스트
+
+기능 수정 시 다음 항목을 확인:
+
+- [ ] 해당 기능의 테스트 가이드 파일에 수동 테스트 시나리오 추가/수정
+  - Auth: [auth-test-guide.md](docs/testing/auth-test-guide.md)
+  - Inquiries: [inquiries-test-guide.md](docs/testing/inquiries-test-guide.md)
+  - Posts: [posts-test-guide.md](docs/testing/posts-test-guide.md)
+- [ ] Playwright 자동화 테스트 코드 예시 추가/수정
+- [ ] 관련 마이그레이션 문서 업데이트 (있는 경우)
+- [ ] 변경된 API endpoint 문서화
+- [ ] 에러 케이스 추가 (있는 경우)
