@@ -1,6 +1,8 @@
 package igrus.web.community.comment.repository;
 
 import igrus.web.community.comment.domain.Comment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -54,4 +56,14 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      * @return 작성자가 맞으면 true
      */
     boolean existsByIdAndAuthorId(Long id, Long authorId);
+
+    /**
+     * 특정 사용자가 작성한 삭제되지 않은 댓글을 최신순으로 페이징 조회합니다.
+     *
+     * @param authorId 작성자 ID
+     * @param pageable 페이징 정보
+     * @return 댓글 페이지
+     */
+    @Query("SELECT c FROM Comment c JOIN FETCH c.post WHERE c.author.id = :authorId AND c.deleted = false ORDER BY c.createdAt DESC")
+    Page<Comment> findByAuthorIdAndDeletedFalseOrderByCreatedAtDesc(@Param("authorId") Long authorId, Pageable pageable);
 }

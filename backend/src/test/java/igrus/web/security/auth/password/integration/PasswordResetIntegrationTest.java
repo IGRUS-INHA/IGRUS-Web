@@ -64,8 +64,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
     private static final long PASSWORD_RESET_EXPIRY = 1800000L; // 30분
     private static final String TEST_STUDENT_ID = "12345678";
     private static final String TEST_EMAIL = "test@inha.edu";
-    private static final String TEST_PASSWORD = "OldPass1!@";
-    private static final String VALID_NEW_PASSWORD = "NewPass1!@";
+    private static final String TEST_PASSWORD = "oldpass12";
+    private static final String VALID_NEW_PASSWORD = "newpass12";
 
     @BeforeEach
     void setUp() {
@@ -387,7 +387,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveCredential(user);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
-            String shortPassword = "Pass1!";
+            String shortPassword = "pass1";
 
             // when & then
             assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, shortPassword))
@@ -395,32 +395,17 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("[PWD-007] 비밀번호 정책 위반으로 변경 실패 - 대문자 미포함")
-        void resetPassword_withoutUppercase_throwsException() {
+        @DisplayName("[PWD-007] 비밀번호 정책 위반으로 변경 실패 - 영문 미포함")
+        void resetPassword_withoutLetter_throwsException() {
             // given
             User user = createAndSaveTestUser();
             createAndSaveCredential(user);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
-            String noUppercasePassword = "password1!";
+            String noLetterPassword = "12345678";
 
             // when & then
-            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, noUppercasePassword))
-                    .isInstanceOf(InvalidPasswordFormatException.class);
-        }
-
-        @Test
-        @DisplayName("[PWD-007] 비밀번호 정책 위반으로 변경 실패 - 소문자 미포함")
-        void resetPassword_withoutLowercase_throwsException() {
-            // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
-            String tokenString = UUID.randomUUID().toString();
-            createAndSaveValidResetToken(user, tokenString);
-            String noLowercasePassword = "PASSWORD1!";
-
-            // when & then
-            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, noLowercasePassword))
+            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, noLetterPassword))
                     .isInstanceOf(InvalidPasswordFormatException.class);
         }
 
@@ -432,25 +417,10 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveCredential(user);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
-            String noNumberPassword = "Password!@";
+            String noNumberPassword = "password";
 
             // when & then
             assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, noNumberPassword))
-                    .isInstanceOf(InvalidPasswordFormatException.class);
-        }
-
-        @Test
-        @DisplayName("[PWD-007] 비밀번호 정책 위반으로 변경 실패 - 특수문자 미포함")
-        void resetPassword_withoutSpecialChar_throwsException() {
-            // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
-            String tokenString = UUID.randomUUID().toString();
-            createAndSaveValidResetToken(user, tokenString);
-            String noSpecialCharPassword = "Password123";
-
-            // when & then
-            assertThatThrownBy(() -> resetPasswordService.resetPassword(tokenString, noSpecialCharPassword))
                     .isInstanceOf(InvalidPasswordFormatException.class);
         }
 
@@ -462,7 +432,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveCredential(user);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
-            String validPassword = "ValidPass1!@";
+            String validPassword = "validpass1";
 
             // when
             resetPasswordService.resetPassword(tokenString, validPassword);

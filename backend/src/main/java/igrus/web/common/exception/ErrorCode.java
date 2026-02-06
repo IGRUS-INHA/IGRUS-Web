@@ -56,7 +56,9 @@ public enum ErrorCode {
     VERIFICATION_ATTEMPTS_EXCEEDED(429, "인증 시도 횟수를 초과했습니다"),
     DUPLICATE_STUDENT_ID(409, "이미 가입된 학번입니다"),
     DUPLICATE_PHONE_NUMBER(409, "이미 등록된 전화번호입니다"),
-    INVALID_PASSWORD_FORMAT(400, "비밀번호는 영문 대/소문자, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다"),
+    INVALID_PASSWORD_FORMAT(400, "비밀번호는 영문, 숫자를 포함하여 8자 이상이어야 합니다"),
+    SAME_PASSWORD(400, "현재 비밀번호와 다른 비밀번호를 입력해주세요"),
+
     PRIVACY_CONSENT_REQUIRED(400, "개인정보 처리방침 동의가 필요합니다"),
     ACCOUNT_SUSPENDED(403, "정지된 계정입니다"),
     ACCOUNT_WITHDRAWN(403, "탈퇴한 계정입니다"),
