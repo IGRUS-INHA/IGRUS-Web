@@ -61,6 +61,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
 
     private static final long ACCESS_TOKEN_VALIDITY = 3600000L; // 1시간
     private static final long REFRESH_TOKEN_VALIDITY = 604800000L; // 7일
+    private static final long REFRESH_TOKEN_GRACE_PERIOD = 10000L; // 10초
     private static final long VERIFICATION_CODE_EXPIRY = 600000L; // 10분
 
     private static final String TEST_STUDENT_ID = "12345678";
@@ -106,6 +107,8 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
         ReflectionTestUtils.setField(loginService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(loginService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "gracePeriodMillis", REFRESH_TOKEN_GRACE_PERIOD);
         ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
         ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", 5);
         ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
@@ -200,7 +203,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
     class TokenRefreshFlowTest {
 
         @Test
-        @DisplayName("E2E-HTTP-002: 로그인 → 토큰 갱신 → 새 토큰으로 검증")
+        @DisplayName("E2E-HTTP-002: 로그인 → 토큰 갱신 → 새 토큰으로 검증 (로테이션 포함)")
         void tokenRefreshFlow_viaHttp() throws Exception {
             // === Setup: 인증된 사용자 생성 ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
@@ -222,7 +225,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             String refreshToken = extractRefreshTokenFromCookie(loginResult);
             assertThat(refreshToken).isNotNull();
 
-            // === Step 2: POST /refresh (쿠키로) → 새 Access Token 발급 ===
+            // === Step 2: POST /refresh (쿠키로) → 새 Access Token + 새 Refresh Token 발급 ===
             MvcResult refreshResult = mockMvc.perform(post(API_BASE_PATH + "/refresh")
                             .cookie(new Cookie("refreshToken", refreshToken)))
                     .andExpect(status().isOk())
@@ -236,13 +239,18 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Step 3: 새 Access Token이 다른 것 확인 ===
             assertThat(newAccessToken).isNotEqualTo(originalAccessToken);
 
-            // === Step 4: 새 Access Token으로 사용자 정보 검증 ===
+            // === Step 4: Set-Cookie 헤더에 새 Refresh Token 포함 확인 ===
+            String newRefreshToken = extractRefreshTokenFromCookie(refreshResult);
+            assertThat(newRefreshToken).isNotNull();
+            assertThat(newRefreshToken).isNotEqualTo(refreshToken);
+
+            // === Step 5: 새 Access Token으로 사용자 정보 검증 ===
             var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(newAccessToken);
             assertThat(jwtTokenProvider.getUserIdFromClaims(claims)).isEqualTo(user.getId());
         }
 
         @Test
-        @DisplayName("E2E-HTTP-003: 여러 번 토큰 갱신해도 항상 새로운 토큰 발급")
+        @DisplayName("E2E-HTTP-003: 연쇄 토큰 갱신 시 매번 새 Refresh Token으로 갱신")
         void multipleTokenRefreshes_viaHttp() throws Exception {
             // === Setup ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
@@ -258,24 +266,27 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andReturn();
 
-            String refreshToken = extractRefreshTokenFromCookie(loginResult);
-            assertThat(refreshToken).isNotNull();
+            String currentRefreshToken = extractRefreshTokenFromCookie(loginResult);
+            assertThat(currentRefreshToken).isNotNull();
 
-            // === 여러 번 갱신 (쿠키로) ===
+            // === 연쇄 갱신 - 매번 새 Refresh Token 사용 ===
             MvcResult refresh1 = mockMvc.perform(post(API_BASE_PATH + "/refresh")
-                            .cookie(new Cookie("refreshToken", refreshToken)))
+                            .cookie(new Cookie("refreshToken", currentRefreshToken)))
                     .andExpect(status().isOk())
                     .andReturn();
 
+            String refreshToken1 = extractRefreshTokenFromCookie(refresh1);
+            assertThat(refreshToken1).isNotNull().isNotEqualTo(currentRefreshToken);
+
             MvcResult refresh2 = mockMvc.perform(post(API_BASE_PATH + "/refresh")
-                            .cookie(new Cookie("refreshToken", refreshToken)))
+                            .cookie(new Cookie("refreshToken", refreshToken1)))
                     .andExpect(status().isOk())
                     .andReturn();
 
             String token1 = objectMapper.readTree(refresh1.getResponse().getContentAsString()).get("accessToken").asText();
             String token2 = objectMapper.readTree(refresh2.getResponse().getContentAsString()).get("accessToken").asText();
 
-            // 서로 다른 토큰
+            // 서로 다른 Access Token
             assertThat(token1).isNotEqualTo(token2);
         }
     }
@@ -370,13 +381,18 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Step 4: Device A 토큰 무효화 확인 ===
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(deviceARefreshToken)).isEmpty();
 
-            // === Step 5: Device B 토큰 유효 확인 ===
+            // === Step 5: Device B 토큰 유효 확인 및 갱신 가능 ===
             assertThat(refreshTokenRepository.findByTokenAndRevokedFalse(deviceBRefreshToken)).isPresent();
 
-            // Device B로 토큰 갱신 가능
-            mockMvc.perform(post(API_BASE_PATH + "/refresh")
+            // Device B로 토큰 갱신 가능 (로테이션 포함)
+            MvcResult deviceBRefreshResult = mockMvc.perform(post(API_BASE_PATH + "/refresh")
                             .cookie(new Cookie("refreshToken", deviceBRefreshToken)))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isOk())
+                    .andReturn();
+
+            // Device B의 새 Refresh Token 발급 확인
+            String newDeviceBRefreshToken = extractRefreshTokenFromCookie(deviceBRefreshResult);
+            assertThat(newDeviceBRefreshToken).isNotNull().isNotEqualTo(deviceBRefreshToken);
         }
 
         @Test

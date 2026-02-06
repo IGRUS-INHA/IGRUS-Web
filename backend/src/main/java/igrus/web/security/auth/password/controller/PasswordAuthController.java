@@ -17,6 +17,7 @@ import igrus.web.security.auth.password.dto.request.PasswordResetRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
@@ -190,12 +191,21 @@ public class PasswordAuthController {
             )
     })
     @PostMapping("/refresh")
-    public ResponseEntity<TokenRefreshResponse> refreshToken(HttpServletRequest httpRequest) {
+    public ResponseEntity<TokenRefreshResponse> refreshToken(
+            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         String refreshToken = cookieUtil.getRefreshTokenFromCookies(httpRequest)
                 .orElseThrow(RefreshTokenInvalidException::new);
 
-        TokenRefreshResponse response = refreshTokenService.refreshToken(refreshToken);
-        return ResponseEntity.ok(response);
+        TokenRotationResult result = refreshTokenService.refreshToken(refreshToken);
+
+        // 새 리프레시 토큰을 HttpOnly 쿠키로 설정
+        ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
+                result.newRefreshToken(),
+                Duration.ofMillis(result.refreshTokenValidity())
+        );
+        httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return ResponseEntity.ok(result.toResponse());
     }
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다. 등록 후 이메일 인증이 필요합니다.")

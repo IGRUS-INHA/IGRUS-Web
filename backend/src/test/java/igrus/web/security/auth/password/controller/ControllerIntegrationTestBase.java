@@ -48,6 +48,7 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
 
     protected static final long ACCESS_TOKEN_VALIDITY = 3600000L; // 1시간
     protected static final long REFRESH_TOKEN_VALIDITY = 604800000L; // 7일
+    protected static final long REFRESH_TOKEN_GRACE_PERIOD = 10000L; // 10초
     protected static final long VERIFICATION_CODE_EXPIRY = 600000L; // 10분
     protected static final int MAX_VERIFICATION_ATTEMPTS = 5;
     protected static final long RESEND_RATE_LIMIT_SECONDS = 60L;
@@ -107,6 +108,8 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
         ReflectionTestUtils.setField(loginService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(loginService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "gracePeriodMillis", REFRESH_TOKEN_GRACE_PERIOD);
         ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
         ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", MAX_VERIFICATION_ATTEMPTS);
         ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
