@@ -21,12 +21,12 @@ public record PasswordSignupRequest(
     @Email(message = "유효한 이메일 형식이 아닙니다")
     String email,
 
-    @Schema(description = "비밀번호 (영문 대/소문자, 숫자, 특수문자 포함 8~72자)", example = "Password1!", format = "password")
+    @Schema(description = "비밀번호 (영문, 숫자 포함 8~72자)", example = "password1", format = "password")
     @NotBlank(message = "비밀번호는 필수입니다")
     @Size(min = 8, max = 72, message = "비밀번호는 8자 이상 72자 이하여야 합니다")
     @Pattern(
-        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,72}$",
-        message = "비밀번호는 영문 대/소문자, 숫자, 특수문자를 포함하여 8자 이상 72자 이하여야 합니다"
+        regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,72}$",
+        message = "비밀번호는 영문, 숫자를 포함하여 8자 이상 72자 이하여야 합니다"
     )
     String password,
 

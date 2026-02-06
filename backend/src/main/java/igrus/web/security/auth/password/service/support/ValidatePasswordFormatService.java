@@ -18,13 +18,12 @@ public class ValidatePasswordFormatService {
     /**
      * 비밀번호 복잡도 정규식
      * - 최소 8자 이상
-     * - 영문 대문자 1개 이상
-     * - 영문 소문자 1개 이상
+     * - 영문 1개 이상 (대소문자 구분 없음)
      * - 숫자 1개 이상
-     * - 특수문자 1개 이상
+     * - 특수문자 선택
      */
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$"
+            "^(?=.*[A-Za-z])(?=.*\\d).{8,}$"
     );
 
     /**

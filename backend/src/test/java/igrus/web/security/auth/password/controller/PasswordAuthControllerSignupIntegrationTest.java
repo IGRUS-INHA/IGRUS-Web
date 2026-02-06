@@ -199,12 +199,12 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
         }
 
         @Test
-        @DisplayName("[REG-013] 비밀번호 정책 미충족 (소문자 없음) - 400 Bad Request 응답")
-        void signup_withPasswordMissingLowercase_returns400() throws Exception {
+        @DisplayName("[REG-013] 비밀번호 정책 미충족 (영문 없음) - 400 Bad Request 응답")
+        void signup_withPasswordMissingLetter_returns400() throws Exception {
             // given
             PasswordSignupRequest request = createSignupRequest(
                     TEST_STUDENT_ID, TEST_NAME, TEST_EMAIL,
-                    "TESTPASS1!@", // 소문자 없음
+                    "12345678", // 영문 없음
                     TEST_PHONE, TEST_DEPARTMENT,
                     TEST_MOTIVATION, true
             );
@@ -215,12 +215,12 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
         }
 
         @Test
-        @DisplayName("[REG-014] 비밀번호 정책 미충족 (특수문자 없음) - 400 Bad Request 응답")
-        void signup_withPasswordMissingSpecialChar_returns400() throws Exception {
+        @DisplayName("[REG-014] 비밀번호 정책 미충족 (숫자 없음) - 400 Bad Request 응답")
+        void signup_withPasswordMissingDigit_returns400() throws Exception {
             // given
             PasswordSignupRequest request = createSignupRequest(
                     TEST_STUDENT_ID, TEST_NAME, TEST_EMAIL,
-                    "TestPass123", // 특수문자 없음
+                    "password", // 숫자 없음
                     TEST_PHONE, TEST_DEPARTMENT,
                     TEST_MOTIVATION, true
             );

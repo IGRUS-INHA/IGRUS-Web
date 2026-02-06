@@ -66,7 +66,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
     private static final String TEST_STUDENT_ID = "12345678";
     private static final String TEST_NAME = "홍길동";
     private static final String TEST_EMAIL = "test@inha.edu";
-    private static final String TEST_PASSWORD = "TestPass1!@";
+    private static final String TEST_PASSWORD = "testpass1";
     private static final String TEST_PHONE = "010-1234-5678";
     private static final String TEST_DEPARTMENT = "컴퓨터공학과";
     private static final String TEST_MOTIVATION = "동아리 활동을 열심히 하고 싶습니다.";
@@ -461,7 +461,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             passwordCredentialRepository.save(credential);
 
             // === 잘못된 비밀번호로 로그인 ===
-            PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, "WrongPassword1!@");
+            PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, "wrongpass1");
 
             mockMvc.perform(post(API_BASE_PATH + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
