@@ -147,4 +147,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      */
     @EntityGraph(attributePaths = {"author", "board", "images"})
     Optional<Post> findByBoardAndIdAndDeletedFalse(Board board, Long postId);
+
+    /**
+     * 특정 기간 내 작성된 삭제되지 않은 게시글 수를 조회합니다.
+     *
+     * @param start 시작 시각 (포함)
+     * @param end   종료 시각 (미포함)
+     * @return 게시글 수
+     */
+    @Query("SELECT COUNT(p) FROM Post p WHERE p.createdAt >= :start AND p.createdAt < :end AND p.deleted = false")
+    long countByCreatedAtBetween(@Param("start") Instant start, @Param("end") Instant end);
 }

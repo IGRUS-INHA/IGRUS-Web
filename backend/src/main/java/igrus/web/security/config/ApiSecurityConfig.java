@@ -44,7 +44,7 @@ public class ApiSecurityConfig {
 
                 // 운영진 이상 (더 구체적인 경로를 먼저 배치)
                 .requestMatchers(
-                        "/api/admin/dashboard",
+                        "/api/v1/admin/dashboard",
                         "/api/events/*/registrations",
                         "/api/v1/admin/comment-reports/**"
                 ).hasAnyRole("OPERATOR", "ADMIN")

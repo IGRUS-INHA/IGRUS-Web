@@ -58,4 +58,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = "SELECT * FROM users u WHERE u.users_status = 'WITHDRAWN' " +
            "AND u.users_deleted_at < :cutoffTime", nativeQuery = true)
     List<User> findWithdrawnUsersBefore(@Param("cutoffTime") Instant cutoffTime);
+
+    /**
+     * 특정 시각 이후에 가입한 사용자 수를 조회합니다.
+     *
+     * @param after 기준 시각
+     * @return 신규 사용자 수
+     */
+    long countByCreatedAtAfter(Instant after);
 }
