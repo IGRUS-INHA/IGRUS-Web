@@ -1,4 +1,5 @@
-import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useUIStore } from "@/stores";
 import SearchBar from "./SearchBar";
 import { getPageTitle } from "@/constants/routes";
@@ -7,11 +8,46 @@ import { Menu } from "lucide-react";
 
 export default function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { sidebarOpen, toggleSidebar, theme } = useUIStore();
 
   const pageTitle = getPageTitle(location.pathname);
   const currentDate = formatHeaderDate();
   const isDark = theme === "dark";
+
+  // 검색 가능한 페이지 체크
+  const searchablePaths = ["/board", "/events"];
+  const shouldShowSearch = searchablePaths.some((path) =>
+    location.pathname.startsWith(path)
+  );
+
+  // 검색어 상태 (URL 쿼리 파라미터와 동기화)
+  const [searchKeyword, setSearchKeyword] = useState("");
+
+  // URL 쿼리 파라미터에서 검색어 읽기
+  useEffect(() => {
+    const keyword = searchParams.get("search") || "";
+    setSearchKeyword(keyword);
+  }, [searchParams]);
+
+  // 검색 처리
+  const handleSearch = (keyword: string) => {
+    const trimmedKeyword = keyword.trim();
+
+    if (trimmedKeyword) {
+      // 현재 경로의 쿼리 파라미터 업데이트
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("search", trimmedKeyword);
+      navigate(`${location.pathname}?${newParams.toString()}`);
+    } else {
+      // 검색어가 없으면 search 파라미터 제거
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("search");
+      const queryString = newParams.toString();
+      navigate(`${location.pathname}${queryString ? `?${queryString}` : ""}`);
+    }
+  };
 
   return (
     <header
@@ -43,11 +79,17 @@ export default function Header() {
             </div>
           </div>
 
-          {/* 오른쪽: 검색 */}
-          <div className="flex items-center">
-            {/* 검색창 (모바일: 작게, 데스크톱: 크게) */}
-            <SearchBar />
-          </div>
+          {/* 오른쪽: 검색 (검색 가능한 페이지에서만 표시) */}
+          {shouldShowSearch && (
+            <div className="flex items-center">
+              {/* 검색창 (모바일: 작게, 데스크톱: 크게) */}
+              <SearchBar
+                value={searchKeyword}
+                onChange={setSearchKeyword}
+                onSearch={handleSearch}
+              />
+            </div>
+          )}
         </div>
       </div>
     </header>

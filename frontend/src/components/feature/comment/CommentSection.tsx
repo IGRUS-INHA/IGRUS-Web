@@ -70,7 +70,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
       <h3 className="text-xl font-bold mb-s6">댓글 ({totalCount})</h3>
 
       {/* 댓글 입력 */}
-      <div className="flex gap-s4 mb-s8">
+      <div className="flex gap-s4 mb-s5">
         <div
           className={cn(
             'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
@@ -82,6 +82,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
         <div className="flex-1 space-y-s2">
           <div className="relative">
             <input
+              id="comment-input"
               type="text"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
