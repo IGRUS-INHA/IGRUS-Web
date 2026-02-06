@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useGetPostDetail, useDeletePost } from '@/api/model/post/post';
 import { useToggleLike } from '@/api/model/post-like/post-like';
+import { useToggleBookmark, useGetBookmarkStatus } from '@/api/model/bookmark/bookmark';
 import { useUIStore } from '@/stores';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -20,6 +21,7 @@ import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
+import { usePermission } from '@/hooks/usePermission';
 
 export default function PostDetailPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
@@ -27,6 +29,7 @@ export default function PostDetailPage() {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
   const isMockMode = useMockData();
+  const { isAuthenticated } = usePermission();
 
   // Fetch post data (Mock 또는 실제 API)
   const realQuery = useGetPostDetail(
@@ -42,7 +45,6 @@ export default function PostDetailPage() {
   const post = response?.data;
 
   // Local state
-  const [isScrapped, setIsScrapped] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   // Refs
@@ -50,8 +52,15 @@ export default function PostDetailPage() {
 
   // Mutations
   const toggleLike = useToggleLike();
+  const toggleBookmark = useToggleBookmark();
   const queryClient = useQueryClient();
   const deletePost = useDeletePost();
+
+  // Bookmark status query (로그인한 경우에만 조회)
+  const { data: bookmarkStatusResponse } = useGetBookmarkStatus(Number(postId), {
+    query: { enabled: !isMockMode && !!postId && isAuthenticated },
+  });
+  const isBookmarked = bookmarkStatusResponse?.data?.bookmarked ?? false;
 
   // Click outside handler
   useEffect(() => {
@@ -72,15 +81,47 @@ export default function PostDetailPage() {
     e.stopPropagation();
     if (!post?.postId) return;
 
-    toggleLike.mutate({
-      postId: post.postId,
-    });
+    // 로그인하지 않은 경우 로그인 페이지로 이동
+    if (!isAuthenticated) {
+      alert('로그인이 필요한 기능입니다.');
+      navigate('/login');
+      return;
+    }
+
+    toggleLike.mutate(
+      { postId: post.postId },
+      {
+        onSuccess: () => {
+          // 게시글 데이터 새로고침 (좋아요 상태 및 카운트 업데이트)
+          void queryClient.invalidateQueries({
+            queryKey: [`/api/v1/boards/${boardType}/posts/${post.postId}`],
+          });
+        },
+      }
+    );
   };
 
   const handleScrap = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsScrapped(!isScrapped);
-    // TODO: Implement bookmark API call
+    if (!post?.postId) return;
+
+    // 로그인하지 않은 경우 로그인 페이지로 이동
+    if (!isAuthenticated) {
+      alert('로그인이 필요한 기능입니다.');
+      navigate('/login');
+      return;
+    }
+
+    toggleBookmark.mutate(
+      { postId: post.postId },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({
+            queryKey: [`/api/v1/posts/${post.postId}/bookmarks/status`],
+          });
+        },
+      }
+    );
   };
 
   const handleReport = () => {
@@ -124,6 +165,16 @@ export default function PostDetailPage() {
 
   const handleBack = () => {
     navigate(`/board/${boardType}`);
+  };
+
+  const handleCommentClick = () => {
+    const input = document.getElementById('comment-input') as HTMLInputElement;
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        input.focus();
+      }, 300);
+    }
   };
 
   if (isLoading) {
@@ -290,6 +341,7 @@ export default function PostDetailPage() {
           </button>
 
           <button
+            onClick={handleCommentClick}
             type="button"
             className={cn(
               'flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer',
@@ -305,14 +357,14 @@ export default function PostDetailPage() {
             type="button"
             className={cn(
               'flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer',
-              isScrapped
+              isBookmarked
                 ? 'bg-primary/10 text-primary'
                 : isDark
                   ? 'bg-white/5 text-muted-foreground hover:bg-white/10'
                   : 'bg-muted text-muted-foreground hover:bg-muted/80'
             )}
           >
-            <Bookmark size={20} className={isScrapped ? 'fill-current' : ''} />
+            <Bookmark size={20} className={isBookmarked ? 'fill-current' : ''} />
             <span className="hidden sm:inline">스크랩</span>
           </button>
         </div>

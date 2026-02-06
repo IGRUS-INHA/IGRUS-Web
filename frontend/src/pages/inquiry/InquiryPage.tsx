@@ -7,6 +7,7 @@ import {
 import type { PageInquiryListResponse, CreateInquiryResponse } from '@/api/model/models';
 import InquiryForm from '@/components/feature/inquiry/InquiryForm';
 import InquiryListItem from '@/components/feature/inquiry/InquiryListItem';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { Inquiry } from '@/types/entities';
 
@@ -77,9 +78,10 @@ export default function InquiryPage() {
   })) || [];
 
   return (
-    <div className="max-w-3xl mx-auto animate-in fade-in duration-300">
-      {/* View Toggle Buttons */}
-      <div className="flex gap-s4 mb-s5">
+    <div className="flex items-center justify-center h-full">
+      <div className="max-w-3xl w-full animate-in slide-in-from-bottom-8 duration-500">
+        {/* View Toggle Buttons */}
+        <div className="flex gap-s4 mb-s5">
         <button
           type="button"
           onClick={() => setView('form')}
@@ -116,11 +118,21 @@ export default function InquiryPage() {
       ) : (
         <div className="space-y-s4">
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">로딩 중...</div>
+            <Card className="py-5 px-11 rounded-[2.5rem] border-transparent bg-transparent shadow-none">
+              <h3 className="text-h3 opacity-0 pointer-events-none">문의하기</h3>
+              <div className="flex items-center justify-center min-h-[548px]">
+                <div className="text-center text-muted-foreground">로딩 중...</div>
+              </div>
+            </Card>
           ) : inquiries.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              문의 내역이 없습니다.
-            </div>
+            <Card className="py-5 px-11 rounded-[2.5rem] border-transparent bg-transparent shadow-none">
+              <h3 className="text-h3 opacity-0 pointer-events-none">문의하기</h3>
+              <div className="flex items-center justify-center min-h-[548px]">
+                <div className="text-center text-muted-foreground">
+                  문의 내역이 없습니다.
+                </div>
+              </div>
+            </Card>
           ) : (
             inquiries.map((inquiry) => (
               <InquiryListItem key={inquiry.id} inquiry={inquiry} />
@@ -128,6 +140,7 @@ export default function InquiryPage() {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

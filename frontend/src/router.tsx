@@ -62,7 +62,6 @@ const routes: RouteObject[] = [
 
       // 게시판
       { path: 'board/:boardType', element: <BoardListPage /> },
-      { path: 'board/:boardType/:postId', element: <PostDetailPage /> },
       {
         path: 'board/:boardType/write',
         element: (
@@ -79,6 +78,7 @@ const routes: RouteObject[] = [
           </ProtectedRoute>
         ),
       },
+      { path: 'board/:boardType/:postId', element: <PostDetailPage /> },
 
       // 행사
       { path: 'events', element: <EventListPage /> },
