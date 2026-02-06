@@ -11,6 +11,7 @@ import igrus.web.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,7 +72,12 @@ public class RefreshTokenService {
         }
 
         // 4. 토큰 로테이션 수행
-        return rotateToken(tokenEntity);
+        try {
+            return rotateToken(tokenEntity);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.warn("토큰 갱신 실패 - 동시 요청에 의한 충돌: tokenFamily={}", tokenEntity.getTokenFamily());
+            throw new RefreshTokenInvalidException();
+        }
     }
 
     /**
@@ -79,25 +85,31 @@ public class RefreshTokenService {
      * Grace Period 내이면 동시 요청으로 간주하고, 아니면 탈취로 감지합니다.
      */
     private TokenRotationResult handleRevokedToken(RefreshToken revokedToken) {
+        // 만료된 토큰은 폐기 여부와 관계없이 거부
+        if (revokedToken.isExpired()) {
+            log.warn("토큰 갱신 실패 - 폐기되고 만료된 리프레시 토큰: userId={}", revokedToken.getUser().getId());
+            throw new RefreshTokenExpiredException();
+        }
+
         Duration gracePeriod = Duration.ofMillis(gracePeriodMillis);
 
         // Grace Period 내: 동시 탭에서의 경쟁 조건으로 간주
         if (revokedToken.isWithinGracePeriod(gracePeriod)) {
-            log.info("유예 기간 내 이미 교체된 토큰 사용 - tokenFamily={}", revokedToken.getTokenFamily());
+            log.debug("유예 기간 내 이미 교체된 토큰 사용 - tokenFamily={}", revokedToken.getTokenFamily());
 
-            RefreshToken activeToken = refreshTokenRepository
+            refreshTokenRepository
                     .findByTokenFamilyAndRevokedFalse(revokedToken.getTokenFamily())
                     .orElseThrow(() -> {
-                        log.warn("유예 기간이지만 활성 토큰 없음 - 전체 무효화");
+                        log.warn("유예 기간이지만 활성 토큰 없음 - 유효하지 않은 토큰으로 처리");
                         return new RefreshTokenInvalidException();
                     });
 
-            User user = activeToken.getUser();
+            User user = revokedToken.getUser();
             String newAccessToken = jwtTokenProvider.createAccessToken(
                     user.getId(), user.getStudentId(), user.getRole().name());
 
-            return new TokenRotationResult(
-                    newAccessToken, activeToken.getToken(), accessTokenValidity, refreshTokenValidity);
+            // Grace Period에서는 Access Token만 갱신, Refresh Token은 반환하지 않음
+            return new TokenRotationResult(newAccessToken, null, accessTokenValidity, 0);
         }
 
         // Grace Period 밖: 토큰 탈취 감지 → 패밀리 전체 무효화

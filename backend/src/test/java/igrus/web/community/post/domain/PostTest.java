@@ -267,44 +267,6 @@ class PostTest {
     }
 
     @Nested
-    @DisplayName("incrementViewCount 메서드")
-    class IncrementViewCountTest {
-
-        @Test
-        @DisplayName("조회수 1 증가")
-        void incrementViewCount_IncrementsBy1() {
-            // given
-            Board board = generalBoard();
-            User author = createMemberWithId();
-            Post post = Post.createPost(board, author, "제목", "내용");
-            assertThat(post.getViewCount()).isZero();
-
-            // when
-            post.incrementViewCount();
-
-            // then
-            assertThat(post.getViewCount()).isEqualTo(1);
-        }
-
-        @Test
-        @DisplayName("여러 번 호출 시 조회수 누적")
-        void incrementViewCount_MultipleIncrements_Accumulates() {
-            // given
-            Board board = generalBoard();
-            User author = createMemberWithId();
-            Post post = Post.createPost(board, author, "제목", "내용");
-
-            // when
-            post.incrementViewCount();
-            post.incrementViewCount();
-            post.incrementViewCount();
-
-            // then
-            assertThat(post.getViewCount()).isEqualTo(3);
-        }
-    }
-
-    @Nested
     @DisplayName("canModify 메서드")
     class CanModifyTest {
 

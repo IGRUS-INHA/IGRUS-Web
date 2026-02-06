@@ -43,7 +43,7 @@ public class PostViewSyncScheduler {
             int currentCount = post.getViewCount();
 
             if (currentCount != actualCount) {
-                post.syncViewCount((int) actualCount);
+                postRepository.syncViewCount(post.getId(), (int) actualCount);
                 syncedCount++;
                 log.debug("조회수 동기화: postId={}, {} -> {}", post.getId(), currentCount, actualCount);
             }
