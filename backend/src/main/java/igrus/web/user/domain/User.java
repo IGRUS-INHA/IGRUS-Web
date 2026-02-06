@@ -300,4 +300,8 @@ public class User extends SoftDeletableEntity {
         this.email = email;
     }
 
+    public void updatePhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
 }

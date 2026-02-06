@@ -37,7 +37,7 @@ class JwtAuthenticationFilterAccountStatusTest extends ServiceIntegrationTestBas
     // Admin 엔드포인트 사용 (ADMIN 권한 필요, 인증 필수)
     private static final String PROTECTED_ENDPOINT = "/api/v1/admin/members/pending";
     private static final String TEST_STUDENT_ID = "12345678";
-    private static final String TEST_PASSWORD = "TestPass1!@";
+    private static final String TEST_PASSWORD = "testpass1";
 
     @BeforeEach
     void setUp() {

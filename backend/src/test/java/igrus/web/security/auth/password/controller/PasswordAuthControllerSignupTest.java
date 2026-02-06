@@ -101,7 +101,7 @@ class PasswordAuthControllerSignupTest {
     private static final String VALID_STUDENT_ID = "12345678";
     private static final String VALID_NAME = "홍길동";
     private static final String VALID_EMAIL = "test@inha.edu";
-    private static final String VALID_PASSWORD = "Test1234!@";
+    private static final String VALID_PASSWORD = "testpass1";
     private static final String VALID_PHONE = "010-1234-5678";
     private static final String VALID_DEPARTMENT = "컴퓨터공학과";
     private static final String VALID_MOTIVATION = "프로그래밍을 배우고 싶습니다.";
@@ -438,7 +438,7 @@ class PasswordAuthControllerSignupTest {
         @DisplayName("[REG-021] 8자 미만 비밀번호 - 400 반환")
         void signup_WithPasswordLessThan8Chars_Returns400() throws Exception {
             // given
-            PasswordSignupRequest request = createRequestWithPassword("Test1!");
+            PasswordSignupRequest request = createRequestWithPassword("pass12");
 
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
@@ -450,25 +450,10 @@ class PasswordAuthControllerSignupTest {
         }
 
         @Test
-        @DisplayName("[REG-022] 대문자 미포함 - 400 반환")
-        void signup_WithPasswordWithoutUppercase_Returns400() throws Exception {
+        @DisplayName("[REG-022] 영문 미포함 - 400 반환")
+        void signup_WithPasswordWithoutLetter_Returns400() throws Exception {
             // given
-            PasswordSignupRequest request = createRequestWithPassword("test1234!@");
-
-            // when & then
-            mockMvc.perform(post(SIGNUP_URL)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
-        }
-
-        @Test
-        @DisplayName("[REG-023] 소문자 미포함 - 400 반환")
-        void signup_WithPasswordWithoutLowercase_Returns400() throws Exception {
-            // given
-            PasswordSignupRequest request = createRequestWithPassword("TEST1234!@");
+            PasswordSignupRequest request = createRequestWithPassword("12345678");
 
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
@@ -483,22 +468,7 @@ class PasswordAuthControllerSignupTest {
         @DisplayName("[REG-024] 숫자 미포함 - 400 반환")
         void signup_WithPasswordWithoutDigit_Returns400() throws Exception {
             // given
-            PasswordSignupRequest request = createRequestWithPassword("TestTest!@");
-
-            // when & then
-            mockMvc.perform(post(SIGNUP_URL)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
-        }
-
-        @Test
-        @DisplayName("[REG-025] 특수문자 미포함 - 400 반환")
-        void signup_WithPasswordWithoutSpecialChar_Returns400() throws Exception {
-            // given
-            PasswordSignupRequest request = createRequestWithPassword("Test1234");
+            PasswordSignupRequest request = createRequestWithPassword("password");
 
             // when & then
             mockMvc.perform(post(SIGNUP_URL)

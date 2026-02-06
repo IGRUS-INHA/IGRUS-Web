@@ -6,8 +6,6 @@ import igrus.web.community.bookmark.dto.response.BookmarkedPostResponse;
 import igrus.web.community.bookmark.repository.BookmarkRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.user.domain.User;
-import igrus.web.user.exception.UserNotFoundException;
-import igrus.web.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,14 +20,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Optional;
 
 import static igrus.web.common.fixture.TestEntityIdAssigner.withId;
 import static igrus.web.common.fixture.UserTestFixture.*;
 import static igrus.web.community.fixture.BoardTestFixture.*;
 import static igrus.web.community.fixture.PostTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 /**
@@ -49,9 +45,6 @@ class GetMyBookmarksServiceTest {
 
     @Mock
     private BookmarkRepository bookmarkRepository;
-
-    @Mock
-    private UserRepository userRepository;
 
     @InjectMocks
     private GetMyBookmarksService getMyBookmarksService;
@@ -93,8 +86,7 @@ class GetMyBookmarksServiceTest {
                     2
             );
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(bookmarkRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(bookmarkPage);
+            given(bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(bookmarkPage);
 
             // when
             Page<BookmarkedPostResponse> result = getMyBookmarksService.getMyBookmarks(userId, pageable);
@@ -129,8 +121,7 @@ class GetMyBookmarksServiceTest {
                     2
             );
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(bookmarkRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(bookmarkPage);
+            given(bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(bookmarkPage);
 
             // when
             Page<BookmarkedPostResponse> result = getMyBookmarksService.getMyBookmarks(userId, pageable);
@@ -162,8 +153,7 @@ class GetMyBookmarksServiceTest {
 
             Page<Bookmark> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(bookmarkRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(emptyPage);
+            given(bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(emptyPage);
 
             // when
             Page<BookmarkedPostResponse> result = getMyBookmarksService.getMyBookmarks(userId, pageable);
@@ -172,20 +162,6 @@ class GetMyBookmarksServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.getContent()).isEmpty();
             assertThat(result.getTotalElements()).isZero();
-        }
-
-        @DisplayName("존재하지 않는 사용자 북마크 목록 조회 시 UserNotFoundException 발생")
-        @Test
-        void getMyBookmarks_WhenUserNotFound_ThrowsUserNotFoundException() {
-            // given
-            Long nonExistentUserId = 999L;
-            Pageable pageable = PageRequest.of(0, 20);
-
-            given(userRepository.findById(nonExistentUserId)).willReturn(Optional.empty());
-
-            // when & then
-            assertThatThrownBy(() -> getMyBookmarksService.getMyBookmarks(nonExistentUserId, pageable))
-                    .isInstanceOf(UserNotFoundException.class);
         }
 
         @DisplayName("북마크 목록 페이지네이션 테스트")
@@ -204,8 +180,7 @@ class GetMyBookmarksServiceTest {
                     21 // 전체 21개 중 두 번째 페이지 (페이지당 10개이므로 3페이지)
             );
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(bookmarkRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(bookmarkPage);
+            given(bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(bookmarkPage);
 
             // when
             Page<BookmarkedPostResponse> result = getMyBookmarksService.getMyBookmarks(userId, pageable);
@@ -240,8 +215,7 @@ class GetMyBookmarksServiceTest {
                     1
             );
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(bookmarkRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(bookmarkPage);
+            given(bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(bookmarkPage);
 
             // when
             Page<BookmarkedPostResponse> result = getMyBookmarksService.getMyBookmarks(userId, pageable);

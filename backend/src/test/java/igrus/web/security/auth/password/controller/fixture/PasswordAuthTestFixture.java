@@ -18,7 +18,7 @@ public final class PasswordAuthTestFixture {
 
     // 유효한 테스트 데이터
     public static final String VALID_STUDENT_ID = "12345678";
-    public static final String VALID_PASSWORD = "Test1234!@";
+    public static final String VALID_PASSWORD = "testpass1";
     public static final String VALID_EMAIL = "test@inha.edu";
     public static final String VALID_NAME = "홍길동";
     public static final Long VALID_USER_ID = 1L;
