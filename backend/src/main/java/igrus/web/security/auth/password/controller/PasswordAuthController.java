@@ -9,6 +9,7 @@ import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
+import igrus.web.admin.service.VisitLogService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
@@ -72,6 +73,7 @@ public class PasswordAuthController {
     private final ValidateResetTokenService validateResetTokenService;
     private final CheckRecoveryEligibilityService checkRecoveryEligibilityService;
     private final RecoverAccountService recoverAccountService;
+    private final VisitLogService visitLogService;
     private final CookieUtil cookieUtil;
 
     @Operation(summary = "로그인", description = "학번과 비밀번호로 로그인합니다.")
@@ -117,6 +119,13 @@ public class PasswordAuthController {
                 Duration.ofMillis(result.refreshTokenValidity())
         );
         httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        // 방문 기록: 오늘 첫 로그인이면 VisitLog 저장 + 쿠키 발급
+        if (!cookieUtil.hasVisitCookie(httpRequest)) {
+            visitLogService.recordVisit(result.userId());
+            ResponseCookie visitCookie = cookieUtil.createVisitCookie();
+            httpResponse.addHeader(HttpHeaders.SET_COOKIE, visitCookie.toString());
+        }
 
         return ResponseEntity.ok(result.toResponse());
     }

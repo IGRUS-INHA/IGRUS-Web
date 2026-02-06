@@ -8,6 +8,10 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 /**
@@ -18,7 +22,10 @@ import java.util.Optional;
 public class CookieUtil {
 
     public static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+    public static final String VISIT_COOKIE_NAME = "visited";
     private static final String COOKIE_PATH = "/api/v1/auth";
+    private static final String VISIT_COOKIE_PATH = "/";
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final CookieProperties cookieProperties;
 
@@ -63,6 +70,51 @@ public class CookieUtil {
         }
 
         return builder.build();
+    }
+
+    /**
+     * 방문 쿠키를 생성합니다.
+     * KST 자정에 만료되도록 설정합니다.
+     *
+     * @return ResponseCookie 객체
+     */
+    public ResponseCookie createVisitCookie() {
+        Instant now = Instant.now();
+        Instant tomorrowMidnight = LocalDate.now(KST).plusDays(1).atStartOfDay(KST).toInstant();
+        long secondsUntilMidnight = ChronoUnit.SECONDS.between(now, tomorrowMidnight);
+
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(VISIT_COOKIE_NAME, "true")
+                .httpOnly(true)
+                .secure(cookieProperties.secure())
+                .sameSite(cookieProperties.sameSite())
+                .path(VISIT_COOKIE_PATH)
+                .maxAge(secondsUntilMidnight);
+
+        if (cookieProperties.domain() != null && !cookieProperties.domain().isBlank()) {
+            builder.domain(cookieProperties.domain());
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * 요청에서 방문 쿠키가 있는지 확인합니다.
+     *
+     * @param request HTTP 요청
+     * @return 방문 쿠키 존재 여부
+     */
+    public boolean hasVisitCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return false;
+        }
+
+        for (Cookie cookie : cookies) {
+            if (VISIT_COOKIE_NAME.equals(cookie.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
