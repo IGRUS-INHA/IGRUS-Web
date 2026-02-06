@@ -6,8 +6,6 @@ import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
 import igrus.web.community.like.post_like.repository.PostLikeRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.user.domain.User;
-import igrus.web.user.exception.UserNotFoundException;
-import igrus.web.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,7 +20,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Optional;
 
 import static igrus.web.common.fixture.TestConstants.*;
 import static igrus.web.common.fixture.TestEntityIdAssigner.withId;
@@ -30,7 +27,6 @@ import static igrus.web.common.fixture.UserTestFixture.*;
 import static igrus.web.community.fixture.BoardTestFixture.*;
 import static igrus.web.community.fixture.PostTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 /**
@@ -49,9 +45,6 @@ class GetMyLikedPostsServiceTest {
 
     @Mock
     private PostLikeRepository postLikeRepository;
-
-    @Mock
-    private UserRepository userRepository;
 
     @InjectMocks
     private GetMyLikedPostsService getMyLikedPostsService;
@@ -96,8 +89,7 @@ class GetMyLikedPostsServiceTest {
             List<PostLike> likes = List.of(like3, like2, like1);
             Page<PostLike> likePage = new PageImpl<>(likes, pageable, likes.size());
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(postLikeRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(likePage);
+            given(postLikeRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(likePage);
 
             // when
             Page<LikedPostResponse> result = getMyLikedPostsService.getMyLikes(userId, pageable);
@@ -119,8 +111,7 @@ class GetMyLikedPostsServiceTest {
 
             Page<PostLike> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(postLikeRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(emptyPage);
+            given(postLikeRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(emptyPage);
 
             // when
             Page<LikedPostResponse> result = getMyLikedPostsService.getMyLikes(userId, pageable);
@@ -146,8 +137,7 @@ class GetMyLikedPostsServiceTest {
 
             Page<PostLike> likePage = new PageImpl<>(List.of(likeOnDeletedPost), pageable, 1);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(postLikeRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(likePage);
+            given(postLikeRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(likePage);
 
             // when
             Page<LikedPostResponse> result = getMyLikedPostsService.getMyLikes(userId, pageable);
@@ -159,20 +149,6 @@ class GetMyLikedPostsServiceTest {
             assertThat(response.isDeleted()).isTrue();
             assertThat(response.title()).isNull();
             assertThat(response.deletedMessage()).isEqualTo("삭제된 게시글입니다");
-        }
-
-        @DisplayName("존재하지 않는 사용자의 좋아요 목록 조회 시 UserNotFoundException 발생")
-        @Test
-        void getMyLikes_WithNonExistentUser_ThrowsUserNotFoundException() {
-            // given
-            Long userId = 999L;
-            Pageable pageable = PageRequest.of(0, 10);
-
-            given(userRepository.findById(userId)).willReturn(Optional.empty());
-
-            // when & then
-            assertThatThrownBy(() -> getMyLikedPostsService.getMyLikes(userId, pageable))
-                    .isInstanceOf(UserNotFoundException.class);
         }
 
         @DisplayName("페이징이 올바르게 적용된다")
@@ -190,8 +166,7 @@ class GetMyLikedPostsServiceTest {
             List<PostLike> secondPageLikes = List.of(like1);
             Page<PostLike> likePage = new PageImpl<>(secondPageLikes, pageable, 5);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(postLikeRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(likePage);
+            given(postLikeRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(likePage);
 
             // when
             Page<LikedPostResponse> result = getMyLikedPostsService.getMyLikes(userId, pageable);
@@ -217,8 +192,7 @@ class GetMyLikedPostsServiceTest {
 
             Page<PostLike> likePage = new PageImpl<>(List.of(likeOnAnonymousPost), pageable, 1);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(postLikeRepository.findAllByUserOrderByCreatedAtDesc(memberUser, pageable)).willReturn(likePage);
+            given(postLikeRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable)).willReturn(likePage);
 
             // when
             Page<LikedPostResponse> result = getMyLikedPostsService.getMyLikes(userId, pageable);

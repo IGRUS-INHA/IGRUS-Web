@@ -98,4 +98,19 @@ class GetMyInquiriesServiceTest {
         // then
         assertThat(response.getTotalElements()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("문의 없는 경우 빈 페이지 반환")
+    void getMyInquiries_WhenEmpty_ReturnsEmptyPage() {
+        // given
+        User user = createAndSaveUser("20231234", "test@inha.edu", "010-1234-5678");
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // when
+        Page<InquiryListResponse> response = getMyInquiriesService.getMyInquiries(user.getId(), pageable);
+
+        // then
+        assertThat(response.getTotalElements()).isZero();
+        assertThat(response.getContent()).isEmpty();
+    }
 }

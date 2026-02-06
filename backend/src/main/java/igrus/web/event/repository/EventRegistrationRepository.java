@@ -2,6 +2,7 @@ package igrus.web.event.repository;
 
 import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -43,6 +44,7 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
      * @param userId 사용자 ID
      * @return 해당 사용자의 신청 목록
      */
+    @EntityGraph(attributePaths = {"event"})
     List<EventRegistration> findByUserId(Long userId);
 
 

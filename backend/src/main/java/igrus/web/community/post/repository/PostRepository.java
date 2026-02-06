@@ -147,4 +147,15 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      */
     @EntityGraph(attributePaths = {"author", "board", "images"})
     Optional<Post> findByBoardAndIdAndDeletedFalse(Board board, Long postId);
+
+    /**
+     * 특정 사용자가 작성한 삭제되지 않은 게시글을 최신순으로 페이징 조회합니다.
+     *
+     * @param authorId 작성자 ID
+     * @param pageable 페이징 정보
+     * @return 게시글 페이지
+     */
+    @EntityGraph(attributePaths = {"board"})
+    @Query("SELECT p FROM Post p WHERE p.author.id = :authorId AND p.deleted = false ORDER BY p.createdAt DESC")
+    Page<Post> findByAuthorIdAndDeletedFalseOrderByCreatedAtDesc(@Param("authorId") Long authorId, Pageable pageable);
 }
