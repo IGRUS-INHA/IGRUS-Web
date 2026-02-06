@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * TogglePostLikeService 단위 테스트.
@@ -97,7 +98,7 @@ class TogglePostLikeServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.empty());
             given(postLikeRepository.save(any(PostLike.class))).willAnswer(invocation -> invocation.getArgument(0));
-            given(postRepository.save(any(Post.class))).willReturn(normalPost);
+            given(postRepository.incrementLikeCount(postId)).willReturn(1);
 
             // when
             PostLikeToggleResponse response = togglePostLikeService.toggleLike(postId, userId);
@@ -107,7 +108,7 @@ class TogglePostLikeServiceTest {
             assertThat(response.liked()).isTrue();
             assertThat(response.likeCount()).isEqualTo(1);
             verify(postLikeRepository).save(any(PostLike.class));
-            verify(postRepository).save(normalPost);
+            verify(postRepository).incrementLikeCount(postId);
         }
 
         @DisplayName("LKB-002: 게시글 좋아요 취소 (토글) - 좋아요가 있을 때 토글하면 좋아요가 취소된다")
@@ -120,12 +121,12 @@ class TogglePostLikeServiceTest {
             withId(existingLike, 1L);
 
             // 좋아요가 1개 있는 상태로 설정
-            normalPost.incrementLikeCount();
+            setField(normalPost, "likeCount", 1);
 
             given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.of(existingLike));
-            given(postRepository.save(any(Post.class))).willReturn(normalPost);
+            given(postRepository.decrementLikeCount(postId)).willReturn(1);
 
             // when
             PostLikeToggleResponse response = togglePostLikeService.toggleLike(postId, userId);
@@ -135,7 +136,7 @@ class TogglePostLikeServiceTest {
             assertThat(response.liked()).isFalse();
             assertThat(response.likeCount()).isEqualTo(0);
             verify(postLikeRepository).delete(existingLike);
-            verify(postRepository).save(normalPost);
+            verify(postRepository).decrementLikeCount(postId);
         }
 
         @DisplayName("LKB-003: 본인 게시글 좋아요 가능 - 작성자도 본인 게시글에 좋아요를 할 수 있다")
@@ -151,7 +152,7 @@ class TogglePostLikeServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(ownPost, memberUser)).willReturn(Optional.empty());
             given(postLikeRepository.save(any(PostLike.class))).willAnswer(invocation -> invocation.getArgument(0));
-            given(postRepository.save(any(Post.class))).willReturn(ownPost);
+            given(postRepository.incrementLikeCount(postId)).willReturn(1);
 
             // when
             PostLikeToggleResponse response = togglePostLikeService.toggleLike(postId, userId);
@@ -172,12 +173,12 @@ class TogglePostLikeServiceTest {
             PostLike existingLike = PostLike.create(normalPost, memberUser);
             withId(existingLike, 1L);
 
-            normalPost.incrementLikeCount();
+            setField(normalPost, "likeCount", 1);
 
             given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.of(existingLike));
-            given(postRepository.save(any(Post.class))).willReturn(normalPost);
+            given(postRepository.decrementLikeCount(postId)).willReturn(1);
 
             // when
             PostLikeToggleResponse response = togglePostLikeService.toggleLike(postId, userId);
@@ -218,12 +219,12 @@ class TogglePostLikeServiceTest {
             PostLike existingLike = PostLike.create(normalPost, memberUser);
             withId(existingLike, 1L);
 
-            normalPost.incrementLikeCount();
+            setField(normalPost, "likeCount", 1);
 
             given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.of(existingLike));
-            given(postRepository.save(any(Post.class))).willReturn(normalPost);
+            given(postRepository.decrementLikeCount(postId)).willReturn(1);
 
             // when
             togglePostLikeService.toggleLike(postId, userId);
@@ -280,14 +281,14 @@ class TogglePostLikeServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.empty());
             given(postLikeRepository.save(any(PostLike.class))).willAnswer(invocation -> invocation.getArgument(0));
-            given(postRepository.save(any(Post.class))).willReturn(normalPost);
+            given(postRepository.incrementLikeCount(postId)).willReturn(1);
 
             // when
             PostLikeToggleResponse response = togglePostLikeService.toggleLike(postId, userId);
 
             // then
             assertThat(response.likeCount()).isEqualTo(initialLikeCount + 1);
-            verify(postRepository).save(normalPost);
+            verify(postRepository).incrementLikeCount(postId);
         }
 
         @DisplayName("좋아요 취소 시 게시글의 좋아요 수가 감소한다")
@@ -299,21 +300,20 @@ class TogglePostLikeServiceTest {
             PostLike existingLike = PostLike.create(normalPost, memberUser);
             withId(existingLike, 1L);
 
-            normalPost.incrementLikeCount();
-            normalPost.incrementLikeCount(); // 좋아요 2개 상태
+            setField(normalPost, "likeCount", 2); // 좋아요 2개 상태
             int initialLikeCount = normalPost.getLikeCount();
 
             given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.of(existingLike));
-            given(postRepository.save(any(Post.class))).willReturn(normalPost);
+            given(postRepository.decrementLikeCount(postId)).willReturn(1);
 
             // when
             PostLikeToggleResponse response = togglePostLikeService.toggleLike(postId, userId);
 
             // then
             assertThat(response.likeCount()).isEqualTo(initialLikeCount - 1);
-            verify(postRepository).save(normalPost);
+            verify(postRepository).decrementLikeCount(postId);
         }
     }
 
@@ -336,7 +336,7 @@ class TogglePostLikeServiceTest {
             given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(postLikeRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.of(existingLike));
-            given(postRepository.save(any(Post.class))).willReturn(normalPost);
+            given(postRepository.decrementLikeCount(postId)).willReturn(0); // 0이면 업데이트 안 됨 (SQL WHERE likeCount > 0)
 
             // when
             PostLikeToggleResponse response = togglePostLikeService.toggleLike(postId, userId);

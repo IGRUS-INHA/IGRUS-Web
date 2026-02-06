@@ -57,20 +57,20 @@ public class TogglePostLikeService {
         if (existingLike.isPresent()) {
             // 좋아요 취소 (Hard Delete)
             postLikeRepository.delete(existingLike.get());
-            post.decrementLikeCount();
-            postRepository.save(post);
+            postRepository.decrementLikeCount(postId);
 
-            log.info("게시글 좋아요 취소 - postId: {}, userId: {}, likeCount: {}", postId, userId, post.getLikeCount());
-            return PostLikeToggleResponse.of(false, post.getLikeCount());
+            int newLikeCount = Math.max(0, post.getLikeCount() - 1);
+            log.info("게시글 좋아요 취소 - postId: {}, userId: {}, likeCount: {}", postId, userId, newLikeCount);
+            return PostLikeToggleResponse.of(false, newLikeCount);
         } else {
             // 좋아요 추가
             PostLike postLike = PostLike.create(post, user);
             postLikeRepository.save(postLike);
-            post.incrementLikeCount();
-            postRepository.save(post);
+            postRepository.incrementLikeCount(postId);
 
-            log.info("게시글 좋아요 추가 - postId: {}, userId: {}, likeCount: {}", postId, userId, post.getLikeCount());
-            return PostLikeToggleResponse.of(true, post.getLikeCount());
+            int newLikeCount = post.getLikeCount() + 1;
+            log.info("게시글 좋아요 추가 - postId: {}, userId: {}, likeCount: {}", postId, userId, newLikeCount);
+            return PostLikeToggleResponse.of(true, newLikeCount);
         }
     }
 }

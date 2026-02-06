@@ -301,10 +301,28 @@ class RefreshTokenServiceTest extends ServiceIntegrationTestBase {
             // when - Grace Period 내에 폐기된 토큰으로 갱신 시도 (동시 탭 시나리오)
             TokenRotationResult result = refreshTokenService.refreshToken(oldRefreshToken);
 
-            // then - 정상적으로 액세스 토큰 발급
+            // then - 정상적으로 액세스 토큰만 발급 (리프레시 토큰은 null)
             assertThat(result).isNotNull();
             assertThat(result.accessToken()).isNotNull().isNotEmpty();
-            assertThat(result.newRefreshToken()).isEqualTo(activeRefreshToken);
+            assertThat(result.newRefreshToken()).isNull();
+        }
+
+        @Test
+        @DisplayName("폐기되고 만료된 토큰은 Grace Period 내여도 만료 예외 발생 [TKN-034]")
+        void refreshToken_WithRevokedAndExpiredTokenWithinGracePeriod_ThrowsExpiredException() {
+            // given
+            User user = createAndSaveTestUser();
+            String oldRefreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+            RefreshToken oldToken = createAndSaveValidRefreshToken(user, oldRefreshToken);
+
+            // 토큰을 방금 폐기하고 (Grace Period 내) 만료도 시킴
+            oldToken.revoke();
+            ReflectionTestUtils.setField(oldToken, "expiresAt", Instant.now().minusMillis(1000L));
+            refreshTokenRepository.save(oldToken);
+
+            // when & then - 만료 체크가 Grace Period 체크보다 먼저 실행됨
+            assertThatThrownBy(() -> refreshTokenService.refreshToken(oldRefreshToken))
+                    .isInstanceOf(RefreshTokenExpiredException.class);
         }
     }
 

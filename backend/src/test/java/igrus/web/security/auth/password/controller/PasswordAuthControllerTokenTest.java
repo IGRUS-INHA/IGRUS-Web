@@ -4,6 +4,7 @@ import igrus.web.common.exception.ErrorCode;
 import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
+import igrus.web.security.auth.common.exception.token.RefreshTokenTheftException;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
@@ -38,7 +39,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -113,6 +117,14 @@ class PasswordAuthControllerTokenTest {
                 .willReturn(ResponseCookie.from("refreshToken", "new.refresh.token")
                         .httpOnly(true)
                         .path("/api/v1/auth")
+                        .build());
+
+        // Mock for theft detection - deleteRefreshTokenCookie returns a delete cookie
+        given(cookieUtil.deleteRefreshTokenCookie())
+                .willReturn(ResponseCookie.from("refreshToken", "")
+                        .httpOnly(true)
+                        .path("/api/v1/auth")
+                        .maxAge(0)
                         .build());
     }
 
@@ -233,18 +245,59 @@ class PasswordAuthControllerTokenTest {
         }
 
         @Test
-        @DisplayName("로그아웃된 (무효화된) Refresh Token으로 갱신 시도 시 401 반환 [TKN-014]")
-        void refreshToken_withRevokedToken_returns401() throws Exception {
+        @DisplayName("탈취 감지 시 401 반환 및 쿠키 삭제 [TKN-014]")
+        void refreshToken_withTheftDetected_returns401AndDeletesCookie() throws Exception {
             // given
             given(refreshTokenService.refreshToken(anyString()))
-                .willThrow(new RefreshTokenInvalidException());
+                .willThrow(new RefreshTokenTheftException());
 
             // when & then
             mockMvc.perform(post("/api/v1/auth/password/refresh")
                     .cookie(new Cookie("refreshToken", REVOKED_REFRESH_TOKEN)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()))
-                .andExpect(jsonPath("$.message").value(ErrorCode.REFRESH_TOKEN_INVALID.getMessage()));
+                .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_THEFT_DETECTED.getCode()))
+                .andExpect(header().exists("Set-Cookie"));
+
+            verify(cookieUtil).deleteRefreshTokenCookie();
+        }
+    }
+
+    @Nested
+    @DisplayName("토큰 갱신 - 쿠키 동작")
+    class TokenRefreshCookieTest {
+
+        @Test
+        @DisplayName("정상 갱신 시 Set-Cookie 헤더에 새 Refresh Token 포함 [TKN-005]")
+        void refreshToken_withValidToken_setsCookieHeader() throws Exception {
+            // given
+            TokenRotationResult result = new TokenRotationResult("new.access.token", "new.refresh.token", EXPIRES_IN, REFRESH_TOKEN_VALIDITY);
+            given(refreshTokenService.refreshToken(anyString()))
+                .willReturn(result);
+
+            // when & then
+            mockMvc.perform(post("/api/v1/auth/password/refresh")
+                    .cookie(new Cookie("refreshToken", VALID_REFRESH_TOKEN)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Set-Cookie"));
+
+            verify(cookieUtil).createRefreshTokenCookie(anyString(), any(Duration.class));
+        }
+
+        @Test
+        @DisplayName("Grace Period 내 응답 시 Set-Cookie 미포함 [TKN-033]")
+        void refreshToken_withinGracePeriod_doesNotSetCookie() throws Exception {
+            // given - Grace Period: newRefreshToken이 null
+            TokenRotationResult result = new TokenRotationResult("new.access.token", null, EXPIRES_IN, 0);
+            given(refreshTokenService.refreshToken(anyString()))
+                .willReturn(result);
+
+            // when & then
+            mockMvc.perform(post("/api/v1/auth/password/refresh")
+                    .cookie(new Cookie("refreshToken", VALID_REFRESH_TOKEN)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("new.access.token"));
+
+            verify(cookieUtil, never()).createRefreshTokenCookie(anyString(), any(Duration.class));
         }
     }
 }

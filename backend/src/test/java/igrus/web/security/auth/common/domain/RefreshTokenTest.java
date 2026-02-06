@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("RefreshToken 도메인")
 class RefreshTokenTest {
@@ -79,6 +80,39 @@ class RefreshTokenTest {
 
             // then
             assertThat(refreshToken.isRevoked()).isFalse();
+        }
+
+        @Test
+        @DisplayName("user가 null이면 NullPointerException 발생")
+        void create_WithNullUser_ThrowsNPE() {
+            assertThatThrownBy(() -> RefreshToken.create(null, "token", 259200000L, TEST_TOKEN_FAMILY))
+                    .isInstanceOf(NullPointerException.class);
+        }
+
+        @Test
+        @DisplayName("token이 null이면 NullPointerException 발생")
+        void create_WithNullToken_ThrowsNPE() {
+            User user = createTestUser();
+            assertThatThrownBy(() -> RefreshToken.create(user, null, 259200000L, TEST_TOKEN_FAMILY))
+                    .isInstanceOf(NullPointerException.class);
+        }
+
+        @Test
+        @DisplayName("tokenFamily가 null이면 NullPointerException 발생")
+        void create_WithNullTokenFamily_ThrowsNPE() {
+            User user = createTestUser();
+            assertThatThrownBy(() -> RefreshToken.create(user, "token", 259200000L, null))
+                    .isInstanceOf(NullPointerException.class);
+        }
+
+        @Test
+        @DisplayName("expiryMillis가 0 이하이면 IllegalArgumentException 발생")
+        void create_WithNonPositiveExpiry_ThrowsIAE() {
+            User user = createTestUser();
+            assertThatThrownBy(() -> RefreshToken.create(user, "token", 0L, TEST_TOKEN_FAMILY))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> RefreshToken.create(user, "token", -1L, TEST_TOKEN_FAMILY))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
 
@@ -251,18 +285,20 @@ class RefreshTokenTest {
         }
 
         @Test
-        @DisplayName("이미 폐기된 토큰에 revoke 호출해도 정상 동작")
-        void revoke_WhenAlreadyRevoked_StaysRevoked() {
+        @DisplayName("이미 폐기된 토큰에 revoke 호출해도 revokedAt 불변")
+        void revoke_WhenAlreadyRevoked_RevokedAtPreserved() {
             // given
             User user = createTestUser();
             RefreshToken refreshToken = RefreshToken.create(user, "token", 259200000L, TEST_TOKEN_FAMILY);
             refreshToken.revoke();
+            Instant originalRevokedAt = refreshToken.getRevokedAt();
 
             // when
             refreshToken.revoke();
 
             // then
             assertThat(refreshToken.isRevoked()).isTrue();
+            assertThat(refreshToken.getRevokedAt()).isEqualTo(originalRevokedAt);
         }
     }
 

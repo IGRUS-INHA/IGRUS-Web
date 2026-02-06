@@ -106,8 +106,8 @@ class PostOptimisticLockingTest extends ServiceIntegrationTestBase {
     class ConcurrencyTest {
 
         @Test
-        @DisplayName("OPT-001: 여러 스레드에서 동시에 조회수 증가 시 일부 요청은 락 충돌 발생")
-        void incrementViewCount_ConcurrentAccess_SomeRequestsFail() throws InterruptedException {
+        @DisplayName("OPT-001: 원자적 SQL UPDATE로 동시 조회수 증가 시 모든 요청이 성공")
+        void incrementViewCount_ConcurrentAccess_AllRequestsSucceed() throws InterruptedException {
             // given
             Post post = createAndSavePost(generalBoard, memberUser, "테스트 제목", "테스트 내용");
             Long postId = post.getId();
@@ -127,17 +127,13 @@ class PostOptimisticLockingTest extends ServiceIntegrationTestBase {
                         startLatch.await();
 
                         transactionTemplate.execute(status -> {
-                            Post foundPost = postRepository.findById(postId).orElseThrow();
-                            foundPost.incrementViewCount();
-                            postRepository.saveAndFlush(foundPost);
+                            postRepository.incrementViewCount(postId);
                             return null;
                         });
 
                         successCount.incrementAndGet();
-                    } catch (ObjectOptimisticLockingFailureException | OptimisticLockException e) {
+                    } catch (Exception e) {
                         failCount.incrementAndGet();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
                     } finally {
                         endLatch.countDown();
                     }
@@ -148,12 +144,13 @@ class PostOptimisticLockingTest extends ServiceIntegrationTestBase {
             endLatch.await(10, TimeUnit.SECONDS);
             executorService.shutdown();
 
-            // then
-            assertThat(successCount.get()).isGreaterThan(0);
-            assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
+            // then - 원자적 UPDATE이므로 모든 요청이 성공해야 함
+            assertThat(successCount.get()).isEqualTo(threadCount);
+            assertThat(failCount.get()).isZero();
 
+            entityManager.clear();
             Post updatedPost = postRepository.findById(postId).orElseThrow();
-            assertThat(updatedPost.getViewCount()).isEqualTo(successCount.get());
+            assertThat(updatedPost.getViewCount()).isEqualTo(threadCount);
         }
 
         @Test
@@ -256,7 +253,7 @@ class PostOptimisticLockingTest extends ServiceIntegrationTestBase {
             // 버전을 증가시키기 위해 먼저 업데이트
             transactionTemplate.execute(status -> {
                 Post p = postRepository.findById(postId).orElseThrow();
-                p.incrementViewCount();
+                p.updateContent("수정된 제목", "수정된 내용");
                 postRepository.saveAndFlush(p);
                 return null;
             });

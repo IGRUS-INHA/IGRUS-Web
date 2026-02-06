@@ -7,6 +7,7 @@ import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
+import igrus.web.security.auth.common.exception.token.RefreshTokenTheftException;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.util.CookieUtil;
@@ -172,7 +173,12 @@ public class PasswordAuthController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "토큰 갱신", description = "리프레시 토큰으로 새로운 액세스 토큰을 발급합니다.")
+    @Operation(
+            summary = "토큰 갱신",
+            description = "리프레시 토큰으로 새로운 액세스 토큰을 발급합니다. " +
+                    "토큰 로테이션이 적용되어 매 갱신마다 새 리프레시 토큰이 Set-Cookie로 발급됩니다. " +
+                    "Grace Period(10초) 내 중복 요청 시에는 액세스 토큰만 갱신됩니다."
+    )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
@@ -186,7 +192,7 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "유효하지 않거나 만료된 리프레시 토큰",
+                    description = "유효하지 않거나 만료된 리프레시 토큰, 또는 토큰 탈취 감지",
                     content = @Content
             )
     })
@@ -196,14 +202,23 @@ public class PasswordAuthController {
         String refreshToken = cookieUtil.getRefreshTokenFromCookies(httpRequest)
                 .orElseThrow(RefreshTokenInvalidException::new);
 
-        TokenRotationResult result = refreshTokenService.refreshToken(refreshToken);
+        TokenRotationResult result;
+        try {
+            result = refreshTokenService.refreshToken(refreshToken);
+        } catch (RefreshTokenTheftException e) {
+            ResponseCookie deleteCookie = cookieUtil.deleteRefreshTokenCookie();
+            httpResponse.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+            throw e;
+        }
 
-        // 새 리프레시 토큰을 HttpOnly 쿠키로 설정
-        ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
-                result.newRefreshToken(),
-                Duration.ofMillis(result.refreshTokenValidity())
-        );
-        httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        // 새 리프레시 토큰이 있을 때만 Set-Cookie 설정 (Grace Period 시 null)
+        if (result.newRefreshToken() != null) {
+            ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
+                    result.newRefreshToken(),
+                    Duration.ofMillis(result.refreshTokenValidity())
+            );
+            httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        }
 
         return ResponseEntity.ok(result.toResponse());
     }

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -87,6 +88,14 @@ public class RefreshToken extends BaseEntity {
     private Instant revokedAt;
 
     /**
+     * 낙관적 잠금을 위한 버전 필드.
+     * 동시 요청에 의한 중복 토큰 로테이션을 방지합니다.
+     */
+    @Version
+    @Column(name = "refresh_tokens_version", nullable = false)
+    private Long version = 0L;
+
+    /**
      * 로그인 시 새로운 토큰 패밀리와 함께 RefreshToken을 생성합니다.
      *
      * @param user 토큰을 발급받는 사용자
@@ -108,6 +117,12 @@ public class RefreshToken extends BaseEntity {
      * @return 생성된 RefreshToken 엔티티
      */
     public static RefreshToken create(User user, String token, long expiryMillis, String tokenFamily) {
+        Objects.requireNonNull(user, "user must not be null");
+        Objects.requireNonNull(token, "token must not be null");
+        Objects.requireNonNull(tokenFamily, "tokenFamily must not be null");
+        if (expiryMillis <= 0) {
+            throw new IllegalArgumentException("expiryMillis must be positive");
+        }
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.user = user;
         refreshToken.token = token;
@@ -138,6 +153,9 @@ public class RefreshToken extends BaseEntity {
      * 토큰을 폐기 상태로 변경합니다.
      */
     public void revoke() {
+        if (this.revoked) {
+            return;
+        }
         this.revoked = true;
         this.revokedAt = Instant.now();
     }
@@ -148,6 +166,9 @@ public class RefreshToken extends BaseEntity {
      * @param newToken 이 토큰을 대체하는 새 토큰 값
      */
     public void rotateWith(String newToken) {
+        if (this.revoked) {
+            return;
+        }
         this.revoked = true;
         this.revokedAt = Instant.now();
         this.replacedByToken = newToken;

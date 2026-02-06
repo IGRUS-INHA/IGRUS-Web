@@ -57,6 +57,7 @@ public class ToggleBookmarkService {
         if (existingBookmark.isPresent()) {
             // 북마크 취소 (Hard Delete)
             bookmarkRepository.delete(existingBookmark.get());
+            postRepository.decrementBookmarkCount(postId);
 
             log.info("북마크 취소 - postId: {}, userId: {}", postId, userId);
             return BookmarkToggleResponse.of(false);
@@ -64,6 +65,7 @@ public class ToggleBookmarkService {
             // 북마크 추가
             Bookmark bookmark = Bookmark.create(post, user);
             bookmarkRepository.save(bookmark);
+            postRepository.incrementBookmarkCount(postId);
 
             log.info("북마크 추가 - postId: {}, userId: {}", postId, userId);
             return BookmarkToggleResponse.of(true);
