@@ -24,6 +24,7 @@ import static igrus.web.community.fixture.PostTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * GetPostLikeStatusService 단위 테스트.
@@ -65,9 +66,7 @@ class GetPostLikeStatusServiceTest {
             Long postId = DEFAULT_POST_ID;
             Long userId = DEFAULT_MEMBER_ID;
 
-            normalPost.incrementLikeCount();
-            normalPost.incrementLikeCount();
-            normalPost.incrementLikeCount(); // 좋아요 3개
+            setField(normalPost, "likeCount", 3); // 좋아요 3개
 
             given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
             given(postLikeRepository.existsByPostIdAndUserId(postId, userId)).willReturn(true);
@@ -88,7 +87,7 @@ class GetPostLikeStatusServiceTest {
             Long postId = DEFAULT_POST_ID;
             Long userId = DEFAULT_MEMBER_ID;
 
-            normalPost.incrementLikeCount(); // 다른 사용자가 좋아요
+            setField(normalPost, "likeCount", 1); // 다른 사용자가 좋아요
 
             given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
             given(postLikeRepository.existsByPostIdAndUserId(postId, userId)).willReturn(false);

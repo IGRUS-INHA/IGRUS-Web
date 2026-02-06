@@ -66,6 +66,7 @@ public enum ErrorCode {
     ACCOUNT_NOT_RECOVERABLE(400, "복구 기간이 만료된 계정입니다"),
     REFRESH_TOKEN_INVALID(401, "유효하지 않은 리프레시 토큰입니다"),
     REFRESH_TOKEN_EXPIRED(401, "리프레시 토큰이 만료되었습니다"),
+    REFRESH_TOKEN_THEFT_DETECTED(401, "토큰 도용이 감지되어 모든 세션이 종료되었습니다"),
     PASSWORD_RESET_TOKEN_INVALID(400, "유효하지 않은 비밀번호 재설정 토큰입니다"),
     PASSWORD_RESET_TOKEN_EXPIRED(400, "비밀번호 재설정 토큰이 만료되었습니다"),
     EMAIL_SEND_FAILED(500, "이메일 발송에 실패했습니다"),

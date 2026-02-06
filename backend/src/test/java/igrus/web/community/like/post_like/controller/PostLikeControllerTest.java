@@ -111,10 +111,11 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
     }
 
     private void createLike(Post post, User user) {
-        PostLike like = PostLike.create(post, user);
-        postLikeRepository.save(like);
-        post.incrementLikeCount();
-        postRepository.save(post);
+        transactionTemplate.executeWithoutResult(status -> {
+            PostLike like = PostLike.create(post, user);
+            postLikeRepository.save(like);
+            postRepository.incrementLikeCount(post.getId());
+        });
     }
 
     @Nested
@@ -333,12 +334,16 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("LKB-090: 삭제된 게시글 좋아요 목록에 표시")
         @Test
         void getMyLikes_DeletedPost_ShowsDeletedMessage() throws Exception {
-            // given: 좋아요 생성 (createLike 헬퍼 미사용, 버전 충돌 방지)
-            PostLike like = PostLike.create(post, memberUser2);
-            postLikeRepository.save(like);
-            post.incrementLikeCount();
-            post.delete(memberUser.getId());
-            postRepository.save(post);
+            // given: 좋아요 생성 및 삭제를 트랜잭션 내에서 처리
+            Long postId = post.getId();
+            transactionTemplate.executeWithoutResult(status -> {
+                PostLike like = PostLike.create(post, memberUser2);
+                postLikeRepository.save(like);
+                postRepository.incrementLikeCount(postId);
+                Post freshPost = postRepository.findById(postId).orElseThrow();
+                freshPost.delete(memberUser.getId());
+                postRepository.save(freshPost);
+            });
 
             // when & then
             mockMvc.perform(get("/api/v1/users/me/likes")

@@ -78,7 +78,7 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
 
     private RefreshToken createAndSaveRefreshToken(User user) {
         long sevenDaysInMillis = Duration.ofDays(7).toMillis();
-        RefreshToken token = RefreshToken.create(user, "test-refresh-token", sevenDaysInMillis);
+        RefreshToken token = RefreshToken.createInitial(user, "test-refresh-token", sevenDaysInMillis);
         return refreshTokenRepository.save(token);
     }
 

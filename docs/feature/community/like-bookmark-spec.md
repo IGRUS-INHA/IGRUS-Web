@@ -58,9 +58,10 @@
 
 ### Edge Cases
 
-- 동시에 여러 사용자가 같은 게시글에 좋아요를 누르면 어떻게 되는가? → 각각 정상 처리되고 좋아요 수는 정확히 반영됨
+- 동시에 여러 사용자가 같은 게시글에 좋아요를 누르면 어떻게 되는가? → 원자적 SQL UPDATE(`PostRepository.incrementLikeCount`)로 처리되어 `@Version` 충돌 없이 각각 정상 처리되고 좋아요 수는 정확히 반영됨
 - 게시글이 삭제된 상태에서 좋아요/북마크를 시도하면 어떻게 되는가? → 동작 거부, "삭제된 게시글입니다" 메시지 표시
 - 북마크한 게시글의 게시판 접근 권한이 사라지면 어떻게 되는가? → 북마크 목록에는 표시되나 접근 시 권한 없음 메시지 표시
+- 원자적 카운터 업데이트가 실패(게시글 없음/카운트 이미 0)하면 어떻게 되는가? → 반환값 검사 후 `log.warn` 기록. `PostCountSyncScheduler`가 10분마다 실제 레코드 수와 카운터 필드를 비교하여 불일치를 자동 보정
 
 ## Requirements *(mandatory)*
 
@@ -86,9 +87,19 @@
 
 - **Like**: 좋아요 정보 - 게시글 참조, 사용자 참조, 생성일
 - **Bookmark**: 북마크 정보 - 게시글 참조, 사용자 참조, 생성일
-- **Post (확장)**: like_count 컬럼 추가 - 좋아요 토글 시 증감 업데이트
+- **Post (확장)**: like_count, bookmark_count 컬럼 추가 - 좋아요/북마크 토글 시 증감 업데이트
 
 ## Clarifications
+
+### Session 2026-02-07
+
+- Q: 카운트 필드(likeCount, bookmarkCount, viewCount)의 동시성 문제 해결 방법은? → A: `@Modifying @Query`를 사용한 원자적 SQL UPDATE로 `@Version` 낙관적 락을 우회. 엔티티 메서드 대신 `PostRepository.incrementLikeCount()` 등 리포지토리 메서드 사용. `flushAutomatically = true, clearAutomatically = true` 조합으로 영속성 컨텍스트 일관성 보장.
+- Q: 원자적 UPDATE 후 영속성 컨텍스트의 엔티티가 stale 상태인데 어떻게 처리하나? → A: `clearAutomatically = true`로 영속성 컨텍스트가 초기화된 후, 카운트 값이 필요한 경우 `postRepository.findById()`로 재조회하여 최신 값을 반환. `TogglePostLikeService`와 `GetPostDetailService`에 적용됨.
+- Q: 카운터 값과 실제 레코드 수가 불일치하면 어떻게 되나? → A: `PostCountSyncScheduler`가 10분마다 `PostLike`/`Bookmark` 레코드의 실제 COUNT와 `likeCount`/`bookmarkCount` 필드를 비교하여 불일치 시 `syncLikeCount()`/`syncBookmarkCount()`로 보정. 기존 `PostViewSyncScheduler`(조회수)와 동일한 패턴.
+
+### Session 2026-02-06
+
+- Q: 게시글 상세 조회 시 북마크 수도 함께 표시해야 하나요? → A: 네, `likeCount`처럼 `bookmarkCount`를 응답에 포함. `Post` 테이블에 `posts_bookmark_count` 컬럼을 추가하고 북마크 토글 시 증감 (비정규화 카운터 패턴)
 
 ### Session 2026-01-26
 

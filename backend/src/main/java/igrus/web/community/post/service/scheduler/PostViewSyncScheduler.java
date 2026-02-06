@@ -35,17 +35,24 @@ public class PostViewSyncScheduler {
     public void syncViewCounts() {
         log.debug("조회수 동기화 시작");
 
+        // ID와 viewCount만 먼저 추출 (영속성 컨텍스트 초기화 영향 방지)
         List<Post> allPosts = postRepository.findAll();
+        record PostViewSnapshot(Long postId, int viewCount) {}
+        List<PostViewSnapshot> snapshots = allPosts.stream()
+                .map(p -> new PostViewSnapshot(p.getId(), p.getViewCount()))
+                .toList();
+
         int syncedCount = 0;
 
-        for (Post post : allPosts) {
-            long actualCount = postViewRepository.countByPost(post);
-            int currentCount = post.getViewCount();
+        for (PostViewSnapshot snapshot : snapshots) {
+            long actualCount = postViewRepository.countByPostId(snapshot.postId());
 
-            if (currentCount != actualCount) {
-                post.syncViewCount((int) actualCount);
-                syncedCount++;
-                log.debug("조회수 동기화: postId={}, {} -> {}", post.getId(), currentCount, actualCount);
+            if (snapshot.viewCount() != actualCount) {
+                int updated = postRepository.syncViewCount(snapshot.postId(), (int) actualCount);
+                if (updated > 0) {
+                    syncedCount++;
+                    log.debug("조회수 동기화: postId={}, {} -> {}", snapshot.postId(), snapshot.viewCount(), actualCount);
+                }
             }
         }
 
