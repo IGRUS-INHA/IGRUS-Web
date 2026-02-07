@@ -1,25 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Image as ImageIcon, Paperclip } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-md-editor/markdown-editor.css';
 import { useCreatePost } from '@/api/model/post/post';
 import { useUIStore } from '@/stores';
-import { Button } from '@/components/ui/button';
-import { BOARD_CATEGORIES, POST_OPTIONS } from '@/constants/board';
+import { BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type PostFormData } from '@/constants/board';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
-
-// Form validation schema
-const postSchema = z.object({
-  title: z.string().min(1, '제목을 입력해주세요').max(200, '제목은 200자 이내로 입력해주세요'),
-  content: z.string().min(1, '내용을 입력해주세요'),
-  category: z.string().min(1, '카테고리를 선택해주세요'),
-  isAnonymous: z.boolean().optional(),
-  isQuestion: z.boolean().optional(),
-});
-
-type PostForm = z.infer<typeof postSchema>;
 
 export default function PostWritePage() {
   const { boardType } = useParams<{ boardType: BoardType }>();
@@ -32,9 +21,13 @@ export default function PostWritePage() {
   // Get categories for this board
   const categories = BOARD_CATEGORIES[validBoardType] || BOARD_CATEGORIES.general;
 
+  // Get board label
+  const boardLabel = validBoardType ? BOARD_LABELS[validBoardType as keyof typeof BOARD_LABELS] : '게시판';
+
   // Check if anonymous and question posts are allowed
-  const allowAnonymous = POST_OPTIONS.ALLOW_ANONYMOUS.includes(validBoardType);
-  const allowQuestion = POST_OPTIONS.ALLOW_QUESTION.includes(validBoardType);
+  const allowAnonymous = (POST_OPTIONS.ALLOW_ANONYMOUS as readonly BoardType[]).includes(validBoardType);
+  const allowQuestion = (POST_OPTIONS.ALLOW_QUESTION as readonly BoardType[]).includes(validBoardType);
+  const allowVisibleToAssociate = validBoardType === 'notices';
 
   // Form setup
   const {
@@ -42,13 +35,15 @@ export default function PostWritePage() {
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors, isSubmitting },
-  } = useForm<PostForm>({
-    resolver: zodResolver(postSchema),
+  } = useForm<PostFormData>({
+    resolver: zodResolver(postFormSchema),
     defaultValues: {
       category: categories[0]?.value || 'general',
       isAnonymous: false,
       isQuestion: false,
+      isVisibleToAssociate: false,
     },
   });
 
@@ -57,6 +52,7 @@ export default function PostWritePage() {
   const content = watch('content');
   const isAnonymous = watch('isAnonymous');
   const isQuestion = watch('isQuestion');
+  const isVisibleToAssociate = watch('isVisibleToAssociate');
 
   // Mutation
   const createPost = useCreatePost();
@@ -66,7 +62,7 @@ export default function PostWritePage() {
     navigate(`/board/${validBoardType}`);
   };
 
-  const onSubmit = (data: PostForm) => {
+  const onSubmit = (data: PostFormData) => {
     createPost.mutate(
       {
         boardCode: validBoardType,
@@ -75,6 +71,7 @@ export default function PostWritePage() {
           content: data.content,
           ...(data.isAnonymous !== undefined && { isAnonymous: data.isAnonymous }),
           ...(data.isQuestion !== undefined && { isQuestion: data.isQuestion }),
+          ...(data.isVisibleToAssociate !== undefined && { isVisibleToAssociate: data.isVisibleToAssociate }),
         },
       },
       {
@@ -86,8 +83,28 @@ export default function PostWritePage() {
             }
           }
         },
-        onError: (error) => {
-          alert(`게시글 작성 실패: ${error.message}`);
+        onError: (error: any) => {
+          // 백엔드 ErrorResponse의 message를 파싱해서 표시
+          let errorMessage = '게시글 작성에 실패했습니다.';
+
+          if (error.message) {
+            errorMessage = error.message;
+          }
+
+          // 403 Forbidden - 권한 없음
+          if (error.message?.includes('403') || error.message?.includes('권한')) {
+            errorMessage = '❌ 권한이 없습니다.\n\n로그인 후 다시 시도하거나,\n게시판 작성 권한을 확인해주세요.\n\n• 자유게시판/정보공유: MEMBER(정회원) 이상\n• 공지사항: OPERATOR(운영진) 이상';
+          }
+
+          // 401 Unauthorized - 인증 필요
+          if (error.message?.includes('401') || error.message?.includes('인증')) {
+            errorMessage = '❌ 로그인이 필요합니다.\n로그인 페이지로 이동합니다.';
+            alert(errorMessage);
+            navigate('/login');
+            return;
+          }
+
+          alert(errorMessage);
         },
       }
     );
@@ -101,64 +118,55 @@ export default function PostWritePage() {
           onClick={handleBack}
           type="button"
           className={cn(
-            'flex items-center gap-s2 text-sm font-bold transition-colors cursor-pointer',
-            isDark ? 'text-muted-foreground hover:text-foreground' : 'text-muted-foreground hover:text-foreground'
+            'flex items-center gap-2 text-sm font-bold transition-colors cursor-pointer',
+            isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'
           )}
         >
           <ArrowLeft size={18} /> 취소
         </button>
         <div className="flex items-center gap-s4">
-          <span className="text-xs text-muted-foreground font-medium">
+          <span className="text-xs text-gray-500 font-medium">
             {title && content ? '저장됨' : '저장 안됨'}
           </span>
-          <Button
+          <button
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting}
             type="button"
-            className="rounded-full flex items-center gap-s2 shadow-lg"
+            className="bg-[#03A69E] text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-[#028b84] transition shadow-lg shadow-[#03A69E]/20 flex items-center gap-2 disabled:opacity-50"
           >
             <Save size={16} /> 게시하기
-          </Button>
+          </button>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div
           className={cn(
-            'max-w-4xl mx-auto p-s8 md:p-12 rounded-[2.5rem] border min-h-[80vh] flex flex-col',
-            isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'
+            'w-full max-w-[1616px] mx-auto p-8 md:p-12 rounded-[2.5rem] border min-h-[80vh] flex flex-col',
+            isDark ? 'bg-[#1A1A1A] border-white/5' : 'bg-white border-gray-100 shadow-sm'
           )}
         >
           {/* Settings Bar */}
-          <div className="flex flex-wrap gap-s4 mb-s8">
-            <select
-              {...register('category')}
-              className={cn(
-                'px-s4 py-s2 rounded-r3 text-sm font-bold border focus:outline-none focus:border-primary cursor-pointer',
-                isDark ? 'bg-white/5 border-border' : 'bg-muted/50 border-border'
-              )}
-            >
-              {categories.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-            {errors.category && (
-              <span className="text-destructive text-xs">{errors.category.message}</span>
-            )}
+          <div className="flex flex-wrap gap-s4 mb-s6">
+            {/* 게시판 이름 표시 (읽기 전용) */}
+            <div className="px-2 py-2 text-xl text-[#03A69E]">
+              {validBoardType === 'general' ? boardLabel : `${boardLabel} 게시판`}
+            </div>
+
+            {/* 숨겨진 카테고리 필드 (첫 번째 카테고리로 자동 설정) */}
+            <input type="hidden" {...register('category')} />
 
             {allowAnonymous && (
               <button
                 onClick={() => setValue('isAnonymous', !isAnonymous)}
                 type="button"
                 className={cn(
-                  'px-s4 py-s2 rounded-r3 text-sm font-bold border transition-all cursor-pointer',
+                  'px-4 py-2 rounded-xl text-sm border transition-all cursor-pointer',
                   isAnonymous
-                    ? 'bg-primary/10 border-primary text-primary'
+                    ? 'bg-[#03A69E]/10 border-[#03A69E] text-[#03A69E]'
                     : isDark
-                      ? 'bg-white/5 border-border text-muted-foreground'
-                      : 'bg-muted/50 border-border text-muted-foreground'
+                      ? 'bg-white/5 border-white/10 text-gray-400'
+                      : 'bg-gray-50 border-gray-200 text-gray-500'
                 )}
               >
                 익명
@@ -170,15 +178,32 @@ export default function PostWritePage() {
                 onClick={() => setValue('isQuestion', !isQuestion)}
                 type="button"
                 className={cn(
-                  'px-s4 py-s2 rounded-r3 text-sm font-bold border transition-all cursor-pointer',
+                  'px-4 py-2 rounded-xl text-sm border transition-all cursor-pointer',
                   isQuestion
-                    ? 'bg-primary/10 border-primary text-primary'
+                    ? 'bg-[#03A69E]/10 border-[#03A69E] text-[#03A69E]'
                     : isDark
-                      ? 'bg-white/5 border-border text-muted-foreground'
-                      : 'bg-muted/50 border-border text-muted-foreground'
+                      ? 'bg-white/5 border-white/10 text-gray-400'
+                      : 'bg-gray-50 border-gray-200 text-gray-500'
                 )}
               >
-                질문 게시글
+                질문
+              </button>
+            )}
+
+            {allowVisibleToAssociate && (
+              <button
+                onClick={() => setValue('isVisibleToAssociate', !isVisibleToAssociate)}
+                type="button"
+                className={cn(
+                  'px-4 py-2 rounded-xl text-sm border transition-all cursor-pointer',
+                  isVisibleToAssociate
+                    ? 'bg-[#03A69E]/10 border-[#03A69E] text-[#03A69E]'
+                    : isDark
+                      ? 'bg-white/5 border-white/10 text-gray-400'
+                      : 'bg-gray-50 border-gray-200 text-gray-500'
+                )}
+              >
+                준회원 공개
               </button>
             )}
           </div>
@@ -190,7 +215,8 @@ export default function PostWritePage() {
               type="text"
               placeholder="게시글 제목"
               className={cn(
-                'w-full text-4xl font-bold bg-transparent border-none focus:ring-0 placeholder-muted-foreground',
+                'w-full text-4xl font-bold bg-transparent border-none focus:ring-0 focus:outline-none opacity-80',
+                isDark ? 'text-white placeholder-gray-500' : 'text-black placeholder-gray-500',
                 errors.title && 'border-b-2 border-destructive'
               )}
             />
@@ -199,15 +225,29 @@ export default function PostWritePage() {
             )}
           </div>
 
-          {/* Content Textarea */}
+          {/* Content Markdown Editor */}
           <div className="flex-1 relative mb-s8">
-            <textarea
-              {...register('content')}
-              placeholder="이야기를 작성하세요... (마크다운 지원)"
-              className={cn(
-                'w-full h-full bg-transparent border-none focus:ring-0 resize-none text-lg leading-relaxed',
-                isDark ? 'text-muted-foreground placeholder-muted-foreground' : 'text-foreground placeholder-muted-foreground',
-                errors.content && 'border-2 border-destructive rounded-r2 p-4'
+            <Controller
+              name="content"
+              control={control}
+              render={({ field }) => (
+                <MDEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  preview="live"
+                  height={500}
+                  data-color-mode={isDark ? 'dark' : 'light'}
+                  commandsFilter={(command) => {
+                    // 드롭다운 버튼(title), 이미지, 체크리스트 제거
+                    if (command.name === 'title' || command.name === 'image' || command.name === 'checked-list') {
+                      return false;
+                    }
+                    return command;
+                  }}
+                  className={cn(
+                    errors.content && 'border-2 border-destructive rounded-r2'
+                  )}
+                />
               )}
             />
             {errors.content && (
@@ -216,26 +256,26 @@ export default function PostWritePage() {
           </div>
 
           {/* Bottom Toolbar */}
-          <div className={cn('mt-s8 pt-s4 border-t flex gap-s4', 'border-border')}>
+          <div className={cn('mt-8 pt-4 border-t flex gap-4', isDark ? 'border-white/5' : 'border-gray-100')}>
             <button
               type="button"
               className={cn(
-                'p-s2 rounded-r2 transition cursor-pointer',
-                isDark ? 'text-muted-foreground hover:bg-white/10' : 'text-muted-foreground hover:bg-muted'
+                'p-3 rounded-lg transition cursor-pointer',
+                isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >
-              <ImageIcon size={20} />
+              <ImageIcon size={24} />
             </button>
             <button
               type="button"
               className={cn(
-                'p-s2 rounded-r2 transition cursor-pointer',
-                isDark ? 'text-muted-foreground hover:bg-white/10' : 'text-muted-foreground hover:bg-muted'
+                'p-3 rounded-lg transition cursor-pointer',
+                isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >
-              <Paperclip size={20} />
+              <Paperclip size={24} />
             </button>
-            <div className="ml-auto text-xs text-muted-foreground flex items-center">
+            <div className="ml-auto text-xs text-gray-500 flex items-center">
               {content?.length || 0} 글자
             </div>
           </div>

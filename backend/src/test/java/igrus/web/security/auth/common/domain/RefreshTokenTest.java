@@ -324,6 +324,33 @@ class RefreshTokenTest {
             assertThat(refreshToken.getRevokedAt()).isAfterOrEqualTo(beforeRotate);
             assertThat(refreshToken.getReplacedByToken()).isEqualTo(newToken);
         }
+
+        @Test
+        @DisplayName("null 토큰으로 rotateWith 호출 시 NullPointerException 발생")
+        void rotateWith_WithNullToken_ThrowsNullPointerException() {
+            // given
+            User user = createTestUser();
+            RefreshToken refreshToken = RefreshToken.create(user, "old-token", 259200000L, TEST_TOKEN_FAMILY);
+
+            // when & then
+            assertThatThrownBy(() -> refreshToken.rotateWith(null))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessageContaining("newToken must not be null");
+        }
+
+        @Test
+        @DisplayName("이미 폐기된 토큰에 rotateWith 호출 시 IllegalStateException 발생")
+        void rotateWith_WhenAlreadyRevoked_ThrowsIllegalStateException() {
+            // given
+            User user = createTestUser();
+            RefreshToken refreshToken = RefreshToken.create(user, "old-token", 259200000L, TEST_TOKEN_FAMILY);
+            refreshToken.revoke();
+
+            // when & then
+            assertThatThrownBy(() -> refreshToken.rotateWith("new-token"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Cannot rotate an already-revoked token");
+        }
     }
 
     @Nested

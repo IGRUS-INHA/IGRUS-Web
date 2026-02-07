@@ -17,4 +17,4 @@ export const queryClient = new QueryClient({
       retry: false,
     },
   },
-});
+} as const);

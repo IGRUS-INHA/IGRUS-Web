@@ -1,29 +1,30 @@
 import { ChangeEvent } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { SORT_TYPE, SORT_TYPE_LABELS } from '@/constants/board';
 
-interface SortSelectProps {
+interface FilterSelectProps {
   value: string;
   onChange: (value: string) => void;
+  options: Record<string, string>;
 }
 
 /**
- * 정렬 선택 컴포넌트
+ * 필터 선택 컴포넌트
+ * 범용적으로 사용 가능한 필터 드롭다운
  */
-export function SortSelect({ value, onChange }: SortSelectProps) {
+export function FilterSelect({ value, onChange, options }: FilterSelectProps) {
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
     onChange(e.target.value);
   };
 
   return (
-    <div className="relative inline-block min-w-[100px]">
+    <div className="relative inline-block min-w-[120px]">
       <select
         value={value}
         onChange={handleChange}
         className="h-9 pl-4 pr-10 py-2 rounded-full border border-input bg-background text-sm font-bold transition-all appearance-none cursor-pointer w-full"
       >
-        {Object.entries(SORT_TYPE_LABELS).map(([sortValue, label]) => (
-          <option key={sortValue} value={sortValue}>
+        {Object.entries(options).map(([filterValue, label]) => (
+          <option key={filterValue} value={filterValue}>
             {label}
           </option>
         ))}

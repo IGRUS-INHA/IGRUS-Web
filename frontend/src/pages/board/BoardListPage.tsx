@@ -1,56 +1,64 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { PenTool } from 'lucide-react';
 import { useGetPostList } from '@/api/model/post/post';
-import { useUIStore } from '@/stores';
 import PostListItem from '@/components/feature/board/PostListItem';
-import { SearchBar } from '@/components/board/SearchBar';
 import { SortSelect } from '@/components/board/SortSelect';
 import { Pagination } from '@/components/board/Pagination';
 import { Button } from '@/components/ui/button';
 import { BOARDS, BOARD_LABELS, SORT_TYPE, PAGINATION } from '@/constants/board';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
+import { useMockData } from '@/hooks/useMockData';
+import { useMockPostList } from '@/hooks/queries/useMockPosts';
 
 export default function BoardListPage() {
   const { boardType } = useParams<{ boardType: BoardType }>();
   const navigate = useNavigate();
-  const { theme } = useUIStore();
-  const isDark = theme === 'dark';
+  const [searchParams] = useSearchParams();
 
   // State
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchType, setSearchType] = useState('title_content');
-  const [sortType, setSortType] = useState(SORT_TYPE.LATEST);
-  const [currentPage, setCurrentPage] = useState(PAGINATION.DEFAULT_PAGE);
+  const [sortType, setSortType] = useState<string>(SORT_TYPE.LATEST);
+  const [currentPage, setCurrentPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+
+  // URL 쿼리 파라미터에서 검색어 읽기
+  const searchKeyword = searchParams.get('search');
 
   // Validate boardType
   const validBoardType = boardType && Object.values(BOARDS).includes(boardType as BoardType)
     ? (boardType as BoardType)
     : BOARDS.NOTICES;
 
-  // Fetch posts
-  const { data: response, isLoading } = useGetPostList(validBoardType, {
-    keyword: searchKeyword || undefined,
+  // Mock 모드 확인
+  const isMockMode = useMockData();
+
+  // 검색어가 변경되면 첫 페이지로 이동
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchKeyword]);
+
+  // Fetch posts (Mock 또는 실제 API)
+  const realQuery = useGetPostList(validBoardType, {
+    ...(searchKeyword && { keyword: searchKeyword }),
     page: currentPage - 1, // Orval은 0-based pagination
     size: PAGINATION.DEFAULT_SIZE,
+  }, {
+    query: {
+      enabled: !isMockMode,
+      refetchOnMount: 'always', // 페이지 마운트 시 항상 새로운 데이터 가져오기
+    },
   });
+  const mockQuery = useMockPostList(validBoardType);
+
+  const { data: response, isLoading, error } = isMockMode ? mockQuery : realQuery;
 
   // Orval 응답 unwrap
   const data = response?.data;
 
+  // 403 에러 체크 (권한 없음)
+  const isForbidden = error && 'response' in error && (error as any).response?.status === 403;
+
   // Handlers
-  const handleSearch = (keyword: string, type: string) => {
-    setSearchKeyword(keyword);
-    setSearchType(type);
-    setCurrentPage(1); // Reset to first page on search
-  };
-
-  const handleClearSearch = () => {
-    setSearchKeyword('');
-    setCurrentPage(1);
-  };
-
   const handleSortChange = (newSortType: string) => {
     setSortType(newSortType);
     setCurrentPage(1); // Reset to first page on sort change
@@ -89,27 +97,16 @@ export default function BoardListPage() {
             </button>
           ))}
         </div>
-        <Button
-          onClick={handleWriteClick}
-          type="button"
-          className="flex items-center gap-s2 rounded-full"
-        >
-          <PenTool size={14} /> <span className="hidden sm:inline">글쓰기</span>
-        </Button>
-      </div>
-
-      {/* Search and Sort */}
-      <div className="flex flex-col md:flex-row gap-s4 justify-between">
-        <div className="flex-1 max-w-2xl">
-          <SearchBar
-            onSearch={handleSearch}
-            onClear={handleClearSearch}
-            initialKeyword={searchKeyword}
-            initialSearchType={searchType}
-            placeholder="검색어를 입력하세요"
-          />
+        <div className="flex items-center gap-s4">
+          <SortSelect value={sortType} onChange={handleSortChange} />
+          <Button
+            onClick={handleWriteClick}
+            type="button"
+            className="flex items-center justify-center gap-s2 rounded-full h-9 px-4 py-2 min-w-[100px]"
+          >
+            <PenTool size={14} /> <span className="hidden sm:inline">글쓰기</span>
+          </Button>
         </div>
-        <SortSelect value={sortType} onChange={handleSortChange} />
       </div>
 
       {/* Posts List */}
@@ -117,27 +114,26 @@ export default function BoardListPage() {
         <div className="flex items-center justify-center py-12">
           <p className="text-muted-foreground">로딩 중...</p>
         </div>
+      ) : isForbidden ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-s4">
+          <p className="text-muted-foreground">정회원 승인 후 게시판 이용이 가능합니다.</p>
+        </div>
       ) : !data?.posts || data.posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 gap-s4">
           <p className="text-muted-foreground">게시글이 없습니다.</p>
-          {searchKeyword && (
-            <Button variant="outline" onClick={handleClearSearch}>
-              검색 초기화
-            </Button>
-          )}
         </div>
       ) : (
         <div className="flex flex-col gap-s4">
           {data.posts.map((post) => (
             <Link key={post.postId} to={`/board/${validBoardType}/${post.postId}`}>
-              <PostListItem post={post} />
+              <PostListItem post={post} boardType={validBoardType} />
             </Link>
           ))}
         </div>
       )}
 
       {/* Pagination */}
-      {data && data.totalPages && data.totalPages > 1 && (
+      {data && data.totalPages > 1 && (
         <Pagination
           currentPage={currentPage}
           totalPages={data.totalPages}

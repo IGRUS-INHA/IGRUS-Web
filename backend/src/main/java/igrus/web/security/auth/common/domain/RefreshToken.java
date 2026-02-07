@@ -166,8 +166,9 @@ public class RefreshToken extends BaseEntity {
      * @param newToken 이 토큰을 대체하는 새 토큰 값
      */
     public void rotateWith(String newToken) {
+        Objects.requireNonNull(newToken, "newToken must not be null");
         if (this.revoked) {
-            return;
+            throw new IllegalStateException("Cannot rotate an already-revoked token: id=" + this.id);
         }
         this.revoked = true;
         this.revokedAt = Instant.now();

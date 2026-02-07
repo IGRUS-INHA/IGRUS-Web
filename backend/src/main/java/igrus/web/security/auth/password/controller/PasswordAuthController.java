@@ -6,6 +6,7 @@ import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
+import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenTheftException;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
@@ -205,7 +206,7 @@ public class PasswordAuthController {
         TokenRotationResult result;
         try {
             result = refreshTokenService.refreshToken(refreshToken);
-        } catch (RefreshTokenTheftException e) {
+        } catch (RefreshTokenTheftException | RefreshTokenExpiredException e) {
             ResponseCookie deleteCookie = cookieUtil.deleteRefreshTokenCookie();
             httpResponse.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
             throw e;
