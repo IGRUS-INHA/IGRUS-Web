@@ -110,11 +110,11 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("인증되지 않은 사용자 목록 조회 시 403 반환")
-        void getUserList_Unauthenticated_Returns403() throws Exception {
+        @DisplayName("인증되지 않은 사용자 목록 조회 시 401 반환")
+        void getUserList_Unauthenticated_Returns401() throws Exception {
             mockMvc.perform(get(BASE_URL))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isUnauthorized());
         }
 
         @Test
