@@ -443,7 +443,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
             associateDecisionRepository.save(AssociateDecision.reject(associateUser, adminUser.getId(), "거절"));
 
             // when & then - 승인 대기 목록에는 associate2만 포함
-            mockMvc.perform(get(BASE_URL)
+            mockMvc.perform(get(BASE_URL + "/pending")
                             .with(withAuth(adminUser))
                             .with(csrf())
                             .param("page", "0")
@@ -451,7 +451,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.content[0].studentId").value("20230002"));
+                    .andExpect(jsonPath("$.associates[0].studentId").value("20230002"));
         }
 
         @Test

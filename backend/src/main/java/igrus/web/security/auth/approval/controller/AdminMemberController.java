@@ -4,6 +4,7 @@ import igrus.web.common.config.SwaggerConfig;
 import igrus.web.security.auth.approval.dto.request.BulkApprovalRequest;
 import igrus.web.security.auth.approval.dto.request.BulkRejectionRequest;
 import igrus.web.security.auth.approval.dto.request.RejectAssociateRequest;
+import igrus.web.security.auth.approval.dto.response.AssociateInfoPageResponse;
 import igrus.web.security.auth.approval.dto.response.AssociateInfoResponse;
 import igrus.web.security.auth.approval.dto.response.BulkApprovalResultResponse;
 import igrus.web.security.auth.approval.dto.response.BulkRejectionResultResponse;
@@ -223,7 +224,7 @@ public class AdminMemberController {
             @ApiResponse(
                     responseCode = "200",
                     description = "일괄 거절 처리 완료 (부분 성공 가능)",
-                    content = @Content(schema = @Schema(implementation = BulkRejectionResultResponse.class))
+                    useReturnTypeSchema = true
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -272,7 +273,7 @@ public class AdminMemberController {
             @ApiResponse(
                     responseCode = "200",
                     description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = Page.class))
+                    useReturnTypeSchema = true
             ),
             @ApiResponse(
                     responseCode = "401",
