@@ -3,6 +3,7 @@ package igrus.web.inquiry.controller;
 import igrus.web.common.config.SwaggerConfig;
 import igrus.web.inquiry.dto.request.CreateMemberInquiryRequest;
 import igrus.web.inquiry.dto.response.InquiryCreateResponse;
+import igrus.web.inquiry.dto.response.InquiryListPageResponse;
 import igrus.web.inquiry.dto.response.InquiryListResponse;
 import igrus.web.inquiry.dto.response.InquiryResponse;
 import igrus.web.inquiry.service.create.CreateMemberInquiryService;
@@ -73,13 +74,13 @@ public class MemberInquiryController {
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/my")
-    public ResponseEntity<Page<InquiryListResponse>> getMyInquiries(
+    public ResponseEntity<InquiryListPageResponse> getMyInquiries(
             @AuthenticationPrincipal AuthenticatedUser user,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {
-        Page<InquiryListResponse> response = getMyInquiriesService.getMyInquiries(user.userId(), pageable);
-        return ResponseEntity.ok(response);
+        Page<InquiryListResponse> page = getMyInquiriesService.getMyInquiries(user.userId(), pageable);
+        return ResponseEntity.ok(InquiryListPageResponse.from(page));
     }
 
     @Operation(

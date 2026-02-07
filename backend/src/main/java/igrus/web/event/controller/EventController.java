@@ -81,11 +81,13 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "행사 상세 조회", description = "행사의 상세 정보를 조회합니다.")
+    @Operation(summary = "행사 상세 조회", description = "행사의 상세 정보를 조회합니다. 준회원은 조회할 수 없습니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "행사 상세 조회 성공",
                     content = @Content(schema = @Schema(implementation = EventDetailResponse.class))),
             @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "준회원 접근 불가",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))

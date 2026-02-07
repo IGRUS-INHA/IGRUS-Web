@@ -51,6 +51,8 @@ class PrivacyConsentRepositoryTest {
         transactionTemplate.execute(status -> {
             // 테스트 데이터 정리 (FK 순서 고려)
             entityManager.createNativeQuery("DELETE FROM privacy_consents").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM login_histories").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM login_attempts").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM refresh_tokens").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_reset_tokens").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();

@@ -18,7 +18,6 @@ import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -62,8 +61,7 @@ public class AdminMemberController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = Page.class))
+                    description = "조회 성공"
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -76,17 +74,17 @@ public class AdminMemberController {
                     content = @Content
             )
     })
-    @GetMapping
-    public ResponseEntity<Page<AssociateInfoResponse>> getPendingAssociates(
+    @GetMapping("/pending")
+    public ResponseEntity<AssociateInfoPageResponse> getPendingAssociates(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        Page<AssociateInfoResponse> pendingAssociates = getPendingAssociatesService.getPendingAssociates(
+        Page<AssociateInfoResponse> page = getPendingAssociatesService.getPendingAssociates(
                 pageable,
                 authenticatedUser.userId()
         );
-        return ResponseEntity.ok(pendingAssociates);
+        return ResponseEntity.ok(AssociateInfoPageResponse.from(page));
     }
 
     @Operation(
@@ -136,8 +134,7 @@ public class AdminMemberController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "일괄 승인 처리 완료 (부분 성공 가능)",
-                    content = @Content(schema = @Schema(implementation = BulkApprovalResultResponse.class))
+                    description = "일괄 승인 처리 완료 (부분 성공 가능)"
             ),
             @ApiResponse(
                     responseCode = "401",

@@ -1,17 +1,17 @@
-package igrus.web.community.post.dto.response;
+package igrus.web.community.bookmark.dto.response;
 
-import igrus.web.community.post.domain.Post;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.data.domain.Page;
+
 import java.util.List;
 
 /**
- * 게시글 목록 페이징 응답 DTO.
+ * 북마크한 게시글 목록 페이징 응답 DTO.
  */
-@Schema(description = "게시글 목록 페이징 응답")
-public record PostListPageResponse(
-    @Schema(description = "게시글 목록")
-    List<PostListResponse> posts,
+@Schema(description = "북마크한 게시글 목록 페이징 응답")
+public record BookmarkedPostPageResponse(
+    @Schema(description = "북마크한 게시글 목록")
+    List<BookmarkedPostResponse> posts,
 
     @Schema(description = "전체 요소 수", example = "100")
     long totalElements,
@@ -25,13 +25,9 @@ public record PostListPageResponse(
     @Schema(description = "다음 페이지 존재 여부", example = "true")
     boolean hasNext
 ) {
-    public static PostListPageResponse from(Page<Post> page) {
-        List<PostListResponse> posts = page.getContent().stream()
-            .map(PostListResponse::from)
-            .toList();
-
-        return new PostListPageResponse(
-            posts,
+    public static BookmarkedPostPageResponse from(Page<BookmarkedPostResponse> page) {
+        return new BookmarkedPostPageResponse(
+            page.getContent(),
             page.getTotalElements(),
             page.getTotalPages(),
             page.getNumber(),
