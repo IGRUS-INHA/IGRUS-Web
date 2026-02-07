@@ -34,15 +34,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
-  createdAt?: string;
+/**
+ * 비밀번호 변경 요청
+ */
+export interface ChangePasswordRequest {
+  /**
+   * 현재 비밀번호
+   * @minLength 1
+   */
+  currentPassword: string;
+  /**
+   * 새 비밀번호 (8자 이상, 영문 대소문자, 숫자, 특수문자 포함)
+   * @minLength 1
+   */
+  newPassword: string;
 }

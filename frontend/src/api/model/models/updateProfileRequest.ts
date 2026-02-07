@@ -34,15 +34,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
-  createdAt?: string;
+/**
+ * 프로필 수정 요청
+ */
+export interface UpdateProfileRequest {
+  /** 이메일 */
+  email?: string;
+  /**
+   * 전화번호
+   * @pattern ^01[0-9]-?\d{3,4}-?\d{4}$
+   */
+  phoneNumber?: string;
 }

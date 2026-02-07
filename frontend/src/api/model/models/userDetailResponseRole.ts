@@ -34,15 +34,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
-  createdAt?: string;
-}
+/**
+ * 역할
+ */
+export type UserDetailResponseRole = typeof UserDetailResponseRole[keyof typeof UserDetailResponseRole];
+
+
+export const UserDetailResponseRole = {
+  ASSOCIATE: 'ASSOCIATE',
+  MEMBER: 'MEMBER',
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
+} as const;

@@ -57,10 +57,10 @@ export interface PasswordSignupRequest {
    */
   email: string;
   /**
-   * 비밀번호 (영문 대/소문자, 숫자, 특수문자 포함 8~72자)
+   * 비밀번호 (영문, 숫자 포함 8~72자)
    * @minLength 8
    * @maxLength 72
-   * @pattern ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,72}$
+   * @pattern ^(?=.*[A-Za-z])(?=.*\d).{8,72}$
    */
   password: string;
   /**

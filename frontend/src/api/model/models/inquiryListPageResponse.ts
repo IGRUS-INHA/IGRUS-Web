@@ -33,16 +33,20 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { InquiryListResponse } from './inquiryListResponse';
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
-  createdAt?: string;
+/**
+ * 문의 목록 페이징 응답
+ */
+export interface InquiryListPageResponse {
+  /** 문의 목록 */
+  inquiries?: InquiryListResponse[];
+  /** 전체 요소 수 */
+  totalElements?: number;
+  /** 전체 페이지 수 */
+  totalPages?: number;
+  /** 현재 페이지 번호 (0부터 시작) */
+  currentPage?: number;
+  /** 다음 페이지 존재 여부 */
+  hasNext?: boolean;
 }

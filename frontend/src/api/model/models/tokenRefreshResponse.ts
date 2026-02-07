@@ -40,6 +40,6 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 export interface TokenRefreshResponse {
   /** 새로 발급된 JWT Access Token */
   accessToken?: string;
-  /** Access Token 만료까지 남은 시간 (초) */
+  /** Access Token 만료까지 남은 시간 (밀리초) */
   expiresIn?: number;
 }

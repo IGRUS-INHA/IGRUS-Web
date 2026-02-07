@@ -66,7 +66,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * 행사의 상세 정보를 조회합니다.
+ * 행사의 상세 정보를 조회합니다. 준회원은 조회할 수 없습니다.
  * @summary 행사 상세 조회
  */
 export type getEventResponse200 = {
@@ -79,6 +79,11 @@ export type getEventResponse401 = {
   status: 401
 }
 
+export type getEventResponse403 = {
+  data: Blob
+  status: 403
+}
+
 export type getEventResponse404 = {
   data: Blob
   status: 404
@@ -87,7 +92,7 @@ export type getEventResponse404 = {
 export type getEventResponseSuccess = (getEventResponse200) & {
   headers: Headers;
 };
-export type getEventResponseError = (getEventResponse401 | getEventResponse404) & {
+export type getEventResponseError = (getEventResponse401 | getEventResponse403 | getEventResponse404) & {
   headers: Headers;
 };
 

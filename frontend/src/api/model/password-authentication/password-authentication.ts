@@ -537,7 +537,7 @@ export const useResendVerification = <TError = void,
       return useMutation(getResendVerificationMutationOptions(options), queryClient);
     }
     /**
- * 리프레시 토큰으로 새로운 액세스 토큰을 발급합니다.
+ * 리프레시 토큰으로 새로운 액세스 토큰을 발급합니다. 토큰 로테이션이 적용되어 매 갱신마다 새 리프레시 토큰이 Set-Cookie로 발급됩니다. Grace Period(10초) 내 중복 요청 시에는 액세스 토큰만 갱신됩니다.
  * @summary 토큰 갱신
  */
 export type refreshTokenResponse200 = {

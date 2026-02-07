@@ -33,16 +33,36 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { UserDetailResponseGender } from './userDetailResponseGender';
+import type { UserDetailResponseRole } from './userDetailResponseRole';
+import type { UserDetailResponseStatus } from './userDetailResponseStatus';
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
+/**
+ * 관리자용 회원 상세 응답
+ */
+export interface UserDetailResponse {
+  /** 사용자 ID */
+  userId?: number;
+  /** 학번 */
+  studentId?: string;
+  /** 이름 */
+  name?: string;
+  /** 이메일 */
+  email?: string;
+  /** 전화번호 */
+  phoneNumber?: string;
+  /** 학과 */
+  department?: string;
+  /** 가입 동기 */
+  motivation?: string;
+  /** 성별 */
+  gender?: UserDetailResponseGender;
+  /** 학년 */
+  grade?: number;
+  /** 역할 */
+  role?: UserDetailResponseRole;
+  /** 상태 */
+  status?: UserDetailResponseStatus;
+  /** 가입일 */
   createdAt?: string;
 }

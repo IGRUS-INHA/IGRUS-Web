@@ -33,16 +33,34 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { GetUserListRole } from './getUserListRole';
+import type { GetUserListStatus } from './getUserListStatus';
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
-  createdAt?: string;
-}
+export type GetUserListParams = {
+/**
+ * 검색어 (이름 또는 학번)
+ */
+keyword?: string;
+/**
+ * 역할 필터
+ */
+role?: GetUserListRole;
+/**
+ * 상태 필터
+ */
+status?: GetUserListStatus;
+/**
+ * 페이지 번호 (0부터 시작)
+ * @minimum 0
+ */
+page?: number;
+/**
+ * 페이지당 항목 수
+ * @minimum 1
+ */
+size?: number;
+/**
+ * 정렬 조건. 여러 정렬은 sort를 여러 번 지정합니다. (sort=createdAt,DESC&sort=id,ASC)
+ */
+sort?: string[];
+};
