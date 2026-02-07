@@ -1,9 +1,11 @@
 package igrus.web.admin.user.controller;
 
 import igrus.web.admin.user.dto.ChangeUserRoleRequest;
+import igrus.web.admin.user.dto.ChangeUserStatusRequest;
 import igrus.web.admin.user.dto.UserDetailResponse;
 import igrus.web.admin.user.dto.UserListResponse;
 import igrus.web.admin.user.service.ChangeUserRoleService;
+import igrus.web.admin.user.service.ChangeUserStatusService;
 import igrus.web.admin.user.service.GetUserDetailService;
 import igrus.web.admin.user.service.GetUserListService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
@@ -47,6 +49,7 @@ public class AdminUserController {
     private final GetUserListService getUserListService;
     private final GetUserDetailService getUserDetailService;
     private final ChangeUserRoleService changeUserRoleService;
+    private final ChangeUserStatusService changeUserStatusService;
 
     @Operation(
             summary = "회원 목록 조회",
