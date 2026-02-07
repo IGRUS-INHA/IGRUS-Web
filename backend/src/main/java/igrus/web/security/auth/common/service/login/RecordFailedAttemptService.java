@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -32,9 +33,11 @@ public class RecordFailedAttemptService {
      * 로그인 실패를 기록합니다.
      *
      * <p>실패 횟수가 최대 허용 횟수에 도달하면 계정을 잠금 처리합니다.</p>
+     * <p>별도 트랜잭션으로 실행되어 호출자 트랜잭션 롤백 시에도 카운트가 유지됩니다.</p>
      *
      * @param studentId 학번
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordFailedAttempt(String studentId) {
         LoginAttempt attempt = loginAttemptRepository.findByStudentId(studentId)
                 .orElseGet(() -> LoginAttempt.create(studentId));
