@@ -75,7 +75,7 @@ public class RefreshTokenService {
         try {
             return rotateToken(tokenEntity);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("토큰 갱신 실패 - 동시 요청에 의한 충돌: tokenFamily={}", tokenEntity.getTokenFamily());
+            log.warn("토큰 갱신 실패 - 동시 요청에 의한 충돌: tokenFamily={}", tokenEntity.getTokenFamily(), e);
             throw new RefreshTokenInvalidException();
         }
     }
@@ -97,25 +97,25 @@ public class RefreshTokenService {
         if (revokedToken.isWithinGracePeriod(gracePeriod)) {
             log.debug("유예 기간 내 이미 교체된 토큰 사용 - tokenFamily={}", revokedToken.getTokenFamily());
 
-            refreshTokenRepository
+            RefreshToken activeToken = refreshTokenRepository
                     .findByTokenFamilyAndRevokedFalse(revokedToken.getTokenFamily())
                     .orElseThrow(() -> {
                         log.warn("유예 기간이지만 활성 토큰 없음 - 유효하지 않은 토큰으로 처리");
                         return new RefreshTokenInvalidException();
                     });
 
-            User user = revokedToken.getUser();
+            User user = activeToken.getUser();
             String newAccessToken = jwtTokenProvider.createAccessToken(
                     user.getId(), user.getStudentId(), user.getRole().name());
 
             // Grace Period에서는 Access Token만 갱신, Refresh Token은 반환하지 않음
-            return new TokenRotationResult(newAccessToken, null, accessTokenValidity, 0);
+            return TokenRotationResult.gracePeriod(newAccessToken, accessTokenValidity);
         }
 
         // Grace Period 밖: 토큰 탈취 감지 → 패밀리 전체 무효화
-        log.warn("토큰 도용 감지! tokenFamily={}, userId={}",
-                revokedToken.getTokenFamily(), revokedToken.getUser().getId());
-        refreshTokenRepository.revokeAllByTokenFamily(revokedToken.getTokenFamily(), Instant.now());
+        int revokedCount = refreshTokenRepository.revokeAllByTokenFamily(revokedToken.getTokenFamily(), Instant.now());
+        log.warn("토큰 도용 감지! tokenFamily={}, userId={}, revokedCount={}",
+                revokedToken.getTokenFamily(), revokedToken.getUser().getId(), revokedCount);
         throw new RefreshTokenTheftException();
     }
 

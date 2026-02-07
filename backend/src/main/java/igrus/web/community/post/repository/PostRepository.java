@@ -193,4 +193,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Post p SET p.commentCount = p.commentCount - 1 WHERE p.id = :postId AND p.commentCount > 0")
     int decrementCommentCount(@Param("postId") Long postId);
+
+    @Query("UPDATE Post p SET p.likeCount = :likeCount WHERE p.id = :postId")
+    int syncLikeCount(@Param("postId") Long postId, @Param("likeCount") int likeCount);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Post p SET p.bookmarkCount = :bookmarkCount WHERE p.id = :postId")
+    int syncBookmarkCount(@Param("postId") Long postId, @Param("bookmarkCount") int bookmarkCount);
 }

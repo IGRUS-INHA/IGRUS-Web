@@ -1,5 +1,3 @@
-import type { FetchConfig, ApiResponse } from '@/types/api';
-
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -12,19 +10,12 @@ function getAccessToken(): string | undefined {
   return token ?? undefined;
 }
 
-function getRefreshToken(): string | undefined {
-  const token = localStorage.getItem('refreshToken');
-  return token ?? undefined;
-}
-
-function setTokens(accessToken: string, refreshToken: string): void {
+function setAccessToken(accessToken: string): void {
   localStorage.setItem('accessToken', accessToken);
-  localStorage.setItem('refreshToken', refreshToken);
 }
 
-function clearTokens(): void {
+function clearAccessToken(): void {
   localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
 }
 
 // =============================================================================
@@ -44,32 +35,27 @@ function onTokenRefreshed(newToken: string): void {
 }
 
 async function refreshAccessToken(): Promise<string> {
-  const refreshToken = getRefreshToken();
-
-  if (!refreshToken) {
-    throw new Error('No refresh token available');
-  }
-
-  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+  // Refresh Token은 httpOnly 쿠키로 자동 전송됨
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/password/refresh`, {
     method: 'POST',
+    credentials: 'include', // 쿠키 포함
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ refreshToken }),
   });
 
   if (!response.ok) {
-    clearTokens();
+    clearAccessToken();
     throw new Error('Token refresh failed');
   }
 
-  const result = (await response.json()) as ApiResponse<{
+  const result = (await response.json()) as {
     accessToken: string;
-    refreshToken: string;
-  }>;
+    expiresIn: number;
+  };
 
-  setTokens(result.data.accessToken, result.data.refreshToken);
-  return result.data.accessToken;
+  setAccessToken(result.accessToken);
+  return result.accessToken;
 }
 
 // =============================================================================
@@ -77,7 +63,8 @@ async function refreshAccessToken(): Promise<string> {
 // =============================================================================
 
 function handleLogout(): void {
-  clearTokens();
+  clearAccessToken();
+  // Refresh Token 쿠키는 서버에서 삭제 필요 (로그아웃 API 호출 시)
   // 로그인 페이지로 리다이렉트
   window.location.href = '/login';
 }
@@ -86,27 +73,14 @@ function handleLogout(): void {
 // 커스텀 Fetch
 // =============================================================================
 
-export async function customFetch<T>({
-  url,
-  method,
-  params,
-  data,
-  headers,
-  signal,
-}: FetchConfig): Promise<T> {
-  const queryString = params
-    ? `?${new URLSearchParams(
-        Object.entries(params)
-          .filter(([, v]) => v !== undefined && v !== null)
-          .map(([k, v]) => [k, String(v)])
-      ).toString()}`
-    : '';
-
+export async function customFetch<T>(
+  url: string,
+  options?: RequestInit
+): Promise<T> {
   const accessToken = getAccessToken();
 
   const requestHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...headers,
+    ...(options?.headers as Record<string, string>),
   };
 
   // Authorization 헤더 자동 주입
@@ -114,41 +88,51 @@ export async function customFetch<T>({
     requestHeaders['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${url}${queryString}`, {
-    method,
-    signal: signal ?? null,
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    ...options,
+    credentials: 'include', // 쿠키 포함 (Refresh Token)
     headers: requestHeaders,
-    body: data ? JSON.stringify(data) : null,
   });
 
-  // 401 Unauthorized - 토큰 갱신 시도
-  if (response.status === 401) {
-    const refreshToken = getRefreshToken();
+  // 401 Unauthorized 또는 403 Forbidden - 토큰 갱신 시도
+  // (403은 토큰 유효하지 않아 익명 사용자로 처리되어 권한 없음으로 나올 수 있음)
+  // 단, public endpoint (로그인, 회원가입, 이메일 인증 등)는 제외
+  const isPublicEndpoint =
+    url.includes('/auth/password/login') ||
+    url.includes('/auth/password/signup') ||
+    url.includes('/auth/password/refresh') ||
+    url.includes('/auth/password/verify-email') ||
+    url.includes('/auth/password/resend-verification');
 
-    // 리프레시 토큰도 없으면 로그아웃
-    if (!refreshToken) {
-      handleLogout();
-      throw new Error('Authentication required');
-    }
-
+  if ((response.status === 401 || response.status === 403) && !isPublicEndpoint) {
     // 이미 갱신 중이면 대기
     if (isRefreshing) {
       return new Promise<T>((resolve, reject) => {
         subscribeTokenRefresh((newToken: string) => {
-          requestHeaders['Authorization'] = `Bearer ${newToken}`;
-          fetch(`${API_BASE_URL}${url}${queryString}`, {
-            method,
-            signal: signal ?? null,
-            headers: requestHeaders,
-            body: data ? JSON.stringify(data) : null,
+          const retryHeaders = {
+            ...(options?.headers as Record<string, string>),
+            'Authorization': `Bearer ${newToken}`,
+          };
+          fetch(`${API_BASE_URL}${url}`, {
+            ...options,
+            credentials: 'include',
+            headers: retryHeaders,
           })
-            .then((retryResponse) => {
+            .then(async (retryResponse) => {
               if (!retryResponse.ok) {
                 throw new Error(`HTTP ${retryResponse.status}`);
               }
-              return retryResponse.json() as Promise<T>;
+
+              const data = retryResponse.status === 204
+                ? undefined
+                : await retryResponse.json();
+
+              resolve({
+                data,
+                status: retryResponse.status,
+                headers: retryResponse.headers,
+              } as T);
             })
-            .then(resolve)
             .catch(reject);
         });
       });
@@ -163,12 +147,14 @@ export async function customFetch<T>({
       onTokenRefreshed(newAccessToken);
 
       // 갱신된 토큰으로 재요청
-      requestHeaders['Authorization'] = `Bearer ${newAccessToken}`;
-      const retryResponse = await fetch(`${API_BASE_URL}${url}${queryString}`, {
-        method,
-        signal: signal ?? null,
-        headers: requestHeaders,
-        body: data ? JSON.stringify(data) : null,
+      const retryHeaders = {
+        ...(options?.headers as Record<string, string>),
+        'Authorization': `Bearer ${newAccessToken}`,
+      };
+      const retryResponse = await fetch(`${API_BASE_URL}${url}`, {
+        ...options,
+        credentials: 'include',
+        headers: retryHeaders,
       });
 
       if (!retryResponse.ok) {
@@ -178,12 +164,15 @@ export async function customFetch<T>({
         throw new Error(errorBody.message ?? `HTTP ${retryResponse.status}`);
       }
 
-      // 204 No Content 처리
-      if (retryResponse.status === 204) {
-        return undefined as T;
-      }
+      const data = retryResponse.status === 204
+        ? undefined
+        : await retryResponse.json();
 
-      return (await retryResponse.json()) as T;
+      return {
+        data,
+        status: retryResponse.status,
+        headers: retryResponse.headers,
+      } as T;
     } catch (error) {
       isRefreshing = false;
       refreshSubscribers = [];
@@ -205,10 +194,13 @@ export async function customFetch<T>({
     throw error;
   }
 
-  // 204 No Content 처리
-  if (response.status === 204) {
-    return undefined as T;
-  }
+  const data = response.status === 204
+    ? undefined
+    : await response.json();
 
-  return (await response.json()) as T;
+  return {
+    data,
+    status: response.status,
+    headers: response.headers,
+  } as T;
 }
