@@ -20,23 +20,23 @@
 | 변경 일시 기록 | ✅ 완료 | `BaseEntity.createdAt` |
 | 영구 보관 (삭제 불가) | ✅ 완료 | `UserRoleHistory`는 `BaseEntity` 확장 (soft delete 없음), 삭제 쿼리 없음 |
 
-### 미구현 태스크
+### 태스크 현황
 
 | Phase | 총 태스크 | 완료 | 미완료 | 완료율 |
 |-------|----------|------|--------|--------|
-| Phase 1: Response DTO | 1 | 0 | 1 | 0% |
-| Phase 2: Repository 필터 쿼리 | 1 | 0 | 1 | 0% |
-| Phase 3: Service | 1 | 0 | 1 | 0% |
-| Phase 4: Controller | 1 | 0 | 1 | 0% |
-| Phase 5: 테스트 | 2 | 0 | 2 | 0% |
-| Phase 6: 문서 | 1 | 0 | 1 | 0% |
-| **Total** | **7** | **0** | **7** | **0%** |
+| Phase 1: Response DTO | 1 | 1 | 0 | 100% |
+| Phase 2: Repository 필터 쿼리 | 1 | 1 | 0 | 100% |
+| Phase 3: Service | 1 | 1 | 0 | 100% |
+| Phase 4: Controller | 1 | 1 | 0 | 100% |
+| Phase 5: 테스트 | 2 | 2 | 0 | 100% |
+| Phase 6: 문서 | 1 | 1 | 0 | 100% |
+| **Total** | **7** | **7** | **0** | **100%** |
 
 ---
 
 ## Phase 1: Response DTO
 
-- [ ] **[T1]** `UserRoleHistoryResponse` record 생성
+- [x] **[T1]** `UserRoleHistoryResponse` record 생성
   - 파일: `admin/user/dto/UserRoleHistoryResponse.java`
   - `UserDetailResponse` 패턴의 record 클래스
   - 필드:
@@ -55,7 +55,7 @@
 
 ## Phase 2: Repository 필터 쿼리
 
-- [ ] **[T2]** `UserRoleHistoryRepository`에 복합 필터 쿼리 추가
+- [x] **[T2]** `UserRoleHistoryRepository`에 복합 필터 쿼리 추가
   - 파일: `user/repository/UserRoleHistoryRepository.java`
   - `findByFilters(userId, previousRole, newRole, changedBy, startDate, endDate, pageable)` JPQL 쿼리
   - `LEFT JOIN FETCH h.user` (N+1 방지)
@@ -65,14 +65,14 @@
 
 ## Phase 3: Service
 
-- [ ] **[T3]** `GetUserRoleHistoryService` 서비스 생성
+- [x] **[T3]** `GetUserRoleHistoryService` 서비스 생성
   - 파일: `admin/user/service/GetUserRoleHistoryService.java`
   - `GetUserListService` 패턴 (단순 repository 위임)
   - `@Transactional(readOnly = true)`, `repository.findByFilters().map(UserRoleHistoryResponse::from)`
 
 ## Phase 4: Controller
 
-- [ ] **[T4]** `AdminUserController`에 권한 변경 이력 조회 엔드포인트 추가
+- [x] **[T4]** `AdminUserController`에 권한 변경 이력 조회 엔드포인트 추가
   - 파일: `admin/user/controller/AdminUserController.java`
   - `GET /api/v1/admin/users/role-histories`
   - `@PreAuthorize("hasRole('ADMIN')")` (ADMIN 전용 - 감사 데이터 보호)
@@ -89,7 +89,7 @@
 
 ## Phase 5: 테스트
 
-- [ ] **[T5]** `AdminUserControllerTest`에 role-histories 테스트 추가
+- [x] **[T5]** `AdminUserControllerTest`에 role-histories 테스트 추가
   - 파일: `(test) admin/user/controller/AdminUserControllerTest.java`
   - 기존 테스트 클래스에 `@Nested` 클래스 추가
   - 테스트 케이스:
@@ -104,7 +104,7 @@
     - 401: 미인증 접근 시 거부
     - 빈 결과 처리
 
-- [ ] **[T6]** `GetUserRoleHistoryServiceTest` 통합 테스트 작성
+- [x] **[T6]** `GetUserRoleHistoryServiceTest` 통합 테스트 작성
   - 파일: `(test) admin/user/service/GetUserRoleHistoryServiceTest.java`
   - `ServiceIntegrationTestBase` 확장
   - 테스트 케이스:
@@ -116,7 +116,7 @@
 
 ## Phase 6: 문서 업데이트
 
-- [ ] **[T7]** 관련 스펙 문서 업데이트
+- [x] **[T7]** 관련 스펙 문서 업데이트
   - 파일: `docs/feature/auth/auth-spec.md`
   - 관리자 권한 변경 이력 조회 API 관련 FR 추가
   - 영구 보관 정책 명시

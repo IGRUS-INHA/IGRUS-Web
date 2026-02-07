@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.Instant;
 
 // 사용자 패스워드 기반 인증 정보 (비밀번호, 계정 상태, 승인 정보)
 @Entity
@@ -45,14 +44,6 @@ public class PasswordCredential extends SoftDeletableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "password_credentials_status", nullable = false)
     private UserStatus status = UserStatus.ACTIVE;
-
-    // 정회원 승인일 : 준회원 -> 정회원 전환 시 기록
-    @Column(name = "password_credentials_approved_at")
-    private Instant approvedAt;
-
-    // 승인 처리자의 ID
-    @Column(name = "password_credentials_approved_by")
-    private Long approvedBy;
 
     // === 정적 팩토리 메서드 ===
 
@@ -106,17 +97,6 @@ public class PasswordCredential extends SoftDeletableEntity {
         if (this.status == UserStatus.PENDING_VERIFICATION) {
             this.status = UserStatus.ACTIVE;
         }
-    }
-
-    // === 정회원 승인 ===
-
-    public void approve(Long approverId) {
-        this.approvedAt = Instant.now();
-        this.approvedBy = approverId;
-    }
-
-    public boolean isApproved() {
-        return this.approvedAt != null;
     }
 
 }

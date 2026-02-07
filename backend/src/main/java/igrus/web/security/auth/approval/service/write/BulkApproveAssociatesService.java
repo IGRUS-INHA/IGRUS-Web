@@ -1,8 +1,9 @@
 package igrus.web.security.auth.approval.service.write;
 
+import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.exception.BulkApprovalEmptyException;
+import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
-import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -29,7 +30,7 @@ import java.util.List;
 public class BulkApproveAssociatesService {
 
     private final UserRepository userRepository;
-    private final PasswordCredentialRepository passwordCredentialRepository;
+    private final AssociateDecisionRepository associateDecisionRepository;
     private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
     private final ApplicationEventPublisher eventPublisher;
@@ -66,11 +67,16 @@ public class BulkApproveAssociatesService {
                     continue;
                 }
 
+                if (associateDecisionRepository.findByUserId(userId).isPresent()) {
+                    failedUserIds.add(userId);
+                    continue;
+                }
+
                 UserRole previousRole = user.getRole();
                 user.promoteToMember();
 
-                passwordCredentialRepository.findByUserId(userId)
-                        .ifPresent(credential -> credential.approve(approverId));
+                AssociateDecision decision = AssociateDecision.approve(user, approverId);
+                associateDecisionRepository.save(decision);
 
                 UserRoleHistory history = UserRoleHistory.create(
                         user,
