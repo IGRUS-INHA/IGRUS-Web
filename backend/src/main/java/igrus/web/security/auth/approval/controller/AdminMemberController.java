@@ -2,6 +2,7 @@ package igrus.web.security.auth.approval.controller;
 
 import igrus.web.common.config.SwaggerConfig;
 import igrus.web.security.auth.approval.dto.request.BulkApprovalRequest;
+import igrus.web.security.auth.approval.dto.response.AssociateInfoPageResponse;
 import igrus.web.security.auth.approval.dto.response.AssociateInfoResponse;
 import igrus.web.security.auth.approval.dto.response.BulkApprovalResultResponse;
 import igrus.web.security.auth.approval.service.read.GetPendingAssociatesService;
@@ -53,7 +54,7 @@ public class AdminMemberController {
             @ApiResponse(
                     responseCode = "200",
                     description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = Page.class))
+                    content = @Content(schema = @Schema(implementation = AssociateInfoPageResponse.class))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -67,16 +68,16 @@ public class AdminMemberController {
             )
     })
     @GetMapping("/pending")
-    public ResponseEntity<Page<AssociateInfoResponse>> getPendingAssociates(
+    public ResponseEntity<AssociateInfoPageResponse> getPendingAssociates(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        Page<AssociateInfoResponse> pendingAssociates = getPendingAssociatesService.getPendingAssociates(
+        Page<AssociateInfoResponse> page = getPendingAssociatesService.getPendingAssociates(
                 pageable,
                 authenticatedUser.userId()
         );
-        return ResponseEntity.ok(pendingAssociates);
+        return ResponseEntity.ok(AssociateInfoPageResponse.from(page));
     }
 
     @Operation(

@@ -86,9 +86,9 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .param("size", "10"))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.content").isArray())
-                    .andExpect(jsonPath("$.content[0].studentId").value("20230001"))
-                    .andExpect(jsonPath("$.content[0].name").value("테스트유저"))
+                    .andExpect(jsonPath("$.associates").isArray())
+                    .andExpect(jsonPath("$.associates[0].studentId").value("20230001"))
+                    .andExpect(jsonPath("$.associates[0].name").value("테스트유저"))
                     .andExpect(jsonPath("$.totalElements").value(1));
         }
 
