@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 @Service
@@ -17,29 +18,43 @@ public class RecordAccountStatusChangeService {
 
     private final AccountStatusChangeHistoryRepository accountStatusChangeHistoryRepository;
     private final UserRepository userRepository;
+    private final TransactionTemplate transactionTemplate;
 
-    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAccountStatusChange(AccountStatusChangeEvent event) {
         log.info("계정 상태 변경 이력 저장: userId={}, changeType={}, {} -> {}",
                 event.userId(), event.changeType(), event.previousValue(), event.newValue());
 
-        String userStudentId = event.userId() != null
-                ? userRepository.findStudentIdByIdIncludingDeleted(event.userId()).orElse(null)
-                : null;
+        try {
+            transactionTemplate.executeWithoutResult(status -> {
+                String userStudentId = resolveStudentId(event.userId());
+                String changedByStudentId = resolveStudentId(event.changedByUserId());
 
-        String changedByStudentId = event.changedByUserId() != null
-                ? userRepository.findStudentIdByIdIncludingDeleted(event.changedByUserId()).orElse(null)
-                : null;
+                AccountStatusChangeHistory history = AccountStatusChangeHistory.create(
+                        event.userId(), userStudentId,
+                        event.changedByUserId(), changedByStudentId,
+                        event.changeType(),
+                        event.previousValue(),
+                        event.newValue(),
+                        event.reason()
+                );
 
-        AccountStatusChangeHistory history = AccountStatusChangeHistory.create(
-                event.userId(), userStudentId,
-                event.changedByUserId(), changedByStudentId,
-                event.changeType(),
-                event.previousValue(),
-                event.newValue(),
-                event.reason()
-        );
+                accountStatusChangeHistoryRepository.save(history);
+            });
+        } catch (Exception e) {
+            log.error("계정 상태 변경 이력 저장 실패: userId={}, changeType={}",
+                    event.userId(), event.changeType(), e);
+        }
+    }
 
-        accountStatusChangeHistoryRepository.save(history);
+    private String resolveStudentId(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        return userRepository.findStudentIdByIdIncludingDeleted(userId)
+                .orElseGet(() -> {
+                    log.warn("학번 조회 실패: userId={}", userId);
+                    return null;
+                });
     }
 }

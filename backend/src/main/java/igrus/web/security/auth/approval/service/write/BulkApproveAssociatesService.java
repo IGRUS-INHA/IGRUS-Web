@@ -88,7 +88,7 @@ public class BulkApproveAssociatesService {
 
                 approvedCount++;
             } catch (Exception e) {
-                log.warn("일괄 승인 중 개별 사용자 처리 실패: userId={}, error={}", userId, e.getMessage());
+                log.warn("일괄 승인 중 개별 사용자 처리 실패: userId={}", userId, e);
                 failedUserIds.add(userId);
             }
         }

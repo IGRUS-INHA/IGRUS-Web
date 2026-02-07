@@ -145,7 +145,7 @@ class RecordAccountStatusChangeServiceTest extends ServiceIntegrationTestBase {
     void handleAccountStatusChange_NullChangedBy_SavesHistory() {
         transactionTemplate.execute(status -> {
             AccountStatusChangeEvent event = new AccountStatusChangeEvent(
-                    targetUser.getId(), null, AccountChangeType.STATUS_CHANGE,
+                    targetUser.getId(), null, AccountChangeType.APPROVAL,
                     "PENDING_VERIFICATION", "ACTIVE", null
             );
 

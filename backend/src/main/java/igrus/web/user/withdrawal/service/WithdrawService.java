@@ -40,6 +40,7 @@ public class WithdrawService {
         // 1. User 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+        String previousStatus = user.getStatus().name();
 
         // 2. 정지 상태 확인
         if (user.isSuspended()) {
@@ -75,7 +76,7 @@ public class WithdrawService {
         // 9. 감사 이력 이벤트 발행
         eventPublisher.publishEvent(new AccountStatusChangeEvent(
                 userId, userId, AccountChangeType.WITHDRAWAL,
-                UserStatus.ACTIVE.name(), UserStatus.WITHDRAWN.name(),
+                previousStatus, UserStatus.WITHDRAWN.name(),
                 request.reason()
         ));
 

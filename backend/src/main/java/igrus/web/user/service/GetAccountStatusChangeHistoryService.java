@@ -13,11 +13,12 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class GetAccountStatusChangeHistoryService {
 
     private final AccountStatusChangeHistoryRepository accountStatusChangeHistoryRepository;
 
+    @Transactional(readOnly = true)
     public Page<AccountStatusChangeHistoryResponse> getHistories(
             Long userId,
             Long changedByUserId,

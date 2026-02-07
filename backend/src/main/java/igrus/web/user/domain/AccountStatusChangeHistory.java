@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 
 // 계정 상태 변경 감사 이력
 @Entity
@@ -73,6 +75,9 @@ public class AccountStatusChangeHistory extends BaseEntity {
                                                     Long changedByUserId, String changedByStudentId,
                                                     AccountChangeType changeType,
                                                     String previousValue, String newValue, String reason) {
+        Objects.requireNonNull(changeType, "changeType must not be null");
+        Objects.requireNonNull(previousValue, "previousValue must not be null");
+        Objects.requireNonNull(newValue, "newValue must not be null");
         return new AccountStatusChangeHistory(userId, userStudentId, changedByUserId, changedByStudentId,
                 changeType, previousValue, newValue, reason);
     }

@@ -54,6 +54,7 @@ public class ChangeUserStatusService {
             throw new InvalidSuspensionException(ErrorCode.ACCOUNT_SUSPENDED);
         }
 
+        String previousStatus = targetUser.getStatus().name();
         targetUser.suspend();
 
         UserSuspension suspension = UserSuspension.create(
@@ -62,7 +63,7 @@ public class ChangeUserStatusService {
 
         eventPublisher.publishEvent(new AccountStatusChangeEvent(
                 targetUserId, currentUserId, AccountChangeType.SUSPENSION,
-                UserStatus.ACTIVE.name(), UserStatus.SUSPENDED.name(),
+                previousStatus, UserStatus.SUSPENDED.name(),
                 request.reason()
         ));
     }
@@ -75,12 +76,13 @@ public class ChangeUserStatusService {
                 .findActiveByUserId(targetUserId, Instant.now())
                 .orElseThrow(InvalidSuspensionException::alreadyLifted);
 
+        String previousStatus = targetUser.getStatus().name();
         suspension.lift(currentUserId);
         targetUser.activate();
 
         eventPublisher.publishEvent(new AccountStatusChangeEvent(
                 targetUserId, currentUserId, AccountChangeType.SUSPENSION_LIFT,
-                UserStatus.SUSPENDED.name(), UserStatus.ACTIVE.name(),
+                previousStatus, UserStatus.ACTIVE.name(),
                 null
         ));
     }
