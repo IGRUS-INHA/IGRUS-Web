@@ -7,6 +7,7 @@ import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
+import igrus.web.user.event.AccountStatusChangeEvent;
 import igrus.web.user.exception.SameRoleChangeException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -40,6 +42,9 @@ class ChangeUserRoleServiceTest {
 
     @Mock
     private ValidateNotLastAdminService validateNotLastAdminService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ChangeUserRoleService changeUserRoleService;
@@ -66,6 +71,7 @@ class ChangeUserRoleServiceTest {
             assertThat(targetUser.getRole()).isEqualTo(UserRole.OPERATOR);
             verify(userRoleHistoryRepository).save(any(UserRoleHistory.class));
             verify(validateNotLastAdminService).validateNotLastAdmin(targetUserId);
+            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
         }
 
         @Test
@@ -84,6 +90,7 @@ class ChangeUserRoleServiceTest {
             // then
             assertThat(targetUser.getRole()).isEqualTo(UserRole.MEMBER);
             verify(userRoleHistoryRepository).save(any(UserRoleHistory.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
         }
     }
 

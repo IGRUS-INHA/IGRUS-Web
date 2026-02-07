@@ -9,8 +9,11 @@ import igrus.web.user.domain.UserRoleHistory;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.repository.UserRoleHistoryRepository;
+import igrus.web.user.domain.AccountChangeType;
+import igrus.web.user.event.AccountStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,7 @@ public class ApproveAssociateService {
     private final PasswordCredentialRepository passwordCredentialRepository;
     private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 개별 준회원을 정회원으로 승인합니다.
@@ -59,6 +63,12 @@ public class ApproveAssociateService {
                 "관리자 승인에 의한 정회원 전환"
         );
         userRoleHistoryRepository.save(history);
+
+        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+                userId, approverId, AccountChangeType.APPROVAL,
+                previousRole.name(), UserRole.MEMBER.name(),
+                "관리자 승인에 의한 정회원 전환"
+        ));
 
         log.info("개별 승인 완료: userId={}, previousRole={}, newRole={}", userId, previousRole, UserRole.MEMBER);
     }

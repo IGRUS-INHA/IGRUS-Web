@@ -8,8 +8,11 @@ import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.repository.UserRoleHistoryRepository;
+import igrus.web.user.domain.AccountChangeType;
+import igrus.web.user.event.AccountStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,7 @@ public class BulkApproveAssociatesService {
     private final PasswordCredentialRepository passwordCredentialRepository;
     private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 여러 준회원을 일괄 승인합니다.
@@ -76,9 +80,15 @@ public class BulkApproveAssociatesService {
                 );
                 userRoleHistoryRepository.save(history);
 
+                eventPublisher.publishEvent(new AccountStatusChangeEvent(
+                        userId, approverId, AccountChangeType.APPROVAL,
+                        previousRole.name(), UserRole.MEMBER.name(),
+                        "관리자 일괄 승인에 의한 정회원 전환"
+                ));
+
                 approvedCount++;
             } catch (Exception e) {
-                log.warn("일괄 승인 중 개별 사용자 처리 실패: userId={}, error={}", userId, e.getMessage());
+                log.warn("일괄 승인 중 개별 사용자 처리 실패: userId={}", userId, e);
                 failedUserIds.add(userId);
             }
         }
