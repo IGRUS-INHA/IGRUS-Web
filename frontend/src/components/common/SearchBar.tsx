@@ -7,6 +7,7 @@ interface SearchBarProps {
   onSearch: (keyword: string) => void;
   className?: string;
   placeholder?: string;
+  autoFocus?: boolean;
 }
 
 export default function SearchBar({
@@ -15,6 +16,7 @@ export default function SearchBar({
   onSearch,
   className = '',
   placeholder = 'Search...',
+  autoFocus = false,
 }: SearchBarProps) {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -39,8 +41,9 @@ export default function SearchBar({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="border border-gray-400 dark:border-gray-500 rounded-full pl-s7 pr-s10 py-s3 text-sm
-                   w-96 md:w-[450px] lg:w-[500px] xl:w-[600px]
+        autoFocus={autoFocus}
+        className="border border-gray-400 dark:border-gray-500 rounded-full pl-s7 pr-s10 py-s3 text-base md:text-sm
+                   w-full md:w-[450px] lg:w-[500px] xl:w-[600px]
                    bg-background text-foreground focus:outline-none focus:border-primary
                    transition-all focus:xl:w-[700px]"
       />
