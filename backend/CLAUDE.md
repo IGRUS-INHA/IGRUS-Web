@@ -252,6 +252,35 @@ public class UserService {
 - 새로운 기능 구현, 기능 수정 이후에는 Swagger 관련 코드를 업데이트 해서 문서화 상태를 항상 최신으로 유지할 것
 - 인증이 필요한 엔드포인트에는 `@SecurityRequirement` 를 붙일 것
 
+##### @ApiResponse 작성 시 필수 규칙
+- **`@Content`에 반드시 `mediaType = "application/json"` 명시**: 생략하면 SpringDoc이 `*/*`로 생성하여 Orval이 Blob 타입으로 처리함
+- **제네릭 타입(`Page<T>`, `List<T>` 등)은 `@Schema(implementation = ...)` 사용 금지**: 제네릭 정보가 유실되어 빈 객체(`{}`)로 생성됨. 대신 메서드 반환 타입으로부터 SpringDoc이 자동 추론하도록 `@Content`의 `schema`를 생략하거나, 구체적인 응답 DTO 클래스를 지정할 것
+```java
+// Bad - Content-Type */*로 생성, 제네릭 정보 유실
+@ApiResponse(
+    responseCode = "200",
+    description = "조회 성공",
+    content = @Content(schema = @Schema(implementation = Page.class))
+)
+
+// Good - mediaType 명시, 제네릭은 메서드 반환 타입에서 자동 추론
+@ApiResponse(
+    responseCode = "200",
+    description = "조회 성공",
+    useReturnTypeSchema = true
+)
+
+// Good - 비제네릭 응답은 명시적으로 지정 가능
+@ApiResponse(
+    responseCode = "200",
+    description = "조회 성공",
+    content = @Content(
+        mediaType = "application/json",
+        schema = @Schema(implementation = UserDetailResponse.class)
+    )
+)
+```
+
 ### 12. SOLID 원칙 준수
 - SRP(Single Responsibility Principle): 단일 책임 원칙
 - OCP(Open Closed Principle): 개방 폐쇄 원칙
