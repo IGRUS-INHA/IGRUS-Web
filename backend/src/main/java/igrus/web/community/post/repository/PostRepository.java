@@ -160,6 +160,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE p.author.id = :authorId AND p.deleted = false ORDER BY p.createdAt DESC")
     Page<Post> findByAuthorIdAndDeletedFalseOrderByCreatedAtDesc(@Param("authorId") Long authorId, Pageable pageable);
 
+    /**
+     * 특정 시각 이후에 생성된 삭제되지 않은 게시글 수를 조회합니다.
+     *
+     * @param startTime 기준 시각
+     * @return 게시글 수
+     */
+    @Query("SELECT COUNT(p) FROM Post p WHERE p.deleted = false AND p.createdAt >= :startTime")
+    long countByDeletedFalseAndCreatedAtAfter(@Param("startTime") Instant startTime);
     // === 원자적 카운트 업데이트 (@Version 우회) ===
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)

@@ -43,7 +43,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final String BASE_URL = "/api/v1/admin/members";
+    private static final String BASE_URL = "/api/v1/admin/associates";
 
     private User adminUser;
     private User memberUser;
@@ -79,7 +79,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("관리자 권한으로 준회원 목록 조회 성공")
         void getPendingAssociates_WithAdminRole_ReturnsOk() throws Exception {
             // when & then
-            mockMvc.perform(get(BASE_URL + "/pending")
+            mockMvc.perform(get(BASE_URL)
                             .with(withAuth(adminUser))
                             .with(csrf())
                             .param("page", "0")
@@ -96,7 +96,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("일반 사용자 권한으로 목록 조회 시 403 반환")
         void getPendingAssociates_WithMemberRole_Returns403() throws Exception {
             // when & then
-            mockMvc.perform(get(BASE_URL + "/pending")
+            mockMvc.perform(get(BASE_URL)
                             .with(withAuth(memberUser))
                             .with(csrf()))
                     .andDo(print())
@@ -185,7 +185,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
             BulkApprovalRequest request = new BulkApprovalRequest(userIds, "2026년 1월 일괄 승인");
 
             // when & then
-            mockMvc.perform(post(BASE_URL + "/approve/bulk")
+            mockMvc.perform(post(BASE_URL + "/approve-batch")
                             .with(withAuth(adminUser))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -212,7 +212,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
             BulkApprovalRequest request = new BulkApprovalRequest(userIds, null);
 
             // when & then
-            mockMvc.perform(post(BASE_URL + "/approve/bulk")
+            mockMvc.perform(post(BASE_URL + "/approve-batch")
                             .with(withAuth(adminUser))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -231,7 +231,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
             String requestBody = "{\"userIds\": [], \"reason\": null}";
 
             // when & then
-            mockMvc.perform(post(BASE_URL + "/approve/bulk")
+            mockMvc.perform(post(BASE_URL + "/approve-batch")
                             .with(withAuth(adminUser))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -248,7 +248,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
             String requestBody = "{\"reason\": \"test\"}";
 
             // when & then
-            mockMvc.perform(post(BASE_URL + "/approve/bulk")
+            mockMvc.perform(post(BASE_URL + "/approve-batch")
                             .with(withAuth(adminUser))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -266,7 +266,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
             BulkApprovalRequest request = new BulkApprovalRequest(userIds, null);
 
             // when & then
-            mockMvc.perform(post(BASE_URL + "/approve/bulk")
+            mockMvc.perform(post(BASE_URL + "/approve-batch")
                             .with(withAuth(memberUser))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)

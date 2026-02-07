@@ -35,10 +35,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/members")
+@RequestMapping("/api/v1/admin/associates")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Admin Member Management", description = "관리자 회원 관리 API (ADMIN 전용)")
+@Tag(name = "Admin Associate Approval", description = "관리자 준회원 승인 API (ADMIN 전용)")
 @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 public class AdminMemberController {
 
@@ -146,7 +146,7 @@ public class AdminMemberController {
                     content = @Content
             )
     })
-    @PostMapping("/approve/bulk")
+    @PostMapping("/approve-batch")
     public ResponseEntity<BulkApprovalResultResponse> approveBulk(
             @Valid @RequestBody BulkApprovalRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
