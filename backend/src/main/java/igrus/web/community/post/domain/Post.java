@@ -93,6 +93,10 @@ public class Post extends SoftDeletableEntity {
     @Column(name = "posts_bookmark_count", nullable = false)
     private int bookmarkCount = 0;
 
+    /** 댓글 수 (기본값: 0) */
+    @Column(name = "posts_comment_count", nullable = false)
+    private int commentCount = 0;
+
     /** 낙관적 락을 위한 버전 (동시성 제어) */
     @Version
     @Column(name = "posts_version")

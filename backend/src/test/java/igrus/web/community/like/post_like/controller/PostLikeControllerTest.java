@@ -356,15 +356,16 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.content[0].deletedMessage").value("삭제된 게시글입니다"));
         }
 
-        @DisplayName("준회원 좋아요 목록 조회 시 403 Forbidden")
+        @DisplayName("준회원 좋아요 목록 조회 시 200 OK (빈 목록)")
         @Test
-        void getMyLikes_AsAssociate_Returns403() throws Exception {
+        void getMyLikes_AsAssociate_Returns200() throws Exception {
             // when & then
             mockMvc.perform(get("/api/v1/users/me/likes")
                             .with(withAuth(associateUser))
                             .with(csrf()))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(0));
         }
     }
 }

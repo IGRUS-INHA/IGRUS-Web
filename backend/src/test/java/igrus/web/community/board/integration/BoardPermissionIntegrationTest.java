@@ -301,22 +301,22 @@ class BoardPermissionIntegrationTest extends ServiceIntegrationTestBase {
     @DisplayName("비인증 사용자 접근 테스트")
     class UnauthenticatedAccessTest {
 
-        @DisplayName("비인증 사용자가 게시판 목록 조회 시 403 Forbidden")
+        @DisplayName("비인증 사용자가 게시판 목록 조회 시 401 Unauthorized")
         @Test
-        void unauthenticated_getBoardList_returnsForbidden() throws Exception {
+        void unauthenticated_getBoardList_returnsUnauthorized() throws Exception {
             mockMvc.perform(get(BASE_URL)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isUnauthorized());
         }
 
-        @DisplayName("비인증 사용자가 게시판 상세 조회 시 403 Forbidden")
+        @DisplayName("비인증 사용자가 게시판 상세 조회 시 401 Unauthorized")
         @Test
-        void unauthenticated_getBoardDetail_returnsForbidden() throws Exception {
+        void unauthenticated_getBoardDetail_returnsUnauthorized() throws Exception {
             mockMvc.perform(get(BASE_URL + "/notices")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isUnauthorized());
         }
     }
 
