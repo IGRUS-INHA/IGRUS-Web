@@ -96,10 +96,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (AccountSuspendedException | AccountWithdrawnException | EmailNotVerifiedException | UserNotFoundException e) {
             // 계정 상태 예외 - 에러 응답 직접 작성 후 필터 체인 종료
-            handleAccountStatusException(response, e);
+            handleAuthenticationException(response, e);
             return;
         } catch (CustomBaseException e) {
             log.warn("인증 실패 - {}: path={}", e.getMessage(), request.getRequestURI());
+            handleAuthenticationException(response, e);
+            return;
         } catch (Exception e) {
             log.error("인증 처리 중 예외 발생: path={}, error={}", request.getRequestURI(), e.getMessage());
         }
@@ -109,9 +111,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 계정 상태 예외 발생 시 에러 응답을 직접 작성합니다.
+     * 인증 예외 발생 시 에러 응답을 직접 작성합니다.
      */
-    private void handleAccountStatusException(HttpServletResponse response, CustomBaseException e) throws IOException {
+    private void handleAuthenticationException(HttpServletResponse response, CustomBaseException e) throws IOException {
         ErrorCode errorCode = e.getErrorCode();
         response.setStatus(errorCode.getStatus());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

@@ -148,7 +148,9 @@ public enum ErrorCode {
     EVENT_INVALID_REGISTRATION_STATUS(400, "유효하지 않은 신청 상태입니다"),
     EVENT_OPERATOR_REQUIRED(403, "운영진 이상만 접근할 수 있습니다"),
     EVENT_NOT_OPEN(400, "신청 가능한 상태가 아닙니다"),
-    EVENT_NOT_IN_REGISTRATION_PERIOD(400, "신청 기간이 아닙니다");
+    EVENT_NOT_IN_REGISTRATION_PERIOD(400, "신청 기간이 아닙니다"),
+    EVENT_NOT_EDITABLE(400, "수정 불가능한 상태의 행사입니다"),
+    EVENT_INVALID_STATE_TRANSITION(400, "허용되지 않은 행사 상태 변경입니다");
 
     private final int status;
     private final String message;

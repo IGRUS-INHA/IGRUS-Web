@@ -4,6 +4,7 @@ import igrus.web.community.comment.domain.Comment;
 import igrus.web.community.like.comment_like.domain.CommentLike;
 import igrus.web.community.like.comment_like.repository.CommentLikeRepository;
 import igrus.web.community.like.comment_like.service.support.CommentLikeValidator;
+import igrus.web.community.post.service.support.PostAccessChecker;
 import igrus.web.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ public class LikeCommentService {
 
     private final CommentLikeRepository commentLikeRepository;
     private final CommentLikeValidator commentLikeValidator;
+    private final PostAccessChecker postAccessChecker;
 
     /**
      * 댓글에 좋아요를 추가합니다.
@@ -30,6 +32,7 @@ public class LikeCommentService {
         Comment comment = commentLikeValidator.findCommentById(commentId);
         User user = commentLikeValidator.findUserById(userId);
 
+        postAccessChecker.checkPostAccess(comment.getPost(), user);
         commentLikeValidator.validateNotOwnComment(comment, user);
         commentLikeValidator.validateNotAlreadyLiked(commentId, userId);
 

@@ -10,6 +10,8 @@ import igrus.web.community.comment.service.support.CommentFinder;
 import igrus.web.community.comment.service.support.CommentValidator;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.exception.PostNotFoundException;
+import igrus.web.community.post.repository.PostRepository;
+import igrus.web.community.post.service.support.PostAccessChecker;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,10 +53,16 @@ class CreateCommentServiceTest {
     private CommentRepository commentRepository;
 
     @Mock
+    private PostRepository postRepository;
+
+    @Mock
     private CommentFinder commentFinder;
 
     @Mock
     private CommentValidator commentValidator;
+
+    @Mock
+    private PostAccessChecker postAccessChecker;
 
     @InjectMocks
     private CreateCommentService createCommentService;
@@ -96,6 +104,7 @@ class CreateCommentServiceTest {
             assertThat(response.getContent()).isEqualTo(DEFAULT_COMMENT_CONTENT);
             assertThat(response.isAnonymous()).isFalse();
             verify(commentRepository).save(any(Comment.class));
+            verify(postRepository).incrementCommentCount(post.getId());
         }
 
         @Test

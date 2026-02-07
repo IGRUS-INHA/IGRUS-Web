@@ -58,7 +58,7 @@ public record PostDetailResponse(
             post.getViewCount(),
             post.getLikeCount(),
             post.getBookmarkCount(),
-            0,  // commentCount - 추후 구현
+            post.getCommentCount(),
             imageUrls,
             post.getCreatedAt(),
             post.getUpdatedAt(),

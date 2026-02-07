@@ -104,13 +104,12 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("인증되지 않은 사용자 목록 조회 시 403 반환")
-        void getPendingAssociates_Unauthenticated_Returns403() throws Exception {
+        @DisplayName("인증되지 않은 사용자 목록 조회 시 401 반환")
+        void getPendingAssociates_Unauthenticated_Returns401() throws Exception {
             // when & then
-            // Note: 인증 없이 CSRF 토큰도 없으면 CSRF 필터에서 403 반환
-            mockMvc.perform(get(BASE_URL))
+            mockMvc.perform(get(BASE_URL + "/pending"))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isUnauthorized());
         }
     }
 
@@ -277,19 +276,18 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("인증되지 않은 사용자 일괄 승인 시도 시 403 반환")
-        void approveBulk_Unauthenticated_Returns403() throws Exception {
+        @DisplayName("인증되지 않은 사용자 일괄 승인 시도 시 401 반환")
+        void approveBulk_Unauthenticated_Returns401() throws Exception {
             // given
             List<Long> userIds = List.of(associateUser.getId());
             BulkApprovalRequest request = new BulkApprovalRequest(userIds, null);
 
             // when & then
-            // Note: 인증 없이 CSRF 토큰도 없으면 CSRF 필터에서 403 반환
-            mockMvc.perform(post(BASE_URL + "/approve-batch")
+            mockMvc.perform(post(BASE_URL + "/approve/bulk")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isUnauthorized());
         }
     }
 }

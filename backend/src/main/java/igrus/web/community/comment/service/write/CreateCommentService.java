@@ -7,6 +7,8 @@ import igrus.web.community.comment.repository.CommentRepository;
 import igrus.web.community.comment.service.support.CommentFinder;
 import igrus.web.community.comment.service.support.CommentValidator;
 import igrus.web.community.post.domain.Post;
+import igrus.web.community.post.repository.PostRepository;
+import igrus.web.community.post.service.support.PostAccessChecker;
 import igrus.web.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateCommentService {
 
     private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
     private final CommentFinder commentFinder;
     private final CommentValidator commentValidator;
+    private final PostAccessChecker postAccessChecker;
 
     /**
      * 댓글을 작성합니다.
@@ -37,10 +41,12 @@ public class CreateCommentService {
         User author = commentFinder.findUserById(userId);
 
         commentValidator.validatePostNotDeleted(post);
+        postAccessChecker.checkPostAccess(post, author);
         commentValidator.validateAnonymousOption(post, request.isAnonymous());
 
         Comment comment = Comment.createComment(post, author, request.getContent(), request.isAnonymous());
         Comment savedComment = commentRepository.save(comment);
+        postRepository.incrementCommentCount(postId);
 
         return CommentResponse.from(savedComment, 0, false);
     }

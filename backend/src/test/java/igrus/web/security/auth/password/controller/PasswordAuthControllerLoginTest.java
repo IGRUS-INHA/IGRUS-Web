@@ -60,7 +60,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(PasswordAuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import({GlobalExceptionHandler.class, ApiSecurityConfig.class, SecurityConfigUtil.class, JwtAuthenticationFilter.class})
+@Import({GlobalExceptionHandler.class, ApiSecurityConfig.class, SecurityConfigUtil.class, JwtAuthenticationFilter.class, igrus.web.security.jwt.JwtAuthenticationEntryPoint.class})
 @DisplayName("PasswordAuthController 로그인/로그아웃 테스트")
 class PasswordAuthControllerLoginTest {
 

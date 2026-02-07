@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/comments/{commentId}/likes")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
+@PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
 public class CommentLikeController {
 
     private final LikeCommentService likeCommentService;
