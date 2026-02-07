@@ -15,58 +15,39 @@ export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
       // 상태
-      user: null,
-      accessToken: null,
-      refreshToken: null,
+      user: undefined,
+      accessToken: undefined,
+      refreshToken: undefined,
       isAuthenticated: false,
 
       // 액션
-      login: async (studentId: string, _password: string): Promise<void> => {
-        // TODO: API 연동
-        // const response = await authApi.login({ studentId, password });
-        // set({ user: response.user, accessToken: response.accessToken, refreshToken: response.refreshToken, isAuthenticated: true });
-
-        // Mock login
-        set({
-          user: {
-            studentId,
-            name: '테스트 유저',
-            email: `${studentId}@inha.edu`,
-            joinedDate: '2024-03-01',
-            role: ROLES.ADMIN,
-          },
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
-          isAuthenticated: true,
-        });
-      },
-
       setAuth: (
         user: User,
         accessToken: string,
-        refreshToken: string
+        refreshToken?: string
       ): void => {
         set({
           user,
           accessToken,
-          refreshToken,
+          refreshToken: refreshToken || undefined,
           isAuthenticated: true,
         });
       },
 
       updateUser: (userData: Partial<User>): void => {
         set((state) => ({
-          user: state.user ? { ...state.user, ...userData } : null,
+          user: state.user ? { ...state.user, ...userData } : undefined,
         }));
       },
 
       logout: (): void => {
+        // Access Token만 localStorage에서 제거
+        // Refresh Token은 HttpOnly 쿠키로 관리되므로 서버에서 제거
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
         set({
-          user: null,
-          accessToken: null,
-          refreshToken: null,
+          user: undefined,
+          accessToken: undefined,
+          refreshToken: undefined,
           isAuthenticated: false,
         });
       },
@@ -91,7 +72,8 @@ export const useAuthStore = create<AuthStore>()(
       partialize: (state): AuthPersistState => ({
         user: state.user,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
+        // refreshToken은 HttpOnly 쿠키로 관리되므로 persist 제외
+        refreshToken: undefined,
         isAuthenticated: state.isAuthenticated,
       }),
     }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { useAuthStore } from '@/stores';
 import { useLogin } from '@/api/model/password-authentication/password-authentication';
 import type { PasswordLoginResponse } from '@/api/model/models';
@@ -40,6 +41,11 @@ export default function LoginPage() {
           role: loginData.role,
         };
 
+        // Access Token만 localStorage에 저장 (client.ts의 customFetch가 사용)
+        // Refresh Token은 HttpOnly 쿠키로 자동 관리됨
+        localStorage.setItem('accessToken', loginData.accessToken);
+
+        // zustand store에 저장 (Access Token만)
         setAuth(user, loginData.accessToken);
         navigate('/');
       } else {
@@ -53,11 +59,35 @@ export default function LoginPage() {
 
       // 이메일 인증 관련 에러 처리
       if (errorMessage.includes('이메일 인증')) {
-        alert('이메일 인증이 완료되지 않았습니다.\n\n회원가입 시 입력하신 이메일에서 인증 메일을 확인해주세요.');
+        Swal.fire({
+          icon: 'warning',
+          title: '이메일 인증 필요',
+          html: '이메일 인증이 완료되지 않았습니다.<br><br>회원가입 시 입력하신 이메일에서 인증 메일을 확인해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#FFC107',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       } else if (errorMessage.includes('승인')) {
-        alert('관리자 승인 대기 중입니다.\n\n승인 완료 후 로그인이 가능합니다.');
+        Swal.fire({
+          icon: 'info',
+          title: '승인 대기 중',
+          html: '관리자 승인 대기 중입니다.<br><br>승인 완료 후 로그인이 가능합니다.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#17A2B8',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       } else {
-        alert('로그인에 실패했습니다.\n\n학번과 비밀번호를 확인해주세요.');
+        Swal.fire({
+          icon: 'error',
+          title: '로그인 실패',
+          html: '로그인에 실패했습니다.<br><br>학번과 비밀번호를 확인해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#DC3545',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       }
     } finally {
       setLoading(false);

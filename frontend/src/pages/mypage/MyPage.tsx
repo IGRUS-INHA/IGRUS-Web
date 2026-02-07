@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Swal from 'sweetalert2';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { Layers, Heart, Bookmark, Award } from 'lucide-react';
@@ -16,11 +17,32 @@ export default function MyPage() {
   const [activeTab, setActiveTab] = useState<TabType>('posts');
 
   const handleChangePassword = () => {
-    alert('비밀번호 변경 기능이 곧 추가됩니다.');
+    Swal.fire({
+      icon: 'info',
+      title: '개발 예정',
+      text: '비밀번호 변경 기능이 곧 추가됩니다.',
+      confirmButtonText: '확인',
+      confirmButtonColor: '#17A2B8',
+      showClass: { popup: '', backdrop: '' },
+      hideClass: { popup: '', backdrop: '' },
+    });
   };
 
-  const handleLogout = () => {
-    if (confirm('로그아웃 하시겠습니까?')) {
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      icon: 'question',
+      title: '로그아웃',
+      text: '로그아웃 하시겠습니까?',
+      showCancelButton: true,
+      confirmButtonText: '로그아웃',
+      cancelButtonText: '취소',
+      confirmButtonColor: '#DC3545',
+      cancelButtonColor: '#6C757D',
+      showClass: { popup: '', backdrop: '' },
+      hideClass: { popup: '', backdrop: '' },
+    });
+
+    if (result.isConfirmed) {
       logout();
     }
   };
