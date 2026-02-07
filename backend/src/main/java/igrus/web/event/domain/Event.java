@@ -1,6 +1,6 @@
 package igrus.web.event.domain;
 
-import igrus.web.common.domain.BaseEntity;
+import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.InvalidEventCapacityException;
 import igrus.web.event.exception.InvalidEventStateTransitionException;
@@ -23,11 +23,14 @@ import java.util.Optional;
         @AttributeOverride(name = "createdAt", column = @Column(name = "event_created_at", nullable = false, updatable = false)),
         @AttributeOverride(name = "updatedAt", column = @Column(name = "event_updated_at", nullable = false)),
         @AttributeOverride(name = "createdBy", column = @Column(name = "event_created_by", updatable = false)),
-        @AttributeOverride(name = "updatedBy", column = @Column(name = "event_updated_by"))
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "event_updated_by")),
+        @AttributeOverride(name = "deleted", column = @Column(name = "event_deleted", nullable = false)),
+        @AttributeOverride(name = "deletedAt", column = @Column(name = "event_deleted_at")),
+        @AttributeOverride(name = "deletedBy", column = @Column(name = "event_deleted_by"))
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Event extends BaseEntity {
+public class Event extends SoftDeletableEntity {
 
     /** 행사 고유 식별자 */
     @Id
