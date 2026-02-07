@@ -2,6 +2,7 @@ package igrus.web.security.auth.approval.controller;
 
 import igrus.web.common.config.SwaggerConfig;
 import igrus.web.security.auth.approval.dto.request.BulkApprovalRequest;
+import igrus.web.security.auth.approval.dto.response.AssociateInfoPageResponse;
 import igrus.web.security.auth.approval.dto.response.AssociateInfoResponse;
 import igrus.web.security.auth.approval.dto.response.BulkApprovalResultResponse;
 import igrus.web.security.auth.approval.service.read.GetPendingAssociatesService;
@@ -64,17 +65,17 @@ public class AdminMemberController {
                     content = @Content
             )
     })
-    @GetMapping
-    public ResponseEntity<Page<AssociateInfoResponse>> getPendingAssociates(
+    @GetMapping("/pending")
+    public ResponseEntity<AssociateInfoPageResponse> getPendingAssociates(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        Page<AssociateInfoResponse> pendingAssociates = getPendingAssociatesService.getPendingAssociates(
+        Page<AssociateInfoResponse> page = getPendingAssociatesService.getPendingAssociates(
                 pageable,
                 authenticatedUser.userId()
         );
-        return ResponseEntity.ok(pendingAssociates);
+        return ResponseEntity.ok(AssociateInfoPageResponse.from(page));
     }
 
     @Operation(
