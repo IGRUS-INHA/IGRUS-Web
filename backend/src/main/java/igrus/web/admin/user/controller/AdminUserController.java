@@ -1,9 +1,12 @@
 package igrus.web.admin.user.controller;
 
+import igrus.web.admin.user.dto.ChangeUserRoleRequest;
 import igrus.web.admin.user.dto.UserDetailResponse;
 import igrus.web.admin.user.dto.UserListResponse;
+import igrus.web.admin.user.service.ChangeUserRoleService;
 import igrus.web.admin.user.service.GetUserDetailService;
 import igrus.web.admin.user.service.GetUserListService;
+import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.common.config.SwaggerConfig;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -23,8 +26,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,6 +46,7 @@ public class AdminUserController {
 
     private final GetUserListService getUserListService;
     private final GetUserDetailService getUserDetailService;
+    private final ChangeUserRoleService changeUserRoleService;
 
     @Operation(
             summary = "회원 목록 조회",
@@ -79,5 +87,26 @@ public class AdminUserController {
             @Parameter(description = "사용자 ID") @PathVariable Long userId
     ) {
         return ResponseEntity.ok(getUserDetailService.getUserDetail(userId));
+    }
+
+    @Operation(
+            summary = "회원 권한 변경",
+            description = "회원의 권한을 변경합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "변경 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)", content = @Content),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content)
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{userId}/role")
+    public ResponseEntity<Void> changeUserRole(
+            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
+            @Valid @RequestBody ChangeUserRoleRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        changeUserRoleService.changeUserRole(userId, request.role(), authenticatedUser.userId());
+        return ResponseEntity.noContent().build();
     }
 }

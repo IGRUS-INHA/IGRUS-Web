@@ -76,6 +76,7 @@ public enum ErrorCode {
     // Member Approval
     ADMIN_REQUIRED(403, "관리자 권한이 필요합니다"),
     USER_NOT_ASSOCIATE(400, "해당 사용자는 준회원이 아닙니다"),
+    SELF_ROLE_CHANGE_NOT_ALLOWED(400, "자기 자신의 권한은 변경할 수 없습니다"),
     LAST_ADMIN_CANNOT_CHANGE(400, "마지막 관리자는 권한을 변경할 수 없습니다"),
     BULK_APPROVAL_EMPTY(400, "승인할 사용자를 선택해주세요"),
 
