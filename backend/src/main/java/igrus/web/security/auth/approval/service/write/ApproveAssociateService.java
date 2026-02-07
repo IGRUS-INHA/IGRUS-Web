@@ -1,8 +1,10 @@
 package igrus.web.security.auth.approval.service.write;
 
+import igrus.web.security.auth.approval.domain.AssociateDecision;
+import igrus.web.security.auth.approval.exception.AssociateAlreadyDecidedException;
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
+import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
-import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -27,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ApproveAssociateService {
 
     private final UserRepository userRepository;
-    private final PasswordCredentialRepository passwordCredentialRepository;
+    private final AssociateDecisionRepository associateDecisionRepository;
     private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
     private final ApplicationEventPublisher eventPublisher;
@@ -50,11 +52,15 @@ public class ApproveAssociateService {
             throw new UserNotAssociateException(userId);
         }
 
+        if (associateDecisionRepository.findByUserId(userId).isPresent()) {
+            throw new AssociateAlreadyDecidedException();
+        }
+
         UserRole previousRole = user.getRole();
         user.promoteToMember();
 
-        passwordCredentialRepository.findByUserId(userId)
-                .ifPresent(credential -> credential.approve(approverId));
+        AssociateDecision decision = AssociateDecision.approve(user, approverId);
+        associateDecisionRepository.save(decision);
 
         UserRoleHistory history = UserRoleHistory.create(
                 user,

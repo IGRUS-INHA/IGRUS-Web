@@ -8,11 +8,29 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 행사 Repository.
  */
 public interface EventRepository extends JpaRepository<Event, Long> {
+
+    /**
+     * 삭제되지 않은 행사를 ID로 조회합니다.
+     *
+     * @param id 행사 ID
+     * @return 삭제되지 않은 행사
+     */
+    @Query("SELECT e FROM Event e WHERE e.id = :id AND e.deleted = false")
+    Optional<Event> findByIdAndNotDeleted(@Param("id") Long id);
+
+    /**
+     * 삭제되지 않은 모든 행사를 조회합니다.
+     *
+     * @return 삭제되지 않은 행사 목록
+     */
+    @Query("SELECT e FROM Event e WHERE e.deleted = false")
+    List<Event> findAllNotDeleted();
 
     /**
      * 신청자 수를 원자적으로 1 증가시킵니다.
@@ -26,7 +44,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount + 1 " +
-           "WHERE e.id = :id AND e.currentCount < e.capacity AND e.status = 'OPEN'")
+           "WHERE e.id = :id AND e.currentCount < e.capacity AND e.status = 'OPEN' AND e.deleted = false")
     int incrementCurrentCountIfAvailable(@Param("id") Long id);
 
     /**
@@ -41,7 +59,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount + 1 " +
-           "WHERE e.id = :id AND e.currentCount < e.capacity")
+           "WHERE e.id = :id AND e.currentCount < e.capacity AND e.deleted = false")
     int incrementCurrentCountForApproval(@Param("id") Long id);
 
     /**
@@ -56,22 +74,24 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount - 1 " +
-           "WHERE e.id = :id AND e.currentCount > 0")
+           "WHERE e.id = :id AND e.currentCount > 0 AND e.deleted = false")
     int decrementCurrentCount(@Param("id") Long id);
 
     /**
-     * 특정 상태의 행사 목록을 조회합니다.
+     * 삭제되지 않은 특정 상태의 행사 목록을 조회합니다.
      *
      * @param status 행사 상태
-     * @return 해당 상태의 행사 목록
+     * @return 해당 상태의 삭제되지 않은 행사 목록
      */
-    List<Event> findByStatus(EventStatus status);
+    @Query("SELECT e FROM Event e WHERE e.status = :status AND e.deleted = false")
+    List<Event> findByStatusAndNotDeleted(@Param("status") EventStatus status);
 
     /**
-     * 특정 사용자(운영자)가 생성한 행사 목록을 조회합니다.
+     * 삭제되지 않은 특정 사용자(운영자)가 생성한 행사 목록을 조회합니다.
      *
      * @param userId 사용자 ID
-     * @return 해당 사용자가 생성한 행사 목록
+     * @return 해당 사용자가 생성한 삭제되지 않은 행사 목록
      */
-    List<Event> findByUserId(Long userId);
+    @Query("SELECT e FROM Event e WHERE e.user.id = :userId AND e.deleted = false")
+    List<Event> findByUserIdAndNotDeleted(@Param("userId") Long userId);
 }
