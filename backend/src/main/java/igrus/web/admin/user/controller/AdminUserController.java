@@ -1,6 +1,8 @@
 package igrus.web.admin.user.controller;
 
+import igrus.web.admin.user.dto.UserDetailResponse;
 import igrus.web.admin.user.dto.UserListResponse;
+import igrus.web.admin.user.service.GetUserDetailService;
 import igrus.web.admin.user.service.GetUserListService;
 import igrus.web.common.config.SwaggerConfig;
 import igrus.web.user.domain.UserRole;
@@ -22,6 +24,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminUserController {
 
     private final GetUserListService getUserListService;
+    private final GetUserDetailService getUserDetailService;
 
     @Operation(
             summary = "회원 목록 조회",
@@ -57,5 +61,23 @@ public class AdminUserController {
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity.ok(getUserListService.getUserList(keyword, role, status, pageable));
+    }
+
+    @Operation(
+            summary = "회원 상세 조회",
+            description = "특정 회원의 상세 정보를 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = UserDetailResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (OPERATOR 이상 필요)", content = @Content),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content)
+    })
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserDetailResponse> getUserDetail(
+            @Parameter(description = "사용자 ID") @PathVariable Long userId
+    ) {
+        return ResponseEntity.ok(getUserDetailService.getUserDetail(userId));
     }
 }
