@@ -462,3 +462,52 @@
 .dark .wmde-markdown a:hover {
   color: #B3E5E2;
 }
+
+/* ============================================
+   Markdown Editor Mobile Responsive
+   ============================================ */
+
+@media (max-width: 767px) {
+  /* 모바일에서 MDEditor 내장 편집/미리보기 토글 숨김 (커스텀 토글 사용) */
+  .w-md-editor-toolbar li[data-name="edit"],
+  .w-md-editor-toolbar li[data-name="live"],
+  .w-md-editor-toolbar li[data-name="preview"] {
+    display: none !important;
+  }
+
+  /* 모바일 툴바 아이콘 크기 축소 */
+  .w-md-editor-toolbar svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* 모바일 툴바 버튼 패딩 축소 */
+  .w-md-editor-toolbar button {
+    padding: 6px !important;
+  }
+
+  /* 모바일 툴바 구분선 높이 조정 */
+  .w-md-editor-toolbar-divider {
+    height: 28px !important;
+  }
+
+  /* 모바일 에디터 폰트 크기 (16px: iOS 자동 줌 방지) */
+  .w-md-editor-text-pre,
+  .w-md-editor-text-input,
+  .w-md-editor-text {
+    font-size: 16px !important;
+  }
+
+  .wmde-markdown {
+    font-size: 16px !important;
+  }
+
+  /* 모바일 툴바 줄바꿈 허용 */
+  .w-md-editor-toolbar {
+    flex-wrap: wrap !important;
+  }
+
+  .w-md-editor-toolbar ul {
+    flex-wrap: wrap !important;
+  }
+}
