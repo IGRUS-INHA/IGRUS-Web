@@ -2,6 +2,7 @@ package igrus.web.user.repository;
 
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,6 +36,27 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findByRole(UserRole role, Pageable pageable);
 
     long countByRole(UserRole role);
+
+    // === 관리자용 회원 목록 필터링 조회 ===
+
+    /**
+     * 회원 목록을 필터링하여 조회합니다.
+     * 각 파라미터가 null이면 해당 조건을 무시합니다.
+     *
+     * @param keyword 검색어 (이름 또는 학번)
+     * @param role 역할 필터
+     * @param status 상태 필터
+     * @param pageable 페이징 정보
+     * @return 회원 목록 페이지
+     */
+    @Query("SELECT u FROM User u WHERE " +
+           "(:keyword IS NULL OR u.name LIKE %:keyword% OR u.studentId LIKE %:keyword%) " +
+           "AND (:role IS NULL OR u.role = :role) " +
+           "AND (:status IS NULL OR u.status = :status)")
+    Page<User> findByFilters(@Param("keyword") String keyword,
+                             @Param("role") UserRole role,
+                             @Param("status") UserStatus status,
+                             Pageable pageable);
 
     // === 삭제된 데이터 포함 조회 (관리자용, native query로 @SQLRestriction 우회) ===
 

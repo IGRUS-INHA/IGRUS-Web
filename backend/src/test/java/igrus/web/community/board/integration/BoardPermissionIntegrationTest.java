@@ -151,9 +151,9 @@ class BoardPermissionIntegrationTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.canWrite").value(false));
         }
 
-        @DisplayName("준회원이 게시판 목록 조회 시 읽기 권한 있는 게시판만 반환")
+        @DisplayName("준회원이 게시판 목록 조회 시 모든 게시판 반환 (canRead로 권한 구분)")
         @Test
-        void associate_getBoardList_returnsOnlyAccessibleBoards() throws Exception {
+        void associate_getBoardList_returnsAllBoardsWithPermissions() throws Exception {
             mockMvc.perform(get(BASE_URL)
                             .with(withAuth(associateUser))
                             .with(csrf())
@@ -161,8 +161,13 @@ class BoardPermissionIntegrationTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].code").value("NOTICES"));
+                    .andExpect(jsonPath("$.length()").value(3))
+                    .andExpect(jsonPath("$[0].code").value("NOTICES"))
+                    .andExpect(jsonPath("$[0].canRead").value(true))
+                    .andExpect(jsonPath("$[1].code").value("GENERAL"))
+                    .andExpect(jsonPath("$[1].canRead").value(false))
+                    .andExpect(jsonPath("$[2].code").value("INSIGHT"))
+                    .andExpect(jsonPath("$[2].canRead").value(false));
         }
     }
 
