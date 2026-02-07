@@ -9,6 +9,7 @@ import igrus.web.user.domain.UserRole;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.repository.UserRoleHistoryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.time.temporal.TemporalAdjusters;
 /**
  * 관리자 대시보드 통계 조회 서비스.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -41,14 +43,14 @@ public class GetDashboardStatsService {
 
         long todayPostCount = postRepository.countByDeletedFalseAndCreatedAtAfter(todayStart);
         long todayCommentCount = commentRepository.countByDeletedFalseAndCreatedAtAfter(todayStart);
-        long newMemberCount = userRoleHistoryRepository.countByNewRoleAndCreatedAtAfter(UserRole.MEMBER, weekStart);
+        long weeklyApprovedMemberCount = userRoleHistoryRepository.countByNewRoleAndCreatedAtAfter(UserRole.MEMBER, weekStart);
         long pendingInquiryCount = inquiryRepository.countByStatus(InquiryStatus.PENDING);
         long pendingAssociateCount = userRepository.countByRole(UserRole.ASSOCIATE);
 
         return new DashboardStatsResponse(
                 todayPostCount,
                 todayCommentCount,
-                newMemberCount,
+                weeklyApprovedMemberCount,
                 pendingInquiryCount,
                 pendingAssociateCount
         );

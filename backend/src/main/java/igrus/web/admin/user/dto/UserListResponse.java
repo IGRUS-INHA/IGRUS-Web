@@ -10,7 +10,7 @@ import java.time.Instant;
 @Schema(description = "관리자용 회원 목록 응답")
 public record UserListResponse(
         @Schema(description = "사용자 ID", example = "1")
-        Long id,
+        Long userId,
 
         @Schema(description = "학번", example = "20231234")
         String studentId,

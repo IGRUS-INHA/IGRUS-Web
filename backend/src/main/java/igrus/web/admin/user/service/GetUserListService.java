@@ -5,6 +5,7 @@ import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 관리자용 회원 목록 조회 서비스.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional

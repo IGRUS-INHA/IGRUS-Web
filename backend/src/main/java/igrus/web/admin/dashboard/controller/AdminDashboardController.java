@@ -29,7 +29,7 @@ public class AdminDashboardController {
 
     @Operation(
             summary = "대시보드 통계 조회",
-            description = "오늘 게시글/댓글 수, 이번 주 신규 승인 회원 수, 대기 중 문의 수, 승인 대기 준회원 수를 조회합니다."
+            description = "오늘 게시글/댓글 수, 이번 주 정회원 승인 수, 대기 중 문의 수, 승인 대기 준회원 수를 조회합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(

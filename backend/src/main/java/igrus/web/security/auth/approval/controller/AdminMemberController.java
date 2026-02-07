@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/admin/associates")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Admin Member Management", description = "관리자 회원 관리 API (ADMIN 전용)")
+@Tag(name = "Admin Associate Approval", description = "관리자 준회원 승인 API (ADMIN 전용)")
 @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 public class AdminMemberController {
 

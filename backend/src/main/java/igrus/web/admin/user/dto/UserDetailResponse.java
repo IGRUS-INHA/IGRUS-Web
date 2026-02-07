@@ -11,7 +11,7 @@ import java.time.Instant;
 @Schema(description = "관리자용 회원 상세 응답")
 public record UserDetailResponse(
         @Schema(description = "사용자 ID", example = "1")
-        Long id,
+        Long userId,
 
         @Schema(description = "학번", example = "20231234")
         String studentId,
@@ -35,7 +35,7 @@ public record UserDetailResponse(
         Gender gender,
 
         @Schema(description = "학년", example = "2")
-        Integer grade,
+        int grade,
 
         @Schema(description = "역할", example = "MEMBER")
         UserRole role,

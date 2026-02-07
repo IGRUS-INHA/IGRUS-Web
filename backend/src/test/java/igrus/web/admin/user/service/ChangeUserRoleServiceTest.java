@@ -2,11 +2,15 @@ package igrus.web.admin.user.service;
 
 import igrus.web.admin.user.exception.SelfRoleChangeException;
 import igrus.web.security.auth.approval.exception.LastAdminCannotChangeException;
+import igrus.web.security.auth.approval.service.manage.ValidateNotLastAdminService;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.UserRoleHistory;
+import igrus.web.user.exception.SameRoleChangeException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
+import igrus.web.user.repository.UserRoleHistoryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,7 +23,10 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChangeUserRoleService 단위 테스트")
@@ -27,6 +34,12 @@ class ChangeUserRoleServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserRoleHistoryRepository userRoleHistoryRepository;
+
+    @Mock
+    private ValidateNotLastAdminService validateNotLastAdminService;
 
     @InjectMocks
     private ChangeUserRoleService changeUserRoleService;
@@ -36,7 +49,7 @@ class ChangeUserRoleServiceTest {
     class SuccessTest {
 
         @Test
-        @DisplayName("MEMBER를 OPERATOR로 변경")
+        @DisplayName("MEMBER를 OPERATOR로 변경하면 역할이 변경되고 이력이 저장됨")
         void changeRole_MemberToOperator_Success() {
             // given
             Long targetUserId = 1L;
@@ -51,10 +64,12 @@ class ChangeUserRoleServiceTest {
 
             // then
             assertThat(targetUser.getRole()).isEqualTo(UserRole.OPERATOR);
+            verify(userRoleHistoryRepository).save(any(UserRoleHistory.class));
+            verify(validateNotLastAdminService).validateNotLastAdmin(targetUserId);
         }
 
         @Test
-        @DisplayName("ADMIN이 2명 이상일 때 ADMIN을 MEMBER로 강등")
+        @DisplayName("ADMIN이 2명 이상일 때 ADMIN을 MEMBER로 강등하면 성공")
         void changeRole_AdminToMember_WhenMultipleAdmins_Success() {
             // given
             Long targetUserId = 1L;
@@ -62,13 +77,13 @@ class ChangeUserRoleServiceTest {
             User targetUser = createTestUser();
             targetUser.changeRole(UserRole.ADMIN);
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
-            given(userRepository.countByRole(UserRole.ADMIN)).willReturn(2L);
 
             // when
             changeUserRoleService.changeUserRole(targetUserId, UserRole.MEMBER, currentUserId);
 
             // then
             assertThat(targetUser.getRole()).isEqualTo(UserRole.MEMBER);
+            verify(userRoleHistoryRepository).save(any(UserRoleHistory.class));
         }
     }
 
@@ -106,14 +121,28 @@ class ChangeUserRoleServiceTest {
             // given
             Long targetUserId = 1L;
             Long currentUserId = 2L;
-            User targetUser = createTestUser();
-            targetUser.changeRole(UserRole.ADMIN);
-            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
-            given(userRepository.countByRole(UserRole.ADMIN)).willReturn(1L);
+            doThrow(new LastAdminCannotChangeException())
+                    .when(validateNotLastAdminService).validateNotLastAdmin(targetUserId);
 
             // when & then
             assertThatThrownBy(() -> changeUserRoleService.changeUserRole(targetUserId, UserRole.MEMBER, currentUserId))
                     .isInstanceOf(LastAdminCannotChangeException.class);
+        }
+
+        @Test
+        @DisplayName("동일 역할로 변경 시도 시 SameRoleChangeException 발생")
+        void changeRole_SameRole_ThrowsException() {
+            // given
+            Long targetUserId = 1L;
+            Long currentUserId = 2L;
+            User targetUser = createTestUser();
+            targetUser.verifyEmail();
+            targetUser.changeRole(UserRole.MEMBER);
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+
+            // when & then
+            assertThatThrownBy(() -> changeUserRoleService.changeUserRole(targetUserId, UserRole.MEMBER, currentUserId))
+                    .isInstanceOf(SameRoleChangeException.class);
         }
     }
 

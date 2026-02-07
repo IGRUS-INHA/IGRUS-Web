@@ -42,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/admin/users")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-@Tag(name = "Admin User Management", description = "관리자 회원 관리 API")
+@Tag(name = "Admin User Management", description = "관리자 회원 관리 API (OPERATOR 이상, 권한 변경은 ADMIN 전용)")
 @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 public class AdminUserController {
 
@@ -98,6 +98,7 @@ public class AdminUserController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "변경 성공"),
+            @ApiResponse(responseCode = "400", description = "자기 자신 권한 변경, 동일 역할 변경, 또는 마지막 ADMIN 권한 변경 시도", content = @Content),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
             @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)", content = @Content),
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content)

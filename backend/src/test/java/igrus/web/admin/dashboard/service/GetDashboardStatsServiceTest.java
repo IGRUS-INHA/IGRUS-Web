@@ -73,7 +73,7 @@ class GetDashboardStatsServiceTest {
             // then
             assertThat(response.todayPostCount()).isEqualTo(5L);
             assertThat(response.todayCommentCount()).isEqualTo(10L);
-            assertThat(response.newMemberCount()).isEqualTo(3L);
+            assertThat(response.weeklyApprovedMemberCount()).isEqualTo(3L);
             assertThat(response.pendingInquiryCount()).isEqualTo(2L);
             assertThat(response.pendingAssociateCount()).isEqualTo(7L);
         }
@@ -94,7 +94,7 @@ class GetDashboardStatsServiceTest {
             // then
             assertThat(response.todayPostCount()).isZero();
             assertThat(response.todayCommentCount()).isZero();
-            assertThat(response.newMemberCount()).isZero();
+            assertThat(response.weeklyApprovedMemberCount()).isZero();
             assertThat(response.pendingInquiryCount()).isZero();
             assertThat(response.pendingAssociateCount()).isZero();
         }
