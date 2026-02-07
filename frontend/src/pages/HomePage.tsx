@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight, UserPlus, Users, Gamepad2, Trophy } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUIStore } from '@/stores/uiStore';
@@ -65,79 +65,120 @@ export default function HomePage() {
       {/* Hero Section */}
       <section
         className={cn(
-          'relative w-full h-96 rounded-r4 border py-s8 px-s7 flex flex-col justify-center overflow-hidden group transition-all duration-300',
-          isDark
-            ? 'bg-gradient-to-br from-[#1E1E1E] to-[#121212] border-white/5'
-            : 'bg-gradient-to-br from-[#F3F4F6] to-white border-gray-100'
+          'relative w-full min-h-[480px] rounded-r4 overflow-hidden transition-all duration-500 hero-accent-line',
+          isDark ? 'hero-clean-dark' : 'hero-clean-light'
         )}
       >
-        <div className="relative z-10 space-y-4">
-          <div
-            className={cn(
-              'inline-flex items-center gap-s2 px-s3 py-s1 border rounded-full text-[10px] uppercase tracking-widest transition-colors',
-              isDark
-                ? 'bg-white/5 border-white/10 text-gray-400'
-                : 'bg-gray-100 border-gray-200 text-gray-500'
-            )}
-          >
-            <Sparkles size={12} className="text-[#03A69E]" />
-            혁신적인 개발
-          </div>
-          <h2
-            className={cn(
-              'text-5xl font-bold leading-tight transition-colors',
-              isDark ? 'text-white' : 'text-black'
-            )}
-          >
-            웹을 개발하고,
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#03A69E] to-[#027d77]">
-              미래를 만드세요.
-            </span>
-          </h2>
-          <p
-            className={cn(
-              'max-w-lg transition-colors',
-              isDark ? 'text-gray-400' : 'text-gray-600'
-            )}
-          >
-            인하대학교 웹 개발 동아리 IGRUS에서 최신 기술로 프로젝트를
-            구현하세요. 함께 성장하는 개발자들의 커뮤니티입니다.
-          </p>
-          <Button
-            asChild
-            className={cn(
-              'flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all w-fit',
-              isDark
-                ? 'bg-white text-black hover:bg-primary hover:text-white'
-                : 'bg-black text-white hover:bg-primary'
-            )}
-          >
-            <Link to="/board/general">
-              커뮤니티 둘러보기{' '}
-              <ArrowRight
-                size={16}
-                className="group-hover/btn:translate-x-1 transition-transform"
-              />
-            </Link>
-          </Button>
-        </div>
+        {/* Dot Grid Pattern */}
+        <div className="hero-dot-grid" />
 
         {/* Decorative Elements */}
-        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000 bg-[#03A69E]/20 group-hover:bg-primary/30" />
-        <div className="absolute right-20 top-1/2 -translate-y-1/2 opacity-20 select-none pointer-events-none">
-          <div
-            className={cn(
-              'w-48 h-48 border rounded-r4 rotate-12 flex items-center justify-center',
-              isDark ? 'border-white/10' : 'border-black/5'
-            )}
-          >
+        <div
+          className="hero-deco-ring"
+          style={{ top: '15%', right: '12%', width: 80, height: 80 }}
+        />
+        <div
+          className="hero-deco-ring-2"
+          style={{ top: '55%', right: '8%', width: 48, height: 48 }}
+        />
+        <div
+          className="hero-glow-orb"
+          style={{ top: '10%', right: '5%', width: 200, height: 200 }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center min-h-[480px] px-s4 md:px-s7 py-s6 md:py-s8">
+          <div className="space-y-6 max-w-2xl">
+            {/* Badge */}
             <div
               className={cn(
-                'w-32 h-32 border rounded-full animate-pulse',
-                isDark ? 'border-[#03A69E]/20' : 'border-[#03A69E]/10'
+                'inline-flex items-center px-s3 py-s1 rounded-full text-[11px] font-mono tracking-wider transition-colors hero-badge-glow',
+                isDark
+                  ? 'bg-[#03A69E]/10 border border-[#03A69E]/20 text-[#66CBC5]'
+                  : 'bg-[#03A69E]/5 border border-[#03A69E]/12 text-[#03A69E]'
               )}
-            />
+            >
+              &lt;IGRUS /&gt;
+            </div>
+
+            {/* Heading */}
+            <h2 className="hero-heading hero-text-glow">
+              <span
+                className={cn(
+                  'block transition-colors',
+                  isDark ? 'text-white' : 'text-gray-8'
+                )}
+              >
+                성장과 낭만의 동아리,
+              </span>
+              <span className="block font-black text-transparent bg-clip-text bg-gradient-to-r from-[#03A69E] via-[#0891b2] to-[#03A69E] hero-gradient-text">
+                IGRUS.
+              </span>
+            </h2>
+
+            {/* Description */}
+            <p
+              className={cn(
+                'text-b1 max-w-lg leading-relaxed transition-colors',
+                isDark ? 'text-[#9CA3AF]' : 'text-gray-500'
+              )}
+            >
+              인하대학교 웹 개발 동아리 IGRUS에서 최신 기술로 프로젝트를
+              구현하세요. 함께 성장하는 개발자들의 커뮤니티입니다.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap items-center gap-s3 pt-s2">
+              <Button
+                asChild
+                className="flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all bg-[#03A69E] text-white hover:bg-[#029890] hero-btn-glow"
+              >
+                <Link to="/signup">
+                  <UserPlus size={16} />
+                  가입하기
+                  <ArrowRight
+                    size={16}
+                    className="group-hover/btn:translate-x-1 transition-transform"
+                  />
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                variant="ghost"
+                className={cn(
+                  'flex items-center gap-s2 px-s5 py-s3 rounded-full font-medium text-sm transition-all border',
+                  isDark
+                    ? 'border-white/10 text-gray-300 hover:border-[#03A69E]/40 hover:text-[#66CBC5] hover:bg-white/[0.03] backdrop-blur-sm'
+                    : 'border-gray-200 text-gray-500 hover:border-[#03A69E]/30 hover:text-[#03A69E] hover:bg-[#03A69E]/[0.03]'
+                )}
+              >
+                <Link to="/board/general">
+                  커뮤니티 둘러보기
+                </Link>
+              </Button>
+            </div>
+
+            {/* Stats Bar */}
+            <div className="flex items-center gap-s5 pt-s4">
+              <div className="flex items-center gap-s2">
+                <Users size={14} className={cn(isDark ? 'text-[#66CBC5]' : 'text-[#03A69E]')} />
+                <span className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-gray-8')}>120+</span>
+                <span className={cn('text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>Members</span>
+              </div>
+              <div className="hero-stat-divider" />
+              <div className="flex items-center gap-s2">
+                <Gamepad2 size={14} className={cn(isDark ? 'text-[#66CBC5]' : 'text-[#03A69E]')} />
+                <span className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-gray-8')}>50+</span>
+                <span className={cn('text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>Projects</span>
+              </div>
+              <div className="hero-stat-divider" />
+              <div className="flex items-center gap-s2">
+                <Trophy size={14} className={cn(isDark ? 'text-[#66CBC5]' : 'text-[#03A69E]')} />
+                <span className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-gray-8')}>10+</span>
+                <span className={cn('text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>Years</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

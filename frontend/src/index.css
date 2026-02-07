@@ -511,3 +511,193 @@
     flex-wrap: wrap !important;
   }
 }
+
+/* ============================================
+   Hero Section - Clean
+   ============================================ */
+
+/* Hero Heading - 반응형 대형 타이포그래피 */
+.hero-heading {
+  font-weight: 800;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+
+/* 배경 - 다크 모드 */
+.hero-clean-dark {
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 25%, rgba(3, 166, 158, 0.1) 0%, transparent 60%),
+    #1a1e24;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* 배경 - 라이트 모드 */
+.hero-clean-light {
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 25%, rgba(3, 166, 158, 0.06) 0%, transparent 60%),
+    #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* 하단 액센트 라인 */
+.hero-accent-line::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(3, 166, 158, 0.3), transparent);
+}
+
+.dark .hero-accent-line::after {
+  background: linear-gradient(90deg, transparent, rgba(3, 166, 158, 0.4), transparent);
+}
+
+/* 텍스트 글로우 효과 */
+.hero-text-glow {
+  text-shadow: 0 0 80px rgba(3, 166, 158, 0.12);
+}
+
+.dark .hero-text-glow {
+  text-shadow: 0 0 80px rgba(3, 166, 158, 0.2);
+}
+
+/* 그라데이션 텍스트 shimmer 효과 */
+@keyframes hero-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-gradient-text {
+  background-size: 200% 200%;
+  animation: hero-gradient-shift 8s ease-in-out infinite;
+  -webkit-text-stroke: 1px #03A69E;
+}
+
+/* 뱃지 */
+.hero-badge-glow {
+  box-shadow: none;
+}
+
+.dark .hero-badge-glow {
+  box-shadow: 0 0 8px rgba(3, 166, 158, 0.08);
+}
+
+/* Primary 버튼 글로우 */
+.hero-btn-glow {
+  box-shadow: 0 1px 4px rgba(3, 166, 158, 0.12);
+  transition: box-shadow 0.3s ease;
+}
+
+.hero-btn-glow:hover {
+  box-shadow: 0 2px 12px rgba(3, 166, 158, 0.22);
+}
+
+.dark .hero-btn-glow {
+  box-shadow: 0 1px 8px rgba(3, 166, 158, 0.18);
+}
+
+.dark .hero-btn-glow:hover {
+  box-shadow: 0 2px 16px rgba(3, 166, 158, 0.32);
+}
+
+/* 도트 그리드 패턴 오버레이 */
+.hero-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(3, 166, 158, 0.12) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 60% 50% at 80% 30%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 80% 30%, black 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.dark .hero-dot-grid {
+  background-image: radial-gradient(circle, rgba(102, 203, 197, 0.15) 1px, transparent 1px);
+}
+
+/* 장식용 플로팅 링 */
+@keyframes hero-ring-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(6deg); }
+}
+
+@keyframes hero-ring-float-delay {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-4deg); }
+}
+
+.hero-deco-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid rgba(3, 166, 158, 0.2);
+  pointer-events: none;
+  animation: hero-ring-float 6s ease-in-out infinite;
+}
+
+.hero-deco-ring-2 {
+  position: absolute;
+  border-radius: 12px;
+  border: 1.5px solid rgba(3, 166, 158, 0.15);
+  pointer-events: none;
+  animation: hero-ring-float-delay 8s ease-in-out infinite;
+  transform: rotate(45deg);
+}
+
+.dark .hero-deco-ring {
+  border-color: rgba(102, 203, 197, 0.2);
+}
+
+.dark .hero-deco-ring-2 {
+  border-color: rgba(102, 203, 197, 0.15);
+}
+
+/* 장식용 글로우 오브 */
+.hero-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(3, 166, 158, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(40px);
+}
+
+.dark .hero-glow-orb {
+  background: radial-gradient(circle, rgba(3, 166, 158, 0.2) 0%, transparent 70%);
+}
+
+/* 스탯 바 구분선 */
+.hero-stat-divider {
+  width: 1px;
+  height: 24px;
+  background: linear-gradient(180deg, transparent, rgba(3, 166, 158, 0.3), transparent);
+}
+
+.dark .hero-stat-divider {
+  background: linear-gradient(180deg, transparent, rgba(102, 203, 197, 0.3), transparent);
+}
+
+/* 접근성: 모션 감소 설정 시 애니메이션 비활성화 */
+@media (prefers-reduced-motion: reduce) {
+  .hero-gradient-text {
+    animation: none;
+  }
+  .hero-deco-ring,
+  .hero-deco-ring-2 {
+    animation: none;
+  }
+}
+
+/* 모바일 히어로 헤딩 크기 조정 */
+@media (max-width: 767px) {
+  .hero-heading {
+    font-size: clamp(28px, 7vw, 36px);
+  }
+  .hero-deco-ring,
+  .hero-deco-ring-2,
+  .hero-glow-orb {
+    display: none;
+  }
+}
