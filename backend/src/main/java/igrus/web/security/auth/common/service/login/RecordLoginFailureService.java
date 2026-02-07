@@ -7,6 +7,7 @@ import igrus.web.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -22,12 +23,14 @@ public class RecordLoginFailureService {
 
     /**
      * 로그인 실패 히스토리를 기록합니다 (사용자 정보 없이).
+     * 별도 트랜잭션으로 실행되어 호출자 트랜잭션 롤백 시에도 실패 이력이 저장됩니다.
      *
      * @param studentId 시도한 학번
      * @param ipAddress 클라이언트 IP 주소
      * @param userAgent 클라이언트 User-Agent
      * @param failureReason 실패 사유
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordFailure(String studentId, String ipAddress, String userAgent,
                               LoginFailureReason failureReason) {
         LoginHistory history = LoginHistory.failure(studentId, ipAddress, userAgent, failureReason);
@@ -37,6 +40,7 @@ public class RecordLoginFailureService {
 
     /**
      * 로그인 실패 히스토리를 기록합니다 (사용자 정보 포함).
+     * 별도 트랜잭션으로 실행되어 호출자 트랜잭션 롤백 시에도 실패 이력이 저장됩니다.
      *
      * @param user 로그인 시도한 사용자
      * @param studentId 시도한 학번
@@ -44,6 +48,7 @@ public class RecordLoginFailureService {
      * @param userAgent 클라이언트 User-Agent
      * @param failureReason 실패 사유
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordFailure(User user, String studentId, String ipAddress, String userAgent,
                               LoginFailureReason failureReason) {
         LoginHistory history = LoginHistory.failure(user, studentId, ipAddress, userAgent, failureReason);

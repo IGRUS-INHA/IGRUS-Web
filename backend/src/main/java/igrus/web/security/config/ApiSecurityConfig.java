@@ -52,6 +52,9 @@ public class ApiSecurityConfig {
                         "/api/v1/admin/comment-reports/**"
                 ).hasAnyRole("OPERATOR", "ADMIN")
 
+                // 관리자 전용 (로그인 이력 조회)
+                .requestMatchers("/api/v1/admin/login-histories/**").hasRole("ADMIN")
+
                 // 관리자 전용
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
