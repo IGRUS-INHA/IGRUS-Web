@@ -1,14 +1,11 @@
 package igrus.web.security.auth.approval.service.write;
 
 import igrus.web.security.auth.approval.domain.AssociateDecision;
-import igrus.web.security.auth.approval.exception.BulkApprovalEmptyException;
+import igrus.web.security.auth.approval.exception.BulkRejectionEmptyException;
 import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
 import igrus.web.user.domain.User;
-import igrus.web.user.domain.UserRole;
-import igrus.web.user.domain.UserRoleHistory;
 import igrus.web.user.repository.UserRepository;
-import igrus.web.user.repository.UserRoleHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,36 +15,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 일괄 준회원 승인 서비스.
+ * 일괄 준회원 거절 서비스.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class BulkApproveAssociatesService {
+public class BulkRejectAssociatesService {
 
     private final UserRepository userRepository;
     private final AssociateDecisionRepository associateDecisionRepository;
-    private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
 
     /**
-     * 여러 준회원을 일괄 승인합니다.
+     * 여러 준회원을 일괄 거절합니다.
      *
-     * @param userIds 승인할 사용자 ID 목록
-     * @param approverId 승인 처리자 ID (ADMIN)
-     * @return 승인된 사용자 수
+     * @param userIds 거절할 사용자 ID 목록
+     * @param rejectorId 거절 처리자 ID (ADMIN)
+     * @param reason 거절 사유
+     * @return 거절된 사용자 수
      */
-    public int approveBulk(List<Long> userIds, Long approverId) {
-        log.info("일괄 승인 요청: userIds={}, approverId={}", userIds, approverId);
+    public int rejectBulk(List<Long> userIds, Long rejectorId, String reason) {
+        log.info("일괄 거절 요청: userIds={}, rejectorId={}", userIds, rejectorId);
 
-        adminRoleValidator.validateAdminRole(approverId);
+        adminRoleValidator.validateAdminRole(rejectorId);
 
         if (userIds == null || userIds.isEmpty()) {
-            throw new BulkApprovalEmptyException();
+            throw new BulkRejectionEmptyException();
         }
 
-        int approvedCount = 0;
+        int rejectedCount = 0;
         List<Long> failedUserIds = new ArrayList<>();
 
         for (Long userId : userIds) {
@@ -68,33 +65,22 @@ public class BulkApproveAssociatesService {
                     continue;
                 }
 
-                UserRole previousRole = user.getRole();
-                user.promoteToMember();
-
-                AssociateDecision decision = AssociateDecision.approve(user, approverId);
+                AssociateDecision decision = AssociateDecision.reject(user, rejectorId, reason);
                 associateDecisionRepository.save(decision);
 
-                UserRoleHistory history = UserRoleHistory.create(
-                        user,
-                        previousRole,
-                        UserRole.MEMBER,
-                        "관리자 일괄 승인에 의한 정회원 전환"
-                );
-                userRoleHistoryRepository.save(history);
-
-                approvedCount++;
+                rejectedCount++;
             } catch (Exception e) {
-                log.warn("일괄 승인 중 개별 사용자 처리 실패: userId={}, error={}", userId, e.getMessage());
+                log.warn("일괄 거절 중 개별 사용자 처리 실패: userId={}, error={}", userId, e.getMessage());
                 failedUserIds.add(userId);
             }
         }
 
         if (!failedUserIds.isEmpty()) {
-            log.warn("일괄 승인 중 일부 실패: failedUserIds={}", failedUserIds);
+            log.warn("일괄 거절 중 일부 실패: failedUserIds={}", failedUserIds);
         }
 
-        log.info("일괄 승인 완료: approvedCount={}, failedCount={}", approvedCount, failedUserIds.size());
+        log.info("일괄 거절 완료: rejectedCount={}, failedCount={}", rejectedCount, failedUserIds.size());
 
-        return approvedCount;
+        return rejectedCount;
     }
 }

@@ -1,8 +1,9 @@
 package igrus.web.security.auth.approval.service.write;
 
 import igrus.web.common.ServiceIntegrationTestBase;
+import igrus.web.security.auth.approval.domain.AssociateDecision;
+import igrus.web.security.auth.approval.domain.AssociateDecisionType;
 import igrus.web.security.auth.approval.exception.BulkApprovalEmptyException;
-import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -89,18 +90,11 @@ class BulkApproveAssociatesServiceTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("일괄 승인 시 각각 승인일 기록 [APR-022]")
-        void approveBulk_EachUserHasApprovalDate() {
+        @DisplayName("일괄 승인 시 각각 AssociateDecision 기록 [APR-022]")
+        void approveBulk_EachUserHasAssociateDecision() {
             // given
             User associate1 = createAndSaveUser("20230010", "a10@inha.edu", UserRole.ASSOCIATE);
             User associate2 = createAndSaveUser("20230011", "a11@inha.edu", UserRole.ASSOCIATE);
-            PasswordCredential credential1 = PasswordCredential.create(associate1, "hash1");
-            PasswordCredential credential2 = PasswordCredential.create(associate2, "hash2");
-            transactionTemplate.execute(status -> {
-                passwordCredentialRepository.save(credential1);
-                passwordCredentialRepository.save(credential2);
-                return null;
-            });
 
             List<Long> userIds = List.of(associate1.getId(), associate2.getId());
 
@@ -108,13 +102,13 @@ class BulkApproveAssociatesServiceTest extends ServiceIntegrationTestBase {
             bulkApproveAssociatesService.approveBulk(userIds, adminUser.getId());
 
             // then
-            PasswordCredential updatedCredential1 = passwordCredentialRepository.findByUserId(associate1.getId()).orElseThrow();
-            PasswordCredential updatedCredential2 = passwordCredentialRepository.findByUserId(associate2.getId()).orElseThrow();
+            AssociateDecision decision1 = associateDecisionRepository.findByUserId(associate1.getId()).orElseThrow();
+            AssociateDecision decision2 = associateDecisionRepository.findByUserId(associate2.getId()).orElseThrow();
 
-            assertThat(updatedCredential1.getApprovedAt()).isNotNull();
-            assertThat(updatedCredential1.getApprovedBy()).isEqualTo(adminUser.getId());
-            assertThat(updatedCredential2.getApprovedAt()).isNotNull();
-            assertThat(updatedCredential2.getApprovedBy()).isEqualTo(adminUser.getId());
+            assertThat(decision1.getType()).isEqualTo(AssociateDecisionType.APPROVED);
+            assertThat(decision1.getDecidedBy()).isEqualTo(adminUser.getId());
+            assertThat(decision2.getType()).isEqualTo(AssociateDecisionType.APPROVED);
+            assertThat(decision2.getDecidedBy()).isEqualTo(adminUser.getId());
         }
 
         @Test

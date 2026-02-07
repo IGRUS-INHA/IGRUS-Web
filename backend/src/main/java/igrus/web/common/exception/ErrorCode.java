@@ -81,6 +81,8 @@ public enum ErrorCode {
     SELF_STATUS_CHANGE_NOT_ALLOWED(400, "자기 자신의 상태는 변경할 수 없습니다"),
     LAST_ADMIN_CANNOT_CHANGE(400, "마지막 관리자는 권한을 변경할 수 없습니다"),
     BULK_APPROVAL_EMPTY(400, "승인할 사용자를 선택해주세요"),
+    BULK_REJECTION_EMPTY(400, "거절할 사용자를 선택해주세요"),
+    ASSOCIATE_ALREADY_DECIDED(400, "이미 처리된 준회원입니다"),
     INVALID_DATE_RANGE(400, "종료 일시는 시작 일시 이후여야 합니다"),
 
     // Board

@@ -1,10 +1,10 @@
 package igrus.web.security.auth.approval.service.read;
 
 import igrus.web.security.auth.approval.dto.response.AssociateInfoResponse;
+import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
-import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class GetPendingAssociatesService {
 
-    private final UserRepository userRepository;
+    private final AssociateDecisionRepository associateDecisionRepository;
     private final AdminRoleValidator adminRoleValidator;
 
     /**
@@ -37,7 +37,7 @@ public class GetPendingAssociatesService {
 
         adminRoleValidator.validateAdminRole(approverId);
 
-        Page<User> associates = userRepository.findByRole(UserRole.ASSOCIATE, pageable);
+        Page<User> associates = associateDecisionRepository.findPendingAssociates(UserRole.ASSOCIATE, pageable);
 
         log.info("준회원 목록 조회 완료: totalElements={}", associates.getTotalElements());
 
