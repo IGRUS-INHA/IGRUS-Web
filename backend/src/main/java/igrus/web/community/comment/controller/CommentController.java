@@ -43,7 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/posts/{postId}/comments")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
+@PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
 public class CommentController {
 
     private final CreateCommentService createCommentService;
@@ -53,7 +53,7 @@ public class CommentController {
 
     @Operation(
             summary = "댓글 작성",
-            description = "게시글에 댓글을 작성합니다. 정회원 이상만 작성 가능합니다."
+            description = "게시글에 댓글을 작성합니다. 접근 가능한 게시글에 한해 준회원 이상 작성 가능합니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -82,7 +82,7 @@ public class CommentController {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "작성 권한 없음 (정회원 이상 필요)",
+                    description = "작성 권한 없음 (게시글 접근 권한 필요)",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -113,7 +113,7 @@ public class CommentController {
 
     @Operation(
             summary = "대댓글 작성",
-            description = "댓글에 대댓글을 작성합니다. 정회원 이상만 작성 가능하며, 대댓글에는 답글을 달 수 없습니다 (1단계까지만 허용)."
+            description = "댓글에 대댓글을 작성합니다. 접근 가능한 게시글에 한해 준회원 이상 작성 가능하며, 대댓글에는 답글을 달 수 없습니다 (1단계까지만 허용)."
     )
     @ApiResponses({
             @ApiResponse(
@@ -142,7 +142,7 @@ public class CommentController {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "작성 권한 없음 (정회원 이상 필요)",
+                    description = "작성 권한 없음 (게시글 접근 권한 필요)",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)

@@ -69,7 +69,7 @@ public class PostLikeController {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "정회원 이상 권한 필요",
+                    description = "게시글 접근 권한 필요",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -94,7 +94,7 @@ public class PostLikeController {
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PostMapping("/api/v1/posts/{postId}/likes")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
     public ResponseEntity<PostLikeToggleResponse> toggleLike(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
@@ -170,7 +170,7 @@ public class PostLikeController {
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @GetMapping("/api/v1/users/me/likes")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
     public ResponseEntity<Page<LikedPostResponse>> getMyLikes(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,

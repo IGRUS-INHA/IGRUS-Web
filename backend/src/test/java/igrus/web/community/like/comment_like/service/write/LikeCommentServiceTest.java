@@ -8,6 +8,7 @@ import igrus.web.community.like.comment_like.exception.CommentLikeException;
 import igrus.web.community.like.comment_like.repository.CommentLikeRepository;
 import igrus.web.community.like.comment_like.service.support.CommentLikeValidator;
 import igrus.web.community.post.domain.Post;
+import igrus.web.community.post.service.support.PostAccessChecker;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +48,9 @@ class LikeCommentServiceTest {
 
     @Mock
     private CommentLikeValidator commentLikeValidator;
+
+    @Mock
+    private PostAccessChecker postAccessChecker;
 
     @InjectMocks
     private LikeCommentService likeCommentService;

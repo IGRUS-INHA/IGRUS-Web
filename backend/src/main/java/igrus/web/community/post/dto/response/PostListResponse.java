@@ -17,6 +17,7 @@ public record PostListResponse(
     int viewCount,
     int likeCount,
     int commentCount,
+    int bookmarkCount,
     Instant createdAt
 ) {
     /**
@@ -34,8 +35,9 @@ public record PostListResponse(
             post.isAnonymous(),
             post.isQuestion(),
             post.getViewCount(),
-            0,  // likeCount - 추후 구현
-            0,  // commentCount - 추후 구현
+            post.getLikeCount(),
+            post.getCommentCount(),
+            post.getBookmarkCount(),
             post.getCreatedAt()
         );
     }
