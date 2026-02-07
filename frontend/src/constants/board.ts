@@ -4,9 +4,9 @@
 
 // 게시판 종류
 export const BOARDS = {
-  NOTICES: 'notices',
-  GENERAL: 'general',
-  INSIGHT: 'insight',
+  NOTICES: 'NOTICES',
+  GENERAL: 'GENERAL',
+  INSIGHT: 'INSIGHT',
 } as const;
 
 export const BOARD_LABELS = {
@@ -76,42 +76,12 @@ export const POST_STATUS = {
   DELETED: 'DELETED', // 삭제됨
 } as const;
 
-// 게시판별 카테고리
-export const BOARD_CATEGORIES = {
-  [BOARDS.NOTICES]: [
-    { value: 'general', label: '일반' },
-    { value: 'event', label: '행사' },
-    { value: 'important', label: '중요' },
-  ],
-  [BOARDS.GENERAL]: [
-    { value: 'free', label: '자유' },
-    { value: 'question', label: '질문' },
-    { value: 'info', label: '정보' },
-  ],
-  [BOARDS.INSIGHT]: [
-    { value: 'tech', label: '기술' },
-    { value: 'career', label: '취업/진로' },
-    { value: 'study', label: '스터디' },
-    { value: 'review', label: '후기' },
-  ],
-} as const;
-
-// 글 작성 옵션
-export const POST_OPTIONS = {
-  // 익명 글 허용 게시판
-  ALLOW_ANONYMOUS: [BOARDS.GENERAL],
-
-  // 질문글 허용 게시판
-  ALLOW_QUESTION: [BOARDS.GENERAL],
-} as const;
-
 // 게시글 폼 검증 스키마 (PostWritePage, PostEditPage 공유)
 import { z } from 'zod';
 
 export const postFormSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요').max(100, '제목은 100자 이내로 입력해주세요'),
   content: z.string().min(1, '내용을 입력해주세요'),
-  category: z.string().min(1, '카테고리를 선택해주세요'),
   isAnonymous: z.boolean().optional(),
   isQuestion: z.boolean().optional(),
   isVisibleToAssociate: z.boolean().optional(),

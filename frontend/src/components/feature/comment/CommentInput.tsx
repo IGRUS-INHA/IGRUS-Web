@@ -58,7 +58,7 @@ export function CommentInput({
           disabled={isSubmitting}
           autoFocus={autoFocus}
           className={cn(
-            'w-full rounded-r4 px-5 py-s3 pr-12 border focus:outline-none focus:border-primary transition-all',
+            'w-full rounded-r4 px-s5 py-s3 pr-s7 border focus:outline-none focus:border-primary transition-all',
             isDark ? 'bg-white/5 border-border' : 'bg-muted/50 border-border',
             isSubmitting && 'opacity-50 cursor-not-allowed',
             isOverLimit && 'border-red-500 focus:border-red-500'
@@ -69,7 +69,7 @@ export function CommentInput({
           type="button"
           disabled={isSubmitting || !value.trim() || isOverLimit}
           className={cn(
-            'absolute right-2 top-1/2 -translate-y-1/2 p-s2 rounded-lg transition cursor-pointer',
+            'absolute right-s2 top-1/2 -translate-y-1/2 p-s2 rounded-r2 transition cursor-pointer',
             'text-primary hover:bg-primary/10',
             (isSubmitting || !value.trim() || isOverLimit) &&
               'opacity-50 cursor-not-allowed hover:bg-transparent'
@@ -79,7 +79,7 @@ export function CommentInput({
         </button>
       </div>
 
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-s1">
         <label className="flex items-center gap-s2 cursor-pointer">
           <input
             type="checkbox"
@@ -92,10 +92,9 @@ export function CommentInput({
         </label>
 
         <span
-          className={cn(
-            'text-c1',
+          className={`text-c1 ${
             isOverLimit ? 'text-red-500' : 'text-muted-foreground'
-          )}
+          }`}
         >
           {remainingChars} / 500
         </span>

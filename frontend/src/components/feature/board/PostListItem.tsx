@@ -38,7 +38,7 @@ export default function PostListItem({ post, boardType, linkTo }: PostListItemPr
 
   const content = (
     <Card
-      className={`px-s6 py-s5 rounded-[2rem] border transition-all hover:border-primary/50 group cursor-pointer ${
+      className={`px-s6 py-s5 rounded-r4 border transition-all hover:border-primary/50 group cursor-pointer ${
         isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'
       }`}
     >
@@ -47,7 +47,7 @@ export default function PostListItem({ post, boardType, linkTo }: PostListItemPr
           {post.title}
           {post.isQuestion && (
             <span
-              className={`px-s3 py-1 rounded-full text-c2 font-bold uppercase tracking-widest ${
+              className={`px-s3 py-s1 rounded-full text-c2 font-bold uppercase tracking-widest ${
                 isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
               }`}
             >
@@ -71,15 +71,18 @@ export default function PostListItem({ post, boardType, linkTo }: PostListItemPr
         </div>
 
         <div className="flex items-center gap-s4 text-muted-foreground">
-          <div className="flex items-center gap-1.5 hover:text-primary transition-colors">
+          <div className="flex items-center gap-s2 hover:text-primary transition-colors">
             <Heart size={16} />
             <span className="text-c1">{post.likeCount ?? 0}</span>
           </div>
-          <div className="flex items-center gap-1.5 hover:text-primary transition-colors">
+          <div className="flex items-center gap-s2 hover:text-primary transition-colors">
             <MessageCircle size={16} />
             <span className="text-c1">{post.commentCount ?? 0}</span>
           </div>
-          <Bookmark size={16} className="hover:text-primary transition-colors cursor-pointer" />
+          <div className="flex items-center gap-s2 hover:text-primary transition-colors cursor-pointer">
+            <Bookmark size={16} />
+            <span className="text-c1">{(post as any).bookmarkCount ?? 0}</span>
+          </div>
         </div>
       </div>
     </Card>

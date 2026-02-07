@@ -33,20 +33,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { PageableObject } from './pageableObject';
-import type { PostViewHistoryResponse } from './postViewHistoryResponse';
-import type { SortObject } from './sortObject';
 
-export interface PagePostViewHistoryResponse {
-  totalElements?: number;
-  totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: PostViewHistoryResponse[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  first?: boolean;
-  last?: boolean;
-  empty?: boolean;
-}
+/**
+ * 변경 전 역할
+ */
+export type UserRoleHistoryResponsePreviousRole = typeof UserRoleHistoryResponsePreviousRole[keyof typeof UserRoleHistoryResponsePreviousRole];
+
+
+export const UserRoleHistoryResponsePreviousRole = {
+  ASSOCIATE: 'ASSOCIATE',
+  MEMBER: 'MEMBER',
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
+} as const;

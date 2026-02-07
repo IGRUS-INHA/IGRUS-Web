@@ -33,20 +33,41 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { InquiryListResponse } from './inquiryListResponse';
-import type { PageableObject } from './pageableObject';
-import type { SortObject } from './sortObject';
+import type { GetHistoriesChangeType } from './getHistoriesChangeType';
 
-export interface PageInquiryListResponse {
-  totalElements?: number;
-  totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: InquiryListResponse[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  first?: boolean;
-  last?: boolean;
-  empty?: boolean;
-}
+export type GetHistoriesParams = {
+/**
+ * 대상 사용자 ID
+ */
+userId?: number;
+/**
+ * 변경자 사용자 ID
+ */
+changedByUserId?: number;
+/**
+ * 변경 유형
+ */
+changeType?: GetHistoriesChangeType;
+/**
+ * 조회 시작일
+ */
+startDate?: string;
+/**
+ * 조회 종료일
+ */
+endDate?: string;
+/**
+ * 페이지 번호 (0부터 시작)
+ * @minimum 0
+ */
+page?: number;
+/**
+ * 페이지당 항목 수
+ * @minimum 1
+ */
+size?: number;
+/**
+ * 정렬 조건. 여러 정렬은 sort를 여러 번 지정합니다. (sort=createdAt,DESC&sort=id,ASC)
+ */
+sort?: string[];
+};

@@ -31,14 +31,14 @@ export default function EventCard({ event }: EventCardProps) {
   const isAvailable = event.status === 'Open' || event.status === 'OPEN' || event.status === 'UPCOMING';
 
   return (
-    <div className="rounded-[2.5rem] overflow-hidden border transition-all hover:scale-[1.01] bg-card border-border shadow-xl shadow-black/5 dark:shadow-none">
+    <div className="rounded-r4 overflow-hidden border transition-all hover:scale-[1.01] bg-card border-border shadow-xl shadow-black/5 dark:shadow-none">
 
       <div className="h-48 relative">
         {event.image && (
           <img src={event.image} alt={event.title} className="w-full h-full object-cover opacity-80" />
         )}
         <div
-          className={`absolute top-4 right-4 px-s3 py-1 rounded-full text-c2 font-bold uppercase tracking-wider ${
+          className={`absolute top-s4 right-s4 px-s3 py-s1 rounded-full text-c2 font-bold uppercase tracking-wider ${
             STATUS_STYLES[event.status] ?? STATUS_STYLES.Closed
           }`}
         >
@@ -46,10 +46,10 @@ export default function EventCard({ event }: EventCardProps) {
         </div>
       </div>
 
-      <div className="p-s8">
+      <div className="p-s6">
         <h3 className="text-2xl font-bold mb-s4">{event.title}</h3>
 
-        <div className="space-y-s3 mb-s8">
+        <div className="space-y-s3 mb-s6">
           <div className="flex items-center gap-s3 text-muted-foreground">
             <Calendar size={18} className="text-primary" />
             <span className="text-sm">{event.date}</span>

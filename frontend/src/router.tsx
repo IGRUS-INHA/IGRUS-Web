@@ -34,6 +34,7 @@ import { PrivacyPolicyPage, TermsOfServicePage } from '@/pages/legal';
 
 // 마이페이지
 import MyPage from '@/pages/mypage/MyPage';
+import WithdrawPage from '@/pages/mypage/WithdrawPage';
 
 // 관리자
 import AdminDashboard from '@/pages/admin/AdminDashboard';
@@ -103,6 +104,14 @@ const routes: RouteObject[] = [
       },
 
       // 마이페이지
+      {
+        path: 'mypage/withdraw',
+        element: (
+          <ProtectedRoute>
+            <WithdrawPage />
+          </ProtectedRoute>
+        ),
+      },
       {
         path: 'mypage/*',
         element: (

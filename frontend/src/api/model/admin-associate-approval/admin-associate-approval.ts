@@ -53,8 +53,15 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AssociateInfoPageResponse,
   BulkApprovalRequest,
-  GetPendingAssociatesParams
+  BulkApprovalResultResponse,
+  BulkRejectionRequest,
+  BulkRejectionResultResponse,
+  GetPendingAssociatesParams,
+  GetRejectedAssociatesParams,
+  PageRejectedAssociateInfoResponse,
+  RejectAssociateRequest
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -65,6 +72,112 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * 특정 준회원의 가입을 거절합니다. ADMIN 권한이 필요합니다. 거절 사유는 필수입니다.
+ * @summary 개별 준회원 거절
+ */
+export type rejectAssociateResponse200 = {
+  data: void
+  status: 200
+}
+
+export type rejectAssociateResponse400 = {
+  data: void
+  status: 400
+}
+
+export type rejectAssociateResponse401 = {
+  data: void
+  status: 401
+}
+
+export type rejectAssociateResponse403 = {
+  data: void
+  status: 403
+}
+
+export type rejectAssociateResponse404 = {
+  data: void
+  status: 404
+}
+    
+export type rejectAssociateResponseSuccess = (rejectAssociateResponse200) & {
+  headers: Headers;
+};
+export type rejectAssociateResponseError = (rejectAssociateResponse400 | rejectAssociateResponse401 | rejectAssociateResponse403 | rejectAssociateResponse404) & {
+  headers: Headers;
+};
+
+export type rejectAssociateResponse = (rejectAssociateResponseSuccess | rejectAssociateResponseError)
+
+export const getRejectAssociateUrl = (id: number,) => {
+
+
+  
+
+  return `/api/v1/admin/associates/${id}/reject`
+}
+
+export const rejectAssociate = async (id: number,
+    rejectAssociateRequest: RejectAssociateRequest, options?: RequestInit): Promise<rejectAssociateResponse> => {
+  
+  return customFetch<rejectAssociateResponse>(getRejectAssociateUrl(id),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      rejectAssociateRequest,)
+  }
+);}
+
+
+
+
+export const getRejectAssociateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateRequest}, TContext> => {
+
+const mutationKey = ['rejectAssociate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectAssociate>>, {id: number;data: RejectAssociateRequest}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  rejectAssociate(id,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RejectAssociateMutationResult = NonNullable<Awaited<ReturnType<typeof rejectAssociate>>>
+    export type RejectAssociateMutationBody = RejectAssociateRequest
+    export type RejectAssociateMutationError = void
+
+    /**
+ * @summary 개별 준회원 거절
+ */
+export const useRejectAssociate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof rejectAssociate>>,
+        TError,
+        {id: number;data: RejectAssociateRequest},
+        TContext
+      > => {
+      return useMutation(getRejectAssociateMutationOptions(options), queryClient);
+    }
+    /**
  * 특정 준회원을 정회원으로 승인합니다. ADMIN 권한이 필요합니다.
  * @summary 개별 준회원 승인
  */
@@ -169,11 +282,111 @@ export const useApproveAssociate = <TError = void,
       return useMutation(getApproveAssociateMutationOptions(options), queryClient);
     }
     /**
+ * 여러 준회원의 가입을 한 번에 거절합니다. ADMIN 권한이 필요합니다. 일부 사용자 거절이 실패해도 나머지는 정상 처리됩니다.
+ * @summary 준회원 일괄 거절
+ */
+export type rejectBulkResponse200 = {
+  data: BulkRejectionResultResponse
+  status: 200
+}
+
+export type rejectBulkResponse400 = {
+  data: void
+  status: 400
+}
+
+export type rejectBulkResponse401 = {
+  data: void
+  status: 401
+}
+
+export type rejectBulkResponse403 = {
+  data: void
+  status: 403
+}
+    
+export type rejectBulkResponseSuccess = (rejectBulkResponse200) & {
+  headers: Headers;
+};
+export type rejectBulkResponseError = (rejectBulkResponse400 | rejectBulkResponse401 | rejectBulkResponse403) & {
+  headers: Headers;
+};
+
+export type rejectBulkResponse = (rejectBulkResponseSuccess | rejectBulkResponseError)
+
+export const getRejectBulkUrl = () => {
+
+
+  
+
+  return `/api/v1/admin/associates/reject-batch`
+}
+
+export const rejectBulk = async (bulkRejectionRequest: BulkRejectionRequest, options?: RequestInit): Promise<rejectBulkResponse> => {
+  
+  return customFetch<rejectBulkResponse>(getRejectBulkUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      bulkRejectionRequest,)
+  }
+);}
+
+
+
+
+export const getRejectBulkMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: BulkRejectionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: BulkRejectionRequest}, TContext> => {
+
+const mutationKey = ['rejectBulk'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectBulk>>, {data: BulkRejectionRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  rejectBulk(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RejectBulkMutationResult = NonNullable<Awaited<ReturnType<typeof rejectBulk>>>
+    export type RejectBulkMutationBody = BulkRejectionRequest
+    export type RejectBulkMutationError = void
+
+    /**
+ * @summary 준회원 일괄 거절
+ */
+export const useRejectBulk = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: BulkRejectionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof rejectBulk>>,
+        TError,
+        {data: BulkRejectionRequest},
+        TContext
+      > => {
+      return useMutation(getRejectBulkMutationOptions(options), queryClient);
+    }
+    /**
  * 여러 준회원을 한 번에 정회원으로 승인합니다. ADMIN 권한이 필요합니다. 일부 사용자 승인이 실패해도 나머지는 정상 처리됩니다.
  * @summary 준회원 일괄 승인
  */
 export type approveBulkResponse200 = {
-  data: Blob
+  data: BulkApprovalResultResponse
   status: 200
 }
 
@@ -269,11 +482,141 @@ export const useApproveBulk = <TError = void,
       return useMutation(getApproveBulkMutationOptions(options), queryClient);
     }
     /**
+ * 거절된 준회원 목록을 페이지네이션하여 조회합니다. ADMIN 권한이 필요합니다.
+ * @summary 거절된 준회원 목록 조회
+ */
+export type getRejectedAssociatesResponse200 = {
+  data: PageRejectedAssociateInfoResponse
+  status: 200
+}
+
+export type getRejectedAssociatesResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getRejectedAssociatesResponse403 = {
+  data: void
+  status: 403
+}
+    
+export type getRejectedAssociatesResponseSuccess = (getRejectedAssociatesResponse200) & {
+  headers: Headers;
+};
+export type getRejectedAssociatesResponseError = (getRejectedAssociatesResponse401 | getRejectedAssociatesResponse403) & {
+  headers: Headers;
+};
+
+export type getRejectedAssociatesResponse = (getRejectedAssociatesResponseSuccess | getRejectedAssociatesResponseError)
+
+export const getGetRejectedAssociatesUrl = (params?: GetRejectedAssociatesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/admin/associates/rejected?${stringifiedParams}` : `/api/v1/admin/associates/rejected`
+}
+
+export const getRejectedAssociates = async (params?: GetRejectedAssociatesParams, options?: RequestInit): Promise<getRejectedAssociatesResponse> => {
+  
+  return customFetch<getRejectedAssociatesResponse>(getGetRejectedAssociatesUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetRejectedAssociatesQueryKey = (params?: GetRejectedAssociatesParams,) => {
+    return [
+    `/api/v1/admin/associates/rejected`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getGetRejectedAssociatesQueryOptions = <TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = void>(params?: GetRejectedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRejectedAssociatesQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRejectedAssociates>>> = ({ signal }) => getRejectedAssociates(params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetRejectedAssociatesQueryResult = NonNullable<Awaited<ReturnType<typeof getRejectedAssociates>>>
+export type GetRejectedAssociatesQueryError = void
+
+
+export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = void>(
+ params: undefined |  GetRejectedAssociatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRejectedAssociates>>,
+          TError,
+          Awaited<ReturnType<typeof getRejectedAssociates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = void>(
+ params?: GetRejectedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRejectedAssociates>>,
+          TError,
+          Awaited<ReturnType<typeof getRejectedAssociates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = void>(
+ params?: GetRejectedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary 거절된 준회원 목록 조회
+ */
+
+export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = void>(
+ params?: GetRejectedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetRejectedAssociatesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
  * 승인 대기 중인 준회원 목록을 페이지네이션하여 조회합니다. ADMIN 권한이 필요합니다.
  * @summary 승인 대기 준회원 목록 조회
  */
 export type getPendingAssociatesResponse200 = {
-  data: Blob
+  data: AssociateInfoPageResponse
   status: 200
 }
 

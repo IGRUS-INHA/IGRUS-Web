@@ -33,16 +33,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { BookmarkedPostResponse } from './bookmarkedPostResponse';
 import type { PageableObject } from './pageableObject';
 import type { SortObject } from './sortObject';
+import type { UserRoleHistoryResponse } from './userRoleHistoryResponse';
 
-export interface PageBookmarkedPostResponse {
-  totalElements?: number;
+export interface PageUserRoleHistoryResponse {
   totalPages?: number;
+  totalElements?: number;
   pageable?: PageableObject;
   size?: number;
-  content?: BookmarkedPostResponse[];
+  content?: UserRoleHistoryResponse[];
   number?: number;
   sort?: SortObject;
   numberOfElements?: number;

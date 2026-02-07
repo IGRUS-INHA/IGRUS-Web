@@ -26,7 +26,7 @@ export function CommentActions({
 
   // 삭제 권한 체크: 본인 또는 관리자/운영자
   const canDelete =
-    comment.authorId === Number(userId) || isAdmin() || isOperator();
+    String(comment.authorId) === String(userId) || isAdmin() || isOperator();
 
   const handleLike = () => {
     if (isLikeLoading) return;
@@ -53,7 +53,7 @@ export function CommentActions({
         onClick={handleLike}
         disabled={isLikeLoading}
         className={cn(
-          'flex items-center gap-1.5 transition-colors cursor-pointer',
+          'flex items-center gap-s2 transition-colors cursor-pointer',
           comment.likedByMe
             ? 'text-primary fill-current'
             : 'hover:text-primary',
@@ -69,10 +69,10 @@ export function CommentActions({
         <button
           type="button"
           onClick={onReplyClick}
-          className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer"
+          className="flex items-center gap-s2 hover:text-primary transition-colors cursor-pointer"
         >
           <MessageCircle size={16} />
-          <span className="text-c1">답글</span>
+          <span className="text-c1">{comment.replies?.length ?? 0}</span>
         </button>
       )}
 
@@ -83,7 +83,7 @@ export function CommentActions({
           onClick={handleDelete}
           disabled={deleteComment.isPending}
           className={cn(
-            'flex items-center gap-1.5 hover:text-red-500 transition-colors cursor-pointer',
+            'flex items-center gap-s2 hover:text-red-500 transition-colors cursor-pointer',
             deleteComment.isPending && 'opacity-50 cursor-not-allowed'
           )}
         >

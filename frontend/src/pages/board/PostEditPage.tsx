@@ -1,16 +1,20 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { FullPageSpinner } from '@/components/ui';
 import { ArrowLeft, Save, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import { useGetPostDetail, useUpdatePost } from '@/api/model/post/post';
+import type { PostDetailResponse } from '@/api/model/models';
 import { useUIStore } from '@/stores';
-import { BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type PostFormData } from '@/constants/board';
+import { postFormSchema, type PostFormData } from '@/constants/board';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { isForbiddenError, isUnauthorizedError, isNotFoundError, getErrorMessage } from '@/utils/error';
+import { useCurrentBoard } from '@/hooks/useBoards';
 
 export default function PostEditPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
@@ -30,17 +34,18 @@ export default function PostEditPage() {
       query: { enabled: !!(validBoardType && numericPostId) },
     }
   );
-  const post = response?.data;
+  // customFetch가 에러 시 throw하므로 data는 항상 성공 타입
+  const post = response?.data as PostDetailResponse | undefined;
 
-  // Get categories for this board
-  const categories = BOARD_CATEGORIES[validBoardType] || BOARD_CATEGORIES.general;
+  // Get current board info
+  const { board, isLoading: boardLoading } = useCurrentBoard();
 
-  // Get board label
-  const boardLabel = validBoardType ? BOARD_LABELS[validBoardType as keyof typeof BOARD_LABELS] : '게시판';
+  // Get board label (fallback to hardcoded)
+  const boardLabel = board?.name ?? '게시판';
 
-  // Check if anonymous and question posts are allowed
-  const allowAnonymous = (POST_OPTIONS.ALLOW_ANONYMOUS as readonly BoardType[]).includes(validBoardType);
-  const allowQuestion = (POST_OPTIONS.ALLOW_QUESTION as readonly BoardType[]).includes(validBoardType);
+  // Check if anonymous and question posts are allowed (server-driven)
+  const allowAnonymous = board?.allowsAnonymous ?? false;
+  const allowQuestion = board?.allowsQuestionTag ?? false;
   const allowVisibleToAssociate = validBoardType === 'notices';
 
   // Form setup
@@ -55,7 +60,6 @@ export default function PostEditPage() {
   } = useForm<PostFormData>({
     resolver: zodResolver(postFormSchema),
     defaultValues: {
-      category: categories[0]?.value || 'general',
       isAnonymous: false,
       isQuestion: false,
       isVisibleToAssociate: false,
@@ -68,13 +72,12 @@ export default function PostEditPage() {
       reset({
         title: post.title || '',
         content: post.content || '',
-        category: categories[0]?.value || 'general',
         isAnonymous: post.isAnonymous || false,
         isQuestion: post.isQuestion || false,
         isVisibleToAssociate: false,
       });
     }
-  }, [post, reset, categories]);
+  }, [post, reset]);
 
   // Watch form values
   const title = watch('title');
@@ -113,26 +116,27 @@ export default function PostEditPage() {
 
           navigate(`/board/${validBoardType}/${postId}`);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           let errorMessage = '게시글 수정에 실패했습니다.';
 
-          if (error.message) {
-            errorMessage = error.message;
-          }
-
-          if (error.message?.includes('403') || error.message?.includes('권한')) {
+          // 403 Forbidden - 권한 없음
+          if (isForbiddenError(error)) {
             errorMessage = '수정 권한이 없습니다.\n\n작성자 본인만 게시글을 수정할 수 있습니다.';
           }
-
-          if (error.message?.includes('401') || error.message?.includes('인증')) {
+          // 401 Unauthorized - 인증 필요
+          else if (isUnauthorizedError(error)) {
             errorMessage = '로그인이 필요합니다.\n로그인 페이지로 이동합니다.';
             alert(errorMessage);
             navigate('/login');
             return;
           }
-
-          if (error.message?.includes('404')) {
+          // 404 Not Found
+          else if (isNotFoundError(error)) {
             errorMessage = '게시글을 찾을 수 없습니다.';
+          }
+          // 기타 에러
+          else {
+            errorMessage = getErrorMessage(error);
           }
 
           alert(errorMessage);
@@ -142,12 +146,8 @@ export default function PostEditPage() {
   };
 
   // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">로딩 중...</p>
-      </div>
-    );
+  if (isLoading || boardLoading) {
+    return <FullPageSpinner />;
   }
 
   // Error state
@@ -190,7 +190,7 @@ export default function PostEditPage() {
           onClick={handleBack}
           type="button"
           className={cn(
-            'flex items-center gap-2 text-sm font-bold transition-colors cursor-pointer',
+            'flex items-center gap-s2 text-sm font-bold transition-colors cursor-pointer',
             isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'
           )}
         >
@@ -204,7 +204,7 @@ export default function PostEditPage() {
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting}
             type="button"
-            className="bg-[#03A69E] text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-[#028b84] transition shadow-lg shadow-[#03A69E]/20 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+            className="bg-[#03A69E] text-white px-s5 py-s2 rounded-full text-sm font-bold hover:bg-[#028b84] transition shadow-lg shadow-[#03A69E]/20 flex items-center gap-s2 disabled:opacity-50 cursor-pointer"
           >
             <Save size={16} /> 수정하기
           </button>
@@ -214,24 +214,23 @@ export default function PostEditPage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div
           className={cn(
-            'w-full max-w-[1616px] mx-auto p-8 md:p-12 rounded-[2.5rem] border min-h-[80vh] flex flex-col',
+            'w-full max-w-[1616px] mx-auto p-s6 md:p-s7 rounded-[2.5rem] border min-h-[80vh] flex flex-col',
             isDark ? 'bg-[#1A1A1A] border-white/5' : 'bg-white border-gray-100 shadow-sm'
           )}
         >
           {/* Settings Bar */}
           <div className="flex flex-wrap gap-s4 mb-s6">
-            <div className="px-2 py-2 text-xl text-[#03A69E]">
+            <div className="px-s2 py-s2 text-xl text-[#03A69E]">
               {validBoardType === 'general' ? boardLabel : `${boardLabel} 게시판`}
             </div>
 
-            <input type="hidden" {...register('category')} />
 
             {allowAnonymous && (
               <button
                 onClick={() => setValue('isAnonymous', !isAnonymous)}
                 type="button"
                 className={cn(
-                  'px-4 py-2 rounded-xl text-sm border transition-all cursor-pointer',
+                  'px-s4 py-s2 rounded-r4 text-sm border transition-all cursor-pointer',
                   isAnonymous
                     ? 'bg-[#03A69E]/10 border-[#03A69E] text-[#03A69E]'
                     : isDark
@@ -248,7 +247,7 @@ export default function PostEditPage() {
                 onClick={() => setValue('isQuestion', !isQuestion)}
                 type="button"
                 className={cn(
-                  'px-4 py-2 rounded-xl text-sm border transition-all cursor-pointer',
+                  'px-s4 py-s2 rounded-r4 text-sm border transition-all cursor-pointer',
                   isQuestion
                     ? 'bg-[#03A69E]/10 border-[#03A69E] text-[#03A69E]'
                     : isDark
@@ -265,7 +264,7 @@ export default function PostEditPage() {
                 onClick={() => setValue('isVisibleToAssociate', !isVisibleToAssociate)}
                 type="button"
                 className={cn(
-                  'px-4 py-2 rounded-xl text-sm border transition-all cursor-pointer',
+                  'px-s4 py-s2 rounded-r4 text-sm border transition-all cursor-pointer',
                   isVisibleToAssociate
                     ? 'bg-[#03A69E]/10 border-[#03A69E] text-[#03A69E]'
                     : isDark
@@ -325,11 +324,11 @@ export default function PostEditPage() {
           </div>
 
           {/* Bottom Toolbar */}
-          <div className={cn('mt-8 pt-4 border-t flex gap-4', isDark ? 'border-white/5' : 'border-gray-100')}>
+          <div className={cn('mt-s6 pt-s4 border-t flex gap-s4', isDark ? 'border-white/5' : 'border-gray-100')}>
             <button
               type="button"
               className={cn(
-                'p-3 rounded-lg transition cursor-pointer',
+                'p-s3 rounded-r3 transition cursor-pointer',
                 isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >
@@ -338,7 +337,7 @@ export default function PostEditPage() {
             <button
               type="button"
               className={cn(
-                'p-3 rounded-lg transition cursor-pointer',
+                'p-s3 rounded-r3 transition cursor-pointer',
                 isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >

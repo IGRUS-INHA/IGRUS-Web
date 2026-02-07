@@ -6,16 +6,21 @@ import PostListItem from '@/components/feature/board/PostListItem';
 import { SortSelect } from '@/components/board/SortSelect';
 import { Pagination } from '@/components/board/Pagination';
 import { Button } from '@/components/ui/button';
-import { BOARDS, BOARD_LABELS, SORT_TYPE, PAGINATION } from '@/constants/board';
-import type { BoardType } from '@/types/common';
+import { FullPageSpinner, Spinner } from '@/components/ui';
+import { SORT_TYPE, PAGINATION } from '@/constants/board';
+import type { PostListPageResponse } from '@/api/model/models';
+import { BOARDS, type BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostList } from '@/hooks/queries/useMockPosts';
+import { useBoardList, useBoardByCode, type Board } from '@/hooks/useBoards';
+import { useUIStore } from '@/stores';
 
 export default function BoardListPage() {
   const { boardType } = useParams<{ boardType: BoardType }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { addToast } = useUIStore();
 
   // State
   const [sortType, setSortType] = useState<string>(SORT_TYPE.LATEST);
@@ -29,34 +34,50 @@ export default function BoardListPage() {
     ? (boardType as BoardType)
     : BOARDS.NOTICES;
 
+  // 게시판 목록 조회 (탭용)
+  const { boards, isLoading: boardsLoading } = useBoardList();
+
+  // 현재 게시판 권한 정보 조회
+  const { board, isLoading: boardLoading } = useBoardByCode(validBoardType);
+
   // Mock 모드 확인
   const isMockMode = useMockData();
+
+  // 권한 체크: 백엔드 응답 기반으로 접근 권한이 없으면 토스트 + 리다이렉트
+  useEffect(() => {
+    if (!boardLoading && !board.canRead) {
+      addToast({
+        type: 'warning',
+        title: '접근 권한 부족',
+        message: '게시판 조회 권한이 없습니다.',
+        duration: 5000,
+      });
+      navigate('/', { replace: true });
+    }
+  }, [boardLoading, board.canRead, addToast, navigate]);
 
   // 검색어가 변경되면 첫 페이지로 이동
   useEffect(() => {
     setCurrentPage(1);
   }, [searchKeyword]);
 
-  // Fetch posts (Mock 또는 실제 API)
+  // Fetch posts (Mock 또는 실제 API) - 백엔드 권한 체크
   const realQuery = useGetPostList(validBoardType, {
     ...(searchKeyword && { keyword: searchKeyword }),
     page: currentPage - 1, // Orval은 0-based pagination
     size: PAGINATION.DEFAULT_SIZE,
   }, {
     query: {
-      enabled: !isMockMode,
+      enabled: !isMockMode && board.canRead, // 백엔드 권한 체크
       refetchOnMount: 'always', // 페이지 마운트 시 항상 새로운 데이터 가져오기
     },
   });
   const mockQuery = useMockPostList(validBoardType);
 
-  const { data: response, isLoading, error } = isMockMode ? mockQuery : realQuery;
+  const { data: response, isLoading } = isMockMode ? mockQuery : realQuery;
 
-  // Orval 응답 unwrap
-  const data = response?.data;
-
-  // 403 에러 체크 (권한 없음)
-  const isForbidden = error && 'response' in error && (error as any).response?.status === 403;
+  // Orval 응답 unwrap (customFetch가 에러 시 throw하므로 data는 항상 성공 타입)
+  const data = response?.data as PostListPageResponse | undefined;
 
   // Handlers
   const handleSortChange = (newSortType: string) => {
@@ -76,24 +97,29 @@ export default function BoardListPage() {
     navigate(`/board/${validBoardType}/write`);
   };
 
+  // 로딩 중
+  if (boardLoading || boardsLoading) {
+    return <FullPageSpinner />;
+  }
+
   return (
     <div className="space-y-s8 animate-in fade-in duration-300">
       {/* Header with Tabs and Write Button */}
       <div className="flex justify-between items-center border-b border-border pb-s4">
         <div className="flex gap-s4 overflow-x-auto">
-          {(Object.values(BOARDS) as BoardType[]).map((tab) => (
+          {boards?.map((board: Board) => (
             <button
-              key={tab}
-              onClick={() => handleTabClick(tab)}
+              key={board.code}
+              onClick={() => handleTabClick(board.code as BoardType)}
               type="button"
               className={cn(
                 'px-s6 py-s2 rounded-full text-sm font-bold transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer',
-                validBoardType === tab
+                validBoardType === board.code
                   ? 'bg-primary text-primary-foreground shadow-lg'
                   : 'text-muted-foreground hover:bg-muted'
               )}
             >
-              {BOARD_LABELS[tab]}
+              {board.name}
             </button>
           ))}
         </div>
@@ -102,7 +128,8 @@ export default function BoardListPage() {
           <Button
             onClick={handleWriteClick}
             type="button"
-            className="flex items-center justify-center gap-s2 rounded-full h-9 px-4 py-2 min-w-[100px]"
+            className="flex items-center justify-center gap-s2 rounded-full h-9 px-s4 py-s2 min-w-[100px]"
+            disabled={!board.canWrite}
           >
             <PenTool size={14} /> <span className="hidden sm:inline">글쓰기</span>
           </Button>
@@ -112,11 +139,7 @@ export default function BoardListPage() {
       {/* Posts List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">로딩 중...</p>
-        </div>
-      ) : isForbidden ? (
-        <div className="flex flex-col items-center justify-center py-12 gap-s4">
-          <p className="text-muted-foreground">정회원 승인 후 게시판 이용이 가능합니다.</p>
+          <Spinner size="lg" />
         </div>
       ) : !data?.posts || data.posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 gap-s4">

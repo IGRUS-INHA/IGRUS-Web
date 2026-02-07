@@ -1,17 +1,21 @@
 import { useUIStore } from '@/stores';
-import { User, Mail, Calendar, Edit3, Shield, Lock, LogOut } from 'lucide-react';
+import { User, Mail, Calendar, Edit3, Shield, Lock, LogOut, UserX, Building2, Phone } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ROLE_LABELS } from '@/constants';
+import { formatPhoneNumber } from '@/utils';
 import type { User as UserType } from '@/types/entities';
+import type { MyProfileResponse } from '@/api/model/models/myProfileResponse';
 
 interface ProfileHeaderProps {
   user: UserType;
+  profile?: MyProfileResponse | undefined;
   onChangePassword?: () => void;
   onLogout?: () => void;
+  onWithdraw?: () => void;
 }
 
-export default function ProfileHeader({ user, onChangePassword, onLogout }: ProfileHeaderProps) {
+export default function ProfileHeader({ user, profile, onChangePassword, onLogout, onWithdraw }: ProfileHeaderProps) {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 
@@ -37,7 +41,7 @@ export default function ProfileHeader({ user, onChangePassword, onLogout }: Prof
 
       <div className="flex-1 text-center md:text-left">
         <div className="flex flex-col md:flex-row items-center gap-s3 mb-2">
-          <h2 className="text-h1">{user.name}</h2>
+          <h2 className="text-h1">{profile?.name ?? user.name}</h2>
           <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-c2 font-bold uppercase tracking-widest border border-primary/30">
             {ROLE_LABELS[user.role]}
           </span>
@@ -45,19 +49,31 @@ export default function ProfileHeader({ user, onChangePassword, onLogout }: Prof
         <div className="flex flex-wrap justify-center md:justify-start gap-s5 text-muted-foreground text-b2">
           <div className="flex items-center gap-2">
             <Shield size={16} className="text-primary" />
-            {user.studentId}
+            {profile?.studentId ?? user.studentId}
           </div>
           <div className="flex items-center gap-2">
             <Mail size={16} className="text-primary" />
-            {user.email}
+            {profile?.email ?? user.email}
           </div>
+          {profile?.department && (
+            <div className="flex items-center gap-2">
+              <Building2 size={16} className="text-primary" />
+              {profile.department}
+            </div>
+          )}
+          {profile?.phoneNumber && (
+            <div className="flex items-center gap-2">
+              <Phone size={16} className="text-primary" />
+              {formatPhoneNumber(profile.phoneNumber)}
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <Calendar size={16} className="text-primary" />
-            가입일 {user.joinedDate}
+            가입일 {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('ko-KR') : user.joinedDate}
           </div>
         </div>
 
-        {(onChangePassword || onLogout) && (
+        {(onChangePassword || onLogout || onWithdraw) && (
           <div className="flex flex-wrap justify-center md:justify-start gap-s3 mt-s4">
             {onChangePassword && (
               <Button
@@ -79,6 +95,16 @@ export default function ProfileHeader({ user, onChangePassword, onLogout }: Prof
                 className="flex items-center gap-s2 rounded-r3 text-xs font-bold border-destructive/30 text-destructive hover:bg-destructive/10"
               >
                 <LogOut size={14} /> 로그아웃
+              </Button>
+            )}
+            {onWithdraw && (
+              <Button
+                type="button"
+                onClick={onWithdraw}
+                variant="outline"
+                className="flex items-center gap-s2 rounded-r3 text-xs font-bold border-destructive/30 text-destructive hover:bg-destructive/10"
+              >
+                <UserX size={14} /> 회원 탈퇴
               </Button>
             )}
           </div>

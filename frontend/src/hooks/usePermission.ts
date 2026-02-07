@@ -1,8 +1,6 @@
 import { useAuthStore } from '@/stores';
 import {
   hasPermission,
-  canViewBoard,
-  canWriteBoard,
   canEditPost,
   canDeletePost,
   canWriteComment,
@@ -12,7 +10,7 @@ import {
   canApproveAssociate,
   canChangeRole,
 } from '@/constants/permissions';
-import { ROLES, type RoleOrNull, type BoardType } from '@/types/common';
+import { ROLES, type RoleOrNull } from '@/types/common';
 
 interface UsePermissionReturn {
   // 기본 정보
@@ -24,8 +22,7 @@ interface UsePermissionReturn {
   hasPermission: (requiredRole: RoleOrNull) => boolean;
 
   // 게시판
-  canViewBoard: (boardType: BoardType) => boolean;
-  canWriteBoard: (boardType: BoardType) => boolean;
+  // canViewBoard, canWriteBoard 제거 → useBoardByCode().canRead/canWrite 사용
   canEditPost: (postAuthorId: string) => boolean;
   canDeletePost: (postAuthorId: string) => boolean;
 
@@ -68,10 +65,6 @@ export function usePermission(): UsePermissionReturn {
       hasPermission(role, requiredRole),
 
     // 게시판
-    canViewBoard: (boardType: BoardType): boolean =>
-      canViewBoard(role, boardType),
-    canWriteBoard: (boardType: BoardType): boolean =>
-      canWriteBoard(role, boardType),
     canEditPost: (postAuthorId: string): boolean =>
       canEditPost(role, userId, postAuthorId),
     canDeletePost: (postAuthorId: string): boolean =>

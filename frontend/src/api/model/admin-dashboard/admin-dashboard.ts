@@ -48,6 +48,10 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
+import type {
+  DashboardStatsResponse
+} from '.././models';
+
 import { customFetch } from '../../client';
 
 
@@ -60,7 +64,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 대시보드 통계 조회
  */
 export type getDashboardStatsResponse200 = {
-  data: Blob
+  data: DashboardStatsResponse
   status: 200
 }
 

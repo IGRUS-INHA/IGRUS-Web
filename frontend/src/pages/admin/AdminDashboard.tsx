@@ -19,7 +19,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
 
   const renderStats = () => (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-s6 mb-12">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-s6 mb-s7">
       {[
         {
           label: 'Visitors',
@@ -49,14 +49,14 @@ export default function AdminDashboard() {
         <div
           key={i}
           className={cn(
-            'p-s8 rounded-[2.5rem] border',
+            'p-s6 rounded-r4 border',
             isDark
               ? 'bg-[#1A1A1A] border-white/5'
               : 'bg-white border-gray-100 shadow-sm'
           )}
         >
           <div className={cn(stat.color, 'mb-s4')}>{stat.icon}</div>
-          <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">
+          <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-s1">
             {stat.label}
           </p>
           <h3 className="text-3xl font-bold">{stat.value}</h3>
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
                     <td className="py-s4">
                       <span
                         className={cn(
-                          'px-s2 py-1 rounded-md text-[10px] font-bold',
+                          'px-s2 py-s1 rounded-r2 text-[10px] font-bold',
                           user.status === 'Active'
                             ? 'bg-green-500/10 text-green-500'
                             : 'bg-red-500/10 text-red-500'
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
                       ({app.id})
                     </span>
                   </h4>
-                  <p className="text-xs text-muted-foreground mt-1">{app.intro}</p>
+                  <p className="text-xs text-muted-foreground mt-s1">{app.intro}</p>
                 </div>
                 <div className="flex gap-s2">
                   <button
@@ -217,10 +217,10 @@ export default function AdminDashboard() {
                 )}
               >
                 <div>
-                  <div className="flex items-center gap-s2 mb-1">
+                  <div className="flex items-center gap-s2 mb-s1">
                     <span
                       className={cn(
-                        'w-2 h-2 rounded-full',
+                        'w-2 h-2 rounded-r4',
                         inq.status === 'Pending' ? 'bg-orange-500' : 'bg-green-500'
                       )}
                     />
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   <h4 className="font-bold">{inq.title}</h4>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-s1">
                     From: {inq.author} • {inq.date}
                   </p>
                 </div>
@@ -252,11 +252,11 @@ export default function AdminDashboard() {
 
       <div
         className={cn(
-          'p-s8 rounded-[2.5rem] border',
+          'p-s6 rounded-r4 border',
           isDark ? 'bg-[#1A1A1A] border-white/10' : 'bg-white border-gray-100 shadow-sm'
         )}
       >
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-s8 gap-s4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-s6 gap-s4">
           <div className="flex gap-s2 overflow-x-auto">
             {(['users', 'approvals', 'inquiries'] as AdminTab[]).map((tab) => (
               <button
@@ -280,13 +280,13 @@ export default function AdminDashboard() {
           <div className="relative">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
             <input
               type="text"
               placeholder="Search..."
               className={cn(
-                'pl-10 pr-4 py-s2 rounded-r3 text-sm border focus:outline-none focus:border-primary',
+                'pl-s7 pr-s4 py-s2 rounded-r3 text-sm border focus:outline-none focus:border-primary',
                 isDark
                   ? 'bg-white/5 border-white/10 text-white'
                   : 'bg-gray-50 border-gray-200'

@@ -341,12 +341,21 @@
 .w-md-editor-text-pre,
 .w-md-editor-text-input,
 .w-md-editor-text {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   font-size: 17px !important;
   line-height: 1.6 !important;
 }
 
+/* CodeMirror textarea 폰트 설정 (커서 위치 정확도 향상) */
+.w-md-editor-text-pre > code,
+.w-md-editor-text-input {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+}
+
 .wmde-markdown {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   font-size: 17px !important;
+  line-height: 1.6 !important;
 }
 
 /* 마크다운 프리뷰 영역의 리스트 스타일 */

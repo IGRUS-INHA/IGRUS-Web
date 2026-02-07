@@ -54,14 +54,20 @@ import type {
 
 import type {
   AccountRecoveryRequest,
+  AccountRecoveryResponse,
   CheckRecoveryEligibilityParams,
   EmailVerificationRequest,
   PasswordLoginRequest,
+  PasswordLoginResponse,
   PasswordResetConfirmRequest,
   PasswordResetRequest,
   PasswordSignupRequest,
+  PasswordSignupResponse,
+  RecoveryEligibilityResponse,
   ResendVerificationRequest,
-  ValidateResetTokenParams
+  TokenRefreshResponse,
+  ValidateResetTokenParams,
+  VerificationResendResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -76,7 +82,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 이메일 인증
  */
 export type verifyEmailResponse200 = {
-  data: Blob
+  data: PasswordSignupResponse
   status: 200
 }
 
@@ -171,7 +177,7 @@ export const useVerifyEmail = <TError = void,
  * @summary 회원가입
  */
 export type signupResponse201 = {
-  data: Blob
+  data: PasswordSignupResponse
   status: 201
 }
 
@@ -446,7 +452,7 @@ export const useConfirmPasswordReset = <TError = void,
  * @summary 인증 코드 재발송
  */
 export type resendVerificationResponse200 = {
-  data: Blob
+  data: VerificationResendResponse
   status: 200
 }
 
@@ -541,7 +547,7 @@ export const useResendVerification = <TError = void,
  * @summary 토큰 갱신
  */
 export type refreshTokenResponse200 = {
-  data: Blob
+  data: TokenRefreshResponse
   status: 200
 }
 
@@ -729,7 +735,7 @@ export const useLogout = <TError = void,
  * @summary 로그인
  */
 export type loginResponse200 = {
-  data: Blob
+  data: PasswordLoginResponse
   status: 200
 }
 
@@ -829,7 +835,7 @@ export const useLogin = <TError = void,
  * @summary 계정 복구
  */
 export type recoverAccountResponse200 = {
-  data: Blob
+  data: AccountRecoveryResponse
   status: 200
 }
 
@@ -1049,7 +1055,7 @@ export function useValidateResetToken<TData = Awaited<ReturnType<typeof validate
  * @summary 계정 복구 가능 여부 확인
  */
 export type checkRecoveryEligibilityResponse200 = {
-  data: Blob
+  data: RecoveryEligibilityResponse
   status: 200
 }
 

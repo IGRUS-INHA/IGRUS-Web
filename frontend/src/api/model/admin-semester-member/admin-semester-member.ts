@@ -53,7 +53,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CandidateMemberResponse,
   RegisterSemesterMembersRequest,
+  RegisterSemesterMembersResponse,
   RemoveSemesterMembersRequest
 } from '.././models';
 
@@ -69,7 +71,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 회원 일괄 등록
  */
 export type registerMembersResponse200 = {
-  data: Blob
+  data: RegisterSemesterMembersResponse
   status: 200
 }
 
@@ -172,7 +174,7 @@ export const useRegisterMembers = <TError = void,
  * @summary 회원 일괄 제외
  */
 export type removeMembersResponse200 = {
-  data: Blob
+  data: number
   status: 200
 }
 
@@ -275,7 +277,7 @@ export const useRemoveMembers = <TError = void,
  * @summary 등록 후보 회원 목록 조회
  */
 export type getCandidateMembersResponse200 = {
-  data: Blob
+  data: CandidateMemberResponse[]
   status: 200
 }
 

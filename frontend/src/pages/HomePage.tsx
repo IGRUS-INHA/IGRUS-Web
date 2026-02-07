@@ -71,10 +71,10 @@ export default function HomePage() {
             : 'bg-gradient-to-br from-[#F3F4F6] to-white border-gray-100'
         )}
       >
-        <div className="relative z-10 space-y-4">
+        <div className="relative z-10 space-y-s4">
           <div
             className={cn(
-              'inline-flex items-center gap-s2 px-s3 py-s1 border rounded-full text-[10px] uppercase tracking-widest transition-colors',
+              'inline-flex items-center gap-s2 px-s3 py-s1 border rounded-r4 text-[10px] uppercase tracking-widest transition-colors',
               isDark
                 ? 'bg-white/5 border-white/10 text-gray-400'
                 : 'bg-gray-100 border-gray-200 text-gray-500'
@@ -107,7 +107,7 @@ export default function HomePage() {
           <Button
             asChild
             className={cn(
-              'flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all w-fit',
+              'flex items-center gap-s2 group/btn px-s6 py-s3 rounded-r4 font-semibold text-sm transition-all w-fit',
               isDark
                 ? 'bg-white text-black hover:bg-primary hover:text-white'
                 : 'bg-black text-white hover:bg-primary'
@@ -124,7 +124,7 @@ export default function HomePage() {
         </div>
 
         {/* Decorative Elements */}
-        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full transition-colors duration-1000 bg-[#03A69E]/20 group-hover:bg-primary/30" />
+        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-r4 transition-colors duration-1000 bg-[#03A69E]/20 group-hover:bg-primary/30" />
         <div className="absolute right-20 top-1/2 -translate-y-1/2 opacity-20 select-none pointer-events-none">
           <div
             className={cn(
@@ -134,7 +134,7 @@ export default function HomePage() {
           >
             <div
               className={cn(
-                'w-32 h-32 border rounded-full animate-pulse',
+                'w-32 h-32 border rounded-r4 animate-pulse',
                 isDark ? 'border-[#03A69E]/20' : 'border-[#03A69E]/10'
               )}
             />
@@ -203,14 +203,14 @@ function PostCard({ post, theme }: PostCardProps) {
               className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
             />
             {post.tag && (
-              <div className="absolute top-s4 right-s4 bg-primary text-white px-s3 py-s1 rounded-full text-xs font-bold">
+              <div className="absolute top-s4 right-s4 bg-primary text-white px-s3 py-s1 rounded-r4 text-xs font-bold">
                 {post.tag}
               </div>
             )}
           </div>
         )}
         <CardContent className="p-s4 flex-1 flex flex-col">
-          <div className="space-y-4 flex-1 flex flex-col">
+          <div className="space-y-s4 flex-1 flex flex-col">
             <div
               className={cn(
                 'text-xs font-bold uppercase tracking-widest',
@@ -235,7 +235,7 @@ function PostCard({ post, theme }: PostCardProps) {
             >
               {post.content}
             </p>
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-s2">
               <div className="flex items-center gap-s4 text-xs text-gray-500">
                 <span>👍 {post.likes}</span>
                 <span>💬 {post.comments}</span>

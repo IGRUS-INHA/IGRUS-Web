@@ -184,7 +184,7 @@ export default function ResetPasswordPage() {
     <div className="flex items-center justify-center h-full">
       <div className="max-w-md w-full animate-in slide-in-from-bottom-8 duration-500">
         <Card
-          className={`p-s6 lg:p-s7 rounded-[2.5rem] border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}
+          className={`p-s6 lg:p-s7 rounded-r4 border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}
         >
           <CardContent className="p-0">
             <div className="text-center mb-s6">

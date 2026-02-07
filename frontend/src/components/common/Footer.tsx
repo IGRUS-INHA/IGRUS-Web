@@ -19,15 +19,15 @@ export default function Footer() {
         isDark ? 'bg-[#1A1A1A] border-white/5' : 'bg-gray-50 border-gray-200'
       )}
     >
-      <div className="px-4 lg:px-7 py-4">
+      <div className="px-s4 lg:px-s7 py-s4">
         {/* Main content - 2 columns on desktop, stack on mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-s5 max-w-7xl mx-auto">
           {/* Left: Club Info & Address */}
-          <div className="space-y-2" data-testid="club-info">
+          <div className="space-y-s2" data-testid="club-info">
             <div>
               <h3
                 className={cn(
-                  'text-sm font-bold mb-2',
+                  'text-sm font-bold mb-s2',
                   isDark ? 'text-white' : 'text-black'
                 )}
               >
@@ -44,7 +44,7 @@ export default function Footer() {
             </div>
 
             {/* Address */}
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-s2">
               <MapPin
                 size={14}
                 className={cn(
@@ -67,16 +67,16 @@ export default function Footer() {
           <div className="lg:text-right" data-testid="contact-info">
             <h4
               className={cn(
-                'text-sm font-semibold mb-2',
+                'text-sm font-semibold mb-s2',
                 isDark ? 'text-white' : 'text-black'
               )}
             >
               연락처
             </h4>
 
-            <div className="space-y-2">
+            <div className="space-y-s2">
             {/* Email */}
-            <div className="flex items-center gap-1.5 lg:justify-end">
+            <div className="flex items-center gap-s2 lg:justify-end">
               <Mail
                 size={14}
                 className={cn(
@@ -96,7 +96,7 @@ export default function Footer() {
             </div>
 
             {/* Phone */}
-            <div className="flex items-center gap-1.5 lg:justify-end">
+            <div className="flex items-center gap-s2 lg:justify-end">
               <Phone
                 size={14}
                 className={cn(

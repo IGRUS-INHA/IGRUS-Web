@@ -53,13 +53,18 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BookmarkedPostPageResponse,
   ChangePasswordRequest,
   ErrorResponse,
   GetMyBookmarks1Params,
   GetMyCommentsParams,
   GetMyLikes1Params,
   GetMyPostsParams,
+  LikedPostPageResponse,
+  MyCommentPageResponse,
+  MyPostPageResponse,
   MyProfileResponse,
+  MyRegistrationResponse,
   UpdateProfileRequest,
   WithdrawRequest
 } from '.././models';
@@ -394,7 +399,7 @@ export const useChangeMyPassword = <TError = ErrorResponse,
  * @summary 내 행사 신청 목록 조회
  */
 export type getMyRegistrationsResponse200 = {
-  data: Blob
+  data: MyRegistrationResponse[]
   status: 200
 }
 
@@ -512,7 +517,7 @@ export function useGetMyRegistrations<TData = Awaited<ReturnType<typeof getMyReg
  * @summary 내 게시글 목록 조회
  */
 export type getMyPostsResponse200 = {
-  data: Blob
+  data: MyPostPageResponse
   status: 200
 }
 
@@ -637,7 +642,7 @@ export function useGetMyPosts<TData = Awaited<ReturnType<typeof getMyPosts>>, TE
  * @summary 좋아요한 게시글 목록 조회
  */
 export type getMyLikes1Response200 = {
-  data: Blob
+  data: LikedPostPageResponse
   status: 200
 }
 
@@ -762,7 +767,7 @@ export function useGetMyLikes1<TData = Awaited<ReturnType<typeof getMyLikes1>>, 
  * @summary 내 댓글 목록 조회
  */
 export type getMyCommentsResponse200 = {
-  data: Blob
+  data: MyCommentPageResponse
   status: 200
 }
 
@@ -887,7 +892,7 @@ export function useGetMyComments<TData = Awaited<ReturnType<typeof getMyComments
  * @summary 북마크한 게시글 목록 조회
  */
 export type getMyBookmarks1Response200 = {
-  data: Blob
+  data: BookmarkedPostPageResponse
   status: 200
 }
 
