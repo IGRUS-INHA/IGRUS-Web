@@ -7,6 +7,7 @@ import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.exception.PostDeletedException;
 import igrus.web.community.post.exception.PostNotFoundException;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.community.post.service.support.PostAccessChecker;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -30,6 +31,7 @@ public class ToggleBookmarkService {
     private final BookmarkRepository bookmarkRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostAccessChecker postAccessChecker;
 
     /**
      * 북마크를 토글합니다.
@@ -52,11 +54,17 @@ public class ToggleBookmarkService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
+        postAccessChecker.checkPostAccess(post, user);
+
         Optional<Bookmark> existingBookmark = bookmarkRepository.findByPostAndUser(post, user);
 
         if (existingBookmark.isPresent()) {
             // 북마크 취소 (Hard Delete)
             bookmarkRepository.delete(existingBookmark.get());
+            int updated = postRepository.decrementBookmarkCount(postId);
+            if (updated == 0) {
+                log.warn("북마크 카운터 감소 실패 - 게시글 없음 또는 카운트 이미 0: postId={}", postId);
+            }
 
             log.info("북마크 취소 - postId: {}, userId: {}", postId, userId);
             return BookmarkToggleResponse.of(false);
@@ -64,6 +72,10 @@ public class ToggleBookmarkService {
             // 북마크 추가
             Bookmark bookmark = Bookmark.create(post, user);
             bookmarkRepository.save(bookmark);
+            int updated = postRepository.incrementBookmarkCount(postId);
+            if (updated == 0) {
+                log.warn("북마크 카운터 증가 실패 - 게시글 없음: postId={}", postId);
+            }
 
             log.info("북마크 추가 - postId: {}, userId: {}", postId, userId);
             return BookmarkToggleResponse.of(true);

@@ -18,8 +18,18 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     List<RefreshToken> findByUserIdAndRevokedFalse(Long userId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE RefreshToken r SET r.revoked = true WHERE r.user.id = :userId")
-    void revokeAllByUserId(@Param("userId") Long userId);
+    @Query("UPDATE RefreshToken r SET r.revoked = true, r.revokedAt = :now WHERE r.user.id = :userId AND r.revoked = false")
+    void revokeAllByUserId(@Param("userId") Long userId, @Param("now") Instant now);
+
+    default void revokeAllByUserId(Long userId) {
+        revokeAllByUserId(userId, Instant.now());
+    }
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE RefreshToken r SET r.revoked = true, r.revokedAt = :now WHERE r.tokenFamily = :tokenFamily AND r.revoked = false")
+    int revokeAllByTokenFamily(@Param("tokenFamily") String tokenFamily, @Param("now") Instant now);
+
+    Optional<RefreshToken> findByTokenFamilyAndRevokedFalse(String tokenFamily);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM RefreshToken r WHERE r.expiresAt < :now")

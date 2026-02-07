@@ -7,6 +7,8 @@ import igrus.web.community.comment.repository.CommentRepository;
 import igrus.web.community.comment.service.support.CommentFinder;
 import igrus.web.community.comment.service.support.CommentValidator;
 import igrus.web.community.post.domain.Post;
+import igrus.web.community.post.repository.PostRepository;
+import igrus.web.community.post.service.support.PostAccessChecker;
 import igrus.web.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateCommentReplyService {
 
     private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
     private final CommentFinder commentFinder;
     private final CommentValidator commentValidator;
+    private final PostAccessChecker postAccessChecker;
 
     /**
      * 대댓글을 작성합니다.
@@ -39,12 +43,14 @@ public class CreateCommentReplyService {
         Comment parentComment = commentFinder.findCommentById(parentCommentId);
 
         commentValidator.validatePostNotDeleted(post);
+        postAccessChecker.checkPostAccess(post, author);
         commentValidator.validateParentCommentBelongsToPost(parentComment, postId);
         commentValidator.validateCanReplyTo(parentComment);
         commentValidator.validateAnonymousOption(post, request.isAnonymous());
 
         Comment reply = Comment.createReply(post, parentComment, author, request.getContent(), request.isAnonymous());
         Comment savedReply = commentRepository.save(reply);
+        postRepository.incrementCommentCount(postId);
 
         return CommentResponse.from(savedReply, 0, false);
     }

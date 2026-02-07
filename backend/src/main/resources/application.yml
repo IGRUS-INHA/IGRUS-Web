@@ -5,10 +5,14 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+springdoc:
+  default-produces-media-type: application/json
+
 app:
   jwt:
-    access-token-validity: 3600000      # 1시간
-    refresh-token-validity: 604800000   # 7일
+    access-token-validity: 300000        # 5분
+    refresh-token-validity: 259200000   # 3일
+    refresh-token-grace-period: 10000   # 10초
     issuer: igrus-api
     audience: igrus-web
   security:

@@ -6,7 +6,9 @@ import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
+import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
+import igrus.web.security.auth.common.exception.token.RefreshTokenTheftException;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.util.CookieUtil;
@@ -17,6 +19,7 @@ import igrus.web.security.auth.password.dto.request.PasswordResetRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
@@ -31,7 +34,6 @@ import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -78,8 +80,7 @@ public class PasswordAuthController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "로그인 성공",
-                    content = @Content(schema = @Schema(implementation = PasswordLoginResponse.class))
+                    description = "로그인 성공"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -171,12 +172,16 @@ public class PasswordAuthController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "토큰 갱신", description = "리프레시 토큰으로 새로운 액세스 토큰을 발급합니다.")
+    @Operation(
+            summary = "토큰 갱신",
+            description = "리프레시 토큰으로 새로운 액세스 토큰을 발급합니다. " +
+                    "토큰 로테이션이 적용되어 매 갱신마다 새 리프레시 토큰이 Set-Cookie로 발급됩니다. " +
+                    "Grace Period(10초) 내 중복 요청 시에는 액세스 토큰만 갱신됩니다."
+    )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "토큰 갱신 성공",
-                    content = @Content(schema = @Schema(implementation = TokenRefreshResponse.class))
+                    description = "토큰 갱신 성공"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -185,25 +190,42 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "유효하지 않거나 만료된 리프레시 토큰",
+                    description = "유효하지 않거나 만료된 리프레시 토큰, 또는 토큰 탈취 감지",
                     content = @Content
             )
     })
     @PostMapping("/refresh")
-    public ResponseEntity<TokenRefreshResponse> refreshToken(HttpServletRequest httpRequest) {
+    public ResponseEntity<TokenRefreshResponse> refreshToken(
+            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         String refreshToken = cookieUtil.getRefreshTokenFromCookies(httpRequest)
                 .orElseThrow(RefreshTokenInvalidException::new);
 
-        TokenRefreshResponse response = refreshTokenService.refreshToken(refreshToken);
-        return ResponseEntity.ok(response);
+        TokenRotationResult result;
+        try {
+            result = refreshTokenService.refreshToken(refreshToken);
+        } catch (RefreshTokenTheftException | RefreshTokenExpiredException e) {
+            ResponseCookie deleteCookie = cookieUtil.deleteRefreshTokenCookie();
+            httpResponse.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+            throw e;
+        }
+
+        // 새 리프레시 토큰이 있을 때만 Set-Cookie 설정 (Grace Period 시 null)
+        if (result.newRefreshToken() != null) {
+            ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
+                    result.newRefreshToken(),
+                    Duration.ofMillis(result.refreshTokenValidity())
+            );
+            httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        }
+
+        return ResponseEntity.ok(result.toResponse());
     }
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다. 등록 후 이메일 인증이 필요합니다.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
-                    description = "회원가입 요청 성공 (이메일 인증 대기)",
-                    content = @Content(schema = @Schema(implementation = PasswordSignupResponse.class))
+                    description = "회원가입 요청 성공 (이메일 인증 대기)"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -226,8 +248,7 @@ public class PasswordAuthController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "이메일 인증 성공",
-                    content = @Content(schema = @Schema(implementation = PasswordSignupResponse.class))
+                    description = "이메일 인증 성공"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -250,8 +271,7 @@ public class PasswordAuthController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "인증 코드 재발송 성공",
-                    content = @Content(schema = @Schema(implementation = VerificationResendResponse.class))
+                    description = "인증 코드 재발송 성공"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -277,8 +297,7 @@ public class PasswordAuthController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "복구 가능 여부 조회 성공",
-                    content = @Content(schema = @Schema(implementation = RecoveryEligibilityResponse.class))
+                    description = "복구 가능 여부 조회 성공"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -302,8 +321,7 @@ public class PasswordAuthController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "계정 복구 성공",
-                    content = @Content(schema = @Schema(implementation = AccountRecoveryResponse.class))
+                    description = "계정 복구 성공"
             ),
             @ApiResponse(
                     responseCode = "400",

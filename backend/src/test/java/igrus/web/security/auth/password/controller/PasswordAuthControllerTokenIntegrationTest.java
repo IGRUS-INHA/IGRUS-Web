@@ -75,19 +75,17 @@ class PasswordAuthControllerTokenIntegrationTest extends ControllerIntegrationTe
         }
 
         @Test
-        @DisplayName("[TOK-003] 여러 번 토큰 갱신 시 매번 새로운 Access Token 발급")
+        @DisplayName("[TOK-003] 여러 번 토큰 갱신 시 매번 새로운 Access Token 및 Refresh Token 발급")
         void refreshToken_multipleRefreshes_generatesUniqueTokens() throws Exception {
             // given
             createAndSaveDefaultUserWithCredential();
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
             LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
-            String refreshToken = loginResult.refreshToken();
-
-            // when
-            var response1 = refreshTokenService.refreshToken(refreshToken);
-            var response2 = refreshTokenService.refreshToken(refreshToken);
-            var response3 = refreshTokenService.refreshToken(refreshToken);
+            // when - 로테이션으로 매번 새 리프레시 토큰 사용
+            var response1 = refreshTokenService.refreshToken(loginResult.refreshToken());
+            var response2 = refreshTokenService.refreshToken(response1.newRefreshToken());
+            var response3 = refreshTokenService.refreshToken(response2.newRefreshToken());
 
             // then - 모든 Access Token이 서로 다름
             assertThat(response1.accessToken())

@@ -45,6 +45,12 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     Page<Bookmark> findAllByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 
     /**
+     * 특정 게시글 ID의 북마크 수를 조회합니다.
+     */
+    @Query("SELECT COUNT(b) FROM Bookmark b WHERE b.post.id = :postId")
+    long countByPostId(@Param("postId") Long postId);
+
+    /**
      * 특정 게시글 ID와 사용자 ID로 북마크 존재 여부를 확인합니다.
      */
     @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Bookmark b WHERE b.post.id = :postId AND b.user.id = :userId")

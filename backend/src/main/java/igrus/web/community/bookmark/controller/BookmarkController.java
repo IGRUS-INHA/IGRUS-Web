@@ -3,6 +3,7 @@ package igrus.web.community.bookmark.controller;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.community.bookmark.dto.response.BookmarkStatusResponse;
 import igrus.web.community.bookmark.dto.response.BookmarkToggleResponse;
+import igrus.web.community.bookmark.dto.response.BookmarkedPostPageResponse;
 import igrus.web.community.bookmark.dto.response.BookmarkedPostResponse;
 import igrus.web.community.bookmark.service.read.GetBookmarkStatusService;
 import igrus.web.community.bookmark.service.read.GetMyBookmarksService;
@@ -69,7 +70,7 @@ public class BookmarkController {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "정회원 이상 권한 필요",
+                    description = "게시글 접근 권한 필요",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -94,7 +95,7 @@ public class BookmarkController {
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PostMapping("/api/v1/posts/{postId}/bookmarks")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
     public ResponseEntity<BookmarkToggleResponse> toggleBookmark(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
@@ -170,8 +171,8 @@ public class BookmarkController {
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @GetMapping("/api/v1/users/me/bookmarks")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
-    public ResponseEntity<Page<BookmarkedPostResponse>> getMyBookmarks(
+    @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
+    public ResponseEntity<BookmarkedPostPageResponse> getMyBookmarks(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
@@ -179,7 +180,7 @@ public class BookmarkController {
         log.info("내 북마크 목록 조회 요청 - userId: {}, page: {}, size: {}",
                 user.userId(), pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<BookmarkedPostResponse> response = getMyBookmarksService.getMyBookmarks(user.userId(), pageable);
-        return ResponseEntity.ok(response);
+        Page<BookmarkedPostResponse> page = getMyBookmarksService.getMyBookmarks(user.userId(), pageable);
+        return ResponseEntity.ok(BookmarkedPostPageResponse.from(page));
     }
 }

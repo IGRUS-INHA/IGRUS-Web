@@ -21,7 +21,6 @@ import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
-import { usePermission } from '@/hooks/usePermission';
 
 export default function PostDetailPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
@@ -45,6 +44,7 @@ export default function PostDetailPage() {
   const post = response?.data;
 
   // Local state
+  const [isScrapped, setIsScrapped] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   // Refs
@@ -52,15 +52,8 @@ export default function PostDetailPage() {
 
   // Mutations
   const toggleLike = useToggleLike();
-  const toggleBookmark = useToggleBookmark();
   const queryClient = useQueryClient();
   const deletePost = useDeletePost();
-
-  // Bookmark status query (로그인한 경우에만 조회)
-  const { data: bookmarkStatusResponse } = useGetBookmarkStatus(Number(postId), {
-    query: { enabled: !isMockMode && !!postId && isAuthenticated },
-  });
-  const isBookmarked = bookmarkStatusResponse?.data?.bookmarked ?? false;
 
   // Click outside handler
   useEffect(() => {
@@ -165,16 +158,6 @@ export default function PostDetailPage() {
 
   const handleBack = () => {
     navigate(`/board/${boardType}`);
-  };
-
-  const handleCommentClick = () => {
-    const input = document.getElementById('comment-input') as HTMLInputElement;
-    if (input) {
-      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => {
-        input.focus();
-      }, 300);
-    }
   };
 
   if (isLoading) {

@@ -3,6 +3,7 @@ package igrus.web.community.like.post_like.controller;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.community.like.post_like.dto.response.PostLikeStatusResponse;
 import igrus.web.community.like.post_like.dto.response.PostLikeToggleResponse;
+import igrus.web.community.like.post_like.dto.response.LikedPostPageResponse;
 import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
 import igrus.web.community.like.post_like.service.read.GetMyLikedPostsService;
 import igrus.web.community.like.post_like.service.read.GetPostLikeStatusService;
@@ -69,7 +70,7 @@ public class PostLikeController {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "정회원 이상 권한 필요",
+                    description = "게시글 접근 권한 필요",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -94,7 +95,7 @@ public class PostLikeController {
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PostMapping("/api/v1/posts/{postId}/likes")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
     public ResponseEntity<PostLikeToggleResponse> toggleLike(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
@@ -170,8 +171,8 @@ public class PostLikeController {
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @GetMapping("/api/v1/users/me/likes")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
-    public ResponseEntity<Page<LikedPostResponse>> getMyLikes(
+    @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
+    public ResponseEntity<LikedPostPageResponse> getMyLikes(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
@@ -179,7 +180,7 @@ public class PostLikeController {
         log.info("내 게시글 좋아요 목록 조회 요청 - userId: {}, page: {}, size: {}",
                 user.userId(), pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<LikedPostResponse> response = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
-        return ResponseEntity.ok(response);
+        Page<LikedPostResponse> page = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
+        return ResponseEntity.ok(LikedPostPageResponse.from(page));
     }
 }

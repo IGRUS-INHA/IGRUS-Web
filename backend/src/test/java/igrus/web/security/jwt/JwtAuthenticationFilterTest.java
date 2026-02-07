@@ -19,8 +19,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +31,9 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtAuthenticationFilter 하이브리드 테스트")
@@ -73,6 +78,7 @@ class JwtAuthenticationFilterTest {
         );
 
         objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
 
         jwtAuthenticationFilter = new JwtAuthenticationFilter(
                 jwtTokenProvider,
@@ -251,10 +257,9 @@ class JwtAuthenticationFilterTest {
     class TokenValidationFailureTest {
 
         @Test
-        @DisplayName("[JWT-FILTER-010] 만료된 토큰 - 로그 기록 후 통과")
-        void doFilterInternal_WithExpiredToken_LogsAndPasses() throws ServletException, IOException {
+        @DisplayName("[JWT-FILTER-010] 만료된 토큰 - 401 에러 응답 반환")
+        void doFilterInternal_WithExpiredToken_Returns401() throws ServletException, IOException {
             // given
-            // 만료된 토큰을 시뮬레이션하기 위해 매우 짧은 유효기간으로 JwtTokenProvider 생성
             JwtTokenProvider expiredTokenProvider = new JwtTokenProvider(
                     TEST_SECRET_KEY,
                     1L, // 1ms 유효기간
@@ -265,7 +270,6 @@ class JwtAuthenticationFilterTest {
 
             String expiredToken = expiredTokenProvider.createAccessToken(1L, "12345678", "MEMBER");
 
-            // 토큰이 만료될 때까지 잠시 대기
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -274,69 +278,75 @@ class JwtAuthenticationFilterTest {
 
             given(request.getHeader("Authorization")).willReturn("Bearer " + expiredToken);
             given(request.getRequestURI()).willReturn("/api/users");
+            given(response.getWriter()).willReturn(new PrintWriter(new StringWriter()));
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // then
             assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-            then(filterChain).should(times(1)).doFilter(request, response);
+            verify(response).setStatus(401);
+            then(filterChain).should(never()).doFilter(request, response);
         }
 
         @Test
-        @DisplayName("[JWT-FILTER-011] Refresh Token을 Access Token으로 사용 - InvalidTokenTypeException 후 통과")
-        void doFilterInternal_WithRefreshTokenAsAccess_LogsAndPasses() throws ServletException, IOException {
+        @DisplayName("[JWT-FILTER-011] Refresh Token을 Access Token으로 사용 - 401 에러 응답 반환")
+        void doFilterInternal_WithRefreshTokenAsAccess_Returns401() throws ServletException, IOException {
             // given
-            // Refresh 토큰 생성
             String refreshToken = jwtTokenProvider.createRefreshToken(1L);
 
             given(request.getHeader("Authorization")).willReturn("Bearer " + refreshToken);
             given(request.getRequestURI()).willReturn("/api/users");
+            given(response.getWriter()).willReturn(new PrintWriter(new StringWriter()));
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // then
             assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-            then(filterChain).should(times(1)).doFilter(request, response);
+            verify(response).setStatus(401);
+            then(filterChain).should(never()).doFilter(request, response);
         }
 
         @Test
-        @DisplayName("[JWT-FILTER-012] 유효하지 않은 토큰 - 로그 기록 후 통과")
-        void doFilterInternal_WithInvalidToken_LogsAndPasses() throws ServletException, IOException {
+        @DisplayName("[JWT-FILTER-012] 유효하지 않은 토큰 - 401 에러 응답 반환")
+        void doFilterInternal_WithInvalidToken_Returns401() throws ServletException, IOException {
             // given
             String invalidToken = "invalid.token.value";
 
             given(request.getHeader("Authorization")).willReturn("Bearer " + invalidToken);
             given(request.getRequestURI()).willReturn("/api/users");
+            given(response.getWriter()).willReturn(new PrintWriter(new StringWriter()));
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // then
             assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-            then(filterChain).should(times(1)).doFilter(request, response);
+            verify(response).setStatus(401);
+            then(filterChain).should(never()).doFilter(request, response);
         }
 
         @Test
-        @DisplayName("[JWT-FILTER-013] 변조된 토큰 - 로그 기록 후 통과")
-        void doFilterInternal_WithTamperedToken_LogsAndPasses() throws ServletException, IOException {
+        @DisplayName("[JWT-FILTER-013] 변조된 토큰 - 401 에러 응답 반환")
+        void doFilterInternal_WithTamperedToken_Returns401() throws ServletException, IOException {
             // given
             String validToken = jwtTokenProvider.createAccessToken(1L, "12345678", "MEMBER");
-            // 토큰 변조 - 서명 부분의 여러 문자를 변경하여 확실히 무효화
             String[] parts = validToken.split("\\.");
             String tamperedSignature = "TAMPERED" + parts[2].substring(8);
             String tamperedToken = parts[0] + "." + parts[1] + "." + tamperedSignature;
 
             given(request.getHeader("Authorization")).willReturn("Bearer " + tamperedToken);
             given(request.getRequestURI()).willReturn("/api/users");
+            given(response.getWriter()).willReturn(new PrintWriter(new StringWriter()));
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // then
             assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-            then(filterChain).should(times(1)).doFilter(request, response);
+            verify(response).setStatus(401);
+            then(filterChain).should(never()).doFilter(request, response);
         }
     }
 
@@ -423,18 +433,20 @@ class JwtAuthenticationFilterTest {
         }
 
         @Test
-        @DisplayName("[JWT-FILTER-019] 인증 실패 후에도 필터 체인 계속 진행")
-        void doFilterInternal_AfterFailedAuth_ContinuesFilterChain() throws ServletException, IOException {
+        @DisplayName("[JWT-FILTER-019] 인증 실패 시 필터 체인 중단 및 401 에러 응답 반환")
+        void doFilterInternal_AfterFailedAuth_StopsFilterChainAndReturns401() throws ServletException, IOException {
             // given
             String invalidToken = "invalid.token";
             given(request.getHeader("Authorization")).willReturn("Bearer " + invalidToken);
             given(request.getRequestURI()).willReturn("/api/users");
+            given(response.getWriter()).willReturn(new PrintWriter(new StringWriter()));
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // then
-            then(filterChain).should(times(1)).doFilter(request, response);
+            verify(response).setStatus(401);
+            then(filterChain).should(never()).doFilter(request, response);
         }
     }
 
@@ -443,18 +455,20 @@ class JwtAuthenticationFilterTest {
     class TokenExtractionEdgeCaseTest {
 
         @Test
-        @DisplayName("[JWT-FILTER-020] Bearer 접두사만 있는 경우 - 빈 토큰으로 인증 시도하여 실패")
-        void doFilterInternal_WithOnlyBearerPrefix_AttemptsAuthAndFails() throws ServletException, IOException {
+        @DisplayName("[JWT-FILTER-020] Bearer 접두사만 있는 경우 - 401 에러 응답 반환")
+        void doFilterInternal_WithOnlyBearerPrefix_Returns401() throws ServletException, IOException {
             // given
             given(request.getHeader("Authorization")).willReturn("Bearer ");
             given(request.getRequestURI()).willReturn("/api/users");
+            given(response.getWriter()).willReturn(new PrintWriter(new StringWriter()));
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // then
             assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-            then(filterChain).should(times(1)).doFilter(request, response);
+            verify(response).setStatus(401);
+            then(filterChain).should(never()).doFilter(request, response);
         }
 
         @Test
@@ -477,8 +491,8 @@ class JwtAuthenticationFilterTest {
     class DifferentSecretKeyTest {
 
         @Test
-        @DisplayName("[JWT-FILTER-022] 다른 Secret Key로 서명된 토큰 - 인증 실패")
-        void doFilterInternal_WithDifferentSecretKey_FailsAuthentication() throws ServletException, IOException {
+        @DisplayName("[JWT-FILTER-022] 다른 Secret Key로 서명된 토큰 - 401 에러 응답 반환")
+        void doFilterInternal_WithDifferentSecretKey_Returns401() throws ServletException, IOException {
             // given
             String differentSecretKey = "DifferentSecretKeyThatIsAlsoLongEnoughForHS256AlgorithmAtLeast256Bits";
             JwtTokenProvider differentProvider = new JwtTokenProvider(
@@ -493,13 +507,15 @@ class JwtAuthenticationFilterTest {
 
             given(request.getHeader("Authorization")).willReturn("Bearer " + tokenFromDifferentProvider);
             given(request.getRequestURI()).willReturn("/api/users");
+            given(response.getWriter()).willReturn(new PrintWriter(new StringWriter()));
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // then
             assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-            then(filterChain).should(times(1)).doFilter(request, response);
+            verify(response).setStatus(401);
+            then(filterChain).should(never()).doFilter(request, response);
         }
     }
 }

@@ -1,26 +1,30 @@
 package igrus.web.community.post.dto.response;
 
 import igrus.web.community.post.domain.Post;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.data.domain.Page;
 import java.util.List;
 
 /**
  * 게시글 목록 페이징 응답 DTO.
- * 페이징된 게시글 목록과 페이징 정보를 담습니다.
  */
+@Schema(description = "게시글 목록 페이징 응답")
 public record PostListPageResponse(
+    @Schema(description = "게시글 목록")
     List<PostListResponse> posts,
+
+    @Schema(description = "전체 요소 수", example = "100")
     long totalElements,
+
+    @Schema(description = "전체 페이지 수", example = "5")
     int totalPages,
+
+    @Schema(description = "현재 페이지 번호 (0부터 시작)", example = "0")
     int currentPage,
+
+    @Schema(description = "다음 페이지 존재 여부", example = "true")
     boolean hasNext
 ) {
-    /**
-     * Page<Post>로부터 PostListPageResponse를 생성합니다.
-     *
-     * @param page 페이징된 게시글 엔티티
-     * @return PostListPageResponse
-     */
     public static PostListPageResponse from(Page<Post> page) {
         List<PostListResponse> posts = page.getContent().stream()
             .map(PostListResponse::from)

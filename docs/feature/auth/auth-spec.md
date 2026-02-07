@@ -1,7 +1,7 @@
 # Feature Specification: 로그인/회원가입
 
 **Created**: 2026-01-23
-**Updated**: 2026-01-28
+**Updated**: 2026-02-06
 **Status**: In Progress
 **Input**: PRD V2 기반 로그인/회원가입 기능 명세
 
@@ -49,17 +49,19 @@
 
 ### User Story 3 - 토큰 갱신 (Priority: P2)
 
-로그인한 사용자가 Access Token 만료 시 Refresh Token을 사용하여 새로운 Access Token을 발급받는다.
+로그인한 사용자가 Access Token 만료 시 Refresh Token을 사용하여 새로운 Access Token을 발급받는다. 갱신 시 Refresh Token 로테이션을 통해 보안을 강화하며, 토큰 탈취 감지 기능을 제공한다.
 
 **Why this priority**: 사용자 경험을 위해 세션이 자동으로 유지되어야 하며, 매번 재로그인하는 불편함을 방지한다.
 
-**Independent Test**: 만료된 Access Token 상태에서 유효한 Refresh Token으로 새 Access Token을 발급받을 수 있는지 확인한다.
+**Independent Test**: 만료된 Access Token 상태에서 유효한 Refresh Token으로 새 Access Token과 새 Refresh Token을 발급받을 수 있는지 확인한다.
 
 **Acceptance Scenarios**:
 
-1. **Given** Access Token이 만료된 상태에서, **When** 유효한 Refresh Token으로 갱신을 요청하면, **Then** 새로운 Access Token이 발급된다
+1. **Given** Access Token이 만료된 상태에서, **When** 유효한 Refresh Token으로 갱신을 요청하면, **Then** 새로운 Access Token이 발급되고, 새로운 Refresh Token이 HttpOnly 쿠키로 설정되며, 기존 Refresh Token은 폐기된다
 2. **Given** Refresh Token이 만료된 상태에서, **When** 토큰 갱신을 요청하면, **Then** "토큰이 만료되었습니다" 메시지와 함께 재로그인이 필요하다
 3. **Given** 유효하지 않은 Refresh Token으로, **When** 갱신을 요청하면, **Then** "유효하지 않은 토큰입니다" 메시지가 표시된다
+4. **Given** 이미 폐기된 Refresh Token으로 (10초 경과 후), **When** 갱신을 요청하면, **Then** 토큰 탈취로 감지되어 해당 Token Family의 모든 토큰이 무효화되고, "토큰 도용이 감지되어 모든 세션이 종료되었습니다" 메시지가 표시된다
+5. **Given** 이미 폐기된 Refresh Token으로 (10초 이내), **When** 갱신을 요청하면, **Then** Grace Period 내 동시 요청으로 간주되어 현재 활성 토큰 기반으로 새 Access Token이 발급된다
 
 ---
 
@@ -122,7 +124,7 @@
 - 계정 정지/탈퇴 시 모든 활성 토큰 즉시 무효화
 - 마지막 ADMIN은 권한 변경 불가
 - 로그인 히스토리 User-Agent가 500자 초과 시 자동 truncate
-- 로그인 히스토리 1년 경과 시 스케줄러에 의해 자동 삭제 (매일 새벽 3시 실행)
+- 로그인 히스토리는 보안 감사 목적으로 영구 보관 (삭제 불가)
 
 ---
 
@@ -145,17 +147,18 @@
 **로그인/인증**
 - **FR-011**: 시스템은 학번과 비밀번호로 사용자를 인증해야 한다
 - **FR-012**: 시스템은 이메일 인증이 완료된 사용자만 로그인을 허용해야 한다
-- **FR-013**: 시스템은 로그인 성공 시 Access Token(1시간 유효)과 Refresh Token(7일 유효)을 발급해야 한다
+- **FR-013**: 시스템은 로그인 성공 시 Access Token(5분 유효)과 Refresh Token(3일 유효)을 발급해야 한다
 - **FR-014**: 시스템은 로그인 시 사용자의 역할(ASSOCIATE/MEMBER/OPERATOR/ADMIN) 정보를 반환해야 한다
-- **FR-015**: 시스템은 Refresh Token으로 Access Token 재발급을 지원해야 한다
+- **FR-015**: 시스템은 Refresh Token 로테이션을 통해 Access Token 재발급을 지원해야 한다 (갱신 시 기존 Refresh Token 폐기 + 새 Refresh Token 발급)
+- **FR-015a**: 시스템은 Token Family 기반 탈취 감지를 지원해야 한다 (폐기된 토큰 재사용 시 해당 패밀리 전체 무효화, 10초 Grace Period 적용)
 - **FR-016**: 시스템은 로그아웃 시 현재 세션의 토큰을 무효화해야 한다
 
 **로그인 히스토리** *(구현 완료)*
 - **FR-032**: 시스템은 모든 로그인 시도(성공/실패)를 기록해야 한다
 - **FR-033**: 시스템은 로그인 시도 시 학번, IP 주소, User-Agent, 성공 여부, 실패 사유를 저장해야 한다
 - **FR-034**: 시스템은 실패 사유를 다음과 같이 분류해야 한다: INVALID_CREDENTIALS, ACCOUNT_LOCKED, ACCOUNT_SUSPENDED, ACCOUNT_WITHDRAWN, EMAIL_NOT_VERIFIED, ACCOUNT_RECOVERABLE
-- **FR-035**: 시스템은 로그인 히스토리를 1년간 보관해야 한다
-- **FR-036**: 시스템은 1년이 경과한 로그인 히스토리를 매일 자동 삭제해야 한다 (새벽 3시 실행)
+- **FR-035**: 시스템은 로그인 히스토리를 영구 보관해야 한다 (보안 감사 목적, 삭제 불가)
+- **FR-037**: 시스템은 관리자(ADMIN)에게 로그인 이력 조회 API를 제공해야 한다 (학번, 성공 여부, IP 주소, 날짜 범위 필터 지원)
 
 **비밀번호 재설정**
 - **FR-017**: 시스템은 학번 입력 시 등록된 이메일로 비밀번호 재설정 링크를 발송해야 한다
@@ -177,6 +180,14 @@
 - **FR-027**: 시스템은 관리자(ADMIN)만 준회원을 정회원으로 승인할 수 있어야 한다
 - **FR-028**: 시스템은 개별 승인 및 일괄 승인 기능을 제공해야 한다
 
+**계정 상태 변경 감사 이력** *(구현 완료 - Issue #219)*
+- **FR-037**: 시스템은 모든 계정 상태 변경(역할 변경, 정지, 정지 해제, 탈퇴, 승인)을 통합 감사 이력으로 기록해야 한다
+- **FR-038**: 시스템은 감사 이력에 변경 대상, 변경자, 변경 유형, 변경 전/후 값, 변경 사유, 변경 일시를 포함해야 한다
+- **FR-039**: 시스템은 관리자(ADMIN)에게 감사 이력 조회 API를 제공해야 한다 (`GET /api/v1/admin/account-status-histories`)
+- **FR-040**: 시스템은 감사 이력 조회 시 사용자, 변경자, 변경 유형, 기간 필터를 지원해야 한다
+- **FR-041**: 시스템은 감사 이력을 영구 보관하며 삭제를 허용하지 않아야 한다
+- **FR-042**: 시스템은 기존 비즈니스 로직에 최소한의 영향을 주기 위해 Spring Application Event 방식으로 감사 이력을 기록해야 한다
+
 **개인정보 보호**
 - **FR-029**: 시스템은 회원가입 시 개인정보 처리방침 전문 링크를 제공해야 한다
 - **FR-030**: 시스템은 동의한 개인정보 처리방침 버전을 기록해야 한다
@@ -190,11 +201,12 @@
 - **PasswordCredential**: 비밀번호 인증 자격증명 (비밀번호 해시, 계정 상태, 승인 정보)
 - **UserSuspension**: 계정 정지 이력 (정지 사유, 시작일, 종료일, 해제일)
 - **UserRoleHistory**: 역할 변경 감사 이력
-- **RefreshToken**: 리프레시 토큰 관리
+- **RefreshToken**: 리프레시 토큰 관리 (토큰 로테이션, Token Family, 탈취 감지, Grace Period 지원)
 - **EmailVerification**: 이메일 인증 코드 관리 (인증 코드, 만료 시간, 시도 횟수)
 - **PrivacyConsent**: 개인정보 동의 이력
 - **LoginHistory**: 로그인 시도 이력 (사용자 ID, 학번, IP 주소, User-Agent, 성공 여부, 실패 사유, 시도 시각)
 - **LoginAttempt**: 로그인 시도 횟수 관리 (Brute Force 방지용)
+- **AccountStatusChangeHistory**: 계정 상태 변경 감사 이력 (변경 유형, 변경 전/후 값, 변경 사유, 영구 보관)
 
 ---
 
@@ -229,3 +241,15 @@
 - 생체 인증
 - 세션 동시 접속 제한
 - ~~로그인 시도 횟수 제한 (Brute Force 방지)~~ → **구현 완료** (LoginAttempt 엔티티 사용)
+
+---
+
+## Clarifications
+
+### Session 2026-02-06
+
+- Q: 토큰 갱신 시 Refresh Token은 어떻게 처리되는가? → A: **Refresh Token 로테이션** 적용. 매 갱신마다 기존 Refresh Token을 폐기하고 새 Refresh Token을 발급한다. Token Family(UUID)로 같은 로그인 세션에서 파생된 토큰 체인을 그룹화한다.
+- Q: 탈취된 Refresh Token으로 갱신 요청이 오면? → A: 이미 폐기된 토큰이 10초(Grace Period) 이후에 재사용되면 **탈취로 감지**하고, 해당 Token Family의 모든 토큰을 즉시 무효화한다.
+- Q: 동시 탭에서 동시에 갱신 요청이 오면? → A: **Grace Period (10초)** 내에 폐기된 토큰이 사용되면 동시 요청으로 간주하고, 현재 활성 토큰 기반으로 Access Token만 발급한다.
+- Q: Access Token/Refresh Token 유효기간은? → A: Access Token 1시간 → **5분**, Refresh Token 7일 → **3일**로 변경. 짧은 Access Token 유효기간은 로테이션과 함께 보안 강화 효과를 높인다.
+- Q: `@Transactional` 롤백과 탈취 감지의 관계는? → A: 탈취 감지 시 Token Family 전체를 무효화한 후 예외를 던지는데, 일반 `@Transactional`에서는 RuntimeException으로 인해 무효화가 롤백된다. `@Transactional(noRollbackFor = RefreshTokenTheftException.class)` 적용으로 해결.

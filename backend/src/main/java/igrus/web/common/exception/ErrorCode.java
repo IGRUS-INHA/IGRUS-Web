@@ -66,6 +66,7 @@ public enum ErrorCode {
     ACCOUNT_NOT_RECOVERABLE(400, "복구 기간이 만료된 계정입니다"),
     REFRESH_TOKEN_INVALID(401, "유효하지 않은 리프레시 토큰입니다"),
     REFRESH_TOKEN_EXPIRED(401, "리프레시 토큰이 만료되었습니다"),
+    REFRESH_TOKEN_THEFT_DETECTED(401, "토큰 도용이 감지되어 모든 세션이 종료되었습니다"),
     PASSWORD_RESET_TOKEN_INVALID(400, "유효하지 않은 비밀번호 재설정 토큰입니다"),
     PASSWORD_RESET_TOKEN_EXPIRED(400, "비밀번호 재설정 토큰이 만료되었습니다"),
     EMAIL_SEND_FAILED(500, "이메일 발송에 실패했습니다"),
@@ -76,6 +77,8 @@ public enum ErrorCode {
     // Member Approval
     ADMIN_REQUIRED(403, "관리자 권한이 필요합니다"),
     USER_NOT_ASSOCIATE(400, "해당 사용자는 준회원이 아닙니다"),
+    SELF_ROLE_CHANGE_NOT_ALLOWED(400, "자기 자신의 권한은 변경할 수 없습니다"),
+    SELF_STATUS_CHANGE_NOT_ALLOWED(400, "자기 자신의 상태는 변경할 수 없습니다"),
     LAST_ADMIN_CANNOT_CHANGE(400, "마지막 관리자는 권한을 변경할 수 없습니다"),
     BULK_APPROVAL_EMPTY(400, "승인할 사용자를 선택해주세요"),
 
@@ -145,7 +148,9 @@ public enum ErrorCode {
     EVENT_INVALID_REGISTRATION_STATUS(400, "유효하지 않은 신청 상태입니다"),
     EVENT_OPERATOR_REQUIRED(403, "운영진 이상만 접근할 수 있습니다"),
     EVENT_NOT_OPEN(400, "신청 가능한 상태가 아닙니다"),
-    EVENT_NOT_IN_REGISTRATION_PERIOD(400, "신청 기간이 아닙니다");
+    EVENT_NOT_IN_REGISTRATION_PERIOD(400, "신청 기간이 아닙니다"),
+    EVENT_NOT_EDITABLE(400, "수정 불가능한 상태의 행사입니다"),
+    EVENT_INVALID_STATE_TRANSITION(400, "허용되지 않은 행사 상태 변경입니다");
 
     private final int status;
     private final String message;

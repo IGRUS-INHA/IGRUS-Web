@@ -67,6 +67,22 @@
   - 필드: post(ManyToOne), imageUrl, displayOrder
   - 최대 5개 제한 (Post에서 관리)
 
+- [x] T006-1 [P] Post 엔티티에 북마크 수 필드 추가 (2026-02-06)
+  - `bookmarkCount` 필드 추가 (`likeCount` 패턴과 동일)
+  - `incrementBookmarkCount()`, `decrementBookmarkCount()` 메서드 추가
+  - Flyway V21 마이그레이션: `posts_bookmark_count` 컬럼 추가
+  - `ToggleBookmarkService`에서 북마크 토글 시 카운터 증감
+  - `PostDetailResponse`에 `bookmarkCount` 필드 추가
+
+- [x] T006-2 [P] Post 엔티티에 댓글 수 필드 추가 및 PostListResponse 리팩토링 (2026-02-07)
+  - `commentCount` 필드 추가 (`likeCount`/`bookmarkCount` 패턴과 동일)
+  - `PostRepository`에 `incrementCommentCount()`, `decrementCommentCount()` 메서드 추가
+  - Flyway V23 마이그레이션: `posts_comment_count` 컬럼 추가
+  - `CreateCommentService`, `CreateCommentReplyService`에서 댓글 작성 시 카운터 증가
+  - `DeleteCommentService`에서 댓글 삭제 시 카운터 감소
+  - `PostListResponse`에 `bookmarkCount` 필드 추가, `likeCount`/`commentCount` 하드코딩 0 → 실제 값 사용
+  - `PostDetailResponse`에서 `commentCount` 하드코딩 0 → `post.getCommentCount()` 사용
+
 ### 2.3 Repository
 
 - [x] T007 [P] PostRepository 인터페이스 구현 in `backend/src/main/java/igrus/web/board/repository/PostRepository.java`

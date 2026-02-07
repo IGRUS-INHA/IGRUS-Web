@@ -10,7 +10,6 @@ import { useUIStore } from '@/stores';
 import { BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type PostFormData } from '@/constants/board';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/useIsMobile';
 
 export default function PostWritePage() {
   const { boardType } = useParams<{ boardType: BoardType }>();
@@ -146,7 +145,7 @@ export default function PostWritePage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div
           className={cn(
-            'w-full max-w-[1616px] mx-auto p-s4 sm:p-8 md:p-12 rounded-r4 sm:rounded-[1.5rem] md:rounded-[2.5rem] border min-h-[60vh] md:min-h-[80vh] flex flex-col',
+            'w-full max-w-[1616px] mx-auto p-8 md:p-12 rounded-[2.5rem] border min-h-[80vh] flex flex-col',
             isDark ? 'bg-[#1A1A1A] border-white/5' : 'bg-white border-gray-100 shadow-sm'
           )}
         >
@@ -219,7 +218,7 @@ export default function PostWritePage() {
               type="text"
               placeholder="게시글 제목"
               className={cn(
-                'w-full text-2xl sm:text-3xl md:text-4xl font-bold bg-transparent border-none focus:ring-0 focus:outline-none opacity-80',
+                'w-full text-4xl font-bold bg-transparent border-none focus:ring-0 focus:outline-none opacity-80',
                 isDark ? 'text-white placeholder-gray-500' : 'text-black placeholder-gray-500',
                 errors.title && 'border-b-2 border-destructive'
               )}
@@ -231,38 +230,6 @@ export default function PostWritePage() {
 
           {/* Content Markdown Editor */}
           <div className="flex-1 relative mb-s8">
-            {/* 모바일 편집/미리보기 토글 */}
-            {isMobile && (
-              <div className={cn(
-                'flex mb-s3 rounded-lg p-1',
-                isDark ? 'bg-white/5' : 'bg-gray-100'
-              )}>
-                <button
-                  type="button"
-                  onClick={() => setMobilePreview('edit')}
-                  className={cn(
-                    'flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer',
-                    mobilePreview === 'edit'
-                      ? isDark ? 'bg-gray-700 text-foreground shadow-sm' : 'bg-white text-foreground shadow-sm'
-                      : 'text-gray-500'
-                  )}
-                >
-                  편집
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobilePreview('preview')}
-                  className={cn(
-                    'flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer',
-                    mobilePreview === 'preview'
-                      ? isDark ? 'bg-gray-700 text-foreground shadow-sm' : 'bg-white text-foreground shadow-sm'
-                      : 'text-gray-500'
-                  )}
-                >
-                  미리보기
-                </button>
-              </div>
-            )}
             <Controller
               name="content"
               control={control}
@@ -270,8 +237,8 @@ export default function PostWritePage() {
                 <MDEditor
                   value={field.value}
                   onChange={field.onChange}
-                  preview={isMobile ? mobilePreview : 'live'}
-                  height={isMobile ? 300 : 500}
+                  preview="live"
+                  height={500}
                   data-color-mode={isDark ? 'dark' : 'light'}
                   commandsFilter={(command) => {
                     // 드롭다운 버튼(title), 이미지, 체크리스트 제거
@@ -292,24 +259,24 @@ export default function PostWritePage() {
           </div>
 
           {/* Bottom Toolbar */}
-          <div className={cn('mt-s4 sm:mt-8 pt-s3 sm:pt-4 border-t flex gap-s3 sm:gap-4', isDark ? 'border-white/5' : 'border-gray-100')}>
+          <div className={cn('mt-8 pt-4 border-t flex gap-4', isDark ? 'border-white/5' : 'border-gray-100')}>
             <button
               type="button"
               className={cn(
-                'p-2 sm:p-3 rounded-lg transition cursor-pointer',
+                'p-3 rounded-lg transition cursor-pointer',
                 isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >
-              <ImageIcon size={isMobile ? 20 : 24} />
+              <ImageIcon size={24} />
             </button>
             <button
               type="button"
               className={cn(
-                'p-2 sm:p-3 rounded-lg transition cursor-pointer',
+                'p-3 rounded-lg transition cursor-pointer',
                 isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >
-              <Paperclip size={isMobile ? 20 : 24} />
+              <Paperclip size={24} />
             </button>
             <div className="ml-auto text-xs text-gray-500 flex items-center">
               {content?.length || 0} 글자

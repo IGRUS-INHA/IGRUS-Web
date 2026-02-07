@@ -2,6 +2,7 @@ package igrus.web.security.auth.approval.controller;
 
 import igrus.web.common.config.SwaggerConfig;
 import igrus.web.security.auth.approval.dto.request.BulkApprovalRequest;
+import igrus.web.security.auth.approval.dto.response.AssociateInfoPageResponse;
 import igrus.web.security.auth.approval.dto.response.AssociateInfoResponse;
 import igrus.web.security.auth.approval.dto.response.BulkApprovalResultResponse;
 import igrus.web.security.auth.approval.service.read.GetPendingAssociatesService;
@@ -11,7 +12,6 @@ import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -34,10 +34,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/members")
+@RequestMapping("/api/v1/admin/associates")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Admin Member Management", description = "관리자 회원 관리 API (ADMIN 전용)")
+@Tag(name = "Admin Associate Approval", description = "관리자 준회원 승인 API (ADMIN 전용)")
 @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 public class AdminMemberController {
 
@@ -52,8 +52,7 @@ public class AdminMemberController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = Page.class))
+                    description = "조회 성공"
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -67,16 +66,16 @@ public class AdminMemberController {
             )
     })
     @GetMapping("/pending")
-    public ResponseEntity<Page<AssociateInfoResponse>> getPendingAssociates(
+    public ResponseEntity<AssociateInfoPageResponse> getPendingAssociates(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        Page<AssociateInfoResponse> pendingAssociates = getPendingAssociatesService.getPendingAssociates(
+        Page<AssociateInfoResponse> page = getPendingAssociatesService.getPendingAssociates(
                 pageable,
                 authenticatedUser.userId()
         );
-        return ResponseEntity.ok(pendingAssociates);
+        return ResponseEntity.ok(AssociateInfoPageResponse.from(page));
     }
 
     @Operation(
@@ -126,8 +125,7 @@ public class AdminMemberController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "일괄 승인 처리 완료 (부분 성공 가능)",
-                    content = @Content(schema = @Schema(implementation = BulkApprovalResultResponse.class))
+                    description = "일괄 승인 처리 완료 (부분 성공 가능)"
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -145,7 +143,7 @@ public class AdminMemberController {
                     content = @Content
             )
     })
-    @PostMapping("/approve/bulk")
+    @PostMapping("/approve-batch")
     public ResponseEntity<BulkApprovalResultResponse> approveBulk(
             @Valid @RequestBody BulkApprovalRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
