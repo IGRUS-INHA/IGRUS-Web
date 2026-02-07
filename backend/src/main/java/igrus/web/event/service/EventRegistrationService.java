@@ -83,7 +83,7 @@ public class EventRegistrationService {
      */
     public RegistrationResponse registerEvent(Long eventId, Long userId) {
         // 1. 행사 조회 (락 없이)
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회
@@ -138,7 +138,7 @@ public class EventRegistrationService {
      */
     public RegistrationResponse cancelRegistration(Long eventId, Long userId) {
         // 1. 행사 존재 확인
-        if (!eventRepository.existsById(eventId)) {
+        if (eventRepository.findByIdAndNotDeleted(eventId).isEmpty()) {
             throw new EventNotFoundException(eventId);
         }
 
@@ -197,7 +197,7 @@ public class EventRegistrationService {
     @Transactional(readOnly = true)
     public List<RegistrationListResponse> getRegistrationList(Long eventId, Long userId) {
         // 1. 행사 조회
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회
@@ -238,7 +238,7 @@ public class EventRegistrationService {
         Long eventId = registration.getEvent().getId();
 
         // 2. 행사 조회 (락 없이)
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 3. 사용자 조회
@@ -293,7 +293,7 @@ public class EventRegistrationService {
                 .orElseThrow(EventRegistrationNotFoundException::new);
 
         // 2. 행사 조회
-        Event event = eventRepository.findById(registration.getEvent().getId())
+        Event event = eventRepository.findByIdAndNotDeleted(registration.getEvent().getId())
                 .orElseThrow(() -> new EventNotFoundException(registration.getEvent().getId()));
 
         // 3. 사용자 조회
@@ -407,7 +407,7 @@ public class EventRegistrationService {
      * @param eventId 행사 ID
      */
     private void updateEventStatusAfterIncrement(Long eventId) {
-        Event event = eventRepository.findById(eventId).orElse(null);
+        Event event = eventRepository.findByIdAndNotDeleted(eventId).orElse(null);
         if (event != null && event.isFull()) {
             event.closeByCapacity();
         }
@@ -420,7 +420,7 @@ public class EventRegistrationService {
      * @param eventId 행사 ID
      */
     private void updateEventStatusAfterDecrement(Long eventId) {
-        Event event = eventRepository.findById(eventId).orElse(null);
+        Event event = eventRepository.findByIdAndNotDeleted(eventId).orElse(null);
         if (event != null) {
             event.reopenIfNeeded();
         }
