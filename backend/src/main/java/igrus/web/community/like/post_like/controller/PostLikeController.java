@@ -3,6 +3,7 @@ package igrus.web.community.like.post_like.controller;
 import igrus.web.common.exception.ErrorResponse;
 import igrus.web.community.like.post_like.dto.response.PostLikeStatusResponse;
 import igrus.web.community.like.post_like.dto.response.PostLikeToggleResponse;
+import igrus.web.community.like.post_like.dto.response.LikedPostPageResponse;
 import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
 import igrus.web.community.like.post_like.service.read.GetMyLikedPostsService;
 import igrus.web.community.like.post_like.service.read.GetPostLikeStatusService;
@@ -171,7 +172,7 @@ public class PostLikeController {
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @GetMapping("/api/v1/users/me/likes")
     @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
-    public ResponseEntity<Page<LikedPostResponse>> getMyLikes(
+    public ResponseEntity<LikedPostPageResponse> getMyLikes(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
@@ -179,7 +180,7 @@ public class PostLikeController {
         log.info("내 게시글 좋아요 목록 조회 요청 - userId: {}, page: {}, size: {}",
                 user.userId(), pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<LikedPostResponse> response = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
-        return ResponseEntity.ok(response);
+        Page<LikedPostResponse> page = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
+        return ResponseEntity.ok(LikedPostPageResponse.from(page));
     }
 }

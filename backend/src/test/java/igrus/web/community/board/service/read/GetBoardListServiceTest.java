@@ -78,9 +78,9 @@ class GetBoardListServiceTest {
         assertThat(result.get(2).code()).isEqualTo(BoardCode.INSIGHT.name());
     }
 
-    @DisplayName("준회원(ASSOCIATE)이 게시판 목록 조회 시 읽기 권한 있는 게시판만 반환 (공지사항만)")
+    @DisplayName("준회원(ASSOCIATE)이 게시판 목록 조회 시 모든 게시판 반환 (canRead 값으로 권한 구분)")
     @Test
-    void getBoardList_WithAssociateRole_ReturnsOnlyReadableBoards() {
+    void getBoardList_WithAssociateRole_ReturnsAllBoardsWithPermissions() {
         // given
         UserRole role = UserRole.ASSOCIATE;
         List<Board> boards = List.of(noticesBoard, generalBoard, insightBoard);
@@ -90,14 +90,20 @@ class GetBoardListServiceTest {
         given(canReadBoardService.canRead(eq(generalBoard), eq(role))).willReturn(false);
         given(canReadBoardService.canRead(eq(insightBoard), eq(role))).willReturn(false);
         given(canWriteBoardService.canWrite(eq(noticesBoard), eq(role))).willReturn(false);
+        given(canWriteBoardService.canWrite(eq(generalBoard), eq(role))).willReturn(false);
+        given(canWriteBoardService.canWrite(eq(insightBoard), eq(role))).willReturn(false);
 
         // when
         List<BoardListResponse> result = getBoardListService.getBoardList(role);
 
         // then
-        assertThat(result).hasSize(1);
+        assertThat(result).hasSize(3);
         assertThat(result.get(0).code()).isEqualTo(BoardCode.NOTICES.name());
         assertThat(result.get(0).canRead()).isTrue();
         assertThat(result.get(0).canWrite()).isFalse();
+        assertThat(result.get(1).code()).isEqualTo(BoardCode.GENERAL.name());
+        assertThat(result.get(1).canRead()).isFalse();
+        assertThat(result.get(2).code()).isEqualTo(BoardCode.INSIGHT.name());
+        assertThat(result.get(2).canRead()).isFalse();
     }
 }

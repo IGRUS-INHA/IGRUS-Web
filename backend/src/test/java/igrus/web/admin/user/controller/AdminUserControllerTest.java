@@ -85,7 +85,7 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                             .param("size", "10"))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.users").isArray())
                     .andExpect(jsonPath("$.totalElements").value(3));
         }
 
@@ -99,7 +99,7 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                             .param("size", "10"))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.content").isArray());
+                    .andExpect(jsonPath("$.users").isArray());
         }
 
         @Test

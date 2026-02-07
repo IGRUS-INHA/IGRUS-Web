@@ -6,6 +6,7 @@ import igrus.web.community.post.dto.response.PostCreateResponse;
 import igrus.web.community.post.dto.response.PostDetailResponse;
 import igrus.web.community.post.dto.response.PostListPageResponse;
 import igrus.web.community.post.dto.response.PostUpdateResponse;
+import igrus.web.community.post.dto.response.PostViewHistoryPageResponse;
 import igrus.web.community.post.dto.response.PostViewHistoryResponse;
 import igrus.web.community.post.dto.response.PostViewStatsResponse;
 import igrus.web.community.post.service.read.GetPostDetailService;
@@ -436,7 +437,7 @@ public class PostController {
             )
     })
     @GetMapping("/{postId}/view-history")
-    public ResponseEntity<Page<PostViewHistoryResponse>> getPostViewHistory(
+    public ResponseEntity<PostViewHistoryPageResponse> getPostViewHistory(
             @Parameter(description = "게시판 코드", example = "GENERAL")
             @PathVariable String boardCode,
             @Parameter(description = "게시글 ID", example = "1")
@@ -448,7 +449,7 @@ public class PostController {
         log.info("게시글 조회 기록 요청 - boardCode: {}, postId: {}, userId: {}, page: {}, size: {}",
                 boardCode, postId, user.userId(), pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<PostViewHistoryResponse> response = getPostViewHistoryService.getPostViewHistory(boardCode, postId, user, pageable);
-        return ResponseEntity.ok(response);
+        Page<PostViewHistoryResponse> page = getPostViewHistoryService.getPostViewHistory(boardCode, postId, user, pageable);
+        return ResponseEntity.ok(PostViewHistoryPageResponse.from(page));
     }
 }

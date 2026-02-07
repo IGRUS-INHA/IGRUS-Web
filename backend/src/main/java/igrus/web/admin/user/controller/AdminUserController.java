@@ -3,6 +3,7 @@ package igrus.web.admin.user.controller;
 import igrus.web.admin.user.dto.ChangeUserRoleRequest;
 import igrus.web.admin.user.dto.ChangeUserStatusRequest;
 import igrus.web.admin.user.dto.UserDetailResponse;
+import igrus.web.admin.user.dto.UserListPageResponse;
 import igrus.web.admin.user.dto.UserListResponse;
 import igrus.web.admin.user.dto.UserRoleHistoryResponse;
 import igrus.web.admin.user.service.ChangeUserRoleService;
@@ -88,19 +89,20 @@ public class AdminUserController {
             @ApiResponse(
                     responseCode = "200",
             description = "조회 성공",
-    content = @Content(schema = @Schema(implementation = Page.class))
+    content = @Content(schema = @Schema(implementation = UserListPageResponse.class))
             ),
     @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
     @ApiResponse(responseCode = "403", description = "권한 없음 (OPERATOR 이상 필요)", content = @Content)
     })
     @GetMapping
-    public ResponseEntity<Page<UserListResponse>> getUserList(
+    public ResponseEntity<UserListPageResponse> getUserList(
             @Parameter(description = "검색어 (이름 또는 학번)") @RequestParam(required = false) String keyword,
             @Parameter(description = "역할 필터") @RequestParam(required = false) UserRole role,
             @Parameter(description = "상태 필터") @RequestParam(required = false) UserStatus status,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ResponseEntity.ok(getUserListService.getUserList(keyword, role, status, pageable));
+        Page<UserListResponse> page = getUserListService.getUserList(keyword, role, status, pageable);
+        return ResponseEntity.ok(UserListPageResponse.from(page));
     }
 
     @Operation(
