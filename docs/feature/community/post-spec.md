@@ -18,6 +18,11 @@
 
 - Q: 게시글 상세 조회 응답에 북마크 수를 포함해야 하나요? → A: 네, `PostDetailResponse`에 `bookmarkCount` 필드 추가. `likeCount`와 동일한 비정규화 카운터 패턴 사용
 
+### Session 2026-02-07
+
+- Q: `PostListResponse`에 `bookmarkCount`를 포함해야 하나요? → A: 네, 목록 응답에도 `bookmarkCount` 필드 추가. `likeCount`, `commentCount`와 함께 실제 값 반환
+- Q: `commentCount`를 어떻게 관리해야 하나요? → A: `likeCount`/`bookmarkCount`와 동일한 비정규화 카운터 패턴 사용. Post 엔티티에 `commentCount` 필드 추가, 댓글 작성/삭제 시 원자적 SQL UPDATE로 증감
+
 ### Session 2026-01-26
 
 - Q: 이미지 업로드 실패 처리 - S3 업로드가 중간에 실패하면 어떻게 처리해야 하나요? → A: 게시글 작성은 성공, 실패한 이미지는 건너뛰고 사용자에게 알림

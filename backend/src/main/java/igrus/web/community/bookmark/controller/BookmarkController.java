@@ -69,7 +69,7 @@ public class BookmarkController {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "정회원 이상 권한 필요",
+                    description = "게시글 접근 권한 필요",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -94,7 +94,7 @@ public class BookmarkController {
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PostMapping("/api/v1/posts/{postId}/bookmarks")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
     public ResponseEntity<BookmarkToggleResponse> toggleBookmark(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
@@ -170,7 +170,7 @@ public class BookmarkController {
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @GetMapping("/api/v1/users/me/bookmarks")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
     public ResponseEntity<Page<BookmarkedPostResponse>> getMyBookmarks(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,

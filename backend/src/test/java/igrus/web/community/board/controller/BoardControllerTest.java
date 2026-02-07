@@ -137,13 +137,13 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$[0].code").value("NOTICES"));
         }
 
-        @DisplayName("비인증 사용자가 접근 시 403 Forbidden")
+        @DisplayName("비인증 사용자가 접근 시 401 Unauthorized")
         @Test
-        void getBoardList_WithUnauthenticatedUser_ReturnsForbidden() throws Exception {
+        void getBoardList_WithUnauthenticatedUser_ReturnsUnauthorized() throws Exception {
             // when & then
             mockMvc.perform(get(BASE_URL))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isUnauthorized());
         }
     }
 
@@ -186,13 +186,13 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.code").value(ErrorCode.BOARD_NOT_FOUND.getCode()));
         }
 
-        @DisplayName("비인증 사용자가 상세 조회 시 403 Forbidden")
+        @DisplayName("비인증 사용자가 상세 조회 시 401 Unauthorized")
         @Test
-        void getBoardByCode_WithUnauthenticatedUser_ReturnsForbidden() throws Exception {
+        void getBoardByCode_WithUnauthenticatedUser_ReturnsUnauthorized() throws Exception {
             // when & then
             mockMvc.perform(get(BASE_URL + "/general"))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isUnauthorized());
         }
     }
 }

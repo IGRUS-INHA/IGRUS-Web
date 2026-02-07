@@ -7,6 +7,7 @@ import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.exception.PostDeletedException;
 import igrus.web.community.post.exception.PostNotFoundException;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.community.post.service.support.PostAccessChecker;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -30,6 +31,7 @@ public class TogglePostLikeService {
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostAccessChecker postAccessChecker;
 
     /**
      * 좋아요를 토글합니다.
@@ -51,6 +53,8 @@ public class TogglePostLikeService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
+
+        postAccessChecker.checkPostAccess(post, user);
 
         Optional<PostLike> existingLike = postLikeRepository.findByPostAndUser(post, user);
 

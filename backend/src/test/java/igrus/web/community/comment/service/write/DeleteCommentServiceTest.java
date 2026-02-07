@@ -7,6 +7,7 @@ import igrus.web.community.comment.exception.CommentNotFoundException;
 import igrus.web.community.comment.service.support.CommentFinder;
 import igrus.web.community.comment.service.support.CommentValidator;
 import igrus.web.community.post.domain.Post;
+import igrus.web.community.post.repository.PostRepository;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 /**
  * DeleteCommentService 단위 테스트.
@@ -39,6 +41,9 @@ import static org.mockito.Mockito.doThrow;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("DeleteCommentService 단위 테스트")
 class DeleteCommentServiceTest {
+
+    @Mock
+    private PostRepository postRepository;
 
     @Mock
     private CommentFinder commentFinder;
@@ -81,6 +86,7 @@ class DeleteCommentServiceTest {
 
             // then
             assertThat(targetComment.isDeleted()).isTrue();
+            verify(postRepository).decrementCommentCount(post.getId());
         }
 
         @Test
@@ -112,6 +118,7 @@ class DeleteCommentServiceTest {
 
             // then
             assertThat(targetComment.isDeleted()).isTrue();
+            verify(postRepository).decrementCommentCount(post.getId());
         }
 
         @Test
