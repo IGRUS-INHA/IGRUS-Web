@@ -1,6 +1,7 @@
 package igrus.web.event.service;
 
 import igrus.web.event.domain.Event;
+import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.UpdateEventRequest;
 import igrus.web.event.dto.response.EventCreateResponse;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 행사 서비스.
@@ -42,6 +44,12 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class EventService {
+
+    private static final Set<EventRegistrationStatus> ACTIVE_REGISTRATION_STATUSES = Set.of(
+            EventRegistrationStatus.REGISTERED,
+            EventRegistrationStatus.WAITING,
+            EventRegistrationStatus.APPROVED
+    );
 
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
@@ -108,7 +116,8 @@ public class EventService {
         // 권한 정보 계산
         boolean isAuthor = event.getUser().getId().equals(userId);
         boolean canEdit = user.isOperatorOrAbove();
-        boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserId(eventId, userId);
+        boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                eventId, userId, ACTIVE_REGISTRATION_STATUSES);
 
         return EventDetailResponse.from(event, isAuthor, canEdit, isRegistered);
     }
