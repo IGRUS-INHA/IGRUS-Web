@@ -43,7 +43,6 @@ public class GetBoardListService {
                     boolean canWrite = canWriteBoardService.canWrite(board, role);
                     return BoardListResponse.of(board, canRead, canWrite);
                 })
-                .filter(response -> response.canRead())
                 .toList();
     }
 }

@@ -123,9 +123,9 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$[2].name").value("정보공유"));
         }
 
-        @DisplayName("준회원이 게시판 목록 조회 시 공지사항만 반환")
+        @DisplayName("준회원이 게시판 목록 조회 시 모든 게시판 반환 (canRead로 권한 구분)")
         @Test
-        void getBoardList_WithAssociateUser_ReturnsOnlyNotices() throws Exception {
+        void getBoardList_WithAssociateUser_ReturnsAllBoardsWithPermissions() throws Exception {
             // when & then
             mockMvc.perform(get(BASE_URL)
                             .with(withAuth(associateUser))
@@ -133,8 +133,13 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].code").value("NOTICES"));
+                    .andExpect(jsonPath("$.length()").value(3))
+                    .andExpect(jsonPath("$[0].code").value("NOTICES"))
+                    .andExpect(jsonPath("$[0].canRead").value(true))
+                    .andExpect(jsonPath("$[1].code").value("GENERAL"))
+                    .andExpect(jsonPath("$[1].canRead").value(false))
+                    .andExpect(jsonPath("$[2].code").value("INSIGHT"))
+                    .andExpect(jsonPath("$[2].canRead").value(false));
         }
 
         @DisplayName("비인증 사용자가 접근 시 401 Unauthorized")
