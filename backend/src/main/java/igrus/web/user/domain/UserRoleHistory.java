@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 // 사용자 역할 변경 이력
 @Entity
@@ -30,8 +32,10 @@ public class UserRoleHistory extends BaseEntity {
     @Column(name = "user_role_histories_id")
     private Long id;
 
+    /** 대상 사용자. 탈퇴(soft-deleted) 사용자는 @SQLRestriction에 의해 로딩 불가하므로 @NotFound로 null 허용 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_role_histories_user_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private User user;
 
     @Enumerated(EnumType.STRING)
