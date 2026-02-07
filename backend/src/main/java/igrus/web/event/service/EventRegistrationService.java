@@ -25,6 +25,7 @@ import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ import java.util.List;
  *
  * @see EventService 행사 CRUD 관련 기능
  */
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 @Service
@@ -180,6 +182,7 @@ public class EventRegistrationService {
         List<EventRegistration> registrations = eventRegistrationRepository.findByUserId(userId);
 
         return registrations.stream()
+                .filter(r -> !r.getEvent().isDeleted())
                 .map(MyRegistrationResponse::from)
                 .toList();
     }
@@ -408,7 +411,11 @@ public class EventRegistrationService {
      */
     private void updateEventStatusAfterIncrement(Long eventId) {
         Event event = eventRepository.findByIdAndNotDeleted(eventId).orElse(null);
-        if (event != null && event.isFull()) {
+        if (event == null) {
+            log.warn("행사 상태 갱신 실패: 원자적 UPDATE 이후 행사를 찾을 수 없음. eventId={}", eventId);
+            return;
+        }
+        if (event.isFull()) {
             event.closeByCapacity();
         }
     }
@@ -421,9 +428,11 @@ public class EventRegistrationService {
      */
     private void updateEventStatusAfterDecrement(Long eventId) {
         Event event = eventRepository.findByIdAndNotDeleted(eventId).orElse(null);
-        if (event != null) {
-            event.reopenIfNeeded();
+        if (event == null) {
+            log.warn("행사 상태 갱신 실패: 원자적 UPDATE 이후 행사를 찾을 수 없음. eventId={}", eventId);
+            return;
         }
+        event.reopenIfNeeded();
     }
 
 }
