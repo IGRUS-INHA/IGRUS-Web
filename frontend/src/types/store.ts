@@ -11,11 +11,11 @@ export interface AuthState {
   accessToken: string | undefined;
   refreshToken: string | undefined;
   isAuthenticated: boolean;
+  isHydrated: boolean;
 }
 
 export interface AuthActions {
-  login: (studentId: string, password: string) => Promise<void>;
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void;
+  setAuth: (user: User, accessToken: string, refreshToken?: string) => void;
   updateUser: (userData: Partial<User>) => void;
   logout: () => void;
   isAssociate: () => boolean;

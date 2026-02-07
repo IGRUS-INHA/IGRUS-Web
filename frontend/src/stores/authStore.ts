@@ -19,6 +19,7 @@ export const useAuthStore = create<AuthStore>()(
       accessToken: undefined,
       refreshToken: undefined,
       isAuthenticated: false,
+      isHydrated: false,
 
       // 액션
       setAuth: (
@@ -79,3 +80,13 @@ export const useAuthStore = create<AuthStore>()(
     }
   )
 );
+
+// hydration 완료 시 isHydrated 플래그 설정
+useAuthStore.persist.onFinishHydration(() => {
+  useAuthStore.setState({ isHydrated: true });
+});
+
+// Zustand v5: hydration이 콜백 등록 전에 이미 완료된 경우 대비
+if (useAuthStore.persist.hasHydrated()) {
+  useAuthStore.setState({ isHydrated: true });
+}
