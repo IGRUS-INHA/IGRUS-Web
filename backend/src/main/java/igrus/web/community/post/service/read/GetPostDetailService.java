@@ -72,8 +72,12 @@ public class GetPostDetailService {
         // 조회 기록 저장 (비동기 - 항상 성공)
         recordPostViewService.recordViewAsync(post.getId(), currentUser.getId());
 
-        // 조회수 증가 (재시도 2회)
-        incrementViewCountService.incrementViewCountWithRetry(post, 2);
+        // 조회수 증가 (원자적 SQL UPDATE - clearAutomatically로 영속성 컨텍스트 초기화됨)
+        incrementViewCountService.incrementViewCount(post.getId());
+
+        // 원자적 UPDATE 후 영속성 컨텍스트가 초기화되므로 게시글을 다시 조회
+        post = postRepository.findByBoardAndIdAndDeletedFalse(board, postId)
+                .orElseThrow(() -> new PostNotFoundException(postId));
 
         // 현재 사용자가 작성자인지 확인 (탈퇴한 사용자는 author가 null일 수 있음)
         boolean isCurrentUserAuthor = post.getAuthor() != null

@@ -21,6 +21,7 @@ public record PostDetailResponse(
     boolean isQuestion,
     int viewCount,
     int likeCount,
+    int bookmarkCount,
     int commentCount,
     List<String> imageUrls,
     Instant createdAt,
@@ -56,6 +57,7 @@ public record PostDetailResponse(
             post.isQuestion(),
             post.getViewCount(),
             post.getLikeCount(),
+            post.getBookmarkCount(),
             0,  // commentCount - 추후 구현
             imageUrls,
             post.getCreatedAt(),

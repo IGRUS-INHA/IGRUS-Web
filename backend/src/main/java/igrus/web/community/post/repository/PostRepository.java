@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -167,4 +168,37 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      */
     @Query("SELECT COUNT(p) FROM Post p WHERE p.deleted = false AND p.createdAt >= :startTime")
     long countByDeletedFalseAndCreatedAtAfter(@Param("startTime") Instant startTime);
+    // === 원자적 카운트 업데이트 (@Version 우회) ===
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Post p SET p.bookmarkCount = p.bookmarkCount + 1 WHERE p.id = :postId")
+    int incrementBookmarkCount(@Param("postId") Long postId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Post p SET p.bookmarkCount = p.bookmarkCount - 1 WHERE p.id = :postId AND p.bookmarkCount > 0")
+    int decrementBookmarkCount(@Param("postId") Long postId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId")
+    int incrementLikeCount(@Param("postId") Long postId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId AND p.likeCount > 0")
+    int decrementLikeCount(@Param("postId") Long postId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Post p SET p.viewCount = p.viewCount + 1 WHERE p.id = :postId")
+    int incrementViewCount(@Param("postId") Long postId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Post p SET p.viewCount = :viewCount WHERE p.id = :postId")
+    int syncViewCount(@Param("postId") Long postId, @Param("viewCount") int viewCount);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Post p SET p.likeCount = :likeCount WHERE p.id = :postId")
+    int syncLikeCount(@Param("postId") Long postId, @Param("likeCount") int likeCount);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Post p SET p.bookmarkCount = :bookmarkCount WHERE p.id = :postId")
+    int syncBookmarkCount(@Param("postId") Long postId, @Param("bookmarkCount") int bookmarkCount);
 }

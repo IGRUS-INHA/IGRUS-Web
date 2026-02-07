@@ -50,6 +50,12 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
     long countByPost(Post post);
 
     /**
+     * 특정 게시글 ID의 좋아요 수를 조회합니다.
+     */
+    @Query("SELECT COUNT(l) FROM PostLike l WHERE l.post.id = :postId")
+    long countByPostId(@Param("postId") Long postId);
+
+    /**
      * 특정 게시글 ID와 사용자 ID로 좋아요 존재 여부를 확인합니다.
      */
     @Query("SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END FROM PostLike l WHERE l.post.id = :postId AND l.user.id = :userId")

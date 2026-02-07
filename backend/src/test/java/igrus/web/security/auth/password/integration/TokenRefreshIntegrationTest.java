@@ -4,7 +4,8 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.RefreshToken;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
-import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
+import igrus.web.security.auth.common.exception.token.RefreshTokenTheftException;
+import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
@@ -22,16 +23,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * 토큰 갱신 통합 테스트 (18개 테스트 케이스)
+ * 토큰 갱신 통합 테스트
  *
  * <p>테스트 케이스 문서: docs/test-case/auth/token-test-cases.md</p>
  *
  * <p>테스트 범위:</p>
  * <ul>
- *     <li>TKN-001 ~ TKN-004: 토큰 갱신 성공</li>
+ *     <li>TKN-001 ~ TKN-008: 토큰 갱신 및 로테이션 성공</li>
  *     <li>TKN-010 ~ TKN-014: 토큰 갱신 실패</li>
  *     <li>TKN-020 ~ TKN-024: 계정 상태 변경 시 토큰 처리</li>
- *     <li>TKN-030 ~ TKN-032: 토큰 보안</li>
+ *     <li>TKN-030 ~ TKN-032: 토큰 보안 및 탈취 감지</li>
  * </ul>
  */
 @DisplayName("토큰 갱신 통합 테스트")
@@ -43,13 +44,17 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    private static final long ACCESS_TOKEN_VALIDITY = 3600000L; // 1시간
-    private static final long REFRESH_TOKEN_VALIDITY = 604800000L; // 7일
+    private static final long ACCESS_TOKEN_VALIDITY = 300000L; // 5분
+    private static final long REFRESH_TOKEN_VALIDITY = 259200000L; // 3일
+    private static final long GRACE_PERIOD_MILLIS = 10000L; // 10초
+    private static final String TEST_TOKEN_FAMILY = "test-family-uuid";
 
     @BeforeEach
     void setUp() {
         setUpBase();
         ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
+        ReflectionTestUtils.setField(refreshTokenService, "gracePeriodMillis", GRACE_PERIOD_MILLIS);
     }
 
     private User createAndSaveTestUser() {
@@ -57,13 +62,12 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
     }
 
     private RefreshToken createAndSaveValidRefreshToken(User user, String token) {
-        RefreshToken refreshToken = RefreshToken.create(user, token, REFRESH_TOKEN_VALIDITY);
+        RefreshToken refreshToken = RefreshToken.create(user, token, REFRESH_TOKEN_VALIDITY, TEST_TOKEN_FAMILY);
         return refreshTokenRepository.save(refreshToken);
     }
 
     private RefreshToken createAndSaveExpiredRefreshToken(User user, String token) {
-        RefreshToken refreshToken = RefreshToken.create(user, token, REFRESH_TOKEN_VALIDITY);
-        // 리플렉션으로 expiresAt을 과거 시간으로 설정
+        RefreshToken refreshToken = RefreshToken.create(user, token, REFRESH_TOKEN_VALIDITY, TEST_TOKEN_FAMILY);
         ReflectionTestUtils.setField(refreshToken, "expiresAt", Instant.now().minusMillis(1000L));
         return refreshTokenRepository.save(refreshToken);
     }
@@ -83,16 +87,15 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRotationResult result = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
-            assertThat(response).isNotNull();
-            assertThat(response.accessToken()).isNotNull();
-            assertThat(response.accessToken()).isNotEmpty();
+            assertThat(result).isNotNull();
+            assertThat(result.accessToken()).isNotNull().isNotEmpty();
         }
 
         @Test
-        @DisplayName("[TKN-002] 갱신된 Access Token 1시간 유효")
+        @DisplayName("[TKN-002] 갱신된 Access Token 유효기간 확인")
         void refreshToken_withValidToken_returnsCorrectExpiresIn() {
             // given
             User user = createAndSaveTestUser();
@@ -100,10 +103,10 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRotationResult result = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
-            assertThat(response.expiresIn()).isEqualTo(ACCESS_TOKEN_VALIDITY);
+            assertThat(result.accessTokenValidity()).isEqualTo(ACCESS_TOKEN_VALIDITY);
         }
 
         @Test
@@ -115,11 +118,11 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRotationResult result = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
-            assertThat(response.accessToken()).isNotNull();
-            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
+            assertThat(result.accessToken()).isNotNull();
+            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(result.accessToken());
             assertThat(jwtTokenProvider.getUserIdFromClaims(claims)).isEqualTo(user.getId());
             assertThat(jwtTokenProvider.getStudentIdFromClaims(claims)).isEqualTo(user.getStudentId());
             assertThat(jwtTokenProvider.getRoleFromClaims(claims)).isEqualTo(user.getRole().name());
@@ -134,27 +137,28 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRotationResult result = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
-            assertThat(response).isNotNull();
-            assertThat(response.accessToken()).isNotNull();
+            assertThat(result).isNotNull();
+            assertThat(result.accessToken()).isNotNull();
         }
 
         @Test
-        @DisplayName("[TKN-003] 여러 번 갱신해도 매번 새로운 Access Token 발급")
-        void refreshToken_multipleTimes_generatesNewAccessTokenEachTime() {
+        @DisplayName("[TKN-003] 연쇄 갱신 시 매번 새로운 Access Token 및 Refresh Token 발급")
+        void refreshToken_chainedRotation_generatesNewTokensEachTime() {
             // given
             User user = createAndSaveTestUser();
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            // when
-            TokenRefreshResponse response1 = refreshTokenService.refreshToken(refreshTokenString);
-            TokenRefreshResponse response2 = refreshTokenService.refreshToken(refreshTokenString);
+            // when - 로테이션으로 인해 새 토큰으로 연쇄 갱신
+            TokenRotationResult result1 = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRotationResult result2 = refreshTokenService.refreshToken(result1.newRefreshToken());
 
             // then
-            assertThat(response1.accessToken()).isNotEqualTo(response2.accessToken());
+            assertThat(result1.accessToken()).isNotEqualTo(result2.accessToken());
+            assertThat(result1.newRefreshToken()).isNotEqualTo(result2.newRefreshToken());
         }
     }
 
@@ -211,29 +215,29 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("[TKN-014] 로그아웃된 Refresh Token으로 갱신 시도 시 예외 발생")
-        void refreshToken_withRevokedToken_throwsException() {
+        @DisplayName("[TKN-014] 로그아웃된 Refresh Token으로 갱신 시도 시 탈취 감지")
+        void refreshToken_withRevokedToken_throwsTheftException() {
             // given
             User user = createAndSaveTestUser();
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             RefreshToken refreshToken = createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            // 토큰 무효화
+            // 토큰 무효화 (Grace Period 밖)
             refreshToken.revoke();
+            ReflectionTestUtils.setField(refreshToken, "revokedAt", Instant.now().minusSeconds(11));
             refreshTokenRepository.save(refreshToken);
 
             // when & then
             assertThatThrownBy(() -> refreshTokenService.refreshToken(refreshTokenString))
-                    .isInstanceOf(RefreshTokenInvalidException.class);
+                    .isInstanceOf(RefreshTokenTheftException.class);
         }
 
         @Test
         @DisplayName("[TKN-011] DB에 존재하지 않는 토큰으로 갱신 시도 시 예외 발생")
         void refreshToken_withNonExistentToken_throwsException() {
-            // given - DB에 저장하지 않은 유효한 형식의 토큰
+            // given
             User user = createAndSaveTestUser();
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
-            // DB에 저장하지 않음
 
             // when & then
             assertThatThrownBy(() -> refreshTokenService.refreshToken(refreshTokenString))
@@ -259,21 +263,24 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("[TKN-021] 모든 토큰이 무효화된 경우 갱신 실패")
-        void refreshToken_whenAllTokensRevoked_throwsException() {
+        @DisplayName("[TKN-021] 모든 토큰이 무효화된 경우 탈취 감지")
+        void refreshToken_whenAllTokensRevoked_throwsTheftException() {
             // given
             User user = createAndSaveTestUser();
             String refreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
-            // 모든 토큰 무효화 (비밀번호 재설정 등의 시나리오)
             transactionTemplate.executeWithoutResult(status ->
                     refreshTokenRepository.revokeAllByUserId(user.getId())
             );
 
+            RefreshToken revokedToken = refreshTokenRepository.findByToken(refreshTokenString).orElseThrow();
+            ReflectionTestUtils.setField(revokedToken, "revokedAt", Instant.now().minusSeconds(11));
+            refreshTokenRepository.save(revokedToken);
+
             // when & then
             assertThatThrownBy(() -> refreshTokenService.refreshToken(refreshTokenString))
-                    .isInstanceOf(RefreshTokenInvalidException.class);
+                    .isInstanceOf(RefreshTokenTheftException.class);
         }
 
         @Test
@@ -284,21 +291,20 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             String oldRefreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
             createAndSaveValidRefreshToken(user, oldRefreshTokenString);
 
-            // 모든 토큰 무효화
             transactionTemplate.executeWithoutResult(status ->
                     refreshTokenRepository.revokeAllByUserId(user.getId())
             );
 
-            // 새 토큰 발급
             String newRefreshTokenString = jwtTokenProvider.createRefreshToken(user.getId());
-            createAndSaveValidRefreshToken(user, newRefreshTokenString);
+            RefreshToken newToken = RefreshToken.createInitial(user, newRefreshTokenString, REFRESH_TOKEN_VALIDITY);
+            refreshTokenRepository.save(newToken);
 
             // when
-            TokenRefreshResponse response = refreshTokenService.refreshToken(newRefreshTokenString);
+            TokenRotationResult result = refreshTokenService.refreshToken(newRefreshTokenString);
 
             // then
-            assertThat(response).isNotNull();
-            assertThat(response.accessToken()).isNotNull();
+            assertThat(result).isNotNull();
+            assertThat(result.accessToken()).isNotNull();
         }
     }
 
@@ -317,10 +323,10 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRotationResult result = refreshTokenService.refreshToken(refreshTokenString);
 
-            // then - 유효한 토큰은 검증 통과
-            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
+            // then
+            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(result.accessToken());
             assertThat(claims).isNotNull();
         }
 
@@ -333,10 +339,10 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRotationResult result = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
-            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
+            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(result.accessToken());
             String role = jwtTokenProvider.getRoleFromClaims(claims);
             assertThat(role).isEqualTo(UserRole.MEMBER.name());
         }
@@ -350,10 +356,10 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRotationResult result = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
-            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
+            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(result.accessToken());
             Long userId = jwtTokenProvider.getUserIdFromClaims(claims);
             assertThat(userId).isEqualTo(user.getId());
         }
@@ -367,10 +373,10 @@ class TokenRefreshIntegrationTest extends ServiceIntegrationTestBase {
             createAndSaveValidRefreshToken(user, refreshTokenString);
 
             // when
-            TokenRefreshResponse response = refreshTokenService.refreshToken(refreshTokenString);
+            TokenRotationResult result = refreshTokenService.refreshToken(refreshTokenString);
 
             // then
-            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(response.accessToken());
+            var claims = jwtTokenProvider.validateAccessTokenAndGetClaims(result.accessToken());
             String studentId = jwtTokenProvider.getStudentIdFromClaims(claims);
             assertThat(studentId).isEqualTo(user.getStudentId());
         }
