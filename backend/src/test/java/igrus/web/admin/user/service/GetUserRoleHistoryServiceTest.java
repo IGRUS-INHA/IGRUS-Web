@@ -17,6 +17,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import igrus.web.admin.user.exception.InvalidDateRangeException;
 
 @DisplayName("GetUserRoleHistoryService 통합 테스트")
 class GetUserRoleHistoryServiceTest extends ServiceIntegrationTestBase {
@@ -224,10 +226,47 @@ class GetUserRoleHistoryServiceTest extends ServiceIntegrationTestBase {
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         UserRoleHistoryResponse response = result.getContent().getFirst();
-        assertThat(response.userId()).isNull();
+        assertThat(response.userId()).isEqualTo(userA.getId());
         assertThat(response.userName()).isEqualTo("탈퇴한 사용자");
         assertThat(response.studentId()).isNull();
         assertThat(response.previousRole()).isEqualTo(UserRole.ASSOCIATE);
         assertThat(response.newRole()).isEqualTo(UserRole.MEMBER);
+    }
+
+    @Test
+    @DisplayName("탈퇴한 사용자의 userId로 필터링 시 이력이 조회된다")
+    void getUserRoleHistories_FilterByWithdrawnUserId_ReturnsResults() {
+        saveHistory(userA, UserRole.ASSOCIATE, UserRole.MEMBER, "승급");
+
+        Long savedUserId = userA.getId();
+
+        transactionTemplate.execute(status -> {
+            entityManager.createNativeQuery(
+                    "UPDATE users SET users_status = 'WITHDRAWN', users_deleted = true, users_deleted_at = NOW() " +
+                            "WHERE users_id = :userId")
+                    .setParameter("userId", savedUserId)
+                    .executeUpdate();
+            entityManager.flush();
+            entityManager.clear();
+            return null;
+        });
+
+        Page<UserRoleHistoryResponse> result = getUserRoleHistoryService.getUserRoleHistories(
+                savedUserId, null, null, null, null, null, DEFAULT_PAGE);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().getFirst().userId()).isEqualTo(savedUserId);
+        assertThat(result.getContent().getFirst().userName()).isEqualTo("탈퇴한 사용자");
+    }
+
+    @Test
+    @DisplayName("시작 일시가 종료 일시보다 이후일 때 예외 발생")
+    void getUserRoleHistories_WithInvertedDateRange_ThrowsException() {
+        Instant startDate = Instant.now().plus(1, ChronoUnit.DAYS);
+        Instant endDate = Instant.now();
+
+        assertThatThrownBy(() -> getUserRoleHistoryService.getUserRoleHistories(
+                null, null, null, null, startDate, endDate, DEFAULT_PAGE))
+                .isInstanceOf(InvalidDateRangeException.class);
     }
 }

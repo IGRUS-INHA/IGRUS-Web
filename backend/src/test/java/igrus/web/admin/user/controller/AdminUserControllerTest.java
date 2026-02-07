@@ -517,11 +517,56 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.content[0].userId").isEmpty())
+                    .andExpect(jsonPath("$.content[0].userId").value(memberUser.getId().intValue()))
                     .andExpect(jsonPath("$.content[0].userName").value("탈퇴한 사용자"))
                     .andExpect(jsonPath("$.content[0].studentId").isEmpty())
                     .andExpect(jsonPath("$.content[0].previousRole").value("ASSOCIATE"))
                     .andExpect(jsonPath("$.content[0].newRole").value("MEMBER"));
+        }
+
+        @Test
+        @DisplayName("탈퇴한 사용자의 userId로 필터링 시 이력이 조회된다")
+        void getRoleHistories_FilterByWithdrawnUserId_ReturnsResults() throws Exception {
+            saveHistory(memberUser, UserRole.ASSOCIATE, UserRole.MEMBER, "승급");
+
+            Long savedUserId = memberUser.getId();
+
+            transactionTemplate.execute(status -> {
+                entityManager.createNativeQuery(
+                        "UPDATE users SET users_status = 'WITHDRAWN', users_deleted = true, users_deleted_at = NOW() " +
+                                "WHERE users_id = :userId")
+                        .setParameter("userId", savedUserId)
+                        .executeUpdate();
+                entityManager.flush();
+                entityManager.clear();
+                return null;
+            });
+
+            mockMvc.perform(get(ROLE_HISTORIES_URL)
+                            .with(withAuth(adminUser))
+                            .with(csrf())
+                            .param("userId", savedUserId.toString()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].userId").value(savedUserId.intValue()))
+                    .andExpect(jsonPath("$.content[0].userName").value("탈퇴한 사용자"));
+        }
+
+        @Test
+        @DisplayName("시작 일시가 종료 일시보다 이후일 때 400 반환")
+        void getRoleHistories_WithInvertedDateRange_Returns400() throws Exception {
+            Instant startDate = Instant.now().plus(1, ChronoUnit.DAYS);
+            Instant endDate = Instant.now();
+
+            mockMvc.perform(get(ROLE_HISTORIES_URL)
+                            .with(withAuth(adminUser))
+                            .with(csrf())
+                            .param("startDate", startDate.toString())
+                            .param("endDate", endDate.toString()))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("INVALID_DATE_RANGE"));
         }
     }
 }

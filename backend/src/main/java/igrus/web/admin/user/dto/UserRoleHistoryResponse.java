@@ -40,7 +40,7 @@ public record UserRoleHistoryResponse(
         User user = history.getUser();
         return new UserRoleHistoryResponse(
                 history.getId(),
-                user != null ? user.getId() : null,
+                history.getUserId(),
                 user != null ? user.getName() : User.WITHDRAWN_DISPLAY_NAME,
                 user != null ? user.getStudentId() : null,
                 history.getPreviousRole(),

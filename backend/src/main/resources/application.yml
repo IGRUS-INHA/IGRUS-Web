@@ -1,6 +1,10 @@
 spring:
   profiles:
     active: ${SPRING_ACTIVE_PROFILE}
+  data:
+    web:
+      pageable:
+        max-page-size: 100
   flyway:
     enabled: true
     locations: classpath:db/migration

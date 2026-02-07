@@ -50,14 +50,14 @@ public interface UserRoleHistoryRepository extends JpaRepository<UserRoleHistory
      * @return 이력 페이지
      */
     @Query(value = "SELECT h FROM UserRoleHistory h LEFT JOIN FETCH h.user WHERE " +
-           "(:userId IS NULL OR h.user.id = :userId) " +
+           "(:userId IS NULL OR h.userId = :userId) " +
            "AND (:previousRole IS NULL OR h.previousRole = :previousRole) " +
            "AND (:newRole IS NULL OR h.newRole = :newRole) " +
            "AND (:changedBy IS NULL OR h.createdBy = :changedBy) " +
            "AND (CAST(:startDate AS timestamp) IS NULL OR h.createdAt >= :startDate) " +
            "AND (CAST(:endDate AS timestamp) IS NULL OR h.createdAt <= :endDate)",
            countQuery = "SELECT COUNT(h) FROM UserRoleHistory h WHERE " +
-           "(:userId IS NULL OR h.user.id = :userId) " +
+           "(:userId IS NULL OR h.userId = :userId) " +
            "AND (:previousRole IS NULL OR h.previousRole = :previousRole) " +
            "AND (:newRole IS NULL OR h.newRole = :newRole) " +
            "AND (:changedBy IS NULL OR h.createdBy = :changedBy) " +

@@ -32,11 +32,21 @@ public class UserRoleHistory extends BaseEntity {
     @Column(name = "user_role_histories_id")
     private Long id;
 
-    /** 대상 사용자. 탈퇴(soft-deleted) 사용자는 @SQLRestriction에 의해 로딩 불가하므로 @NotFound로 null 허용 */
+    /**
+     * 대상 사용자.
+     * <p>User 엔티티의 {@code @SQLRestriction("users_deleted = false")}로 인해
+     * 탈퇴 사용자는 로딩 불가하므로 {@code @NotFound(IGNORE)}로 null 허용.</p>
+     * <p>주의: {@code @NotFound}는 지연 로딩을 비활성화합니다.
+     * findByFilters()는 LEFT JOIN FETCH 사용으로 영향 없음.</p>
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_role_histories_user_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User user;
+
+    /** 대상 사용자 ID (raw FK). 탈퇴 사용자도 원본 ID 유지. */
+    @Column(name = "user_role_histories_user_id", insertable = false, updatable = false)
+    private Long userId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role_histories_previous_role", nullable = false)
