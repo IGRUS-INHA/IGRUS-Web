@@ -1,6 +1,8 @@
 import { defineConfig } from "orval";
 
+// 환경 변수에서 읽어오고, 없으면 AWS URL 사용
 const swaggerSchemaUrl =
+  process.env.VITE_SWAGGER_URL ||
   "http://igrus-web-alb-535342735.ap-northeast-2.elb.amazonaws.com/v3/api-docs";
 
 export default defineConfig({

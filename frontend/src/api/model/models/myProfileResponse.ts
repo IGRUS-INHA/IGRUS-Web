@@ -33,9 +33,24 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { MyProfileResponseRole } from './myProfileResponseRole';
 
-export interface SortObject {
-  sorted?: boolean;
-  empty?: boolean;
-  unsorted?: boolean;
+/**
+ * 내 프로필 정보
+ */
+export interface MyProfileResponse {
+  /** 학번 */
+  studentId?: string;
+  /** 이름 */
+  name?: string;
+  /** 이메일 */
+  email?: string;
+  /** 전화번호 */
+  phoneNumber?: string;
+  /** 학과 */
+  department?: string;
+  /** 역할 */
+  role?: MyProfileResponseRole;
+  /** 가입일 */
+  createdAt?: string;
 }

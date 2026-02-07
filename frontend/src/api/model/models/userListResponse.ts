@@ -33,16 +33,25 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { UserListResponseRole } from './userListResponseRole';
+import type { UserListResponseStatus } from './userListResponseStatus';
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
+/**
+ * 관리자용 회원 목록 응답
+ */
+export interface UserListResponse {
+  /** 사용자 ID */
+  userId?: number;
+  /** 학번 */
+  studentId?: string;
+  /** 이름 */
+  name?: string;
+  /** 이메일 */
+  email?: string;
+  /** 역할 */
+  role?: UserListResponseRole;
+  /** 상태 */
+  status?: UserListResponseStatus;
+  /** 가입일 */
   createdAt?: string;
 }

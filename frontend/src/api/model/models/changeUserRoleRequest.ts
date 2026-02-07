@@ -33,16 +33,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { ChangeUserRoleRequestRole } from './changeUserRoleRequestRole';
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
-  createdAt?: string;
+/**
+ * 회원 권한 변경 요청
+ */
+export interface ChangeUserRoleRequest {
+  /** 변경할 역할 */
+  role: ChangeUserRoleRequestRole;
 }

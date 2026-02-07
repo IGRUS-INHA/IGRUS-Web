@@ -34,15 +34,20 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
+/**
+ * 준회원(가입 승인 대기자) 정보 응답
+ */
+export interface AssociateInfoResponse {
+  /** 사용자 고유 ID */
+  userId?: number;
+  /** 학번 */
+  studentId?: string;
+  /** 이름 */
+  name?: string;
+  /** 학과 */
+  department?: string;
+  /** 가입 동기 */
+  motivation?: string;
+  /** 가입 신청 일시 */
   createdAt?: string;
 }

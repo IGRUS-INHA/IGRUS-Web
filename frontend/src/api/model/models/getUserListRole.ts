@@ -33,20 +33,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { BookmarkedPostResponse } from './bookmarkedPostResponse';
-import type { PageableObject } from './pageableObject';
-import type { SortObject } from './sortObject';
 
-export interface PageBookmarkedPostResponse {
-  totalElements?: number;
-  totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: BookmarkedPostResponse[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  first?: boolean;
-  last?: boolean;
-  empty?: boolean;
-}
+export type GetUserListRole = typeof GetUserListRole[keyof typeof GetUserListRole];
+
+
+export const GetUserListRole = {
+  ASSOCIATE: 'ASSOCIATE',
+  MEMBER: 'MEMBER',
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
+} as const;

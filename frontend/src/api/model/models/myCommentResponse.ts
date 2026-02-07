@@ -33,20 +33,23 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { PageableObject } from './pageableObject';
-import type { PostViewHistoryResponse } from './postViewHistoryResponse';
-import type { SortObject } from './sortObject';
 
-export interface PagePostViewHistoryResponse {
-  totalElements?: number;
-  totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: PostViewHistoryResponse[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  first?: boolean;
-  last?: boolean;
-  empty?: boolean;
+/**
+ * 내 댓글 정보
+ */
+export interface MyCommentResponse {
+  /** 댓글 ID */
+  id?: number;
+  /** 게시글 ID */
+  postId?: number;
+  /** 게시글 제목 */
+  postTitle?: string;
+  /** 댓글 내용 */
+  content?: string;
+  /** 익명 여부 */
+  isAnonymous?: boolean;
+  /** 대댓글 여부 */
+  isReply?: boolean;
+  /** 작성일 */
+  createdAt?: string;
 }

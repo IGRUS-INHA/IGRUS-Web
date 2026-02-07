@@ -34,15 +34,24 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 
-export interface PostListResponse {
-  postId?: number;
+/**
+ * 내 게시글 정보
+ */
+export interface MyPostResponse {
+  /** 게시글 ID */
+  id?: number;
+  /** 게시판 코드 */
+  boardCode?: string;
+  /** 게시판 이름 */
+  boardName?: string;
+  /** 제목 */
   title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
+  /** 조회수 */
   viewCount?: number;
+  /** 좋아요 수 */
   likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
+  /** 익명 여부 */
+  isAnonymous?: boolean;
+  /** 작성일 */
   createdAt?: string;
 }

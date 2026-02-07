@@ -107,7 +107,7 @@ export const getApproveAssociateUrl = (id: number,) => {
 
   
 
-  return `/api/v1/admin/members/${id}/approve`
+  return `/api/v1/admin/associates/${id}/approve`
 }
 
 export const approveAssociate = async (id: number, options?: RequestInit): Promise<approveAssociateResponse> => {
@@ -206,7 +206,7 @@ export const getApproveBulkUrl = () => {
 
   
 
-  return `/api/v1/admin/members/approve/bulk`
+  return `/api/v1/admin/associates/approve-batch`
 }
 
 export const approveBulk = async (bulkApprovalRequest: BulkApprovalRequest, options?: RequestInit): Promise<approveBulkResponse> => {
@@ -308,7 +308,7 @@ export const getGetPendingAssociatesUrl = (params?: GetPendingAssociatesParams,)
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/admin/members/pending?${stringifiedParams}` : `/api/v1/admin/members/pending`
+  return stringifiedParams.length > 0 ? `/api/v1/admin/associates/pending?${stringifiedParams}` : `/api/v1/admin/associates/pending`
 }
 
 export const getPendingAssociates = async (params?: GetPendingAssociatesParams, options?: RequestInit): Promise<getPendingAssociatesResponse> => {
@@ -328,7 +328,7 @@ export const getPendingAssociates = async (params?: GetPendingAssociatesParams, 
 
 export const getGetPendingAssociatesQueryKey = (params?: GetPendingAssociatesParams,) => {
     return [
-    `/api/v1/admin/members/pending`, ...(params ? [params] : [])
+    `/api/v1/admin/associates/pending`, ...(params ? [params] : [])
     ] as const;
     }
 

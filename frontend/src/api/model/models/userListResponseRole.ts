@@ -33,19 +33,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { PageableObject } from './pageableObject';
-import type { SortObject } from './sortObject';
 
-export interface Page {
-  totalElements?: number;
-  totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: unknown[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  first?: boolean;
-  last?: boolean;
-  empty?: boolean;
-}
+/**
+ * 역할
+ */
+export type UserListResponseRole = typeof UserListResponseRole[keyof typeof UserListResponseRole];
+
+
+export const UserListResponseRole = {
+  ASSOCIATE: 'ASSOCIATE',
+  MEMBER: 'MEMBER',
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
+} as const;

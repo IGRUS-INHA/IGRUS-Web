@@ -34,15 +34,19 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 
-export interface PostListResponse {
-  postId?: number;
-  title?: string;
-  authorName?: string;
-  isAnonymous?: boolean;
-  isQuestion?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  bookmarkCount?: number;
-  createdAt?: string;
+/**
+ * 회원 탈퇴 요청
+ */
+export interface WithdrawRequest {
+  /**
+   * 현재 비밀번호
+   * @minLength 1
+   */
+  password: string;
+  /**
+   * 탈퇴 사유
+   * @minLength 0
+   * @maxLength 500
+   */
+  reason: string;
 }

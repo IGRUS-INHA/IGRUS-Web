@@ -34,19 +34,19 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 import type { LikedPostResponse } from './likedPostResponse';
-import type { PageableObject } from './pageableObject';
-import type { SortObject } from './sortObject';
 
-export interface PageLikedPostResponse {
+/**
+ * 좋아요한 게시글 목록 페이징 응답
+ */
+export interface LikedPostPageResponse {
+  /** 좋아요한 게시글 목록 */
+  posts?: LikedPostResponse[];
+  /** 전체 요소 수 */
   totalElements?: number;
+  /** 전체 페이지 수 */
   totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: LikedPostResponse[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  first?: boolean;
-  last?: boolean;
-  empty?: boolean;
+  /** 현재 페이지 번호 (0부터 시작) */
+  currentPage?: number;
+  /** 다음 페이지 존재 여부 */
+  hasNext?: boolean;
 }
