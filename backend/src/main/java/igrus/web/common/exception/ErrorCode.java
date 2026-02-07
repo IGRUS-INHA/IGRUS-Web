@@ -83,6 +83,7 @@ public enum ErrorCode {
     BULK_APPROVAL_EMPTY(400, "승인할 사용자를 선택해주세요"),
     BULK_REJECTION_EMPTY(400, "거절할 사용자를 선택해주세요"),
     ASSOCIATE_ALREADY_DECIDED(400, "이미 처리된 준회원입니다"),
+    INVALID_DATE_RANGE(400, "종료 일시는 시작 일시 이후여야 합니다"),
 
     // Board
     BOARD_NOT_FOUND(404, "게시판을 찾을 수 없습니다"),
