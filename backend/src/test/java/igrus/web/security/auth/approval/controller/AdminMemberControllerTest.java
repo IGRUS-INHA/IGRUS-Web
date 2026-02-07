@@ -79,16 +79,16 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("관리자 권한으로 준회원 목록 조회 성공")
         void getPendingAssociates_WithAdminRole_ReturnsOk() throws Exception {
             // when & then
-            mockMvc.perform(get(BASE_URL)
+            mockMvc.perform(get(BASE_URL + "/pending")
                             .with(withAuth(adminUser))
                             .with(csrf())
                             .param("page", "0")
                             .param("size", "10"))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.content").isArray())
-                    .andExpect(jsonPath("$.content[0].studentId").value("20230001"))
-                    .andExpect(jsonPath("$.content[0].name").value("테스트유저"))
+                    .andExpect(jsonPath("$.associates").isArray())
+                    .andExpect(jsonPath("$.associates[0].studentId").value("20230001"))
+                    .andExpect(jsonPath("$.associates[0].name").value("테스트유저"))
                     .andExpect(jsonPath("$.totalElements").value(1));
         }
 
@@ -96,7 +96,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("일반 사용자 권한으로 목록 조회 시 403 반환")
         void getPendingAssociates_WithMemberRole_Returns403() throws Exception {
             // when & then
-            mockMvc.perform(get(BASE_URL)
+            mockMvc.perform(get(BASE_URL + "/pending")
                             .with(withAuth(memberUser))
                             .with(csrf()))
                     .andDo(print())
@@ -283,7 +283,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
             BulkApprovalRequest request = new BulkApprovalRequest(userIds, null);
 
             // when & then
-            mockMvc.perform(post(BASE_URL + "/approve/bulk")
+            mockMvc.perform(post(BASE_URL + "/approve-batch")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
