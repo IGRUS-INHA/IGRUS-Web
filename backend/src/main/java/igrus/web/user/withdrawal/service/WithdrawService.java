@@ -11,8 +11,12 @@ import igrus.web.user.repository.UserRepository;
 import igrus.web.user.withdrawal.domain.WithdrawalLog;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.repository.WithdrawalLogRepository;
+import igrus.web.user.domain.AccountChangeType;
+import igrus.web.user.domain.UserStatus;
+import igrus.web.user.event.AccountStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +32,7 @@ public class WithdrawService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final WithdrawalLogRepository withdrawalLogRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void withdraw(Long userId, WithdrawRequest request) {
         log.info("회원 탈퇴 요청 - userId: {}", userId);
@@ -66,6 +71,13 @@ public class WithdrawService {
 
         // 8. RefreshToken 전부 무효화
         refreshTokenRepository.revokeAllByUserId(userId);
+
+        // 9. 감사 이력 이벤트 발행
+        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+                userId, userId, AccountChangeType.WITHDRAWAL,
+                UserStatus.ACTIVE.name(), UserStatus.WITHDRAWN.name(),
+                request.reason()
+        ));
 
         log.info("회원 탈퇴 완료 - userId: {}", userId);
     }
