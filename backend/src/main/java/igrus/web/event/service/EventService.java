@@ -8,6 +8,7 @@ import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventAccessDeniedException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.InvalidEventDateException;
@@ -101,7 +102,8 @@ public class EventService {
      * @param eventId 행사 ID
      * @param userId  현재 사용자 ID
      * @return 행사 상세 응답 DTO
-     * @throws EventNotFoundException 행사를 찾을 수 없는 경우
+     * @throws EventNotFoundException             행사를 찾을 수 없는 경우
+     * @throws AssociateMemberNotAllowedException 준회원인 경우
      */
     public EventDetailResponse getEvent(Long eventId, Long userId) {
         Event event = eventRepository.findById(eventId)
@@ -112,6 +114,11 @@ public class EventService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+
+        // 준회원 접근 제한
+        if (user.isAssociate()) {
+            throw new AssociateMemberNotAllowedException();
+        }
 
         // 권한 정보 계산
         boolean isAuthor = event.getUser().getId().equals(userId);
