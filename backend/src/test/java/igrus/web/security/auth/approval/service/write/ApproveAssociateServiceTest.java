@@ -1,9 +1,10 @@
 package igrus.web.security.auth.approval.service.write;
 
 import igrus.web.common.ServiceIntegrationTestBase;
+import igrus.web.security.auth.approval.domain.AssociateDecision;
+import igrus.web.security.auth.approval.domain.AssociateDecisionType;
 import igrus.web.security.auth.approval.exception.AdminRequiredException;
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
-import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,13 +49,6 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
         @Test
         @DisplayName("관리자 개별 승인 성공 - 역할이 MEMBER로 변경됨 [APR-010]")
         void approveAssociate_WithAdminRole_ChangesRoleToMember() {
-            // given
-            PasswordCredential credential = PasswordCredential.create(associateUser, "hashedPassword");
-            transactionTemplate.execute(status -> {
-                passwordCredentialRepository.save(credential);
-                return null;
-            });
-
             // when
             approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
 
@@ -68,11 +63,6 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
         void approveAssociate_RoleChangedFromAssociateToMember() {
             // given
             assertThat(associateUser.getRole()).isEqualTo(UserRole.ASSOCIATE);
-            PasswordCredential credential = PasswordCredential.create(associateUser, "hashedPassword");
-            transactionTemplate.execute(status -> {
-                passwordCredentialRepository.save(credential);
-                return null;
-            });
 
             // when
             approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
@@ -83,37 +73,22 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("승인일 정확히 기록 - PasswordCredential에 approvedAt, approvedBy 설정 [APR-012]")
-        void approveAssociate_SetsApprovalInfo() {
-            // given
-            PasswordCredential credential = PasswordCredential.create(associateUser, "hashedPassword");
-            assertThat(credential.getApprovedAt()).isNull();
-            assertThat(credential.getApprovedBy()).isNull();
-            transactionTemplate.execute(status -> {
-                passwordCredentialRepository.save(credential);
-                return null;
-            });
-
+        @DisplayName("승인 결정 기록 - AssociateDecision에 APPROVED 타입으로 저장 [APR-012]")
+        void approveAssociate_CreatesAssociateDecision() {
             // when
             approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
 
             // then
-            PasswordCredential updatedCredential = passwordCredentialRepository.findByUserId(associateUser.getId()).orElseThrow();
-            assertThat(updatedCredential.getApprovedAt()).isNotNull();
-            assertThat(updatedCredential.getApprovedBy()).isEqualTo(adminUser.getId());
-            assertThat(updatedCredential.isApproved()).isTrue();
+            Optional<AssociateDecision> decision = associateDecisionRepository.findByUserId(associateUser.getId());
+            assertThat(decision).isPresent();
+            assertThat(decision.get().getType()).isEqualTo(AssociateDecisionType.APPROVED);
+            assertThat(decision.get().getDecidedBy()).isEqualTo(adminUser.getId());
+            assertThat(decision.get().getDecidedAt()).isNotNull();
         }
 
         @Test
         @DisplayName("역할 변경 감사 이력 기록 - UserRoleHistory에 ASSOCIATE -> MEMBER 기록 [APR-013]")
         void approveAssociate_RecordsRoleChangeHistory() {
-            // given
-            PasswordCredential credential = PasswordCredential.create(associateUser, "hashedPassword");
-            transactionTemplate.execute(status -> {
-                passwordCredentialRepository.save(credential);
-                return null;
-            });
-
             // when
             approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
 

@@ -50,22 +50,6 @@ class PasswordCredentialTest {
             assertThat(credential.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
             assertThat(credential.isPendingVerification()).isTrue();
         }
-
-        @Test
-        @DisplayName("생성 시 approvedAt은 null (미승인 상태)")
-        void create_ApprovedAt_IsNull() {
-            // given
-            User user = createTestUser();
-            String passwordHash = "$2a$10$hashedPassword";
-
-            // when
-            PasswordCredential credential = PasswordCredential.create(user, passwordHash);
-
-            // then
-            assertThat(credential.getApprovedAt()).isNull();
-            assertThat(credential.getApprovedBy()).isNull();
-            assertThat(credential.isApproved()).isFalse();
-        }
     }
 
     @Nested
@@ -299,51 +283,6 @@ class PasswordCredentialTest {
 
             // then
             assertThat(credential.isWithdrawn()).isFalse();
-        }
-    }
-
-    @Nested
-    @DisplayName("정회원 승인 메서드")
-    class ApprovalTest {
-
-        @Test
-        @DisplayName("approve 호출 시 승인 정보 기록")
-        void approve_WithApproverId_SetsApprovalInfo() {
-            // given
-            User user = createTestUser();
-            PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
-            Long approverId = 100L;
-
-            // when
-            credential.approve(approverId);
-
-            // then
-            assertThat(credential.getApprovedAt()).isNotNull();
-            assertThat(credential.getApprovedBy()).isEqualTo(approverId);
-            assertThat(credential.isApproved()).isTrue();
-        }
-
-        @Test
-        @DisplayName("isApproved - 승인 후 true 반환")
-        void isApproved_AfterApproval_ReturnsTrue() {
-            // given
-            User user = createTestUser();
-            PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
-            credential.approve(100L);
-
-            // then
-            assertThat(credential.isApproved()).isTrue();
-        }
-
-        @Test
-        @DisplayName("isApproved - 승인 전 false 반환")
-        void isApproved_BeforeApproval_ReturnsFalse() {
-            // given
-            User user = createTestUser();
-            PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
-
-            // then
-            assertThat(credential.isApproved()).isFalse();
         }
     }
 }
