@@ -5,6 +5,7 @@ import igrus.web.event.domain.EventRegistrationStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,19 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
      * @return 이미 신청했으면 true
      */
     boolean existsByEventIdAndUserId(Long eventId, Long userId);
+
+
+    /**
+     * 특정 사용자가 특정 행사에 유효한(활성) 신청이 있는지 확인합니다.
+     * REGISTERED, WAITING, APPROVED 상태만 유효한 신청으로 판단합니다.
+     * 행사 상세 조회 시 현재 사용자의 신청 여부 표시용.
+     *
+     * @param eventId  행사 ID
+     * @param userId   사용자 ID
+     * @param statuses 유효한 신청 상태 목록
+     * @return 유효한 신청이 있으면 true
+     */
+    boolean existsByEventIdAndUserIdAndStatusIn(Long eventId, Long userId, Collection<EventRegistrationStatus> statuses);
 
 
     /**
