@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FullPageSpinner } from '@/components/ui';
 import {
   ArrowLeft,
   Heart,
@@ -12,7 +11,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useGetPostDetail, useDeletePost } from '@/api/model/post/post';
-import type { PostDetailResponse } from '@/api/model/models';
 import { useToggleLike } from '@/api/model/post-like/post-like';
 import { useToggleBookmark, useGetBookmarkStatus } from '@/api/model/bookmark/bookmark';
 import { useUIStore } from '@/stores';
@@ -24,7 +22,6 @@ import { cn } from '@/lib/utils';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
 import { usePermission } from '@/hooks/usePermission';
-import { isForbiddenError, isNotFoundError, getErrorMessage } from '@/utils/error';
 
 export default function PostDetailPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
@@ -45,11 +42,9 @@ export default function PostDetailPage() {
   const mockQuery = useMockPostDetail(boardType as string, Number(postId));
 
   const { data: response, isLoading } = isMockMode ? mockQuery : realQuery;
-  // customFetch가 에러 시 throw하므로 data는 항상 성공 타입
-  const post = response?.data as PostDetailResponse | undefined;
+  const post = response?.data;
 
   // Local state
-  const [isScrapped, setIsScrapped] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   // Refs
@@ -57,8 +52,15 @@ export default function PostDetailPage() {
 
   // Mutations
   const toggleLike = useToggleLike();
+  const toggleBookmark = useToggleBookmark();
   const queryClient = useQueryClient();
   const deletePost = useDeletePost();
+
+  // Bookmark status query (로그인한 경우에만 조회)
+  const { data: bookmarkStatusResponse } = useGetBookmarkStatus(Number(postId), {
+    query: { enabled: !isMockMode && !!postId && isAuthenticated },
+  });
+  const isBookmarked = bookmarkStatusResponse?.data?.bookmarked ?? false;
 
   // Click outside handler
   useEffect(() => {
@@ -90,13 +92,9 @@ export default function PostDetailPage() {
       { postId: post.postId },
       {
         onSuccess: () => {
-          // 게시글 상세 데이터 새로고침
+          // 게시글 데이터 새로고침 (좋아요 상태 및 카운트 업데이트)
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/boards/${boardType}/posts/${post.postId}`],
-          });
-          // 게시글 목록 데이터도 새로고침 (좋아요 카운트 업데이트)
-          void queryClient.invalidateQueries({
-            queryKey: [`/api/v1/boards/${boardType}/posts`],
           });
         },
       }
@@ -107,6 +105,7 @@ export default function PostDetailPage() {
     e.stopPropagation();
     if (!post?.postId) return;
 
+    // 로그인하지 않은 경우 로그인 페이지로 이동
     if (!isAuthenticated) {
       alert('로그인이 필요한 기능입니다.');
       navigate('/login');
@@ -116,18 +115,9 @@ export default function PostDetailPage() {
     toggleBookmark.mutate(
       { postId: post.postId },
       {
-        onSuccess: async () => {
-          // 북마크 상태 쿼리 갱신
-          await queryClient.invalidateQueries({
+        onSuccess: () => {
+          void queryClient.invalidateQueries({
             queryKey: [`/api/v1/posts/${post.postId}/bookmarks/status`],
-          });
-          // 게시글 상세 데이터 갱신
-          await queryClient.invalidateQueries({
-            queryKey: [`/api/v1/boards/${boardType}/posts/${post.postId}`],
-          });
-          // 게시글 목록 데이터도 새로고침 (북마크 카운트 업데이트)
-          await queryClient.invalidateQueries({
-            queryKey: [`/api/v1/boards/${boardType}/posts`],
           });
         },
       }
@@ -162,17 +152,10 @@ export default function PostDetailPage() {
           });
           navigate(`/board/${boardType}`);
         },
-        onError: (error: unknown) => {
+        onError: (error: any) => {
           let errorMessage = '게시글 삭제에 실패했습니다.';
-
-          if (isForbiddenError(error)) {
-            errorMessage = '삭제 권한이 없습니다.';
-          } else if (isNotFoundError(error)) {
-            errorMessage = '게시글을 찾을 수 없습니다.';
-          } else {
-            errorMessage = getErrorMessage(error);
-          }
-
+          if (error.message?.includes('403')) errorMessage = '삭제 권한이 없습니다.';
+          else if (error.message?.includes('404')) errorMessage = '게시글을 찾을 수 없습니다.';
           alert(errorMessage);
         },
       }
@@ -194,33 +177,17 @@ export default function PostDetailPage() {
     }
   };
 
-  // 작성 시간 포맷팅
-  const formatTime = (createdAt?: string) => {
-    if (!createdAt) return '';
-
-    const date = new Date(createdAt);
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 1000 / 60);
-
-    if (diff < 1) return '방금 전';
-    if (diff < 60) return `${diff}분 전`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`;
-    if (diff < 10080) return `${Math.floor(diff / 1440)}일 전`;
-
-    // 7일 이상이면 날짜 표시 (YYYY.MM.DD)
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}.${month}.${day}`;
-  };
-
   if (isLoading) {
-    return <FullPageSpinner />;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
   }
 
   if (!post) {
     return (
-      <div className="flex flex-col items-center justify-center py-s7 gap-s4">
+      <div className="flex flex-col items-center justify-center py-12 gap-s4">
         <p className="text-muted-foreground">게시글을 찾을 수 없습니다.</p>
         <button
           type="button"
@@ -237,7 +204,7 @@ export default function PostDetailPage() {
   const authorInitial = authorName[0];
 
   return (
-    <div className="animate-in slide-in-from-right-8 duration-300 pb-s7">
+    <div className="animate-in slide-in-from-right-8 duration-300 pb-12">
       {/* Navigation */}
       <button
         onClick={handleBack}
@@ -253,7 +220,7 @@ export default function PostDetailPage() {
       {/* Main Post Card */}
       <article
         className={cn(
-          'p-s8 md:p-s7 rounded-r4 border mb-s8 relative',
+          'p-s8 md:p-12 rounded-[2.5rem] border mb-s8 relative',
           isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'
         )}
       >
@@ -262,7 +229,7 @@ export default function PostDetailPage() {
           <div className="flex justify-between items-start">
             <span
               className={cn(
-                'px-s4 py-s2 rounded-full text-xs font-bold uppercase tracking-widest',
+                'px-s4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest',
                 isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
               )}
             >
@@ -287,7 +254,7 @@ export default function PostDetailPage() {
               {isMoreMenuOpen && (
                 <div
                   className={cn(
-                    'absolute right-0 top-full mt-s2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200',
+                    'absolute right-0 top-full mt-2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200',
                     'bg-popover border-border'
                   )}
                 >
@@ -340,15 +307,15 @@ export default function PostDetailPage() {
             </div>
             <div>
               <p className="text-sm font-bold">{authorName}</p>
-              <p className="text-xs text-muted-foreground">{formatTime(post.createdAt)}</p>
+              <p className="text-xs text-muted-foreground">{post.createdAt} · 4분 읽기</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className={cn('prose max-w-none mb-s6', isDark ? 'prose-invert text-muted-foreground' : 'text-muted-foreground')}>
+        <div className={cn('prose max-w-none mb-10', isDark ? 'prose-invert text-muted-foreground' : 'text-muted-foreground')}>
           {post.imageUrls?.[0] && (
-            <div className="my-s6 rounded-r4 overflow-hidden aspect-video">
+            <div className="my-8 rounded-r4 overflow-hidden aspect-video">
               <img src={post.imageUrls[0]} alt={post.title} className="w-full h-full object-cover" />
             </div>
           )}
@@ -398,7 +365,7 @@ export default function PostDetailPage() {
             )}
           >
             <Bookmark size={20} className={isBookmarked ? 'fill-current' : ''} />
-            {(post && 'bookmarkCount' in post ? post.bookmarkCount : 0) ?? 0}
+            <span className="hidden sm:inline">스크랩</span>
           </button>
         </div>
       </article>
@@ -406,7 +373,7 @@ export default function PostDetailPage() {
       {/* Comments Section */}
       <Card
         className={cn(
-          'p-s8 rounded-r4 border',
+          'p-s8 rounded-[2.5rem] border',
           isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'
         )}
       >

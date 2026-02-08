@@ -90,6 +90,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
         <div className="flex-1 space-y-s2">
           <div className="relative">
             <input
+              id="comment-input"
               type="text"
               value={comment}
               onChange={(e) => setComment(e.target.value)}

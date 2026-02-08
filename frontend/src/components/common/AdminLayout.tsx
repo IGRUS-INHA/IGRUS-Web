@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useAuthStore, useUIStore } from '@/stores';
+import { useUIStore } from '@/stores';
+import { useAuth } from '@/hooks';
 import {
   LayoutDashboard,
   Users,
@@ -50,7 +51,7 @@ const AdminMenuItem = ({ to, icon, label, active, onClick }: AdminMenuItemProps)
 
 export default function AdminLayout() {
   const location = useLocation();
-  const { user, logout } = useAuthStore();
+  const { user, logout } = useAuth();
   const { theme } = useUIStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isDark = theme === 'dark';

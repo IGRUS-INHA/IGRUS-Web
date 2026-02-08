@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/stores';
+import { useAuth } from './useAuth';
 import {
   hasPermission,
   canEditPost,
@@ -50,7 +50,7 @@ interface UsePermissionReturn {
  * 컴포넌트에서 권한 기반 렌더링에 사용
  */
 export function usePermission(): UsePermissionReturn {
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuth();
   const role: RoleOrNull = user?.role ?? undefined;
   const userId: string | undefined = user?.id ?? user?.studentId ?? undefined;
 

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Swal from 'sweetalert2';
 import { AlertCircle, ArrowLeft, UserX } from 'lucide-react';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks';
 import { useWithdraw } from '@/api/model/my-page/my-page';
 import { isInvalidCredentials, getErrorMessage } from '@/utils/error';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ type WithdrawForm = z.infer<typeof withdrawSchema>;
 
 export default function WithdrawPage() {
   const navigate = useNavigate();
-  const { logout } = useAuthStore();
+  const { logout } = useAuth();
 
   const {
     register,

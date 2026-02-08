@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { useAuthStore } from '@/stores';
+import { useAuth } from '@/hooks';
 import {
   useLogin,
   useResendVerification,
@@ -24,7 +24,7 @@ import {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const loginMutation = useLogin();
   const resendVerificationMutation = useResendVerification();
@@ -163,7 +163,7 @@ export default function LoginPage() {
         };
 
         localStorage.setItem('accessToken', recoveryData.accessToken);
-        setAuth(user, recoveryData.accessToken);
+        login(user, recoveryData.accessToken);
 
         await Swal.fire({
           icon: 'success',
@@ -242,7 +242,7 @@ export default function LoginPage() {
         localStorage.setItem('accessToken', typedData.accessToken);
 
         // zustand store에 저장 (Access Token만)
-        setAuth(user, typedData.accessToken);
+        login(user, typedData.accessToken);
         navigate('/');
       } else {
         throw new Error('Invalid login response');

@@ -1,5 +1,4 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FullPageSpinner } from '@/components/ui';
 import { Plus } from 'lucide-react';
 import { useEvents } from '@/hooks/queries/useEvents';
 import EventCard from '@/components/feature/event/EventCard';
@@ -60,13 +59,17 @@ export default function EventListPage() {
   const canCreateEvent = user?.role === 'OPERATOR' || user?.role === 'ADMIN';
 
   if (isLoading) {
-    return <FullPageSpinner />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-s8 animate-in fade-in duration-300">
       {/* Header with Filter and Actions */}
-      <div className="flex items-center justify-end gap-s4 border-b border-border pb-s4">
+      <div className="flex items-center gap-s4 border-b border-border pb-s4">
         <FilterSelect
           value={filterStatus}
           onChange={handleFilterChange}
@@ -98,7 +101,7 @@ export default function EventListPage() {
 
       {/* Empty State */}
       {events?.length === 0 && (
-        <div className="text-center py-s7 text-muted-foreground">
+        <div className="text-center py-12 text-muted-foreground">
           {filterStatus !== EVENT_FILTER_STATUS.ALL || searchKeyword
             ? '검색 조건에 맞는 행사가 없습니다.'
             : '등록된 행사가 없습니다.'}

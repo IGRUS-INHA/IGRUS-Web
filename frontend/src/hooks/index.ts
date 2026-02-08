@@ -1,3 +1,4 @@
+export { useAuth } from './useAuth';
 export { useIsMobile } from './useIsMobile';
 export { usePagination } from './usePagination';
 export { usePermission } from './usePermission';

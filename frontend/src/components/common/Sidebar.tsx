@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAuthStore, useUIStore } from '@/stores';
+import { useUIStore } from '@/stores';
+import { useAuth } from '@/hooks';
 import {
   Home,
   MessageSquare,
@@ -55,7 +56,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useUIStore();
   const isDark = theme === 'dark';
 

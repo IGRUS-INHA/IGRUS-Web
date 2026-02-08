@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore, useUIStore } from '@/stores';
+import { useUIStore } from '@/stores';
+import { useAuth } from '@/hooks';
 import { hasPermission } from '@/constants/permissions';
 import { ROLE_LABELS } from '@/constants';
 import { FullPageSpinner } from '@/components/ui';
@@ -23,7 +24,7 @@ export default function ProtectedRoute({
   requireAuth = true,
 }: ProtectedRouteProps) {
   const location = useLocation();
-  const { isAuthenticated, isHydrated, user } = useAuthStore();
+  const { isAuthenticated, isHydrated, user } = useAuth();
   const addToast = useUIStore((state) => state.addToast);
   const hasShownToast = useRef(false);
 

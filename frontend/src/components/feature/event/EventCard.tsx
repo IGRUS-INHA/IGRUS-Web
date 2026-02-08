@@ -14,12 +14,12 @@ const STATUS_STYLES: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   Open: '신청 가능',
-  OPEN: '진행중',
+  OPEN: '신청 가능',
   UPCOMING: '예정',
   Full: '마감',
-  CLOSED: '마감',
-  Closed: '종료',
-  COMPLETED: '종료',
+  CLOSED: '신청 불가',
+  Closed: '신청 불가',
+  COMPLETED: '신청 불가',
   ONGOING: '진행중',
 };
 

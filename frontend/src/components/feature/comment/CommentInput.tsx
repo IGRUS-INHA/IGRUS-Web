@@ -92,9 +92,10 @@ export function CommentInput({
         </label>
 
         <span
-          className={`text-c1 ${
+          className={cn(
+            'text-c1',
             isOverLimit ? 'text-red-500' : 'text-muted-foreground'
-          }`}
+          )}
         >
           {remainingChars} / 500
         </span>

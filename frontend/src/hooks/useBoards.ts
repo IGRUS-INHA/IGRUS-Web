@@ -1,5 +1,5 @@
 import { useGetBoardList, useGetBoardByCode } from '@/api/model/board/board';
-import { useAuthStore } from '@/stores';
+import { useAuth } from './useAuth';
 import { useParams } from 'react-router-dom';
 import { canViewBoard, canWriteBoard } from '@/constants/permissions';
 import type { BoardListResponse, BoardDetailResponse } from '@/api/model/models';
@@ -52,7 +52,7 @@ function transformBoardDetail(response: BoardDetailResponse): BoardDetail {
 // 1. 전체 게시판 목록
 export function useBoardList() {
   const { data, error, isLoading } = useGetBoardList();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   if (error || !data) {
     // 폴백: 클라이언트 권한 계산
@@ -79,7 +79,7 @@ export function useBoardByCode(code: string) {
   const { data, error, isLoading } = useGetBoardByCode(code, {
     query: { enabled: !!code },
   });
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   if (error || !data) {
     // 폴백

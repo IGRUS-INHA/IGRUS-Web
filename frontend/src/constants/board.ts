@@ -79,9 +79,26 @@ export const POST_STATUS = {
 // 게시글 폼 검증 스키마 (PostWritePage, PostEditPage 공유)
 import { z } from 'zod';
 
+// 질문글 허용 게시판
+export const ALLOW_QUESTION = [BOARDS.GENERAL] as const;
+
+// 게시판별 카테고리 (소문자 BoardType 키 사용)
+export const BOARD_CATEGORIES: Record<string, { value: string; label: string }[]> = {
+  notices: [{ value: 'general', label: '일반' }],
+  general: [{ value: 'general', label: '일반' }],
+  insight: [{ value: 'general', label: '일반' }],
+};
+
+// 게시글 작성 옵션 (소문자 BoardType 값 사용)
+export const POST_OPTIONS = {
+  ALLOW_ANONYMOUS: ['general'] as const,
+  ALLOW_QUESTION: ['general'] as const,
+} as const;
+
 export const postFormSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요').max(100, '제목은 100자 이내로 입력해주세요'),
   content: z.string().min(1, '내용을 입력해주세요'),
+  category: z.string().min(1, '카테고리를 선택해주세요'),
   isAnonymous: z.boolean().optional(),
   isQuestion: z.boolean().optional(),
   isVisibleToAssociate: z.boolean().optional(),

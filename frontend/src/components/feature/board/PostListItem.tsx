@@ -81,7 +81,7 @@ export default function PostListItem({ post, boardType, linkTo }: PostListItemPr
           </div>
           <div className="flex items-center gap-s2 hover:text-primary transition-colors cursor-pointer">
             <Bookmark size={16} />
-            <span className="text-c1">{(post as any).bookmarkCount ?? 0}</span>
+            <span className="text-c1">{post.bookmarkCount ?? 0}</span>
           </div>
         </div>
       </div>

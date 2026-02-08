@@ -3,7 +3,7 @@ import { FullPageSpinner } from '@/components/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, MapPin, Users, Clock, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { useEvent, useApplyEvent, useCancelEventApplication, useDeleteEvent } from '@/hooks/queries/useEvents';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks';
 import { useEffect, useRef, useState } from 'react';
 import { getErrorMessage } from '@/utils/error';
 
@@ -15,7 +15,7 @@ export default function EventDetailPage() {
   const { mutate: applyEvent, isPending: isApplying } = useApplyEvent();
   const { mutate: cancelEvent, isPending: isCanceling } = useCancelEventApplication();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
-  const user = useAuthStore((state) => state.user);
+  const { user } = useAuth();
 
   // API 응답 데이터 추출
   const event = eventResponse?.data;

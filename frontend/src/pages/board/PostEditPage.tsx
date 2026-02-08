@@ -1,26 +1,25 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FullPageSpinner } from '@/components/ui';
 import { ArrowLeft, Save, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import { useGetPostDetail, useUpdatePost } from '@/api/model/post/post';
-import type { PostDetailResponse } from '@/api/model/models';
 import { useUIStore } from '@/stores';
-import { postFormSchema, type PostFormData } from '@/constants/board';
+import { BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type PostFormData } from '@/constants/board';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { useQueryClient } from '@tanstack/react-query';
-import { isForbiddenError, isUnauthorizedError, isNotFoundError, getErrorMessage } from '@/utils/error';
-import { useCurrentBoard } from '@/hooks/useBoards';
 
 export default function PostEditPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
   const navigate = useNavigate();
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
+  const isMobile = useIsMobile();
+  const [mobilePreview, setMobilePreview] = useState<'edit' | 'preview'>('edit');
   const queryClient = useQueryClient();
 
   const validBoardType = boardType as BoardType;
@@ -34,18 +33,17 @@ export default function PostEditPage() {
       query: { enabled: !!(validBoardType && numericPostId) },
     }
   );
-  // customFetch가 에러 시 throw하므로 data는 항상 성공 타입
-  const post = response?.data as PostDetailResponse | undefined;
+  const post = response?.data;
 
-  // Get current board info
-  const { board, isLoading: boardLoading } = useCurrentBoard();
+  // Get categories for this board
+  const categories = BOARD_CATEGORIES[validBoardType] || BOARD_CATEGORIES.general;
 
-  // Get board label (fallback to hardcoded)
-  const boardLabel = board?.name ?? '게시판';
+  // Get board label
+  const boardLabel = validBoardType ? BOARD_LABELS[validBoardType as keyof typeof BOARD_LABELS] : '게시판';
 
-  // Check if anonymous and question posts are allowed (server-driven)
-  const allowAnonymous = board?.allowsAnonymous ?? false;
-  const allowQuestion = board?.allowsQuestionTag ?? false;
+  // Check if anonymous and question posts are allowed
+  const allowAnonymous = (POST_OPTIONS.ALLOW_ANONYMOUS as readonly BoardType[]).includes(validBoardType);
+  const allowQuestion = (POST_OPTIONS.ALLOW_QUESTION as readonly BoardType[]).includes(validBoardType);
   const allowVisibleToAssociate = validBoardType === 'notices';
 
   // Form setup
@@ -60,6 +58,7 @@ export default function PostEditPage() {
   } = useForm<PostFormData>({
     resolver: zodResolver(postFormSchema),
     defaultValues: {
+      category: categories[0]?.value || 'general',
       isAnonymous: false,
       isQuestion: false,
       isVisibleToAssociate: false,
@@ -72,12 +71,13 @@ export default function PostEditPage() {
       reset({
         title: post.title || '',
         content: post.content || '',
+        category: categories[0]?.value || 'general',
         isAnonymous: post.isAnonymous || false,
         isQuestion: post.isQuestion || false,
         isVisibleToAssociate: false,
       });
     }
-  }, [post, reset]);
+  }, [post, reset, categories]);
 
   // Watch form values
   const title = watch('title');
@@ -116,27 +116,26 @@ export default function PostEditPage() {
 
           navigate(`/board/${validBoardType}/${postId}`);
         },
-        onError: (error: unknown) => {
+        onError: (error: any) => {
           let errorMessage = '게시글 수정에 실패했습니다.';
 
-          // 403 Forbidden - 권한 없음
-          if (isForbiddenError(error)) {
+          if (error.message) {
+            errorMessage = error.message;
+          }
+
+          if (error.message?.includes('403') || error.message?.includes('권한')) {
             errorMessage = '수정 권한이 없습니다.\n\n작성자 본인만 게시글을 수정할 수 있습니다.';
           }
-          // 401 Unauthorized - 인증 필요
-          else if (isUnauthorizedError(error)) {
+
+          if (error.message?.includes('401') || error.message?.includes('인증')) {
             errorMessage = '로그인이 필요합니다.\n로그인 페이지로 이동합니다.';
             alert(errorMessage);
             navigate('/login');
             return;
           }
-          // 404 Not Found
-          else if (isNotFoundError(error)) {
+
+          if (error.message?.includes('404')) {
             errorMessage = '게시글을 찾을 수 없습니다.';
-          }
-          // 기타 에러
-          else {
-            errorMessage = getErrorMessage(error);
           }
 
           alert(errorMessage);
@@ -146,8 +145,12 @@ export default function PostEditPage() {
   };
 
   // Loading state
-  if (isLoading || boardLoading) {
-    return <FullPageSpinner />;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
   }
 
   // Error state
@@ -190,7 +193,7 @@ export default function PostEditPage() {
           onClick={handleBack}
           type="button"
           className={cn(
-            'flex items-center gap-s2 text-sm font-bold transition-colors cursor-pointer',
+            'flex items-center gap-2 text-sm font-bold transition-colors cursor-pointer',
             isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'
           )}
         >
@@ -204,7 +207,7 @@ export default function PostEditPage() {
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting}
             type="button"
-            className="bg-[#03A69E] text-white px-s5 py-s2 rounded-full text-sm font-bold hover:bg-[#028b84] transition shadow-lg shadow-[#03A69E]/20 flex items-center gap-s2 disabled:opacity-50 cursor-pointer"
+            className="bg-[#03A69E] text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-[#028b84] transition shadow-lg shadow-[#03A69E]/20 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             <Save size={16} /> 수정하기
           </button>
@@ -214,23 +217,24 @@ export default function PostEditPage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div
           className={cn(
-            'w-full max-w-[1616px] mx-auto p-s6 md:p-s7 rounded-[2.5rem] border min-h-[80vh] flex flex-col',
+            'w-full max-w-[1616px] mx-auto p-s4 sm:p-8 md:p-12 rounded-r4 sm:rounded-[1.5rem] md:rounded-[2.5rem] border min-h-[60vh] md:min-h-[80vh] flex flex-col',
             isDark ? 'bg-[#1A1A1A] border-white/5' : 'bg-white border-gray-100 shadow-sm'
           )}
         >
           {/* Settings Bar */}
           <div className="flex flex-wrap gap-s4 mb-s6">
-            <div className="px-s2 py-s2 text-xl text-[#03A69E]">
+            <div className="px-2 py-2 text-xl text-[#03A69E]">
               {validBoardType === 'general' ? boardLabel : `${boardLabel} 게시판`}
             </div>
 
+            <input type="hidden" {...register('category')} />
 
             {allowAnonymous && (
               <button
                 onClick={() => setValue('isAnonymous', !isAnonymous)}
                 type="button"
                 className={cn(
-                  'px-s4 py-s2 rounded-r4 text-sm border transition-all cursor-pointer',
+                  'px-4 py-2 rounded-xl text-sm border transition-all cursor-pointer',
                   isAnonymous
                     ? 'bg-[#03A69E]/10 border-[#03A69E] text-[#03A69E]'
                     : isDark
@@ -247,7 +251,7 @@ export default function PostEditPage() {
                 onClick={() => setValue('isQuestion', !isQuestion)}
                 type="button"
                 className={cn(
-                  'px-s4 py-s2 rounded-r4 text-sm border transition-all cursor-pointer',
+                  'px-4 py-2 rounded-xl text-sm border transition-all cursor-pointer',
                   isQuestion
                     ? 'bg-[#03A69E]/10 border-[#03A69E] text-[#03A69E]'
                     : isDark
@@ -264,7 +268,7 @@ export default function PostEditPage() {
                 onClick={() => setValue('isVisibleToAssociate', !isVisibleToAssociate)}
                 type="button"
                 className={cn(
-                  'px-s4 py-s2 rounded-r4 text-sm border transition-all cursor-pointer',
+                  'px-4 py-2 rounded-xl text-sm border transition-all cursor-pointer',
                   isVisibleToAssociate
                     ? 'bg-[#03A69E]/10 border-[#03A69E] text-[#03A69E]'
                     : isDark
@@ -284,7 +288,7 @@ export default function PostEditPage() {
               type="text"
               placeholder="게시글 제목"
               className={cn(
-                'w-full text-4xl font-bold bg-transparent border-none focus:ring-0 focus:outline-none opacity-80',
+                'w-full text-2xl sm:text-3xl md:text-4xl font-bold bg-transparent border-none focus:ring-0 focus:outline-none opacity-80',
                 isDark ? 'text-white placeholder-gray-500' : 'text-black placeholder-gray-500',
                 errors.title && 'border-b-2 border-destructive'
               )}
@@ -296,6 +300,38 @@ export default function PostEditPage() {
 
           {/* Content Markdown Editor */}
           <div className="flex-1 relative mb-s8">
+            {/* 모바일 편집/미리보기 토글 */}
+            {isMobile && (
+              <div className={cn(
+                'flex mb-s3 rounded-lg p-1',
+                isDark ? 'bg-white/5' : 'bg-gray-100'
+              )}>
+                <button
+                  type="button"
+                  onClick={() => setMobilePreview('edit')}
+                  className={cn(
+                    'flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer',
+                    mobilePreview === 'edit'
+                      ? isDark ? 'bg-gray-700 text-foreground shadow-sm' : 'bg-white text-foreground shadow-sm'
+                      : 'text-gray-500'
+                  )}
+                >
+                  편집
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobilePreview('preview')}
+                  className={cn(
+                    'flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer',
+                    mobilePreview === 'preview'
+                      ? isDark ? 'bg-gray-700 text-foreground shadow-sm' : 'bg-white text-foreground shadow-sm'
+                      : 'text-gray-500'
+                  )}
+                >
+                  미리보기
+                </button>
+              </div>
+            )}
             <Controller
               name="content"
               control={control}
@@ -303,8 +339,8 @@ export default function PostEditPage() {
                 <MDEditor
                   value={field.value}
                   onChange={field.onChange}
-                  preview="live"
-                  height={500}
+                  preview={isMobile ? mobilePreview : 'live'}
+                  height={isMobile ? 300 : 500}
                   data-color-mode={isDark ? 'dark' : 'light'}
                   commandsFilter={(command) => {
                     if (command.name === 'title' || command.name === 'image' || command.name === 'checked-list') {
@@ -324,24 +360,24 @@ export default function PostEditPage() {
           </div>
 
           {/* Bottom Toolbar */}
-          <div className={cn('mt-s6 pt-s4 border-t flex gap-s4', isDark ? 'border-white/5' : 'border-gray-100')}>
+          <div className={cn('mt-s4 sm:mt-8 pt-s3 sm:pt-4 border-t flex gap-s3 sm:gap-4', isDark ? 'border-white/5' : 'border-gray-100')}>
             <button
               type="button"
               className={cn(
-                'p-s3 rounded-r3 transition cursor-pointer',
+                'p-2 sm:p-3 rounded-lg transition cursor-pointer',
                 isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >
-              <ImageIcon size={24} />
+              <ImageIcon size={isMobile ? 20 : 24} />
             </button>
             <button
               type="button"
               className={cn(
-                'p-s3 rounded-r3 transition cursor-pointer',
+                'p-2 sm:p-3 rounded-lg transition cursor-pointer',
                 isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >
-              <Paperclip size={24} />
+              <Paperclip size={isMobile ? 20 : 24} />
             </button>
             <div className="ml-auto text-xs text-gray-500 flex items-center">
               {content?.length || 0} 글자
