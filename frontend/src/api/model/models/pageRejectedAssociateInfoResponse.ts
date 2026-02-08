@@ -38,8 +38,8 @@ import type { RejectedAssociateInfoResponse } from './rejectedAssociateInfoRespo
 import type { SortObject } from './sortObject';
 
 export interface PageRejectedAssociateInfoResponse {
-  totalPages?: number;
   totalElements?: number;
+  totalPages?: number;
   pageable?: PageableObject;
   size?: number;
   content?: RejectedAssociateInfoResponse[];

@@ -4,6 +4,7 @@ import { ShieldCheck } from 'lucide-react';
 import { useSignup } from '@/api/model/password-authentication/password-authentication';
 import type { PasswordSignupResponse } from '@/api/model/models';
 import AuthForm from '@/components/feature/auth/AuthForm';
+import { formatPhoneNumber } from '@/utils';
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ export default function SignupPage() {
           password: data.password,
           name: data.name,
           email: data.email,
-          phoneNumber: data.phoneNumber!,
+          phoneNumber: formatPhoneNumber(data.phoneNumber!),
           department: data.department!,
           motivation: data.motivation!,
           gender: data.gender!,

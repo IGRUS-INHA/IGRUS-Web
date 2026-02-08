@@ -35,23 +35,46 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
       setEditValue(profile?.phoneNumber ?? '');
     }
     setEditingField(field);
+    setEditError('');
   };
 
   const cancelEditing = () => {
     setEditingField(undefined);
     setEditValue('');
+    setEditError('');
+  };
+
+  const [editError, setEditError] = useState('');
+
+  const validate = (): string => {
+    if (!editingField) return '';
+    const value = editValue.trim();
+    if (!value) return editingField === 'email' ? '이메일을 입력해주세요.' : '전화번호를 입력해주세요.';
+    if (editingField === 'email') {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return '올바른 이메일 형식이 아닙니다.';
+    } else {
+      if (!/^01[0-9]-?\d{3,4}-?\d{4}$/.test(value)) return '올바른 전화번호 형식이 아닙니다. (예: 01012345678)';
+    }
+    return '';
   };
 
   const handleSave = async () => {
     if (!onUpdateProfile || !editingField) return;
 
+    const error = validate();
+    if (error) {
+      setEditError(error);
+      return;
+    }
+
     const data: UpdateProfileRequest = editingField === 'email'
-      ? { email: editValue }
-      : { phoneNumber: editValue.replace(/-/g, '') };
+      ? { email: editValue.trim() }
+      : { phoneNumber: editValue.trim().replace(/-/g, '') };
 
     await onUpdateProfile(data);
     setEditingField(undefined);
     setEditValue('');
+    setEditError('');
   };
 
   return (
@@ -102,38 +125,44 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
         {/* 이메일 / 전화번호 (인라인 수정) */}
         <div className="mt-s3 space-y-s2 text-muted-foreground text-b2">
           {/* 이메일 */}
-          <div className="flex items-center justify-center md:justify-start gap-2">
-            <Mail size={16} className="text-primary shrink-0" />
+          <div className="flex items-start justify-center md:justify-start gap-2">
+            <Mail size={16} className="text-primary shrink-0 mt-1.5" />
             {editingField === 'email' ? (
-              <div className="flex items-center gap-1">
-                <input
-                  type="email"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') void handleSave();
-                    if (e.key === 'Escape') cancelEditing();
-                  }}
-                  className="px-2 py-1 text-b2 bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-56"
-                  autoFocus
-                  disabled={isUpdating}
-                />
-                <button
-                  type="button"
-                  onClick={() => void handleSave()}
-                  disabled={isUpdating}
-                  className="cursor-pointer p-1 rounded-md hover:bg-primary/10 text-primary transition-colors disabled:opacity-50"
-                >
-                  {isUpdating ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelEditing}
-                  disabled={isUpdating}
-                  className="cursor-pointer p-1 rounded-md hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
-                >
-                  <X size={14} />
-                </button>
+              <div>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="email"
+                    value={editValue}
+                    onChange={(e) => { setEditValue(e.target.value); setEditError(''); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void handleSave();
+                      if (e.key === 'Escape') cancelEditing();
+                    }}
+                    className={cn(
+                      'px-2 py-1 text-b2 bg-background border rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-56',
+                      editError ? 'border-destructive' : 'border-border'
+                    )}
+                    autoFocus
+                    disabled={isUpdating}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleSave()}
+                    disabled={isUpdating}
+                    className="cursor-pointer p-1 rounded-md hover:bg-primary/10 text-primary transition-colors disabled:opacity-50"
+                  >
+                    {isUpdating ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEditing}
+                    disabled={isUpdating}
+                    className="cursor-pointer p-1 rounded-md hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                {editError && <p className="text-destructive text-c2 mt-1">{editError}</p>}
               </div>
             ) : (
               <>
@@ -152,39 +181,45 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
           </div>
 
           {/* 전화번호 */}
-          <div className="flex items-center justify-center md:justify-start gap-2">
-            <Phone size={16} className="text-primary shrink-0" />
+          <div className="flex items-start justify-center md:justify-start gap-2">
+            <Phone size={16} className="text-primary shrink-0 mt-1.5" />
             {editingField === 'phone' ? (
-              <div className="flex items-center gap-1">
-                <input
-                  type="tel"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') void handleSave();
-                    if (e.key === 'Escape') cancelEditing();
-                  }}
-                  placeholder="01012345678"
-                  className="px-2 py-1 text-b2 bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-44"
-                  autoFocus
-                  disabled={isUpdating}
-                />
-                <button
-                  type="button"
-                  onClick={() => void handleSave()}
-                  disabled={isUpdating}
-                  className="cursor-pointer p-1 rounded-md hover:bg-primary/10 text-primary transition-colors disabled:opacity-50"
-                >
-                  {isUpdating ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelEditing}
-                  disabled={isUpdating}
-                  className="cursor-pointer p-1 rounded-md hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
-                >
-                  <X size={14} />
-                </button>
+              <div>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="tel"
+                    value={editValue}
+                    onChange={(e) => { setEditValue(e.target.value); setEditError(''); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void handleSave();
+                      if (e.key === 'Escape') cancelEditing();
+                    }}
+                    placeholder="01012345678"
+                    className={cn(
+                      'px-2 py-1 text-b2 bg-background border rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-44',
+                      editError ? 'border-destructive' : 'border-border'
+                    )}
+                    autoFocus
+                    disabled={isUpdating}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleSave()}
+                    disabled={isUpdating}
+                    className="cursor-pointer p-1 rounded-md hover:bg-primary/10 text-primary transition-colors disabled:opacity-50"
+                  >
+                    {isUpdating ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEditing}
+                    disabled={isUpdating}
+                    className="cursor-pointer p-1 rounded-md hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                {editError && <p className="text-destructive text-c2 mt-1">{editError}</p>}
               </div>
             ) : (
               <>
