@@ -12,6 +12,7 @@ import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.mypage.dto.request.ChangePasswordRequest;
+import igrus.web.user.mypage.dto.request.ChangePhoneNumberRequest;
 import igrus.web.user.mypage.dto.response.MyCommentPageResponse;
 import igrus.web.user.mypage.dto.response.MyCommentResponse;
 import igrus.web.user.mypage.dto.response.MyPostPageResponse;
@@ -21,6 +22,7 @@ import igrus.web.user.mypage.service.read.GetMyCommentsService;
 import igrus.web.user.mypage.service.read.GetMyPostsService;
 import igrus.web.user.mypage.service.read.GetMyProfileService;
 import igrus.web.user.mypage.service.write.ChangeMyPasswordService;
+import igrus.web.user.mypage.service.write.ChangePhoneNumberService;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.service.WithdrawService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,6 +65,7 @@ public class MyPageController {
     private final GetMyLikedPostsService getMyLikedPostsService;
     private final GetMyBookmarksService getMyBookmarksService;
     private final ChangeMyPasswordService changeMyPasswordService;
+    private final ChangePhoneNumberService changePhoneNumberService;
     private final WithdrawService withdrawService;
 
     // === 프로필 ===
@@ -115,6 +118,31 @@ public class MyPageController {
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
         changeMyPasswordService.changePassword(user.userId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    // === 전화번호 변경 ===
+
+    @Operation(summary = "전화번호 변경", description = "현재 비밀번호 확인 후 새 전화번호로 변경합니다")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "전화번호 변경 성공"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "전화번호 형식 오류 또는 중복",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "현재 비밀번호 불일치 또는 인증 필요",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PatchMapping("/phone-number")
+    public ResponseEntity<Void> changePhoneNumber(
+            @Valid @RequestBody ChangePhoneNumberRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        changePhoneNumberService.changePhoneNumber(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 
