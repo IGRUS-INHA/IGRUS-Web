@@ -42,6 +42,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -56,6 +57,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth/password")
 @RequiredArgsConstructor
