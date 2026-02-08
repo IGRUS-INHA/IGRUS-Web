@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { Layers, Heart, Bookmark, Award, Eye, ThumbsUp, RefreshCw, Loader2 } from 'lucide-react';
@@ -9,7 +10,10 @@ import { Button } from '@/components/ui/button';
 import ProfileHeader from '@/components/feature/mypage/ProfileHeader';
 import { cn } from '@/lib/utils';
 import { useMyProfile, useMyPosts, useMyLikes, useMyBookmarks, useMyRegistrations } from '@/hooks/queries/useMyPage';
+import { useUpdateMyProfile, getGetMyProfileQueryKey } from '@/api/model/my-page/my-page';
+import { isConflictError, getErrorMessage } from '@/utils/error';
 import { formatRelativeTime, formatDate } from '@/utils';
+import type { UpdateProfileRequest } from '@/api/model/models/updateProfileRequest';
 import type { MyRegistrationResponseStatus } from '@/api/model/models/myRegistrationResponseStatus';
 
 type TabType = 'posts' | 'likes' | 'scraps' | 'events';
@@ -44,6 +48,8 @@ export default function MyPage() {
   const isDark = theme === 'dark';
   const [activeTab, setActiveTab] = useState<TabType>('posts');
 
+  const queryClient = useQueryClient();
+
   // API 조회
   const profile = useMyProfile();
   const postsQuery = useMyPosts({ page: 0, size: 10 });
@@ -51,16 +57,28 @@ export default function MyPage() {
   const bookmarksQuery = useMyBookmarks({ page: 0, size: 10 });
   const registrationsQuery = useMyRegistrations();
 
+  // 프로필 수정 mutation
+  const { mutateAsync: updateProfile, isPending: isProfileUpdating } = useUpdateMyProfile({
+    mutation: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
+      },
+      onError: (error: unknown) => {
+        if (isConflictError(error)) {
+          void Swal.fire({ icon: 'error', title: '수정 실패', text: '이미 사용 중인 이메일입니다.', showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
+        } else {
+          void Swal.fire({ icon: 'error', title: '수정 실패', text: getErrorMessage(error), showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
+        }
+      },
+    },
+  });
+
+  const handleUpdateProfile = async (data: UpdateProfileRequest) => {
+    await updateProfile({ data });
+  };
+
   const handleChangePassword = () => {
-    Swal.fire({
-      icon: 'info',
-      title: '개발 예정',
-      text: '비밀번호 변경 기능이 곧 추가됩니다.',
-      confirmButtonText: '확인',
-      confirmButtonColor: '#17A2B8',
-      showClass: { popup: '', backdrop: '' },
-      hideClass: { popup: '', backdrop: '' },
-    });
+    navigate('/mypage/change-password');
   };
 
   const handleLogout = async () => {
@@ -110,6 +128,8 @@ export default function MyPage() {
         onChangePassword={handleChangePassword}
         onLogout={handleLogout}
         onWithdraw={() => navigate('/mypage/withdraw')}
+        onEditEmail={() => {/* TODO: 이메일 수정 구현 */}}
+        onEditPhone={() => {/* TODO: 전화번호 수정 구현 */}}
       />
 
       {/* Tabs */}

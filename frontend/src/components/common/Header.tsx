@@ -109,7 +109,7 @@ export default function Header() {
                 <h1 className="text-xl lg:text-3xl font-bold capitalize tracking-tight">
                   {pageTitle}
                 </h1>
-                <p className="hidden lg:block text-xs text-muted-foreground mt-s1">
+                <p className={`hidden lg:block text-xs text-muted-foreground mt-s1 ${pageTitle.trim() ? '' : 'invisible'}`}>
                   {currentDate}
                 </p>
               </div>

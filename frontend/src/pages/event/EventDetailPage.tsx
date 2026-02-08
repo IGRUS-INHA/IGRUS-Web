@@ -54,8 +54,6 @@ export default function EventDetailPage() {
       { eventId: Number(eventId) },
       {
         onSuccess: () => {
-          alert('행사 신청이 완료되었습니다.');
-          // 행사 상세 정보 즉시 다시 불러오기
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/events/${eventId}`],
           });
@@ -78,30 +76,40 @@ export default function EventDetailPage() {
   };
 
   const handleCancel = () => {
+    console.log('[handleCancel] eventId:', eventId);
     if (!eventId) return;
     if (!confirm('행사 신청을 취소하시겠습니까?')) return;
+    console.log('[handleCancel] calling cancelEvent');
 
-    cancelEvent(
-      { eventId: Number(eventId) },
-      {
-        onSuccess: () => {
-          alert('행사 신청이 취소되었습니다.');
-          // 행사 상세 정보 즉시 다시 불러오기
-          void queryClient.invalidateQueries({
-            queryKey: [`/api/v1/events/${eventId}`],
-          });
-        },
-        onError: (error: unknown) => {
-          if (hasErrorCode(error, 'EVENT_ALREADY_CANCELED')) {
-            alert('이미 취소된 신청입니다.');
-          } else if (hasErrorCode(error, 'CANCEL_DEADLINE_PASSED')) {
-            alert('취소 가능 기간이 지났습니다.');
-          } else {
-            alert(getErrorMessage(error));
-          }
-        },
+    try {
+      cancelEvent(
+        { eventId: Number(eventId) },
+        {
+          onSuccess: () => {
+            console.log('[cancelEvent] onSuccess');
+            void queryClient.invalidateQueries({
+              queryKey: [`/api/v1/events/${eventId}`],
+            });
+          },
+          onError: (error: unknown) => {
+            console.log('[cancelEvent] onError:', error);
+            if (hasErrorCode(error, 'EVENT_ALREADY_CANCELED')) {
+              alert('이미 취소된 신청입니다.');
+            } else if (hasErrorCode(error, 'CANCEL_DEADLINE_PASSED')) {
+              alert('취소 가능 기간이 지났습니다.');
+            } else {
+              alert(getErrorMessage(error));
+            }
+          },
+          onSettled: () => {
+            console.log('[cancelEvent] onSettled');
+          },
       }
     );
+    console.log('[handleCancel] cancelEvent() returned');
+    } catch (e) {
+      console.error('[handleCancel] cancelEvent threw:', e);
+    }
   };
 
   const handleEdit = () => {
