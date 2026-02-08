@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { Lock, Key, ArrowRight } from 'lucide-react';
 import { useConfirmPasswordReset } from '@/api/model/password-authentication/password-authentication';
 import { Button } from '@/components/ui/button';
@@ -55,25 +56,57 @@ export default function ResetPasswordPage() {
     e.preventDefault();
 
     if (!token) {
-      alert('재설정 토큰을 입력해주세요.');
+      Swal.fire({
+        icon: 'warning',
+        title: '토큰 입력 필요',
+        text: '재설정 토큰을 입력해주세요.',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#FFC107',
+        showClass: { popup: '', backdrop: '' },
+        hideClass: { popup: '', backdrop: '' },
+      });
       return;
     }
 
     if (!newPassword || !passwordConfirm) {
-      alert('새 비밀번호를 입력해주세요.');
+      Swal.fire({
+        icon: 'warning',
+        title: '비밀번호 입력 필요',
+        text: '새 비밀번호를 입력해주세요.',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#FFC107',
+        showClass: { popup: '', backdrop: '' },
+        hideClass: { popup: '', backdrop: '' },
+      });
       return;
     }
 
     // 비밀번호 유효성 검사
     const passwordError = validatePassword(newPassword);
     if (passwordError) {
-      alert(passwordError);
+      Swal.fire({
+        icon: 'warning',
+        title: '비밀번호 형식 오류',
+        text: passwordError,
+        confirmButtonText: '확인',
+        confirmButtonColor: '#FFC107',
+        showClass: { popup: '', backdrop: '' },
+        hideClass: { popup: '', backdrop: '' },
+      });
       return;
     }
 
     // 비밀번호 확인
     if (newPassword !== passwordConfirm) {
-      alert('비밀번호가 일치하지 않습니다.');
+      Swal.fire({
+        icon: 'error',
+        title: '비밀번호 불일치',
+        text: '비밀번호가 일치하지 않습니다.',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#DC3545',
+        showClass: { popup: '', backdrop: '' },
+        hideClass: { popup: '', backdrop: '' },
+      });
       return;
     }
 
@@ -86,7 +119,15 @@ export default function ResetPasswordPage() {
         },
       });
 
-      alert('비밀번호가 성공적으로 변경되었습니다.\n\n새 비밀번호로 로그인해주세요.');
+      await Swal.fire({
+        icon: 'success',
+        title: '재설정 완료',
+        html: '비밀번호가 성공적으로 변경되었습니다.<br><br>새 비밀번호로 로그인해주세요.',
+        confirmButtonText: '로그인하러 가기',
+        confirmButtonColor: '#28A745',
+        showClass: { popup: '', backdrop: '' },
+        hideClass: { popup: '', backdrop: '' },
+      });
       navigate('/login');
     } catch (error) {
       console.error('Password reset confirmation failed:', error);
@@ -94,13 +135,45 @@ export default function ResetPasswordPage() {
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
 
       if (errorMessage.includes('만료')) {
-        alert('재설정 토큰이 만료되었습니다.\n\n비밀번호 찾기를 다시 시도해주세요.');
+        Swal.fire({
+          icon: 'error',
+          title: '토큰 만료',
+          html: '재설정 토큰이 만료되었습니다.<br><br>비밀번호 찾기를 다시 시도해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#DC3545',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       } else if (errorMessage.includes('토큰')) {
-        alert('유효하지 않은 토큰입니다.\n\n토큰을 확인해주세요.');
+        Swal.fire({
+          icon: 'error',
+          title: '유효하지 않은 토큰',
+          html: '유효하지 않은 토큰입니다.<br><br>토큰을 확인해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#DC3545',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       } else if (errorMessage.includes('비밀번호')) {
-        alert('비밀번호 형식이 올바르지 않습니다.\n\n요구사항을 확인해주세요.');
+        Swal.fire({
+          icon: 'warning',
+          title: '비밀번호 형식 오류',
+          html: '비밀번호 형식이 올바르지 않습니다.<br><br>요구사항을 확인해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#FFC107',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       } else {
-        alert('비밀번호 재설정에 실패했습니다.\n\n다시 시도해주세요.');
+        Swal.fire({
+          icon: 'error',
+          title: '재설정 실패',
+          html: '비밀번호 재설정에 실패했습니다.<br><br>다시 시도해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#DC3545',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       }
     } finally {
       setLoading(false);
@@ -111,7 +184,7 @@ export default function ResetPasswordPage() {
     <div className="flex items-center justify-center h-full">
       <div className="max-w-md w-full animate-in slide-in-from-bottom-8 duration-500">
         <Card
-          className={`p-s6 lg:p-s7 rounded-[2.5rem] border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}
+          className={`p-s6 lg:p-s7 rounded-r4 border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}
         >
           <CardContent className="p-0">
             <div className="text-center mb-s6">

@@ -33,7 +33,7 @@ spring:
             enable: true
 
 springdoc:
-  server-url: http://igrus-web-alb-535342735.ap-northeast-2.elb.amazonaws.com
+  server-url: https://api.igrus.co.kr
 
 app:
   cookie:

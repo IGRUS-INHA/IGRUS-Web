@@ -8,14 +8,20 @@ const ROLE_HIERARCHY: (Role | undefined)[] = [undefined, ROLES.ASSOCIATE, ROLES.
 
 // 기능별 최소 권한 정의
 export const PERMISSIONS = {
-  // 게시판 조회
+  /**
+   * @deprecated 서버 응답(BoardListResponse.canRead) 우선 사용
+   * 폴백 전용: useBoards() 훅에서 API 실패 시만 사용
+   */
   BOARD_VIEW: {
     [BOARDS.NOTICES]: undefined, // 비회원 가능
     [BOARDS.GENERAL]: ROLES.ASSOCIATE, // 준회원 이상
     [BOARDS.INSIGHT]: ROLES.ASSOCIATE, // 준회원 이상
   },
 
-  // 게시판 글쓰기
+  /**
+   * @deprecated 서버 응답(BoardListResponse.canWrite) 우선 사용
+   * 폴백 전용: useBoards() 훅에서 API 실패 시만 사용
+   */
   BOARD_WRITE: {
     [BOARDS.NOTICES]: ROLES.OPERATOR, // 공지는 운영진만
     [BOARDS.GENERAL]: ROLES.MEMBER, // 정회원 이상
@@ -55,6 +61,8 @@ export function hasPermission(userRole: Role | undefined, requiredRole: Role | u
 
 /**
  * 게시판 조회 권한
+ * @deprecated 서버 응답(BoardListResponse.canRead) 우선 사용
+ * 폴백 전용: useBoards() 훅에서 API 실패 시만 호출
  */
 export function canViewBoard(userRole: Role | undefined, boardType: Board): boolean {
   return hasPermission(userRole, PERMISSIONS.BOARD_VIEW[boardType]);
@@ -62,6 +70,8 @@ export function canViewBoard(userRole: Role | undefined, boardType: Board): bool
 
 /**
  * 게시판 글쓰기 권한
+ * @deprecated 서버 응답(BoardListResponse.canWrite) 우선 사용
+ * 폴백 전용: useBoards() 훅에서 API 실패 시만 호출
  */
 export function canWriteBoard(userRole: Role | undefined, boardType: Board): boolean {
   return hasPermission(userRole, PERMISSIONS.BOARD_WRITE[boardType]);

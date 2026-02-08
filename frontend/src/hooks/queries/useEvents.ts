@@ -1,87 +1,108 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryResult,
-  type UseMutationResult,
-} from '@tanstack/react-query';
-import { eventsApi } from '@/api/events';
-import { MOCK_EVENTS } from '@/mocks';
-import type { Event, EventDetail } from '@/types/entities';
-import type { EventListParams } from '@/types/api';
+import { useQueryClient } from '@tanstack/react-query';
 
-// 쿼리 키 상수
+// Orval로 생성된 이벤트 API hooks
+import {
+  useGetEventList,
+  useGetEvent,
+  useCreateEvent as useCreateEventMutation,
+  useUpdateEvent as useUpdateEventMutation,
+  useDeleteEvent as useDeleteEventMutation,
+} from '@/api/model/event/event';
+import {
+  useRegisterEvent,
+  useCancelRegistration,
+} from '@/api/model/event-registration/event-registration';
+import type { GetEventListParams, CreateEventRequest } from '@/api/model/models';
+
+// 쿼리 키 - Orval이 자동으로 생성하지만 invalidation을 위해 정의
 export const eventKeys = {
-  all: ['events'] as const,
-  lists: () => [...eventKeys.all, 'list'] as const,
-  list: (filters: EventListParams) => [...eventKeys.lists(), filters] as const,
+  all: ['/api/v1/events'] as const,
+  lists: () => [...eventKeys.all] as const,
+  list: (filters?: GetEventListParams) =>
+    [...eventKeys.all, ...(filters ? [filters] : [])] as const,
   details: () => [...eventKeys.all, 'detail'] as const,
-  detail: (id: string) => [...eventKeys.details(), id] as const,
+  detail: (id: number) => [`/api/v1/events/${id}`] as const,
 };
 
-// 행사 목록 조회 (Mock)
-export function useEvents(
-  options: EventListParams = {}
-): UseQueryResult<Event[]> {
-  return useQuery({
-    queryKey: eventKeys.list(options),
-    queryFn: async (): Promise<Event[]> => {
-      // TODO: 백엔드 연동 시 아래 주석 해제
-      // const response = await eventsApi.getList(options);
-      // return response.data;
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return [...MOCK_EVENTS];
-    },
-  });
+// 행사 목록 조회 (실제 API 사용)
+export function useEvents(params?: GetEventListParams) {
+  return useGetEventList(params);
 }
 
-// 행사 상세 조회 (Mock)
-export function useEvent(eventId: string): UseQueryResult<EventDetail> {
-  return useQuery({
-    queryKey: eventKeys.detail(eventId),
-    queryFn: async (): Promise<EventDetail> => {
-      // TODO: 백엔드 연동 시 아래 주석 해제
-      // const response = await eventsApi.getDetail(eventId);
-      // return response.data;
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const event = [...MOCK_EVENTS].find((e) => e.id === eventId);
-      if (!event) throw new Error('Event not found');
-      return event as EventDetail;
-    },
-    enabled: !!eventId,
-  });
+// 행사 상세 조회 (실제 API 사용)
+export function useEvent(eventId: number) {
+  return useGetEvent(eventId);
 }
 
-// 행사 신청
-export function useApplyEvent(): UseMutationResult<void, Error, string> {
+// 행사 신청 (실제 API 사용)
+export function useApplyEvent() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (eventId: string): Promise<void> => {
-      await eventsApi.register(eventId);
-    },
-    onSuccess: (_: void, eventId: string): void => {
-      void queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) });
-      void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+  return useRegisterEvent({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        // 행사 상세 및 목록 새로고침
+        void queryClient.invalidateQueries({ queryKey: eventKeys.detail(variables.eventId) });
+        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      },
     },
   });
 }
 
-// 행사 신청 취소
-export function useCancelEventApplication(): UseMutationResult<
-  void,
-  Error,
-  string
-> {
+// 행사 신청 취소 (실제 API 사용)
+export function useCancelEventApplication() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (eventId: string): Promise<void> => {
-      await eventsApi.cancelRegistration(eventId);
+  return useCancelRegistration({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        // 행사 상세 및 목록 새로고침
+        void queryClient.invalidateQueries({ queryKey: eventKeys.detail(variables.eventId) });
+        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      },
     },
-    onSuccess: (_: void, eventId: string): void => {
-      void queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) });
-      void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+  });
+}
+
+// 행사 생성 (실제 API 사용)
+export function useCreateEvent() {
+  const queryClient = useQueryClient();
+
+  return useCreateEventMutation({
+    mutation: {
+      onSuccess: () => {
+        // 행사 목록 새로고침
+        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      },
+    },
+  });
+}
+
+// 행사 수정 (실제 API 사용)
+export function useUpdateEvent() {
+  const queryClient = useQueryClient();
+
+  return useUpdateEventMutation({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        // 행사 상세 및 목록 새로고침
+        void queryClient.invalidateQueries({ queryKey: eventKeys.detail(variables.eventId) });
+        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      },
+    },
+  });
+}
+
+// 행사 삭제 (실제 API 사용)
+export function useDeleteEvent() {
+  const queryClient = useQueryClient();
+
+  return useDeleteEventMutation({
+    mutation: {
+      onSuccess: () => {
+        // 행사 목록 새로고침 (상세는 더 이상 존재하지 않음)
+        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      },
     },
   });
 }

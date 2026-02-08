@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -9,14 +10,17 @@ import { useUIStore } from '@/stores';
 import { BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type PostFormData } from '@/constants/board';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { useQueryClient } from '@tanstack/react-query';
+import { isForbiddenError, isUnauthorizedError, isNotFoundError, getErrorMessage } from '@/utils/error';
 
 export default function PostEditPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
   const navigate = useNavigate();
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
+  const isMobile = useIsMobile();
+  const [mobilePreview, setMobilePreview] = useState<'edit' | 'preview'>('edit');
   const queryClient = useQueryClient();
 
   const validBoardType = boardType as BoardType;
@@ -113,26 +117,20 @@ export default function PostEditPage() {
 
           navigate(`/board/${validBoardType}/${postId}`);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           let errorMessage = '게시글 수정에 실패했습니다.';
 
-          if (error.message) {
-            errorMessage = error.message;
-          }
-
-          if (error.message?.includes('403') || error.message?.includes('권한')) {
+          if (isForbiddenError(error)) {
             errorMessage = '수정 권한이 없습니다.\n\n작성자 본인만 게시글을 수정할 수 있습니다.';
-          }
-
-          if (error.message?.includes('401') || error.message?.includes('인증')) {
+          } else if (isUnauthorizedError(error)) {
             errorMessage = '로그인이 필요합니다.\n로그인 페이지로 이동합니다.';
             alert(errorMessage);
             navigate('/login');
             return;
-          }
-
-          if (error.message?.includes('404')) {
+          } else if (isNotFoundError(error)) {
             errorMessage = '게시글을 찾을 수 없습니다.';
+          } else {
+            errorMessage = getErrorMessage(error);
           }
 
           alert(errorMessage);
@@ -214,7 +212,7 @@ export default function PostEditPage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div
           className={cn(
-            'w-full max-w-[1616px] mx-auto p-8 md:p-12 rounded-[2.5rem] border min-h-[80vh] flex flex-col',
+            'w-full max-w-[1616px] mx-auto p-s4 sm:p-8 md:p-12 rounded-r4 sm:rounded-[1.5rem] md:rounded-[2.5rem] border min-h-[60vh] md:min-h-[80vh] flex flex-col',
             isDark ? 'bg-[#1A1A1A] border-white/5' : 'bg-white border-gray-100 shadow-sm'
           )}
         >
@@ -285,7 +283,7 @@ export default function PostEditPage() {
               type="text"
               placeholder="게시글 제목"
               className={cn(
-                'w-full text-4xl font-bold bg-transparent border-none focus:ring-0 focus:outline-none opacity-80',
+                'w-full text-2xl sm:text-3xl md:text-4xl font-bold bg-transparent border-none focus:ring-0 focus:outline-none opacity-80',
                 isDark ? 'text-white placeholder-gray-500' : 'text-black placeholder-gray-500',
                 errors.title && 'border-b-2 border-destructive'
               )}
@@ -297,6 +295,38 @@ export default function PostEditPage() {
 
           {/* Content Markdown Editor */}
           <div className="flex-1 relative mb-s8">
+            {/* 모바일 편집/미리보기 토글 */}
+            {isMobile && (
+              <div className={cn(
+                'flex mb-s3 rounded-lg p-1',
+                isDark ? 'bg-white/5' : 'bg-gray-100'
+              )}>
+                <button
+                  type="button"
+                  onClick={() => setMobilePreview('edit')}
+                  className={cn(
+                    'flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer',
+                    mobilePreview === 'edit'
+                      ? isDark ? 'bg-gray-700 text-foreground shadow-sm' : 'bg-white text-foreground shadow-sm'
+                      : 'text-gray-500'
+                  )}
+                >
+                  편집
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobilePreview('preview')}
+                  className={cn(
+                    'flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer',
+                    mobilePreview === 'preview'
+                      ? isDark ? 'bg-gray-700 text-foreground shadow-sm' : 'bg-white text-foreground shadow-sm'
+                      : 'text-gray-500'
+                  )}
+                >
+                  미리보기
+                </button>
+              </div>
+            )}
             <Controller
               name="content"
               control={control}
@@ -304,8 +334,8 @@ export default function PostEditPage() {
                 <MDEditor
                   value={field.value}
                   onChange={field.onChange}
-                  preview="live"
-                  height={500}
+                  preview={isMobile ? mobilePreview : 'live'}
+                  height={isMobile ? 300 : 500}
                   data-color-mode={isDark ? 'dark' : 'light'}
                   commandsFilter={(command) => {
                     if (command.name === 'title' || command.name === 'image' || command.name === 'checked-list') {
@@ -325,24 +355,24 @@ export default function PostEditPage() {
           </div>
 
           {/* Bottom Toolbar */}
-          <div className={cn('mt-8 pt-4 border-t flex gap-4', isDark ? 'border-white/5' : 'border-gray-100')}>
+          <div className={cn('mt-s4 sm:mt-8 pt-s3 sm:pt-4 border-t flex gap-s3 sm:gap-4', isDark ? 'border-white/5' : 'border-gray-100')}>
             <button
               type="button"
               className={cn(
-                'p-3 rounded-lg transition cursor-pointer',
+                'p-2 sm:p-3 rounded-lg transition cursor-pointer',
                 isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >
-              <ImageIcon size={24} />
+              <ImageIcon size={isMobile ? 20 : 24} />
             </button>
             <button
               type="button"
               className={cn(
-                'p-3 rounded-lg transition cursor-pointer',
+                'p-2 sm:p-3 rounded-lg transition cursor-pointer',
                 isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
               )}
             >
-              <Paperclip size={24} />
+              <Paperclip size={isMobile ? 20 : 24} />
             </button>
             <div className="ml-auto text-xs text-gray-500 flex items-center">
               {content?.length || 0} 글자

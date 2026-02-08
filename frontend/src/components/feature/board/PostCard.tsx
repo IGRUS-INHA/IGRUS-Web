@@ -33,7 +33,7 @@ export default function PostCard({ post, linkTo }: PostCardProps) {
           />
         )}
         {post.tag && (
-          <span className="absolute top-4 right-4 bg-background text-foreground text-c2 font-bold px-s2 py-s1 rounded shadow-lg uppercase tracking-wider">
+          <span className="absolute top-s4 right-s4 bg-background text-foreground text-c2 font-bold px-s2 py-s1 rounded-r1 shadow-lg uppercase tracking-wider">
             {post.tag}
           </span>
         )}
@@ -46,8 +46,8 @@ export default function PostCard({ post, linkTo }: PostCardProps) {
         />
       </div>
       <div className="flex justify-between items-start">
-        <div className="flex-1 mr-4">
-          <h4 className="font-bold text-b1 leading-tight mb-1 transition-colors group-hover:text-primary">
+        <div className="flex-1 mr-s4">
+          <h4 className="font-bold text-b1 leading-tight mb-s1 transition-colors group-hover:text-primary">
             {post.title}
           </h4>
           <div className="flex items-center gap-s2">

@@ -3,6 +3,7 @@ import { useUIStore } from '@/stores';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Footer from './Footer';
+import { ToastContainer } from '@/components/ui/toast';
 
 export default function Layout() {
   const location = useLocation();
@@ -26,12 +27,12 @@ export default function Layout() {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen">
         {/* Header */}
         <Header />
 
         {/* Page Content */}
-        <main className="px-6 pb-6 flex-1">
+        <main className="px-s5 pb-s5 flex-1">
           <div className="max-w-7xl mx-auto h-full">
             <Outlet />
           </div>
@@ -40,6 +41,9 @@ export default function Layout() {
         {/* Footer - 조건부 렌더링 */}
         {showFooter && <Footer />}
       </div>
+
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   );
 }

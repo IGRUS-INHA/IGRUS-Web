@@ -1,7 +1,9 @@
 import { defineConfig } from "orval";
 
+// 환경 변수에서 읽어오고, 없으면 AWS URL 사용
 const swaggerSchemaUrl =
-  process.env.VITE_SWAGGER_URL ?? "http://localhost:8080/v3/api-docs";
+  process.env.VITE_SWAGGER_URL ||
+  "http://igrus-web-alb-535342735.ap-northeast-2.elb.amazonaws.com/v3/api-docs";
 
 export default defineConfig({
   api: {
@@ -21,6 +23,12 @@ export default defineConfig({
         mutator: {
           path: "./src/api/client.ts",
           name: "customFetch",
+        },
+        operations: {
+          // */* content-type을 application/json으로 처리
+          "*": {
+            requestFormat: "json",
+          },
         },
       },
     },

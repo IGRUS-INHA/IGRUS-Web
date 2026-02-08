@@ -1,26 +1,83 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
-import { Layers, Heart, Bookmark, Award } from 'lucide-react';
+import { Layers, Heart, Bookmark, Award, Eye, ThumbsUp, RefreshCw, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import ProfileHeader from '@/components/feature/mypage/ProfileHeader';
 import { cn } from '@/lib/utils';
+import { useMyProfile, useMyPosts, useMyLikes, useMyBookmarks, useMyRegistrations } from '@/hooks/queries/useMyPage';
+import { formatRelativeTime, formatDate } from '@/utils';
+import type { MyRegistrationResponseStatus } from '@/api/model/models/myRegistrationResponseStatus';
 
 type TabType = 'posts' | 'likes' | 'scraps' | 'events';
 
+const REGISTRATION_STATUS_LABELS: Record<string, string> = {
+  REGISTERED: '신청 완료',
+  WAITING: '대기중',
+  APPROVED: '승인됨',
+  REJECTED: '거절됨',
+  CANCELED: '취소됨',
+};
+
+function getRegistrationStatusColor(status?: MyRegistrationResponseStatus) {
+  switch (status) {
+    case 'APPROVED':
+    case 'REGISTERED':
+      return 'text-primary';
+    case 'WAITING':
+      return 'text-yellow-600 dark:text-yellow-400';
+    case 'REJECTED':
+    case 'CANCELED':
+      return 'text-destructive';
+    default:
+      return 'text-muted-foreground';
+  }
+}
+
 export default function MyPage() {
+  const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
   const [activeTab, setActiveTab] = useState<TabType>('posts');
 
+  // API 조회
+  const profile = useMyProfile();
+  const postsQuery = useMyPosts({ page: 0, size: 10 });
+  const likesQuery = useMyLikes({ page: 0, size: 10 });
+  const bookmarksQuery = useMyBookmarks({ page: 0, size: 10 });
+  const registrationsQuery = useMyRegistrations();
+
   const handleChangePassword = () => {
-    alert('비밀번호 변경 기능이 곧 추가됩니다.');
+    Swal.fire({
+      icon: 'info',
+      title: '개발 예정',
+      text: '비밀번호 변경 기능이 곧 추가됩니다.',
+      confirmButtonText: '확인',
+      confirmButtonColor: '#17A2B8',
+      showClass: { popup: '', backdrop: '' },
+      hideClass: { popup: '', backdrop: '' },
+    });
   };
 
-  const handleLogout = () => {
-    if (confirm('로그아웃 하시겠습니까?')) {
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      icon: 'question',
+      title: '로그아웃',
+      text: '로그아웃 하시겠습니까?',
+      showCancelButton: true,
+      confirmButtonText: '로그아웃',
+      cancelButtonText: '취소',
+      confirmButtonColor: '#DC3545',
+      cancelButtonColor: '#6C757D',
+      showClass: { popup: '', backdrop: '' },
+      hideClass: { popup: '', backdrop: '' },
+    });
+
+    if (result.isConfirmed) {
       logout();
     }
   };
@@ -33,28 +90,37 @@ export default function MyPage() {
     );
   }
 
-  // Mock data for tabs
+  // 탭별 카운트 (로딩 중이면 '-' 표시)
   const tabCounts = {
-    posts: 24,
-    likes: 156,
-    scraps: 42,
-    events: 3,
+    posts: postsQuery.isLoading ? '-' : postsQuery.totalElements,
+    likes: likesQuery.isLoading ? '-' : likesQuery.totalElements,
+    scraps: bookmarksQuery.isLoading ? '-' : bookmarksQuery.totalElements,
+    events: registrationsQuery.isLoading ? '-' : registrationsQuery.registrations.length,
   };
+
+  // 프로필 데이터 (API 응답 우선, fallback으로 auth store)
+  const profileData = profile.data?.status === 200 ? profile.data.data : undefined;
 
   return (
     <div className="space-y-s8 animate-in fade-in duration-300">
       {/* Profile Header */}
-      <ProfileHeader user={user} onChangePassword={handleChangePassword} onLogout={handleLogout} />
+      <ProfileHeader
+        user={user}
+        profile={profileData}
+        onChangePassword={handleChangePassword}
+        onLogout={handleLogout}
+        onWithdraw={() => navigate('/mypage/withdraw')}
+      />
 
       {/* Tabs */}
-      <div className="flex gap-s4 overflow-x-auto pb-2">
+      <div className="flex gap-s4 overflow-x-auto pb-s2">
         {(['posts', 'likes', 'scraps', 'events'] as TabType[]).map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'flex-1 min-w-[120px] text-center px-s6 py-s4 rounded-[2rem] border transition-all cursor-pointer',
+              'flex-1 min-w-[120px] text-center px-s6 py-s4 rounded-r4 border transition-all cursor-pointer',
               activeTab === tab
                 ? 'bg-primary/10 border-primary'
                 : 'bg-white/5 border-border hover:border-primary/30'
@@ -78,7 +144,7 @@ export default function MyPage() {
       {/* Main Content Area */}
       <Card
         className={cn(
-          'p-s8 rounded-[2.5rem] border min-h-[400px]',
+          'p-s6 rounded-r4 border min-h-[400px]',
           isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'
         )}
       >
@@ -91,99 +157,204 @@ export default function MyPage() {
         </h3>
 
         <div className="space-y-s4">
+          {/* 게시글 탭 */}
           {activeTab === 'posts' && (
-            <>
-              {[1, 2, 3].map((i) => (
+            <TabContent
+              isLoading={postsQuery.isLoading}
+              isError={postsQuery.isError}
+              isEmpty={postsQuery.posts.length === 0}
+              emptyMessage="작성한 게시글이 없습니다."
+              onRetry={() => void postsQuery.refetch()}
+            >
+              {postsQuery.posts.map((post) => (
                 <div
-                  key={i}
+                  key={post.id}
+                  onClick={() => post.boardCode && post.id && navigate(`/boards/${post.boardCode}/posts/${post.id}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
                     isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
                   )}
                 >
-                  <div>
-                    <p className="text-c1 text-muted-foreground mb-1 font-bold uppercase">자유게시판 • 2일 전</p>
-                    <h4 className="font-bold text-lg">팀을 위한 Figma 워크플로우 최적화 방법</h4>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-c1 text-muted-foreground mb-s1 font-bold">
+                      {post.boardName ?? '게시판'} {post.createdAt ? `\u2022 ${formatRelativeTime(post.createdAt)}` : ''}
+                    </p>
+                    <h4 className="font-bold text-lg truncate">{post.title ?? '제목 없음'}</h4>
+                    <div className="flex items-center gap-s4 mt-s2 text-c1 text-muted-foreground">
+                      <span className="flex items-center gap-1"><Eye size={12} /> {post.viewCount ?? 0}</span>
+                      <span className="flex items-center gap-1"><ThumbsUp size={12} /> {post.likeCount ?? 0}</span>
+                    </div>
                   </div>
-                  <div className="text-sm font-bold text-primary cursor-pointer">보기</div>
+                  <div className="text-sm font-bold text-primary cursor-pointer ml-s4 shrink-0">보기</div>
                 </div>
               ))}
-            </>
+            </TabContent>
           )}
 
+          {/* 좋아요 탭 */}
           {activeTab === 'likes' && (
-            <>
-              {[1, 2, 3, 4].map((i) => (
+            <TabContent
+              isLoading={likesQuery.isLoading}
+              isError={likesQuery.isError}
+              isEmpty={likesQuery.posts.length === 0}
+              emptyMessage="좋아요한 게시글이 없습니다."
+              onRetry={() => void likesQuery.refetch()}
+            >
+              {likesQuery.posts.map((post) => (
                 <div
-                  key={i}
+                  key={post.postId}
+                  onClick={() => post.boardCode && post.postId && navigate(`/boards/${post.boardCode}/posts/${post.postId}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
-                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
+                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border',
+                    post.isDeleted && 'opacity-50'
                   )}
                 >
-                  <div className="flex items-center gap-s4">
-                    <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center text-destructive">
+                  <div className="flex items-center gap-s4 min-w-0">
+                    <div className="w-10 h-10 rounded-r4 bg-destructive/10 flex items-center justify-center text-destructive shrink-0">
                       <Heart size={18} className="fill-current" />
                     </div>
-                    <div>
-                      <p className="text-c1 text-muted-foreground mb-1 font-bold uppercase">좋아요한 게시글</p>
-                      <h4 className="font-bold text-lg">주간 디자인 영감 #42</h4>
-                      <p className="text-c1 text-muted-foreground">작성자: 홍길동</p>
+                    <div className="min-w-0">
+                      <p className="text-c1 text-muted-foreground mb-s1 font-bold">
+                        {post.boardName ?? '게시판'} {post.createdAt ? `\u2022 ${formatRelativeTime(post.createdAt)}` : ''}
+                      </p>
+                      <h4 className="font-bold text-lg truncate">
+                        {post.isDeleted ? (post.deletedMessage ?? '삭제된 게시글') : (post.title ?? '제목 없음')}
+                      </h4>
+                      <p className="text-c1 text-muted-foreground">
+                        작성자: {post.authorName ?? '알 수 없음'}
+                        {post.likeCount !== undefined && ` \u2022 좋아요 ${post.likeCount}`}
+                      </p>
                     </div>
                   </div>
                 </div>
               ))}
-            </>
+            </TabContent>
           )}
 
+          {/* 스크랩 탭 */}
           {activeTab === 'scraps' && (
-            <>
-              {[1, 2].map((i) => (
+            <TabContent
+              isLoading={bookmarksQuery.isLoading}
+              isError={bookmarksQuery.isError}
+              isEmpty={bookmarksQuery.posts.length === 0}
+              emptyMessage="스크랩한 게시글이 없습니다."
+              onRetry={() => void bookmarksQuery.refetch()}
+            >
+              {bookmarksQuery.posts.map((post) => (
                 <div
-                  key={i}
+                  key={post.postId}
+                  onClick={() => post.boardCode && post.postId && navigate(`/boards/${post.boardCode}/posts/${post.postId}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
-                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
+                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border',
+                    post.isDeleted && 'opacity-50'
                   )}
                 >
-                  <div>
-                    <div className="flex items-center gap-s2 mb-1">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-s2 mb-s1">
                       <Bookmark size={14} className="text-primary fill-current" />
-                      <p className="text-c1 text-primary font-bold">스크랩한 자료</p>
+                      <p className="text-c1 text-primary font-bold">{post.boardName ?? '스크랩한 자료'}</p>
                     </div>
-                    <h4 className="font-bold text-lg mb-1">2024 React 라이브러리 종합 가이드</h4>
-                    <p className="text-c1 text-muted-foreground">작성자: 김철수 • 5월 20일 저장</p>
+                    <h4 className="font-bold text-lg mb-s1 truncate">
+                      {post.isDeleted ? (post.deletedMessage ?? '삭제된 게시글') : (post.title ?? '제목 없음')}
+                    </h4>
+                    <p className="text-c1 text-muted-foreground">
+                      작성자: {post.authorName ?? '알 수 없음'}
+                      {post.createdAt ? ` \u2022 ${formatDate(post.createdAt)}` : ''}
+                    </p>
                   </div>
                 </div>
               ))}
-            </>
+            </TabContent>
           )}
 
+          {/* 행사 탭 */}
           {activeTab === 'events' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-s4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="p-s6 rounded-r4 border border-primary/30 bg-primary/5">
-                  <div className="flex justify-between items-center">
+            <TabContent
+              isLoading={registrationsQuery.isLoading}
+              isError={registrationsQuery.isError}
+              isEmpty={registrationsQuery.registrations.length === 0}
+              emptyMessage="신청한 행사가 없습니다."
+              onRetry={() => void registrationsQuery.refetch()}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-s4">
+                {registrationsQuery.registrations.map((reg) => (
+                  <div
+                    key={reg.registrationId}
+                    onClick={() => reg.eventId && navigate(`/events/${reg.eventId}`)}
+                    className="p-s6 rounded-r4 border border-primary/30 bg-primary/5 cursor-pointer transition-all hover:scale-[1.01]"
+                  >
                     <div>
-                      <h4 className="font-bold text-lg">여름 네트워킹 모임</h4>
-                      <p className="text-c1 text-primary mt-1 font-bold">상태: 참가 확정</p>
-                      <p className="text-c1 text-muted-foreground mt-2">2024년 6월 15일 • 디자인홀 B1</p>
+                      <h4 className="font-bold text-lg">{reg.eventTitle ?? '행사명 없음'}</h4>
+                      <p className={cn('text-c1 mt-s1 font-bold', getRegistrationStatusColor(reg.status))}>
+                        상태: {reg.status ? (REGISTRATION_STATUS_LABELS[reg.status] ?? reg.status) : '-'}
+                      </p>
+                      <p className="text-c1 text-muted-foreground mt-s2">
+                        {reg.eventStartAt ? formatDate(reg.eventStartAt) : '일정 미정'}
+                        {reg.registeredAt ? ` \u2022 신청일 ${formatDate(reg.registeredAt)}` : ''}
+                      </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-c1 text-muted-foreground hover:text-destructive bg-white/50 dark:bg-black/20 rounded-r2"
-                    >
-                      취소
-                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </TabContent>
           )}
         </div>
       </Card>
     </div>
   );
+}
+
+// 탭 컨텐츠 래퍼 (로딩/에러/빈 상태 처리)
+function TabContent({
+  isLoading,
+  isError,
+  isEmpty,
+  emptyMessage,
+  onRetry,
+  children,
+}: {
+  isLoading: boolean;
+  isError: boolean;
+  isEmpty: boolean;
+  emptyMessage: string;
+  onRetry: () => void;
+  children: React.ReactNode;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+        <Loader2 size={32} className="animate-spin mb-s4" />
+        <p className="text-b2">데이터를 불러오는 중...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+        <p className="text-b2 mb-s4">데이터를 불러올 수 없습니다.</p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+          className="flex items-center gap-s2"
+        >
+          <RefreshCw size={14} /> 다시 시도
+        </Button>
+      </div>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground">
+        <p className="text-b2">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 }

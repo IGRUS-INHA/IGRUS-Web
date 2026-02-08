@@ -41,7 +41,7 @@ export function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <nav className={cn('flex items-center justify-center gap-1', className)}>
+    <nav className={cn('flex items-center justify-center gap-s1', className)}>
       {/* 이전 페이지 */}
       <Button
         variant="outline"

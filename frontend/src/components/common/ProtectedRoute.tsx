@@ -1,6 +1,10 @@
+import { useEffect, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '@/stores';
+import { useUIStore } from '@/stores';
+import { useAuth } from '@/hooks';
 import { hasPermission } from '@/constants/permissions';
+import { ROLE_LABELS } from '@/constants';
+import { FullPageSpinner } from '@/components/ui';
 import type { Role } from '@/types';
 
 interface ProtectedRouteProps {
@@ -20,7 +24,35 @@ export default function ProtectedRoute({
   requireAuth = true,
 }: ProtectedRouteProps) {
   const location = useLocation();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, isHydrated, user } = useAuth();
+  const addToast = useUIStore((state) => state.addToast);
+  const hasShownToast = useRef(false);
+
+  const isPermissionDenied = minRole && !hasPermission(user?.role, minRole);
+
+  // 권한 부족 시 토스트 표시 (렌더 중 state 변경 방지)
+  useEffect(() => {
+    if (!isHydrated || !isAuthenticated || !isPermissionDenied) return;
+    if (hasShownToast.current) return;
+
+    hasShownToast.current = true;
+    const requiredRoleLabel = ROLE_LABELS[minRole!] ?? minRole;
+    const currentRoleLabel = user?.role
+      ? ROLE_LABELS[user.role] ?? user.role
+      : '비회원';
+
+    addToast({
+      type: 'warning',
+      title: '접근 권한 부족',
+      message: `이 페이지는 ${requiredRoleLabel} 이상 권한이 필요합니다. (현재 권한: ${currentRoleLabel})`,
+      duration: 5000,
+    });
+  }, [isHydrated, isAuthenticated, isPermissionDenied, minRole, user?.role, addToast]);
+
+  // hydration 완료 전에는 로딩 스피너 표시
+  if (!isHydrated) {
+    return <FullPageSpinner />;
+  }
 
   // 로그인 필요한데 안 되어있음
   if (requireAuth && !isAuthenticated) {
@@ -28,7 +60,7 @@ export default function ProtectedRoute({
   }
 
   // 권한 부족 → 홈으로 리다이렉트
-  if (minRole && !hasPermission(user?.role, minRole)) {
+  if (isPermissionDenied) {
     return <Navigate to="/" replace />;
   }
 
