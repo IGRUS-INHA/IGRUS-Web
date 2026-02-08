@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, UserPlus, Users, Gamepad2, Trophy } from 'lucide-react';
+import { ArrowRight, UserPlus, Users, Gamepad2, Trophy, MessageCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUIStore } from '@/stores/uiStore';
+import { useAuth } from '@/hooks';
 import { cn } from '@/lib/utils';
 import type { Post } from '@/types/entities';
 
@@ -59,6 +60,7 @@ const FEATURED_POSTS: Post[] = [
 export default function HomePage() {
   const theme = useUIStore((state) => state.theme);
   const isDark = theme === 'dark';
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -129,34 +131,35 @@ export default function HomePage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap items-center gap-s3 pt-s2">
-              <Button
-                asChild
-                className="flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all bg-[#03A69E] text-white hover:bg-[#029890] hero-btn-glow"
-              >
-                <Link to="/signup">
-                  <UserPlus size={16} />
-                  가입하기
-                  <ArrowRight
-                    size={16}
-                    className="group-hover/btn:translate-x-1 transition-transform"
-                  />
-                </Link>
-              </Button>
-
-              <Button
-                asChild
-                variant="ghost"
-                className={cn(
-                  'flex items-center gap-s2 px-s5 py-s3 rounded-full font-medium text-sm transition-all border',
-                  isDark
-                    ? 'border-white/10 text-gray-300 hover:border-[#03A69E]/40 hover:text-[#66CBC5] hover:bg-white/[0.03] backdrop-blur-sm'
-                    : 'border-gray-200 text-gray-500 hover:border-[#03A69E]/30 hover:text-[#03A69E] hover:bg-[#03A69E]/[0.03]'
-                )}
-              >
-                <Link to="/board/general">
-                  커뮤니티 둘러보기
-                </Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  asChild
+                  className="flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all bg-[#03A69E] text-white hover:bg-[#029890] hero-btn-glow"
+                >
+                  <Link to="/board/general">
+                    <MessageCircle size={16} />
+                    커뮤니티 둘러보기
+                    <ArrowRight
+                      size={16}
+                      className="group-hover/btn:translate-x-1 transition-transform"
+                    />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  className="flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all bg-[#03A69E] text-white hover:bg-[#029890] hero-btn-glow"
+                >
+                  <Link to="/signup">
+                    <UserPlus size={16} />
+                    가입하기
+                    <ArrowRight
+                      size={16}
+                      className="group-hover/btn:translate-x-1 transition-transform"
+                    />
+                  </Link>
+                </Button>
+              )}
             </div>
 
             {/* Stats Bar */}
