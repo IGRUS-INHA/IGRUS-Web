@@ -73,7 +73,7 @@ public class EventController {
     })
     @GetMapping
     public ResponseEntity<List<EventListResponse>> getEventList(
-            @Parameter(description = "행사 상태 필터 (UPCOMING, OPEN, CLOSED, CANCELED)")
+            @Parameter(description = "행사 상태 필터 (UPCOMING, OPEN, CLOSED, ONGOING, COMPLETED)")
             @RequestParam(required = false) EventStatus status
     ) {
         log.info("행사 목록 조회 요청 - status: {}", status);
@@ -169,24 +169,4 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "행사 취소", description = "행사를 취소합니다. 작성자 또는 관리자만 가능합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "행사 취소 성공",
-                    content = @Content(schema = @Schema(implementation = EventDetailResponse.class))),
-            @ApiResponse(responseCode = "400", description = "취소 불가능한 상태",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @PostMapping("/{eventId}/cancel")
-    public ResponseEntity<EventDetailResponse> cancelEvent(
-            @Parameter(description = "행사 ID") @PathVariable Long eventId,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
-        log.info("행사 취소 요청 - eventId: {}, userId: {}", eventId, user.userId());
-        EventDetailResponse response = eventService.cancelEvent(eventId, user.userId());
-        return ResponseEntity.ok(response);
-    }
 }

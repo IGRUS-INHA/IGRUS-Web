@@ -3,10 +3,11 @@ package igrus.web.event.domain;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Set;
-
 /**
  * 행사 상태를 나타내는 Enum.
+ *
+ * <p>상태 흐름:</p>
+ * UPCOMING(예정) → OPEN(모집 중) → CLOSED(마감) → ONGOING(진행 중) → COMPLETED(완료)
  */
 @Getter
 @RequiredArgsConstructor
@@ -15,8 +16,8 @@ public enum EventStatus {
     UPCOMING("예정", "신청 시작 전"),
     OPEN("모집 중", "신청 가능"),
     CLOSED("마감", "신청 마감"),
-    COMPLETED("완료", "행사 종료"),
-    CANCELED("취소", "행사 취소됨");
+    ONGOING("진행 중", "행사 진행 중"),
+    COMPLETED("완료", "행사 종료");
 
     private final String displayName;
     private final String description;
@@ -29,14 +30,15 @@ public enum EventStatus {
      */
     public boolean canTransitionTo(EventStatus target) {
         if (this == target) {
-            return false; // 같은 상태로 전이 불가
+            return false;
         }
 
         return switch (this) {
-            case UPCOMING -> target == OPEN || target == CANCELED;
-            case OPEN -> target == CLOSED || target == COMPLETED || target == CANCELED;
-            case CLOSED -> target == OPEN || target == COMPLETED || target == CANCELED;
-            case COMPLETED, CANCELED -> false; // 종료 상태에서는 전이 불가
+            case UPCOMING -> target == OPEN;
+            case OPEN -> target == CLOSED;
+            case CLOSED -> target == OPEN || target == ONGOING;
+            case ONGOING -> target == COMPLETED;
+            case COMPLETED -> false;
         };
     }
 
@@ -50,26 +52,26 @@ public enum EventStatus {
     }
 
     /**
-     * 행사가 종료된 상태인지 확인합니다.
+     * 행사가 최종 종료된 상태인지 확인합니다.
      *
-     * @return 종료 여부 (COMPLETED, CANCELED)
+     * @return 종료 여부 (COMPLETED)
      */
     public boolean isTerminal() {
-        return this == COMPLETED || this == CANCELED;
+        return this == COMPLETED;
     }
 
     /**
      * 행사가 종료된 상태인지 확인합니다.
      *
-     * @return 종료 여부 (CLOSED, COMPLETED, CANCELED)
+     * @return 종료 여부 (COMPLETED)
      */
     public boolean isFinished() {
-        return this == CLOSED || this == COMPLETED || this == CANCELED;
+        return this == COMPLETED;
     }
 
     /**
      * 행사 정보 수정이 가능한 상태인지 확인합니다.
-     * COMPLETED, CANCELED 상태에서는 수정 불가.
+     * ONGOING, COMPLETED 상태에서는 수정 불가.
      *
      * @return 수정 가능 여부
      */

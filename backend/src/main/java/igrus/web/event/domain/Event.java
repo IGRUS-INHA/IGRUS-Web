@@ -1,6 +1,6 @@
 package igrus.web.event.domain;
 
-import igrus.web.common.domain.BaseEntity;
+import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.InvalidEventCapacityException;
 import igrus.web.event.exception.InvalidEventStateTransitionException;
@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -19,15 +20,19 @@ import java.util.Optional;
  */
 @Entity
 @Table(name = "events")
+@SQLRestriction("event_deleted = false")
 @AttributeOverrides({
         @AttributeOverride(name = "createdAt", column = @Column(name = "event_created_at", nullable = false, updatable = false)),
         @AttributeOverride(name = "updatedAt", column = @Column(name = "event_updated_at", nullable = false)),
         @AttributeOverride(name = "createdBy", column = @Column(name = "event_created_by", updatable = false)),
-        @AttributeOverride(name = "updatedBy", column = @Column(name = "event_updated_by"))
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "event_updated_by")),
+        @AttributeOverride(name = "deleted", column = @Column(name = "event_deleted", nullable = false)),
+        @AttributeOverride(name = "deletedAt", column = @Column(name = "event_deleted_at")),
+        @AttributeOverride(name = "deletedBy", column = @Column(name = "event_deleted_by"))
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Event extends BaseEntity {
+public class Event extends SoftDeletableEntity {
 
     /** 행사 고유 식별자 */
     @Id
@@ -181,16 +186,6 @@ public class Event extends BaseEntity {
         this.status = EventStatus.COMPLETED;
     }
 
-    /**
-     * 행사를 취소합니다.
-     *
-     * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
-     */
-    public void cancel() {
-        validateStateTransition(EventStatus.CANCELED);
-        this.status = EventStatus.CANCELED;
-    }
-
     private void validateStateTransition(EventStatus target) {
         if (!this.status.canTransitionTo(target)) {
             throw new InvalidEventStateTransitionException(this.status, target);
@@ -201,6 +196,8 @@ public class Event extends BaseEntity {
      * 현재 시간에 따라 상태를 자동 갱신합니다. (Lazy Evaluation)
      * - UPCOMING → OPEN: 신청 시작일이 지났을 때
      * - OPEN → CLOSED (DEADLINE_PASSED): 신청 마감일이 지났을 때
+     * - CLOSED → ONGOING: 행사 시작일이 지났을 때
+     * - ONGOING → COMPLETED: 행사 종료일이 지났을 때
      *
      * @param now 현재 시간
      */
@@ -213,6 +210,16 @@ public class Event extends BaseEntity {
         // OPEN 상태에서 신청 마감일이 지났으면 CLOSED로 변경
         if (this.status == EventStatus.OPEN && now.isAfter(this.registrationEndAt)) {
             closeByDeadline();
+        }
+
+        // CLOSED 상태에서 행사 시작일이 지났으면 ONGOING으로 변경
+        if (this.status == EventStatus.CLOSED && !now.isBefore(this.eventStartAt)) {
+            this.status = EventStatus.ONGOING;
+        }
+
+        // ONGOING 상태에서 행사 종료일이 지났으면 COMPLETED로 변경
+        if (this.status == EventStatus.ONGOING && now.isAfter(this.eventEndAt)) {
+            this.status = EventStatus.COMPLETED;
         }
     }
 

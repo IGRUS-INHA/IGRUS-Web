@@ -26,7 +26,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount + 1 " +
-           "WHERE e.id = :id AND e.currentCount < e.capacity AND e.status = 'OPEN'")
+           "WHERE e.id = :id AND e.currentCount < e.capacity AND e.status = 'OPEN' AND e.deleted = false")
     int incrementCurrentCountIfAvailable(@Param("id") Long id);
 
     /**
@@ -41,7 +41,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount + 1 " +
-           "WHERE e.id = :id AND e.currentCount < e.capacity")
+           "WHERE e.id = :id AND e.currentCount < e.capacity AND e.deleted = false")
     int incrementCurrentCountForApproval(@Param("id") Long id);
 
     /**
@@ -56,7 +56,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount - 1 " +
-           "WHERE e.id = :id AND e.currentCount > 0")
+           "WHERE e.id = :id AND e.currentCount > 0 AND e.deleted = false")
     int decrementCurrentCount(@Param("id") Long id);
 
     /**

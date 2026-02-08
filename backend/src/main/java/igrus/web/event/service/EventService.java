@@ -36,7 +36,6 @@ import java.util.Set;
  *   <li>{@link #updateEvent} - 행사 수정 (운영진 이상)</li>
  *   <li>{@link #deleteEvent} - 행사 삭제 (운영진 이상)</li>
  *   <li>{@link #closeEvent} - 행사 수동 마감 (운영진 이상)</li>
- *   <li>{@link #cancelEvent} - 행사 취소 (운영진 이상)</li>
  * </ul>
  *
  * @see EventRegistrationService 행사 신청 관련 기능
@@ -72,7 +71,11 @@ public class EventService {
         validateOperatorPermission(user);
 
         // 3. 날짜 유효성 검증
-        validateEventDates(request);
+        if (request.registrationStartAt().isBefore(Instant.now())) {
+            throw new InvalidEventDateException("신청 시작일은 현재 시간 이후여야 합니다");
+        }
+        validateEventDates(request.eventStartAt(), request.eventEndAt(),
+                request.registrationStartAt(), request.registrationEndAt());
 
         // 4. Event 도메인 객체 생성
         Event event = Event.create(
@@ -121,12 +124,13 @@ public class EventService {
         }
 
         // 권한 정보 계산
-        boolean isAuthor = event.getUser().getId().equals(userId);
-        boolean canEdit = user.isOperatorOrAbove();
+        // 수정 권한이 있는가
+        boolean canEdit = user.isOperatorOrAbove(); // 운영진, 관리자
+        // 신청 vs 신청 취소 버튼 분기용
         boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
                 eventId, userId, ACTIVE_REGISTRATION_STATUSES);
 
-        return EventDetailResponse.from(event, isAuthor, canEdit, isRegistered);
+        return EventDetailResponse.from(event, canEdit, isRegistered);
     }
 
     /**
@@ -139,6 +143,7 @@ public class EventService {
     public List<EventListResponse> getEventList(EventStatus status) {
         List<Event> events;
 
+        // 상태 필터가 없으면 전체 조회, 있으면 해당 상태만 조회
         if (status == null) {
             events = eventRepository.findAll();
         } else {
@@ -177,7 +182,8 @@ public class EventService {
         validateEditPermission(user);
 
         // 4. 날짜 유효성 검증
-        validateEventDates(request);
+        validateEventDates(request.eventStartAt(), request.eventEndAt(),
+                request.registrationStartAt(), request.registrationEndAt());
 
         // 5. 행사 수정 (도메인 메서드 호출)
         event.update(
@@ -215,8 +221,8 @@ public class EventService {
         // 3. 권한 확인 (운영진 이상만 삭제 가능)
         validateEditPermission(user);
 
-        // 4. 삭제 실행
-        eventRepository.delete(event);
+        // 4. Soft Delete 실행
+        event.delete(userId);
     }
 
     /**
@@ -242,34 +248,6 @@ public class EventService {
 
         // 4. 행사 마감 (도메인 메서드 호출)
         event.closeManually();
-
-        // 5. 응답 반환
-        return EventDetailResponse.from(event);
-    }
-
-    /**
-     * 행사를 취소합니다.
-     *
-     * @param eventId 행사 ID
-     * @param userId  취소 요청자 ID
-     * @return 취소된 행사 상세 응답 DTO
-     * @throws EventNotFoundException       행사를 찾을 수 없는 경우
-     * @throws EventAccessDeniedException   권한이 없는 경우
-     */
-    public EventDetailResponse cancelEvent(Long eventId, Long userId) {
-        // 1. 행사 조회
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventNotFoundException(eventId));
-
-        // 2. 사용자 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
-
-        // 3. 권한 확인 (운영진 이상만 취소 가능)
-        validateEditPermission(user);
-
-        // 4. 행사 취소 (도메인 메서드 호출)
-        event.cancel();
 
         // 5. 응답 반환
         return EventDetailResponse.from(event);
@@ -302,36 +280,6 @@ public class EventService {
     }
 
     /**
-     * 행사 날짜 유효성을 검증합니다.
-     *
-     * @param request 행사 생성 요청 DTO
-     * @throws InvalidEventDateException 날짜 조건이 맞지 않을 경우
-     */
-    private void validateEventDates(CreateEventRequest request) {
-        validateEventDates(
-                request.eventStartAt(),
-                request.eventEndAt(),
-                request.registrationStartAt(),
-                request.registrationEndAt()
-        );
-    }
-
-    /**
-     * 행사 날짜 유효성을 검증합니다.
-     *
-     * @param request 행사 수정 요청 DTO
-     * @throws InvalidEventDateException 날짜 조건이 맞지 않을 경우
-     */
-    private void validateEventDates(UpdateEventRequest request) {
-        validateEventDates(
-                request.eventStartAt(),
-                request.eventEndAt(),
-                request.registrationStartAt(),
-                request.registrationEndAt()
-        );
-    }
-
-    /**
      * 행사 날짜 유효성을 검증합니다. (내부 공통 로직)
      *
      * @param eventStart 행사 시작일
@@ -341,12 +289,7 @@ public class EventService {
      * @throws InvalidEventDateException 날짜 조건이 맞지 않을 경우
      */
     private void validateEventDates(Instant eventStart, Instant eventEnd, Instant regStart, Instant regEnd) {
-        // 행사 시작일 <= 행사 종료일
-        if (eventStart.isAfter(eventEnd)) {
-            throw new InvalidEventDateException("행사 종료일은 시작일 이후여야 합니다");
-        }
-
-        // 신청 시작일 <= 신청 마감일
+        // 신청 시작일 < 신청 마감일
         if (regStart.isAfter(regEnd)) {
             throw new InvalidEventDateException("신청 마감일은 신청 시작일 이후여야 합니다");
         }
@@ -355,6 +298,13 @@ public class EventService {
         if (!regEnd.isBefore(eventStart)) {
             throw new InvalidEventDateException("신청 마감일은 행사 시작일 이전이어야 합니다");
         }
+
+        // 행사 시작일 <= 행사 종료일
+        if (eventStart.isAfter(eventEnd)) {
+            throw new InvalidEventDateException("행사 종료일은 시작일 이후여야 합니다");
+        }
+
+
     }
 
 }

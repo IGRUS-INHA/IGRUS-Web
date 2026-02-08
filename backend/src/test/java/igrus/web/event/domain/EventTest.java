@@ -156,22 +156,6 @@ class EventTest {
         }
 
         /**
-         * EVT-011: UPCOMING→CANCELED 전이
-         */
-        @Test
-        @DisplayName("[EVT-011] UPCOMING에서 CANCELED로 전이 성공")
-        void cancel_FromUpcoming_Success() {
-            // given
-            Event event = createTestEvent();
-
-            // when
-            event.cancel();
-
-            // then
-            assertThat(event.getStatus()).isEqualTo(EventStatus.CANCELED);
-        }
-
-        /**
          * EVT-012: OPEN→CLOSED 수동 마감
          */
         @Test
@@ -235,22 +219,10 @@ class EventTest {
             // given
             Event event = createTestEvent();
             event.open();
-            event.complete();
-
-            // when & then
-            assertThatThrownBy(() -> event.open())
-                    .isInstanceOf(InvalidEventStateTransitionException.class);
-        }
-
-        /**
-         * EVT-016: CANCELED→OPEN 전이 불가
-         */
-        @Test
-        @DisplayName("[EVT-016] CANCELED에서 OPEN으로 전이 시 예외 발생")
-        void open_FromCanceled_ThrowsException() {
-            // given
-            Event event = createTestEvent();
-            event.cancel();
+            event.closeManually();
+            Instant afterEventEnd = EVENT_END_AT.plus(1, ChronoUnit.DAYS);
+            event.updateStatusIfNeeded(afterEventEnd);
+            assertThat(event.getStatus()).isEqualTo(EventStatus.COMPLETED);
 
             // when & then
             assertThatThrownBy(() -> event.open())
@@ -269,6 +241,48 @@ class EventTest {
             // when & then
             assertThatThrownBy(() -> event.complete())
                     .isInstanceOf(InvalidEventStateTransitionException.class);
+        }
+
+        /**
+         * EVT-060: CLOSED → ONGOING 자동 전환 (행사 시작일 도래)
+         */
+        @Test
+        @DisplayName("[EVT-060] CLOSED 상태에서 행사 시작일이 지나면 ONGOING으로 자동 전환")
+        void updateStatusIfNeeded_FromClosed_ToOngoing() {
+            // given
+            Event event = createTestEvent();
+            event.open();
+            event.closeManually();
+            assertThat(event.getStatus()).isEqualTo(EventStatus.CLOSED);
+
+            // when
+            Instant afterEventStart = EVENT_START_AT.plus(1, ChronoUnit.HOURS);
+            event.updateStatusIfNeeded(afterEventStart);
+
+            // then
+            assertThat(event.getStatus()).isEqualTo(EventStatus.ONGOING);
+        }
+
+        /**
+         * EVT-061: ONGOING → COMPLETED 자동 전환 (행사 종료일 경과)
+         */
+        @Test
+        @DisplayName("[EVT-061] ONGOING 상태에서 행사 종료일이 지나면 COMPLETED로 자동 전환")
+        void updateStatusIfNeeded_FromOngoing_ToCompleted() {
+            // given
+            Event event = createTestEvent();
+            event.open();
+            event.closeManually();
+            Instant afterEventStart = EVENT_START_AT.plus(1, ChronoUnit.HOURS);
+            event.updateStatusIfNeeded(afterEventStart);
+            assertThat(event.getStatus()).isEqualTo(EventStatus.ONGOING);
+
+            // when
+            Instant afterEventEnd = EVENT_END_AT.plus(1, ChronoUnit.DAYS);
+            event.updateStatusIfNeeded(afterEventEnd);
+
+            // then
+            assertThat(event.getStatus()).isEqualTo(EventStatus.COMPLETED);
         }
     }
 
@@ -674,7 +688,10 @@ class EventTest {
             // given
             Event event = createTestEvent();
             event.open();
-            event.complete();
+            event.closeManually();
+            Instant afterEventEnd = EVENT_END_AT.plus(1, ChronoUnit.DAYS);
+            event.updateStatusIfNeeded(afterEventEnd);
+            assertThat(event.getStatus()).isEqualTo(EventStatus.COMPLETED);
 
             // when & then
             assertThatThrownBy(() -> event.update("새 제목", "새 설명", LOCATION,
@@ -683,14 +700,18 @@ class EventTest {
         }
 
         /**
-         * EVT-053: CANCELED 상태에서 수정 불가
+         * EVT-053: ONGOING 상태에서 수정 불가
          */
         @Test
-        @DisplayName("[EVT-053] CANCELED 상태에서 수정 시 예외 발생")
-        void update_WhenCanceled_ThrowsException() {
+        @DisplayName("[EVT-053] ONGOING 상태에서 수정 시 예외 발생")
+        void update_WhenOngoing_ThrowsException() {
             // given
             Event event = createTestEvent();
-            event.cancel();
+            event.open();
+            event.closeManually();
+            Instant afterEventStart = EVENT_START_AT.plus(1, ChronoUnit.HOURS);
+            event.updateStatusIfNeeded(afterEventStart);
+            assertThat(event.getStatus()).isEqualTo(EventStatus.ONGOING);
 
             // when & then
             assertThatThrownBy(() -> event.update("새 제목", "새 설명", LOCATION,
