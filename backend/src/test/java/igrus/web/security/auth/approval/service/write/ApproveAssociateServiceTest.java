@@ -5,6 +5,7 @@ import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.domain.AssociateDecisionType;
 import igrus.web.security.auth.approval.exception.AdminRequiredException;
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
+import igrus.web.security.auth.common.domain.RefreshToken;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -84,6 +85,20 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
             assertThat(decision.get().getType()).isEqualTo(AssociateDecisionType.APPROVED);
             assertThat(decision.get().getDecidedBy()).isEqualTo(adminUser.getId());
             assertThat(decision.get().getDecidedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("승인 시 리프레시 토큰 만료 - 기존 토큰이 revoked 처리됨 [APR-014]")
+        void approveAssociate_RevokesRefreshTokens() {
+            // given
+            RefreshToken token = RefreshToken.createInitial(associateUser, "test-refresh-token", 86400000);
+            refreshTokenRepository.save(token);
+
+            // when
+            approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
+
+            // then
+            assertThat(refreshTokenRepository.findByUserIdAndRevokedFalse(associateUser.getId())).isEmpty();
         }
 
         @Test
