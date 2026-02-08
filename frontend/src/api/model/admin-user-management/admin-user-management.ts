@@ -54,7 +54,11 @@ import type {
 
 import type {
   ChangeUserRoleRequest,
-  GetUserListParams
+  GetRoleHistoriesParams,
+  GetUserListParams,
+  PageUserRoleHistoryResponse,
+  UserDetailResponse,
+  UserListPageResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -175,7 +179,7 @@ export const useChangeUserRole = <TError = void,
  * @summary 회원 목록 조회
  */
 export type getUserListResponse200 = {
-  data: Blob
+  data: UserListPageResponse
   status: 200
 }
 
@@ -305,7 +309,7 @@ export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, 
  * @summary 회원 상세 조회
  */
 export type getUserDetailResponse200 = {
-  data: Blob
+  data: UserDetailResponse
   status: 200
 }
 
@@ -419,6 +423,141 @@ export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetUserDetailQueryOptions(userId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
+ * 권한 변경 이력을 조회합니다. 사용자, 역할, 변경자, 날짜 범위로 필터링 가능합니다.
+ * @summary 권한 변경 이력 조회
+ */
+export type getRoleHistoriesResponse200 = {
+  data: PageUserRoleHistoryResponse
+  status: 200
+}
+
+export type getRoleHistoriesResponse400 = {
+  data: void
+  status: 400
+}
+
+export type getRoleHistoriesResponse401 = {
+  data: void
+  status: 401
+}
+
+export type getRoleHistoriesResponse403 = {
+  data: void
+  status: 403
+}
+    
+export type getRoleHistoriesResponseSuccess = (getRoleHistoriesResponse200) & {
+  headers: Headers;
+};
+export type getRoleHistoriesResponseError = (getRoleHistoriesResponse400 | getRoleHistoriesResponse401 | getRoleHistoriesResponse403) & {
+  headers: Headers;
+};
+
+export type getRoleHistoriesResponse = (getRoleHistoriesResponseSuccess | getRoleHistoriesResponseError)
+
+export const getGetRoleHistoriesUrl = (params?: GetRoleHistoriesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/admin/users/role-histories?${stringifiedParams}` : `/api/v1/admin/users/role-histories`
+}
+
+export const getRoleHistories = async (params?: GetRoleHistoriesParams, options?: RequestInit): Promise<getRoleHistoriesResponse> => {
+  
+  return customFetch<getRoleHistoriesResponse>(getGetRoleHistoriesUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetRoleHistoriesQueryKey = (params?: GetRoleHistoriesParams,) => {
+    return [
+    `/api/v1/admin/users/role-histories`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getGetRoleHistoriesQueryOptions = <TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(params?: GetRoleHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRoleHistoriesQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoleHistories>>> = ({ signal }) => getRoleHistories(params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetRoleHistoriesQueryResult = NonNullable<Awaited<ReturnType<typeof getRoleHistories>>>
+export type GetRoleHistoriesQueryError = void
+
+
+export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(
+ params: undefined |  GetRoleHistoriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRoleHistories>>,
+          TError,
+          Awaited<ReturnType<typeof getRoleHistories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(
+ params?: GetRoleHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRoleHistories>>,
+          TError,
+          Awaited<ReturnType<typeof getRoleHistories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(
+ params?: GetRoleHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary 권한 변경 이력 조회
+ */
+
+export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(
+ params?: GetRoleHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetRoleHistoriesQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -49,7 +49,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetMemberListParams
+  GetMemberListParams,
+  SemesterMemberListResponse,
+  SemesterSummaryResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -64,7 +66,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 학기 목록 조회
  */
 export type getSemesterListResponse200 = {
-  data: Blob
+  data: SemesterSummaryResponse[]
   status: 200
 }
 
@@ -187,7 +189,7 @@ export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemester
  * @summary 학기별 회원 명단 조회
  */
 export type getMemberListResponse200 = {
-  data: Blob
+  data: SemesterMemberListResponse[]
   status: 200
 }
 

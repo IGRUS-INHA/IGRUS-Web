@@ -55,6 +55,7 @@ import type {
 import type {
   BookmarkStatusResponse,
   BookmarkToggleResponse,
+  BookmarkedPostPageResponse,
   ErrorResponse,
   GetMyBookmarksParams
 } from '.././models';
@@ -175,7 +176,7 @@ export const useToggleBookmark = <TError = ErrorResponse,
  * @summary 내 북마크 목록 조회
  */
 export type getMyBookmarksResponse200 = {
-  data: Blob
+  data: BookmarkedPostPageResponse
   status: 200
 }
 

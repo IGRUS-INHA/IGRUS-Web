@@ -126,8 +126,8 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto py-12 animate-in slide-in-from-bottom-8 duration-500">
-      <Card className={`p-s6 lg:p-s7 rounded-[2.5rem] border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}>
+    <div className="max-w-md mx-auto py-s7 animate-in slide-in-from-bottom-8 duration-500">
+      <Card className={`p-s6 lg:p-s7 rounded-r4 border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}>
         <CardContent className="p-0">
           <div className="text-center mb-s6">
             <div className="w-16 h-16 bg-primary/20 rounded-r4 flex items-center justify-center mx-auto mb-s5">

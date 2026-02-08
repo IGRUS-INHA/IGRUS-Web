@@ -1,5 +1,4 @@
 import type { Event, EventRegistration, User } from '@/types/entities';
-import type { Role } from '@/types/common';
 import {
   EVENT_STATUS,
   REGISTRATION_STATUS,

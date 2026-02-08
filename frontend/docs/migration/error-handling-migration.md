@@ -27,8 +27,8 @@
 - ✅ utils/error.ts 리팩토링 (45개 헬퍼 함수, 148개 에러 코드 매핑)
 - ✅ client.ts 수정 (ApiError 사용, default 코드 생성)
 
-**Phase 2 (완료):**
-- ✅ 게시판 페이지 (BoardListPage, PostDetailPage, PostWritePage, PostEditPage)
+**Phase 2 (향후):**
+- ⬜ 게시판 페이지 (BoardListPage, PostDetailPage, PostWritePage, PostEditPage)
 
 **Phase 3 (향후):**
 - ⬜ 인증 페이지 (LoginPage, SignupPage, ForgotPasswordPage 등)
@@ -45,14 +45,14 @@
 
 ## 우선순위
 
-### 1순위: 게시판 도메인 (완료)
+### 1순위: 게시판 도메인 (향후)
 
 **이유:**
 - 가장 많이 사용되는 기능
 - 다양한 에러 케이스 포함
 - 사용자 경험에 직접적 영향
 
-**완료된 파일:**
+**마이그레이션 대상 파일:**
 - frontend/src/pages/board/BoardListPage.tsx
 - frontend/src/pages/board/PostDetailPage.tsx
 - frontend/src/pages/board/PostWritePage.tsx

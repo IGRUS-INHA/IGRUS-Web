@@ -1,10 +1,14 @@
 import { ApiError, type ErrorResponseDto } from '@/types/error';
+import { useAuthStore } from '@/stores';
+import { isTokenExpired } from '@/utils/jwt';
+import { queryClient } from '@/lib/queryClient';
 
 // 환경변수가 제대로 로드되지 않으면 에러 발생
 if (!import.meta.env.VITE_API_URL) {
   console.error('❌ VITE_API_URL 환경변수가 로드되지 않았습니다!');
   console.error('개발 서버를 재시작하세요: npm run dev');
 }
+
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -63,6 +67,8 @@ async function refreshAccessToken(): Promise<string> {
   };
 
   setAccessToken(result.accessToken);
+  // Zustand store도 동기화
+  useAuthStore.setState({ accessToken: result.accessToken });
   return result.accessToken;
 }
 
@@ -72,7 +78,15 @@ async function refreshAccessToken(): Promise<string> {
 
 function handleLogout(): void {
   clearAccessToken();
-  // Refresh Token 쿠키는 서버에서 삭제 필요 (로그아웃 API 호출 시)
+  // TanStack Query 캐시 초기화 (이전 사용자 데이터 잔류 방지)
+  queryClient.clear();
+  // Zustand store 정리
+  useAuthStore.setState({
+    user: undefined,
+    accessToken: undefined,
+    refreshToken: undefined,
+    isAuthenticated: false,
+  });
   // 로그인 페이지로 리다이렉트
   window.location.href = '/login';
 }
@@ -85,6 +99,16 @@ export async function customFetch<T>(
   url: string,
   options?: RequestInit
 ): Promise<T> {
+  // 선제 토큰 갱신: 만료 60초 전이면 요청 전에 갱신 시도
+  const currentToken = getAccessToken();
+  if (currentToken && isTokenExpired(currentToken, 60) && !isRefreshing) {
+    try {
+      await refreshAccessToken();
+    } catch {
+      // 선제 갱신 실패 시 무시 — 기존 401 핸들러가 처리
+    }
+  }
+
   const accessToken = getAccessToken();
 
   const requestHeaders: Record<string, string> = {

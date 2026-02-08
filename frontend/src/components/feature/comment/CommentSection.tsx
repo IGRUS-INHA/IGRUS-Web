@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User as UserIcon, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Spinner } from '@/components/ui';
 import { useUIStore } from '@/stores';
 import { usePermission } from '@/hooks/usePermission';
 import { useComments, useCreateCommentMutation } from '@/hooks/queries/useComments';
@@ -51,8 +52,15 @@ export function CommentSection({ postId }: CommentSectionProps) {
         setComment('');
         setIsAnonymous(false);
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.error('댓글 작성 실패:', error);
+        const isForbidden =
+          error?.code === 'COMMENT_CREATE_DENIED' ||
+          error?.message?.includes('권한이 없습니다');
+        const errorMessage = isForbidden
+          ? '정회원 승인 후 댓글 이용이 가능합니다.'
+          : error?.message || '댓글 작성에 실패했습니다';
+        alert(errorMessage);
       },
     });
   };
@@ -67,7 +75,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
   return (
     <>
       {/* 댓글 섹션 헤더 */}
-      <h3 className="text-xl font-bold mb-s6">댓글 ({totalCount})</h3>
+      <h3 className="text-xl font-bold mb-s5">댓글 ({totalCount})</h3>
 
       {/* 댓글 입력 */}
       <div className="flex gap-s4 mb-s8">
@@ -82,6 +90,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
         <div className="flex-1 space-y-s2">
           <div className="relative">
             <input
+              id="comment-input"
               type="text"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -89,7 +98,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
               placeholder="댓글을 입력하세요..."
               disabled={!isAuthenticated || createComment.isPending}
               className={cn(
-                'w-full rounded-r4 px-5 py-s3 pr-12 border focus:outline-none focus:border-primary transition-all',
+                'w-full rounded-r4 px-s5 py-s3 pr-s7 border focus:outline-none focus:border-primary transition-all',
                 isDark ? 'bg-white/5 border-border' : 'bg-muted/50 border-border',
                 (!isAuthenticated || createComment.isPending) && 'opacity-50 cursor-not-allowed'
               )}
@@ -99,7 +108,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
               type="button"
               disabled={!isAuthenticated || !comment.trim() || createComment.isPending}
               className={cn(
-                'absolute right-2 top-1/2 -translate-y-1/2 p-s2 text-primary hover:bg-primary/10 rounded-lg transition cursor-pointer',
+                'absolute right-s2 top-1/2 -translate-y-1/2 p-s2 text-primary hover:bg-primary/10 rounded-r2 transition cursor-pointer',
                 (!isAuthenticated || !comment.trim() || createComment.isPending) &&
                   'opacity-50 cursor-not-allowed hover:bg-transparent'
               )}
@@ -110,7 +119,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
 
           {/* 익명 체크박스 */}
           {isAuthenticated && (
-            <label className="flex items-center gap-s2 cursor-pointer px-1">
+            <label className="flex items-center gap-s2 cursor-pointer px-s1">
               <input
                 type="checkbox"
                 checked={isAnonymous}
@@ -126,8 +135,8 @@ export function CommentSection({ postId }: CommentSectionProps) {
 
       {/* 댓글 목록 */}
       {isLoading ? (
-        <div className="text-center py-s8 text-muted-foreground">
-          댓글을 불러오는 중...
+        <div className="flex justify-center py-s8">
+          <Spinner />
         </div>
       ) : (
         <CommentList comments={comments} postId={postId} />

@@ -4,9 +4,9 @@
 
 // 게시판 종류
 export const BOARDS = {
-  NOTICES: 'notices',
-  GENERAL: 'general',
-  INSIGHT: 'insight',
+  NOTICES: 'NOTICES',
+  GENERAL: 'GENERAL',
+  INSIGHT: 'INSIGHT',
 } as const;
 
 export const BOARD_LABELS = {
@@ -76,37 +76,24 @@ export const POST_STATUS = {
   DELETED: 'DELETED', // 삭제됨
 } as const;
 
-// 게시판별 카테고리
-export const BOARD_CATEGORIES = {
-  [BOARDS.NOTICES]: [
-    { value: 'general', label: '일반' },
-    { value: 'event', label: '행사' },
-    { value: 'important', label: '중요' },
-  ],
-  [BOARDS.GENERAL]: [
-    { value: 'free', label: '자유' },
-    { value: 'question', label: '질문' },
-    { value: 'info', label: '정보' },
-  ],
-  [BOARDS.INSIGHT]: [
-    { value: 'tech', label: '기술' },
-    { value: 'career', label: '취업/진로' },
-    { value: 'study', label: '스터디' },
-    { value: 'review', label: '후기' },
-  ],
-} as const;
-
-// 글 작성 옵션
-export const POST_OPTIONS = {
-  // 익명 글 허용 게시판
-  ALLOW_ANONYMOUS: [BOARDS.GENERAL],
-
-  // 질문글 허용 게시판
-  ALLOW_QUESTION: [BOARDS.GENERAL],
-} as const;
-
 // 게시글 폼 검증 스키마 (PostWritePage, PostEditPage 공유)
 import { z } from 'zod';
+
+// 질문글 허용 게시판
+export const ALLOW_QUESTION = [BOARDS.GENERAL] as const;
+
+// 게시판별 카테고리 (소문자 BoardType 키 사용)
+export const BOARD_CATEGORIES: Record<string, { value: string; label: string }[]> = {
+  notices: [{ value: 'general', label: '일반' }],
+  general: [{ value: 'general', label: '일반' }],
+  insight: [{ value: 'general', label: '일반' }],
+};
+
+// 게시글 작성 옵션 (소문자 BoardType 값 사용)
+export const POST_OPTIONS = {
+  ALLOW_ANONYMOUS: ['general'] as const,
+  ALLOW_QUESTION: ['general'] as const,
+} as const;
 
 export const postFormSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요').max(100, '제목은 100자 이내로 입력해주세요'),
