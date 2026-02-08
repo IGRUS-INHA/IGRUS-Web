@@ -18,7 +18,7 @@ interface UsePermissionReturn {
   // 기본 정보
   isAuthenticated: boolean;
   role: RoleOrNull;
-  userId: string | null;
+  userId: string | undefined;
 
   // 일반 권한 체크
   hasPermission: (requiredRole: RoleOrNull) => boolean;
@@ -54,8 +54,8 @@ interface UsePermissionReturn {
  */
 export function usePermission(): UsePermissionReturn {
   const { user, isAuthenticated } = useAuthStore();
-  const role: RoleOrNull = user?.role ?? null;
-  const userId: string | null = user?.id ?? user?.studentId ?? null;
+  const role: RoleOrNull = user?.role ?? undefined;
+  const userId: string | undefined = user?.id ?? user?.studentId ?? undefined;
 
   return {
     // 기본 정보

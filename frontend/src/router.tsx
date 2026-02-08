@@ -26,6 +26,7 @@ import EventEditPage from '@/pages/event/EventEditPage';
 
 // 문의
 import InquiryPage from '@/pages/inquiry/InquiryPage';
+import InquiryHistoryPage from '@/pages/inquiry/InquiryHistoryPage';
 import InquiryLookupPage from '@/pages/inquiry/InquiryLookupPage';
 
 // 법적 페이지
@@ -54,6 +55,7 @@ const routes: RouteObject[] = [
       { path: 'forgot-password', element: <ForgotPasswordPage /> },
       { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'inquiry', element: <InquiryPage /> },
+      { path: 'inquiry/history', element: <InquiryHistoryPage /> },
       { path: 'inquiry/lookup', element: <InquiryLookupPage /> },
 
       // 법적 페이지
@@ -62,7 +64,6 @@ const routes: RouteObject[] = [
 
       // 게시판
       { path: 'board/:boardType', element: <BoardListPage /> },
-      { path: 'board/:boardType/:postId', element: <PostDetailPage /> },
       {
         path: 'board/:boardType/write',
         element: (
@@ -79,6 +80,7 @@ const routes: RouteObject[] = [
           </ProtectedRoute>
         ),
       },
+      { path: 'board/:boardType/:postId', element: <PostDetailPage /> },
 
       // 행사
       { path: 'events', element: <EventListPage /> },

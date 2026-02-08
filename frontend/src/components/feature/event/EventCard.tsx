@@ -3,6 +3,7 @@ import type { Event, EventStatus } from '@/types/entities';
 
 const STATUS_STYLES: Record<string, string> = {
   Open: 'bg-primary text-primary-foreground',
+  OPEN: 'bg-primary text-primary-foreground',
   UPCOMING: 'bg-primary text-primary-foreground',
   Full: 'bg-warning text-foreground',
   CLOSED: 'bg-muted text-muted-foreground',
@@ -13,7 +14,8 @@ const STATUS_STYLES: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   Open: '신청 가능',
-  UPCOMING: '신청 가능',
+  OPEN: '진행중',
+  UPCOMING: '예정',
   Full: '마감',
   CLOSED: '마감',
   Closed: '종료',
@@ -26,7 +28,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const isAvailable = event.status === 'Open' || event.status === 'UPCOMING';
+  const isAvailable = event.status === 'Open' || event.status === 'OPEN' || event.status === 'UPCOMING';
 
   return (
     <div className="rounded-[2.5rem] overflow-hidden border transition-all hover:scale-[1.01] bg-card border-border shadow-xl shadow-black/5 dark:shadow-none">

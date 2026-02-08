@@ -19,6 +19,20 @@ IGRUS Web 프론트엔드 - React + Vite 기반 SPA
 * **절대로 개발 서버 실행 금지** (`pnpm dev` 등 금지)
 * **패키지 매니저는 pnpm 고정**
 * **코드 포맷팅/타입 체크 명령 실행 금지** (`pnpm format`, `pnpm lint`, `pnpm tsc --noEmit` 등 금지 - VSCode에서 자동 처리)
+* **절대로 백엔드 파일을 수정하지 않는다. 읽기만 한다.** (backend/ 디렉토리 내의 모든 파일은 읽기 전용)
+
+## 1.3 Git 커밋 규칙
+
+* **커밋 전 반드시 사용자에게 커밋 메시지 확인 받을 것**
+* 커밋 메시지를 작성한 후, 사용자에게 보여주고 승인을 받은 후에만 커밋 실행
+* 사용자 승인 없이 절대 커밋하지 말 것
+
+**커밋 프로세스:**
+1. `git status`, `git diff`로 변경사항 확인
+2. 커밋 메시지 초안 작성
+3. **사용자에게 커밋 메시지 확인 요청 (필수)**
+4. 사용자 승인 후 `git add` 및 `git commit` 실행
+5. `git status`로 커밋 완료 확인
 
 ---
 
@@ -110,7 +124,298 @@ function useUser(id: string): { user: User | undefined; isLoading: boolean } {
 
 ---
 
-# 3. React + Vite 규칙
+# 3. 에러 처리 규칙
+
+## 3.1 기본 원칙
+
+* **무조건 ApiError 클래스 사용** - 모든 API 에러는 ApiError 인스턴스
+* **헬퍼 함수로 에러 체크** - `utils/error.ts`의 헬퍼 함수 사용
+* **`error.message.includes()` 패턴 금지** - 메시지 기반 체크 금지
+* **`(error as any)` 타입 단언 금지** - 타입 가드 사용
+
+## 3.2 에러 타입 (ApiError)
+
+```typescript
+// types/error.ts
+export class ApiError extends Error {
+  public readonly status: number;   // HTTP 상태 코드
+  public readonly code: string;      // 백엔드 에러 코드
+  public readonly timestamp?: string;
+}
+```
+
+**특징:**
+* client.ts에서 모든 API 에러를 ApiError로 통일
+* `code` 필드가 없으면 `HTTP_{status}` 형태로 자동 생성 (예: `HTTP_403`)
+* 백엔드 ErrorResponse와 1:1 매핑
+
+## 3.3 에러 체크 방법
+
+### 3.3.1 헬퍼 함수 사용 (필수)
+
+```typescript
+import { isForbiddenError, isNotFoundError, getErrorMessage } from '@/utils/error';
+
+// ✅ 올바른 방법
+onError: (error: unknown) => {
+  if (isForbiddenError(error)) {
+    alert('권한이 없습니다.');
+  } else if (isNotFoundError(error)) {
+    alert('게시글을 찾을 수 없습니다.');
+  } else {
+    alert(getErrorMessage(error));
+  }
+}
+
+// ❌ 금지된 방법
+onError: (error: any) => {
+  if (error.message?.includes('403')) {  // 메시지 기반 체크 금지
+    alert('권한이 없습니다.');
+  }
+}
+```
+
+### 3.3.2 주요 헬퍼 함수
+
+**HTTP 상태 기반:**
+* `isUnauthorizedError(error)` - 401 (인증 필요)
+* `isForbiddenError(error)` - 403 (권한 없음)
+* `isNotFoundError(error)` - 404 (리소스 없음)
+* `isConflictError(error)` - 409 (중복/충돌)
+* `isRateLimitError(error)` - 429 (요청 초과)
+* `isServerError(error)` - 5xx (서버 오류)
+
+**게시판 관련:**
+* `isBoardReadDenied(error)` - 게시판 읽기 권한 없음
+* `isBoardWriteDenied(error)` - 게시판 쓰기 권한 없음
+* `isPostNotFound(error)` - 게시글 없음
+* `isPostAccessDenied(error)` - 게시글 접근 권한 없음
+* `isPostDeleted(error)` - 삭제된 게시글
+
+**댓글 관련:**
+* `isCommentNotFound(error)` - 댓글 없음
+* `isCommentAccessDenied(error)` - 댓글 접근 권한 없음
+* `isCommentContentEmpty(error)` - 댓글 내용 비어있음
+* `isCommentContentTooLong(error)` - 댓글 길이 초과
+
+**인증 관련:**
+* `isInvalidCredentials(error)` - 잘못된 인증 정보
+* `isEmailNotVerified(error)` - 이메일 미인증
+* `isAccountSuspended(error)` - 계정 정지
+* `isAccountWithdrawn(error)` - 계정 탈퇴
+* `isTokenExpired(error)` - 토큰 만료
+
+**행사 관련:**
+* `isEventNotFound(error)` - 행사 없음
+* `isEventAlreadyRegistered(error)` - 이미 신청한 행사
+* `isEventCapacityFull(error)` - 행사 정원 마감
+* `isEventRegistrationClosed(error)` - 신청 기간 종료
+
+**기타:**
+* `getErrorMessage(error)` - 사용자 친화적 메시지 추출
+* `getErrorCode(error)` - 에러 코드 추출
+* `hasErrorCode(error, code)` - 특정 에러 코드 확인
+
+전체 목록은 `utils/error.ts` 참조 (45개 함수)
+
+## 3.4 에러 처리 예시
+
+### 3.4.1 게시판 목록 조회
+
+```typescript
+import { isBoardReadDenied } from '@/utils/error';
+
+const { data, error } = useGetPostList(...);
+const isForbidden = isBoardReadDenied(error);
+
+if (isForbidden) {
+  return <div>정회원 승인 후 게시판 이용이 가능합니다.</div>;
+}
+```
+
+### 3.4.2 게시글 삭제
+
+```typescript
+import { isForbiddenError, isNotFoundError, getErrorMessage } from '@/utils/error';
+
+const { mutate } = useDeletePost({
+  mutation: {
+    onError: (error: unknown) => {
+      if (isForbiddenError(error)) {
+        alert('삭제 권한이 없습니다.');
+      } else if (isNotFoundError(error)) {
+        alert('게시글을 찾을 수 없습니다.');
+      } else {
+        alert(getErrorMessage(error));
+      }
+    },
+  },
+});
+```
+
+### 3.4.3 게시글 작성
+
+```typescript
+import { isForbiddenError, isUnauthorizedError, getErrorMessage } from '@/utils/error';
+
+const { mutate } = useCreatePost({
+  mutation: {
+    onError: (error: unknown) => {
+      if (isForbiddenError(error)) {
+        alert('권한이 없습니다.\n정회원 이상만 작성 가능합니다.');
+      } else if (isUnauthorizedError(error)) {
+        alert('로그인이 필요합니다.');
+        navigate('/login');
+      } else {
+        alert(getErrorMessage(error));
+      }
+    },
+  },
+});
+```
+
+## 3.5 마이그레이션 (점진적 개선)
+
+**현재 상태 (Phase 2 완료):**
+* ✅ types/error.ts - ApiError 클래스
+* ✅ utils/error.ts - 45개 헬퍼 함수, 148개 에러 코드 매핑
+* ✅ client.ts - ApiError 사용, default 코드 생성
+* ✅ 게시판 페이지 (BoardListPage, PostDetailPage, PostWritePage, PostEditPage)
+
+**향후 마이그레이션 대상:**
+* ⬜ 인증 페이지 (LoginPage, SignupPage 등)
+* ⬜ 행사 페이지 (EventListPage, EventDetailPage 등)
+* ⬜ 문의 페이지 (InquiryPage)
+* ⬜ 기타 페이지 및 컴포넌트
+
+**마이그레이션 규칙:**
+* 새 기능 개발 시: **무조건 새 방식(ApiError, 헬퍼 함수) 사용**
+* 버그 수정 시: 해당 파일 마이그레이션
+* 리팩토링 세션: 도메인별로 일괄 마이그레이션
+
+**자세한 마이그레이션 가이드:**
+* [docs/migration/error-handling-migration.md](docs/migration/error-handling-migration.md)
+* [docs/testing/error-handling-test.md](docs/testing/error-handling-test.md)
+
+## 3.6 금지 패턴
+
+```typescript
+// ❌ 금지 1: any 타입
+onError: (error: any) => { ... }
+
+// ❌ 금지 2: 메시지 기반 체크
+if (error.message?.includes('403')) { ... }
+
+// ❌ 금지 3: 타입 단언
+if ((error as any).code === 'BOARD_READ_DENIED') { ... }
+
+// ❌ 금지 4: Error 타입 단언
+if ((error as Error).message?.includes('권한')) { ... }
+
+// ✅ 올바른 방법: 헬퍼 함수 사용
+if (isForbiddenError(error)) { ... }
+if (isBoardReadDenied(error)) { ... }
+```
+
+## 3.7 레이어별 에러 처리 패턴 (관심사의 분리)
+
+에러 처리는 **레이어별 책임**에 따라 다르게 구현합니다:
+
+### **Data Hook Layer** - Graceful Degradation
+
+**목적**: API 실패 시에도 앱이 완전히 깨지지 않도록 폴백 데이터 제공
+
+```typescript
+// ✅ 올바른 예: useBoards.ts
+export function useBoardList() {
+  const { data, error, isLoading } = useGetBoardList();
+  const { user } = useAuthStore();
+
+  if (error || !data) {
+    // 폴백 데이터로 최소 기능 제공
+    return {
+      boards: FALLBACK_BOARDS.map(board => ({
+        ...board,
+        canRead: canViewBoard(user?.role, board.code),
+        canWrite: canWriteBoard(user?.role, board.code),
+      })),
+      isLoading: false,
+      error,  // ← 에러 객체는 반환하여 상위에서 처리 가능
+    };
+  }
+
+  return {
+    boards: data.data?.map(transformBoard) ?? [],
+    isLoading,
+    error: undefined,
+  };
+}
+```
+
+### **Component Layer** - User Feedback
+
+**목적**: Hook이 제공한 에러 정보를 바탕으로 사용자에게 적절한 피드백 표시
+
+```typescript
+// ✅ 올바른 예: BoardListPage.tsx
+export default function BoardListPage() {
+  const { boards, error } = useBoardList();
+  const isForbidden = isBoardReadDenied(error);  // ← Hook이 반환한 error 활용
+
+  if (isForbidden) {
+    return (
+      <div>
+        <p>권한이 없습니다</p>
+        <p>정회원 이상만 조회 가능합니다</p>
+      </div>
+    );
+  }
+
+  return <div>{boards.map(board => ...)}</div>;
+}
+```
+
+### **Mutation onError** - Immediate Feedback
+
+**목적**: 사용자 액션(작성, 수정, 삭제 등)의 실패를 즉시 알림
+
+```typescript
+// ✅ 올바른 예: PostDetailPage.tsx
+const { mutate: deletePost } = useDeletePost({
+  mutation: {
+    onError: (error: unknown) => {
+      let errorMessage = '게시글 삭제에 실패했습니다.';
+
+      if (isForbiddenError(error)) {
+        errorMessage = '삭제 권한이 없습니다.';
+      } else if (isNotFoundError(error)) {
+        errorMessage = '게시글을 찾을 수 없습니다.';
+      } else {
+        errorMessage = getErrorMessage(error);
+      }
+
+      alert(errorMessage);
+    },
+  },
+});
+```
+
+### 레이어별 책임 정리
+
+| 레이어 | 책임 | 예시 |
+|--------|------|------|
+| **Hook** | Graceful Degradation (복원력) | `useBoards` - 폴백 데이터 제공 |
+| **Component** | UI State (에러 상태 표시) | `BoardListPage` - 권한 없음 안내 |
+| **Mutation** | Immediate Feedback (즉시 피드백) | `onError` - alert, navigate |
+
+**핵심 원칙:**
+- Hook은 에러를 throw하지 않고 `error` 객체로 반환
+- Component는 Hook의 `error`를 받아서 UI 표현
+- Mutation은 `onError`에서 사용자에게 즉시 피드백
+
+---
+
+# 4. React + Vite 규칙
 
 ## 3.1 React/프론트 공통 규칙
 
@@ -219,9 +524,9 @@ import spotifyIcon from "@/assets/icons/spotify.svg";
 
 ---
 
-# 4. 포맷팅 & 개발 도구
+# 5. 포맷팅 & 개발 도구
 
-## 4.1 ESLint + Prettier (린팅 & 포맷팅)
+## 5.1 ESLint + Prettier (린팅 & 포맷팅)
 
 * **VSCode 익스텐션 설치 필수**: `dbaeumer.vscode-eslint`, `esbenp.prettier-vscode`
 * ESLint: 코드 품질 검사 (`eslint.config.js`)
@@ -234,7 +539,7 @@ pnpm lint     # ESLint 검사
 pnpm format   # Prettier 포맷팅
 ```
 
-## 4.2 Orval (API 클라이언트 생성)
+## 5.2 Orval (API 클라이언트 생성)
 
 * 백엔드 OpenAPI 스펙 기반으로 API 클라이언트 자동 생성
 * `orval.config.ts`에 설정
@@ -244,7 +549,7 @@ pnpm format   # Prettier 포맷팅
 pnpm orval
 ```
 
-## 4.3 환경 변수
+## 5.3 환경 변수
 
 * Vite 환경 변수는 `VITE_` 접두사 사용
 * `.env.local` 파일에 로컬 설정 (gitignore됨)
@@ -255,13 +560,13 @@ VITE_API_URL=http://localhost:8080
 
 ---
 
-# 5. 라이브러리 사용 가이드
+# 6. 라이브러리 사용 가이드
 
-## 5.1 Orval + React Query 사용법
+## 6.1 Orval + React Query 사용법
 
 Orval은 백엔드 OpenAPI 스펙을 읽어서 React Query 훅을 자동 생성해줍니다.
 
-### 5.1.1 API 클라이언트 생성
+### 6.1.1 API 클라이언트 생성
 
 ```bash
 # 백엔드 서버가 실행 중이어야 함
@@ -270,7 +575,7 @@ pnpm orval
 
 실행하면 `src/api/` 폴더에 훅들이 생성됩니다.
 
-### 5.1.2 데이터 조회 (useQuery)
+### 6.1.2 데이터 조회 (useQuery)
 
 ```tsx
 import { useGetUsers } from "@/api";
@@ -291,7 +596,7 @@ function UserList() {
 }
 ```
 
-### 5.1.3 데이터 변경 (useMutation)
+### 6.1.3 데이터 변경 (useMutation)
 
 ```tsx
 import { useCreateUser } from "@/api";
@@ -336,7 +641,7 @@ function CreateUserForm() {
 }
 ```
 
-### 5.1.4 조건부 fetch (enabled)
+### 6.1.4 조건부 fetch (enabled)
 
 ```tsx
 // userId가 있을 때만 fetch
@@ -347,7 +652,7 @@ const { data } = useGetUser(userId, {
 });
 ```
 
-### 5.1.5 자주 쓰는 상태값
+### 6.1.5 자주 쓰는 상태값
 
 | 상태 | 설명 |
 |------|------|
@@ -360,11 +665,11 @@ const { data } = useGetUser(userId, {
 
 ---
 
-## 5.2 Zustand 사용법
+## 6.2 Zustand 사용법
 
 Zustand는 간단한 전역 상태 관리 라이브러리입니다.
 
-### 5.2.1 Store 생성
+### 6.2.1 Store 생성
 
 ```ts
 // src/stores/useAuthStore.ts
@@ -385,7 +690,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 }));
 ```
 
-### 5.2.2 Store 사용
+### 6.2.2 Store 사용
 
 ```tsx
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -410,7 +715,7 @@ function Header() {
 }
 ```
 
-### 5.2.3 다이얼로그 상태 관리 (실전 예시)
+### 6.2.3 다이얼로그 상태 관리 (실전 예시)
 
 ```ts
 // src/stores/useDialogStore.ts
@@ -461,11 +766,11 @@ function EditUserDialog() {
 
 ---
 
-## 5.3 Zod + React Hook Form 사용법
+## 6.3 Zod + React Hook Form 사용법
 
 Zod로 폼 검증 스키마를 정의하고, React Hook Form과 연동합니다.
 
-### 5.3.1 기본 사용법
+### 6.3.1 기본 사용법
 
 ```tsx
 import { useForm } from "react-hook-form";
@@ -525,7 +830,7 @@ function SignupForm() {
 }
 ```
 
-### 5.3.2 자주 쓰는 Zod 검증
+### 6.3.2 자주 쓰는 Zod 검증
 
 ```ts
 import { z } from "zod";
@@ -554,7 +859,7 @@ z.string().refine((val) => val.startsWith("@"), {
 })
 ```
 
-### 5.3.3 폼 기본값 설정
+### 6.3.3 폼 기본값 설정
 
 ```tsx
 const { register } = useForm<EditUserForm>({
@@ -565,3 +870,116 @@ const { register } = useForm<EditUserForm>({
   },
 });
 ```
+
+---
+
+# 7. 테스트 가이드
+
+## 7.1 테스트 원칙
+
+* **모든 사용자 테스트 시나리오는 반드시 문서화**
+* **테스트 문서는 항상 최신 상태 유지**
+* **기능 추가/수정 시 테스트 시나리오도 함께 업데이트**
+
+## 7.2 테스트 문서 위치
+
+### 중앙 테스트 폴더
+**[docs/testing/](docs/testing/)** - 모든 E2E 테스트 가이드
+
+테스트 폴더 전체 개요는 **[docs/README.md](docs/README.md#testing---e2e-테스트-가이드)** 참고
+
+각 파일은 해당 기능의 **Playwright 자동화 테스트**와 **수동 브라우저 테스트** 시나리오를 포함합니다:
+
+- **[auth-test-guide.md](docs/testing/auth-test-guide.md)** - 인증 (회원가입, 이메일 인증, 로그인)
+- **[inquiries-test-guide.md](docs/testing/inquiries-test-guide.md)** - 문의 (문의 목록 조회, 문의 작성)
+- **[posts-test-guide.md](docs/testing/posts-test-guide.md)** - 게시판 (게시글 CRUD, 좋아요)
+- **events-test-guide.md** (예정) - 이벤트
+- **admin-test-guide.md** (예정) - 관리자
+
+### 기능별 마이그레이션 문서
+- [docs/migration/auth-inquiries-orval-migration.md](docs/migration/auth-inquiries-orval-migration.md) - Auth & Inquiries API 마이그레이션
+- [docs/migration/orval-api-migration.md](docs/migration/orval-api-migration.md) - Posts API 마이그레이션
+
+## 7.3 테스트 시나리오 작성 규칙
+
+새로운 기능을 추가하거나 기존 기능을 수정할 때는 반드시 다음 작업을 수행:
+
+1. **해당 기능의 테스트 가이드 파일에 테스트 시나리오 추가**
+   - Auth 기능: [auth-test-guide.md](docs/testing/auth-test-guide.md)
+   - Inquiries 기능: [inquiries-test-guide.md](docs/testing/inquiries-test-guide.md)
+   - Posts 기능: [posts-test-guide.md](docs/testing/posts-test-guide.md)
+   - 새로운 기능: 새 파일 생성 (예: events-test-guide.md)
+   - 수동 브라우저 테스트 섹션에 시나리오 추가
+   - Playwright 자동화 테스트 섹션에 예제 코드 추가
+
+2. **테스트 시나리오 구성 요소**:
+   - 시나리오 설명
+   - 테스트 단계 (1, 2, 3...)
+   - 예상 결과
+   - Network 탭 확인 사항
+   - Console 탭 확인 사항
+
+3. **예시**:
+   ```markdown
+   #### X.X 새로운 기능 테스트
+   **시나리오**: 기능 설명
+
+   1. 사용자 액션 1
+   2. 사용자 액션 2
+   3. **예상 결과**:
+      - UI 변화
+      - 상태 변화
+   4. **Network 탭 확인**:
+      - URL: `POST .../api/v1/...`
+      - Status: 200 OK
+   5. **Console 탭 확인**:
+      - 에러 없음
+   ```
+
+## 7.4 Playwright 설치 및 실행
+
+### 7.4.1 설치
+
+```bash
+pnpm add -D @playwright/test
+npx playwright install
+```
+
+### 7.4.2 테스트 실행
+
+```bash
+# 모든 테스트 실행
+npx playwright test
+
+# 특정 테스트 파일
+npx playwright test e2e/auth/signup.spec.ts
+
+# UI 모드 (디버깅)
+npx playwright test --ui
+
+# 헤드풀 모드 (브라우저 표시)
+npx playwright test --headed
+```
+
+## 7.5 테스트 커버리지
+
+현재 테스트 문서에 포함된 기능:
+
+- ✅ **Auth**: 회원가입, 이메일 인증, 로그인, 에러 처리
+- ✅ **Inquiries**: 문의 목록 조회, 문의 작성
+- ✅ **Posts**: 게시글 목록/상세 조회, 좋아요, 작성
+- ⏸️ **Events**: 문서화 예정
+- ⏸️ **Admin**: 문서화 예정
+
+## 7.6 테스트 업데이트 체크리스트
+
+기능 수정 시 다음 항목을 확인:
+
+- [ ] 해당 기능의 테스트 가이드 파일에 수동 테스트 시나리오 추가/수정
+  - Auth: [auth-test-guide.md](docs/testing/auth-test-guide.md)
+  - Inquiries: [inquiries-test-guide.md](docs/testing/inquiries-test-guide.md)
+  - Posts: [posts-test-guide.md](docs/testing/posts-test-guide.md)
+- [ ] Playwright 자동화 테스트 코드 예시 추가/수정
+- [ ] 관련 마이그레이션 문서 업데이트 (있는 경우)
+- [ ] 변경된 API endpoint 문서화
+- [ ] 에러 케이스 추가 (있는 경우)

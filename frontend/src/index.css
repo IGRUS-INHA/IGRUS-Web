@@ -264,3 +264,250 @@
 .dark * {
   scrollbar-color: rgba(102, 203, 197, 0.5) transparent;
 }
+
+/* ============================================
+   SweetAlert2 Custom Styling
+   ============================================ */
+
+/* SweetAlert2 팝업 스타일 - 라이트 모드 */
+.swal2-popup {
+  background-color: #FFFFFF !important;
+  color: #212529 !important; /* gray-8 */
+  border: 2px solid #DEE2E6 !important; /* gray-3 */
+  border-radius: 16px !important; /* r4 */
+}
+
+.swal2-title {
+  color: #212529 !important; /* gray-8 */
+}
+
+.swal2-html-container {
+  color: #495057 !important; /* gray-6 */
+}
+
+/* 다크 모드 */
+.dark .swal2-popup {
+  background-color: #343A40 !important; /* card */
+  color: #F8F9FA !important; /* foreground */
+  border-color: #495057 !important; /* gray-6 */
+}
+
+.dark .swal2-title {
+  color: #F8F9FA !important; /* foreground */
+}
+
+.dark .swal2-html-container {
+  color: #E9ECEF !important; /* gray-2 */
+}
+
+/* ============================================
+   Markdown Editor Styling
+   ============================================ */
+
+/* 마크다운 에디터 툴바 전체 정렬 */
+.w-md-editor-toolbar {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.w-md-editor-toolbar ul {
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 마크다운 에디터 툴바 아이콘 크기 */
+.w-md-editor-toolbar svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* 마크다운 에디터 툴바 버튼 여백 통일 */
+.w-md-editor-toolbar button {
+  padding: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 마크다운 에디터 툴바 구분선 높이 조정 */
+.w-md-editor-toolbar-divider {
+  height: 34px !important; /* 버튼 높이와 동일 (padding 8px * 2 + icon 18px) */
+  align-self: center !important;
+}
+
+/* 마크다운 에디터 기본 폰트 크기 */
+.w-md-editor-text-pre,
+.w-md-editor-text-input,
+.w-md-editor-text {
+  font-size: 17px !important;
+  line-height: 1.6 !important;
+}
+
+.wmde-markdown {
+  font-size: 17px !important;
+}
+
+/* 마크다운 프리뷰 영역의 리스트 스타일 */
+.wmde-markdown ul {
+  list-style-type: disc;
+  padding-left: 2rem;
+  margin: 1rem 0;
+}
+
+.wmde-markdown ol {
+  list-style-type: decimal;
+  padding-left: 2rem;
+  margin: 1rem 0;
+}
+
+.wmde-markdown li {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+/* 중첩 리스트 */
+.wmde-markdown ul ul,
+.wmde-markdown ol ol,
+.wmde-markdown ul ol,
+.wmde-markdown ol ul {
+  margin: 0.25rem 0;
+}
+
+.wmde-markdown ul ul {
+  list-style-type: circle;
+}
+
+.wmde-markdown ul ul ul {
+  list-style-type: square;
+}
+
+/* 리스트 다음에 다른 요소가 올 때 여백 */
+.wmde-markdown ul + *:not(ul):not(ol),
+.wmde-markdown ol + *:not(ul):not(ol) {
+  margin-top: 1rem;
+}
+
+/* 마크다운 프리뷰 영역의 기타 요소 */
+.wmde-markdown h1,
+.wmde-markdown h2,
+.wmde-markdown h3,
+.wmde-markdown h4,
+.wmde-markdown h5,
+.wmde-markdown h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.wmde-markdown p {
+  margin: 1rem 0;
+}
+
+.wmde-markdown code {
+  background: rgba(3, 166, 158, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.wmde-markdown pre {
+  background: rgba(3, 166, 158, 0.05);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.wmde-markdown pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.wmde-markdown blockquote {
+  border-left: 4px solid #03A69E;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--gray-6);
+}
+
+.wmde-markdown a {
+  color: #03A69E;
+  text-decoration: underline;
+}
+
+.wmde-markdown a:hover {
+  color: #027A75;
+}
+
+/* 다크모드 */
+.dark .wmde-markdown code {
+  background: rgba(102, 203, 197, 0.1);
+}
+
+.dark .wmde-markdown pre {
+  background: rgba(102, 203, 197, 0.05);
+}
+
+.dark .wmde-markdown blockquote {
+  border-left-color: #66CBC5;
+  color: var(--gray-4);
+}
+
+.dark .wmde-markdown a {
+  color: #66CBC5;
+}
+
+.dark .wmde-markdown a:hover {
+  color: #B3E5E2;
+}
+
+/* ============================================
+   Markdown Editor Mobile Responsive
+   ============================================ */
+
+@media (max-width: 767px) {
+  /* 모바일에서 MDEditor 내장 편집/미리보기 토글 숨김 (커스텀 토글 사용) */
+  .w-md-editor-toolbar li[data-name="edit"],
+  .w-md-editor-toolbar li[data-name="live"],
+  .w-md-editor-toolbar li[data-name="preview"] {
+    display: none !important;
+  }
+
+  /* 모바일 툴바 아이콘 크기 축소 */
+  .w-md-editor-toolbar svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* 모바일 툴바 버튼 패딩 축소 */
+  .w-md-editor-toolbar button {
+    padding: 6px !important;
+  }
+
+  /* 모바일 툴바 구분선 높이 조정 */
+  .w-md-editor-toolbar-divider {
+    height: 28px !important;
+  }
+
+  /* 모바일 에디터 폰트 크기 (16px: iOS 자동 줌 방지) */
+  .w-md-editor-text-pre,
+  .w-md-editor-text-input,
+  .w-md-editor-text {
+    font-size: 16px !important;
+  }
+
+  .wmde-markdown {
+    font-size: 16px !important;
+  }
+
+  /* 모바일 툴바 줄바꿈 허용 */
+  .w-md-editor-toolbar {
+    flex-wrap: wrap !important;
+  }
+
+  .w-md-editor-toolbar ul {
+    flex-wrap: wrap !important;
+  }
+}

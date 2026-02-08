@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { Lock, User, ArrowRight } from 'lucide-react';
 import { useRequestPasswordReset } from '@/api/model/password-authentication/password-authentication';
 import { Button } from '@/components/ui/button';
@@ -21,12 +22,28 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
 
     if (!studentId) {
-      alert('학번을 입력해주세요.');
+      Swal.fire({
+        icon: 'warning',
+        title: '학번 입력 필요',
+        text: '학번을 입력해주세요.',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#FFC107',
+        showClass: { popup: '', backdrop: '' },
+        hideClass: { popup: '', backdrop: '' },
+      });
       return;
     }
 
     if (studentId.length !== 8 || !/^\d{8}$/.test(studentId)) {
-      alert('학번은 8자리 숫자로 입력해주세요.');
+      Swal.fire({
+        icon: 'warning',
+        title: '학번 형식 오류',
+        text: '학번은 8자리 숫자로 입력해주세요.',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#FFC107',
+        showClass: { popup: '', backdrop: '' },
+        hideClass: { popup: '', backdrop: '' },
+      });
       return;
     }
 
@@ -36,9 +53,15 @@ export default function ForgotPasswordPage() {
         data: { studentId },
       });
 
-      alert(
-        '비밀번호 재설정 링크가 발송되었습니다.\n\n등록된 이메일을 확인해주세요.'
-      );
+      await Swal.fire({
+        icon: 'success',
+        title: '발송 완료',
+        html: '비밀번호 재설정 링크가 발송되었습니다.<br><br>등록된 이메일을 확인해주세요.',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#28A745',
+        showClass: { popup: '', backdrop: '' },
+        hideClass: { popup: '', backdrop: '' },
+      });
 
       // 재설정 페이지로 이동 (학번을 state로 전달)
       navigate('/reset-password', { state: { studentId } });
@@ -49,13 +72,35 @@ export default function ForgotPasswordPage() {
         error instanceof Error ? error.message : '알 수 없는 오류';
 
       if (errorMessage.includes('사용자')) {
-        alert('등록되지 않은 학번입니다.\n\n학번을 확인해주세요.');
+        Swal.fire({
+          icon: 'error',
+          title: '학번 오류',
+          html: '등록되지 않은 학번입니다.<br><br>학번을 확인해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#DC3545',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       } else if (errorMessage.includes('승인')) {
-        alert(
-          '관리자 승인이 완료되지 않은 계정입니다.\n\n승인 완료 후 이용 가능합니다.'
-        );
+        Swal.fire({
+          icon: 'info',
+          title: '승인 대기 중',
+          html: '관리자 승인이 완료되지 않은 계정입니다.<br><br>승인 완료 후 이용 가능합니다.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#17A2B8',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       } else {
-        alert('비밀번호 재설정 요청에 실패했습니다.\n\n다시 시도해주세요.');
+        Swal.fire({
+          icon: 'error',
+          title: '요청 실패',
+          html: '비밀번호 재설정 요청에 실패했습니다.<br><br>다시 시도해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#DC3545',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
       }
     } finally {
       setLoading(false);

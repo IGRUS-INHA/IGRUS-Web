@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -15,6 +16,8 @@ export default function PostWritePage() {
   const navigate = useNavigate();
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
+  const isMobile = useIsMobile();
+  const [mobilePreview, setMobilePreview] = useState<'edit' | 'preview'>('edit');
 
   const validBoardType = boardType as BoardType;
 

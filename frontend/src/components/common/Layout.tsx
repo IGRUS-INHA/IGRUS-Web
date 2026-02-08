@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { useUIStore } from '@/stores';
+import { useUIStore, useAuthStore } from '@/stores';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Footer from './Footer';
@@ -7,6 +8,17 @@ import Footer from './Footer';
 export default function Layout() {
   const location = useLocation();
   const { sidebarOpen, setSidebarOpen } = useUIStore();
+  const { accessToken } = useAuthStore();
+
+  // 앱 초기화 시 zustand persist → localStorage 동기화
+  // (client.ts의 customFetch가 localStorage에서 accessToken을 읽음)
+  useEffect(() => {
+    if (accessToken && !localStorage.getItem('accessToken')) {
+      localStorage.setItem('accessToken', accessToken);
+    }
+  }, [accessToken]);
+
+  // 토큰 갱신은 client.ts의 refreshAccessToken()이 401 에러 시 자동으로 처리
 
   // 푸터를 표시할 페이지 경로 확인
   const shouldShowFooter = (pathname: string): boolean => {

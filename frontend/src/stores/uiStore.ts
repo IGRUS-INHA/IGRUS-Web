@@ -19,12 +19,12 @@ export const useUIStore = create<UIStore>()(
 
       // 모달
       modalOpen: false,
-      modalContent: null,
+      modalContent: undefined,
       openModal: (content: ReactNode) => {
         set({ modalOpen: true, modalContent: content });
       },
       closeModal: () => {
-        set({ modalOpen: false, modalContent: null });
+        set({ modalOpen: false, modalContent: undefined });
       },
 
       // 토스트 (알림 메시지)
