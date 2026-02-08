@@ -13,10 +13,6 @@ export const PAGE_TITLES: Record<string, string> = {
   '/inquiry/lookup': 'Inquiry Lookup',
   '/mypage': 'My Page',
   '/admin': 'Admin Dashboard',
-  '/admin/users': 'User Management',
-  '/admin/associates': 'Associate Management',
-  '/admin/inquiries': 'Inquiry Management',
-  '/admin/scraps': 'Scrap Management',
 };
 
 export function getPageTitle(pathname: string): string {
