@@ -28,7 +28,6 @@ import java.time.Instant;
  * @param isRegistrable       신청 가능 여부
  * @param createdAt           생성일시
  * @param updatedAt           수정일시
- * @param isAuthor            현재 사용자가 작성자인지 여부
  * @param canEdit             현재 사용자가 수정 가능한지 여부
  * @param isRegistered        현재 사용자가 신청했는지 여부
  */
@@ -50,7 +49,6 @@ public record EventDetailResponse(
         boolean isRegistrable,
         Instant createdAt,
         Instant updatedAt,
-        boolean isAuthor,
         boolean canEdit,
         boolean isRegistered
 ) {
@@ -59,12 +57,11 @@ public record EventDetailResponse(
      * 사용자 권한 정보 포함 버전.
      *
      * @param event        행사 엔티티
-     * @param isAuthor     현재 사용자가 작성자인지 여부
      * @param canEdit      현재 사용자가 수정 가능한지 여부
      * @param isRegistered 현재 사용자가 신청했는지 여부
      * @return EventDetailResponse
      */
-    public static EventDetailResponse from(Event event, boolean isAuthor, boolean canEdit, boolean isRegistered) {
+    public static EventDetailResponse from(Event event, boolean canEdit, boolean isRegistered) {
         return new EventDetailResponse(
                 event.getId(),
                 event.getTitle(),
@@ -78,12 +75,11 @@ public record EventDetailResponse(
                 event.getCapacity(),
                 event.getCurrentCount(),
                 event.getStatus(),
-                event.getCloseReason(),
+                event.getStatus() == EventStatus.CLOSED ? event.getCloseReason() : null,
                 event.getRegistrationType(),
                 event.isRegistrable(),
                 event.getCreatedAt(),
                 event.getUpdatedAt(),
-                isAuthor,
                 canEdit,
                 isRegistered
         );
@@ -97,6 +93,6 @@ public record EventDetailResponse(
      * @return EventDetailResponse
      */
     public static EventDetailResponse from(Event event) {
-        return from(event, false, false, false);
+        return from(event, false, false);
     }
 }
