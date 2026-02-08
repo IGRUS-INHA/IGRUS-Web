@@ -38,4 +38,5 @@ import type { RegistrationResponseStatus } from './registrationResponseStatus';
 export interface RegistrationResponse {
   registrationId?: number;
   status?: RegistrationResponseStatus;
+  isRegistered?: boolean;
 }

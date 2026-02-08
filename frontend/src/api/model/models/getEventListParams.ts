@@ -37,7 +37,7 @@ import type { GetEventListStatus } from './getEventListStatus';
 
 export type GetEventListParams = {
 /**
- * 행사 상태 필터 (UPCOMING, OPEN, CLOSED, CANCELED)
+ * 행사 상태 필터 (UPCOMING, OPEN, CLOSED, ONGOING, COMPLETED)
  */
 status?: GetEventListStatus;
 };

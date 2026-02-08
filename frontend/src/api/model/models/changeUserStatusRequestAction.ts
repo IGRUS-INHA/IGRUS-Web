@@ -33,20 +33,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { InquiryListResponse } from './inquiryListResponse';
-import type { PageableObject } from './pageableObject';
-import type { SortObject } from './sortObject';
 
-export interface PageInquiryListResponse {
-  totalElements?: number;
-  totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: InquiryListResponse[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  first?: boolean;
-  last?: boolean;
-  empty?: boolean;
-}
+/**
+ * 수행할 행위
+ */
+export type ChangeUserStatusRequestAction = typeof ChangeUserStatusRequestAction[keyof typeof ChangeUserStatusRequestAction];
+
+
+export const ChangeUserStatusRequestAction = {
+  SUSPEND: 'SUSPEND',
+  LIFT: 'LIFT',
+} as const;

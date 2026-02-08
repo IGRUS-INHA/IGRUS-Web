@@ -41,6 +41,6 @@ export const EventDetailResponseStatus = {
   UPCOMING: 'UPCOMING',
   OPEN: 'OPEN',
   CLOSED: 'CLOSED',
+  ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
-  CANCELED: 'CANCELED',
 } as const;
