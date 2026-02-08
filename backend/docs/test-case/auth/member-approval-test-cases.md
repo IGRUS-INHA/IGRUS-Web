@@ -34,6 +34,7 @@
 | APR-011 | 승인 후 역할 변경 확인 | 개별 승인 완료 | 승인된 사용자로 로그인 | 역할이 MEMBER로 표시 | ✅ |
 | APR-012 | 승인 결정 기록 | 개별 승인 완료 | AssociateDecision 확인 | APPROVED 타입, 승인자 ID, 승인일시 기록 | ✅ |
 | APR-013 | 역할 변경 감사 이력 기록 | 개별 승인 완료 | UserRoleHistory 확인 | ASSOCIATE → MEMBER 변경 이력 기록 | ✅ |
+| APR-014 | 승인 시 리프레시 토큰 만료 | 개별 승인 완료, 기존 Refresh Token 존재 | refreshTokenRepository 확인 | 해당 사용자의 모든 Refresh Token이 revoked 처리됨 | ✅ |
 
 ### 2.3 일괄 승인
 
@@ -44,6 +45,7 @@
 | APR-022 | 일괄 승인 시 각각 AssociateDecision 기록 | 일괄 승인 완료 | 각 사용자 AssociateDecision 확인 | 각 사용자별 APPROVED 결정 개별 기록 | ✅ |
 | APR-023 | 일괄 승인 시 역할 변경 이력 개별 기록 | 일괄 승인 완료 | UserRoleHistory 확인 | 각 사용자별 역할 변경 이력 개별 기록 | ✅ |
 | APR-024 | 선택 없이 일괄 승인 시도 | 아무도 선택하지 않음 | 일괄 승인 버튼 클릭 | 일괄 승인 버튼 비활성화 또는 경고 메시지 | ✅ |
+| APR-025 | 일괄 승인 시 각 사용자의 리프레시 토큰 만료 | 일괄 승인 완료, 각 사용자에 Refresh Token 존재 | refreshTokenRepository 확인 | 승인된 모든 사용자의 Refresh Token이 revoked 처리됨 | ✅ |
 
 ### 2.4 권한 검증
 
@@ -104,8 +106,8 @@
 | ID | 요구사항 | 관련 테스트 케이스 |
 |----|---------|------------------|
 | FR-026 | 관리자(ADMIN) 승인 대기 준회원 목록 조회 (승인/거절된 준회원 제외) | APR-001 ~ APR-006 |
-| FR-027 | 관리자(ADMIN)만 준회원 승인 가능 | APR-010 ~ APR-013, APR-030 ~ APR-034 |
-| FR-028 | 개별 승인 및 일괄 승인 제공 | APR-010 ~ APR-024 |
+| FR-027 | 관리자(ADMIN)만 준회원 승인 가능 | APR-010 ~ APR-014, APR-030 ~ APR-034 |
+| FR-028 | 개별 승인 및 일괄 승인 제공 | APR-010 ~ APR-025 |
 | FR-037 | 관리자(ADMIN)만 준회원 거절 가능 (거절 사유 필수) | REJ-010 ~ REJ-013, REJ-040 ~ REJ-043 |
 | FR-038 | 개별 거절 및 일괄 거절 제공 | REJ-010 ~ REJ-023 |
 | FR-039 | 거절된 준회원 ASSOCIATE 역할 유지, 승인 대기 목록에서만 제외 | REJ-011, APR-005 |
@@ -119,13 +121,13 @@
 ```java
 // 서비스 통합 테스트
 class ApproveAssociateServiceTest {
-    @Nested class IndividualApprovalTest { /* APR-010 ~ APR-013 */ }
+    @Nested class IndividualApprovalTest { /* APR-010 ~ APR-014 */ }
     @Nested class AuthorizationTest { /* APR-030 ~ APR-031 */ }
     @Nested class EdgeCaseTest { /* MEMBER 승인 시도, 존재하지 않는 사용자 등 */ }
 }
 
 class BulkApproveAssociatesServiceTest {
-    @Nested class BulkApprovalTest { /* APR-020 ~ APR-024 */ }
+    @Nested class BulkApprovalTest { /* APR-020 ~ APR-025 */ }
 }
 
 class RejectAssociateServiceTest {
@@ -146,7 +148,7 @@ class GetRejectedAssociatesServiceTest {
 class AdminMemberControllerTest {
     @Nested class GetPendingAssociatesTest { /* APR-001 ~ APR-006 */ }
     @Nested class ApproveAssociateTest { /* APR-010 ~ APR-013 */ }
-    @Nested class BulkApprovalTest { /* APR-020 ~ APR-024 */ }
+    @Nested class BulkApprovalTest { /* APR-020 ~ APR-025 */ }
     @Nested class RejectAssociateTest { /* REJ-010 ~ REJ-013 */ }
     @Nested class BulkRejectionTest { /* REJ-020 ~ REJ-022 */ }
     @Nested class GetRejectedAssociatesTest { /* REJ-030 ~ REJ-032, APR-005 */ }
@@ -161,3 +163,4 @@ class AdminMemberControllerTest {
 |------|------|--------|----------|
 | 1.0 | 2026-01-23 | - | 최초 작성 |
 | 1.1 | 2026-02-07 | Claude | 준회원 거절 기능 테스트 케이스 추가 (REJ-010 ~ REJ-043), 승인 테스트 케이스 보정 (AssociateDecision 엔티티 반영), APR-005/APR-006 추가 |
+| 1.2 | 2026-02-09 | Claude | 승인 시 리프레시 토큰 만료 테스트 케이스 추가 (APR-014, APR-025) - Issue #277 |

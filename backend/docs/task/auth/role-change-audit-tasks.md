@@ -19,6 +19,7 @@
 | 변경 전/후 역할 기록 | ✅ 완료 | `UserRoleHistory.previousRole`, `UserRoleHistory.newRole` |
 | 변경 일시 기록 | ✅ 완료 | `BaseEntity.createdAt` |
 | 영구 보관 (삭제 불가) | ✅ 완료 | `UserRoleHistory`는 `BaseEntity` 확장 (soft delete 없음), 삭제 쿼리 없음 |
+| 권한 변경 시 리프레시 토큰 만료 (Issue #277) | ✅ 완료 | `ChangeUserRoleService`, `ApproveAssociateService`, `BulkApproveAssociatesService`에서 `refreshTokenRepository.revokeAllByUserId()` 호출 |
 
 ### 태스크 현황
 
