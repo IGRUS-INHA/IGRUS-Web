@@ -120,6 +120,9 @@ export default function PostDetailPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/posts/${post.postId}/bookmarks/status`],
           });
+          void queryClient.invalidateQueries({
+            queryKey: [`/api/v1/boards/${boardType}/posts/${post.postId}`],
+          });
         },
       }
     );
@@ -371,7 +374,7 @@ export default function PostDetailPage() {
             )}
           >
             <Bookmark size={20} className={isBookmarked ? 'fill-current' : ''} />
-            <span className="hidden sm:inline">스크랩</span>
+            {post.bookmarkCount ?? 0}
           </button>
         </div>
       </article>

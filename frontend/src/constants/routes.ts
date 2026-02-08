@@ -1,7 +1,7 @@
 export const PAGE_TITLES: Record<string, string> = {
   '/': 'Home',
-  '/login': 'Login',
-  '/signup': 'Sign Up',
+  '/login': ' ',
+  '/signup': ' ',
   '/verify-email': 'Email Verification',
   '/forgot-password': 'Forgot Password',
   '/reset-password': 'Reset Password',
@@ -9,17 +9,18 @@ export const PAGE_TITLES: Record<string, string> = {
   '/board/general': 'Community',
   '/board/insight': 'Insights',
   '/events': 'Events',
-  '/inquiry': 'Inquiry',
+  '/inquiry': ' ',
   '/inquiry/lookup': 'Inquiry Lookup',
   '/mypage': 'My Page',
   '/admin': 'Admin Dashboard',
-  '/admin/users': 'User Management',
-  '/admin/associates': 'Associate Management',
-  '/admin/inquiries': 'Inquiry Management',
-  '/admin/scraps': 'Scrap Management',
 };
 
 export function getPageTitle(pathname: string): string {
+  // 게시판 경로는 모두 Community로 표시
+  if (pathname.startsWith('/board')) {
+    return 'Community';
+  }
+
   // 정확한 매칭 우선
   if (PAGE_TITLES[pathname]) {
     return PAGE_TITLES[pathname];
@@ -27,12 +28,6 @@ export function getPageTitle(pathname: string): string {
 
   // 동적 라우트 처리
   const segments = pathname.split('/').filter(Boolean);
-
-  // /board/:boardType/:postId (게시글 상세)
-  if (segments[0] === 'board' && segments.length >= 2) {
-    const boardPath = `/${segments[0]}/${segments[1]}`;
-    return PAGE_TITLES[boardPath] || 'Post';
-  }
 
   // /events/:eventId (행사 상세)
   if (segments[0] === 'events' && segments.length === 2) {
