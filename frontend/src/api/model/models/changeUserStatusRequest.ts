@@ -33,20 +33,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { BookmarkedPostResponse } from './bookmarkedPostResponse';
-import type { PageableObject } from './pageableObject';
-import type { SortObject } from './sortObject';
+import type { ChangeUserStatusRequestAction } from './changeUserStatusRequestAction';
 
-export interface PageBookmarkedPostResponse {
-  totalElements?: number;
-  totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: BookmarkedPostResponse[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  first?: boolean;
-  last?: boolean;
-  empty?: boolean;
+/**
+ * 회원 상태 변경 요청
+ */
+export interface ChangeUserStatusRequest {
+  /** 수행할 행위 */
+  action: ChangeUserStatusRequestAction;
+  /** 정지 사유 (SUSPEND일 때 필수) */
+  reason?: string;
+  /** 정지 종료일 (SUSPEND일 때 필수) */
+  suspendedUntil?: string;
 }

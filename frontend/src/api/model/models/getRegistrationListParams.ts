@@ -33,20 +33,20 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { PageableObject } from './pageableObject';
-import type { PostViewHistoryResponse } from './postViewHistoryResponse';
-import type { SortObject } from './sortObject';
 
-export interface PagePostViewHistoryResponse {
-  totalElements?: number;
-  totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: PostViewHistoryResponse[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  first?: boolean;
-  last?: boolean;
-  empty?: boolean;
-}
+export type GetRegistrationListParams = {
+/**
+ * 페이지 번호 (0부터 시작)
+ * @minimum 0
+ */
+page?: number;
+/**
+ * 페이지당 항목 수
+ * @minimum 1
+ */
+size?: number;
+/**
+ * 정렬 조건. 여러 정렬은 sort를 여러 번 지정합니다. (sort=createdAt,DESC&sort=id,ASC)
+ */
+sort?: string[];
+};

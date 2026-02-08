@@ -38,8 +38,8 @@ import type { SortObject } from './sortObject';
 import type { UserRoleHistoryResponse } from './userRoleHistoryResponse';
 
 export interface PageUserRoleHistoryResponse {
-  totalPages?: number;
   totalElements?: number;
+  totalPages?: number;
   pageable?: PageableObject;
   size?: number;
   content?: UserRoleHistoryResponse[];
