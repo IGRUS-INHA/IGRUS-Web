@@ -1,6 +1,7 @@
 package igrus.web.event.domain;
 
 import igrus.web.common.domain.BaseEntity;
+import igrus.web.event.exception.InvalidRegistrationStatusException;
 import igrus.web.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -98,11 +99,11 @@ public class EventRegistration extends BaseEntity {
     /**
      * 승인 또는 거절 상태를 대기 상태로 되돌립니다. (선발제 전용)
      *
-     * @throws IllegalStateException APPROVED 또는 REJECTED 상태가 아닌 경우
+     * @throws InvalidRegistrationStatusException APPROVED 또는 REJECTED 상태가 아닌 경우
      */
     public void revertToWaiting() {
         if (!this.isApproved() && !this.isRejected()) {
-            throw new IllegalStateException("승인 또는 거절 상태만 되돌릴 수 있습니다");
+            throw new InvalidRegistrationStatusException();
         }
         this.status = EventRegistrationStatus.WAITING;
     }
@@ -123,7 +124,7 @@ public class EventRegistration extends BaseEntity {
      */
     public void reRegister() {
         if (!this.isCanceled()) {
-            throw new IllegalStateException("취소된 신청만 재신청 가능합니다");
+            throw new InvalidRegistrationStatusException();
         }
         this.status = event.isAutoApprove()
                 ? EventRegistrationStatus.REGISTERED

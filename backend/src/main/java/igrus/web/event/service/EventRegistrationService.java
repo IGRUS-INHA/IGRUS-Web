@@ -352,7 +352,7 @@ public class EventRegistrationService {
         Long eventId = registration.getEvent().getId();
 
         // 2. 행사 조회
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 3. 사용자 조회
@@ -372,17 +372,23 @@ public class EventRegistrationService {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 7. 승인 상태였으면 카운트 감소
-        if (registration.isApproved()) {
+        // 7. 승인 상태였는지 미리 기록 (clearAutomatically로 인한 엔티티 분리 대비)
+        boolean wasApproved = registration.isApproved();
+
+        // 8. WAITING 상태로 되돌리기 (카운트 감소 전에 상태 변경)
+        registration.revertToWaiting();
+        eventRegistrationRepository.saveAndFlush(registration);
+
+        // 9. 승인 상태였으면 카운트 감소 (clearAutomatically=true로 영속성 컨텍스트 초기화됨)
+        if (wasApproved) {
             eventRepository.decrementCurrentCount(eventId);
             updateEventStatusAfterDecrement(eventId);
         }
 
-        // 8. WAITING 상태로 되돌리기
-        registration.revertToWaiting();
-
-        // 9. 응답 반환
-        return RegistrationResponse.from(registration);
+        // 10. 응답 반환 (영속성 컨텍스트 초기화 후이므로 다시 조회)
+        EventRegistration updatedRegistration = eventRegistrationRepository.findById(registrationId)
+                .orElseThrow(EventRegistrationNotFoundException::new);
+        return RegistrationResponse.from(updatedRegistration);
     }
 
     // === Private 메서드 ===

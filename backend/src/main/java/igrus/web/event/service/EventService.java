@@ -254,37 +254,6 @@ public class EventService {
     }
 
     /**
-<<<<<<< HEAD
-=======
-     * 행사를 취소합니다.
-     *
-     * @param eventId 행사 ID
-     * @param userId  취소 요청자 ID
-     * @return 취소된 행사 상세 응답 DTO
-     * @throws EventNotFoundException       행사를 찾을 수 없는 경우
-     * @throws EventAccessDeniedException   권한이 없는 경우
-     */
-    public EventDetailResponse cancelEvent(Long eventId, Long userId) {
-        // 1. 행사 조회
-        Event event = eventRepository.findByIdAndNotDeleted(eventId)
-                .orElseThrow(() -> new EventNotFoundException(eventId));
-
-        // 2. 사용자 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
-
-        // 3. 권한 확인 (운영진 이상만 취소 가능)
-        validateEditPermission(user);
-
-        // 4. 행사 취소 (도메인 메서드 호출)
-        event.cancel();
-
-        // 5. 응답 반환
-        return EventDetailResponse.from(event);
-    }
-
-    /**
->>>>>>> dev
      * 운영진 이상 권한을 검증합니다.
      * 행사 생성 시 사용.
      *

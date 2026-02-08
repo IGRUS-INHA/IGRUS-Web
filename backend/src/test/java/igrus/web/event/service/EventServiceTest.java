@@ -249,8 +249,8 @@ class EventServiceTest {
         }
 
         @Test
-        @DisplayName("행사 작성자가 조회하면 isAuthor가 true인 응답을 반환한다")
-        void getEvent_ByAuthor_ReturnsIsAuthorTrue() {
+        @DisplayName("운영진이 조회하면 canEdit이 true인 응답을 반환한다")
+        void getEvent_ByOperator_ReturnsCanEditTrue() {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
@@ -258,7 +258,6 @@ class EventServiceTest {
 
             EventDetailResponse response = eventService.getEvent(EVENT_ID, OPERATOR_ID);
 
-            assertThat(response.isAuthor()).isTrue();
             assertThat(response.canEdit()).isTrue();
         }
     }
@@ -440,41 +439,4 @@ class EventServiceTest {
         }
     }
 
-    // ========== cancelEvent ==========
-
-    @Nested
-    @DisplayName("cancelEvent - 행사 취소")
-    class CancelEvent {
-
-        @Test
-        @DisplayName("운영진이 행사를 취소하면 성공한다")
-        void cancelEvent_WithOperator_Success() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
-            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
-
-            EventDetailResponse response = eventService.cancelEvent(EVENT_ID, OPERATOR_ID);
-
-            assertThat(response).isNotNull();
-            verify(mockEvent).cancel();
-        }
-
-        @Test
-        @DisplayName("일반 회원이 취소하려고 하면 EventAccessDeniedException 발생")
-        void cancelEvent_WithRegularMember_ThrowsException() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
-            when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
-
-            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, MEMBER_ID))
-                    .isInstanceOf(EventAccessDeniedException.class);
-        }
-
-        @Test
-        @DisplayName("삭제된 행사를 취소하려고 하면 EventNotFoundException 발생")
-        void cancelEvent_DeletedEvent_ThrowsException() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, OPERATOR_ID))
-                    .isInstanceOf(EventNotFoundException.class);
-        }
-    }
 }

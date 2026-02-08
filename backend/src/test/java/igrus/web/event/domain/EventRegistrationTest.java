@@ -1,5 +1,6 @@
 package igrus.web.event.domain;
 
+import igrus.web.event.exception.InvalidRegistrationStatusException;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -263,8 +264,7 @@ class EventRegistrationTest {
 
             // when & then
             assertThatThrownBy(() -> registration.reRegister())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("취소된 신청만 재신청 가능");
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
         }
 
         /**
@@ -281,8 +281,7 @@ class EventRegistrationTest {
 
             // when & then
             assertThatThrownBy(() -> registration.reRegister())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("취소된 신청만 재신청 가능");
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
         }
 
         /**
@@ -299,8 +298,7 @@ class EventRegistrationTest {
 
             // when & then
             assertThatThrownBy(() -> registration.reRegister())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("취소된 신청만 재신청 가능");
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
         }
 
         /**
@@ -317,8 +315,7 @@ class EventRegistrationTest {
 
             // when & then
             assertThatThrownBy(() -> registration.reRegister())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("취소된 신청만 재신청 가능");
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
         }
 
         /**

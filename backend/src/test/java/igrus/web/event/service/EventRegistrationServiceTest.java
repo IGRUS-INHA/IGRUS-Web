@@ -750,4 +750,200 @@ class EventRegistrationServiceTest {
                     .isInstanceOf(OperatorPermissionRequiredException.class);
         }
     }
+
+    @Nested
+    @DisplayName("revertRegistration - 승인/거절 되돌리기")
+    class RevertRegistrationTest {
+
+        /**
+         * SVC-050: APPROVED 상태 되돌리기 (카운트 감소)
+         */
+        @Test
+        @DisplayName("[SVC-050] APPROVED 상태 신청을 되돌리면 WAITING으로 변경되고 카운트 감소")
+        void revertRegistration_FromApproved_RevertsToWaitingAndDecrementsCount() {
+            // given
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getId()).thenReturn(REGISTRATION_ID);
+            when(registration.getEvent()).thenReturn(manualApproveEvent);
+            when(registration.isApproved()).thenReturn(true);
+            when(registration.isRejected()).thenReturn(false);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+            when(registration.getRegisteredAt()).thenReturn(Instant.now());
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.revertRegistration(REGISTRATION_ID, OPERATOR_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(registration).revertToWaiting();
+            verify(eventRegistrationRepository).saveAndFlush(registration);
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
+        }
+
+        /**
+         * SVC-051: REJECTED 상태 되돌리기 (카운트 변경 없음)
+         */
+        @Test
+        @DisplayName("[SVC-051] REJECTED 상태 신청을 되돌리면 WAITING으로 변경되고 카운트 변경 없음")
+        void revertRegistration_FromRejected_RevertsToWaitingWithoutCountChange() {
+            // given
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getId()).thenReturn(REGISTRATION_ID);
+            when(registration.getEvent()).thenReturn(manualApproveEvent);
+            when(registration.isApproved()).thenReturn(false);
+            when(registration.isRejected()).thenReturn(true);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+            when(registration.getRegisteredAt()).thenReturn(Instant.now());
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when
+            RegistrationResponse response = eventRegistrationService.revertRegistration(REGISTRATION_ID, OPERATOR_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(registration).revertToWaiting();
+            verify(eventRepository, never()).decrementCurrentCount(any());
+        }
+
+        /**
+         * SVC-052: WAITING/REGISTERED/CANCELED 상태 되돌리기 거부
+         */
+        @Test
+        @DisplayName("[SVC-052] APPROVED/REJECTED가 아닌 상태를 되돌리면 InvalidRegistrationStatusException 발생")
+        void revertRegistration_InvalidStatus_ThrowsException() {
+            // given
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(manualApproveEvent);
+            when(registration.isApproved()).thenReturn(false);
+            when(registration.isRejected()).thenReturn(false);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.revertRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
+        }
+
+        /**
+         * SVC-053: 자동 승인 행사 되돌리기 거부
+         */
+        @Test
+        @DisplayName("[SVC-053] 자동 승인 행사에서 되돌리면 NotManualApproveEventException 발생")
+        void revertRegistration_AutoApproveEvent_ThrowsException() {
+            // given
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(autoApproveEvent);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.revertRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(NotManualApproveEventException.class);
+        }
+
+        /**
+         * SVC-054: 일반 회원 되돌리기 거부
+         */
+        @Test
+        @DisplayName("[SVC-054] 일반 회원이 되돌리면 OperatorPermissionRequiredException 발생")
+        void revertRegistration_ByRegularMember_ThrowsException() {
+            // given
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(manualApproveEvent);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.revertRegistration(REGISTRATION_ID, USER_ID))
+                    .isInstanceOf(OperatorPermissionRequiredException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("시간 겹침 검증")
+    class TimeOverlapValidationTest {
+
+        /**
+         * SVC-060: 시간 겹치는 행사 신청 거부
+         */
+        @Test
+        @DisplayName("[SVC-060] 시간이 겹치는 다른 행사에 신청하면 EventTimeOverlapException 발생")
+        void registerEvent_TimeOverlap_ThrowsException() {
+            // given
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
+                    .isInstanceOf(EventTimeOverlapException.class);
+        }
+
+        /**
+         * SVC-061: 시간 안 겹치는 행사 신청 성공
+         */
+        @Test
+        @DisplayName("[SVC-061] 시간이 겹치지 않으면 정상 신청")
+        void registerEvent_NoTimeOverlap_Succeeds() {
+            // given
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(false);
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
+
+            EventRegistration savedRegistration = mock(EventRegistration.class);
+            when(savedRegistration.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
+            when(savedRegistration.getRegisteredAt()).thenReturn(Instant.now());
+            when(savedRegistration.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.save(any(EventRegistration.class))).thenReturn(savedRegistration);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, USER_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(eventRegistrationRepository).existsOverlappingRegistration(eq(USER_ID), any(), any(), any());
+        }
+
+        /**
+         * SVC-062: 재신청 시 시간 겹침 거부
+         */
+        @Test
+        @DisplayName("[SVC-062] 재신청 시 시간이 겹치면 EventTimeOverlapException 발생")
+        void reRegister_TimeOverlap_ThrowsException() {
+            // given
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+
+            EventRegistration canceledRegistration = mock(EventRegistration.class);
+            when(canceledRegistration.isCanceled()).thenReturn(true);
+            when(canceledRegistration.getUser()).thenReturn(regularMember);
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
+                    .thenReturn(Optional.of(canceledRegistration));
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
+                    .isInstanceOf(EventTimeOverlapException.class);
+        }
+    }
 }
