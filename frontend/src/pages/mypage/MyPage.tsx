@@ -11,7 +11,7 @@ import ProfileHeader from '@/components/feature/mypage/ProfileHeader';
 import { cn } from '@/lib/utils';
 import { useMyProfile, useMyPosts, useMyLikes, useMyBookmarks, useMyRegistrations } from '@/hooks/queries/useMyPage';
 import { useUpdateMyProfile, getGetMyProfileQueryKey } from '@/api/model/my-page/my-page';
-import { isConflictError, getErrorMessage } from '@/utils/error';
+import { hasErrorCode, getErrorMessage } from '@/utils/error';
 import { formatRelativeTime, formatDate } from '@/utils';
 import type { UpdateProfileRequest } from '@/api/model/models/updateProfileRequest';
 import type { MyRegistrationResponseStatus } from '@/api/model/models/myRegistrationResponseStatus';
@@ -62,13 +62,16 @@ export default function MyPage() {
     mutation: {
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
+        void Swal.fire({ icon: 'success', title: '수정 완료', text: '프로필이 수정되었습니다.', timer: 1500, showConfirmButton: false, showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
       },
       onError: (error: unknown) => {
-        if (isConflictError(error)) {
-          void Swal.fire({ icon: 'error', title: '수정 실패', text: '이미 사용 중인 이메일입니다.', showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
-        } else {
-          void Swal.fire({ icon: 'error', title: '수정 실패', text: getErrorMessage(error), showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
+        let errorMessage = getErrorMessage(error);
+        if (hasErrorCode(error, 'DUPLICATE_EMAIL')) {
+          errorMessage = '이미 사용 중인 이메일입니다.';
+        } else if (hasErrorCode(error, 'DUPLICATE_PHONE_NUMBER')) {
+          errorMessage = '이미 사용 중인 전화번호입니다.';
         }
+        void Swal.fire({ icon: 'error', title: '수정 실패', text: errorMessage, showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
       },
     },
   });
@@ -128,8 +131,8 @@ export default function MyPage() {
         onChangePassword={handleChangePassword}
         onLogout={handleLogout}
         onWithdraw={() => navigate('/mypage/withdraw')}
-        onEditEmail={() => {/* TODO: 이메일 수정 구현 */}}
-        onEditPhone={() => {/* TODO: 전화번호 수정 구현 */}}
+        onUpdateProfile={handleUpdateProfile}
+        isUpdating={isProfileUpdating}
       />
 
       {/* Tabs */}
