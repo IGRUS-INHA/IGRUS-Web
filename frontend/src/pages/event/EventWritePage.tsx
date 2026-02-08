@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, MapPin, Users, Image as ImageIcon, Clock, Save } f
 import { useCreateEvent } from '@/hooks/queries/useEvents';
 import { CreateEventRequestRegistrationType } from '@/api/model/models';
 import { cn } from '@/lib/utils';
+import { isForbiddenError, isEventOperatorRequired, getErrorMessage } from '@/utils/error';
 
 const eventSchema = z.object({
   title: z.string().min(1, '행사 제목을 입력하세요'),
@@ -60,8 +61,12 @@ export default function EventWritePage() {
           alert('행사가 등록되었습니다.');
           navigate('/events');
         },
-        onError: () => {
-          alert('행사 등록에 실패했습니다. 다시 시도해주세요.');
+        onError: (error: unknown) => {
+          if (isForbiddenError(error) || isEventOperatorRequired(error)) {
+            alert('행사 등록 권한이 없습니다.');
+          } else {
+            alert(getErrorMessage(error));
+          }
         },
       }
     );

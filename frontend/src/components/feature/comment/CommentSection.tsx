@@ -6,6 +6,7 @@ import { useUIStore } from '@/stores';
 import { usePermission } from '@/hooks/usePermission';
 import { useComments, useCreateCommentMutation } from '@/hooks/queries/useComments';
 import { CommentList } from './CommentList';
+import { isForbiddenError, hasErrorCode, getErrorMessage } from '@/utils/error';
 
 interface CommentSectionProps {
   postId: number;
@@ -52,14 +53,13 @@ export function CommentSection({ postId }: CommentSectionProps) {
         setComment('');
         setIsAnonymous(false);
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error('댓글 작성 실패:', error);
         const isForbidden =
-          error?.code === 'COMMENT_CREATE_DENIED' ||
-          error?.message?.includes('권한이 없습니다');
+          isForbiddenError(error) || hasErrorCode(error, 'COMMENT_CREATE_DENIED');
         const errorMessage = isForbidden
           ? '정회원 승인 후 댓글 이용이 가능합니다.'
-          : error?.message || '댓글 작성에 실패했습니다';
+          : getErrorMessage(error);
         alert(errorMessage);
       },
     });
