@@ -114,8 +114,8 @@ export default function MyPage() {
   // 탭별 카운트 (로딩 중이면 '-' 표시)
   const tabCounts = {
     posts: postsQuery.isLoading ? '-' : postsQuery.totalElements,
-    likes: likesQuery.isLoading ? '-' : likesQuery.totalElements,
-    scraps: bookmarksQuery.isLoading ? '-' : bookmarksQuery.totalElements,
+    likes: likesQuery.isLoading ? '-' : likesQuery.posts.filter((p) => !p.isDeleted).length,
+    scraps: bookmarksQuery.isLoading ? '-' : bookmarksQuery.posts.filter((p) => !p.isDeleted).length,
     events: registrationsQuery.isLoading ? '-' : registrationsQuery.registrations.length,
   };
 
@@ -223,14 +223,13 @@ export default function MyPage() {
               emptyMessage="좋아요한 게시글이 없습니다."
               onRetry={() => void likesQuery.refetch()}
             >
-              {likesQuery.posts.map((post) => (
+              {likesQuery.posts.filter((post) => !post.isDeleted).map((post) => (
                 <div
                   key={post.postId}
                   onClick={() => post.boardCode && post.postId && navigate(`/boards/${post.boardCode}/posts/${post.postId}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
-                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border',
-                    post.isDeleted && 'opacity-50'
+                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
                   )}
                 >
                   <div className="flex items-center gap-s4 min-w-0">
@@ -242,7 +241,7 @@ export default function MyPage() {
                         {post.boardName ?? '게시판'} {post.createdAt ? `\u2022 ${formatRelativeTime(post.createdAt)}` : ''}
                       </p>
                       <h4 className="font-bold text-lg truncate">
-                        {post.isDeleted ? (post.deletedMessage ?? '삭제된 게시글') : (post.title ?? '제목 없음')}
+                        {post.title ?? '제목 없음'}
                       </h4>
                       <p className="text-c1 text-muted-foreground">
                         작성자: {post.authorName ?? '알 수 없음'}
@@ -264,14 +263,13 @@ export default function MyPage() {
               emptyMessage="스크랩한 게시글이 없습니다."
               onRetry={() => void bookmarksQuery.refetch()}
             >
-              {bookmarksQuery.posts.map((post) => (
+              {bookmarksQuery.posts.filter((post) => !post.isDeleted).map((post) => (
                 <div
                   key={post.postId}
                   onClick={() => post.boardCode && post.postId && navigate(`/boards/${post.boardCode}/posts/${post.postId}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
-                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border',
-                    post.isDeleted && 'opacity-50'
+                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
                   )}
                 >
                   <div className="min-w-0">
@@ -280,7 +278,7 @@ export default function MyPage() {
                       <p className="text-c1 text-primary font-bold">{post.boardName ?? '스크랩한 자료'}</p>
                     </div>
                     <h4 className="font-bold text-lg mb-s1 truncate">
-                      {post.isDeleted ? (post.deletedMessage ?? '삭제된 게시글') : (post.title ?? '제목 없음')}
+                      {post.title ?? '제목 없음'}
                     </h4>
                     <p className="text-c1 text-muted-foreground">
                       작성자: {post.authorName ?? '알 수 없음'}

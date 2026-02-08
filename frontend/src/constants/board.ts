@@ -9,6 +9,11 @@ export const BOARDS = {
   INSIGHT: 'INSIGHT',
 } as const;
 
+// 빌드타임 플래그에 따라 활성화된 게시판 목록
+export const ENABLED_BOARDS = __FEATURE_COMMUNITY__
+  ? [BOARDS.NOTICES, BOARDS.GENERAL, BOARDS.INSIGHT]
+  : [BOARDS.NOTICES];
+
 export const BOARD_LABELS = {
   [BOARDS.NOTICES]: '공지사항',
   [BOARDS.GENERAL]: '자유게시판',

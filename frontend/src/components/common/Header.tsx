@@ -22,7 +22,7 @@ export default function Header() {
 
   // 검색 가능한 페이지 체크
   const searchablePaths = ["/board", "/events"];
-  const shouldShowSearch = searchablePaths.some((path) =>
+  const shouldShowSearch = __FEATURE_SEARCH__ && searchablePaths.some((path) =>
     location.pathname.startsWith(path)
   );
 
