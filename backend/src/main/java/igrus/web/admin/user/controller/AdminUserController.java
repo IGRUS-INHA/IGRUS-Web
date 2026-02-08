@@ -144,4 +144,27 @@ public class AdminUserController {
         changeUserRoleService.changeUserRole(userId, request.role(), authenticatedUser.userId());
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(
+            summary = "회원 상태 변경 (정지/해제)",
+            description = "회원을 정지하거나 정지를 해제합니다. SUSPEND: 사유와 종료일 필수. LIFT: 활성 정지가 있어야 합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "상태 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "자기 자신 상태 변경 / 사유 미입력 / 종료일 미입력 / 이미 정지 / 해제할 정지 없음",
+                    content = @Content),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)", content = @Content),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content)
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{userId}/status")
+    public ResponseEntity<Void> changeUserStatus(
+            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
+            @Valid @RequestBody ChangeUserStatusRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        changeUserStatusService.changeUserStatus(userId, request, authenticatedUser.userId());
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -35,4 +35,12 @@ public class InvalidSuspensionException extends CustomBaseException {
     public static InvalidSuspensionException extendInvalidDate() {
         return new InvalidSuspensionException(ErrorCode.SUSPENSION_EXTEND_INVALID_DATE);
     }
+
+    public static InvalidSuspensionException endDateMustBeFuture() {
+        return new InvalidSuspensionException(ErrorCode.SUSPENSION_END_DATE_MUST_BE_FUTURE);
+    }
+
+    public static InvalidSuspensionException lastAdminCannotSuspend() {
+        return new InvalidSuspensionException(ErrorCode.LAST_ADMIN_CANNOT_SUSPEND);
+    }
 }
