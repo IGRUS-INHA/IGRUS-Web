@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import java.util.Optional;
  */
 @Entity
 @Table(name = "events")
+@SQLRestriction("event_deleted = false")
 @AttributeOverrides({
         @AttributeOverride(name = "createdAt", column = @Column(name = "event_created_at", nullable = false, updatable = false)),
         @AttributeOverride(name = "updatedAt", column = @Column(name = "event_updated_at", nullable = false)),
@@ -175,6 +177,18 @@ public class Event extends SoftDeletableEntity {
     }
 
     /**
+     * 행사를 진행 중 상태로 변경합니다.
+     * 마감 사유를 초기화합니다.
+     *
+     * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
+     */
+    public void startOngoing() {
+        validateStateTransition(EventStatus.ONGOING);
+        this.status = EventStatus.ONGOING;
+        this.closeReason = null;
+    }
+
+    /**
      * 행사를 완료 처리합니다.
      *
      * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
@@ -182,16 +196,6 @@ public class Event extends SoftDeletableEntity {
     public void complete() {
         validateStateTransition(EventStatus.COMPLETED);
         this.status = EventStatus.COMPLETED;
-    }
-
-    /**
-     * 행사를 취소합니다.
-     *
-     * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
-     */
-    public void cancel() {
-        validateStateTransition(EventStatus.CANCELED);
-        this.status = EventStatus.CANCELED;
     }
 
     private void validateStateTransition(EventStatus target) {
@@ -204,18 +208,30 @@ public class Event extends SoftDeletableEntity {
      * 현재 시간에 따라 상태를 자동 갱신합니다. (Lazy Evaluation)
      * - UPCOMING → OPEN: 신청 시작일이 지났을 때
      * - OPEN → CLOSED (DEADLINE_PASSED): 신청 마감일이 지났을 때
+     * - CLOSED → ONGOING: 행사 시작일이 지났을 때
+     * - ONGOING → COMPLETED: 행사 종료일이 지났을 때
      *
      * @param now 현재 시간
      */
     public void updateStatusIfNeeded(Instant now) {
         // UPCOMING 상태에서 신청 시작일이 지났으면 OPEN으로 변경
         if (this.status == EventStatus.UPCOMING && !now.isBefore(this.registrationStartAt)) {
-            this.status = EventStatus.OPEN;
+            open();
         }
 
         // OPEN 상태에서 신청 마감일이 지났으면 CLOSED로 변경
         if (this.status == EventStatus.OPEN && now.isAfter(this.registrationEndAt)) {
             closeByDeadline();
+        }
+
+        // CLOSED 상태에서 행사 시작일이 지났으면 ONGOING으로 변경
+        if (this.status == EventStatus.CLOSED && !now.isBefore(this.eventStartAt)) {
+            startOngoing();
+        }
+
+        // ONGOING 상태에서 행사 종료일이 지났으면 COMPLETED로 변경
+        if (this.status == EventStatus.ONGOING && now.isAfter(this.eventEndAt)) {
+            complete();
         }
     }
 
