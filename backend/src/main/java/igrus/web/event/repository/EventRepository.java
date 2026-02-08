@@ -42,7 +42,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      * @param id 행사 ID
      * @return 변경된 행 수 (1이면 성공, 0이면 정원 초과 또는 OPEN 아님)
      */
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount + 1 " +
            "WHERE e.id = :id AND e.currentCount < e.capacity AND e.status = 'OPEN' AND e.deleted = false")
     int incrementCurrentCountIfAvailable(@Param("id") Long id);
@@ -57,7 +57,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      * @param id 행사 ID
      * @return 변경된 행 수 (1이면 성공, 0이면 정원 초과)
      */
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount + 1 " +
            "WHERE e.id = :id AND e.currentCount < e.capacity AND e.deleted = false")
     int incrementCurrentCountForApproval(@Param("id") Long id);
@@ -72,7 +72,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      * @param id 행사 ID
      * @return 변경된 행 수 (1이면 성공, 0이면 이미 0명)
      */
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Event e SET e.currentCount = e.currentCount - 1 " +
            "WHERE e.id = :id AND e.currentCount > 0 AND e.deleted = false")
     int decrementCurrentCount(@Param("id") Long id);

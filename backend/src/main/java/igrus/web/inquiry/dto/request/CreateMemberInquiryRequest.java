@@ -16,7 +16,7 @@ import java.util.List;
 @Schema(description = "회원 문의 생성 요청")
 public class CreateMemberInquiryRequest {
 
-    @Schema(description = "문의 유형", example = "GENERAL", allowableValues = {"JOIN", "GENERAL", "BUG_REPORT", "SUGGESTION"})
+    @Schema(description = "문의 유형", example = "EVENT")
     @NotNull(message = "문의 유형은 필수입니다")
     private InquiryType type;
 

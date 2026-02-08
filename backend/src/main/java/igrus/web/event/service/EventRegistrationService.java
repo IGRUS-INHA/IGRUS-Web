@@ -372,8 +372,9 @@ public class EventRegistrationService {
             updateEventStatusAfterIncrement(eventId);
         }
 
-        // 재신청 처리
+        // 재신청 처리 (clear 이후 detached 상태이므로 명시적 save 필요)
         registration.reRegister();
+        eventRegistrationRepository.save(registration);
 
         return RegistrationResponse.from(registration);
     }
