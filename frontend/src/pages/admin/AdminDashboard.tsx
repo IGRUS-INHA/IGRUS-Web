@@ -24,7 +24,7 @@ const TABS = [
   { key: 'inquiries', label: '문의 관리', icon: MessageSquare },
   { key: 'reports', label: '댓글 신고', icon: Flag },
   { key: 'login-history', label: '로그인 이력', icon: History },
-  { key: 'semesters', label: '학기 회원', icon: GraduationCap },
+  { key: 'semesters', label: '금학기 회원', icon: GraduationCap },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
