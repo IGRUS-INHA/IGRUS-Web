@@ -34,16 +34,18 @@ function clearAccessToken(): void {
 // 토큰 갱신
 // =============================================================================
 
-let isRefreshing = false;
-let refreshSubscribers: Array<(token: string) => void> = [];
+let refreshPromise: Promise<string> | null = null;
 
-function subscribeTokenRefresh(callback: (token: string) => void): void {
-  refreshSubscribers.push(callback);
-}
-
-function onTokenRefreshed(newToken: string): void {
-  refreshSubscribers.forEach((callback) => callback(newToken));
-  refreshSubscribers = [];
+/**
+ * 토큰 갱신을 보장하는 싱글턴 함수.
+ * 이미 갱신 중이면 기존 Promise를 반환하여 중복 요청을 방지한다.
+ */
+function ensureRefresh(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken()
+      .finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
 }
 
 async function refreshAccessToken(): Promise<string> {
@@ -57,7 +59,6 @@ async function refreshAccessToken(): Promise<string> {
   });
 
   if (!response.ok) {
-    clearAccessToken();
     throw new Error('Token refresh failed');
   }
 
@@ -101,9 +102,9 @@ export async function customFetch<T>(
 ): Promise<T> {
   // 선제 토큰 갱신: 만료 60초 전이면 요청 전에 갱신 시도
   const currentToken = getAccessToken();
-  if (currentToken && isTokenExpired(currentToken, 60) && !isRefreshing) {
+  if (currentToken && isTokenExpired(currentToken, 60) && !refreshPromise) {
     try {
-      await refreshAccessToken();
+      await ensureRefresh();
     } catch {
       // 선제 갱신 실패 시 무시 — 기존 401 핸들러가 처리
     }
@@ -149,55 +150,8 @@ export async function customFetch<T>(
   }
 
   if (response.status === 401 && !isPublicEndpoint) {
-    // 이미 갱신 중이면 대기
-    if (isRefreshing) {
-      return new Promise<T>((resolve, reject) => {
-        subscribeTokenRefresh((newToken: string) => {
-          const retryHeaders = {
-            ...(options?.headers as Record<string, string>),
-            'Authorization': `Bearer ${newToken}`,
-          };
-          fetch(`${API_BASE_URL}${url}`, {
-            ...options,
-            credentials: 'include',
-            headers: retryHeaders,
-          })
-            .then(async (retryResponse) => {
-              if (!retryResponse.ok) {
-                const errorBody = (await retryResponse.json().catch(() => ({}))) as ErrorResponseDto;
-
-                // 403은 권한 부족 (로그아웃 안 함)
-                throw new ApiError(
-                  retryResponse.status,
-                  errorBody.code ?? `HTTP_${retryResponse.status}`,
-                  errorBody.message ?? `HTTP ${retryResponse.status}`,
-                  errorBody.timestamp
-                );
-              }
-
-              const retryText = await retryResponse.text();
-              const data = retryResponse.status === 204 || !retryText
-                ? undefined
-                : JSON.parse(retryText);
-
-              resolve({
-                data,
-                status: retryResponse.status,
-                headers: retryResponse.headers,
-              } as T);
-            })
-            .catch(reject);
-        });
-      });
-    }
-
-    // 토큰 갱신 시도
-    isRefreshing = true;
-
     try {
-      const newAccessToken = await refreshAccessToken();
-      isRefreshing = false;
-      onTokenRefreshed(newAccessToken);
+      const newAccessToken = await ensureRefresh();
 
       // 갱신된 토큰으로 재요청
       const retryHeaders = {
@@ -212,19 +166,6 @@ export async function customFetch<T>(
 
       if (!retryResponse.ok) {
         const errorBody = (await retryResponse.json().catch(() => ({}))) as ErrorResponseDto;
-
-        // 토큰 갱신 후에도 403이면 권한 부족 (로그아웃 안 함)
-        if (retryResponse.status === 403) {
-          isRefreshing = false;
-          refreshSubscribers = [];
-          throw new ApiError(
-            retryResponse.status,
-            errorBody.code ?? `HTTP_${retryResponse.status}`,
-            errorBody.message ?? `HTTP ${retryResponse.status}`,
-            errorBody.timestamp
-          );
-        }
-
         throw new ApiError(
           retryResponse.status,
           errorBody.code ?? `HTTP_${retryResponse.status}`,
@@ -233,10 +174,10 @@ export async function customFetch<T>(
         );
       }
 
-      const retryText2 = await retryResponse.text();
-      const data = retryResponse.status === 204 || !retryText2
+      const retryText = await retryResponse.text();
+      const data = retryResponse.status === 204 || !retryText
         ? undefined
-        : JSON.parse(retryText2);
+        : JSON.parse(retryText);
 
       return {
         data,
@@ -244,9 +185,6 @@ export async function customFetch<T>(
         headers: retryResponse.headers,
       } as T;
     } catch (error) {
-      isRefreshing = false;
-      refreshSubscribers = [];
-
       // 403 권한 부족 에러는 로그아웃하지 않음
       if (error instanceof ApiError && error.status === 403) {
         throw error;

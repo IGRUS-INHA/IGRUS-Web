@@ -12,6 +12,7 @@ import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useQueryClient } from '@tanstack/react-query';
+import { isForbiddenError, isUnauthorizedError, isNotFoundError, getErrorMessage } from '@/utils/error';
 
 export default function PostEditPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
@@ -116,26 +117,20 @@ export default function PostEditPage() {
 
           navigate(`/board/${validBoardType}/${postId}`);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           let errorMessage = '게시글 수정에 실패했습니다.';
 
-          if (error.message) {
-            errorMessage = error.message;
-          }
-
-          if (error.message?.includes('403') || error.message?.includes('권한')) {
+          if (isForbiddenError(error)) {
             errorMessage = '수정 권한이 없습니다.\n\n작성자 본인만 게시글을 수정할 수 있습니다.';
-          }
-
-          if (error.message?.includes('401') || error.message?.includes('인증')) {
+          } else if (isUnauthorizedError(error)) {
             errorMessage = '로그인이 필요합니다.\n로그인 페이지로 이동합니다.';
             alert(errorMessage);
             navigate('/login');
             return;
-          }
-
-          if (error.message?.includes('404')) {
+          } else if (isNotFoundError(error)) {
             errorMessage = '게시글을 찾을 수 없습니다.';
+          } else {
+            errorMessage = getErrorMessage(error);
           }
 
           alert(errorMessage);

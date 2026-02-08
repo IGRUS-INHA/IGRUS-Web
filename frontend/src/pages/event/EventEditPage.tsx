@@ -7,7 +7,7 @@ import { ArrowLeft, Calendar, MapPin, Users, Image as ImageIcon, Clock, Save } f
 import { useEvent, useUpdateEvent } from '@/hooks/queries/useEvents';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
-import { getErrorMessage } from '@/utils/error';
+import { getErrorMessage, isForbiddenError, isEventAccessDenied, isEventOperatorRequired } from '@/utils/error';
 
 const eventSchema = z.object({
   title: z.string().min(1, '행사 제목을 입력하세요'),
@@ -105,7 +105,11 @@ export default function EventEditPage() {
           navigate(`/events/${eventId}`);
         },
         onError: (error: unknown) => {
-          alert(getErrorMessage(error));
+          if (isForbiddenError(error) || isEventOperatorRequired(error)) {
+            alert('행사 수정 권한이 없습니다.');
+          } else {
+            alert(getErrorMessage(error));
+          }
         },
       }
     );
@@ -114,6 +118,24 @@ export default function EventEditPage() {
   // 로딩 상태
   if (isLoading) {
     return <FullPageSpinner />;
+  }
+
+  // 403 에러 체크 (조회 권한 없음)
+  const isForbidden = isForbiddenError(error) || isEventAccessDenied(error);
+
+  if (isForbidden) {
+    return (
+      <div className="text-center py-12 space-y-s4">
+        <p className="text-muted-foreground">정회원 승인 후 행사 조회가 가능합니다.</p>
+        <button
+          type="button"
+          onClick={() => navigate('/events')}
+          className="text-sm text-primary hover:underline cursor-pointer"
+        >
+          목록으로 돌아가기
+        </button>
+      </div>
+    );
   }
 
   // 에러 상태

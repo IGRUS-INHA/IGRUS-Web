@@ -6,6 +6,7 @@ import { useCreateReplyMutation } from '@/hooks/queries/useComments';
 import { CommentActions } from './CommentActions';
 import { CommentInput } from './CommentInput';
 import type { CommentWithRepliesResponse } from '@/api/model/models';
+import { getErrorMessage } from '@/utils/error';
 
 interface CommentItemProps {
   comment: CommentWithRepliesResponse;
@@ -55,9 +56,9 @@ export function CommentItem({ comment, postId, level = 0 }: CommentItemProps) {
           setReplyContent('');
           setShowReplyInput(false);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           console.error('답글 작성 실패:', error);
-          const errorMessage = error?.message || '답글 작성에 실패했습니다';
+          const errorMessage = getErrorMessage(error);
           alert(errorMessage);
         },
       }

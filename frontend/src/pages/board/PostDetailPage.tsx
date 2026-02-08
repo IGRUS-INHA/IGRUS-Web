@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
 import { usePermission } from '@/hooks/usePermission';
+import { isForbiddenError, isNotFoundError, getErrorMessage } from '@/utils/error';
 
 export default function PostDetailPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
@@ -152,10 +153,15 @@ export default function PostDetailPage() {
           });
           navigate(`/board/${boardType}`);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           let errorMessage = '게시글 삭제에 실패했습니다.';
-          if (error.message?.includes('403')) errorMessage = '삭제 권한이 없습니다.';
-          else if (error.message?.includes('404')) errorMessage = '게시글을 찾을 수 없습니다.';
+          if (isForbiddenError(error)) {
+            errorMessage = '삭제 권한이 없습니다.';
+          } else if (isNotFoundError(error)) {
+            errorMessage = '게시글을 찾을 수 없습니다.';
+          } else {
+            errorMessage = getErrorMessage(error);
+          }
           alert(errorMessage);
         },
       }
