@@ -77,6 +77,9 @@ export default function AuthForm({
       setForm({ ...form, [name]: checked });
     } else if (name === 'grade') {
       setForm({ ...form, [name]: value ? parseInt(value) : undefined });
+    } else if (name === 'phoneNumber') {
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
+      setForm({ ...form, [name]: digitsOnly });
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -177,7 +180,8 @@ export default function AuthForm({
                   <Input
                     type="tel"
                     name="phoneNumber"
-                    placeholder="전화번호 (예: 010-1234-5678)"
+                    placeholder="전화번호 (숫자만 입력)"
+                    maxLength={11}
                     value={form.phoneNumber}
                     onChange={handleChange}
                     required
