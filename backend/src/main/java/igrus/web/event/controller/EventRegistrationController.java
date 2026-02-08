@@ -17,6 +17,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -103,7 +108,8 @@ public class EventRegistrationController {
 
     @Operation(summary = "신청자 목록 조회", description = "행사 신청자 목록을 조회합니다. 작성자 또는 관리자만 가능합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    useReturnTypeSchema = true),
             @ApiResponse(responseCode = "401", description = "인증 필요",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "403", description = "권한 없음",
@@ -112,12 +118,13 @@ public class EventRegistrationController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/events/{eventId}/registrations")
-    public ResponseEntity<List<RegistrationListResponse>> getRegistrationList(
+    public ResponseEntity<Page<RegistrationListResponse>> getRegistrationList(
             @Parameter(description = "행사 ID") @PathVariable Long eventId,
-            @AuthenticationPrincipal AuthenticatedUser user
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @ParameterObject @PageableDefault(size = 20, sort = "registeredAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         log.info("신청자 목록 조회 요청 - eventId: {}, userId: {}", eventId, user.userId());
-        List<RegistrationListResponse> response = eventRegistrationService.getRegistrationList(eventId, user.userId());
+        Page<RegistrationListResponse> response = eventRegistrationService.getRegistrationList(eventId, user.userId(), pageable);
         return ResponseEntity.ok(response);
     }
 
@@ -160,6 +167,31 @@ public class EventRegistrationController {
     ) {
         log.info("신청 거절 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
         RegistrationResponse response = eventRegistrationService.rejectRegistration(registrationId, user.userId());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "승인/거절 되돌리기", description = "승인 또는 거절한 신청을 대기 상태로 되돌립니다. (선발제) 운영진 이상만 가능합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "되돌리기 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = RegistrationResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "권한 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "신청을 찾을 수 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/registrations/{registrationId}/revert")
+    public ResponseEntity<RegistrationResponse> revertRegistration(
+            @Parameter(description = "신청 ID") @PathVariable Long registrationId,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        log.info("승인/거절 되돌리기 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
+        RegistrationResponse response = eventRegistrationService.revertRegistration(registrationId, user.userId());
         return ResponseEntity.ok(response);
     }
 }

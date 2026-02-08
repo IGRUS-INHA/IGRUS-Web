@@ -20,6 +20,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -309,8 +312,11 @@ class EventRegistrationServiceTest {
             when(canceledRegistration.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
             when(canceledRegistration.getRegisteredAt()).thenReturn(Instant.now());
             when(canceledRegistration.getId()).thenReturn(REGISTRATION_ID);
+            when(canceledRegistration.getUser()).thenReturn(regularMember);
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.of(canceledRegistration));
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(false);
 
             // when
             RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, USER_ID);
@@ -506,13 +512,14 @@ class EventRegistrationServiceTest {
             when(reg.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
             when(reg.getRegisteredAt()).thenReturn(Instant.now());
 
-            when(eventRegistrationRepository.findByEventId(EVENT_ID)).thenReturn(List.of(reg));
+            Page<EventRegistration> page = new PageImpl<>(List.of(reg));
+            when(eventRegistrationRepository.findByEventId(eq(EVENT_ID), any(Pageable.class))).thenReturn(page);
 
             // when
-            List<RegistrationListResponse> responses = eventRegistrationService.getRegistrationList(EVENT_ID, OPERATOR_ID);
+            Page<RegistrationListResponse> responses = eventRegistrationService.getRegistrationList(EVENT_ID, OPERATOR_ID, Pageable.unpaged());
 
             // then
-            assertThat(responses).hasSize(1);
+            assertThat(responses.getContent()).hasSize(1);
         }
 
         /**
@@ -526,7 +533,7 @@ class EventRegistrationServiceTest {
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
 
             // when & then
-            assertThatThrownBy(() -> eventRegistrationService.getRegistrationList(EVENT_ID, USER_ID))
+            assertThatThrownBy(() -> eventRegistrationService.getRegistrationList(EVENT_ID, USER_ID, Pageable.unpaged()))
                     .isInstanceOf(OperatorPermissionRequiredException.class);
         }
     }

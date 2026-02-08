@@ -96,6 +96,25 @@ public class EventRegistration extends BaseEntity {
     }
 
     /**
+     * 승인 또는 거절 상태를 대기 상태로 되돌립니다. (선발제 전용)
+     *
+     * @throws IllegalStateException APPROVED 또는 REJECTED 상태가 아닌 경우
+     */
+    public void revertToWaiting() {
+        if (!this.isApproved() && !this.isRejected()) {
+            throw new IllegalStateException("승인 또는 거절 상태만 되돌릴 수 있습니다");
+        }
+        this.status = EventRegistrationStatus.WAITING;
+    }
+
+    /**
+     * 거절되었는지 확인합니다. (선발제)
+     */
+    public boolean isRejected() {
+        return this.status == EventRegistrationStatus.REJECTED;
+    }
+
+    /**
      * 재신청합니다. (취소된 신청만 가능)
      * 자동 승인(AUTO_APPROVE): REGISTERED로 복원
      * 수동 승인(MANUAL_APPROVE): WAITING으로 복원
