@@ -297,7 +297,7 @@ export default function AuthForm({
               <Input
                 type="password"
                 name="password"
-                placeholder="비밀번호 (영문 대/소문자, 숫자, 특수문자 포함 8자 이상)"
+                placeholder="비밀번호 (영문, 숫자 포함 8자 이상)"
                 value={form.password}
                 onChange={handleChange}
                 required

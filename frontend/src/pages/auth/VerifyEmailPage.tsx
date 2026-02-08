@@ -67,13 +67,9 @@ export default function VerifyEmailPage() {
       // Blob 타입 우회
       const verificationData = response.data as unknown as PasswordSignupResponse;
 
-      console.log('Email verification success:', verificationData);
-
       alert('이메일 인증이 완료되었습니다!\n\n이제 로그인할 수 있습니다.');
       navigate('/login');
     } catch (error) {
-      console.error('Email verification failed:', error);
-
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
 
       if (errorMessage.includes('만료')) {
@@ -111,8 +107,6 @@ export default function VerifyEmailPage() {
       setResendCooldown(60); // 60초 쿨다운
       setCode(''); // 기존 코드 입력 초기화
     } catch (error) {
-      console.error('Resend verification failed:', error);
-
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
 
       if (errorMessage.includes('5분')) {

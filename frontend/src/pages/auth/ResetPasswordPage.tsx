@@ -40,13 +40,11 @@ export default function ResetPasswordPage() {
       return '비밀번호는 8자 이상 72자 이하여야 합니다.';
     }
 
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
+    const hasLetter = /[A-Za-z]/.test(password);
     const hasNumber = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
-      return '비밀번호는 영문 대/소문자, 숫자, 특수문자를 포함해야 합니다.';
+    if (!hasLetter || !hasNumber) {
+      return '비밀번호는 영문, 숫자를 포함해야 합니다.';
     }
 
     return null;
@@ -130,8 +128,6 @@ export default function ResetPasswordPage() {
       });
       navigate('/login');
     } catch (error) {
-      console.error('Password reset confirmation failed:', error);
-
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
 
       if (errorMessage.includes('만료')) {
@@ -225,7 +221,7 @@ export default function ResetPasswordPage() {
                 />
                 <Input
                   type="password"
-                  placeholder="새 비밀번호 (영문 대/소문자, 숫자, 특수문자 포함 8자 이상)"
+                  placeholder="새 비밀번호 (영문, 숫자 포함 8자 이상)"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
