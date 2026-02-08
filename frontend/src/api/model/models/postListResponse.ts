@@ -43,5 +43,6 @@ export interface PostListResponse {
   viewCount?: number;
   likeCount?: number;
   commentCount?: number;
+  bookmarkCount?: number;
   createdAt?: string;
 }

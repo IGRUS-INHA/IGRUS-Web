@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { AuthStore, AuthPersistState } from '@/types/store';
 import type { User } from '@/types/entities';
 import { ROLES, type Role } from '@/types/common';
+import { queryClient } from '@/lib/queryClient';
 
 const ROLE_ORDER: readonly Role[] = [
   ROLES.ASSOCIATE,
@@ -19,6 +20,7 @@ export const useAuthStore = create<AuthStore>()(
       accessToken: undefined,
       refreshToken: undefined,
       isAuthenticated: false,
+      isHydrated: false,
 
       // 액션
       setAuth: (
@@ -44,6 +46,8 @@ export const useAuthStore = create<AuthStore>()(
         // Access Token만 localStorage에서 제거
         // Refresh Token은 HttpOnly 쿠키로 관리되므로 서버에서 제거
         localStorage.removeItem('accessToken');
+        // TanStack Query 캐시 초기화 (이전 사용자 데이터 잔류 방지)
+        queryClient.clear();
         set({
           user: undefined,
           accessToken: undefined,
@@ -79,3 +83,22 @@ export const useAuthStore = create<AuthStore>()(
     }
   )
 );
+
+// hydration 완료 시 isHydrated 플래그 설정 + localStorage 동기화
+useAuthStore.persist.onFinishHydration(() => {
+  useAuthStore.setState({ isHydrated: true });
+  // Zustand persist → standalone localStorage 동기화 (client.ts가 읽는 키)
+  const { accessToken } = useAuthStore.getState();
+  if (accessToken) {
+    localStorage.setItem('accessToken', accessToken);
+  }
+});
+
+// Zustand v5: hydration이 콜백 등록 전에 이미 완료된 경우 대비
+if (useAuthStore.persist.hasHydrated()) {
+  useAuthStore.setState({ isHydrated: true });
+  const { accessToken } = useAuthStore.getState();
+  if (accessToken) {
+    localStorage.setItem('accessToken', accessToken);
+  }
+}

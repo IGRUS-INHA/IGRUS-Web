@@ -9,6 +9,7 @@ import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserStatus;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
+import igrus.web.user.event.AccountStatusChangeEvent;
 import igrus.web.user.withdrawal.domain.WithdrawalLog;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.repository.WithdrawalLogRepository;
@@ -21,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -65,6 +67,9 @@ class WithdrawServiceTest {
     @Mock
     private WithdrawalLogRepository withdrawalLogRepository;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private WithdrawService withdrawService;
 
@@ -101,6 +106,7 @@ class WithdrawServiceTest {
             assertThat(credential.isDeleted()).isTrue();
             verify(refreshTokenRepository).revokeAllByUserId(userId);
             verify(withdrawalLogRepository).save(any(WithdrawalLog.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
         }
 
         @DisplayName("WD-002: 비밀번호 불일치 시 InvalidCredentialsException 발생")

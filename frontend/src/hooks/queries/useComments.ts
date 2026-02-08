@@ -39,6 +39,10 @@ export function useCreateCommentMutation() {
         void queryClient.invalidateQueries({
           queryKey: ['/api/v1/boards', variables.postId],
         });
+        // 게시글 목록 갱신 (댓글 수 업데이트)
+        void queryClient.invalidateQueries({
+          queryKey: ['/api/v1/boards'],
+        });
         toast.success('댓글이 작성되었습니다');
       },
       onError: () => {
@@ -68,6 +72,10 @@ export function useCreateReplyMutation() {
         void queryClient.invalidateQueries({
           queryKey: ['/api/v1/boards', variables.postId],
         });
+        // 게시글 목록 갱신 (댓글 수 업데이트)
+        void queryClient.invalidateQueries({
+          queryKey: ['/api/v1/boards'],
+        });
         toast.success('답글이 작성되었습니다');
       },
       onError: () => {
@@ -96,6 +104,10 @@ export function useDeleteCommentMutation() {
         // 게시글 상세 갱신 (댓글 수 업데이트)
         void queryClient.invalidateQueries({
           queryKey: ['/api/v1/boards', variables.postId],
+        });
+        // 게시글 목록 갱신 (댓글 수 업데이트)
+        void queryClient.invalidateQueries({
+          queryKey: ['/api/v1/boards'],
         });
         toast.success('댓글이 삭제되었습니다');
       },
@@ -128,6 +140,9 @@ export function useToggleCommentLike() {
             void queryClient.invalidateQueries({
               queryKey: getGetCommentsQueryKey(postId),
             });
+          },
+          onError: () => {
+            alert('본인이 작성한 댓글에는 좋아요를 할 수 없습니다.');
           },
         }
       );

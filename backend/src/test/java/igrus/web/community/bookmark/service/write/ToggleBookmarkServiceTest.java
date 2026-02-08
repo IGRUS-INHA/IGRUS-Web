@@ -8,6 +8,7 @@ import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.exception.PostDeletedException;
 import igrus.web.community.post.exception.PostNotFoundException;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.community.post.service.support.PostAccessChecker;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -60,6 +61,9 @@ class ToggleBookmarkServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PostAccessChecker postAccessChecker;
+
     @InjectMocks
     private ToggleBookmarkService toggleBookmarkService;
 
@@ -99,6 +103,7 @@ class ToggleBookmarkServiceTest {
                 Bookmark bookmark = invocation.getArgument(0);
                 return withId(bookmark, 1L);
             });
+            given(postRepository.incrementBookmarkCount(postId)).willReturn(1);
 
             // when
             BookmarkToggleResponse response = toggleBookmarkService.toggleBookmark(postId, userId);
@@ -108,6 +113,7 @@ class ToggleBookmarkServiceTest {
             assertThat(response.bookmarked()).isTrue();
             verify(bookmarkRepository).save(any(Bookmark.class));
             verify(bookmarkRepository, never()).delete(any(Bookmark.class));
+            verify(postRepository).incrementBookmarkCount(postId);
         }
 
         @DisplayName("LKB-011: 게시글 북마크 취소 (토글)")
@@ -121,6 +127,7 @@ class ToggleBookmarkServiceTest {
             given(postRepository.findById(postId)).willReturn(Optional.of(normalPost));
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(bookmarkRepository.findByPostAndUser(normalPost, memberUser)).willReturn(Optional.of(existingBookmark));
+            given(postRepository.decrementBookmarkCount(postId)).willReturn(1);
 
             // when
             BookmarkToggleResponse response = toggleBookmarkService.toggleBookmark(postId, userId);
@@ -130,6 +137,7 @@ class ToggleBookmarkServiceTest {
             assertThat(response.bookmarked()).isFalse();
             verify(bookmarkRepository).delete(existingBookmark);
             verify(bookmarkRepository, never()).save(any(Bookmark.class));
+            verify(postRepository).decrementBookmarkCount(postId);
         }
 
         @DisplayName("LKB-013: 북마크 1인 1회 제한 (토글로 동작) - 이미 북마크한 경우 취소됨")
@@ -244,6 +252,7 @@ class ToggleBookmarkServiceTest {
                 Bookmark bookmark = invocation.getArgument(0);
                 return withId(bookmark, 1L);
             });
+            given(postRepository.incrementBookmarkCount(postId)).willReturn(1);
 
             // when
             BookmarkToggleResponse response = toggleBookmarkService.toggleBookmark(postId, userId);
@@ -252,6 +261,7 @@ class ToggleBookmarkServiceTest {
             assertThat(response).isNotNull();
             assertThat(response.bookmarked()).isTrue();
             verify(bookmarkRepository).save(any(Bookmark.class));
+            verify(postRepository).incrementBookmarkCount(postId);
         }
     }
 }

@@ -226,15 +226,15 @@ class CommentLikeControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isNotFound());
         }
 
-        @DisplayName("준회원 댓글 좋아요 취소 시 403 Forbidden")
+        @DisplayName("준회원 댓글 좋아요 취소 시 404 Not Found (좋아요 정보 없음)")
         @Test
-        void unlikeComment_AsAssociate_Returns403() throws Exception {
-            // when & then
+        void unlikeComment_AsAssociate_Returns404() throws Exception {
+            // when & then: 준회원은 접근 가능하나 좋아요한 적이 없으므로 404
             mockMvc.perform(delete(BASE_URL + "/" + comment.getId() + "/likes")
                             .with(withAuth(associateUser))
                             .with(csrf()))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isNotFound());
         }
     }
 }

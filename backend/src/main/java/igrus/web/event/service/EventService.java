@@ -1,12 +1,14 @@
 package igrus.web.event.service;
 
 import igrus.web.event.domain.Event;
+import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.UpdateEventRequest;
 import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventAccessDeniedException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.InvalidEventDateException;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 행사 서비스.
@@ -42,6 +45,12 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class EventService {
+
+    private static final Set<EventRegistrationStatus> ACTIVE_REGISTRATION_STATUSES = Set.of(
+            EventRegistrationStatus.REGISTERED,
+            EventRegistrationStatus.WAITING,
+            EventRegistrationStatus.APPROVED
+    );
 
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
@@ -93,10 +102,11 @@ public class EventService {
      * @param eventId 행사 ID
      * @param userId  현재 사용자 ID
      * @return 행사 상세 응답 DTO
-     * @throws EventNotFoundException 행사를 찾을 수 없는 경우
+     * @throws EventNotFoundException             행사를 찾을 수 없는 경우
+     * @throws AssociateMemberNotAllowedException 준회원인 경우
      */
     public EventDetailResponse getEvent(Long eventId, Long userId) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
@@ -105,10 +115,16 @@ public class EventService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
+        // 준회원 접근 제한
+        if (user.isAssociate()) {
+            throw new AssociateMemberNotAllowedException();
+        }
+
         // 권한 정보 계산
         boolean isAuthor = event.getUser().getId().equals(userId);
         boolean canEdit = user.isOperatorOrAbove();
-        boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserId(eventId, userId);
+        boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                eventId, userId, ACTIVE_REGISTRATION_STATUSES);
 
         return EventDetailResponse.from(event, isAuthor, canEdit, isRegistered);
     }
@@ -124,9 +140,9 @@ public class EventService {
         List<Event> events;
 
         if (status == null) {
-            events = eventRepository.findAll();
+            events = eventRepository.findAllNotDeleted();
         } else {
-            events = eventRepository.findByStatus(status);
+            events = eventRepository.findByStatusAndNotDeleted(status);
         }
 
         // 각 행사의 상태를 시간에 따라 자동 갱신 (Lazy Evaluation)
@@ -150,7 +166,7 @@ public class EventService {
      */
     public EventDetailResponse updateEvent(Long eventId, UpdateEventRequest request, Long userId) {
         // 1. 행사 조회
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회
@@ -189,7 +205,7 @@ public class EventService {
      */
     public void deleteEvent(Long eventId, Long userId) {
         // 1. 행사 조회
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회
@@ -199,8 +215,8 @@ public class EventService {
         // 3. 권한 확인 (운영진 이상만 삭제 가능)
         validateEditPermission(user);
 
-        // 4. 삭제 실행
-        eventRepository.delete(event);
+        // 4. Soft Delete 실행
+        event.delete(userId);
     }
 
     /**
@@ -214,7 +230,7 @@ public class EventService {
      */
     public EventDetailResponse closeEvent(Long eventId, Long userId) {
         // 1. 행사 조회
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회
@@ -242,7 +258,7 @@ public class EventService {
      */
     public EventDetailResponse cancelEvent(Long eventId, Long userId) {
         // 1. 행사 조회
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회

@@ -61,6 +61,7 @@ import type {
   PostDetailResponse,
   PostListPageResponse,
   PostUpdateResponse,
+  PostViewHistoryPageResponse,
   PostViewStatsResponse,
   UpdatePostRequest
 } from '.././models';
@@ -812,7 +813,7 @@ export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostVie
  * @summary 게시글 조회 기록 목록
  */
 export type getPostViewHistoryResponse200 = {
-  data: Blob
+  data: PostViewHistoryPageResponse
   status: 200
 }
 

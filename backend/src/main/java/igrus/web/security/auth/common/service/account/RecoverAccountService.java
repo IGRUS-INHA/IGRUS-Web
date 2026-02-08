@@ -104,7 +104,7 @@ public class RecoverAccountService {
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
         // 8. RefreshToken 저장
-        RefreshToken refreshTokenEntity = RefreshToken.create(user, refreshToken, refreshTokenValidity);
+        RefreshToken refreshTokenEntity = RefreshToken.createInitial(user, refreshToken, refreshTokenValidity);
         refreshTokenRepository.save(refreshTokenEntity);
 
         log.info("계정 복구 성공: studentId={}, userId={}, role={}", studentId, user.getId(), user.getRole());

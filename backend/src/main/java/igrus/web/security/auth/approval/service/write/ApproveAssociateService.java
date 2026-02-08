@@ -1,16 +1,21 @@
 package igrus.web.security.auth.approval.service.write;
 
+import igrus.web.security.auth.approval.domain.AssociateDecision;
+import igrus.web.security.auth.approval.exception.AssociateAlreadyDecidedException;
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
+import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
-import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.repository.UserRoleHistoryRepository;
+import igrus.web.user.domain.AccountChangeType;
+import igrus.web.user.event.AccountStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,9 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class ApproveAssociateService {
 
     private final UserRepository userRepository;
-    private final PasswordCredentialRepository passwordCredentialRepository;
+    private final AssociateDecisionRepository associateDecisionRepository;
     private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 개별 준회원을 정회원으로 승인합니다.
@@ -46,11 +52,15 @@ public class ApproveAssociateService {
             throw new UserNotAssociateException(userId);
         }
 
+        if (associateDecisionRepository.findByUserId(userId).isPresent()) {
+            throw new AssociateAlreadyDecidedException();
+        }
+
         UserRole previousRole = user.getRole();
         user.promoteToMember();
 
-        passwordCredentialRepository.findByUserId(userId)
-                .ifPresent(credential -> credential.approve(approverId));
+        AssociateDecision decision = AssociateDecision.approve(user, approverId);
+        associateDecisionRepository.save(decision);
 
         UserRoleHistory history = UserRoleHistory.create(
                 user,
@@ -59,6 +69,12 @@ public class ApproveAssociateService {
                 "관리자 승인에 의한 정회원 전환"
         );
         userRoleHistoryRepository.save(history);
+
+        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+                userId, approverId, AccountChangeType.APPROVAL,
+                previousRole.name(), UserRole.MEMBER.name(),
+                "관리자 승인에 의한 정회원 전환"
+        ));
 
         log.info("개별 승인 완료: userId={}, previousRole={}, newRole={}", userId, previousRole, UserRole.MEMBER);
     }

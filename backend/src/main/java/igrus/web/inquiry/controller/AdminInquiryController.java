@@ -63,14 +63,14 @@ public class AdminInquiryController {
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     @GetMapping
-    public ResponseEntity<Page<InquiryListResponse>> getAllInquiries(
+    public ResponseEntity<InquiryListPageResponse> getAllInquiries(
             @RequestParam(required = false) InquiryType type,
             @RequestParam(required = false) InquiryStatus status,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {
-        Page<InquiryListResponse> response = getAllInquiriesService.getAllInquiries(type, status, pageable);
-        return ResponseEntity.ok(response);
+        Page<InquiryListResponse> page = getAllInquiriesService.getAllInquiries(type, status, pageable);
+        return ResponseEntity.ok(InquiryListPageResponse.from(page));
     }
 
     @Operation(

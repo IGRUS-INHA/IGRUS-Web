@@ -46,12 +46,12 @@ export function SearchBar({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-s2">
       {/* 검색 타입 선택 */}
       <select
         value={searchType}
         onChange={handleSearchTypeChange}
-        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+        className="h-9 rounded-r2 border border-input bg-background px-s3 text-sm"
       >
         {Object.entries(SEARCH_TYPE_LABELS).map(([value, label]) => (
           <option key={value} value={value}>
@@ -62,7 +62,7 @@ export function SearchBar({
 
       {/* 검색어 입력 */}
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-s3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="text"
           value={keyword}
@@ -74,7 +74,7 @@ export function SearchBar({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -115,9 +115,9 @@ export function SimpleSearchBar({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-s2">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-s3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="text"
           value={keyword}

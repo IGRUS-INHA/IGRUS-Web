@@ -123,8 +123,8 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
             createAndSaveCredential(user);
 
             // 리프레시 토큰 생성
-            RefreshToken refreshToken1 = RefreshToken.create(user, "refresh-token-1", 604800000L);
-            RefreshToken refreshToken2 = RefreshToken.create(user, "refresh-token-2", 604800000L);
+            RefreshToken refreshToken1 = RefreshToken.createInitial(user, "refresh-token-1", 604800000L);
+            RefreshToken refreshToken2 = RefreshToken.createInitial(user, "refresh-token-2", 604800000L);
             refreshTokenRepository.save(refreshToken1);
             refreshTokenRepository.save(refreshToken2);
 

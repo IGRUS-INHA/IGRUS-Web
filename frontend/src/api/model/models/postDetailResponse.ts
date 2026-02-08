@@ -45,6 +45,7 @@ export interface PostDetailResponse {
   isQuestion?: boolean;
   viewCount?: number;
   likeCount?: number;
+  bookmarkCount?: number;
   commentCount?: number;
   imageUrls?: string[];
   createdAt?: string;

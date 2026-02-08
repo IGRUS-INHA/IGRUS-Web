@@ -278,7 +278,7 @@ export const useUpdateReportStatus = <TError = ErrorResponse,
  * @summary 신고 목록 조회 (관리자)
  */
 export type getPendingReportsResponse200 = {
-  data: Blob
+  data: CommentReportResponse[]
   status: 200
 }
 

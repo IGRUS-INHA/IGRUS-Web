@@ -1,5 +1,6 @@
 package igrus.web.security.config;
 
+import igrus.web.security.jwt.JwtAuthenticationEntryPoint;
 import igrus.web.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class ApiSecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final SecurityConfigUtil securityConfigUtil;
 
     @Bean
@@ -44,17 +46,21 @@ public class ApiSecurityConfig {
 
                 // 운영진 이상 (더 구체적인 경로를 먼저 배치)
                 .requestMatchers(
-                        "/api/admin/dashboard",
+                        "/api/v1/admin/dashboard",
+                        "/api/v1/admin/users/**",
                         "/api/events/*/registrations",
                         "/api/v1/admin/comment-reports/**"
                 ).hasAnyRole("OPERATOR", "ADMIN")
 
-                // 관리자 전용
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                // 계정 상태 변경 감사 이력 (관리자 전용)
+                .requestMatchers("/api/v1/admin/account-status-histories/**").hasRole("ADMIN")
 
-                // 댓글 API - MEMBER 이상 (정회원)
-                .requestMatchers("/api/v1/posts/*/comments/**").hasAnyRole("MEMBER", "OPERATOR", "ADMIN")
-                .requestMatchers("/api/v1/comments/**").hasAnyRole("MEMBER", "OPERATOR", "ADMIN")
+                // 관리자 전용
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+
+                // 댓글 API - ASSOCIATE 이상 (접근 가능한 게시글에 한함)
+                .requestMatchers("/api/v1/posts/*/comments/**").hasAnyRole("ASSOCIATE", "MEMBER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/v1/comments/**").hasAnyRole("ASSOCIATE", "MEMBER", "OPERATOR", "ADMIN")
 
                 // 게시글 API - ASSOCIATE 이상
                 .requestMatchers("/api/v1/boards/*/posts/**").hasAnyRole("ASSOCIATE", "MEMBER", "OPERATOR", "ADMIN")
@@ -65,6 +71,11 @@ public class ApiSecurityConfig {
 
         // JWT 필터 등록
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // 인증되지 않은 요청에 대해 401 반환
+        http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+        );
 
         securityConfigUtil.disableSessionManagement(http);
         securityConfigUtil.disableDefaultLoginOption(http);

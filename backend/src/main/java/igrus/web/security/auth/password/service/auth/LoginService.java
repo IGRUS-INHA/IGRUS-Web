@@ -137,13 +137,13 @@ public class LoginService {
             throw new AccountWithdrawnException();
         }
 
-        // 5. 로그인 성공 - 시도 기록 초기화
+        // 4. 로그인 성공 - 시도 기록 초기화
         resetLoginAttemptsService.resetAttempts(request.studentId());
 
-        // 6. 로그인 히스토리 기록
+        // 5. 로그인 히스토리 기록
         recordLoginSuccessService.recordSuccess(user, request.studentId(), ipAddress, userAgent);
 
-        // 7. 토큰 발급
+        // 6. 토큰 발급
         String accessToken = jwtTokenProvider.createAccessToken(
                 user.getId(),
                 user.getStudentId(),
@@ -151,8 +151,8 @@ public class LoginService {
         );
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
-        // 8. RefreshToken 저장
-        RefreshToken refreshTokenEntity = RefreshToken.create(user, refreshToken, refreshTokenValidity);
+        // 7. RefreshToken 저장
+        RefreshToken refreshTokenEntity = RefreshToken.createInitial(user, refreshToken, refreshTokenValidity);
         refreshTokenRepository.save(refreshTokenEntity);
 
         log.info("로그인 성공: studentId={}, userId={}", request.studentId(), user.getId());

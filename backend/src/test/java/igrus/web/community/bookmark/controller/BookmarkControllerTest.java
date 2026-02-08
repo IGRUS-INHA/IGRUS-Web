@@ -274,8 +274,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(2))
-                    .andExpect(jsonPath("$.content").isArray())
-                    .andExpect(jsonPath("$.content.length()").value(2));
+                    .andExpect(jsonPath("$.posts").isArray())
+                    .andExpect(jsonPath("$.posts.length()").value(2));
         }
 
         @DisplayName("LKB-022: 북마크 목록 페이지네이션")
@@ -295,7 +295,7 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(25))
-                    .andExpect(jsonPath("$.content.length()").value(20))
+                    .andExpect(jsonPath("$.posts.length()").value(20))
                     .andExpect(jsonPath("$.totalPages").value(2));
         }
 
@@ -309,7 +309,7 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(0))
-                    .andExpect(jsonPath("$.content").isEmpty());
+                    .andExpect(jsonPath("$.posts").isEmpty());
         }
 
         @DisplayName("LKB-091: 삭제된 게시글 북마크 목록에 표시")
@@ -327,19 +327,20 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.content[0].isDeleted").value(true))
-                    .andExpect(jsonPath("$.content[0].deletedMessage").value("삭제된 게시글입니다"));
+                    .andExpect(jsonPath("$.posts[0].isDeleted").value(true))
+                    .andExpect(jsonPath("$.posts[0].deletedMessage").value("삭제된 게시글입니다"));
         }
 
-        @DisplayName("준회원 북마크 목록 조회 시 403 Forbidden")
+        @DisplayName("준회원 북마크 목록 조회 시 200 OK (빈 목록)")
         @Test
-        void getMyBookmarks_AsAssociate_Returns403() throws Exception {
+        void getMyBookmarks_AsAssociate_Returns200() throws Exception {
             // when & then
             mockMvc.perform(get("/api/v1/users/me/bookmarks")
                             .with(withAuth(associateUser))
                             .with(csrf()))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(0));
         }
     }
 }

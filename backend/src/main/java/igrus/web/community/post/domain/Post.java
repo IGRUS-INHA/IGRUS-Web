@@ -89,6 +89,14 @@ public class Post extends SoftDeletableEntity {
     @Column(name = "posts_like_count", nullable = false)
     private int likeCount = 0;
 
+    /** 북마크 수 (기본값: 0) */
+    @Column(name = "posts_bookmark_count", nullable = false)
+    private int bookmarkCount = 0;
+
+    /** 댓글 수 (기본값: 0) */
+    @Column(name = "posts_comment_count", nullable = false)
+    private int commentCount = 0;
+
     /** 낙관적 락을 위한 버전 (동시성 제어) */
     @Version
     @Column(name = "posts_version")
@@ -185,40 +193,6 @@ public class Post extends SoftDeletableEntity {
         validateTitle(title);
         this.title = title;
         this.content = content;
-    }
-
-    /**
-     * 조회수를 1 증가시킵니다.
-     */
-    public void incrementViewCount() {
-        this.viewCount++;
-    }
-
-    /**
-     * 조회수를 지정된 값으로 동기화합니다.
-     * PostView 테이블의 실제 조회 수와 동기화할 때 사용합니다.
-     *
-     * @param viewCount 동기화할 조회수
-     */
-    public void syncViewCount(int viewCount) {
-        this.viewCount = viewCount;
-    }
-
-    /**
-     * 좋아요 수를 1 증가시킵니다.
-     */
-    public void incrementLikeCount() {
-        this.likeCount++;
-    }
-
-    /**
-     * 좋아요 수를 1 감소시킵니다.
-     * 좋아요 수가 0 미만이 되지 않도록 보장합니다.
-     */
-    public void decrementLikeCount() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-        }
     }
 
     /**

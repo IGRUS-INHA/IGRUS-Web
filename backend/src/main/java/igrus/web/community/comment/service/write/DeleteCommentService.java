@@ -3,6 +3,7 @@ package igrus.web.community.comment.service.write;
 import igrus.web.community.comment.domain.Comment;
 import igrus.web.community.comment.service.support.CommentFinder;
 import igrus.web.community.comment.service.support.CommentValidator;
+import igrus.web.community.post.repository.PostRepository;
 import igrus.web.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class DeleteCommentService {
 
+    private final PostRepository postRepository;
     private final CommentFinder commentFinder;
     private final CommentValidator commentValidator;
 
@@ -34,5 +36,6 @@ public class DeleteCommentService {
         commentValidator.validateCanDelete(comment, user);
 
         comment.delete(userId);
+        postRepository.decrementCommentCount(postId);
     }
 }

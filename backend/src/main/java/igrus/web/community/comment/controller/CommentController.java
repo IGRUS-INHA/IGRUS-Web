@@ -43,7 +43,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/posts/{postId}/comments")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
 public class CommentController {
 
     private final CreateCommentService createCommentService;
@@ -82,7 +81,7 @@ public class CommentController {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "작성 권한 없음 (정회원 이상 필요)",
+                    description = "작성 권한 없음 (정회원 이상 권한 필요)",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -97,6 +96,7 @@ public class CommentController {
                     )
             )
     })
+    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
     @PostMapping
     public ResponseEntity<CommentResponse> createComment(
             @Parameter(description = "게시글 ID", example = "1")
@@ -142,7 +142,7 @@ public class CommentController {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "작성 권한 없음 (정회원 이상 필요)",
+                    description = "작성 권한 없음 (정회원 이상 권한 필요)",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)
@@ -157,6 +157,7 @@ public class CommentController {
                     )
             )
     })
+    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
     @PostMapping("/{commentId}/replies")
     public ResponseEntity<CommentResponse> createReply(
             @Parameter(description = "게시글 ID", example = "1")
@@ -195,6 +196,7 @@ public class CommentController {
                     )
             )
     })
+    @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
     @GetMapping
     public ResponseEntity<CommentListResponse> getComments(
             @Parameter(description = "게시글 ID", example = "1")
@@ -243,6 +245,7 @@ public class CommentController {
                     )
             )
     })
+    @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @Parameter(description = "게시글 ID", example = "1")

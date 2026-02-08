@@ -170,6 +170,8 @@
 - [x] T022 [US1] SecurityConfig에 댓글 API 경로 권한 설정 추가 in `backend/src/main/java/igrus/web/security/config/ApiSecurityConfig.java`
   - /api/v1/posts/*/comments/** - 인증 필요 (MEMBER 이상)
 
+**Note**: (2026-02-07) `CreateCommentService`와 `DeleteCommentService`는 `PostRepository`를 의존하여 댓글 작성/삭제 시 `Post.commentCount`를 원자적으로 증감합니다. `CreateCommentReplyService`도 동일한 패턴을 사용합니다.
+
 **Checkpoint**: User Story 1 완료 - 댓글 작성 기능 독립적으로 테스트 가능
 
 ---

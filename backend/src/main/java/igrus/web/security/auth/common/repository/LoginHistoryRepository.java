@@ -4,7 +4,6 @@ import igrus.web.security.auth.common.domain.LoginHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -43,8 +42,23 @@ public interface LoginHistoryRepository extends JpaRepository<LoginHistory, Long
     long countFailuresByStudentIdSince(@Param("studentId") String studentId,
                                        @Param("since") Instant since);
 
-    /** 오래된 로그인 히스토리 삭제 (데이터 정리용) */
-    @Modifying
-    @Query("DELETE FROM LoginHistory lh WHERE lh.attemptedAt < :before")
-    int deleteByAttemptedAtBefore(@Param("before") Instant before);
+    /** 관리자용 복합 필터 로그인 이력 조회 (N+1 방지를 위해 LEFT JOIN FETCH) */
+    @Query(value = "SELECT lh FROM LoginHistory lh LEFT JOIN FETCH lh.user " +
+           "WHERE (:studentId IS NULL OR lh.studentId = :studentId) " +
+           "AND (:success IS NULL OR lh.success = :success) " +
+           "AND (:ipAddress IS NULL OR lh.ipAddress = :ipAddress) " +
+           "AND (CAST(:startDate AS timestamp) IS NULL OR lh.attemptedAt >= :startDate) " +
+           "AND (CAST(:endDate AS timestamp) IS NULL OR lh.attemptedAt <= :endDate)",
+           countQuery = "SELECT COUNT(lh) FROM LoginHistory lh " +
+           "WHERE (:studentId IS NULL OR lh.studentId = :studentId) " +
+           "AND (:success IS NULL OR lh.success = :success) " +
+           "AND (:ipAddress IS NULL OR lh.ipAddress = :ipAddress) " +
+           "AND (CAST(:startDate AS timestamp) IS NULL OR lh.attemptedAt >= :startDate) " +
+           "AND (CAST(:endDate AS timestamp) IS NULL OR lh.attemptedAt <= :endDate)")
+    Page<LoginHistory> findByFilters(@Param("studentId") String studentId,
+                                     @Param("success") Boolean success,
+                                     @Param("ipAddress") String ipAddress,
+                                     @Param("startDate") Instant startDate,
+                                     @Param("endDate") Instant endDate,
+                                     Pageable pageable);
 }

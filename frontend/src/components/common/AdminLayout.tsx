@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useAuthStore, useUIStore } from '@/stores';
+import { useUIStore } from '@/stores';
+import { useAuth } from '@/hooks';
 import {
   LayoutDashboard,
   Users,
@@ -29,7 +30,7 @@ const AdminMenuItem = ({ to, icon, label, active, onClick }: AdminMenuItemProps)
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center gap-3 w-full px-4 py-3 rounded-r3 transition-all relative group ${
+      className={`flex items-center gap-s3 w-full px-s4 py-s3 rounded-r3 transition-all relative group ${
         active
           ? isDark
             ? 'bg-white/10 text-foreground'
@@ -43,14 +44,14 @@ const AdminMenuItem = ({ to, icon, label, active, onClick }: AdminMenuItemProps)
         {icon}
       </span>
       <span className="text-label font-medium">{label}</span>
-      {active && <span className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" />}
+      {active && <span className="absolute left-0 w-1 h-s5 bg-primary rounded-r-full" />}
     </Link>
   );
 };
 
 export default function AdminLayout() {
   const location = useLocation();
-  const { user, logout } = useAuthStore();
+  const { user, logout } = useAuth();
   const { theme } = useUIStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isDark = theme === 'dark';
@@ -88,13 +89,13 @@ export default function AdminLayout() {
       >
         {/* Logo & Title */}
         <div className="flex justify-between items-center">
-          <Link to="/" className="text-h3 ml-2 flex items-center gap-2">
+          <Link to="/" className="text-h3 ml-s2 flex items-center gap-s2">
             <Code className="w-6 h-6 text-primary" />
             <span>IGRUS</span>
           </Link>
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden p-2 text-muted-foreground hover:text-primary transition-colors"
+            className="lg:hidden p-s2 text-muted-foreground hover:text-primary transition-colors"
             type="button"
           >
             <X size={20} />
@@ -102,14 +103,14 @@ export default function AdminLayout() {
         </div>
 
         {/* Admin Badge */}
-        <div className="px-4 py-3 bg-primary/10 rounded-r3 border border-primary/20">
-          <p className="text-c1 text-muted-foreground mb-1">관리자 모드</p>
+        <div className="px-s4 py-s3 bg-primary/10 rounded-r3 border border-primary/20">
+          <p className="text-c1 text-muted-foreground mb-s1">관리자 모드</p>
           <p className="text-label font-semibold text-foreground">{user?.name ?? '관리자'}</p>
           <p className="text-c2 text-muted-foreground">{user?.email}</p>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 flex flex-col gap-1">
+        <nav className="flex-1 flex flex-col gap-s1">
           <AdminMenuItem
             to="/admin"
             icon={<LayoutDashboard size={20} />}
@@ -148,10 +149,10 @@ export default function AdminLayout() {
         </nav>
 
         {/* Bottom Actions */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-s2">
           <Link
             to="/"
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-r3 transition-all ${
+            className={`flex items-center gap-s3 w-full px-s4 py-s3 rounded-r3 transition-all ${
               isDark
                 ? 'text-muted-foreground hover:text-foreground hover:bg-white/5'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -162,7 +163,7 @@ export default function AdminLayout() {
           </Link>
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-r3 transition-all ${
+            className={`flex items-center gap-s3 w-full px-s4 py-s3 rounded-r3 transition-all ${
               isDark
                 ? 'text-destructive hover:bg-destructive/10'
                 : 'text-destructive hover:bg-destructive/10'
@@ -178,10 +179,10 @@ export default function AdminLayout() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Mobile Header */}
-        <header className="lg:hidden sticky top-0 z-30 bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <header className="lg:hidden sticky top-0 z-30 bg-card border-b border-border px-s4 py-s3 flex items-center gap-s3">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2 text-muted-foreground hover:text-primary transition-colors"
+            className="p-s2 text-muted-foreground hover:text-primary transition-colors"
             type="button"
           >
             <Menu size={24} />

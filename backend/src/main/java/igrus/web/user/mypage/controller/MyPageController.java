@@ -2,18 +2,20 @@ package igrus.web.user.mypage.controller;
 
 import igrus.web.common.config.SwaggerConfig;
 import igrus.web.common.exception.ErrorResponse;
+import igrus.web.community.bookmark.dto.response.BookmarkedPostPageResponse;
 import igrus.web.community.bookmark.dto.response.BookmarkedPostResponse;
 import igrus.web.community.bookmark.service.read.GetMyBookmarksService;
+import igrus.web.community.like.post_like.dto.response.LikedPostPageResponse;
 import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
 import igrus.web.community.like.post_like.service.read.GetMyLikedPostsService;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.service.EventRegistrationService;
-import igrus.web.inquiry.dto.response.InquiryListResponse;
-import igrus.web.inquiry.service.read.GetMyInquiriesService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.mypage.dto.request.ChangePasswordRequest;
 import igrus.web.user.mypage.dto.request.UpdateProfileRequest;
+import igrus.web.user.mypage.dto.response.MyCommentPageResponse;
 import igrus.web.user.mypage.dto.response.MyCommentResponse;
+import igrus.web.user.mypage.dto.response.MyPostPageResponse;
 import igrus.web.user.mypage.dto.response.MyPostResponse;
 import igrus.web.user.mypage.dto.response.MyProfileResponse;
 import igrus.web.user.mypage.service.read.GetMyCommentsService;
@@ -62,7 +64,6 @@ public class MyPageController {
     private final EventRegistrationService eventRegistrationService;
     private final GetMyLikedPostsService getMyLikedPostsService;
     private final GetMyBookmarksService getMyBookmarksService;
-    private final GetMyInquiriesService getMyInquiriesService;
     private final UpdateMyProfileService updateMyProfileService;
     private final ChangeMyPasswordService changeMyPasswordService;
     private final WithdrawService withdrawService;
@@ -187,13 +188,13 @@ public class MyPageController {
             )
     })
     @GetMapping("/posts")
-    public ResponseEntity<Page<MyPostResponse>> getMyPosts(
+    public ResponseEntity<MyPostPageResponse> getMyPosts(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        Page<MyPostResponse> response = getMyPostsService.getMyPosts(user.userId(), pageable);
-        return ResponseEntity.ok(response);
+        Page<MyPostResponse> page = getMyPostsService.getMyPosts(user.userId(), pageable);
+        return ResponseEntity.ok(MyPostPageResponse.from(page));
     }
 
     @Operation(summary = "내 댓글 목록 조회", description = "내가 작성한 댓글 목록을 페이징하여 조회합니다")
@@ -206,13 +207,13 @@ public class MyPageController {
             )
     })
     @GetMapping("/comments")
-    public ResponseEntity<Page<MyCommentResponse>> getMyComments(
+    public ResponseEntity<MyCommentPageResponse> getMyComments(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        Page<MyCommentResponse> response = getMyCommentsService.getMyComments(user.userId(), pageable);
-        return ResponseEntity.ok(response);
+        Page<MyCommentResponse> page = getMyCommentsService.getMyComments(user.userId(), pageable);
+        return ResponseEntity.ok(MyCommentPageResponse.from(page));
     }
 
     @Operation(summary = "내 행사 신청 목록 조회", description = "내가 신청한 행사 목록을 조회합니다")
@@ -242,13 +243,13 @@ public class MyPageController {
             )
     })
     @GetMapping("/likes")
-    public ResponseEntity<Page<LikedPostResponse>> getMyLikes(
+    public ResponseEntity<LikedPostPageResponse> getMyLikes(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        Page<LikedPostResponse> response = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
-        return ResponseEntity.ok(response);
+        Page<LikedPostResponse> page = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
+        return ResponseEntity.ok(LikedPostPageResponse.from(page));
     }
 
     @Operation(summary = "북마크한 게시글 목록 조회", description = "내가 북마크한 게시글 목록을 페이징하여 조회합니다")
@@ -261,31 +262,13 @@ public class MyPageController {
             )
     })
     @GetMapping("/bookmarks")
-    public ResponseEntity<Page<BookmarkedPostResponse>> getMyBookmarks(
+    public ResponseEntity<BookmarkedPostPageResponse> getMyBookmarks(
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        Page<BookmarkedPostResponse> response = getMyBookmarksService.getMyBookmarks(user.userId(), pageable);
-        return ResponseEntity.ok(response);
+        Page<BookmarkedPostResponse> page = getMyBookmarksService.getMyBookmarks(user.userId(), pageable);
+        return ResponseEntity.ok(BookmarkedPostPageResponse.from(page));
     }
 
-    @Operation(summary = "내 문의 목록 조회", description = "내가 작성한 문의 목록을 페이징하여 조회합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "문의 목록 조회 성공"),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    @GetMapping("/inquiries")
-    public ResponseEntity<Page<InquiryListResponse>> getMyInquiries(
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
-        Page<InquiryListResponse> response = getMyInquiriesService.getMyInquiries(user.userId(), pageable);
-        return ResponseEntity.ok(response);
-    }
 }

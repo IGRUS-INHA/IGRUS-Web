@@ -111,10 +111,11 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
     }
 
     private void createLike(Post post, User user) {
-        PostLike like = PostLike.create(post, user);
-        postLikeRepository.save(like);
-        post.incrementLikeCount();
-        postRepository.save(post);
+        transactionTemplate.executeWithoutResult(status -> {
+            PostLike like = PostLike.create(post, user);
+            postLikeRepository.save(like);
+            postRepository.incrementLikeCount(post.getId());
+        });
     }
 
     @Nested
@@ -292,8 +293,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(2))
-                    .andExpect(jsonPath("$.content").isArray())
-                    .andExpect(jsonPath("$.content.length()").value(2));
+                    .andExpect(jsonPath("$.posts").isArray())
+                    .andExpect(jsonPath("$.posts.length()").value(2));
         }
 
         @DisplayName("LKB-032: 좋아요 목록 페이지네이션")
@@ -313,7 +314,7 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(25))
-                    .andExpect(jsonPath("$.content.length()").value(20))
+                    .andExpect(jsonPath("$.posts.length()").value(20))
                     .andExpect(jsonPath("$.totalPages").value(2));
         }
 
@@ -327,18 +328,22 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(0))
-                    .andExpect(jsonPath("$.content").isEmpty());
+                    .andExpect(jsonPath("$.posts").isEmpty());
         }
 
         @DisplayName("LKB-090: 삭제된 게시글 좋아요 목록에 표시")
         @Test
         void getMyLikes_DeletedPost_ShowsDeletedMessage() throws Exception {
-            // given: 좋아요 생성 (createLike 헬퍼 미사용, 버전 충돌 방지)
-            PostLike like = PostLike.create(post, memberUser2);
-            postLikeRepository.save(like);
-            post.incrementLikeCount();
-            post.delete(memberUser.getId());
-            postRepository.save(post);
+            // given: 좋아요 생성 및 삭제를 트랜잭션 내에서 처리
+            Long postId = post.getId();
+            transactionTemplate.executeWithoutResult(status -> {
+                PostLike like = PostLike.create(post, memberUser2);
+                postLikeRepository.save(like);
+                postRepository.incrementLikeCount(postId);
+                Post freshPost = postRepository.findById(postId).orElseThrow();
+                freshPost.delete(memberUser.getId());
+                postRepository.save(freshPost);
+            });
 
             // when & then
             mockMvc.perform(get("/api/v1/users/me/likes")
@@ -347,19 +352,20 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.content[0].isDeleted").value(true))
-                    .andExpect(jsonPath("$.content[0].deletedMessage").value("삭제된 게시글입니다"));
+                    .andExpect(jsonPath("$.posts[0].isDeleted").value(true))
+                    .andExpect(jsonPath("$.posts[0].deletedMessage").value("삭제된 게시글입니다"));
         }
 
-        @DisplayName("준회원 좋아요 목록 조회 시 403 Forbidden")
+        @DisplayName("준회원 좋아요 목록 조회 시 200 OK (빈 목록)")
         @Test
-        void getMyLikes_AsAssociate_Returns403() throws Exception {
+        void getMyLikes_AsAssociate_Returns200() throws Exception {
             // when & then
             mockMvc.perform(get("/api/v1/users/me/likes")
                             .with(withAuth(associateUser))
                             .with(csrf()))
                     .andDo(print())
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(0));
         }
     }
 }

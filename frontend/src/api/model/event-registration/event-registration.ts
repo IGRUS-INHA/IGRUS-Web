@@ -52,6 +52,13 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
+import type {
+  ErrorResponse,
+  MyRegistrationResponse,
+  RegistrationListResponse,
+  RegistrationResponse
+} from '.././models';
+
 import { customFetch } from '../../client';
 
 
@@ -64,22 +71,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 신청 거절
  */
 export type rejectRegistrationResponse200 = {
-  data: Blob
+  data: RegistrationResponse
   status: 200
 }
 
 export type rejectRegistrationResponse401 = {
-  data: Blob
+  data: ErrorResponse
   status: 401
 }
 
 export type rejectRegistrationResponse403 = {
-  data: Blob
+  data: ErrorResponse
   status: 403
 }
 
 export type rejectRegistrationResponse404 = {
-  data: Blob
+  data: ErrorResponse
   status: 404
 }
     
@@ -114,7 +121,7 @@ export const rejectRegistration = async (registrationId: number, options?: Reque
 
 
 
-export const getRejectRegistrationMutationOptions = <TError = Blob,
+export const getRejectRegistrationMutationOptions = <TError = ErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof rejectRegistration>>, TError,{registrationId: number}, TContext> => {
 
@@ -143,12 +150,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RejectRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof rejectRegistration>>>
     
-    export type RejectRegistrationMutationError = Blob
+    export type RejectRegistrationMutationError = ErrorResponse
 
     /**
  * @summary 신청 거절
  */
-export const useRejectRegistration = <TError = Blob,
+export const useRejectRegistration = <TError = ErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof rejectRegistration>>,
@@ -163,22 +170,22 @@ export const useRejectRegistration = <TError = Blob,
  * @summary 신청 승인
  */
 export type approveRegistrationResponse200 = {
-  data: Blob
+  data: RegistrationResponse
   status: 200
 }
 
 export type approveRegistrationResponse401 = {
-  data: Blob
+  data: ErrorResponse
   status: 401
 }
 
 export type approveRegistrationResponse403 = {
-  data: Blob
+  data: ErrorResponse
   status: 403
 }
 
 export type approveRegistrationResponse404 = {
-  data: Blob
+  data: ErrorResponse
   status: 404
 }
     
@@ -213,7 +220,7 @@ export const approveRegistration = async (registrationId: number, options?: Requ
 
 
 
-export const getApproveRegistrationMutationOptions = <TError = Blob,
+export const getApproveRegistrationMutationOptions = <TError = ErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof approveRegistration>>, TError,{registrationId: number}, TContext> => {
 
@@ -242,12 +249,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ApproveRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof approveRegistration>>>
     
-    export type ApproveRegistrationMutationError = Blob
+    export type ApproveRegistrationMutationError = ErrorResponse
 
     /**
  * @summary 신청 승인
  */
-export const useApproveRegistration = <TError = Blob,
+export const useApproveRegistration = <TError = ErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof approveRegistration>>,
@@ -262,22 +269,22 @@ export const useApproveRegistration = <TError = Blob,
  * @summary 신청자 목록 조회
  */
 export type getRegistrationListResponse200 = {
-  data: Blob
+  data: RegistrationListResponse[]
   status: 200
 }
 
 export type getRegistrationListResponse401 = {
-  data: Blob
+  data: ErrorResponse
   status: 401
 }
 
 export type getRegistrationListResponse403 = {
-  data: Blob
+  data: ErrorResponse
   status: 403
 }
 
 export type getRegistrationListResponse404 = {
-  data: Blob
+  data: ErrorResponse
   status: 404
 }
     
@@ -320,7 +327,7 @@ export const getGetRegistrationListQueryKey = (eventId: number,) => {
     }
 
     
-export const getGetRegistrationListQueryOptions = <TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = Blob>(eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetRegistrationListQueryOptions = <TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = ErrorResponse>(eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -339,10 +346,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRegistrationListQueryResult = NonNullable<Awaited<ReturnType<typeof getRegistrationList>>>
-export type GetRegistrationListQueryError = Blob
+export type GetRegistrationListQueryError = ErrorResponse
 
 
-export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = Blob>(
+export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = ErrorResponse>(
  eventId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRegistrationList>>,
@@ -352,7 +359,7 @@ export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegi
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = Blob>(
+export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = ErrorResponse>(
  eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRegistrationList>>,
@@ -362,7 +369,7 @@ export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegi
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = Blob>(
+export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = ErrorResponse>(
  eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -370,7 +377,7 @@ export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegi
  * @summary 신청자 목록 조회
  */
 
-export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = Blob>(
+export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = ErrorResponse>(
  eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -390,32 +397,32 @@ export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegi
  * @summary 행사 신청
  */
 export type registerEventResponse201 = {
-  data: Blob
+  data: RegistrationResponse
   status: 201
 }
 
 export type registerEventResponse400 = {
-  data: Blob
+  data: ErrorResponse
   status: 400
 }
 
 export type registerEventResponse401 = {
-  data: Blob
+  data: ErrorResponse
   status: 401
 }
 
 export type registerEventResponse403 = {
-  data: Blob
+  data: ErrorResponse
   status: 403
 }
 
 export type registerEventResponse404 = {
-  data: Blob
+  data: ErrorResponse
   status: 404
 }
 
 export type registerEventResponse409 = {
-  data: Blob
+  data: ErrorResponse
   status: 409
 }
     
@@ -450,7 +457,7 @@ export const registerEvent = async (eventId: number, options?: RequestInit): Pro
 
 
 
-export const getRegisterEventMutationOptions = <TError = Blob,
+export const getRegisterEventMutationOptions = <TError = ErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof registerEvent>>, TError,{eventId: number}, TContext> => {
 
@@ -479,12 +486,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RegisterEventMutationResult = NonNullable<Awaited<ReturnType<typeof registerEvent>>>
     
-    export type RegisterEventMutationError = Blob
+    export type RegisterEventMutationError = ErrorResponse
 
     /**
  * @summary 행사 신청
  */
-export const useRegisterEvent = <TError = Blob,
+export const useRegisterEvent = <TError = ErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof registerEvent>>,
@@ -499,17 +506,17 @@ export const useRegisterEvent = <TError = Blob,
  * @summary 신청 취소
  */
 export type cancelRegistrationResponse200 = {
-  data: Blob
+  data: RegistrationResponse
   status: 200
 }
 
 export type cancelRegistrationResponse401 = {
-  data: Blob
+  data: ErrorResponse
   status: 401
 }
 
 export type cancelRegistrationResponse404 = {
-  data: Blob
+  data: ErrorResponse
   status: 404
 }
     
@@ -544,7 +551,7 @@ export const cancelRegistration = async (eventId: number, options?: RequestInit)
 
 
 
-export const getCancelRegistrationMutationOptions = <TError = Blob,
+export const getCancelRegistrationMutationOptions = <TError = ErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelRegistration>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof cancelRegistration>>, TError,{eventId: number}, TContext> => {
 
@@ -573,12 +580,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CancelRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof cancelRegistration>>>
     
-    export type CancelRegistrationMutationError = Blob
+    export type CancelRegistrationMutationError = ErrorResponse
 
     /**
  * @summary 신청 취소
  */
-export const useCancelRegistration = <TError = Blob,
+export const useCancelRegistration = <TError = ErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelRegistration>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof cancelRegistration>>,
@@ -592,26 +599,26 @@ export const useCancelRegistration = <TError = Blob,
  * 내가 신청한 행사 목록을 조회합니다.
  * @summary 내 신청 목록 조회
  */
-export type getMyRegistrationsResponse200 = {
-  data: Blob
+export type getMyRegistrations1Response200 = {
+  data: MyRegistrationResponse[]
   status: 200
 }
 
-export type getMyRegistrationsResponse401 = {
-  data: Blob
+export type getMyRegistrations1Response401 = {
+  data: ErrorResponse
   status: 401
 }
     
-export type getMyRegistrationsResponseSuccess = (getMyRegistrationsResponse200) & {
+export type getMyRegistrations1ResponseSuccess = (getMyRegistrations1Response200) & {
   headers: Headers;
 };
-export type getMyRegistrationsResponseError = (getMyRegistrationsResponse401) & {
+export type getMyRegistrations1ResponseError = (getMyRegistrations1Response401) & {
   headers: Headers;
 };
 
-export type getMyRegistrationsResponse = (getMyRegistrationsResponseSuccess | getMyRegistrationsResponseError)
+export type getMyRegistrations1Response = (getMyRegistrations1ResponseSuccess | getMyRegistrations1ResponseError)
 
-export const getGetMyRegistrationsUrl = () => {
+export const getGetMyRegistrations1Url = () => {
 
 
   
@@ -619,9 +626,9 @@ export const getGetMyRegistrationsUrl = () => {
   return `/api/v1/my/registrations`
 }
 
-export const getMyRegistrations = async ( options?: RequestInit): Promise<getMyRegistrationsResponse> => {
+export const getMyRegistrations1 = async ( options?: RequestInit): Promise<getMyRegistrations1Response> => {
   
-  return customFetch<getMyRegistrationsResponse>(getGetMyRegistrationsUrl(),
+  return customFetch<getMyRegistrations1Response>(getGetMyRegistrations1Url(),
   {      
     ...options,
     method: 'GET'
@@ -634,69 +641,69 @@ export const getMyRegistrations = async ( options?: RequestInit): Promise<getMyR
 
 
 
-export const getGetMyRegistrationsQueryKey = () => {
+export const getGetMyRegistrations1QueryKey = () => {
     return [
     `/api/v1/my/registrations`
     ] as const;
     }
 
     
-export const getGetMyRegistrationsQueryOptions = <TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = Blob>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetMyRegistrations1QueryOptions = <TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = ErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetMyRegistrationsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetMyRegistrations1QueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyRegistrations>>> = ({ signal }) => getMyRegistrations({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyRegistrations1>>> = ({ signal }) => getMyRegistrations1({ signal, ...requestOptions });
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetMyRegistrationsQueryResult = NonNullable<Awaited<ReturnType<typeof getMyRegistrations>>>
-export type GetMyRegistrationsQueryError = Blob
+export type GetMyRegistrations1QueryResult = NonNullable<Awaited<ReturnType<typeof getMyRegistrations1>>>
+export type GetMyRegistrations1QueryError = ErrorResponse
 
 
-export function useGetMyRegistrations<TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = Blob>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>> & Pick<
+export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = ErrorResponse>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMyRegistrations>>,
+          Awaited<ReturnType<typeof getMyRegistrations1>>,
           TError,
-          Awaited<ReturnType<typeof getMyRegistrations>>
+          Awaited<ReturnType<typeof getMyRegistrations1>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyRegistrations<TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = Blob>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>> & Pick<
+export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMyRegistrations>>,
+          Awaited<ReturnType<typeof getMyRegistrations1>>,
           TError,
-          Awaited<ReturnType<typeof getMyRegistrations>>
+          Awaited<ReturnType<typeof getMyRegistrations1>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyRegistrations<TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = Blob>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 내 신청 목록 조회
  */
 
-export function useGetMyRegistrations<TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = Blob>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetMyRegistrationsQueryOptions(options)
+  const queryOptions = getGetMyRegistrations1QueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

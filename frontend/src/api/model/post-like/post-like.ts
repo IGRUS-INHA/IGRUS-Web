@@ -55,6 +55,7 @@ import type {
 import type {
   ErrorResponse,
   GetMyLikesParams,
+  LikedPostPageResponse,
   PostLikeStatusResponse,
   PostLikeToggleResponse
 } from '.././models';
@@ -175,7 +176,7 @@ export const useToggleLike = <TError = ErrorResponse,
  * @summary 내 게시글 좋아요 목록 조회
  */
 export type getMyLikesResponse200 = {
-  data: Blob
+  data: LikedPostPageResponse
   status: 200
 }
 

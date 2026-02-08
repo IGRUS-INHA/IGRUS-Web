@@ -42,7 +42,7 @@ export default function SearchBar({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className="border border-gray-400 dark:border-gray-500 rounded-full pl-s7 pr-s10 py-s3 text-base md:text-sm
+        className="border border-gray-400 dark:border-gray-500 rounded-r4 pl-s7 pr-s10 py-s3 text-base md:text-sm
                    w-full md:w-[450px] lg:w-[500px] xl:w-[600px]
                    bg-background text-foreground focus:outline-none focus:border-primary
                    transition-all focus:xl:w-[700px]"

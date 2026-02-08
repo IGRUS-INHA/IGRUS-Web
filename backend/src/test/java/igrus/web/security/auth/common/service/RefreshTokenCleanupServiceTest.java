@@ -31,7 +31,7 @@ class RefreshTokenCleanupServiceTest extends ServiceIntegrationTestBase {
     }
 
     private RefreshToken createAndSaveRefreshToken(User user, Instant expiresAt) {
-        RefreshToken token = RefreshToken.create(user, "token-" + System.nanoTime(), 3600000L);
+        RefreshToken token = RefreshToken.createInitial(user, "token-" + System.nanoTime(), 3600000L);
         ReflectionTestUtils.setField(token, "expiresAt", expiresAt);
         return refreshTokenRepository.save(token);
     }

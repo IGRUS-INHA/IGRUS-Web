@@ -30,8 +30,8 @@ export type EventFilterStatus = typeof EVENT_FILTER_STATUS[keyof typeof EVENT_FI
 export const EVENT_FILTER_LABELS = {
   [EVENT_FILTER_STATUS.ALL]: '전체',
   [EVENT_FILTER_STATUS.UPCOMING]: '예정',
-  [EVENT_FILTER_STATUS.OPEN]: '진행중',
-  [EVENT_FILTER_STATUS.COMPLETED]: '종료',
+  [EVENT_FILTER_STATUS.OPEN]: '신청 가능',
+  [EVENT_FILTER_STATUS.COMPLETED]: '신청 불가',
 } as const;
 
 // 신청 상태
