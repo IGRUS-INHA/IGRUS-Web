@@ -11,6 +11,7 @@ import { BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type Post
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { isForbiddenError, isBoardWriteDenied, isUnauthorizedError, getErrorMessage } from '@/utils/error';
 
 export default function PostWritePage() {
   const { boardType } = useParams<{ boardType: BoardType }>();
@@ -87,25 +88,18 @@ export default function PostWritePage() {
             }
           }
         },
-        onError: (error: any) => {
-          // 백엔드 ErrorResponse의 message를 파싱해서 표시
+        onError: (error: unknown) => {
           let errorMessage = '게시글 작성에 실패했습니다.';
 
-          if (error.message) {
-            errorMessage = error.message;
-          }
-
-          // 403 Forbidden - 권한 없음
-          if (error.message?.includes('403') || error.message?.includes('권한')) {
+          if (isForbiddenError(error) || isBoardWriteDenied(error)) {
             errorMessage = '❌ 권한이 없습니다.\n\n로그인 후 다시 시도하거나,\n게시판 작성 권한을 확인해주세요.\n\n• 자유게시판/정보공유: MEMBER(정회원) 이상\n• 공지사항: OPERATOR(운영진) 이상';
-          }
-
-          // 401 Unauthorized - 인증 필요
-          if (error.message?.includes('401') || error.message?.includes('인증')) {
+          } else if (isUnauthorizedError(error)) {
             errorMessage = '❌ 로그인이 필요합니다.\n로그인 페이지로 이동합니다.';
             alert(errorMessage);
             navigate('/login');
             return;
+          } else {
+            errorMessage = getErrorMessage(error);
           }
 
           alert(errorMessage);

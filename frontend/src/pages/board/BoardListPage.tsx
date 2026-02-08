@@ -11,6 +11,8 @@ import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostList } from '@/hooks/queries/useMockPosts';
+import { useBoardByCode } from '@/hooks/useBoards';
+import { isBoardReadDenied, isForbiddenError } from '@/utils/error';
 
 export default function BoardListPage() {
   const { boardType } = useParams<{ boardType: BoardType }>();
@@ -31,6 +33,9 @@ export default function BoardListPage() {
 
   // Mock 모드 확인
   const isMockMode = useMockData();
+
+  // 게시판 권한 정보
+  const { board } = useBoardByCode(validBoardType);
 
   // 검색어가 변경되면 첫 페이지로 이동
   useEffect(() => {
@@ -56,7 +61,7 @@ export default function BoardListPage() {
   const data = response?.data;
 
   // 403 에러 체크 (권한 없음)
-  const isForbidden = error && 'response' in error && (error as any).response?.status === 403;
+  const isForbidden = isBoardReadDenied(error) || isForbiddenError(error);
 
   // Handlers
   const handleSortChange = (newSortType: string) => {
@@ -99,13 +104,15 @@ export default function BoardListPage() {
         </div>
         <div className="flex items-center gap-s4">
           <SortSelect value={sortType} onChange={handleSortChange} />
-          <Button
-            onClick={handleWriteClick}
-            type="button"
-            className="flex items-center justify-center gap-s2 rounded-full h-9 px-4 py-2 min-w-[100px]"
-          >
-            <PenTool size={14} /> <span className="hidden sm:inline">글쓰기</span>
-          </Button>
+          {board.canWrite && (
+            <Button
+              onClick={handleWriteClick}
+              type="button"
+              className="flex items-center justify-center gap-s2 rounded-full h-9 px-4 py-2 min-w-[100px]"
+            >
+              <PenTool size={14} /> <span className="hidden sm:inline">글쓰기</span>
+            </Button>
+          )}
         </div>
       </div>
 

@@ -5,13 +5,23 @@ import { ArrowLeft, Calendar, MapPin, Users, Clock, MoreHorizontal, Edit, Trash2
 import { useEvent, useApplyEvent, useCancelEventApplication, useDeleteEvent } from '@/hooks/queries/useEvents';
 import { useAuth } from '@/hooks';
 import { useEffect, useRef, useState } from 'react';
-import { getErrorMessage } from '@/utils/error';
+import {
+  getErrorMessage,
+  isForbiddenError,
+  isEventAccessDenied,
+  isEventAlreadyRegistered,
+  isEventCapacityFull,
+  isEventRegistrationClosed,
+  isEventNotFound,
+  isEventOperatorRequired,
+  hasErrorCode,
+} from '@/utils/error';
 
 export default function EventDetailPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: eventResponse, isLoading } = useEvent(Number(eventId));
+  const { data: eventResponse, isLoading, error } = useEvent(Number(eventId));
   const { mutate: applyEvent, isPending: isApplying } = useApplyEvent();
   const { mutate: cancelEvent, isPending: isCanceling } = useCancelEventApplication();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
@@ -51,7 +61,17 @@ export default function EventDetailPage() {
           });
         },
         onError: (error: unknown) => {
-          alert(getErrorMessage(error));
+          if (isEventAlreadyRegistered(error)) {
+            alert('이미 신청한 행사입니다.');
+          } else if (isEventCapacityFull(error)) {
+            alert('정원이 마감되었습니다.');
+          } else if (isEventRegistrationClosed(error)) {
+            alert('신청 기간이 종료되었습니다.');
+          } else if (isForbiddenError(error)) {
+            alert('행사 신청 권한이 없습니다.');
+          } else {
+            alert(getErrorMessage(error));
+          }
         },
       }
     );
@@ -72,7 +92,13 @@ export default function EventDetailPage() {
           });
         },
         onError: (error: unknown) => {
-          alert(getErrorMessage(error));
+          if (hasErrorCode(error, 'EVENT_ALREADY_CANCELED')) {
+            alert('이미 취소된 신청입니다.');
+          } else if (hasErrorCode(error, 'CANCEL_DEADLINE_PASSED')) {
+            alert('취소 가능 기간이 지났습니다.');
+          } else {
+            alert(getErrorMessage(error));
+          }
         },
       }
     );
@@ -95,7 +121,13 @@ export default function EventDetailPage() {
           navigate('/events');
         },
         onError: (error: unknown) => {
-          alert(getErrorMessage(error));
+          if (isForbiddenError(error) || isEventOperatorRequired(error)) {
+            alert('행사 삭제 권한이 없습니다.');
+          } else if (isEventNotFound(error)) {
+            alert('이미 삭제된 행사입니다.');
+          } else {
+            alert(getErrorMessage(error));
+          }
         },
       }
     );
@@ -103,6 +135,24 @@ export default function EventDetailPage() {
 
   if (isLoading) {
     return <FullPageSpinner />;
+  }
+
+  // 403 에러 체크 (권한 없음)
+  const isForbidden = isForbiddenError(error) || isEventAccessDenied(error);
+
+  if (isForbidden) {
+    return (
+      <div className="text-center py-12 space-y-s4">
+        <p className="text-muted-foreground">정회원 승인 후 행사 상세 조회가 가능합니다.</p>
+        <button
+          type="button"
+          onClick={() => navigate('/events')}
+          className="text-sm text-primary hover:underline cursor-pointer"
+        >
+          행사 목록으로 돌아가기
+        </button>
+      </div>
+    );
   }
 
   if (!event) {

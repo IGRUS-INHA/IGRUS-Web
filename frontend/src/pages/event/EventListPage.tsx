@@ -8,6 +8,7 @@ import { EVENT_FILTER_STATUS, EVENT_FILTER_LABELS, type EventFilterStatus } from
 import type { GetEventListStatus } from '@/api/model/models/getEventListStatus';
 import type { EventListResponse } from '@/api/model/models/eventListResponse';
 import type { Event } from '@/types/entities';
+import { isForbiddenError } from '@/utils/error';
 
 export default function EventListPage() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function EventListPage() {
   const filterStatus = (searchParams.get('status') as EventFilterStatus) ?? EVENT_FILTER_STATUS.ALL;
 
   // 행사 목록 조회 (API에서 필터링)
-  const { data: eventsResponse, isLoading } = useEvents(
+  const { data: eventsResponse, isLoading, error } = useEvents(
     filterStatus === EVENT_FILTER_STATUS.ALL
       ? { ...(searchKeyword && { keyword: searchKeyword }) }
       : {
@@ -58,6 +59,9 @@ export default function EventListPage() {
   // OPERATOR 이상만 행사 작성 가능
   const canCreateEvent = user?.role === 'OPERATOR' || user?.role === 'ADMIN';
 
+  // 403 에러 체크 (권한 없음)
+  const isForbidden = isForbiddenError(error);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -66,10 +70,18 @@ export default function EventListPage() {
     );
   }
 
+  if (isForbidden) {
+    return (
+      <div className="text-center py-12 space-y-s4">
+        <p className="text-muted-foreground">정회원 승인 후 행사 목록 조회가 가능합니다.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-s8 animate-in fade-in duration-300">
       {/* Header with Filter and Actions */}
-      <div className="flex items-center gap-s4 border-b border-border pb-s4">
+      <div className="flex items-center justify-end gap-s4 border-b border-border pb-s4">
         <FilterSelect
           value={filterStatus}
           onChange={handleFilterChange}
