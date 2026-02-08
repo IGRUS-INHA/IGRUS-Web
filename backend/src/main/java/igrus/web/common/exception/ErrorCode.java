@@ -40,6 +40,8 @@ public enum ErrorCode {
     SUSPENSION_REASON_REQUIRED(400, "정지 사유는 필수입니다"),
     SUSPENSION_CANNOT_EXTEND(400, "해제된 정지는 연장할 수 없습니다"),
     SUSPENSION_EXTEND_INVALID_DATE(400, "새로운 종료일은 기존 종료일 이후여야 합니다"),
+    SUSPENSION_END_DATE_MUST_BE_FUTURE(400, "정지 종료일은 현재 시간 이후여야 합니다"),
+    LAST_ADMIN_CANNOT_SUSPEND(400, "마지막 관리자는 정지할 수 없습니다"),
 
     // JWT
     JWT_SECRET_KEY_TOO_SHORT(500, "JWT 비밀키 길이가 최소 요구사항을 충족하지 않습니다"),

@@ -3,6 +3,7 @@ package igrus.web.admin.user.service;
 import igrus.web.admin.user.dto.ChangeUserStatusRequest;
 import igrus.web.admin.user.exception.SelfStatusChangeException;
 import igrus.web.user.domain.User;
+import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserSuspension;
 import igrus.web.user.event.AccountStatusChangeEvent;
 import igrus.web.user.exception.InvalidSuspensionException;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,14 +22,15 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 import static igrus.web.common.fixture.UserTestFixture.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChangeUserStatusService 단위 테스트")
@@ -215,6 +218,182 @@ class ChangeUserStatusServiceTest {
                     .isInstanceOf(InvalidSuspensionException.class);
 
             verify(eventPublisher, never()).publishEvent(any());
+        }
+
+        @Test
+        @DisplayName("정지 종료일이 과거이면 InvalidSuspensionException 발생")
+        void suspend_PastEndDate_ThrowsException() {
+            // given
+            Long targetUserId = 1L;
+            Long currentUserId = 2L;
+            Instant pastDate = Instant.now().minus(1, ChronoUnit.DAYS);
+            ChangeUserStatusRequest request = new ChangeUserStatusRequest(
+                    ChangeUserStatusRequest.Action.SUSPEND, "규정 위반", pastDate);
+
+            // when & then
+            assertThatThrownBy(() -> changeUserStatusService.changeUserStatus(targetUserId, request, currentUserId))
+                    .isInstanceOf(InvalidSuspensionException.class);
+
+            verify(eventPublisher, never()).publishEvent(any());
+        }
+
+        @Test
+        @DisplayName("마지막 ADMIN을 정지하려 하면 InvalidSuspensionException 발생")
+        void suspend_LastAdmin_ThrowsException() {
+            // given
+            Long targetUserId = 1L;
+            Long currentUserId = 2L;
+            User targetAdmin = createAdminWithId(targetUserId);
+            Instant suspendedUntil = Instant.now().plus(7, ChronoUnit.DAYS);
+            ChangeUserStatusRequest request = new ChangeUserStatusRequest(
+                    ChangeUserStatusRequest.Action.SUSPEND, "규정 위반", suspendedUntil);
+
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetAdmin));
+            given(userRepository.countByRole(UserRole.ADMIN)).willReturn(1L);
+
+            // when & then
+            assertThatThrownBy(() -> changeUserStatusService.changeUserStatus(targetUserId, request, currentUserId))
+                    .isInstanceOf(InvalidSuspensionException.class);
+
+            verify(eventPublisher, never()).publishEvent(any());
+        }
+
+        @Test
+        @DisplayName("ADMIN이 2명 이상이면 ADMIN 정지 가능")
+        void suspend_AdminWithMultipleAdmins_Success() {
+            // given
+            Long targetUserId = 1L;
+            Long currentUserId = 2L;
+            User targetAdmin = createAdminWithId(targetUserId);
+            Instant suspendedUntil = Instant.now().plus(7, ChronoUnit.DAYS);
+            ChangeUserStatusRequest request = new ChangeUserStatusRequest(
+                    ChangeUserStatusRequest.Action.SUSPEND, "규정 위반", suspendedUntil);
+
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetAdmin));
+            given(userRepository.countByRole(UserRole.ADMIN)).willReturn(2L);
+
+            // when
+            changeUserStatusService.changeUserStatus(targetUserId, request, currentUserId);
+
+            // then
+            verify(userSuspensionRepository).save(any(UserSuspension.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("자동 정지 해제")
+    class AutoLiftTest {
+
+        @Test
+        @DisplayName("만료된 정지가 있으면 해제하고 처리 건수를 반환한다")
+        void liftExpiredSuspensions_WithExpired_LiftsAndReturnsCount() {
+            // given
+            User user = createMemberWithId(1L);
+            user.suspend();
+            UserSuspension suspension = UserSuspension.create(
+                    user, "규정 위반",
+                    Instant.now().minus(8, ChronoUnit.DAYS),
+                    Instant.now().minus(1, ChronoUnit.DAYS),
+                    2L
+            );
+
+            given(userSuspensionRepository.findExpiredButNotLifted(any()))
+                    .willReturn(List.of(suspension));
+
+            // when
+            int count = changeUserStatusService.liftExpiredSuspensions();
+
+            // then
+            assertThat(count).isEqualTo(1);
+            assertThat(suspension.isLifted()).isTrue();
+            assertThat(suspension.getLiftedBy()).isNull();
+            assertThat(user.isActive()).isTrue();
+            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+        }
+
+        @Test
+        @DisplayName("만료된 정지가 없으면 0을 반환한다")
+        void liftExpiredSuspensions_NoExpired_ReturnsZero() {
+            // given
+            given(userSuspensionRepository.findExpiredButNotLifted(any()))
+                    .willReturn(List.of());
+
+            // when
+            int count = changeUserStatusService.liftExpiredSuspensions();
+
+            // then
+            assertThat(count).isEqualTo(0);
+            verify(eventPublisher, never()).publishEvent(any());
+        }
+
+        @Test
+        @DisplayName("여러 만료된 정지가 있으면 모두 해제한다")
+        void liftExpiredSuspensions_MultipleExpired_LiftsAll() {
+            // given
+            User user1 = createMemberWithId(1L);
+            user1.suspend();
+            UserSuspension suspension1 = UserSuspension.create(
+                    user1, "규정 위반",
+                    Instant.now().minus(8, ChronoUnit.DAYS),
+                    Instant.now().minus(1, ChronoUnit.DAYS),
+                    3L
+            );
+
+            User user2 = createMemberWithId(2L);
+            user2.suspend();
+            UserSuspension suspension2 = UserSuspension.create(
+                    user2, "스팸",
+                    Instant.now().minus(5, ChronoUnit.DAYS),
+                    Instant.now().minus(2, ChronoUnit.DAYS),
+                    3L
+            );
+
+            given(userSuspensionRepository.findExpiredButNotLifted(any()))
+                    .willReturn(List.of(suspension1, suspension2));
+
+            // when
+            int count = changeUserStatusService.liftExpiredSuspensions();
+
+            // then
+            assertThat(count).isEqualTo(2);
+            assertThat(suspension1.isLifted()).isTrue();
+            assertThat(suspension2.isLifted()).isTrue();
+            assertThat(user1.isActive()).isTrue();
+            assertThat(user2.isActive()).isTrue();
+            verify(eventPublisher, times(2)).publishEvent(any(AccountStatusChangeEvent.class));
+        }
+
+        @Test
+        @DisplayName("감사 이벤트에 시스템 자동 해제 사유가 포함된다")
+        void liftExpiredSuspensions_PublishesEventWithAutoLiftReason() {
+            // given
+            User user = createMemberWithId(1L);
+            user.suspend();
+            UserSuspension suspension = UserSuspension.create(
+                    user, "규정 위반",
+                    Instant.now().minus(8, ChronoUnit.DAYS),
+                    Instant.now().minus(1, ChronoUnit.DAYS),
+                    2L
+            );
+
+            given(userSuspensionRepository.findExpiredButNotLifted(any()))
+                    .willReturn(List.of(suspension));
+
+            // when
+            changeUserStatusService.liftExpiredSuspensions();
+
+            // then
+            ArgumentCaptor<AccountStatusChangeEvent> captor =
+                    ArgumentCaptor.forClass(AccountStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+
+            AccountStatusChangeEvent event = captor.getValue();
+            assertThat(event.userId()).isEqualTo(1L);
+            assertThat(event.changedByUserId()).isNull();
+            assertThat(event.previousValue()).isEqualTo("SUSPENDED");
+            assertThat(event.newValue()).isEqualTo("ACTIVE");
+            assertThat(event.reason()).isEqualTo("자동 정지 해제 (정지 기간 만료)");
         }
     }
 }
