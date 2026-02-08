@@ -26,6 +26,7 @@ import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,6 +53,7 @@ import java.util.Set;
  *
  * @see EventService 행사 CRUD 관련 기능
  */
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 @Service
@@ -89,7 +91,7 @@ public class EventRegistrationService {
      */
     public RegistrationResponse registerEvent(Long eventId, Long userId) {
         // 1. 행사 조회 (락 없이)
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회
@@ -147,7 +149,7 @@ public class EventRegistrationService {
      */
     public RegistrationResponse cancelRegistration(Long eventId, Long userId) {
         // 1. 행사 존재 확인
-        if (!eventRepository.existsById(eventId)) {
+        if (eventRepository.findByIdAndNotDeleted(eventId).isEmpty()) {
             throw new EventNotFoundException(eventId);
         }
 
@@ -189,6 +191,7 @@ public class EventRegistrationService {
         List<EventRegistration> registrations = eventRegistrationRepository.findByUserId(userId);
 
         return registrations.stream()
+                .filter(r -> !r.getEvent().isDeleted())
                 .map(MyRegistrationResponse::from)
                 .toList();
     }
@@ -206,7 +209,7 @@ public class EventRegistrationService {
     @Transactional(readOnly = true)
     public Page<RegistrationListResponse> getRegistrationList(Long eventId, Long userId, Pageable pageable) {
         // 1. 행사 조회
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 사용자 조회
@@ -245,7 +248,7 @@ public class EventRegistrationService {
         Long eventId = registration.getEvent().getId();
 
         // 2. 행사 조회 (락 없이)
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 3. 사용자 조회
@@ -300,7 +303,7 @@ public class EventRegistrationService {
                 .orElseThrow(EventRegistrationNotFoundException::new);
 
         // 2. 행사 조회
-        Event event = eventRepository.findById(registration.getEvent().getId())
+        Event event = eventRepository.findByIdAndNotDeleted(registration.getEvent().getId())
                 .orElseThrow(() -> new EventNotFoundException(registration.getEvent().getId()));
 
         // 3. 사용자 조회
@@ -492,8 +495,12 @@ public class EventRegistrationService {
      * @param eventId 행사 ID
      */
     private void updateEventStatusAfterIncrement(Long eventId) {
-        Event event = eventRepository.findById(eventId).orElse(null);
-        if (event != null && event.isFull()) {
+        Event event = eventRepository.findByIdAndNotDeleted(eventId).orElse(null);
+        if (event == null) {
+            log.warn("행사 상태 갱신 실패: 원자적 UPDATE 이후 행사를 찾을 수 없음. eventId={}", eventId);
+            return;
+        }
+        if (event.isFull()) {
             event.closeByCapacity();
         }
     }
@@ -505,10 +512,12 @@ public class EventRegistrationService {
      * @param eventId 행사 ID
      */
     private void updateEventStatusAfterDecrement(Long eventId) {
-        Event event = eventRepository.findById(eventId).orElse(null);
-        if (event != null) {
-            event.reopenIfNeeded();
+        Event event = eventRepository.findByIdAndNotDeleted(eventId).orElse(null);
+        if (event == null) {
+            log.warn("행사 상태 갱신 실패: 원자적 UPDATE 이후 행사를 찾을 수 없음. eventId={}", eventId);
+            return;
         }
+        event.reopenIfNeeded();
     }
 
 }
