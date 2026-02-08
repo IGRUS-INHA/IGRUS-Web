@@ -17,6 +17,23 @@ export const EVENT_STATUS_LABELS = {
   [EVENT_STATUS.CLOSED]: '마감',
 } as const;
 
+// 행사 필터 옵션 (UI용)
+export const EVENT_FILTER_STATUS = {
+  ALL: 'all',
+  UPCOMING: 'UPCOMING',
+  OPEN: 'OPEN',
+  COMPLETED: 'COMPLETED',
+} as const;
+
+export type EventFilterStatus = typeof EVENT_FILTER_STATUS[keyof typeof EVENT_FILTER_STATUS];
+
+export const EVENT_FILTER_LABELS = {
+  [EVENT_FILTER_STATUS.ALL]: '전체',
+  [EVENT_FILTER_STATUS.UPCOMING]: '예정',
+  [EVENT_FILTER_STATUS.OPEN]: '신청 가능',
+  [EVENT_FILTER_STATUS.COMPLETED]: '신청 불가',
+} as const;
+
 // 신청 상태
 export const REGISTRATION_STATUS = {
   CONFIRMED: 'CONFIRMED', // 신청 확정

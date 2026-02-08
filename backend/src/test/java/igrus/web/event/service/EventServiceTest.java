@@ -249,8 +249,8 @@ class EventServiceTest {
         }
 
         @Test
-        @DisplayName("행사 작성자가 조회하면 isAuthor가 true인 응답을 반환한다")
-        void getEvent_ByAuthor_ReturnsIsAuthorTrue() {
+        @DisplayName("운영진이 조회하면 canEdit이 true인 응답을 반환한다")
+        void getEvent_ByOperator_ReturnsCanEditTrue() {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
@@ -258,7 +258,6 @@ class EventServiceTest {
 
             EventDetailResponse response = eventService.getEvent(EVENT_ID, OPERATOR_ID);
 
-            assertThat(response.isAuthor()).isTrue();
             assertThat(response.canEdit()).isTrue();
         }
     }
@@ -301,6 +300,44 @@ class EventServiceTest {
             List<EventListResponse> result = eventService.getEventList(null);
 
             assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Lazy 갱신 후 상태가 변경된 행사는 필터에서 제외된다")
+        void getEventList_LazyUpdateChangesStatus_FilteredOut() {
+            // given: OPEN 상태로 DB 조회되지만, updateStatusIfNeeded 호출 시 CLOSED로 변경
+            Event changingEvent = mock(Event.class);
+            when(changingEvent.getId()).thenReturn(2L);
+            when(changingEvent.getTitle()).thenReturn("상태 변경 행사");
+            when(changingEvent.getLocation()).thenReturn("장소");
+            when(changingEvent.getEventStartAt()).thenReturn(eventStart);
+            when(changingEvent.getEventEndAt()).thenReturn(eventEnd);
+            when(changingEvent.getRegistrationStartAt()).thenReturn(regStart);
+            when(changingEvent.getRegistrationEndAt()).thenReturn(regEnd);
+            when(changingEvent.getCapacity()).thenReturn(30);
+            when(changingEvent.getCurrentCount()).thenReturn(0);
+            when(changingEvent.getRegistrationType()).thenReturn(EventRegistrationType.AUTO_APPROVE);
+            when(changingEvent.isRegistrable()).thenReturn(false);
+            when(changingEvent.getCreatedAt()).thenReturn(Instant.now());
+            when(changingEvent.getUpdatedAt()).thenReturn(Instant.now());
+            when(changingEvent.getCloseReason()).thenReturn(null);
+
+            // updateStatusIfNeeded 호출 시 상태가 CLOSED로 변경
+            when(changingEvent.getStatus()).thenReturn(EventStatus.OPEN);
+            doAnswer(invocation -> {
+                when(changingEvent.getStatus()).thenReturn(EventStatus.CLOSED);
+                return null;
+            }).when(changingEvent).updateStatusIfNeeded(any(Instant.class));
+
+            when(eventRepository.findByStatusAndNotDeleted(EventStatus.OPEN))
+                    .thenReturn(new java.util.ArrayList<>(List.of(mockEvent, changingEvent)));
+
+            // when: OPEN 필터로 조회
+            List<EventListResponse> result = eventService.getEventList(EventStatus.OPEN);
+
+            // then: 상태가 변경된 행사는 제외되어 1개만 반환
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).id()).isEqualTo(EVENT_ID);
         }
     }
 
@@ -440,41 +477,4 @@ class EventServiceTest {
         }
     }
 
-    // ========== cancelEvent ==========
-
-    @Nested
-    @DisplayName("cancelEvent - 행사 취소")
-    class CancelEvent {
-
-        @Test
-        @DisplayName("운영진이 행사를 취소하면 성공한다")
-        void cancelEvent_WithOperator_Success() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
-            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
-
-            EventDetailResponse response = eventService.cancelEvent(EVENT_ID, OPERATOR_ID);
-
-            assertThat(response).isNotNull();
-            verify(mockEvent).cancel();
-        }
-
-        @Test
-        @DisplayName("일반 회원이 취소하려고 하면 EventAccessDeniedException 발생")
-        void cancelEvent_WithRegularMember_ThrowsException() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
-            when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
-
-            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, MEMBER_ID))
-                    .isInstanceOf(EventAccessDeniedException.class);
-        }
-
-        @Test
-        @DisplayName("삭제된 행사를 취소하려고 하면 EventNotFoundException 발생")
-        void cancelEvent_DeletedEvent_ThrowsException() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, OPERATOR_ID))
-                    .isInstanceOf(EventNotFoundException.class);
-        }
-    }
 }

@@ -90,7 +90,7 @@ export default function AuthForm({
   const isLogin = mode === 'login';
 
   return (
-    <Card className={`${isLogin ? 'p-s4' : 'p-s1'} lg:p-s7 rounded-[2.5rem] border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}>
+    <Card className={`${isLogin ? 'p-s4' : 'p-s1'} lg:p-s7 rounded-r4 border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}>
       <CardContent className="p-0">
         <div className={`mb-s6 ${icon ? 'text-center' : 'text-left pt-s4'}`}>
           {icon && (
@@ -105,7 +105,7 @@ export default function AuthForm({
         <form onSubmit={handleSubmit} className="space-y-s4">
           <div>
             <div className="relative">
-              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <User size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
                 name="studentId"
@@ -113,7 +113,7 @@ export default function AuthForm({
                 value={form.studentId}
                 onChange={handleChange}
                 required
-                className={`w-full rounded-r4 pl-12 pr-4 py-s6 border transition-all ${
+                className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
                   errors.studentId
                     ? 'border-red-500 focus:border-red-500'
                     : 'focus:border-primary border-border'
@@ -121,7 +121,7 @@ export default function AuthForm({
               />
             </div>
             {errors.studentId && (
-              <p className="mt-1 text-sm text-red-500">{errors.studentId}</p>
+              <p className="mt-s1 text-sm text-red-500">{errors.studentId}</p>
             )}
           </div>
 
@@ -129,7 +129,7 @@ export default function AuthForm({
             <>
               <div>
                 <div className="relative">
-                  <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <User size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="text"
                     name="name"
@@ -137,7 +137,7 @@ export default function AuthForm({
                     value={form.name}
                     onChange={handleChange}
                     required
-                    className={`w-full rounded-r4 pl-12 pr-4 py-s6 border transition-all ${
+                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
                       errors.name
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
@@ -145,13 +145,13 @@ export default function AuthForm({
                   />
                 </div>
                 {errors.name && (
-                  <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                  <p className="mt-s1 text-sm text-red-500">{errors.name}</p>
                 )}
               </div>
 
               <div>
                 <div className="relative">
-                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Mail size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="email"
                     name="email"
@@ -159,7 +159,7 @@ export default function AuthForm({
                     value={form.email}
                     onChange={handleChange}
                     required
-                    className={`w-full rounded-r4 pl-12 pr-4 py-s6 border transition-all ${
+                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
                       errors.email
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
@@ -167,13 +167,13 @@ export default function AuthForm({
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                  <p className="mt-s1 text-sm text-red-500">{errors.email}</p>
                 )}
               </div>
 
               <div>
                 <div className="relative">
-                  <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Phone size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="tel"
                     name="phoneNumber"
@@ -181,7 +181,7 @@ export default function AuthForm({
                     value={form.phoneNumber}
                     onChange={handleChange}
                     required
-                    className={`w-full rounded-r4 pl-12 pr-4 py-s6 border transition-all ${
+                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
                       errors.phoneNumber
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
@@ -189,13 +189,13 @@ export default function AuthForm({
                   />
                 </div>
                 {errors.phoneNumber && (
-                  <p className="mt-1 text-sm text-red-500">{errors.phoneNumber}</p>
+                  <p className="mt-s1 text-sm text-red-500">{errors.phoneNumber}</p>
                 )}
               </div>
 
               <div>
                 <div className="relative">
-                  <Building2 size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Building2 size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="text"
                     name="department"
@@ -203,7 +203,7 @@ export default function AuthForm({
                     value={form.department}
                     onChange={handleChange}
                     required
-                    className={`w-full rounded-r4 pl-12 pr-4 py-s6 border transition-all ${
+                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
                       errors.department
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
@@ -211,13 +211,13 @@ export default function AuthForm({
                   />
                 </div>
                 {errors.department && (
-                  <p className="mt-1 text-sm text-red-500">{errors.department}</p>
+                  <p className="mt-s1 text-sm text-red-500">{errors.department}</p>
                 )}
               </div>
 
               <div>
                 <div className="relative">
-                  <GraduationCap size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <GraduationCap size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="number"
                     name="grade"
@@ -227,7 +227,7 @@ export default function AuthForm({
                     required
                     min="1"
                     max="4"
-                    className={`w-full rounded-r4 pl-12 pr-4 py-s6 border transition-all ${
+                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
                       errors.grade
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
@@ -235,19 +235,19 @@ export default function AuthForm({
                   />
                 </div>
                 {errors.grade && (
-                  <p className="mt-1 text-sm text-red-500">{errors.grade}</p>
+                  <p className="mt-s1 text-sm text-red-500">{errors.grade}</p>
                 )}
               </div>
 
               <div>
                 <div className="relative">
-                  <User size={18} className="absolute left-4 top-3 text-muted-foreground" />
+                  <User size={18} className="absolute left-s4 top-s3 text-muted-foreground" />
                   <select
                     name="gender"
                     value={form.gender || ''}
                     onChange={handleChange}
                     required
-                    className={`w-full rounded-r4 pl-12 pr-4 py-s6 border transition-all ${
+                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
                       errors.gender
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
@@ -259,13 +259,13 @@ export default function AuthForm({
                   </select>
                 </div>
                 {errors.gender && (
-                  <p className="mt-1 text-sm text-red-500">{errors.gender}</p>
+                  <p className="mt-s1 text-sm text-red-500">{errors.gender}</p>
                 )}
               </div>
 
               <div>
                 <div className="relative">
-                  <FileText size={18} className="absolute left-4 top-3 text-muted-foreground" />
+                  <FileText size={18} className="absolute left-s4 top-s3 text-muted-foreground" />
                   <textarea
                     name="motivation"
                     placeholder="동아리 가입 동기를 작성해주세요"
@@ -273,7 +273,7 @@ export default function AuthForm({
                     onChange={handleChange}
                     required
                     rows={4}
-                    className={`w-full rounded-r4 pl-12 pr-4 py-3 border transition-all resize-none ${
+                    className={`w-full rounded-r4 pl-12 pr-s4 py-s3 border transition-all resize-none ${
                       errors.motivation
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
@@ -281,7 +281,7 @@ export default function AuthForm({
                   />
                 </div>
                 {errors.motivation && (
-                  <p className="mt-1 text-sm text-red-500">{errors.motivation}</p>
+                  <p className="mt-s1 text-sm text-red-500">{errors.motivation}</p>
                 )}
               </div>
             </>
@@ -289,7 +289,7 @@ export default function AuthForm({
 
           <div>
             <div className="relative">
-              <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Lock size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="password"
                 name="password"
@@ -297,7 +297,7 @@ export default function AuthForm({
                 value={form.password}
                 onChange={handleChange}
                 required
-                className={`w-full rounded-r4 pl-12 pr-4 py-s6 border transition-all ${
+                className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
                   errors.password
                     ? 'border-red-500 focus:border-red-500'
                     : 'focus:border-primary border-border'
@@ -305,7 +305,7 @@ export default function AuthForm({
               />
             </div>
             {errors.password && (
-              <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+              <p className="mt-s1 text-sm text-red-500">{errors.password}</p>
             )}
           </div>
 
@@ -313,7 +313,7 @@ export default function AuthForm({
             <>
               <div>
                 <div className="relative">
-                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Lock size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="password"
                     name="passwordConfirm"
@@ -321,7 +321,7 @@ export default function AuthForm({
                     value={form.passwordConfirm}
                     onChange={handleChange}
                     required
-                    className={`w-full rounded-r4 pl-12 pr-4 py-s6 border transition-all ${
+                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
                       errors.passwordConfirm
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
@@ -329,12 +329,12 @@ export default function AuthForm({
                   />
                 </div>
                 {errors.passwordConfirm && (
-                  <p className="mt-1 text-sm text-red-500">{errors.passwordConfirm}</p>
+                  <p className="mt-s1 text-sm text-red-500">{errors.passwordConfirm}</p>
                 )}
               </div>
 
               <div>
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-s2">
                   <input
                     type="checkbox"
                     name="privacyConsent"
@@ -342,14 +342,14 @@ export default function AuthForm({
                     checked={form.privacyConsent}
                     onChange={handleChange}
                     required
-                    className="mt-1 rounded"
+                    className="mt-s1 rounded-r1"
                   />
                   <label htmlFor="privacyConsent" className="text-sm text-muted-foreground cursor-pointer">
                     개인정보 처리방침에 동의합니다 (필수)
                   </label>
                 </div>
                 {errors.privacyConsent && (
-                  <p className="mt-1 text-sm text-red-500">{errors.privacyConsent}</p>
+                  <p className="mt-s1 text-sm text-red-500">{errors.privacyConsent}</p>
                 )}
               </div>
             </>

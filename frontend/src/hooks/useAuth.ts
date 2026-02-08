@@ -1,99 +1,35 @@
-import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores';
-import { authApi } from '@/api';
 import type { User } from '@/types/entities';
-import type { Role } from '@/types/common';
-import type { LoginResponse } from '@/types/api';
-import { ROLES } from '@/types/common';
-
-interface LoginResult extends LoginResponse {
-  needsRecovery?: boolean;
-}
 
 interface UseAuthReturn {
-  user: User | null;
+  // 인증 상태
+  user: User | undefined;
   isAuthenticated: boolean;
-  login: (studentId: string, password: string) => Promise<LoginResult>;
-  logout: () => Promise<void>;
-  recover: (studentId: string, password: string) => Promise<LoginResponse>;
-  isAssociate: boolean;
-  isMember: boolean;
-  isOperator: boolean;
+  isHydrated: boolean;
+
+  // 인증 액션
+  login: (user: User, accessToken: string, refreshToken?: string) => void;
+  logout: () => void;
+
+  // 역할 편의 속성
   isAdmin: boolean;
-  hasMinRole: (minRole: Role) => boolean;
+  isOperator: boolean;
+  isMember: boolean;
+  isAssociate: boolean;
 }
 
-const ROLE_ORDER: readonly Role[] = [
-  ROLES.ASSOCIATE,
-  ROLES.MEMBER,
-  ROLES.OPERATOR,
-  ROLES.ADMIN,
-] as const;
-
-export const useAuth = (): UseAuthReturn => {
-  const navigate = useNavigate();
-  const { user, isAuthenticated, setAuth, logout: clearAuth } = useAuthStore();
-
-  const login = async (
-    studentId: string,
-    password: string
-  ): Promise<LoginResult> => {
-    const { data } = await authApi.login({ studentId, password });
-
-    // 탈퇴 계정 복구 가능한 경우
-    if (data.code === 'AUTH012' && data.recoverable) {
-      return { needsRecovery: true, ...data };
-    }
-
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    setAuth(data.user, data.accessToken, data.refreshToken);
-
-    return data;
-  };
-
-  const logout = async (): Promise<void> => {
-    try {
-      await authApi.logout();
-    } catch (error) {
-      // 실패해도 로컬 정리 (토큰은 만료되므로 OK)
-      console.error('Logout API error:', error);
-    } finally {
-      clearAuth();
-      navigate('/login');
-    }
-  };
-
-  const recover = async (
-    studentId: string,
-    password: string
-  ): Promise<LoginResponse> => {
-    const { data } = await authApi.recover({ studentId, password });
-
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    setAuth(data.user, data.accessToken, data.refreshToken);
-
-    return data;
-  };
-
-  const hasMinRole = (minRole: Role): boolean => {
-    if (!user?.role) return false;
-    const userIndex = ROLE_ORDER.indexOf(user.role);
-    const minIndex = ROLE_ORDER.indexOf(minRole);
-    return userIndex >= minIndex;
-  };
+export function useAuth(): UseAuthReturn {
+  const store = useAuthStore();
 
   return {
-    user,
-    isAuthenticated,
-    login,
-    logout,
-    recover,
-    isAssociate: user?.role === ROLES.ASSOCIATE,
-    isMember: user?.role === ROLES.MEMBER,
-    isOperator: user?.role === ROLES.OPERATOR,
-    isAdmin: user?.role === ROLES.ADMIN,
-    hasMinRole,
+    user: store.user,
+    isAuthenticated: store.isAuthenticated,
+    isHydrated: store.isHydrated,
+    login: store.setAuth,
+    logout: store.logout,
+    isAdmin: store.user?.role === 'ADMIN',
+    isOperator: store.user?.role === 'OPERATOR',
+    isMember: store.user?.role === 'MEMBER',
+    isAssociate: store.user?.role === 'ASSOCIATE',
   };
-};
+}

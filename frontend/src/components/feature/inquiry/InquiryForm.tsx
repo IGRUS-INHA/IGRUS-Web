@@ -27,7 +27,6 @@ export default function InquiryForm({ onSubmit, loading = false }: InquiryFormPr
 
   return (
     <Card className="py-5 px-11 rounded-[2.5rem] border bg-card shadow-xl">
-      <h3 className="text-h3">문의하기</h3>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-c1 font-bold text-muted-foreground uppercase tracking-widest mb-2">

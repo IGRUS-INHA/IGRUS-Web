@@ -20,7 +20,7 @@ export function SortSelect({ value, onChange }: SortSelectProps) {
       <select
         value={value}
         onChange={handleChange}
-        className="h-9 pl-4 pr-10 py-2 rounded-full border border-input bg-background text-sm font-bold transition-all appearance-none cursor-pointer w-full"
+        className="h-9 pl-s4 pr-10 py-s2 rounded-full border border-input bg-background text-sm font-bold transition-all appearance-none cursor-pointer w-full"
       >
         {Object.entries(SORT_TYPE_LABELS).map(([sortValue, label]) => (
           <option key={sortValue} value={sortValue}>
@@ -28,7 +28,7 @@ export function SortSelect({ value, onChange }: SortSelectProps) {
           </option>
         ))}
       </select>
-      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <ChevronDown className="absolute right-s4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
     </div>
   );
 }

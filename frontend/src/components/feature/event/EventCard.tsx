@@ -3,6 +3,7 @@ import type { Event, EventStatus } from '@/types/entities';
 
 const STATUS_STYLES: Record<string, string> = {
   Open: 'bg-primary text-primary-foreground',
+  OPEN: 'bg-primary text-primary-foreground',
   UPCOMING: 'bg-primary text-primary-foreground',
   Full: 'bg-warning text-foreground',
   CLOSED: 'bg-muted text-muted-foreground',
@@ -13,11 +14,12 @@ const STATUS_STYLES: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   Open: '신청 가능',
-  UPCOMING: '신청 가능',
+  OPEN: '신청 가능',
+  UPCOMING: '예정',
   Full: '마감',
-  CLOSED: '마감',
-  Closed: '종료',
-  COMPLETED: '종료',
+  CLOSED: '신청 불가',
+  Closed: '신청 불가',
+  COMPLETED: '신청 불가',
   ONGOING: '진행중',
 };
 
@@ -26,17 +28,19 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const isAvailable = event.status === 'Open' || event.status === 'UPCOMING';
+  const isAvailable = event.status === 'Open' || event.status === 'OPEN' || event.status === 'UPCOMING';
 
   return (
-    <div className="rounded-[2.5rem] overflow-hidden border transition-all hover:scale-[1.01] bg-card border-border shadow-xl shadow-black/5 dark:shadow-none">
+    <div className="rounded-r4 overflow-hidden border transition-all hover:scale-[1.01] bg-card border-border shadow-xl shadow-black/5 dark:shadow-none">
 
-      <div className="h-48 relative">
-        {event.image && (
-          <img src={event.image} alt={event.title} className="w-full h-full object-cover opacity-80" />
-        )}
+      <div className="h-48 relative bg-muted/30">
+        <img
+          src={event.image || '/igruslogo2.png'}
+          alt={event.title}
+          className={event.image ? 'w-full h-full object-cover opacity-80' : 'absolute inset-0 m-auto h-40 w-40 object-contain'}
+        />
         <div
-          className={`absolute top-4 right-4 px-s3 py-1 rounded-full text-c2 font-bold uppercase tracking-wider ${
+          className={`absolute top-s4 right-s4 px-s3 py-s1 rounded-full text-c2 font-bold uppercase tracking-wider ${
             STATUS_STYLES[event.status] ?? STATUS_STYLES.Closed
           }`}
         >
@@ -44,10 +48,10 @@ export default function EventCard({ event }: EventCardProps) {
         </div>
       </div>
 
-      <div className="p-s8">
+      <div className="p-s6">
         <h3 className="text-2xl font-bold mb-s4">{event.title}</h3>
 
-        <div className="space-y-s3 mb-s8">
+        <div className="space-y-s3 mb-s6">
           <div className="flex items-center gap-s3 text-muted-foreground">
             <Calendar size={18} className="text-primary" />
             <span className="text-sm">{event.date}</span>

@@ -6,6 +6,7 @@ import { useCreateReplyMutation } from '@/hooks/queries/useComments';
 import { CommentActions } from './CommentActions';
 import { CommentInput } from './CommentInput';
 import type { CommentWithRepliesResponse } from '@/api/model/models';
+import { getErrorMessage } from '@/utils/error';
 
 interface CommentItemProps {
   comment: CommentWithRepliesResponse;
@@ -28,8 +29,13 @@ export function CommentItem({ comment, postId, level = 0 }: CommentItemProps) {
 
   const createReply = useCreateReplyMutation();
 
-  // 삭제된 댓글이면서 대댓글이 없는 경우, 렌더링하지 않음
-  if (comment.deleted && (!comment.replies || comment.replies.length === 0)) {
+  // 삭제된 댓글이면서 대댓글이 없거나 모든 대댓글도 삭제된 경우, 렌더링하지 않음
+  if (
+    comment.deleted &&
+    (!comment.replies ||
+      comment.replies.length === 0 ||
+      comment.replies.every((reply) => reply.deleted))
+  ) {
     return null;
   }
 
@@ -49,6 +55,11 @@ export function CommentItem({ comment, postId, level = 0 }: CommentItemProps) {
         onSuccess: () => {
           setReplyContent('');
           setShowReplyInput(false);
+        },
+        onError: (error: unknown) => {
+          console.error('답글 작성 실패:', error);
+          const errorMessage = getErrorMessage(error);
+          alert(errorMessage);
         },
       }
     );
@@ -138,7 +149,7 @@ export function CommentItem({ comment, postId, level = 0 }: CommentItemProps) {
 
         {/* 대댓글 렌더링 (재귀, 1단계만) */}
         {level === 0 && comment.replies && comment.replies.length > 0 && (
-          <div className="mt-s4 space-y-s4">
+          <div className="mt-s6 space-y-s5">
             {comment.replies.map((reply) => (
               <CommentItem
                 key={reply.id}

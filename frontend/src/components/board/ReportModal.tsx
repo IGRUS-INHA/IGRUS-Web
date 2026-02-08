@@ -87,7 +87,7 @@ export function ReportModal({
           </div>
 
           {/* 상세 내용 */}
-          <div className="mb-6">
+          <div className="mb-s5">
             <label className="mb-s2 block text-sm font-medium">
               상세 내용 (선택)
             </label>
@@ -96,7 +96,7 @@ export function ReportModal({
               onChange={handleDetailChange}
               placeholder="추가로 알려주실 내용이 있다면 작성해주세요"
               rows={3}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="w-full rounded-r2 border border-input bg-background px-s3 py-s2 text-sm"
             />
           </div>
 
@@ -111,7 +111,7 @@ export function ReportModal({
           </div>
         </form>
 
-        <p className="mt-4 text-xs text-muted-foreground">
+        <p className="mt-s4 text-xs text-muted-foreground">
           허위 신고 시 제재를 받을 수 있습니다.
         </p>
       </div>

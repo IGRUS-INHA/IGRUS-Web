@@ -11,6 +11,7 @@ import igrus.web.event.exception.AlreadyCanceledException;
 import igrus.web.event.exception.AlreadyRegisteredException;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventCapacityFullException;
+import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.EventRegistrationClosedException;
 import igrus.web.event.exception.EventNotInRegistrationPeriodException;
@@ -18,6 +19,7 @@ import igrus.web.event.exception.EventNotOpenException;
 import igrus.web.event.exception.EventRegistrationNotFoundException;
 import igrus.web.event.exception.InvalidRegistrationStatusException;
 import igrus.web.event.exception.NotManualApproveEventException;
+import igrus.web.event.exception.EventTimeOverlapException;
 import igrus.web.event.exception.OperatorPermissionRequiredException;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventRegistrationRepository;
@@ -29,8 +31,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 행사 신청 서비스.
@@ -79,6 +85,7 @@ public class EventRegistrationService {
      * @throws UserNotFoundException                사용자를 찾을 수 없는 경우
      * @throws AssociateMemberNotAllowedException   준회원인 경우
      * @throws AlreadyRegisteredException           이미 신청한 경우
+     * @throws EventTimeOverlapException            다른 행사와 시간이 겹치는 경우
      * @throws EventNotOpenException                행사가 OPEN 상태가 아닌 경우
      * @throws EventNotInRegistrationPeriodException 신청 기간이 아닌 경우
      * @throws EventCapacityFullException           정원이 초과된 경우 (자동 승인)
@@ -109,7 +116,10 @@ public class EventRegistrationService {
         // 6. 신청 기간 확인
         validateRegistrationPeriod(event);
 
-        // 7. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
+        // 7. 다른 행사와 시간 겹침 확인
+        validateNoTimeOverlap(userId, event);
+
+        // 8. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
         if (event.isAutoApprove()) {
             int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
             if (updated == 0) {
@@ -119,11 +129,11 @@ public class EventRegistrationService {
             updateEventStatusAfterIncrement(eventId);
         }
 
-        // 8. 신청 생성 및 저장
+        // 9. 신청 생성 및 저장
         EventRegistration registration = EventRegistration.create(event, user);
         EventRegistration savedRegistration = eventRegistrationRepository.save(registration);
 
-        // 9. 응답 반환
+        // 10. 응답 반환
         return RegistrationResponse.from(savedRegistration);
     }
 
@@ -162,7 +172,10 @@ public class EventRegistrationService {
 
         // 6. 신청자 수 감소 (원자적 UPDATE)
         if (shouldDecrementCount) {
-            eventRepository.decrementCurrentCount(eventId);
+            int decremented = eventRepository.decrementCurrentCount(eventId);
+            if (decremented == 0) {
+                log.error("신청자 수 감소 실패 (이미 0): eventId={}", eventId);
+            }
             // 자리가 생겼으면 상태 변경 (정원 마감 → OPEN)
             updateEventStatusAfterDecrement(eventId);
         }
@@ -182,7 +195,6 @@ public class EventRegistrationService {
         List<EventRegistration> registrations = eventRegistrationRepository.findByUserId(userId);
 
         return registrations.stream()
-                .filter(r -> !r.getEvent().isDeleted())
                 .map(MyRegistrationResponse::from)
                 .toList();
     }
@@ -198,7 +210,7 @@ public class EventRegistrationService {
      * @throws OperatorPermissionRequiredException  운영진 권한이 없는 경우
      */
     @Transactional(readOnly = true)
-    public List<RegistrationListResponse> getRegistrationList(Long eventId, Long userId) {
+    public Page<RegistrationListResponse> getRegistrationList(Long eventId, Long userId, Pageable pageable) {
         // 1. 행사 조회
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
@@ -210,12 +222,10 @@ public class EventRegistrationService {
         // 3. 권한 확인 (운영진 이상)
         validateOperatorPermission(user);
 
-        // 4. 신청자 목록 조회
-        List<EventRegistration> registrations = eventRegistrationRepository.findByEventId(eventId);
+        // 4. 신청자 목록 조회 (페이징)
+        Page<EventRegistration> registrations = eventRegistrationRepository.findByEventId(eventId, pageable);
 
-        return registrations.stream()
-                .map(RegistrationListResponse::from)
-                .toList();
+        return registrations.map(RegistrationListResponse::from);
     }
 
     /**
@@ -261,20 +271,23 @@ public class EventRegistrationService {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 7. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
+        // 7. 시간 겹침 검증 (승인 대상 사용자의 기존 확정 신청과 겹치는지 확인)
+        validateNoTimeOverlap(registration.getUser().getId(), event);
+
+        // 8. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
         // 선발제 승인은 신청 기간 종료 후에도 가능해야 하므로 상태와 관계없이 정원만 체크
         int updated = eventRepository.incrementCurrentCountForApproval(eventId);
         if (updated == 0) {
             throw new EventCapacityFullException();
         }
 
-        // 8. 승인 처리
+        // 9. 승인 처리
         registration.approve();
 
-        // 9. 정원이 찼으면 상태 변경
+        // 10. 정원이 찼으면 상태 변경
         updateEventStatusAfterIncrement(eventId);
 
-        // 10. 응답 반환
+        // 11. 응답 반환
         return RegistrationResponse.from(registration);
     }
 
@@ -323,6 +336,75 @@ public class EventRegistrationService {
         return RegistrationResponse.from(registration);
     }
 
+    /**
+     * 승인 또는 거절을 되돌려 대기 상태로 복원합니다. (선발제 전용)
+     *
+     * <p>승인 상태에서 되돌릴 경우 신청자 수를 감소시킵니다.</p>
+     *
+     * @param registrationId 신청 ID
+     * @param userId         요청자 ID (운영진)
+     * @return 되돌린 신청 응답 DTO
+     * @throws EventRegistrationNotFoundException   신청을 찾을 수 없는 경우
+     * @throws UserNotFoundException               사용자를 찾을 수 없는 경우
+     * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
+     * @throws NotManualApproveEventException      수동 승인 행사가 아닌 경우
+     * @throws InvalidRegistrationStatusException  승인/거절 상태가 아닌 경우
+     */
+    public RegistrationResponse revertRegistration(Long registrationId, Long userId) {
+        // 1. 신청 조회
+        EventRegistration registration = eventRegistrationRepository.findById(registrationId)
+                .orElseThrow(EventRegistrationNotFoundException::new);
+
+        Long eventId = registration.getEvent().getId();
+
+        // 2. 행사 조회
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 3. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        // 4. 권한 확인 (운영진 이상)
+        validateOperatorPermission(user);
+
+        // 5. 행사 상태 확인 (진행 중 또는 완료된 행사는 되돌리기 불가)
+        if (!event.getStatus().isEditable()) {
+            throw new EventNotEditableException(event.getStatus());
+        }
+
+        // 6. 선발제 행사인지 확인
+        if (!event.isManualApprove()) {
+            throw new NotManualApproveEventException();
+        }
+
+        // 7. APPROVED 또는 REJECTED 상태인지 확인
+        if (!registration.isApproved() && !registration.isRejected()) {
+            throw new InvalidRegistrationStatusException();
+        }
+
+        // 8. 승인 상태였는지 미리 기록 (clearAutomatically로 인한 엔티티 분리 대비)
+        boolean wasApproved = registration.isApproved();
+
+        // 9. WAITING 상태로 되돌리기 (카운트 감소 전에 상태 변경)
+        registration.revertToWaiting();
+        eventRegistrationRepository.saveAndFlush(registration);
+
+        // 10. 승인 상태였으면 카운트 감소 (clearAutomatically=true로 영속성 컨텍스트 초기화됨)
+        if (wasApproved) {
+            int decremented = eventRepository.decrementCurrentCount(eventId);
+            if (decremented == 0) {
+                log.error("신청자 수 감소 실패 (이미 0): eventId={}, registrationId={}", eventId, registrationId);
+            }
+            updateEventStatusAfterDecrement(eventId);
+        }
+
+        // 11. 응답 반환 (영속성 컨텍스트 초기화 후이므로 다시 조회)
+        EventRegistration updatedRegistration = eventRegistrationRepository.findById(registrationId)
+                .orElseThrow(EventRegistrationNotFoundException::new);
+        return RegistrationResponse.from(updatedRegistration);
+    }
+
     // === Private 메서드 ===
 
     /**
@@ -361,6 +443,9 @@ public class EventRegistrationService {
 
         // 신청 기간 확인
         validateRegistrationPeriod(event);
+
+        // 다른 행사와 시간 겹침 확인
+        validateNoTimeOverlap(registration.getUser().getId(), event);
 
         // 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
         if (event.isAutoApprove()) {
@@ -401,6 +486,26 @@ public class EventRegistrationService {
         Instant now = Instant.now();
         if (now.isBefore(event.getRegistrationStartAt()) || now.isAfter(event.getRegistrationEndAt())) {
             throw new EventNotInRegistrationPeriodException();
+        }
+    }
+
+    /**
+     * 사용자의 확정된 신청(REGISTERED, APPROVED) 중
+     * 신청하려는 행사의 진행 시간과 겹치는 신청이 없는지 검증합니다.
+     *
+     * @param userId 사용자 ID
+     * @param event  신청하려는 행사
+     * @throws EventTimeOverlapException 시간이 겹치는 신청이 있는 경우
+     */
+    private void validateNoTimeOverlap(Long userId, Event event) {
+        boolean hasOverlap = eventRegistrationRepository.existsOverlappingRegistration(
+                userId,
+                event.getEventStartAt(),
+                event.getEventEndAt(),
+                Set.of(EventRegistrationStatus.REGISTERED, EventRegistrationStatus.APPROVED)
+        );
+        if (hasOverlap) {
+            throw new EventTimeOverlapException();
         }
     }
 

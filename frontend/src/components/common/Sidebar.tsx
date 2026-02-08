@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAuthStore, useUIStore } from '@/stores';
+import { useUIStore } from '@/stores';
+import { useAuth } from '@/hooks';
 import {
   Home,
   MessageSquare,
@@ -29,7 +30,7 @@ const MenuItem = ({ to, icon, label, active, onClick }: MenuItemProps) => {
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center gap-3 w-full px-4 py-3 rounded-r3 transition-all relative group ${
+      className={`flex items-center gap-s3 w-full px-s4 py-s3 rounded-r3 transition-all relative group ${
         active
           ? isDark
             ? 'bg-white/10 text-foreground'
@@ -43,7 +44,7 @@ const MenuItem = ({ to, icon, label, active, onClick }: MenuItemProps) => {
         {icon}
       </span>
       <span className="text-label">{label}</span>
-      {active && <span className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" />}
+      {active && <span className="absolute left-0 w-1 h-s5 bg-primary rounded-r-full" />}
     </Link>
   );
 };
@@ -55,7 +56,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useUIStore();
   const isDark = theme === 'dark';
 
@@ -90,13 +91,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         {/* Logo */}
         <div className="flex justify-between items-center">
-          <Link to="/" className="text-h3 ml-2 flex items-center gap-2">
+          <Link to="/" className="text-h3 ml-s2 flex items-center gap-s2">
             <Code className="w-6 h-6 text-primary" />
             <span>IGRUS</span>
           </Link>
           <button
             onClick={onClose}
-            className="lg:hidden p-2 text-muted-foreground hover:text-primary transition-colors"
+            className="lg:hidden p-s2 text-muted-foreground hover:text-primary transition-colors"
             type="button"
           >
             <X size={20} />
@@ -104,7 +105,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Main Navigation */}
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-s1">
           <MenuItem
             to="/"
             icon={<Home size={20} />}
@@ -136,11 +137,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="mt-auto flex flex-col gap-1">
+        <div className="mt-auto flex flex-col gap-s1">
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-r3 transition-all mb-s3 ${
+            className={`flex items-center gap-s3 w-full px-s4 py-s3 rounded-r3 transition-all mb-s3 ${
               isDark
                 ? 'text-muted-foreground hover:text-foreground hover:bg-white/5'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
