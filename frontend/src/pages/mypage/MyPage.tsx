@@ -52,15 +52,7 @@ export default function MyPage() {
   const registrationsQuery = useMyRegistrations();
 
   const handleChangePassword = () => {
-    Swal.fire({
-      icon: 'info',
-      title: '개발 예정',
-      text: '비밀번호 변경 기능이 곧 추가됩니다.',
-      confirmButtonText: '확인',
-      confirmButtonColor: '#17A2B8',
-      showClass: { popup: '', backdrop: '' },
-      hideClass: { popup: '', backdrop: '' },
-    });
+    navigate('/mypage/change-password');
   };
 
   const handleLogout = async () => {

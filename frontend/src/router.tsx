@@ -34,14 +34,11 @@ import { PrivacyPolicyPage, TermsOfServicePage } from '@/pages/legal';
 
 // 마이페이지
 import MyPage from '@/pages/mypage/MyPage';
+import ChangePasswordPage from '@/pages/mypage/ChangePasswordPage';
 import WithdrawPage from '@/pages/mypage/WithdrawPage';
 
 // 관리자
 import AdminDashboard from '@/pages/admin/AdminDashboard';
-import AdminUsers from '@/pages/admin/AdminUsers';
-import AdminAssociates from '@/pages/admin/AdminAssociates';
-import AdminInquiries from '@/pages/admin/AdminInquiries';
-import AdminScraps from '@/pages/admin/AdminScraps';
 
 const routes: RouteObject[] = [
   {
@@ -105,6 +102,14 @@ const routes: RouteObject[] = [
 
       // 마이페이지
       {
+        path: 'mypage/change-password',
+        element: (
+          <ProtectedRoute>
+            <ChangePasswordPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'mypage/withdraw',
         element: (
           <ProtectedRoute>
@@ -130,39 +135,6 @@ const routes: RouteObject[] = [
           </ProtectedRoute>
         ),
       },
-      {
-        path: 'admin/users',
-        element: (
-          <ProtectedRoute minRole="OPERATOR">
-            <AdminUsers />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'admin/associates',
-        element: (
-          <ProtectedRoute minRole="ADMIN">
-            <AdminAssociates />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'admin/inquiries',
-        element: (
-          <ProtectedRoute minRole="OPERATOR">
-            <AdminInquiries />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'admin/scraps',
-        element: (
-          <ProtectedRoute minRole="OPERATOR">
-            <AdminScraps />
-          </ProtectedRoute>
-        ),
-      },
-
       // 404
       { path: '*', element: <NotFoundPage /> },
     ],
