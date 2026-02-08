@@ -78,7 +78,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
       <h3 className="text-xl font-bold mb-s5">댓글 ({totalCount})</h3>
 
       {/* 댓글 입력 */}
-      <div className="flex gap-s4 mb-s8">
+      <div className="flex gap-s4 mb-s3">
         <div
           className={cn(
             'w-10 h-10 rounded-full flex items-center justify-center shrink-0',

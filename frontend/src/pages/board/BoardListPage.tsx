@@ -6,7 +6,7 @@ import PostListItem from '@/components/feature/board/PostListItem';
 import { SortSelect } from '@/components/board/SortSelect';
 import { Pagination } from '@/components/board/Pagination';
 import { Button } from '@/components/ui/button';
-import { BOARDS, BOARD_LABELS, SORT_TYPE, PAGINATION } from '@/constants/board';
+import { BOARDS, BOARD_LABELS, SORT_TYPE, PAGINATION, ENABLED_BOARDS } from '@/constants/board';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useMockData } from '@/hooks/useMockData';
@@ -30,6 +30,13 @@ export default function BoardListPage() {
   const validBoardType = boardType && Object.values(BOARDS).includes(boardType as BoardType)
     ? (boardType as BoardType)
     : BOARDS.NOTICES;
+
+  // 비활성화된 게시판 접근 시 notices로 리다이렉트
+  useEffect(() => {
+    if (!ENABLED_BOARDS.includes(validBoardType)) {
+      navigate('/board/NOTICES', { replace: true });
+    }
+  }, [validBoardType, navigate]);
 
   // Mock 모드 확인
   const isMockMode = useMockData();
@@ -73,10 +80,6 @@ export default function BoardListPage() {
     setCurrentPage(page);
   };
 
-  const handleTabClick = (tab: BoardType) => {
-    navigate(`/board/${tab}`);
-  };
-
   const handleWriteClick = () => {
     navigate(`/board/${validBoardType}/write`);
   };
@@ -86,10 +89,10 @@ export default function BoardListPage() {
       {/* Header with Tabs and Write Button */}
       <div className="flex justify-between items-center border-b border-border pb-s4">
         <div className="flex gap-s4 overflow-x-auto">
-          {(Object.values(BOARDS) as BoardType[]).map((tab) => (
+          {ENABLED_BOARDS.map((tab) => (
             <button
               key={tab}
-              onClick={() => handleTabClick(tab)}
+              onClick={() => navigate(`/board/${tab}`)}
               type="button"
               className={cn(
                 'px-s6 py-s2 rounded-full text-sm font-bold transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer',
