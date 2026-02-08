@@ -177,6 +177,18 @@ public class Event extends SoftDeletableEntity {
     }
 
     /**
+     * 행사를 진행 중 상태로 변경합니다.
+     * 마감 사유를 초기화합니다.
+     *
+     * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
+     */
+    public void startOngoing() {
+        validateStateTransition(EventStatus.ONGOING);
+        this.status = EventStatus.ONGOING;
+        this.closeReason = null;
+    }
+
+    /**
      * 행사를 완료 처리합니다.
      *
      * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
@@ -204,7 +216,7 @@ public class Event extends SoftDeletableEntity {
     public void updateStatusIfNeeded(Instant now) {
         // UPCOMING 상태에서 신청 시작일이 지났으면 OPEN으로 변경
         if (this.status == EventStatus.UPCOMING && !now.isBefore(this.registrationStartAt)) {
-            this.status = EventStatus.OPEN;
+            open();
         }
 
         // OPEN 상태에서 신청 마감일이 지났으면 CLOSED로 변경
@@ -214,12 +226,12 @@ public class Event extends SoftDeletableEntity {
 
         // CLOSED 상태에서 행사 시작일이 지났으면 ONGOING으로 변경
         if (this.status == EventStatus.CLOSED && !now.isBefore(this.eventStartAt)) {
-            this.status = EventStatus.ONGOING;
+            startOngoing();
         }
 
         // ONGOING 상태에서 행사 종료일이 지났으면 COMPLETED로 변경
         if (this.status == EventStatus.ONGOING && now.isAfter(this.eventEndAt)) {
-            this.status = EventStatus.COMPLETED;
+            complete();
         }
     }
 

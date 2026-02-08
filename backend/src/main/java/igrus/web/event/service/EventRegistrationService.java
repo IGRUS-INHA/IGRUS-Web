@@ -11,6 +11,7 @@ import igrus.web.event.exception.AlreadyCanceledException;
 import igrus.web.event.exception.AlreadyRegisteredException;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventCapacityFullException;
+import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.EventRegistrationClosedException;
 import igrus.web.event.exception.EventNotInRegistrationPeriodException;
@@ -171,7 +172,10 @@ public class EventRegistrationService {
 
         // 6. 신청자 수 감소 (원자적 UPDATE)
         if (shouldDecrementCount) {
-            eventRepository.decrementCurrentCount(eventId);
+            int decremented = eventRepository.decrementCurrentCount(eventId);
+            if (decremented == 0) {
+                log.error("신청자 수 감소 실패 (이미 0): eventId={}", eventId);
+            }
             // 자리가 생겼으면 상태 변경 (정원 마감 → OPEN)
             updateEventStatusAfterDecrement(eventId);
         }
@@ -191,7 +195,6 @@ public class EventRegistrationService {
         List<EventRegistration> registrations = eventRegistrationRepository.findByUserId(userId);
 
         return registrations.stream()
-                .filter(r -> !r.getEvent().isDeleted())
                 .map(MyRegistrationResponse::from)
                 .toList();
     }
@@ -268,20 +271,23 @@ public class EventRegistrationService {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 7. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
+        // 7. 시간 겹침 검증 (승인 대상 사용자의 기존 확정 신청과 겹치는지 확인)
+        validateNoTimeOverlap(registration.getUser().getId(), event);
+
+        // 8. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
         // 선발제 승인은 신청 기간 종료 후에도 가능해야 하므로 상태와 관계없이 정원만 체크
         int updated = eventRepository.incrementCurrentCountForApproval(eventId);
         if (updated == 0) {
             throw new EventCapacityFullException();
         }
 
-        // 8. 승인 처리
+        // 9. 승인 처리
         registration.approve();
 
-        // 9. 정원이 찼으면 상태 변경
+        // 10. 정원이 찼으면 상태 변경
         updateEventStatusAfterIncrement(eventId);
 
-        // 10. 응답 반환
+        // 11. 응답 반환
         return RegistrationResponse.from(registration);
     }
 
@@ -362,30 +368,38 @@ public class EventRegistrationService {
         // 4. 권한 확인 (운영진 이상)
         validateOperatorPermission(user);
 
-        // 5. 선발제 행사인지 확인
+        // 5. 행사 상태 확인 (진행 중 또는 완료된 행사는 되돌리기 불가)
+        if (!event.getStatus().isEditable()) {
+            throw new EventNotEditableException(event.getStatus());
+        }
+
+        // 6. 선발제 행사인지 확인
         if (!event.isManualApprove()) {
             throw new NotManualApproveEventException();
         }
 
-        // 6. APPROVED 또는 REJECTED 상태인지 확인
+        // 7. APPROVED 또는 REJECTED 상태인지 확인
         if (!registration.isApproved() && !registration.isRejected()) {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 7. 승인 상태였는지 미리 기록 (clearAutomatically로 인한 엔티티 분리 대비)
+        // 8. 승인 상태였는지 미리 기록 (clearAutomatically로 인한 엔티티 분리 대비)
         boolean wasApproved = registration.isApproved();
 
-        // 8. WAITING 상태로 되돌리기 (카운트 감소 전에 상태 변경)
+        // 9. WAITING 상태로 되돌리기 (카운트 감소 전에 상태 변경)
         registration.revertToWaiting();
         eventRegistrationRepository.saveAndFlush(registration);
 
-        // 9. 승인 상태였으면 카운트 감소 (clearAutomatically=true로 영속성 컨텍스트 초기화됨)
+        // 10. 승인 상태였으면 카운트 감소 (clearAutomatically=true로 영속성 컨텍스트 초기화됨)
         if (wasApproved) {
-            eventRepository.decrementCurrentCount(eventId);
+            int decremented = eventRepository.decrementCurrentCount(eventId);
+            if (decremented == 0) {
+                log.error("신청자 수 감소 실패 (이미 0): eventId={}, registrationId={}", eventId, registrationId);
+            }
             updateEventStatusAfterDecrement(eventId);
         }
 
-        // 10. 응답 반환 (영속성 컨텍스트 초기화 후이므로 다시 조회)
+        // 11. 응답 반환 (영속성 컨텍스트 초기화 후이므로 다시 조회)
         EventRegistration updatedRegistration = eventRegistrationRepository.findById(registrationId)
                 .orElseThrow(EventRegistrationNotFoundException::new);
         return RegistrationResponse.from(updatedRegistration);

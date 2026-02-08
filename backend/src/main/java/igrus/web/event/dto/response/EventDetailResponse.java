@@ -75,7 +75,7 @@ public record EventDetailResponse(
                 event.getCapacity(),
                 event.getCurrentCount(),
                 event.getStatus(),
-                event.getCloseReason(),
+                event.getStatus() == EventStatus.CLOSED ? event.getCloseReason() : null,
                 event.getRegistrationType(),
                 event.isRegistrable(),
                 event.getCreatedAt(),

@@ -342,6 +342,104 @@ class EventRegistrationTest {
     }
 
     @Nested
+    @DisplayName("되돌리기 메서드")
+    class RevertToWaitingTest {
+
+        /**
+         * REG-040: APPROVED→WAITING 되돌리기 성공
+         */
+        @Test
+        @DisplayName("[REG-040] APPROVED 상태에서 revertToWaiting 호출 시 WAITING으로 변경")
+        void revertToWaiting_FromApproved_ChangesToWaiting() {
+            // given
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
+            User user = createMockUser(2L, "신청자");
+            EventRegistration registration = EventRegistration.create(event, user);
+            registration.approve();
+            assertThat(registration.isApproved()).isTrue();
+
+            // when
+            registration.revertToWaiting();
+
+            // then
+            assertThat(registration.getStatus()).isEqualTo(EventRegistrationStatus.WAITING);
+            assertThat(registration.isWaiting()).isTrue();
+        }
+
+        /**
+         * REG-041: REJECTED→WAITING 되돌리기 성공
+         */
+        @Test
+        @DisplayName("[REG-041] REJECTED 상태에서 revertToWaiting 호출 시 WAITING으로 변경")
+        void revertToWaiting_FromRejected_ChangesToWaiting() {
+            // given
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
+            User user = createMockUser(2L, "신청자");
+            EventRegistration registration = EventRegistration.create(event, user);
+            registration.reject();
+            assertThat(registration.isRejected()).isTrue();
+
+            // when
+            registration.revertToWaiting();
+
+            // then
+            assertThat(registration.getStatus()).isEqualTo(EventRegistrationStatus.WAITING);
+        }
+
+        /**
+         * REG-042: REGISTERED→WAITING 되돌리기 불가
+         */
+        @Test
+        @DisplayName("[REG-042] REGISTERED 상태에서 revertToWaiting 호출 시 예외 발생")
+        void revertToWaiting_FromRegistered_ThrowsException() {
+            // given
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
+            User user = createMockUser(2L, "신청자");
+            EventRegistration registration = EventRegistration.create(event, user);
+            assertThat(registration.isRegistered()).isTrue();
+
+            // when & then
+            assertThatThrownBy(() -> registration.revertToWaiting())
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
+        }
+
+        /**
+         * REG-043: WAITING→WAITING 되돌리기 불가
+         */
+        @Test
+        @DisplayName("[REG-043] WAITING 상태에서 revertToWaiting 호출 시 예외 발생")
+        void revertToWaiting_FromWaiting_ThrowsException() {
+            // given
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
+            User user = createMockUser(2L, "신청자");
+            EventRegistration registration = EventRegistration.create(event, user);
+            assertThat(registration.isWaiting()).isTrue();
+
+            // when & then
+            assertThatThrownBy(() -> registration.revertToWaiting())
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
+        }
+
+        /**
+         * REG-044: CANCELED→WAITING 되돌리기 불가
+         */
+        @Test
+        @DisplayName("[REG-044] CANCELED 상태에서 revertToWaiting 호출 시 예외 발생")
+        void revertToWaiting_FromCanceled_ThrowsException() {
+            // given
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
+            User user = createMockUser(2L, "신청자");
+            EventRegistration registration = EventRegistration.create(event, user);
+            registration.cancel();
+            assertThat(registration.isCanceled()).isTrue();
+
+            // when & then
+            assertThatThrownBy(() -> registration.revertToWaiting())
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
+        }
+    }
+
+    @Nested
     @DisplayName("조회 메서드")
     class QueryMethodsTest {
 
@@ -405,6 +503,22 @@ class EventRegistrationTest {
 
             // then
             assertThat(registration.isActive()).isFalse();
+        }
+
+        /**
+         * REG-035: REJECTED는 isRejected true
+         */
+        @Test
+        @DisplayName("[REG-035] REJECTED 상태는 isRejected가 true")
+        void isRejected_WhenRejected_ReturnsTrue() {
+            // given
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
+            User user = createMockUser(2L, "신청자");
+            EventRegistration registration = EventRegistration.create(event, user);
+            registration.reject();
+
+            // then
+            assertThat(registration.isRejected()).isTrue();
         }
 
         /**

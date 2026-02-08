@@ -548,9 +548,13 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-030] 운영진이 WAITING 상태 신청을 승인하면 APPROVED로 변경")
         void approveRegistration_ValidCase_ChangesToApproved() {
             // given
+            User applicant = mock(User.class);
+            when(applicant.getId()).thenReturn(USER_ID);
+
             EventRegistration registration = mock(EventRegistration.class);
             when(registration.getId()).thenReturn(REGISTRATION_ID);
             when(registration.getEvent()).thenReturn(manualApproveEvent);
+            when(registration.getUser()).thenReturn(applicant);
             when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
             when(registration.getRegisteredAt()).thenReturn(Instant.now());
 
@@ -558,6 +562,8 @@ class EventRegistrationServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.incrementCurrentCountForApproval(EVENT_ID)).thenReturn(1);
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(false);
 
             // Mock approve 후 상태 변경
             doAnswer(invocation -> {
@@ -572,6 +578,33 @@ class EventRegistrationServiceTest {
             assertThat(response).isNotNull();
             verify(registration).approve();
             verify(eventRepository).incrementCurrentCountForApproval(EVENT_ID);
+            verify(eventRegistrationRepository).existsOverlappingRegistration(eq(USER_ID), any(), any(), any());
+        }
+
+        /**
+         * SVC-030-2: 승인 시 시간 겹침 검증
+         */
+        @Test
+        @DisplayName("[SVC-030-2] 승인 시 시간이 겹치는 확정 신청이 있으면 EventTimeOverlapException 발생")
+        void approveRegistration_TimeOverlap_ThrowsException() {
+            // given
+            User applicant = mock(User.class);
+            when(applicant.getId()).thenReturn(USER_ID);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(manualApproveEvent);
+            when(registration.getUser()).thenReturn(applicant);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.approveRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(EventTimeOverlapException.class);
         }
 
         /**
@@ -621,13 +654,19 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-033] 정원이 찬 상태에서 승인하면 EventCapacityFullException 발생")
         void approveRegistration_CapacityFull_ThrowsException() {
             // given
+            User applicant = mock(User.class);
+            when(applicant.getId()).thenReturn(USER_ID);
+
             EventRegistration registration = mock(EventRegistration.class);
             when(registration.getEvent()).thenReturn(manualApproveEvent);
+            when(registration.getUser()).thenReturn(applicant);
             when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
 
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(false);
             when(eventRepository.incrementCurrentCountForApproval(EVENT_ID)).thenReturn(0); // 원자적 UPDATE 실패
 
             // when & then
@@ -832,6 +871,52 @@ class EventRegistrationServiceTest {
             // when & then
             assertThatThrownBy(() -> eventRegistrationService.revertRegistration(REGISTRATION_ID, OPERATOR_ID))
                     .isInstanceOf(InvalidRegistrationStatusException.class);
+        }
+
+        /**
+         * SVC-055: ONGOING 행사 되돌리기 거부
+         */
+        @Test
+        @DisplayName("[SVC-055] ONGOING 상태 행사에서 되돌리면 EventNotEditableException 발생")
+        void revertRegistration_OngoingEvent_ThrowsException() {
+            // given
+            Event ongoingEvent = mock(Event.class);
+            when(ongoingEvent.getId()).thenReturn(EVENT_ID);
+            when(ongoingEvent.getStatus()).thenReturn(EventStatus.ONGOING);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(ongoingEvent);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(ongoingEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.revertRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(EventNotEditableException.class);
+        }
+
+        /**
+         * SVC-056: COMPLETED 행사 되돌리기 거부
+         */
+        @Test
+        @DisplayName("[SVC-056] COMPLETED 상태 행사에서 되돌리면 EventNotEditableException 발생")
+        void revertRegistration_CompletedEvent_ThrowsException() {
+            // given
+            Event completedEvent = mock(Event.class);
+            when(completedEvent.getId()).thenReturn(EVENT_ID);
+            when(completedEvent.getStatus()).thenReturn(EventStatus.COMPLETED);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(completedEvent);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(completedEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.revertRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(EventNotEditableException.class);
         }
 
         /**

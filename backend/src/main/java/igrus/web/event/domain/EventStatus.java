@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
  * 행사 상태를 나타내는 Enum.
  *
  * <p>상태 흐름:</p>
- * UPCOMING(예정) → OPEN(모집 중) → CLOSED(마감) → ONGOING(진행 중) → COMPLETED(완료)
+ * UPCOMING(예정) → OPEN(모집 중) ↔ CLOSED(마감) → ONGOING(진행 중) → COMPLETED(완료)
+ * <p>CLOSED → OPEN 역전이: 정원 마감(CAPACITY_FULL) 후 취소로 자리가 생기면 다시 OPEN</p>
  */
 @Getter
 @RequiredArgsConstructor
@@ -61,12 +62,13 @@ public enum EventStatus {
     }
 
     /**
-     * 행사가 종료된 상태인지 확인합니다.
+     * 신청 마감 이후 상태인지 확인합니다.
+     * CLOSED, ONGOING, COMPLETED 모두 해당합니다.
      *
-     * @return 종료 여부 (COMPLETED)
+     * @return 신청 마감 이후 여부
      */
     public boolean isFinished() {
-        return this == COMPLETED;
+        return this == CLOSED || this == ONGOING || this == COMPLETED;
     }
 
     /**

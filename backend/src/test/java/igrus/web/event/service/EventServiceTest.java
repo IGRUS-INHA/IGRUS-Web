@@ -301,6 +301,44 @@ class EventServiceTest {
 
             assertThat(result).isEmpty();
         }
+
+        @Test
+        @DisplayName("Lazy 갱신 후 상태가 변경된 행사는 필터에서 제외된다")
+        void getEventList_LazyUpdateChangesStatus_FilteredOut() {
+            // given: OPEN 상태로 DB 조회되지만, updateStatusIfNeeded 호출 시 CLOSED로 변경
+            Event changingEvent = mock(Event.class);
+            when(changingEvent.getId()).thenReturn(2L);
+            when(changingEvent.getTitle()).thenReturn("상태 변경 행사");
+            when(changingEvent.getLocation()).thenReturn("장소");
+            when(changingEvent.getEventStartAt()).thenReturn(eventStart);
+            when(changingEvent.getEventEndAt()).thenReturn(eventEnd);
+            when(changingEvent.getRegistrationStartAt()).thenReturn(regStart);
+            when(changingEvent.getRegistrationEndAt()).thenReturn(regEnd);
+            when(changingEvent.getCapacity()).thenReturn(30);
+            when(changingEvent.getCurrentCount()).thenReturn(0);
+            when(changingEvent.getRegistrationType()).thenReturn(EventRegistrationType.AUTO_APPROVE);
+            when(changingEvent.isRegistrable()).thenReturn(false);
+            when(changingEvent.getCreatedAt()).thenReturn(Instant.now());
+            when(changingEvent.getUpdatedAt()).thenReturn(Instant.now());
+            when(changingEvent.getCloseReason()).thenReturn(null);
+
+            // updateStatusIfNeeded 호출 시 상태가 CLOSED로 변경
+            when(changingEvent.getStatus()).thenReturn(EventStatus.OPEN);
+            doAnswer(invocation -> {
+                when(changingEvent.getStatus()).thenReturn(EventStatus.CLOSED);
+                return null;
+            }).when(changingEvent).updateStatusIfNeeded(any(Instant.class));
+
+            when(eventRepository.findByStatusAndNotDeleted(EventStatus.OPEN))
+                    .thenReturn(new java.util.ArrayList<>(List.of(mockEvent, changingEvent)));
+
+            // when: OPEN 필터로 조회
+            List<EventListResponse> result = eventService.getEventList(EventStatus.OPEN);
+
+            // then: 상태가 변경된 행사는 제외되어 1개만 반환
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).id()).isEqualTo(EVENT_ID);
+        }
     }
 
     // ========== updateEvent ==========

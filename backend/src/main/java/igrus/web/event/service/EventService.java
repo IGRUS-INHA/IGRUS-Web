@@ -154,6 +154,13 @@ public class EventService {
         Instant now = Instant.now();
         events.forEach(event -> event.updateStatusIfNeeded(now));
 
+        // Lazy 갱신 후 상태가 변경되었을 수 있으므로, 필터가 있으면 다시 적용
+        if (status != null) {
+            events = events.stream()
+                    .filter(e -> e.getStatus() == status)
+                    .toList();
+        }
+
         return events.stream()
                 .map(EventListResponse::from)
                 .toList();

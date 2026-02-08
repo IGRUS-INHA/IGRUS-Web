@@ -244,6 +244,60 @@ class EventTest {
         }
 
         /**
+         * EVT-016: CLOSED→ONGOING 전이 (startOngoing)
+         */
+        @Test
+        @DisplayName("[EVT-016] CLOSED에서 startOngoing 호출 시 ONGOING으로 전이 성공")
+        void startOngoing_FromClosed_Success() {
+            // given
+            Event event = createTestEvent();
+            event.open();
+            event.closeManually();
+            assertThat(event.getCloseReason()).isEqualTo(EventCloseReason.MANUAL_CLOSE);
+
+            // when
+            event.startOngoing();
+
+            // then
+            assertThat(event.getStatus()).isEqualTo(EventStatus.ONGOING);
+            assertThat(event.getCloseReason()).isNull();
+        }
+
+        /**
+         * EVT-018: OPEN→ONGOING 직접 전이 불가
+         */
+        @Test
+        @DisplayName("[EVT-018] OPEN에서 startOngoing 호출 시 예외 발생")
+        void startOngoing_FromOpen_ThrowsException() {
+            // given
+            Event event = createTestEvent();
+            event.open();
+
+            // when & then
+            assertThatThrownBy(() -> event.startOngoing())
+                    .isInstanceOf(InvalidEventStateTransitionException.class);
+        }
+
+        /**
+         * EVT-019: ONGOING→COMPLETED 전이 (complete)
+         */
+        @Test
+        @DisplayName("[EVT-019] ONGOING에서 complete 호출 시 COMPLETED로 전이 성공")
+        void complete_FromOngoing_Success() {
+            // given
+            Event event = createTestEvent();
+            event.open();
+            event.closeManually();
+            event.startOngoing();
+
+            // when
+            event.complete();
+
+            // then
+            assertThat(event.getStatus()).isEqualTo(EventStatus.COMPLETED);
+        }
+
+        /**
          * EVT-060: CLOSED → ONGOING 자동 전환 (행사 시작일 도래)
          */
         @Test
