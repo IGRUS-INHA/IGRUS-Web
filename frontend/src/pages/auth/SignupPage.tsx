@@ -33,6 +33,7 @@ export default function SignupPage() {
     phoneNumber?: string;
     department?: string;
     motivation?: string;
+    wishes?: string[];
     gender?: 'MALE' | 'FEMALE';
     grade?: number;
     privacyConsent?: boolean;
@@ -64,6 +65,10 @@ export default function SignupPage() {
         return;
       }
 
+      const wishText = data.wishes?.length
+        ? `[목적: ${data.wishes.join(', ')}]\n`
+        : '';
+
       const response = await signupMutation.mutateAsync({
         data: {
           studentId: data.studentId,
@@ -72,7 +77,7 @@ export default function SignupPage() {
           email: data.email,
           phoneNumber: formatPhoneNumber(data.phoneNumber!),
           department: data.department!,
-          motivation: data.motivation!,
+          motivation: wishText + data.motivation!,
           gender: data.gender!,
           grade: data.grade!,
           privacyConsent: data.privacyConsent!,

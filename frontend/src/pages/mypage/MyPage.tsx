@@ -192,7 +192,7 @@ export default function MyPage() {
               {postsQuery.posts.map((post) => (
                 <div
                   key={post.id}
-                  onClick={() => post.boardCode && post.id && navigate(`/boards/${post.boardCode}/posts/${post.id}`)}
+                  onClick={() => post.boardCode && post.id && navigate(`/board/${post.boardCode}/${post.id}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
                     isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
@@ -226,7 +226,7 @@ export default function MyPage() {
               {likesQuery.posts.filter((post) => !post.isDeleted).map((post) => (
                 <div
                   key={post.postId}
-                  onClick={() => post.boardCode && post.postId && navigate(`/boards/${post.boardCode}/posts/${post.postId}`)}
+                  onClick={() => post.boardCode && post.postId && navigate(`/board/${post.boardCode}/${post.postId}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
                     isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
@@ -266,7 +266,7 @@ export default function MyPage() {
               {bookmarksQuery.posts.filter((post) => !post.isDeleted).map((post) => (
                 <div
                   key={post.postId}
-                  onClick={() => post.boardCode && post.postId && navigate(`/boards/${post.boardCode}/posts/${post.postId}`)}
+                  onClick={() => post.boardCode && post.postId && navigate(`/board/${post.boardCode}/${post.postId}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
                     isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'

@@ -61,7 +61,7 @@ const routes: RouteObject[] = [
       { path: 'terms', element: <TermsOfServicePage /> },
 
       // 게시판
-      { path: 'board/:boardType', element: <BoardListPage /> },
+      { path: 'board/:boardType', element: <ProtectedRoute><BoardListPage /></ProtectedRoute> },
       {
         path: 'board/:boardType/write',
         element: (
@@ -78,10 +78,10 @@ const routes: RouteObject[] = [
           </ProtectedRoute>
         ),
       },
-      { path: 'board/:boardType/:postId', element: <PostDetailPage /> },
+      { path: 'board/:boardType/:postId', element: <ProtectedRoute><PostDetailPage /></ProtectedRoute> },
 
       // 행사
-      { path: 'events', element: <EventListPage /> },
+      { path: 'events', element: <ProtectedRoute><EventListPage /></ProtectedRoute> },
       {
         path: 'events/write',
         element: (
@@ -90,7 +90,7 @@ const routes: RouteObject[] = [
           </ProtectedRoute>
         ),
       },
-      { path: 'events/:eventId', element: <EventDetailPage /> },
+      { path: 'events/:eventId', element: <ProtectedRoute><EventDetailPage /></ProtectedRoute> },
       {
         path: 'events/:eventId/edit',
         element: (

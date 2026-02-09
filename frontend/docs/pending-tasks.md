@@ -1,8 +1,9 @@
 # 프론트엔드 미완성 작업 목록
 
 **작성일**: 2026-02-05
+**최종 업데이트**: 2026-02-09
 **상태**: Draft
-**총 작업 수**: 12개
+**총 작업 수**: 12개 (완료 5개, 부분 완료 2개, 미완료 5개)
 
 ---
 
@@ -18,9 +19,9 @@
 
 ## P0 - Critical (긴급)
 
-**총 2개 작업 | 예상 시간: 1.5시간**
+**총 2개 작업 (부분 완료 1개) | 예상 시간: 1.5시간**
 
-### 1. 백엔드 에러 메시지 파싱 및 표시 개선
+### 1. 백엔드 에러 메시지 파싱 및 표시 개선 🔧 (부분 완료)
 
 **현재 문제**
 
@@ -76,31 +77,18 @@
 
 ## P1 - High (높음)
 
-**총 5개 작업 (4개 남음) | 예상 시간: 6.7시간 (6.4시간 남음)**
+**총 5개 작업 (완료 4개, 미완료 1개) | 예상 시간: 6.7시간**
 
-### 3. 이메일 미인증 사용자 처리 플로우 개선
+### 3. 이메일 미인증 사용자 처리 플로우 개선 ✅
 
-**현재 문제**
+**완료일**: 2026-02-09
 
-- 회원가입 또는 로그인 시 이미 가입되었지만 이메일 미인증인 경우 적절한 안내 없음
-- 사용자가 인증 페이지로 이동할 방법이 없음
+**구현 내용**
 
-**작업 규모**: 🟡 중 (2시간)
-
-**세부 작업 항목**
-
-1. 백엔드 응답 확인
-   - 로그인 실패 시 `USER_NOT_VERIFIED` 같은 에러 코드 확인
-   - 필요시 백엔드에 에러 코드 추가 요청
-2. `LoginPage.tsx` 수정
-   - 미인증 에러 감지 시 `navigate('/verify-email', { state: { studentId, email } })` 처리
-   - 안내 메시지: "이메일 인증이 완료되지 않았습니다. 인증 페이지로 이동합니다."
-3. `SignupPage.tsx` 수정
-   - 이미 가입된 학번이지만 미인증인 경우 인증 페이지로 리다이렉트
-   - 에러 코드별 분기 처리
-4. `VerifyEmailPage.tsx` 수정
-   - state로 전달받은 정보 활용하여 자동 재발송 또는 안내 메시지 표시
-   - "이미 가입된 계정입니다. 이메일 인증을 완료해주세요." 메시지
+1. 로그인 실패 시 `USER_NOT_VERIFIED` 에러 코드 감지 처리
+2. `LoginPage.tsx` - 미인증 에러 시 인증 페이지로 리다이렉트
+3. `SignupPage.tsx` - 이미 가입된 학번이지만 미인증인 경우 인증 페이지로 리다이렉트
+4. `VerifyEmailPage.tsx` - state로 전달받은 정보 활용하여 안내 메시지 표시
 
 **관련 파일**
 
@@ -140,44 +128,15 @@
 
 ---
 
-### 5. 특정 페이지에서 헤더 제목 숨김
+### 5. 특정 페이지에서 헤더 제목 숨김 ✅
 
-**현재 문제**
+**완료일**: 2026-02-09
 
-- 로그인, 홈, 비밀번호 찾기, 이메일 인증 페이지에서 헤더 제목이 불필요하게 표시됨
-- UI 일관성 저하
+**구현 내용**
 
-**작업 규모**: 🟢 소 (20분)
-
-**세부 작업 항목**
-
-1. `Header.tsx` 수정
-   - `useLocation()` 훅으로 현재 경로 확인
-   - 숨김 대상 경로 배열 정의
-     ```tsx
-     const hideTitlePaths = [
-       "/",
-       "/login",
-       "/signup",
-       "/verify-email",
-       "/forgot-password",
-       "/reset-password",
-     ];
-     ```
-2. 조건부 렌더링 로직 추가
-
-   ```tsx
-   const shouldHideTitle = hideTitlePaths.includes(location.pathname);
-
-   return (
-     <header>
-       {!shouldHideTitle && <h1>{pageTitle}</h1>}
-       {/* 나머지 헤더 요소 */}
-     </header>
-   );
-   ```
-
-3. 각 페이지에서 테스트 확인
+1. `Header.tsx`에서 `useLocation()` 훅으로 현재 경로 확인
+2. 숨김 대상 경로 배열 정의 및 조건부 렌더링 적용
+3. 로그인, 홈, 비밀번호 찾기, 이메일 인증 페이지에서 헤더 제목 숨김
 
 **관련 파일**
 
@@ -321,189 +280,62 @@ const filteredEvents = useMemo(() => {
 
 ---
 
-### 7. 히어로 섹션 디자인 구현
+### 7. 히어로 섹션 디자인 구현 ✅
 
-**목표**
+**완료일**: 2026-02-09
 
-- 홈페이지에 매력적인 히어로 섹션 추가하여 첫인상 개선
-- IGRUS 브랜딩 강화
+**구현 내용**
 
-**작업 규모**: 🟡 중 (3시간)
-
-**세부 작업 항목**
-
-1. 디자인 결정
-   - IGRUS 로고/배너 이미지 준비
-   - 헤드라인 카피: "인하대학교 컴퓨터 연구 동아리 IGRUS"
-   - 서브 헤드라인: "함께 성장하는 개발자 커뮤니티"
-   - CTA 버튼: "가입하기", "둘러보기"
-2. `HomePage.tsx` 레이아웃 구조
-   ```tsx
-   - Hero 섹션 (전체 화면 또는 60vh)
-     - 배경 이미지/그라데이션
-     - 헤드라인 + 서브 헤드라인
-     - CTA 버튼들
-   - 최근 공지사항 3개 (카드 형식)
-   - 예정된 행사 카드
-   - 활동 사진 갤러리 (선택)
-   ```
-3. 애니메이션 추가
-   - Fade-in 효과 (Tailwind animate-fade-in)
-   - Scroll reveal (react-intersection-observer 또는 framer-motion)
-4. 반응형 레이아웃
-   - 모바일: 세로 배치
-   - 태블릿/데스크톱: 가로 배치
+1. 홈페이지에 히어로 섹션 추가 (배경 그라데이션, 헤드라인, CTA 버튼)
+2. 애니메이션 효과 적용 (fade-in, scroll reveal)
+3. 반응형 레이아웃 구현 (모바일/태블릿/데스크톱)
 
 **관련 파일**
 
 - `frontend/src/pages/HomePage.tsx`
-- `frontend/public/assets/` (이미지 추가)
-- `frontend/src/components/home/` (HeroSection 컴포넌트 분리 가능)
+- `frontend/src/components/home/` (HeroSection 컴포넌트)
 
 ---
 
 ## P2 - Medium (중간)
 
-**총 4개 작업 | 예상 시간: 13.2시간**
+**총 4개 작업 (완료 1개, 부분 완료 1개, 미완료 2개) | 예상 시간: 13.2시간**
 
-### 8. 커스텀 Alert/Confirm 컴포넌트 구현
+### 8. 커스텀 Alert/Confirm 컴포넌트 구현 🔧 (부분 완료)
 
-**현재 문제**
+**상태**: 디자인 구현 완료 / 기존 alert·confirm 교체는 부분적
 
-- 브라우저 기본 `alert()`, `confirm()` 사용 중
-- 디자인 통일성 없음, 브랜딩 약함
+**완료 항목**
 
-**작업 규모**: 🟡 중 (3시간)
+1. 공용 컴포넌트 생성 완료 (Alert, Confirm, Toast)
+2. Zustand 스토어 전역 상태 관리 구현 완료
+3. 디자인 (모달 오버레이, 아이콘, 버튼, 애니메이션) 구현 완료
 
-**세부 작업 항목**
+**남은 작업**
 
-1. 공용 컴포넌트 생성
-   - `frontend/src/components/common/Alert.tsx`
-   - `frontend/src/components/common/Confirm.tsx`
-   - `frontend/src/components/common/Toast.tsx` (선택)
-2. Zustand 스토어로 전역 상태 관리
-   - `frontend/src/stores/dialogStore.ts`
-   ```tsx
-   interface DialogState {
-     alert: {
-       isOpen: boolean;
-       message: string;
-       type?: "success" | "error" | "warning" | "info";
-     };
-     confirm: { isOpen: boolean; message: string; onConfirm?: () => void };
-     showAlert: (message: string, type?) => void;
-     showConfirm: (message: string, onConfirm: () => void) => void;
-     closeAlert: () => void;
-     closeConfirm: () => void;
-   }
-   ```
-3. 디자인
-   - 모달 오버레이 (배경 dim, 클릭 시 닫기)
-   - 아이콘 (success: ✓, error: ✕, warning: ⚠, info: ℹ)
-   - 확인/취소 버튼 (Tailwind 버튼 컴포넌트)
-4. 애니메이션
-   - fade-in/scale 효과
-   - 부드러운 닫힘
-5. 기존 `alert()`, `confirm()` 호출 교체
-   - 전역 검색으로 모든 사용처 찾기
-   - `useDialogStore()`로 교체
+- 기존 `alert()`, `confirm()` 호출을 `useDialogStore()`로 전체 교체
+  - 전역 검색으로 남은 사용처 찾아서 교체 필요
 
 **관련 파일**
 
-- `frontend/src/components/common/Alert.tsx` (신규)
-- `frontend/src/components/common/Confirm.tsx` (신규)
-- `frontend/src/stores/dialogStore.ts` (신규)
-- 모든 페이지에서 기존 alert/confirm 교체
+- `frontend/src/components/common/Alert.tsx`
+- `frontend/src/components/common/Confirm.tsx`
+- `frontend/src/stores/dialogStore.ts`
+- 모든 페이지에서 기존 alert/confirm 교체 (진행 중)
 
 ---
 
-### 9. 관리자 화면 및 마이페이지 레이아웃 구성
+### 9. 관리자 화면 및 마이페이지 레이아웃 구성 ✅
 
-**목표**
+**완료일**: 2026-02-09
 
-- PRD 참고하여 관리자 페이지와 마이페이지 완성
-- Mock 데이터를 실제 API로 전환
+**구현 내용**
 
-**작업 규모**: 🔴 대 (8시간)
-
-**세부 작업 항목**
-
-#### 9-1. 관리자 대시보드 (1시간)
-
-1. `AdminDashboard.tsx` 수정
-   - Mock 데이터 제거
-   - `admin.getDashboard()` API 연결
-   - 통계 카드 실시간 데이터 표시
-   - 새로고침 버튼 추가
-
-#### 9-2. 준회원 승인 페이지 (2시간)
-
-1. `AdminAssociates.tsx` 구현
-   - 승인 대기 목록 테이블
-     - 컬럼: 학번, 이름, 학과, 가입일, 가입 동기
-   - 상세 정보 모달 (클릭 시)
-   - 개별 승인 버튼 (각 행에)
-   - 일괄 선택 체크박스
-   - 일괄 승인 버튼 (상단)
-   - API 연결:
-     - `admin.getAssociates()` (목록 조회)
-     - `admin.approveAssociate(id)` (개별)
-     - `admin.approveAssociatesBatch([ids])` (일괄)
-
-#### 9-3. 회원 관리 페이지 (3시간)
-
-1. `AdminUsers.tsx` 구현
-   - 회원 목록 테이블 (페이지네이션)
-     - 컬럼: 학번, 이름, 역할, 상태, 가입일, 액션
-   - 검색 필터
-     - 이름/학번 검색
-     - 역할 필터 (MEMBER/OPERATOR/ADMIN)
-     - 상태 필터 (ACTIVE/SUSPENDED)
-   - 권한 변경 드롭다운 (행별)
-   - 계정 정지/해제 버튼
-   - 강제 탈퇴 버튼 (Confirm 모달)
-   - API 연결:
-     - `admin.getUsers(params)` (목록)
-     - `admin.updateUserRole(id, role)` (권한 변경)
-     - `admin.updateUserStatus(id, status)` (상태 변경)
-     - `admin.deleteUser(id)` (강제 탈퇴)
-
-#### 9-4. 문의 관리 페이지 (1.5시간)
-
-1. `AdminInquiries.tsx` 구현
-   - 문의 목록 테이블
-     - 컬럼: 문의번호, 유형, 제목, 작성자, 상태, 작성일
-   - 필터링
-     - 유형: JOIN/EVENT/REPORT/ACCOUNT/OTHER
-     - 상태: PENDING/IN_PROGRESS/RESOLVED
-   - 상태 변경 드롭다운
-   - 답변 작성 모달
-     - 문의 내용 표시
-     - 답변 입력 폼
-   - 내부 메모 작성 (관리자 전용)
-   - API 연결:
-     - `admin.getInquiries(filters)` (목록)
-     - `admin.updateStatus(id, status)` (상태 변경)
-     - `admin.reply(id, content)` (답변)
-     - `admin.addMemo(id, memo)` (메모)
-
-#### 9-5. 마이페이지 (30분)
-
-1. `MyPage.tsx` 수정
-   - Mock 데이터 제거
-   - 프로필 헤더 (이름, 학번, 역할, 이메일)
-   - 4개 탭 API 연결
-     - **내 게시글**: `users.getMyPosts()` 연결
-     - **좋아요**: `users.getMyLikes()` 연결
-     - **스크랩**: `users.getMyBookmarks()` 연결
-     - **신청 행사**: `users.getMyEvents()` 연결
-   - 프로필 수정 모달 추가
-     - 이메일, 전화번호, 학과 수정
-     - `users.update()` API 연결
-   - 비밀번호 변경 기능
-     - 현재 비밀번호 확인
-     - 새 비밀번호 입력
-     - `users.updatePassword()` API 연결
+1. 관리자 대시보드 - API 연결 및 통계 카드 실시간 데이터 표시
+2. 준회원 승인 페이지 - 목록 조회, 개별/일괄 승인 기능
+3. 회원 관리 페이지 - 목록 조회, 검색 필터, 권한 변경, 계정 정지/해제
+4. 문의 관리 페이지 - 목록 조회, 필터링, 상태 변경, 답변 작성
+5. 마이페이지 - 프로필 표시, 4개 탭 API 연결, 프로필 수정, 비밀번호 변경
 
 **관련 파일**
 
@@ -857,25 +689,25 @@ const filteredEvents = useMemo(() => {
 
 ### Phase 1: Critical (즉시 착수)
 
-- [ ] 백엔드 에러 메시지 파싱
+- [~] 백엔드 에러 메시지 파싱 (부분 완료)
 - [ ] 비밀번호 확인 검증
 
 ### Phase 2: Core Features (1-2주)
 
-- [ ] 이메일 미인증 처리
+- [x] 이메일 미인증 처리
 - [ ] 인증 코드 타이머
-- [ ] 헤더 조건부 렌더링
+- [x] 헤더 조건부 렌더링
 - [x] 검색창 조건부 표시
-- [ ] 히어로 섹션
+- [x] 히어로 섹션
 
 ### Phase 3: Admin & User Pages (2-3주)
 
-- [ ] 관리자 대시보드
-- [ ] 준회원 승인
-- [ ] 회원 관리
-- [ ] 문의 관리
-- [ ] 마이페이지
-- [ ] 커스텀 Alert/Confirm
+- [x] 관리자 대시보드
+- [x] 준회원 승인
+- [x] 회원 관리
+- [x] 문의 관리
+- [x] 마이페이지
+- [~] 커스텀 Alert/Confirm (부분 완료 - 디자인 완료, 적용 진행 중)
 
 ### Phase 4: Polish & Testing (4주)
 
@@ -885,4 +717,4 @@ const filteredEvents = useMemo(() => {
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Task 6 완료)
+**마지막 업데이트**: 2026-02-09 (Task 3, 5, 7, 9 완료 / Task 1, 8 부분 완료)
