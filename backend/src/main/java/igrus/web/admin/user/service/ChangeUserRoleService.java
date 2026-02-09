@@ -2,6 +2,7 @@ package igrus.web.admin.user.service;
 
 import igrus.web.admin.user.exception.SelfRoleChangeException;
 import igrus.web.security.auth.approval.service.manage.ValidateNotLastAdminService;
+import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -25,6 +26,7 @@ public class ChangeUserRoleService {
     private final UserRepository userRepository;
     private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final ValidateNotLastAdminService validateNotLastAdminService;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public void changeUserRole(Long targetUserId, UserRole newRole, Long currentUserId) {
@@ -49,6 +51,9 @@ public class ChangeUserRoleService {
                 "관리자에 의한 역할 변경"
         );
         userRoleHistoryRepository.save(history);
+
+        refreshTokenRepository.revokeAllByUserId(targetUserId);
+        log.info("권한 변경으로 인한 리프레시 토큰 만료: targetUserId={}", targetUserId);
 
         eventPublisher.publishEvent(new AccountStatusChangeEvent(
                 targetUserId, currentUserId, AccountChangeType.ROLE_CHANGE,

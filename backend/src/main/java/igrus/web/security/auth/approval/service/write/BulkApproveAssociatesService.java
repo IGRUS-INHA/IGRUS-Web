@@ -4,6 +4,7 @@ import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.exception.BulkApprovalEmptyException;
 import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
+import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -33,6 +34,7 @@ public class BulkApproveAssociatesService {
     private final AssociateDecisionRepository associateDecisionRepository;
     private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -85,6 +87,8 @@ public class BulkApproveAssociatesService {
                         "관리자 일괄 승인에 의한 정회원 전환"
                 );
                 userRoleHistoryRepository.save(history);
+
+                refreshTokenRepository.revokeAllByUserId(userId);
 
                 eventPublisher.publishEvent(new AccountStatusChangeEvent(
                         userId, approverId, AccountChangeType.APPROVAL,
