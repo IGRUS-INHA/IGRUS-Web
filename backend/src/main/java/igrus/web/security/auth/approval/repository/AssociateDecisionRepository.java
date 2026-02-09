@@ -11,8 +11,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface AssociateDecisionRepository extends JpaRepository<AssociateDecision, Long> {
@@ -37,4 +39,7 @@ public interface AssociateDecisionRepository extends JpaRepository<AssociateDeci
         WHERE ad.active = true AND ad.type = :type AND ad.user.role = :role
         """)
     Page<AssociateDecision> findActiveByType(@Param("role") UserRole role, @Param("type") AssociateDecisionType type, Pageable pageable);
+
+    @Query("SELECT ad.user.id FROM AssociateDecision ad WHERE ad.active = true AND ad.type = 'DEMOTED' AND ad.user.id IN :userIds")
+    Set<Long> findDemotedUserIds(@Param("userIds") Collection<Long> userIds);
 }

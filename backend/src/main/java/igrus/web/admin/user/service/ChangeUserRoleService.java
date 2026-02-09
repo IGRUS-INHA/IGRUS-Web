@@ -48,7 +48,7 @@ public class ChangeUserRoleService {
         if (newRole == UserRole.ASSOCIATE && previousRole != UserRole.ASSOCIATE) {
             associateDecisionRepository.findByUserIdAndActiveTrue(targetUserId)
                     .ifPresent(AssociateDecision::deactivate);
-            AssociateDecision demotionRecord = AssociateDecision.demote(targetUser, currentUserId);
+            AssociateDecision demotionRecord = AssociateDecision.demote(targetUser, currentUserId, "관리자에 의한 역할 강등");
             associateDecisionRepository.save(demotionRecord);
         }
 

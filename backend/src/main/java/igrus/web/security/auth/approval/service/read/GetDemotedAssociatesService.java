@@ -19,13 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class GetDemotedAssociatesService {
 
     private final AssociateDecisionRepository associateDecisionRepository;
     private final AdminRoleValidator adminRoleValidator;
 
-    @Transactional(readOnly = true)
     public Page<DemotedAssociateInfoResponse> getDemotedAssociates(Pageable pageable, Long requesterId) {
         log.info("강등된 준회원 목록 조회 요청: requesterId={}", requesterId);
 

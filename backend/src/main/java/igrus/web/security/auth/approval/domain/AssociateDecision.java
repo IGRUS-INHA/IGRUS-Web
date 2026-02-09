@@ -46,6 +46,10 @@ public class AssociateDecision extends BaseEntity {
     @Column(name = "associate_decisions_active", nullable = false)
     private boolean active;
 
+    @Version
+    @Column(name = "associate_decisions_version")
+    private Long version;
+
     public static AssociateDecision approve(User user, Long decidedBy) {
         AssociateDecision decision = new AssociateDecision();
         decision.user = user;
@@ -67,10 +71,11 @@ public class AssociateDecision extends BaseEntity {
         return decision;
     }
 
-    public static AssociateDecision demote(User user, Long decidedBy) {
+    public static AssociateDecision demote(User user, Long decidedBy, String reason) {
         AssociateDecision decision = new AssociateDecision();
         decision.user = user;
         decision.type = AssociateDecisionType.DEMOTED;
+        decision.reason = reason;
         decision.decidedBy = decidedBy;
         decision.decidedAt = Instant.now();
         decision.active = true;
