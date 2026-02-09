@@ -102,8 +102,8 @@ class BulkApproveAssociatesServiceTest extends ServiceIntegrationTestBase {
             bulkApproveAssociatesService.approveBulk(userIds, adminUser.getId());
 
             // then
-            AssociateDecision decision1 = associateDecisionRepository.findByUserId(associate1.getId()).orElseThrow();
-            AssociateDecision decision2 = associateDecisionRepository.findByUserId(associate2.getId()).orElseThrow();
+            AssociateDecision decision1 = associateDecisionRepository.findByUserIdAndActiveTrue(associate1.getId()).orElseThrow();
+            AssociateDecision decision2 = associateDecisionRepository.findByUserIdAndActiveTrue(associate2.getId()).orElseThrow();
 
             assertThat(decision1.getType()).isEqualTo(AssociateDecisionType.APPROVED);
             assertThat(decision1.getDecidedBy()).isEqualTo(adminUser.getId());
