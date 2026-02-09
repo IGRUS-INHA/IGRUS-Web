@@ -36,12 +36,12 @@ public class ResendVerificationService {
      *
      * @param request 재발송 요청 정보
      * @return 재발송 완료 응답
-     * @throws VerificationResendRateLimitedException 5분 내 재발송 요청 시
+     * @throws VerificationResendRateLimitedException 1분 내 재발송 요청 시
      */
     public VerificationResendResponse resendVerification(ResendVerificationRequest request) {
         log.info("인증 코드 재발송 요청: email={}", request.email());
 
-        // Rate Limiting 체크: 5분 내 재발송 기록 확인
+        // Rate Limiting 체크: 1분 내 재발송 기록 확인
         Instant cutoffTime = Instant.now().minusSeconds(resendRateLimitSeconds);
         if (emailVerificationRepository.existsByEmailAndVerifiedFalseAndCreatedAtAfter(
                 request.email(), cutoffTime)) {
