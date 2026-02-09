@@ -116,7 +116,7 @@ export default function MyPage() {
     posts: postsQuery.isLoading ? '-' : postsQuery.totalElements,
     likes: likesQuery.isLoading ? '-' : likesQuery.posts.filter((p) => !p.isDeleted).length,
     scraps: bookmarksQuery.isLoading ? '-' : bookmarksQuery.posts.filter((p) => !p.isDeleted).length,
-    events: registrationsQuery.isLoading ? '-' : registrationsQuery.registrations.length,
+    events: registrationsQuery.isLoading ? '-' : registrationsQuery.registrations.filter((r) => r.status !== 'CANCELED').length,
   };
 
   // 프로필 데이터 (API 응답 우선, fallback으로 auth store)
@@ -295,12 +295,12 @@ export default function MyPage() {
             <TabContent
               isLoading={registrationsQuery.isLoading}
               isError={registrationsQuery.isError}
-              isEmpty={registrationsQuery.registrations.length === 0}
+              isEmpty={registrationsQuery.registrations.filter((r) => r.status !== 'CANCELED').length === 0}
               emptyMessage="신청한 행사가 없습니다."
               onRetry={() => void registrationsQuery.refetch()}
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-s4">
-                {registrationsQuery.registrations.map((reg) => (
+                {registrationsQuery.registrations.filter((reg) => reg.status !== 'CANCELED').map((reg) => (
                   <div
                     key={reg.registrationId}
                     onClick={() => reg.eventId && navigate(`/events/${reg.eventId}`)}

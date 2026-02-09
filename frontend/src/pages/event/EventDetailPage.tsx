@@ -16,6 +16,7 @@ import {
   isEventOperatorRequired,
   hasErrorCode,
 } from '@/utils/error';
+import { myPageKeys } from '@/hooks/queries/useMyPage';
 
 export default function EventDetailPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -57,6 +58,8 @@ export default function EventDetailPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/events/${eventId}`],
           });
+          // 마이페이지 행사 신청 목록 새로고침
+          void queryClient.invalidateQueries({ queryKey: myPageKeys.registrations() });
         },
         onError: (error: unknown) => {
           if (isEventAlreadyRegistered(error)) {
@@ -90,6 +93,8 @@ export default function EventDetailPage() {
             void queryClient.invalidateQueries({
               queryKey: [`/api/v1/events/${eventId}`],
             });
+            // 마이페이지 행사 신청 목록 새로고침
+            void queryClient.invalidateQueries({ queryKey: myPageKeys.registrations() });
           },
           onError: (error: unknown) => {
             console.log('[cancelEvent] onError:', error);

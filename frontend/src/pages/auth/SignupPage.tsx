@@ -1,136 +1,675 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ShieldCheck } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  User,
+  Lock,
+  Mail,
+  Phone,
+
+  Building2,
+  FileText,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Loader2,
+} from 'lucide-react';
 import { useSignup } from '@/api/model/password-authentication/password-authentication';
-import type { PasswordSignupResponse } from '@/api/model/models';
-import AuthForm from '@/components/feature/auth/AuthForm';
+import { majorOptions } from '@/constants/majorOptions';
+import { domainOptions } from '@/constants/domainOptions';
+import { WISH_TITLE, wishOptions } from '@/constants/wishOptions';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/utils';
+import { getErrorMessage, hasErrorCode } from '@/utils/error';
+
+// --- Zod Schema ---
+
+const signupSchema = z
+  .object({
+    studentId: z
+      .string()
+      .min(1, '학번을 입력해주세요.')
+      .regex(/^\d{8}$/, '학번은 8자리 숫자여야 합니다.'),
+    name: z
+      .string()
+      .min(1, '이름을 입력해주세요.')
+      .max(50, '이름은 50자 이내여야 합니다.'),
+    gender: z.enum(['MALE', 'FEMALE'], {
+      required_error: '성별을 선택해주세요.',
+    }),
+    grade: z
+      .number({ required_error: '학년을 선택해주세요.' })
+      .min(1, '학년을 선택해주세요.')
+      .max(4, '학년은 1~4 사이여야 합니다.'),
+    emailLocal: z.string().min(1, '이메일 아이디를 입력해주세요.'),
+    emailDomain: z.string().min(1, '도메인을 선택해주세요.'),
+    customDomain: z.string().optional(),
+    phoneNumber: z
+      .string()
+      .min(1, '전화번호를 입력해주세요.')
+      .regex(/^\d{10,11}$/, '올바른 전화번호를 입력해주세요.'),
+    department: z.string().min(1, '학과를 선택해주세요.'),
+    password: z
+      .string()
+      .min(8, '비밀번호는 8자 이상이어야 합니다.')
+      .max(72, '비밀번호는 72자 이하여야 합니다.')
+      .regex(
+        /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/,
+        '비밀번호는 영문과 숫자를 포함해야 합니다.',
+      ),
+    passwordConfirm: z.string().min(1, '비밀번호 확인을 입력해주세요.'),
+    wishes: z.array(z.string()).optional(),
+    motivation: z.string().min(1, '가입 동기를 작성해주세요.'),
+    privacyConsent: z.literal(true, {
+      errorMap: () => ({ message: '개인정보 처리방침에 동의해주세요.' }),
+    }),
+  })
+  .refine((data) => data.password === data.passwordConfirm, {
+    message: '비밀번호가 일치하지 않습니다.',
+    path: ['passwordConfirm'],
+  })
+  .refine(
+    (data) => {
+      if (data.emailDomain === 'custom') {
+        return !!data.customDomain && data.customDomain.length > 0;
+      }
+      return true;
+    },
+    {
+      message: '도메인을 입력해주세요.',
+      path: ['customDomain'],
+    },
+  );
+
+type SignupFormData = z.infer<typeof signupSchema>;
+
+// --- Step Config ---
+
+const STEPS = [
+  { title: '기본 정보', icon: User },
+  { title: '연락처', icon: Mail },
+  { title: '계정 보안', icon: Lock },
+  { title: '가입 동기', icon: FileText },
+] as const;
+
+const STEP_FIELDS: (keyof SignupFormData)[][] = [
+  ['studentId', 'name', 'gender', 'grade'],
+  ['emailLocal', 'emailDomain', 'customDomain', 'phoneNumber', 'department'],
+  ['password', 'passwordConfirm'],
+  ['wishes', 'motivation', 'privacyConsent'],
+];
+
+// --- Component ---
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{
-    studentId?: string;
-    name?: string;
-    email?: string;
-    phoneNumber?: string;
-    password?: string;
-    passwordConfirm?: string;
-    department?: string;
-    grade?: string;
-    gender?: string;
-    motivation?: string;
-    privacyConsent?: string;
-  }>({});
+  const [step, setStep] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [serverError, setServerError] = useState<string>();
   const signupMutation = useSignup();
 
-  const handleSignup = async (data: {
-    studentId: string;
-    name: string;
-    email: string;
-    password: string;
-    passwordConfirm: string;
-    phoneNumber?: string;
-    department?: string;
-    motivation?: string;
-    wishes?: string[];
-    gender?: 'MALE' | 'FEMALE';
-    grade?: number;
-    privacyConsent?: boolean;
-  }) => {
-    // 에러 초기화
-    setErrors({});
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    trigger,
+    watch,
+    setValue,
+    getValues,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      studentId: '',
+      name: '',
+      gender: undefined,
+      grade: undefined,
+      emailLocal: '',
+      emailDomain: 'inha.edu',
+      customDomain: '',
+      phoneNumber: '',
+      department: '',
+      password: '',
+      passwordConfirm: '',
+      wishes: [],
+      motivation: '',
+      privacyConsent: undefined as unknown as true,
+    },
+    mode: 'onTouched',
+  });
 
-    // 클라이언트 측 유효성 검사
+  const selectedWishes = watch('wishes') ?? [];
+  const emailDomain = watch('emailDomain');
+
+  const handleWishToggle = (wish: string) => {
+    const current = getValues('wishes') ?? [];
+    const updated = current.includes(wish)
+      ? current.filter((w) => w !== wish)
+      : [...current, wish];
+    setValue('wishes', updated);
+  };
+
+  const handleNext = async () => {
+    const fields = STEP_FIELDS[step];
+    const valid = await trigger(fields);
+    if (valid) {
+      setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    }
+  };
+
+  const handlePrev = () => {
+    setStep((s) => Math.max(s - 1, 0));
+  };
+
+  const onSubmit = async (data: SignupFormData) => {
+    setServerError(undefined);
     try {
-      if (data.password !== data.passwordConfirm) {
-        setErrors({ passwordConfirm: '비밀번호가 일치하지 않습니다.' });
-        setLoading(false);
-        return;
-      }
-
-      // 필수 필드 검증
-      const validationErrors: typeof errors = {};
-      if (!data.phoneNumber) validationErrors.phoneNumber = '전화번호를 입력해주세요.';
-      if (!data.department) validationErrors.department = '학과를 입력해주세요.';
-      if (!data.motivation) validationErrors.motivation = '가입 동기를 입력해주세요.';
-      if (!data.gender) validationErrors.gender = '성별을 선택해주세요.';
-      if (!data.grade) validationErrors.grade = '학년을 입력해주세요.';
-      if (!data.privacyConsent) validationErrors.privacyConsent = '개인정보 처리방침에 동의해주세요.';
-
-      if (Object.keys(validationErrors).length > 0) {
-        setErrors(validationErrors);
-        setLoading(false);
-        return;
-      }
+      const domain =
+        data.emailDomain === 'custom' ? data.customDomain : data.emailDomain;
+      const fullEmail = `${data.emailLocal}@${domain}`;
 
       const wishText = data.wishes?.length
         ? `[목적: ${data.wishes.join(', ')}]\n`
         : '';
 
-      const response = await signupMutation.mutateAsync({
+      await signupMutation.mutateAsync({
         data: {
           studentId: data.studentId,
           password: data.password,
           name: data.name,
-          email: data.email,
-          phoneNumber: formatPhoneNumber(data.phoneNumber!),
-          department: data.department!,
-          motivation: wishText + data.motivation!,
-          gender: data.gender!,
-          grade: data.grade!,
-          privacyConsent: data.privacyConsent!,
+          email: fullEmail,
+          phoneNumber: formatPhoneNumber(data.phoneNumber),
+          department: data.department,
+          motivation: wishText + data.motivation,
+          gender: data.gender,
+          grade: data.grade,
+          privacyConsent: data.privacyConsent,
         },
       });
 
-      // 회원가입 성공 (response.data가 null이어도 정상)
-      // HTTP status가 201 Created 또는 200 OK면 성공
-      // 회원가입 성공 메시지 표시
-      alert('회원가입이 완료되었습니다!\n\n입력하신 이메일로 인증 메일이 발송되었습니다.\n이메일 인증 페이지로 이동합니다.');
-
-      // 이메일 인증 페이지로 리다이렉트 (이메일 정보를 state로 전달)
-      navigate('/verify-email', { state: { email: data.email } });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
-
-      // 백엔드 에러 메시지 파싱
-      const newErrors: typeof errors = {};
-
-      if (errorMessage.includes('이미 가입된 학번') || errorMessage.includes('학번')) {
-        newErrors.studentId = '이미 가입된 학번입니다.';
-      }
-      if (errorMessage.includes('이미 존재하는 이메일') || errorMessage.includes('이메일')) {
-        newErrors.email = '이미 존재하는 이메일입니다.';
-      }
-      if (errorMessage.includes('이미 등록된 전화번호') || errorMessage.includes('전화번호')) {
-        newErrors.phoneNumber = '이미 등록된 전화번호입니다.';
-      }
-      if (errorMessage.includes('비밀번호')) {
-        newErrors.password = '비밀번호는 영문, 숫자를 포함하여 8자 이상이어야 합니다.';
-      }
-
-      // 필드별 에러가 있으면 설정, 없으면 일반 에러 메시지
-      if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
+      alert(
+        '회원가입이 완료되었습니다!\n\n입력하신 이메일로 인증 메일이 발송되었습니다.\n이메일 인증 페이지로 이동합니다.',
+      );
+      navigate('/verify-email', { state: { email: fullEmail } });
+    } catch (error: unknown) {
+      if (hasErrorCode(error, 'DUPLICATE_STUDENT_ID')) {
+        setStep(0);
+        setServerError('이미 가입된 학번입니다.');
+      } else if (hasErrorCode(error, 'DUPLICATE_EMAIL')) {
+        setStep(1);
+        setServerError('이미 존재하는 이메일입니다.');
+      } else if (hasErrorCode(error, 'DUPLICATE_PHONE_NUMBER')) {
+        setStep(1);
+        setServerError('이미 등록된 전화번호입니다.');
       } else {
-        alert('회원가입에 실패했습니다. 다시 시도해주세요.');
+        setServerError(getErrorMessage(error));
       }
-    } finally {
-      setLoading(false);
     }
   };
 
+  const isLastStep = step === STEPS.length - 1;
+
   return (
-    <div className="w-full max-w-[1616px] mx-auto animate-in slide-in-from-bottom-8 duration-500">
-      <AuthForm
-        mode="signup"
-        title="회원가입"
-        subtitle="IGRUS 동아리에 가입하여 다양한 활동에 참여하세요."
-        onSubmit={handleSignup}
-        loading={loading}
-        errors={errors}
-      />
+    <div className="flex items-center justify-center min-h-full py-s6 px-s4">
+      <div className="w-full max-w-lg animate-in slide-in-from-bottom-6 duration-500">
+        {/* Header */}
+        <div className="text-center mb-s7">
+          <h1 className="text-h2 text-foreground">IGRUS 회원가입</h1>
+          <p className="text-b2 text-muted-foreground mt-s1">
+            동아리에 가입하여 다양한 활동에 참여하세요
+          </p>
+        </div>
+
+        {/* Step Indicator */}
+        <div className="flex items-center justify-between mb-s7 px-s2">
+          {STEPS.map((s, i) => {
+            const Icon = s.icon;
+            const isActive = i === step;
+            const isCompleted = i < step;
+
+            return (
+              <div key={s.title} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center gap-s1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isCompleted) setStep(i);
+                    }}
+                    className={cn(
+                      'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2',
+                      isCompleted &&
+                        'bg-primary border-primary text-primary-foreground cursor-pointer hover:bg-primary/90',
+                      isActive && 'border-primary bg-primary/10 text-primary',
+                      !isActive &&
+                        !isCompleted &&
+                        'border-border bg-muted text-muted-foreground',
+                    )}
+                  >
+                    {isCompleted ? <Check size={18} /> : <Icon size={18} />}
+                  </button>
+                  <span
+                    className={cn(
+                      'text-c1 font-medium whitespace-nowrap',
+                      (isActive || isCompleted) && 'text-primary',
+                      !isActive && !isCompleted && 'text-muted-foreground',
+                    )}
+                  >
+                    {s.title}
+                  </span>
+                </div>
+
+                {i < STEPS.length - 1 && (
+                  <div
+                    className={cn(
+                      'flex-1 h-0.5 mx-s2 mt-[-20px] rounded-full transition-colors duration-300',
+                      i < step ? 'bg-primary' : 'bg-border',
+                    )}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Form Card */}
+        <div className="rounded-r4 border bg-card p-s6 shadow-sm">
+          {serverError && (
+            <div className="mb-s5 rounded-r2 bg-destructive/10 border border-destructive/20 p-s4 text-sm text-destructive">
+              {serverError}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)}>
+            {/* Step 1: 기본 정보 */}
+            <div className={cn('space-y-s4', step !== 0 && 'hidden')}>
+              <FormField label="학번" error={errors.studentId?.message}>
+                <div className="relative">
+                  <User
+                    size={18}
+                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <Input
+                    {...register('studentId')}
+                    placeholder="12345678"
+                    maxLength={8}
+                    className="pl-10"
+                  />
+                </div>
+              </FormField>
+
+              <FormField label="이름" error={errors.name?.message}>
+                <div className="relative">
+                  <User
+                    size={18}
+                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <Input
+                    {...register('name')}
+                    placeholder="홍길동"
+                    className="pl-10"
+                  />
+                </div>
+              </FormField>
+
+              <FormField label="성별" error={errors.gender?.message}>
+                <div className="grid grid-cols-2 gap-s3">
+                  {(['MALE', 'FEMALE'] as const).map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() =>
+                        setValue('gender', g, { shouldValidate: true })
+                      }
+                      className={cn(
+                        'h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer',
+                        watch('gender') === g
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted border-border text-foreground hover:border-primary/50',
+                      )}
+                    >
+                      {g === 'MALE' ? '남성' : '여성'}
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+
+              <FormField label="학년" error={errors.grade?.message}>
+                <div className="grid grid-cols-4 gap-s2">
+                  {[1, 2, 3, 4].map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() =>
+                        setValue('grade', g, { shouldValidate: true })
+                      }
+                      className={cn(
+                        'h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer',
+                        watch('grade') === g
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted border-border text-foreground hover:border-primary/50',
+                      )}
+                    >
+                      {g}학년
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+            </div>
+
+            {/* Step 2: 연락처 & 학과 */}
+            <div className={cn('space-y-s4', step !== 1 && 'hidden')}>
+              <FormField
+                label="이메일"
+                error={errors.emailLocal?.message || errors.customDomain?.message}
+              >
+                <div className="flex items-center gap-s2">
+                  <div className="relative flex-1">
+                    <Mail
+                      size={18}
+                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      {...register('emailLocal')}
+                      placeholder="아이디"
+                      className="pl-10"
+                    />
+                  </div>
+                  <span className="text-muted-foreground font-bold shrink-0">@</span>
+                  <div className="relative flex-1">
+                    <select
+                      {...register('emailDomain')}
+                      className={cn(
+                        'w-full h-9 rounded-r2 border border-input bg-transparent px-s3 text-sm',
+                        'appearance-none cursor-pointer transition-all outline-none',
+                        'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
+                      )}
+                    >
+                      {domainOptions.map((d) => (
+                        <option key={d.value} value={d.value}>
+                          {d.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={16}
+                      className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                    />
+                  </div>
+                </div>
+                {emailDomain === 'custom' && (
+                  <Input
+                    {...register('customDomain')}
+                    placeholder="도메인 입력 (예: example.com)"
+                    className="mt-s2"
+                  />
+                )}
+              </FormField>
+
+              <FormField label="전화번호" error={errors.phoneNumber?.message}>
+                <div className="relative">
+                  <Phone
+                    size={18}
+                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <Input
+                    {...register('phoneNumber', {
+                      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                        setValue('phoneNumber', digits);
+                      },
+                    })}
+                    placeholder="01012345678"
+                    maxLength={11}
+                    className="pl-10"
+                  />
+                </div>
+              </FormField>
+
+              <FormField label="학과" error={errors.department?.message}>
+                <div className="relative">
+                  <Building2
+                    size={18}
+                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <select
+                    {...register('department')}
+                    className={cn(
+                      'w-full h-9 rounded-r2 border border-input bg-transparent pl-10 pr-10 text-sm',
+                      'appearance-none cursor-pointer transition-all outline-none',
+                      'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
+                      !watch('department') && 'text-muted-foreground',
+                    )}
+                  >
+                    <option value="">학과를 선택하세요</option>
+                    {majorOptions.map((college) => (
+                      <optgroup key={college.title} label={college.title}>
+                        {college.items.map((dept) => (
+                          <option key={dept.key} value={dept.value}>
+                            {dept.value}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                  />
+                </div>
+              </FormField>
+            </div>
+
+            {/* Step 3: 계정 보안 */}
+            <div className={cn('space-y-s4', step !== 2 && 'hidden')}>
+              <div className="rounded-r2 bg-muted/50 border border-border p-s4">
+                <p className="text-c1 text-muted-foreground">
+                  비밀번호는{' '}
+                  <strong className="text-foreground">
+                    영문, 숫자를 포함하여 8자 이상
+                  </strong>
+                  으로 설정해주세요.
+                </p>
+              </div>
+
+              <FormField label="비밀번호" error={errors.password?.message}>
+                <div className="relative">
+                  <Lock
+                    size={18}
+                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <Input
+                    {...register('password')}
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="비밀번호 입력"
+                    className="pl-10 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </FormField>
+
+              <FormField
+                label="비밀번호 확인"
+                error={errors.passwordConfirm?.message}
+              >
+                <div className="relative">
+                  <Lock
+                    size={18}
+                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <Input
+                    {...register('passwordConfirm')}
+                    type={showPasswordConfirm ? 'text' : 'password'}
+                    placeholder="비밀번호 재입력"
+                    className="pl-10 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                    className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    {showPasswordConfirm ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
+              </FormField>
+            </div>
+
+            {/* Step 4: 가입 동기 */}
+            <div className={cn('space-y-s4', step !== 3 && 'hidden')}>
+              <FormField label={WISH_TITLE}>
+                <div className="flex flex-wrap gap-s2">
+                  {wishOptions.map((wish) => (
+                    <button
+                      key={wish}
+                      type="button"
+                      onClick={() => handleWishToggle(wish)}
+                      className={cn(
+                        'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
+                        selectedWishes.includes(wish)
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'border-border bg-muted text-foreground hover:border-primary/50',
+                      )}
+                    >
+                      {wish}
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+
+              <FormField label="가입 동기" error={errors.motivation?.message}>
+                <div className="relative">
+                  <FileText
+                    size={18}
+                    className="absolute left-s3 top-s3 text-muted-foreground"
+                  />
+                  <textarea
+                    {...register('motivation')}
+                    placeholder="동아리 가입 동기를 작성해주세요"
+                    rows={4}
+                    className={cn(
+                      'w-full rounded-r2 border border-input bg-transparent pl-10 pr-s3 py-s2 text-sm',
+                      'placeholder:text-muted-foreground resize-none transition-all outline-none',
+                      'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
+                      errors.motivation && 'border-destructive',
+                    )}
+                  />
+                </div>
+              </FormField>
+
+              <FormField error={errors.privacyConsent?.message}>
+                <label className="flex items-start gap-s3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    {...register('privacyConsent')}
+                    className="mt-0.5 cursor-pointer accent-primary"
+                  />
+                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                    개인정보 처리방침에 동의합니다{' '}
+                    <span className="text-destructive">(필수)</span>
+                  </span>
+                </label>
+              </FormField>
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex items-center gap-s3 mt-s6">
+              {step > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrev}
+                  className="flex-1 cursor-pointer"
+                >
+                  <ChevronLeft size={18} />
+                  이전
+                </Button>
+              )}
+
+              {!isLastStep ? (
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  className={cn('flex-1 cursor-pointer', step === 0 && 'w-full')}
+                >
+                  다음
+                  <ChevronRight size={18} />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      가입 중...
+                    </>
+                  ) : (
+                    <>
+                      회원가입
+                      <Check size={18} />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </form>
+
+          {/* Login Link */}
+          <p className="text-center text-sm text-muted-foreground mt-s5">
+            이미 계정이 있으신가요?{' '}
+            <Link
+              to="/login"
+              className="text-primary font-medium hover:underline"
+            >
+              로그인
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Sub Components ---
+
+function FormField({
+  label,
+  error,
+  children,
+}: {
+  label?: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      {label && (
+        <label className="block text-sm font-medium text-foreground mb-s2">
+          {label}
+        </label>
+      )}
+      {children}
+      {error && <p className="mt-s1 text-sm text-destructive">{error}</p>}
     </div>
   );
 }
