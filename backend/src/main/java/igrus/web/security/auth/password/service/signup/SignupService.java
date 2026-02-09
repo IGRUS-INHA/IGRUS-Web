@@ -110,7 +110,7 @@ public class SignupService {
             throw new DuplicateEmailException();
         }
 
-        if (userRepository.existsByPhoneNumber(User.normalizePhoneNumber(request.phoneNumber()))) {
+        if (userRepository.existsByPhoneNumber(request.phoneNumber())) {
             throw new DuplicatePhoneNumberException();
         }
     }

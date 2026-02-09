@@ -16,7 +16,7 @@ public record ChangePhoneNumberRequest(
 
         @Schema(description = "새 전화번호", example = "010-1234-5678")
         @NotBlank(message = "전화번호는 필수입니다")
-        @Pattern(regexp = "^01[0-9]-?\\d{3,4}-?\\d{4}$", message = "유효한 전화번호 형식이 아닙니다")
+        @Pattern(regexp = "^\\d{3}-\\d{4}-\\d{4}$", message = "전화번호는 000-0000-0000 형식이어야 합니다")
         String newPhoneNumber
 ) {
 }

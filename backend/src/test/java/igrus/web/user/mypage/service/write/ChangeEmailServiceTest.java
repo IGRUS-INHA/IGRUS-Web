@@ -96,7 +96,7 @@ class ChangeEmailServiceTest {
             given(passwordCredentialRepository.findByUserId(userId)).willReturn(Optional.of(credential));
             given(passwordEncoder.matches("currentPw1!", "hashedPw")).willReturn(true);
             given(userRepository.existsByEmail(newEmail)).willReturn(false);
-            given(emailVerificationRepository.findByEmailAndVerifiedFalse(newEmail)).willReturn(Optional.empty());
+            given(emailVerificationRepository.findByEmailAndUserIdAndVerifiedFalse(newEmail, userId)).willReturn(Optional.empty());
             given(verificationCodeGenerator.generateVerificationCode()).willReturn("123456");
 
             // when
@@ -124,7 +124,7 @@ class ChangeEmailServiceTest {
             given(passwordCredentialRepository.findByUserId(userId)).willReturn(Optional.of(credential));
             given(passwordEncoder.matches("currentPw1!", "hashedPw")).willReturn(true);
             given(userRepository.existsByEmail(newEmail)).willReturn(false);
-            given(emailVerificationRepository.findByEmailAndVerifiedFalse(newEmail)).willReturn(Optional.of(oldVerification));
+            given(emailVerificationRepository.findByEmailAndUserIdAndVerifiedFalse(newEmail, userId)).willReturn(Optional.of(oldVerification));
             given(verificationCodeGenerator.generateVerificationCode()).willReturn("654321");
 
             // when

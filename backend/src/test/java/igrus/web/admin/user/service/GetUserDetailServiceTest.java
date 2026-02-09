@@ -51,7 +51,7 @@ class GetUserDetailServiceTest {
             assertThat(response.studentId()).isEqualTo("20231234");
             assertThat(response.name()).isEqualTo("홍길동");
             assertThat(response.email()).isEqualTo("hong@inha.edu");
-            assertThat(response.phoneNumber()).isEqualTo("01012345678");
+            assertThat(response.phoneNumber()).isEqualTo("010-1234-5678");
             assertThat(response.department()).isEqualTo("컴퓨터공학과");
             assertThat(response.motivation()).isEqualTo("프로그래밍을 배우고 싶어서");
             assertThat(response.gender()).isEqualTo(Gender.MALE);

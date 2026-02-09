@@ -26,7 +26,7 @@ public final class TestConstants {
     public static final String ANOTHER_MEMBER_NAME = "다른멤버";
 
     public static final String DEFAULT_EMAIL_DOMAIN = "@inha.edu";
-    public static final String DEFAULT_PHONE = "01012345678";
+    public static final String DEFAULT_PHONE = "010-1234-5678";
     public static final String DEFAULT_DEPARTMENT = "컴퓨터공학과";
     public static final String DEFAULT_MOTIVATION = "테스트 동기";
     public static final Gender DEFAULT_GENDER = Gender.MALE;

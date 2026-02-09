@@ -5,6 +5,7 @@ import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.DuplicatePhoneNumberException;
+import igrus.web.user.exception.SamePhoneNumberException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.mypage.dto.request.ChangePhoneNumberRequest;
 import igrus.web.user.repository.UserRepository;
@@ -72,7 +73,6 @@ class ChangePhoneNumberServiceTest {
             // given
             Long userId = memberUser.getId();
             String newPhoneNumber = "010-9999-8888";
-            String normalizedPhoneNumber = User.normalizePhoneNumber(newPhoneNumber);
             ChangePhoneNumberRequest request = new ChangePhoneNumberRequest("currentPw1!", newPhoneNumber);
 
             PasswordCredential credential = mock(PasswordCredential.class);
@@ -81,13 +81,13 @@ class ChangePhoneNumberServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(passwordCredentialRepository.findByUserId(userId)).willReturn(Optional.of(credential));
             given(passwordEncoder.matches("currentPw1!", "hashedPw")).willReturn(true);
-            given(userRepository.existsByPhoneNumber(normalizedPhoneNumber)).willReturn(false);
+            given(userRepository.existsByPhoneNumber(newPhoneNumber)).willReturn(false);
 
             // when
             changePhoneNumberService.changePhoneNumber(userId, request);
 
             // then
-            assertThat(memberUser.getPhoneNumber()).isEqualTo(normalizedPhoneNumber);
+            assertThat(memberUser.getPhoneNumber()).isEqualTo(newPhoneNumber);
         }
     }
 
@@ -143,9 +143,9 @@ class ChangePhoneNumberServiceTest {
                     .isInstanceOf(InvalidCredentialsException.class);
         }
 
-        @DisplayName("현재 전화번호와 동일하면 DuplicatePhoneNumberException 발생")
+        @DisplayName("현재 전화번호와 동일하면 SamePhoneNumberException 발생")
         @Test
-        void changePhoneNumber_WithSamePhoneNumber_ThrowsDuplicatePhoneNumberException() {
+        void changePhoneNumber_WithSamePhoneNumber_ThrowsSamePhoneNumberException() {
             // given
             Long userId = memberUser.getId();
             String currentPhone = memberUser.getPhoneNumber();
@@ -160,7 +160,7 @@ class ChangePhoneNumberServiceTest {
 
             // when & then
             assertThatThrownBy(() -> changePhoneNumberService.changePhoneNumber(userId, request))
-                    .isInstanceOf(DuplicatePhoneNumberException.class);
+                    .isInstanceOf(SamePhoneNumberException.class);
         }
 
         @DisplayName("새 전화번호가 이미 다른 사용자에게 등록되어 있으면 DuplicatePhoneNumberException 발생")
@@ -169,7 +169,6 @@ class ChangePhoneNumberServiceTest {
             // given
             Long userId = memberUser.getId();
             String duplicatePhone = "010-9999-8888";
-            String normalizedDuplicatePhone = User.normalizePhoneNumber(duplicatePhone);
             ChangePhoneNumberRequest request = new ChangePhoneNumberRequest("currentPw1!", duplicatePhone);
 
             PasswordCredential credential = mock(PasswordCredential.class);
@@ -178,7 +177,7 @@ class ChangePhoneNumberServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(passwordCredentialRepository.findByUserId(userId)).willReturn(Optional.of(credential));
             given(passwordEncoder.matches("currentPw1!", "hashedPw")).willReturn(true);
-            given(userRepository.existsByPhoneNumber(normalizedDuplicatePhone)).willReturn(true);
+            given(userRepository.existsByPhoneNumber(duplicatePhone)).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> changePhoneNumberService.changePhoneNumber(userId, request))

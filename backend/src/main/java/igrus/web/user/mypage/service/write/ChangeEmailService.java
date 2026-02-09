@@ -64,7 +64,7 @@ public class ChangeEmailService {
         }
 
         // 3. 현재 이메일과 동일한지 체크
-        if (request.newEmail().equals(user.getEmail())) {
+        if (request.newEmail().equalsIgnoreCase(user.getEmail())) {
             log.warn("현재 이메일과 동일 - userId: {}", userId);
             throw new SameEmailException();
         }
@@ -75,8 +75,8 @@ public class ChangeEmailService {
             throw new DuplicateEmailException(request.newEmail());
         }
 
-        // 5. 기존 미인증 레코드 삭제
-        emailVerificationRepository.findByEmailAndVerifiedFalse(request.newEmail())
+        // 5. 해당 사용자의 기존 미인증 레코드 삭제
+        emailVerificationRepository.findByEmailAndUserIdAndVerifiedFalse(request.newEmail(), userId)
                 .ifPresent(emailVerificationRepository::delete);
 
         // 6. 인증 코드 생성 & 저장 (userId 바인딩)

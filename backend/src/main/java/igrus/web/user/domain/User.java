@@ -3,6 +3,7 @@ package igrus.web.user.domain;
 import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.user.exception.InvalidEmailException;
 import igrus.web.user.exception.InvalidGradeException;
+import igrus.web.user.exception.InvalidPhoneNumberException;
 import igrus.web.user.exception.InvalidStudentIdException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -98,7 +99,8 @@ public class User extends SoftDeletableEntity {
         user.studentId = studentId;
         user.name = name;
         user.email = email;
-        user.phoneNumber = normalizePhoneNumber(phoneNumber);
+        validatePhoneNumber(phoneNumber);
+        user.phoneNumber = phoneNumber;
         user.department = department;
         user.motivation = motivation;
         user.gender = gender;
@@ -127,13 +129,15 @@ public class User extends SoftDeletableEntity {
     }
 
     /**
-     * 전화번호에서 하이픈을 제거하여 정규화합니다.
+     * 전화번호가 000-0000-0000 형식인지 검증합니다.
      */
-    public static String normalizePhoneNumber(String phoneNumber) {
+    public static void validatePhoneNumber(String phoneNumber) {
         if (phoneNumber == null) {
-            return null;
+            return;
         }
-        return phoneNumber.replaceAll("-", "");
+        if (!phoneNumber.matches("^\\d{3}-\\d{4}-\\d{4}$")) {
+            throw new InvalidPhoneNumberException(phoneNumber);
+        }
     }
 
     // === 역할 변경 ===
@@ -296,7 +300,8 @@ public class User extends SoftDeletableEntity {
                               Gender gender, int grade) {
         validateGrade(grade);
         this.name = name;
-        this.phoneNumber = normalizePhoneNumber(phoneNumber);
+        validatePhoneNumber(phoneNumber);
+        this.phoneNumber = phoneNumber;
         this.department = department;
         this.gender = gender;
         this.grade = grade;
@@ -312,7 +317,8 @@ public class User extends SoftDeletableEntity {
     }
 
     public void updatePhoneNumber(String phoneNumber) {
-        this.phoneNumber = normalizePhoneNumber(phoneNumber);
+        validatePhoneNumber(phoneNumber);
+        this.phoneNumber = phoneNumber;
     }
 
 }

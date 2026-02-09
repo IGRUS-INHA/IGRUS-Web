@@ -5,6 +5,7 @@ import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.DuplicatePhoneNumberException;
+import igrus.web.user.exception.SamePhoneNumberException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.mypage.dto.request.ChangePhoneNumberRequest;
 import igrus.web.user.repository.UserRepository;
@@ -50,23 +51,23 @@ public class ChangePhoneNumberService {
             throw new InvalidCredentialsException();
         }
 
-        // 3. 전화번호 정규화
-        String normalizedPhoneNumber = User.normalizePhoneNumber(request.newPhoneNumber());
+        // 3. 전화번호 형식 검증
+        User.validatePhoneNumber(request.newPhoneNumber());
 
         // 4. 현재 전화번호와 동일한지 체크
-        if (normalizedPhoneNumber.equals(user.getPhoneNumber())) {
+        if (request.newPhoneNumber().equals(user.getPhoneNumber())) {
             log.warn("현재 전화번호와 동일 - userId: {}", userId);
-            throw new DuplicatePhoneNumberException(request.newPhoneNumber());
+            throw new SamePhoneNumberException();
         }
 
         // 5. 새 전화번호 중복 체크
-        if (userRepository.existsByPhoneNumber(normalizedPhoneNumber)) {
-            log.warn("전화번호 중복 - phoneNumber: {}", normalizedPhoneNumber);
+        if (userRepository.existsByPhoneNumber(request.newPhoneNumber())) {
+            log.warn("전화번호 중복 - phoneNumber: {}", request.newPhoneNumber());
             throw new DuplicatePhoneNumberException(request.newPhoneNumber());
         }
 
         // 6. 전화번호 변경
-        user.updatePhoneNumber(normalizedPhoneNumber);
+        user.updatePhoneNumber(request.newPhoneNumber());
 
         log.info("전화번호 변경 완료 - userId: {}", userId);
     }
