@@ -11,6 +11,8 @@ import igrus.web.community.like.post_like.service.read.GetMyLikedPostsService;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
+import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
+import igrus.web.user.mypage.dto.request.ChangeEmailRequest;
 import igrus.web.user.mypage.dto.request.ChangePasswordRequest;
 import igrus.web.user.mypage.dto.request.ChangePhoneNumberRequest;
 import igrus.web.user.mypage.dto.response.MyCommentPageResponse;
@@ -21,8 +23,10 @@ import igrus.web.user.mypage.dto.response.MyProfileResponse;
 import igrus.web.user.mypage.service.read.GetMyCommentsService;
 import igrus.web.user.mypage.service.read.GetMyPostsService;
 import igrus.web.user.mypage.service.read.GetMyProfileService;
+import igrus.web.user.mypage.service.write.ChangeEmailService;
 import igrus.web.user.mypage.service.write.ChangeMyPasswordService;
 import igrus.web.user.mypage.service.write.ChangePhoneNumberService;
+import igrus.web.user.mypage.service.write.VerifyEmailChangeService;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.service.WithdrawService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,6 +69,8 @@ public class MyPageController {
     private final GetMyLikedPostsService getMyLikedPostsService;
     private final GetMyBookmarksService getMyBookmarksService;
     private final ChangeMyPasswordService changeMyPasswordService;
+    private final ChangeEmailService changeEmailService;
+    private final VerifyEmailChangeService verifyEmailChangeService;
     private final ChangePhoneNumberService changePhoneNumberService;
     private final WithdrawService withdrawService;
 
@@ -118,6 +124,59 @@ public class MyPageController {
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
         changeMyPasswordService.changePassword(user.userId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    // === 이메일 변경 ===
+
+    @Operation(summary = "이메일 변경 요청", description = "현재 비밀번호 확인 후 새 이메일로 인증 코드를 발송합니다")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "인증 코드 발송 성공"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "이메일 형식 오류 또는 현재 이메일과 동일",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "현재 비밀번호 불일치 또는 인증 필요",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 사용 중인 이메일",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PatchMapping("/email")
+    public ResponseEntity<Void> changeEmail(
+            @Valid @RequestBody ChangeEmailRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        changeEmailService.changeEmail(user.userId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "이메일 변경 인증 확인", description = "인증 코드를 확인하고 이메일을 변경합니다")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "이메일 변경 완료"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "인증 코드 오류 또는 만료",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "429",
+                    description = "인증 시도 횟수 초과",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PostMapping("/email/verify")
+    public ResponseEntity<Void> verifyEmailChange(
+            @Valid @RequestBody EmailVerificationRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        verifyEmailChangeService.verifyAndChangeEmail(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 
