@@ -5,6 +5,7 @@ import igrus.web.security.auth.approval.exception.AssociateAlreadyDecidedExcepti
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
 import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
+import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -32,6 +33,7 @@ public class ApproveAssociateService {
     private final AssociateDecisionRepository associateDecisionRepository;
     private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -69,6 +71,9 @@ public class ApproveAssociateService {
                 "관리자 승인에 의한 정회원 전환"
         );
         userRoleHistoryRepository.save(history);
+
+        refreshTokenRepository.revokeAllByUserId(userId);
+        log.info("승인으로 인한 리프레시 토큰 만료: userId={}", userId);
 
         eventPublisher.publishEvent(new AccountStatusChangeEvent(
                 userId, approverId, AccountChangeType.APPROVAL,

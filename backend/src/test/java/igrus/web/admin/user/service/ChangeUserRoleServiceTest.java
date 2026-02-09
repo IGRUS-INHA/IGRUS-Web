@@ -3,6 +3,7 @@ package igrus.web.admin.user.service;
 import igrus.web.admin.user.exception.SelfRoleChangeException;
 import igrus.web.security.auth.approval.exception.LastAdminCannotChangeException;
 import igrus.web.security.auth.approval.service.manage.ValidateNotLastAdminService;
+import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -44,6 +45,9 @@ class ChangeUserRoleServiceTest {
     private ValidateNotLastAdminService validateNotLastAdminService;
 
     @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
@@ -71,6 +75,7 @@ class ChangeUserRoleServiceTest {
             assertThat(targetUser.getRole()).isEqualTo(UserRole.OPERATOR);
             verify(userRoleHistoryRepository).save(any(UserRoleHistory.class));
             verify(validateNotLastAdminService).validateNotLastAdmin(targetUserId);
+            verify(refreshTokenRepository).revokeAllByUserId(targetUserId);
             verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
         }
 
@@ -90,6 +95,7 @@ class ChangeUserRoleServiceTest {
             // then
             assertThat(targetUser.getRole()).isEqualTo(UserRole.MEMBER);
             verify(userRoleHistoryRepository).save(any(UserRoleHistory.class));
+            verify(refreshTokenRepository).revokeAllByUserId(targetUserId);
             verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
         }
     }

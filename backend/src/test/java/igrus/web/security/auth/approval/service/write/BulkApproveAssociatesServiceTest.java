@@ -4,6 +4,7 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.domain.AssociateDecisionType;
 import igrus.web.security.auth.approval.exception.BulkApprovalEmptyException;
+import igrus.web.security.auth.common.domain.RefreshToken;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -126,6 +127,26 @@ class BulkApproveAssociatesServiceTest extends ServiceIntegrationTestBase {
             // then
             List<UserRoleHistory> histories = userRoleHistoryRepository.findAll();
             assertThat(histories).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("일괄 승인 시 각 사용자의 리프레시 토큰 만료 [APR-025]")
+        void approveBulk_RevokesRefreshTokensForEachUser() {
+            // given
+            User associate1 = createAndSaveUser("20230010", "a10@inha.edu", UserRole.ASSOCIATE);
+            User associate2 = createAndSaveUser("20230011", "a11@inha.edu", UserRole.ASSOCIATE);
+
+            refreshTokenRepository.save(RefreshToken.createInitial(associate1, "token-1", 86400000));
+            refreshTokenRepository.save(RefreshToken.createInitial(associate2, "token-2", 86400000));
+
+            List<Long> userIds = List.of(associate1.getId(), associate2.getId());
+
+            // when
+            bulkApproveAssociatesService.approveBulk(userIds, adminUser.getId());
+
+            // then
+            assertThat(refreshTokenRepository.findByUserIdAndRevokedFalse(associate1.getId())).isEmpty();
+            assertThat(refreshTokenRepository.findByUserIdAndRevokedFalse(associate2.getId())).isEmpty();
         }
 
         @Test
