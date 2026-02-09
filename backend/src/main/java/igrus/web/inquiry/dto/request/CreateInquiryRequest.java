@@ -4,12 +4,17 @@ import igrus.web.inquiry.domain.InquiryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Builder
 @Schema(description = "문의 생성 요청 (통합)")
 public class CreateInquiryRequest {
@@ -44,6 +49,8 @@ public class CreateInquiryRequest {
     private List<AttachmentInfo> attachments;
 
     @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     @Builder
     @Schema(description = "첨부파일 정보")
     public static class AttachmentInfo {
