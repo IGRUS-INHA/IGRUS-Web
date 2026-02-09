@@ -24,6 +24,7 @@ import { useMockData } from '@/hooks/useMockData';
 import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
 import { usePermission } from '@/hooks/usePermission';
 import { isForbiddenError, isNotFoundError, getErrorMessage } from '@/utils/error';
+import { myPageKeys } from '@/hooks/queries/useMyPage';
 
 export default function PostDetailPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
@@ -98,6 +99,8 @@ export default function PostDetailPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/boards/${boardType}/posts/${post.postId}`],
           });
+          // 마이페이지 좋아요 목록 새로고침
+          void queryClient.invalidateQueries({ queryKey: myPageKeys.likes() });
         },
       }
     );
@@ -124,6 +127,8 @@ export default function PostDetailPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/boards/${boardType}/posts/${post.postId}`],
           });
+          // 마이페이지 스크랩 목록 새로고침
+          void queryClient.invalidateQueries({ queryKey: myPageKeys.bookmarks() });
         },
       }
     );
@@ -155,6 +160,10 @@ export default function PostDetailPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/boards/${boardType}/posts`],
           });
+          // 마이페이지 게시글/좋아요/스크랩 목록 새로고침
+          void queryClient.invalidateQueries({ queryKey: myPageKeys.posts() });
+          void queryClient.invalidateQueries({ queryKey: myPageKeys.likes() });
+          void queryClient.invalidateQueries({ queryKey: myPageKeys.bookmarks() });
           navigate(`/board/${boardType}`);
         },
         onError: (error: unknown) => {
@@ -317,7 +326,7 @@ export default function PostDetailPage() {
             </div>
             <div>
               <p className="text-sm font-bold">{authorName}</p>
-              <p className="text-xs text-muted-foreground">{post.createdAt} · 4분 읽기</p>
+              <p className="text-xs text-muted-foreground">조회 {post.viewCount ?? 0} · {post.createdAt} · 4분 읽기</p>
             </div>
           </div>
         </div>

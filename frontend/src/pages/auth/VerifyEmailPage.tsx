@@ -11,6 +11,7 @@ import { useCountdown } from '@/hooks';
 
 const CODE_EXPIRY_SECONDS = 600; // 10분
 const RESEND_COOLDOWN_SECONDS = 60; // 1분
+const VERIFY_EMAIL_KEY = 'verify-email-address';
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -18,10 +19,19 @@ export default function VerifyEmailPage() {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 
-  // SignupPage에서 전달받은 이메일
+  // SignupPage에서 전달받은 이메일 또는 sessionStorage에서 복구
   const signupEmail = location.state?.email as string | undefined;
+  const savedEmail = sessionStorage.getItem(VERIFY_EMAIL_KEY);
+  const initialEmail = signupEmail || savedEmail || '';
 
-  const [email, setEmail] = useState(signupEmail || '');
+  // 새로 전달받은 이메일이 있으면 sessionStorage에 저장
+  if (signupEmail) {
+    sessionStorage.setItem(VERIFY_EMAIL_KEY, signupEmail);
+  }
+
+  const hasEmail = !!initialEmail;
+
+  const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -32,14 +42,14 @@ export default function VerifyEmailPage() {
   // 인증 코드 유효시간 타이머 (10분)
   const codeTimer = useCountdown({
     initialSeconds: CODE_EXPIRY_SECONDS,
-    autoStart: !!signupEmail,
+    autoStart: hasEmail,
     persistKey: 'verify-email-code-timer',
   });
 
   // 재발송 쿨다운 타이머 (60초) - 페이지 진입 시에도 1분 대기
   const resendCooldown = useCountdown({
     initialSeconds: RESEND_COOLDOWN_SECONDS,
-    autoStart: !!signupEmail,
+    autoStart: hasEmail,
     persistKey: 'verify-email-resend-cooldown',
   });
 
@@ -52,11 +62,11 @@ export default function VerifyEmailPage() {
 
   // 이메일이 없으면 로그인 페이지로 리다이렉트
   useEffect(() => {
-    if (!signupEmail && !email) {
+    if (!initialEmail) {
       alert('이메일 정보가 없습니다. 로그인 페이지로 이동합니다.');
       navigate('/login');
     }
-  }, [signupEmail, email, navigate]);
+  }, [initialEmail, navigate]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +93,7 @@ export default function VerifyEmailPage() {
       // Blob 타입 우회
       const verificationData = response.data as unknown as PasswordSignupResponse;
 
+      sessionStorage.removeItem(VERIFY_EMAIL_KEY);
       alert('이메일 인증이 완료되었습니다!\n\n이제 로그인할 수 있습니다.');
       navigate('/login');
     } catch (error) {
@@ -154,7 +165,7 @@ export default function VerifyEmailPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={!!signupEmail}
+                disabled={hasEmail}
                 className={`w-full rounded-r4 pl-12 pr-4 py-s6 border focus:border-primary transition-all ${
                   isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
                 }`}
@@ -183,7 +194,7 @@ export default function VerifyEmailPage() {
                 <span>남은 시간 {codeTimer.formatted}</span>
               </div>
             )}
-            {codeTimer.isExpired && signupEmail && (
+            {codeTimer.isExpired && hasEmail && (
               <p className="text-center text-b2 text-destructive">
                 인증 코드가 만료되었습니다. 재발송해주세요.
               </p>

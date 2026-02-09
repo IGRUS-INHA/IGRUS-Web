@@ -13,6 +13,7 @@ import {
   useCancelRegistration,
 } from '@/api/model/event-registration/event-registration';
 import type { GetEventListParams, CreateEventRequest } from '@/api/model/models';
+import { myPageKeys } from '@/hooks/queries/useMyPage';
 
 // 쿼리 키 - Orval이 자동으로 생성하지만 invalidation을 위해 정의
 export const eventKeys = {
@@ -44,6 +45,8 @@ export function useApplyEvent() {
         // 행사 상세 및 목록 새로고침
         void queryClient.invalidateQueries({ queryKey: eventKeys.detail(variables.eventId) });
         void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+        // 마이페이지 행사 신청 목록 새로고침
+        void queryClient.invalidateQueries({ queryKey: myPageKeys.registrations() });
       },
     },
   });
@@ -59,6 +62,8 @@ export function useCancelEventApplication() {
         // 행사 상세 및 목록 새로고침
         void queryClient.invalidateQueries({ queryKey: eventKeys.detail(variables.eventId) });
         void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+        // 마이페이지 행사 신청 목록 새로고침
+        void queryClient.invalidateQueries({ queryKey: myPageKeys.registrations() });
       },
     },
   });
