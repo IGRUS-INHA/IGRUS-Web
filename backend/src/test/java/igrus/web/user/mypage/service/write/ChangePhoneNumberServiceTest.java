@@ -72,6 +72,7 @@ class ChangePhoneNumberServiceTest {
             // given
             Long userId = memberUser.getId();
             String newPhoneNumber = "010-9999-8888";
+            String normalizedPhoneNumber = User.normalizePhoneNumber(newPhoneNumber);
             ChangePhoneNumberRequest request = new ChangePhoneNumberRequest("currentPw1!", newPhoneNumber);
 
             PasswordCredential credential = mock(PasswordCredential.class);
@@ -80,13 +81,13 @@ class ChangePhoneNumberServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(passwordCredentialRepository.findByUserId(userId)).willReturn(Optional.of(credential));
             given(passwordEncoder.matches("currentPw1!", "hashedPw")).willReturn(true);
-            given(userRepository.existsByPhoneNumber(newPhoneNumber)).willReturn(false);
+            given(userRepository.existsByPhoneNumber(normalizedPhoneNumber)).willReturn(false);
 
             // when
             changePhoneNumberService.changePhoneNumber(userId, request);
 
             // then
-            assertThat(memberUser.getPhoneNumber()).isEqualTo(newPhoneNumber);
+            assertThat(memberUser.getPhoneNumber()).isEqualTo(normalizedPhoneNumber);
         }
     }
 
@@ -168,6 +169,7 @@ class ChangePhoneNumberServiceTest {
             // given
             Long userId = memberUser.getId();
             String duplicatePhone = "010-9999-8888";
+            String normalizedDuplicatePhone = User.normalizePhoneNumber(duplicatePhone);
             ChangePhoneNumberRequest request = new ChangePhoneNumberRequest("currentPw1!", duplicatePhone);
 
             PasswordCredential credential = mock(PasswordCredential.class);
@@ -176,7 +178,7 @@ class ChangePhoneNumberServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
             given(passwordCredentialRepository.findByUserId(userId)).willReturn(Optional.of(credential));
             given(passwordEncoder.matches("currentPw1!", "hashedPw")).willReturn(true);
-            given(userRepository.existsByPhoneNumber(duplicatePhone)).willReturn(true);
+            given(userRepository.existsByPhoneNumber(normalizedDuplicatePhone)).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> changePhoneNumberService.changePhoneNumber(userId, request))

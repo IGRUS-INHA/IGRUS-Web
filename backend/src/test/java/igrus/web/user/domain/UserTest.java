@@ -45,7 +45,7 @@ class UserTest {
             assertThat(user.getStudentId()).isEqualTo(studentId);
             assertThat(user.getName()).isEqualTo(name);
             assertThat(user.getEmail()).isEqualTo(email);
-            assertThat(user.getPhoneNumber()).isEqualTo(phoneNumber);
+            assertThat(user.getPhoneNumber()).isEqualTo(User.normalizePhoneNumber(phoneNumber));
             assertThat(user.getDepartment()).isEqualTo(department);
             assertThat(user.getMotivation()).isEqualTo(motivation);
             assertThat(user.getGender()).isEqualTo(Gender.MALE);
@@ -704,7 +704,7 @@ class UserTest {
 
             // then
             assertThat(user.getName()).isEqualTo(newName);
-            assertThat(user.getPhoneNumber()).isEqualTo(newPhoneNumber);
+            assertThat(user.getPhoneNumber()).isEqualTo(User.normalizePhoneNumber(newPhoneNumber));
             assertThat(user.getDepartment()).isEqualTo(newDepartment);
         }
 

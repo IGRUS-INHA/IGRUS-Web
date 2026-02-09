@@ -98,7 +98,7 @@ public class User extends SoftDeletableEntity {
         user.studentId = studentId;
         user.name = name;
         user.email = email;
-        user.phoneNumber = phoneNumber;
+        user.phoneNumber = normalizePhoneNumber(phoneNumber);
         user.department = department;
         user.motivation = motivation;
         user.gender = gender;
@@ -124,6 +124,16 @@ public class User extends SoftDeletableEntity {
         if (grade < 1) {
             throw new InvalidGradeException(grade);
         }
+    }
+
+    /**
+     * 전화번호에서 하이픈을 제거하여 정규화합니다.
+     */
+    public static String normalizePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null) {
+            return null;
+        }
+        return phoneNumber.replaceAll("-", "");
     }
 
     // === 역할 변경 ===
@@ -286,7 +296,7 @@ public class User extends SoftDeletableEntity {
                               Gender gender, int grade) {
         validateGrade(grade);
         this.name = name;
-        this.phoneNumber = phoneNumber;
+        this.phoneNumber = normalizePhoneNumber(phoneNumber);
         this.department = department;
         this.gender = gender;
         this.grade = grade;
@@ -301,7 +311,7 @@ public class User extends SoftDeletableEntity {
     }
 
     public void updatePhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+        this.phoneNumber = normalizePhoneNumber(phoneNumber);
     }
 
 }

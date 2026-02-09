@@ -50,20 +50,23 @@ public class ChangePhoneNumberService {
             throw new InvalidCredentialsException();
         }
 
-        // 3. 현재 전화번호와 동일한지 체크
-        if (request.newPhoneNumber().equals(user.getPhoneNumber())) {
+        // 3. 전화번호 정규화
+        String normalizedPhoneNumber = User.normalizePhoneNumber(request.newPhoneNumber());
+
+        // 4. 현재 전화번호와 동일한지 체크
+        if (normalizedPhoneNumber.equals(user.getPhoneNumber())) {
             log.warn("현재 전화번호와 동일 - userId: {}", userId);
             throw new DuplicatePhoneNumberException(request.newPhoneNumber());
         }
 
-        // 4. 새 전화번호 중복 체크
-        if (userRepository.existsByPhoneNumber(request.newPhoneNumber())) {
-            log.warn("전화번호 중복 - phoneNumber: {}", request.newPhoneNumber());
+        // 5. 새 전화번호 중복 체크
+        if (userRepository.existsByPhoneNumber(normalizedPhoneNumber)) {
+            log.warn("전화번호 중복 - phoneNumber: {}", normalizedPhoneNumber);
             throw new DuplicatePhoneNumberException(request.newPhoneNumber());
         }
 
-        // 5. 전화번호 변경
-        user.updatePhoneNumber(request.newPhoneNumber());
+        // 6. 전화번호 변경
+        user.updatePhoneNumber(normalizedPhoneNumber);
 
         log.info("전화번호 변경 완료 - userId: {}", userId);
     }

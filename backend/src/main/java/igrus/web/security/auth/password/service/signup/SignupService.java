@@ -14,6 +14,7 @@ import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.security.auth.password.service.support.VerificationCodeGenerator;
 import igrus.web.user.domain.User;
+import igrus.web.user.domain.User;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -110,7 +111,7 @@ public class SignupService {
             throw new DuplicateEmailException();
         }
 
-        if (userRepository.existsByPhoneNumber(request.phoneNumber())) {
+        if (userRepository.existsByPhoneNumber(User.normalizePhoneNumber(request.phoneNumber()))) {
             throw new DuplicatePhoneNumberException();
         }
     }
