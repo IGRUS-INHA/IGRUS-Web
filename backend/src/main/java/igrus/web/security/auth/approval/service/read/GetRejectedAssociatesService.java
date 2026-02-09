@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class GetRejectedAssociatesService {
 
     private final AssociateDecisionRepository associateDecisionRepository;
@@ -32,13 +32,12 @@ public class GetRejectedAssociatesService {
      * @param requesterId 조회 요청자 ID (ADMIN 권한 확인용)
      * @return 거절된 준회원 정보 목록
      */
-    @Transactional(readOnly = true)
     public Page<RejectedAssociateInfoResponse> getRejectedAssociates(Pageable pageable, Long requesterId) {
         log.info("거절된 준회원 목록 조회 요청: requesterId={}", requesterId);
 
         adminRoleValidator.validateAdminRole(requesterId);
 
-        Page<AssociateDecision> rejectedDecisions = associateDecisionRepository.findByUserRoleAndType(
+        Page<AssociateDecision> rejectedDecisions = associateDecisionRepository.findActiveByType(
                 UserRole.ASSOCIATE, AssociateDecisionType.REJECTED, pageable
         );
 

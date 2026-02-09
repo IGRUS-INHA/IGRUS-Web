@@ -50,7 +50,7 @@ class RejectAssociateServiceTest extends ServiceIntegrationTestBase {
             rejectAssociateService.rejectAssociate(associateUser.getId(), adminUser.getId(), "가입 동기 불충분");
 
             // then
-            Optional<AssociateDecision> decision = associateDecisionRepository.findByUserId(associateUser.getId());
+            Optional<AssociateDecision> decision = associateDecisionRepository.findByUserIdAndActiveTrue(associateUser.getId());
             assertThat(decision).isPresent();
             assertThat(decision.get().getType()).isEqualTo(AssociateDecisionType.REJECTED);
             assertThat(decision.get().getReason()).isEqualTo("가입 동기 불충분");
@@ -108,8 +108,8 @@ class RejectAssociateServiceTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("이미 처리된 준회원 거절 시도 시 AssociateAlreadyDecidedException 발생")
-        void rejectAssociate_AlreadyDecided_ThrowsException() {
+        @DisplayName("이미 거절된 준회원 재거절 시도 시 AssociateAlreadyDecidedException 발생")
+        void rejectAssociate_AlreadyRejected_ThrowsException() {
             // given
             rejectAssociateService.rejectAssociate(associateUser.getId(), adminUser.getId(), "첫 번째 거절");
 

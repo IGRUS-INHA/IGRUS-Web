@@ -317,7 +317,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
             // verify - 역할은 ASSOCIATE 유지
             User updatedUser = userRepository.findById(associateUser.getId()).orElseThrow();
             assertThat(updatedUser.getRole()).isEqualTo(UserRole.ASSOCIATE);
-            assertThat(associateDecisionRepository.findByUserId(associateUser.getId())).isPresent();
+            assertThat(associateDecisionRepository.findByUserIdAndActiveTrue(associateUser.getId())).isPresent();
         }
 
         @Test

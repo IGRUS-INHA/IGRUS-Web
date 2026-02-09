@@ -1,6 +1,8 @@
 package igrus.web.admin.user.service;
 
 import igrus.web.admin.user.exception.SelfRoleChangeException;
+import igrus.web.security.auth.approval.domain.AssociateDecision;
+import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.manage.ValidateNotLastAdminService;
 import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.user.domain.User;
@@ -25,6 +27,7 @@ public class ChangeUserRoleService {
 
     private final UserRepository userRepository;
     private final UserRoleHistoryRepository userRoleHistoryRepository;
+    private final AssociateDecisionRepository associateDecisionRepository;
     private final ValidateNotLastAdminService validateNotLastAdminService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -43,6 +46,13 @@ public class ChangeUserRoleService {
 
         UserRole previousRole = targetUser.getRole();
         targetUser.changeRole(newRole);
+
+        if (newRole == UserRole.ASSOCIATE && previousRole != UserRole.ASSOCIATE) {
+            associateDecisionRepository.findByUserIdAndActiveTrue(targetUserId)
+                    .ifPresent(AssociateDecision::deactivate);
+            AssociateDecision demotionRecord = AssociateDecision.demote(targetUser, currentUserId, "관리자에 의한 역할 강등");
+            associateDecisionRepository.save(demotionRecord);
+        }
 
         UserRoleHistory history = UserRoleHistory.create(
                 targetUser,

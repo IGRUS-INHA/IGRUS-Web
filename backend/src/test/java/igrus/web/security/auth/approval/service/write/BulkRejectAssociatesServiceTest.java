@@ -53,9 +53,9 @@ class BulkRejectAssociatesServiceTest extends ServiceIntegrationTestBase {
             // then
             assertThat(rejectedCount).isEqualTo(3);
 
-            AssociateDecision d1 = associateDecisionRepository.findByUserId(associate1.getId()).orElseThrow();
-            AssociateDecision d2 = associateDecisionRepository.findByUserId(associate2.getId()).orElseThrow();
-            AssociateDecision d3 = associateDecisionRepository.findByUserId(associate3.getId()).orElseThrow();
+            AssociateDecision d1 = associateDecisionRepository.findByUserIdAndActiveTrue(associate1.getId()).orElseThrow();
+            AssociateDecision d2 = associateDecisionRepository.findByUserIdAndActiveTrue(associate2.getId()).orElseThrow();
+            AssociateDecision d3 = associateDecisionRepository.findByUserIdAndActiveTrue(associate3.getId()).orElseThrow();
 
             assertThat(d1.getType()).isEqualTo(AssociateDecisionType.REJECTED);
             assertThat(d2.getType()).isEqualTo(AssociateDecisionType.REJECTED);
@@ -112,7 +112,7 @@ class BulkRejectAssociatesServiceTest extends ServiceIntegrationTestBase {
 
             // then
             assertThat(rejectedCount).isEqualTo(1);
-            assertThat(associateDecisionRepository.findByUserId(associate1.getId())).isPresent();
+            assertThat(associateDecisionRepository.findByUserIdAndActiveTrue(associate1.getId())).isPresent();
         }
 
         @Test
@@ -129,12 +129,12 @@ class BulkRejectAssociatesServiceTest extends ServiceIntegrationTestBase {
 
             // then
             assertThat(rejectedCount).isEqualTo(1);
-            assertThat(associateDecisionRepository.findByUserId(associate1.getId())).isPresent();
+            assertThat(associateDecisionRepository.findByUserIdAndActiveTrue(associate1.getId())).isPresent();
         }
 
         @Test
-        @DisplayName("이미 거절된 사용자가 포함된 경우 나머지는 정상 처리")
-        void rejectBulk_SomeUsersAlreadyRejected_ProcessesOthers() {
+        @DisplayName("이미 거절된 사용자가 포함된 경우 해당 유저는 skip되고 나머지는 정상 처리")
+        void rejectBulk_SomeUsersAlreadyRejected_SkipsRejected() {
             // given
             User associate1 = createAndSaveUser("20230010", "a10@inha.edu", UserRole.ASSOCIATE);
             User associate2 = createAndSaveUser("20230011", "a11@inha.edu", UserRole.ASSOCIATE);
@@ -149,7 +149,7 @@ class BulkRejectAssociatesServiceTest extends ServiceIntegrationTestBase {
 
             // then
             assertThat(rejectedCount).isEqualTo(1);
-            assertThat(associateDecisionRepository.findByUserId(associate2.getId())).isPresent();
+            assertThat(associateDecisionRepository.findByUserIdAndActiveTrue(associate2.getId())).isPresent();
         }
     }
 }
