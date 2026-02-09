@@ -56,6 +56,8 @@ class CreateGuestInquiryServiceTest {
             entityManager.createNativeQuery("DELETE FROM post_views").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM event_registrations").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM events").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
             entityManager.flush();
             entityManager.clear();
