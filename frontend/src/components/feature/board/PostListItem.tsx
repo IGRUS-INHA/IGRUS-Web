@@ -55,7 +55,7 @@ export default function PostListItem({ post, boardType, linkTo }: PostListItemPr
             </span>
           )}
         </h3>
-        <p className="text-c1 text-muted-foreground ml-s4 whitespace-nowrap">{formatDate(post.createdAt)}</p>
+        <p className="text-c1 text-muted-foreground ml-s4 whitespace-nowrap">조회 {post.viewCount ?? 0} · {formatDate(post.createdAt)}</p>
       </div>
 
       <div className="flex justify-between items-center">

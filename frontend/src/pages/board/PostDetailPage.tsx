@@ -18,12 +18,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { CommentSection } from '@/components/feature/comment';
 import type { BoardType } from '@/types/common';
+import type { PostDetailResponse } from '@/api/model/models';
 import { cn } from '@/lib/utils';
 import MDEditor from '@uiw/react-md-editor';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
 import { usePermission } from '@/hooks/usePermission';
 import { isForbiddenError, isNotFoundError, getErrorMessage } from '@/utils/error';
+import { formatRelativeTime } from '@/utils';
 import { myPageKeys } from '@/hooks/queries/useMyPage';
 
 export default function PostDetailPage() {
@@ -45,7 +47,8 @@ export default function PostDetailPage() {
   const mockQuery = useMockPostDetail(boardType as string, Number(postId));
 
   const { data: response, isLoading } = isMockMode ? mockQuery : realQuery;
-  const post = response?.data;
+  // client.ts에서 에러 응답을 throw하므로 data는 항상 PostDetailResponse
+  const post = response?.data as PostDetailResponse | undefined;
 
   // Local state
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -324,9 +327,9 @@ export default function PostDetailPage() {
             >
               {authorInitial}
             </div>
-            <div>
+            <div className="flex flex-col gap-s1">
               <p className="text-sm font-bold">{authorName}</p>
-              <p className="text-xs text-muted-foreground">조회 {post.viewCount ?? 0} · {post.createdAt} · 4분 읽기</p>
+              <p className="text-xs text-muted-foreground">조회 {post.viewCount ?? 0} · {post.createdAt ? formatRelativeTime(post.createdAt) : ''}</p>
             </div>
           </div>
         </div>
