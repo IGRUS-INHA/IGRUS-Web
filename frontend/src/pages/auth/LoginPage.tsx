@@ -248,8 +248,6 @@ export default function LoginPage() {
         throw new Error('Invalid login response');
       }
     } catch (error: unknown) {
-      console.error('Login failed:', error);
-
       if (isEmailNotVerified(error)) {
         await handleEmailVerificationRequired();
       } else if (isAccountWithdrawn(error)) {

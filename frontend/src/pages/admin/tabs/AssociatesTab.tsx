@@ -30,6 +30,7 @@ export default function AssociatesTab() {
     queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/associates/pending'] });
     queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/associates/rejected'] });
     queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/users'] });
   };
 
   const { data: pendingRes, isLoading: pendingLoading } = useGetPendingAssociates(

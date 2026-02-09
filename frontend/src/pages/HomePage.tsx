@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, UserPlus, Users, Gamepad2, Trophy } from 'lucide-react';
+import { ArrowRight, UserPlus, Users, Gamepad2, Trophy, MessageCircle, Megaphone } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUIStore } from '@/stores/uiStore';
+import { useAuth } from '@/hooks';
 import { cn } from '@/lib/utils';
 import type { Post } from '@/types/entities';
 
@@ -59,6 +60,7 @@ const FEATURED_POSTS: Post[] = [
 export default function HomePage() {
   const theme = useUIStore((state) => state.theme);
   const isDark = theme === 'dark';
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -75,15 +77,21 @@ export default function HomePage() {
         {/* Decorative Elements */}
         <div
           className="hero-deco-ring"
-          style={{ top: '15%', right: '12%', width: 80, height: 80 }}
+          style={{ top: '15%', right: '12%', width: 160, height: 160 }}
         />
         <div
           className="hero-deco-ring-2"
-          style={{ top: '55%', right: '8%', width: 48, height: 48 }}
+          style={{ top: '65%', right: '8%', width: 72, height: 72 }}
         />
         <div
           className="hero-glow-orb"
           style={{ top: '10%', right: '5%', width: 200, height: 200 }}
+        />
+        <img
+          src="/igruslogo.png"
+          alt=""
+          className="hero-deco-ring"
+          style={{ bottom: '-15%', left: '-8%', top: 'auto', right: 'auto', width: 320, height: 320, opacity: 0.12, border: 'none' }}
         />
 
         {/* Content */}
@@ -129,34 +137,35 @@ export default function HomePage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap items-center gap-s3 pt-s2">
-              <Button
-                asChild
-                className="flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all bg-[#03A69E] text-white hover:bg-[#029890] hero-btn-glow"
-              >
-                <Link to="/signup">
-                  <UserPlus size={16} />
-                  가입하기
-                  <ArrowRight
-                    size={16}
-                    className="group-hover/btn:translate-x-1 transition-transform"
-                  />
-                </Link>
-              </Button>
-
-              <Button
-                asChild
-                variant="ghost"
-                className={cn(
-                  'flex items-center gap-s2 px-s5 py-s3 rounded-full font-medium text-sm transition-all border',
-                  isDark
-                    ? 'border-white/10 text-gray-300 hover:border-[#03A69E]/40 hover:text-[#66CBC5] hover:bg-white/[0.03] backdrop-blur-sm'
-                    : 'border-gray-200 text-gray-500 hover:border-[#03A69E]/30 hover:text-[#03A69E] hover:bg-[#03A69E]/[0.03]'
-                )}
-              >
-                <Link to="/board/general">
-                  커뮤니티 둘러보기
-                </Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  asChild
+                  className="flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all bg-[#03A69E] text-white hover:bg-[#029890] hero-btn-glow"
+                >
+                  <Link to={__FEATURE_COMMUNITY__ ? "/board/general" : "/board/notices"}>
+                    {__FEATURE_COMMUNITY__ ? <MessageCircle size={16} /> : <Megaphone size={16} />}
+                    {__FEATURE_COMMUNITY__ ? '커뮤니티 둘러보기' : '공지사항 보기'}
+                    <ArrowRight
+                      size={16}
+                      className="group-hover/btn:translate-x-1 transition-transform"
+                    />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  className="flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all bg-[#03A69E] text-white hover:bg-[#029890] hero-btn-glow"
+                >
+                  <Link to="/signup">
+                    <UserPlus size={16} />
+                    가입하기
+                    <ArrowRight
+                      size={16}
+                      className="group-hover/btn:translate-x-1 transition-transform"
+                    />
+                  </Link>
+                </Button>
+              )}
             </div>
 
             {/* Stats Bar */}
@@ -184,34 +193,36 @@ export default function HomePage() {
       </section>
 
       {/* Featured Section */}
-      <section className="mt-s6">
-        <div className="flex justify-between items-center mb-s6">
-          <div>
-            <h3
-              className={cn(
-                'text-2xl font-bold transition-colors',
-                isDark ? 'text-white' : 'text-black'
-              )}
+      {__FEATURE_COMMUNITY__ && (
+        <section className="mt-s6">
+          <div className="flex justify-between items-center mb-s6">
+            <div>
+              <h3
+                className={cn(
+                  'text-2xl font-bold transition-colors',
+                  isDark ? 'text-white' : 'text-black'
+                )}
+              >
+                주요 게시글
+              </h3>
+              <p className="text-gray-500 text-sm">
+                엄선된 이야기와 소식을 확인하세요.
+              </p>
+            </div>
+            <Link
+              to="/board/general"
+              className="text-sm text-gray-400 hover:text-[#03A69E] transition"
             >
-              주요 게시글
-            </h3>
-            <p className="text-gray-500 text-sm">
-              엄선된 이야기와 소식을 확인하세요.
-            </p>
+              전체 게시글 보기
+            </Link>
           </div>
-          <Link
-            to="/board/general"
-            className="text-sm text-gray-400 hover:text-[#03A69E] transition"
-          >
-            전체 게시글 보기
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-s7 items-stretch">
-          {FEATURED_POSTS.map((post) => (
-            <PostCard key={post.id} post={post} theme={theme} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-s7 items-stretch">
+            {FEATURED_POSTS.map((post) => (
+              <PostCard key={post.id} post={post} theme={theme} />
+            ))}
+          </div>
+        </section>
+      )}
 
     </div>
   );

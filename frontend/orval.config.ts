@@ -1,9 +1,14 @@
+import "dotenv/config";
 import { defineConfig } from "orval";
 
-// 환경 변수에서 읽어오고, 없으면 AWS URL 사용
-const swaggerSchemaUrl =
-  process.env.VITE_SWAGGER_URL ||
-  "http://igrus-web-alb-535342735.ap-northeast-2.elb.amazonaws.com/v3/api-docs";
+// .env 파일에서 VITE_SWAGGER_URL을 읽어옴
+const swaggerSchemaUrl = process.env.VITE_SWAGGER_URL;
+
+if (!swaggerSchemaUrl) {
+  throw new Error(
+    "VITE_SWAGGER_URL 환경 변수가 설정되지 않았습니다. .env 파일을 확인하세요."
+  );
+}
 
 export default defineConfig({
   api: {

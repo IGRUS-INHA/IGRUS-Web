@@ -66,8 +66,6 @@ export default function ForgotPasswordPage() {
       // 재설정 페이지로 이동 (학번을 state로 전달)
       navigate('/reset-password', { state: { studentId } });
     } catch (error) {
-      console.error('Password reset request failed:', error);
-
       const errorMessage =
         error instanceof Error ? error.message : '알 수 없는 오류';
 

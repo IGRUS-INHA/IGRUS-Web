@@ -642,14 +642,14 @@
 .hero-deco-ring {
   position: absolute;
   border-radius: 50%;
-  border: 1.5px solid rgba(3, 166, 158, 0.2);
+  border: 2px solid rgba(3, 166, 158, 0.15);
   pointer-events: none;
   animation: hero-ring-float 6s ease-in-out infinite;
 }
 
 .hero-deco-ring-2 {
   position: absolute;
-  border-radius: 12px;
+  border-radius: 50%;
   border: 1.5px solid rgba(3, 166, 158, 0.15);
   pointer-events: none;
   animation: hero-ring-float-delay 8s ease-in-out infinite;
@@ -657,7 +657,7 @@
 }
 
 .dark .hero-deco-ring {
-  border-color: rgba(102, 203, 197, 0.2);
+  border-color: rgba(102, 203, 197, 0.15);
 }
 
 .dark .hero-deco-ring-2 {

@@ -6,8 +6,10 @@ export const PAGE_TITLES: Record<string, string> = {
   '/forgot-password': 'Forgot Password',
   '/reset-password': 'Reset Password',
   '/board/notices': 'Notices',
-  '/board/general': 'Community',
-  '/board/insight': 'Insights',
+  ...(__FEATURE_COMMUNITY__ ? {
+    '/board/general': 'Community',
+    '/board/insight': 'Insights',
+  } : {}),
   '/events': 'Events',
   '/inquiry': ' ',
   '/inquiry/lookup': 'Inquiry Lookup',
@@ -16,9 +18,9 @@ export const PAGE_TITLES: Record<string, string> = {
 };
 
 export function getPageTitle(pathname: string): string {
-  // 게시판 경로는 모두 Community로 표시
+  // 게시판 경로 타이틀
   if (pathname.startsWith('/board')) {
-    return 'Community';
+    return __FEATURE_COMMUNITY__ ? 'Community' : 'Notices';
   }
 
   // 정확한 매칭 우선

@@ -37,8 +37,8 @@ import type { PageableObject } from './pageableObject';
 import type { SortObject } from './sortObject';
 
 export interface Page {
-  totalPages?: number;
   totalElements?: number;
+  totalPages?: number;
   pageable?: PageableObject;
   size?: number;
   content?: unknown[];

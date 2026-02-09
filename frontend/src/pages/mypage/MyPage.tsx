@@ -11,7 +11,7 @@ import ProfileHeader from '@/components/feature/mypage/ProfileHeader';
 import { cn } from '@/lib/utils';
 import { useMyProfile, useMyPosts, useMyLikes, useMyBookmarks, useMyRegistrations } from '@/hooks/queries/useMyPage';
 import { useUpdateMyProfile, getGetMyProfileQueryKey } from '@/api/model/my-page/my-page';
-import { isConflictError, getErrorMessage } from '@/utils/error';
+import { hasErrorCode, getErrorMessage } from '@/utils/error';
 import { formatRelativeTime, formatDate } from '@/utils';
 import type { UpdateProfileRequest } from '@/api/model/models/updateProfileRequest';
 import type { MyRegistrationResponseStatus } from '@/api/model/models/myRegistrationResponseStatus';
@@ -62,13 +62,16 @@ export default function MyPage() {
     mutation: {
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
+        void Swal.fire({ icon: 'success', title: '수정 완료', text: '프로필이 수정되었습니다.', timer: 1500, showConfirmButton: false, showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
       },
       onError: (error: unknown) => {
-        if (isConflictError(error)) {
-          void Swal.fire({ icon: 'error', title: '수정 실패', text: '이미 사용 중인 이메일입니다.', showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
-        } else {
-          void Swal.fire({ icon: 'error', title: '수정 실패', text: getErrorMessage(error), showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
+        let errorMessage = getErrorMessage(error);
+        if (hasErrorCode(error, 'DUPLICATE_EMAIL')) {
+          errorMessage = '이미 사용 중인 이메일입니다.';
+        } else if (hasErrorCode(error, 'DUPLICATE_PHONE_NUMBER')) {
+          errorMessage = '이미 사용 중인 전화번호입니다.';
         }
+        void Swal.fire({ icon: 'error', title: '수정 실패', text: errorMessage, showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
       },
     },
   });
@@ -111,8 +114,8 @@ export default function MyPage() {
   // 탭별 카운트 (로딩 중이면 '-' 표시)
   const tabCounts = {
     posts: postsQuery.isLoading ? '-' : postsQuery.totalElements,
-    likes: likesQuery.isLoading ? '-' : likesQuery.totalElements,
-    scraps: bookmarksQuery.isLoading ? '-' : bookmarksQuery.totalElements,
+    likes: likesQuery.isLoading ? '-' : likesQuery.posts.filter((p) => !p.isDeleted).length,
+    scraps: bookmarksQuery.isLoading ? '-' : bookmarksQuery.posts.filter((p) => !p.isDeleted).length,
     events: registrationsQuery.isLoading ? '-' : registrationsQuery.registrations.length,
   };
 
@@ -128,8 +131,8 @@ export default function MyPage() {
         onChangePassword={handleChangePassword}
         onLogout={handleLogout}
         onWithdraw={() => navigate('/mypage/withdraw')}
-        onEditEmail={() => {/* TODO: 이메일 수정 구현 */}}
-        onEditPhone={() => {/* TODO: 전화번호 수정 구현 */}}
+        onUpdateProfile={handleUpdateProfile}
+        isUpdating={isProfileUpdating}
       />
 
       {/* Tabs */}
@@ -220,14 +223,13 @@ export default function MyPage() {
               emptyMessage="좋아요한 게시글이 없습니다."
               onRetry={() => void likesQuery.refetch()}
             >
-              {likesQuery.posts.map((post) => (
+              {likesQuery.posts.filter((post) => !post.isDeleted).map((post) => (
                 <div
                   key={post.postId}
                   onClick={() => post.boardCode && post.postId && navigate(`/boards/${post.boardCode}/posts/${post.postId}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
-                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border',
-                    post.isDeleted && 'opacity-50'
+                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
                   )}
                 >
                   <div className="flex items-center gap-s4 min-w-0">
@@ -239,7 +241,7 @@ export default function MyPage() {
                         {post.boardName ?? '게시판'} {post.createdAt ? `\u2022 ${formatRelativeTime(post.createdAt)}` : ''}
                       </p>
                       <h4 className="font-bold text-lg truncate">
-                        {post.isDeleted ? (post.deletedMessage ?? '삭제된 게시글') : (post.title ?? '제목 없음')}
+                        {post.title ?? '제목 없음'}
                       </h4>
                       <p className="text-c1 text-muted-foreground">
                         작성자: {post.authorName ?? '알 수 없음'}
@@ -261,14 +263,13 @@ export default function MyPage() {
               emptyMessage="스크랩한 게시글이 없습니다."
               onRetry={() => void bookmarksQuery.refetch()}
             >
-              {bookmarksQuery.posts.map((post) => (
+              {bookmarksQuery.posts.filter((post) => !post.isDeleted).map((post) => (
                 <div
                   key={post.postId}
                   onClick={() => post.boardCode && post.postId && navigate(`/boards/${post.boardCode}/posts/${post.postId}`)}
                   className={cn(
                     'p-s6 rounded-r4 border flex justify-between items-center transition-all hover:scale-[1.01] cursor-pointer',
-                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border',
-                    post.isDeleted && 'opacity-50'
+                    isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
                   )}
                 >
                   <div className="min-w-0">
@@ -277,7 +278,7 @@ export default function MyPage() {
                       <p className="text-c1 text-primary font-bold">{post.boardName ?? '스크랩한 자료'}</p>
                     </div>
                     <h4 className="font-bold text-lg mb-s1 truncate">
-                      {post.isDeleted ? (post.deletedMessage ?? '삭제된 게시글') : (post.title ?? '제목 없음')}
+                      {post.title ?? '제목 없음'}
                     </h4>
                     <p className="text-c1 text-muted-foreground">
                       작성자: {post.authorName ?? '알 수 없음'}

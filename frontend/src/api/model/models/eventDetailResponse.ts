@@ -55,7 +55,6 @@ export interface EventDetailResponse {
   isRegistrable?: boolean;
   createdAt?: string;
   updatedAt?: string;
-  isAuthor?: boolean;
   canEdit?: boolean;
   isRegistered?: boolean;
 }

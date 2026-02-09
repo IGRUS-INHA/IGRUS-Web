@@ -33,16 +33,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { LikedPostResponse } from './likedPostResponse';
 import type { PageableObject } from './pageableObject';
+import type { RegistrationListResponse } from './registrationListResponse';
 import type { SortObject } from './sortObject';
 
-export interface PageLikedPostResponse {
+export interface PageRegistrationListResponse {
   totalElements?: number;
   totalPages?: number;
   pageable?: PageableObject;
   size?: number;
-  content?: LikedPostResponse[];
+  content?: RegistrationListResponse[];
   number?: number;
   sort?: SortObject;
   numberOfElements?: number;

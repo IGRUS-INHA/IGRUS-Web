@@ -54,6 +54,7 @@ import type {
 
 import type {
   ChangeUserRoleRequest,
+  ChangeUserStatusRequest,
   GetRoleHistoriesParams,
   GetUserListParams,
   PageUserRoleHistoryResponse,
@@ -69,6 +70,112 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * 회원을 정지하거나 정지를 해제합니다. SUSPEND: 사유와 종료일 필수. LIFT: 활성 정지가 있어야 합니다.
+ * @summary 회원 상태 변경 (정지/해제)
+ */
+export type changeUserStatusResponse204 = {
+  data: void
+  status: 204
+}
+
+export type changeUserStatusResponse400 = {
+  data: void
+  status: 400
+}
+
+export type changeUserStatusResponse401 = {
+  data: void
+  status: 401
+}
+
+export type changeUserStatusResponse403 = {
+  data: void
+  status: 403
+}
+
+export type changeUserStatusResponse404 = {
+  data: void
+  status: 404
+}
+    
+export type changeUserStatusResponseSuccess = (changeUserStatusResponse204) & {
+  headers: Headers;
+};
+export type changeUserStatusResponseError = (changeUserStatusResponse400 | changeUserStatusResponse401 | changeUserStatusResponse403 | changeUserStatusResponse404) & {
+  headers: Headers;
+};
+
+export type changeUserStatusResponse = (changeUserStatusResponseSuccess | changeUserStatusResponseError)
+
+export const getChangeUserStatusUrl = (userId: number,) => {
+
+
+  
+
+  return `/api/v1/admin/users/${userId}/status`
+}
+
+export const changeUserStatus = async (userId: number,
+    changeUserStatusRequest: ChangeUserStatusRequest, options?: RequestInit): Promise<changeUserStatusResponse> => {
+  
+  return customFetch<changeUserStatusResponse>(getChangeUserStatusUrl(userId),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      changeUserStatusRequest,)
+  }
+);}
+
+
+
+
+export const getChangeUserStatusMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserStatus>>, TError,{userId: number;data: ChangeUserStatusRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeUserStatus>>, TError,{userId: number;data: ChangeUserStatusRequest}, TContext> => {
+
+const mutationKey = ['changeUserStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeUserStatus>>, {userId: number;data: ChangeUserStatusRequest}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  changeUserStatus(userId,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangeUserStatusMutationResult = NonNullable<Awaited<ReturnType<typeof changeUserStatus>>>
+    export type ChangeUserStatusMutationBody = ChangeUserStatusRequest
+    export type ChangeUserStatusMutationError = void
+
+    /**
+ * @summary 회원 상태 변경 (정지/해제)
+ */
+export const useChangeUserStatus = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserStatus>>, TError,{userId: number;data: ChangeUserStatusRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changeUserStatus>>,
+        TError,
+        {userId: number;data: ChangeUserStatusRequest},
+        TContext
+      > => {
+      return useMutation(getChangeUserStatusMutationOptions(options), queryClient);
+    }
+    /**
  * 회원의 권한을 변경합니다.
  * @summary 회원 권한 변경
  */
