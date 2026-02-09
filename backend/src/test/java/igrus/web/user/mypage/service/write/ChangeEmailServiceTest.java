@@ -9,6 +9,7 @@ import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.security.auth.password.service.support.VerificationCodeGenerator;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.DuplicateEmailException;
+import igrus.web.user.exception.SameEmailException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.mypage.dto.request.ChangeEmailRequest;
 import igrus.web.user.repository.UserRepository;
@@ -188,9 +189,9 @@ class ChangeEmailServiceTest {
                     .isInstanceOf(InvalidCredentialsException.class);
         }
 
-        @DisplayName("현재 이메일과 동일하면 DuplicateEmailException 발생")
+        @DisplayName("현재 이메일과 동일하면 SameEmailException 발생")
         @Test
-        void changeEmail_WithSameEmail_ThrowsDuplicateEmailException() {
+        void changeEmail_WithSameEmail_ThrowsSameEmailException() {
             // given
             Long userId = memberUser.getId();
             String currentEmail = memberUser.getEmail();
@@ -205,7 +206,7 @@ class ChangeEmailServiceTest {
 
             // when & then
             assertThatThrownBy(() -> changeEmailService.changeEmail(userId, request))
-                    .isInstanceOf(DuplicateEmailException.class);
+                    .isInstanceOf(SameEmailException.class);
         }
 
         @DisplayName("새 이메일이 이미 다른 사용자에게 등록되어 있으면 DuplicateEmailException 발생")

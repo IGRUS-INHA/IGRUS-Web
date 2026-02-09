@@ -307,6 +307,7 @@ public class User extends SoftDeletableEntity {
     }
 
     public void updateEmail(String email) {
+        validateEmail(email);
         this.email = email;
     }
 

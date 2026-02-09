@@ -8,6 +8,7 @@ import igrus.web.security.auth.common.exception.verification.VerificationCodeInv
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.security.auth.common.service.EmailVerificationAttemptService;
 import igrus.web.user.domain.User;
+import igrus.web.user.exception.DuplicateEmailException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,10 +36,11 @@ import static org.mockito.Mockito.verify;
  * <ul>
  *     <li>성공: 인증 코드 확인 후 이메일 변경 성공</li>
  *     <li>실패: 사용자 미존재</li>
- *     <li>실패: 미인증 레코드 미존재</li>
+ *     <li>실패: 미인증 레코드 미존재 (userId 불일치 포함)</li>
  *     <li>실패: 인증 코드 만료</li>
  *     <li>실패: 시도 횟수 초과</li>
  *     <li>실패: 인증 코드 불일치</li>
+ *     <li>실패: 인증 시점에 이메일 중복 (race condition)</li>
  * </ul>
  */
 @ExtendWith(MockitoExtension.class)
@@ -83,8 +85,9 @@ class VerifyEmailChangeServiceTest {
             given(verification.getCode()).willReturn("123456");
 
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(emailVerificationRepository.findByEmailAndVerifiedFalse(newEmail))
+            given(emailVerificationRepository.findByEmailAndUserIdAndVerifiedFalse(newEmail, userId))
                     .willReturn(Optional.of(verification));
+            given(userRepository.existsByEmail(newEmail)).willReturn(false);
 
             // when
             verifyEmailChangeService.verifyAndChangeEmail(userId, request);
@@ -113,7 +116,7 @@ class VerifyEmailChangeServiceTest {
                     .isInstanceOf(UserNotFoundException.class);
         }
 
-        @DisplayName("미인증 레코드가 없으면 VerificationCodeInvalidException 발생")
+        @DisplayName("해당 사용자의 미인증 레코드가 없으면 VerificationCodeInvalidException 발생")
         @Test
         void verifyAndChangeEmail_WhenVerificationNotFound_ThrowsVerificationCodeInvalidException() {
             // given
@@ -121,7 +124,7 @@ class VerifyEmailChangeServiceTest {
             EmailVerificationRequest request = new EmailVerificationRequest("new@example.com", "123456");
 
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(emailVerificationRepository.findByEmailAndVerifiedFalse("new@example.com"))
+            given(emailVerificationRepository.findByEmailAndUserIdAndVerifiedFalse("new@example.com", userId))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -140,7 +143,7 @@ class VerifyEmailChangeServiceTest {
             given(verification.isExpired()).willReturn(true);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(emailVerificationRepository.findByEmailAndVerifiedFalse("new@example.com"))
+            given(emailVerificationRepository.findByEmailAndUserIdAndVerifiedFalse("new@example.com", userId))
                     .willReturn(Optional.of(verification));
 
             // when & then
@@ -160,7 +163,7 @@ class VerifyEmailChangeServiceTest {
             given(verification.canAttempt(0)).willReturn(false);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(emailVerificationRepository.findByEmailAndVerifiedFalse("new@example.com"))
+            given(emailVerificationRepository.findByEmailAndUserIdAndVerifiedFalse("new@example.com", userId))
                     .willReturn(Optional.of(verification));
 
             // when & then
@@ -182,7 +185,7 @@ class VerifyEmailChangeServiceTest {
             given(verification.getCode()).willReturn("123456");
 
             given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
-            given(emailVerificationRepository.findByEmailAndVerifiedFalse("new@example.com"))
+            given(emailVerificationRepository.findByEmailAndUserIdAndVerifiedFalse("new@example.com", userId))
                     .willReturn(Optional.of(verification));
 
             // when & then
@@ -190,6 +193,29 @@ class VerifyEmailChangeServiceTest {
                     .isInstanceOf(VerificationCodeInvalidException.class);
 
             verify(emailVerificationAttemptService).incrementAttempts(1L);
+        }
+
+        @DisplayName("인증 시점에 이메일이 이미 사용 중이면 DuplicateEmailException 발생")
+        @Test
+        void verifyAndChangeEmail_WhenEmailTakenDuringVerification_ThrowsDuplicateEmailException() {
+            // given
+            Long userId = memberUser.getId();
+            String newEmail = "taken@example.com";
+            EmailVerificationRequest request = new EmailVerificationRequest(newEmail, "123456");
+
+            EmailVerification verification = mock(EmailVerification.class);
+            given(verification.isExpired()).willReturn(false);
+            given(verification.canAttempt(0)).willReturn(true);
+            given(verification.getCode()).willReturn("123456");
+
+            given(userRepository.findById(userId)).willReturn(Optional.of(memberUser));
+            given(emailVerificationRepository.findByEmailAndUserIdAndVerifiedFalse(newEmail, userId))
+                    .willReturn(Optional.of(verification));
+            given(userRepository.existsByEmail(newEmail)).willReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> verifyEmailChangeService.verifyAndChangeEmail(userId, request))
+                    .isInstanceOf(DuplicateEmailException.class);
         }
     }
 }

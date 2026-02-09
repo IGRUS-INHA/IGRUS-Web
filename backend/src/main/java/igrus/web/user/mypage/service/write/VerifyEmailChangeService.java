@@ -8,6 +8,7 @@ import igrus.web.security.auth.common.exception.verification.VerificationCodeInv
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.security.auth.common.service.EmailVerificationAttemptService;
 import igrus.web.user.domain.User;
+import igrus.web.user.exception.DuplicateEmailException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +50,9 @@ public class VerifyEmailChangeService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 2. 미인증 레코드 조회
+        // 2. 해당 사용자의 미인증 레코드 조회 (userId 바인딩 검증)
         EmailVerification verification = emailVerificationRepository
-                .findByEmailAndVerifiedFalse(request.email())
+                .findByEmailAndUserIdAndVerifiedFalse(request.email(), userId)
                 .orElseThrow(VerificationCodeInvalidException::new);
 
         // 3. 만료 체크
@@ -72,10 +73,15 @@ public class VerifyEmailChangeService {
             throw new VerificationCodeInvalidException();
         }
 
-        // 6. 인증 완료 & 이메일 변경
+        // 6. 이메일 중복 재검증 (race condition 방지)
+        if (userRepository.existsByEmail(request.email())) {
+            throw new DuplicateEmailException(request.email());
+        }
+
+        // 7. 인증 완료 & 이메일 변경
         verification.verify();
         user.updateEmail(request.email());
 
-        log.info("이메일 변경 완료 - userId: {}, newEmail: {}", userId, request.email());
+        log.info("이메일 변경 완료 - userId: {}", userId);
     }
 }

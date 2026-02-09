@@ -143,6 +143,11 @@ public class MyPageController {
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
                     responseCode = "409",
                     description = "이미 사용 중인 이메일",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
@@ -163,6 +168,21 @@ public class MyPageController {
             @ApiResponse(
                     responseCode = "400",
                     description = "인증 코드 오류 또는 만료",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 필요",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 사용 중인 이메일",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
@@ -187,12 +207,22 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "전화번호 변경 성공"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "전화번호 형식 오류 또는 중복",
+                    description = "전화번호 형식 오류",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
                     responseCode = "401",
                     description = "현재 비밀번호 불일치 또는 인증 필요",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 사용 중인 전화번호 또는 현재 전화번호와 동일",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
             )
     })

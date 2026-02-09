@@ -9,6 +9,7 @@ import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.security.auth.password.service.support.VerificationCodeGenerator;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.DuplicateEmailException;
+import igrus.web.user.exception.SameEmailException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.mypage.dto.request.ChangeEmailRequest;
 import igrus.web.user.repository.UserRepository;
@@ -65,7 +66,7 @@ public class ChangeEmailService {
         // 3. 현재 이메일과 동일한지 체크
         if (request.newEmail().equals(user.getEmail())) {
             log.warn("현재 이메일과 동일 - userId: {}", userId);
-            throw new DuplicateEmailException(request.newEmail());
+            throw new SameEmailException();
         }
 
         // 4. 새 이메일 중복 체크
@@ -78,10 +79,10 @@ public class ChangeEmailService {
         emailVerificationRepository.findByEmailAndVerifiedFalse(request.newEmail())
                 .ifPresent(emailVerificationRepository::delete);
 
-        // 6. 인증 코드 생성 & 저장
+        // 6. 인증 코드 생성 & 저장 (userId 바인딩)
         String code = verificationCodeGenerator.generateVerificationCode();
         EmailVerification verification = EmailVerification.create(
-                request.newEmail(), code, verificationCodeExpiry
+                request.newEmail(), code, verificationCodeExpiry, userId
         );
         emailVerificationRepository.save(verification);
 
