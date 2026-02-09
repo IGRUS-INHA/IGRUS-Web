@@ -1,7 +1,6 @@
 package igrus.web.security.auth.approval.service.write;
 
 import igrus.web.security.auth.approval.domain.AssociateDecision;
-import igrus.web.security.auth.approval.exception.AssociateAlreadyDecidedException;
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
 import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
@@ -52,9 +51,8 @@ public class ApproveAssociateService {
             throw new UserNotAssociateException(userId);
         }
 
-        if (associateDecisionRepository.findByUserId(userId).isPresent()) {
-            throw new AssociateAlreadyDecidedException();
-        }
+        associateDecisionRepository.findByUserIdAndActiveTrue(userId)
+                .ifPresent(AssociateDecision::deactivate);
 
         UserRole previousRole = user.getRole();
         user.promoteToMember();
