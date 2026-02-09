@@ -45,9 +45,10 @@ public class RejectAssociateService {
             throw new UserNotAssociateException(userId);
         }
 
-        if (associateDecisionRepository.findByUserId(userId).isPresent()) {
-            throw new AssociateAlreadyDecidedException();
-        }
+        associateDecisionRepository.findByUserIdAndActiveTrue(userId)
+                .ifPresent(decision -> {
+                    throw new AssociateAlreadyDecidedException();
+                });
 
         AssociateDecision decision = AssociateDecision.reject(user, rejectorId, reason);
         associateDecisionRepository.save(decision);
