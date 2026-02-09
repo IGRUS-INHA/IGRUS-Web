@@ -27,6 +27,6 @@ app:
     verification-code-expiry: 600000    # 10분
     verification-max-attempts: 5
     password-reset-expiry: 1800000      # 30분
-    resend-rate-limit-seconds: 300      # 5분
+    resend-rate-limit-seconds: 60       # 1분
   cleanup:
     unverified-user-retention-hours: 24 # 24시간
