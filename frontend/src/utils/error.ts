@@ -128,7 +128,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   EMAIL_SEND_FAILED: '이메일 전송에 실패했습니다.',
   RECENT_WITHDRAWAL_EXISTS: '최근 탈퇴 내역이 있습니다.',
   VERIFICATION_RESEND_RATE_LIMITED: '인증 메일 재전송은 잠시 후 다시 시도해주세요.',
-  ACCOUNT_LOCKED: '계정이 잠겼습니다.',
+  ACCOUNT_LOCKED: '로그인 실패 횟수 초과(5회)로 인해\n계정이 10분간 잠금 처리되었습니다.',
   TOKEN_EXPIRED: '로그인이 만료되었습니다.',
 
   // Member Approval (4개)

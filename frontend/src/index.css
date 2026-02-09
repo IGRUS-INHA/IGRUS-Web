@@ -155,6 +155,12 @@
     src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
   }
 
+  /* 브라우저 기본 비밀번호 표시 버튼 숨김 (커스텀 토글 사용) */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
@@ -677,15 +683,11 @@
   background: radial-gradient(circle, rgba(3, 166, 158, 0.2) 0%, transparent 70%);
 }
 
-/* 스탯 바 구분선 */
-.hero-stat-divider {
-  width: 1px;
-  height: 24px;
-  background: linear-gradient(180deg, transparent, rgba(3, 166, 158, 0.3), transparent);
-}
-
-.dark .hero-stat-divider {
-  background: linear-gradient(180deg, transparent, rgba(102, 203, 197, 0.3), transparent);
+/* 장식용 로고 (모바일에서도 표시) */
+.hero-logo-deco {
+  position: absolute;
+  pointer-events: none;
+  animation: hero-ring-float 6s ease-in-out infinite;
 }
 
 /* 접근성: 모션 감소 설정 시 애니메이션 비활성화 */

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, UserPlus, Users, Gamepad2, Trophy, MessageCircle, Megaphone } from 'lucide-react';
+import { ArrowRight, UserPlus, MessageCircle, Megaphone } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUIStore } from '@/stores/uiStore';
@@ -90,12 +90,12 @@ export default function HomePage() {
         <img
           src="/igruslogo.png"
           alt=""
-          className="hero-deco-ring"
-          style={{ bottom: '-15%', left: '-8%', top: 'auto', right: 'auto', width: 320, height: 320, opacity: 0.12, border: 'none' }}
+          className="hero-logo-deco"
+          style={{ bottom: -48, left: -100, top: 'auto', right: 'auto', width: 320, height: 320, opacity: 0.12 }}
         />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center min-h-[480px] px-s4 md:px-s7 py-s6 md:py-s8">
+        <div className="relative z-10 flex flex-col justify-center min-h-[480px] px-s5 md:px-s8 py-s6 md:py-s8">
           <div className="space-y-6 max-w-2xl">
             {/* Badge */}
             <div
@@ -136,7 +136,7 @@ export default function HomePage() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-s3 pt-s2">
+            <div className="flex flex-wrap items-center gap-s3 pt-s6">
               {isAuthenticated ? (
                 <Button
                   asChild
@@ -168,26 +168,6 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Stats Bar */}
-            <div className="flex items-center gap-s5 pt-s4">
-              <div className="flex items-center gap-s2">
-                <Users size={14} className={cn(isDark ? 'text-[#66CBC5]' : 'text-[#03A69E]')} />
-                <span className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-gray-8')}>120+</span>
-                <span className={cn('text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>Members</span>
-              </div>
-              <div className="hero-stat-divider" />
-              <div className="flex items-center gap-s2">
-                <Gamepad2 size={14} className={cn(isDark ? 'text-[#66CBC5]' : 'text-[#03A69E]')} />
-                <span className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-gray-8')}>50+</span>
-                <span className={cn('text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>Projects</span>
-              </div>
-              <div className="hero-stat-divider" />
-              <div className="flex items-center gap-s2">
-                <Trophy size={14} className={cn(isDark ? 'text-[#66CBC5]' : 'text-[#03A69E]')} />
-                <span className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-gray-8')}>10+</span>
-                <span className={cn('text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>Years</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
