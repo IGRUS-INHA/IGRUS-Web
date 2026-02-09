@@ -91,3 +91,8 @@ export const FILE_LIMITS = {
 
 // 라우트 관련
 export * from './routes';
+
+// 회원가입 관련
+export * from './majorOptions';
+export * from './domainOptions';
+export * from './wishOptions';

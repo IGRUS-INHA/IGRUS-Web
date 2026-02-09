@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUIStore } from '@/stores';
-import { User, Lock, Mail, ArrowRight, Phone, GraduationCap, Building2, FileText, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Mail, ArrowRight, Phone, GraduationCap, Building2, FileText, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { majorOptions } from '@/constants/majorOptions';
+import { domainOptions } from '@/constants/domainOptions';
+import { WISH_TITLE, wishOptions } from '@/constants/wishOptions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +19,7 @@ interface AuthFormData {
   phoneNumber?: string;
   department?: string;
   motivation?: string;
+  wishes?: string[];
   gender?: 'MALE' | 'FEMALE';
   grade?: number;
   privacyConsent?: boolean;
@@ -71,6 +75,10 @@ export default function AuthForm({
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [localErrors, setLocalErrors] = useState<{ passwordConfirm?: string }>({});
+  const [emailLocal, setEmailLocal] = useState('');
+  const [emailDomain, setEmailDomain] = useState('inha.edu');
+  const [customDomain, setCustomDomain] = useState('');
+  const [selectedWishes, setSelectedWishes] = useState<string[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -83,9 +91,24 @@ export default function AuthForm({
     } else if (name === 'phoneNumber') {
       const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
       setForm({ ...form, [name]: digitsOnly });
+    } else if (name === 'emailLocal') {
+      setEmailLocal(value);
+    } else if (name === 'emailDomain') {
+      setEmailDomain(value);
+      if (value !== 'custom') {
+        setCustomDomain('');
+      }
+    } else if (name === 'customDomain') {
+      setCustomDomain(value);
     } else {
       setForm({ ...form, [name]: value });
     }
+  };
+
+  const handleWishToggle = (wish: string) => {
+    setSelectedWishes((prev) =>
+      prev.includes(wish) ? prev.filter((w) => w !== wish) : [...prev, wish],
+    );
   };
 
   const handlePasswordConfirmBlur = () => {
@@ -98,7 +121,9 @@ export default function AuthForm({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSubmit?.(form);
+    const domain = emailDomain === 'custom' ? customDomain : emailDomain;
+    const fullEmail = `${emailLocal}@${domain}`.trim();
+    onSubmit?.({ ...form, email: fullEmail, wishes: selectedWishes });
   };
 
   const isLogin = mode === 'login';
@@ -165,22 +190,61 @@ export default function AuthForm({
               </div>
 
               <div>
-                <div className="relative">
-                  <Mail size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    name="email"
-                    placeholder="이메일"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
-                      errors.email
-                        ? 'border-red-500 focus:border-red-500'
-                        : 'focus:border-primary border-border'
-                    } ${isDark ? 'bg-white/5' : 'bg-muted'}`}
-                  />
+                <div className="flex items-center gap-s2">
+                  <div className="relative flex-1">
+                    <Mail size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      name="emailLocal"
+                      placeholder="이메일 아이디"
+                      value={emailLocal}
+                      onChange={handleChange}
+                      required
+                      className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
+                        errors.email
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'focus:border-primary border-border'
+                      } ${isDark ? 'bg-white/5' : 'bg-muted'}`}
+                    />
+                  </div>
+                  <span className="text-muted-foreground font-bold shrink-0">@</span>
+                  <div className="relative flex-1">
+                    <select
+                      name="emailDomain"
+                      value={emailDomain}
+                      onChange={handleChange}
+                      className={`w-full rounded-r4 px-s4 py-s6 border transition-all appearance-none cursor-pointer ${
+                        errors.email
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'focus:border-primary border-border'
+                      } ${isDark ? 'bg-white/5 text-foreground' : 'bg-muted text-foreground'}`}
+                    >
+                      {domainOptions.map((domain) => (
+                        <option key={domain.value} value={domain.value}>
+                          {domain.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-s4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  </div>
                 </div>
+                {emailDomain === 'custom' && (
+                  <div className="mt-s2">
+                    <Input
+                      type="text"
+                      name="customDomain"
+                      placeholder="도메인 입력 (예: example.com)"
+                      value={customDomain}
+                      onChange={handleChange}
+                      required
+                      className={`w-full rounded-r4 px-s4 py-s6 border transition-all ${
+                        errors.email
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'focus:border-primary border-border'
+                      } ${isDark ? 'bg-white/5' : 'bg-muted'}`}
+                    />
+                  </div>
+                )}
                 {errors.email && (
                   <p className="mt-s1 text-sm text-red-500">{errors.email}</p>
                 )}
@@ -212,19 +276,29 @@ export default function AuthForm({
               <div>
                 <div className="relative">
                   <Building2 size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="text"
+                  <select
                     name="department"
-                    placeholder="학과 (예: 컴퓨터공학과)"
                     value={form.department}
                     onChange={handleChange}
                     required
-                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
+                    className={`w-full rounded-r4 pl-12 pr-10 py-s6 border transition-all appearance-none cursor-pointer ${
                       errors.department
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
-                    } ${isDark ? 'bg-white/5' : 'bg-muted'}`}
-                  />
+                    } ${isDark ? 'bg-white/5 text-foreground' : 'bg-muted text-foreground'}`}
+                  >
+                    <option value="">학과를 선택하세요</option>
+                    {majorOptions.map((college) => (
+                      <optgroup key={college.title} label={college.title}>
+                        {college.items.map((dept) => (
+                          <option key={dept.key} value={dept.value}>
+                            {dept.value}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-s4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 </div>
                 {errors.department && (
                   <p className="mt-s1 text-sm text-red-500">{errors.department}</p>
@@ -257,13 +331,13 @@ export default function AuthForm({
 
               <div>
                 <div className="relative">
-                  <User size={18} className="absolute left-s4 top-s3 text-muted-foreground" />
+                  <User size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <select
                     name="gender"
                     value={form.gender || ''}
                     onChange={handleChange}
                     required
-                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
+                    className={`w-full rounded-r4 pl-12 pr-10 py-s6 border transition-all appearance-none cursor-pointer ${
                       errors.gender
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
@@ -273,10 +347,31 @@ export default function AuthForm({
                     <option value="MALE">남성</option>
                     <option value="FEMALE">여성</option>
                   </select>
+                  <ChevronDown size={16} className="absolute right-s4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 </div>
                 {errors.gender && (
                   <p className="mt-s1 text-sm text-red-500">{errors.gender}</p>
                 )}
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-foreground mb-s2">{WISH_TITLE}</p>
+                <div className="flex flex-wrap gap-s2">
+                  {wishOptions.map((wish) => (
+                    <button
+                      key={wish}
+                      type="button"
+                      onClick={() => handleWishToggle(wish)}
+                      className={`px-s4 py-s2 rounded-full border text-sm transition-all cursor-pointer ${
+                        selectedWishes.includes(wish)
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : `border-border ${isDark ? 'bg-white/5 text-foreground' : 'bg-muted text-foreground'} hover:border-primary`
+                      }`}
+                    >
+                      {wish}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
