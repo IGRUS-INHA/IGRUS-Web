@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUIStore } from '@/stores';
-import { User, Lock, Mail, ArrowRight, Phone, GraduationCap, Building2, FileText } from 'lucide-react';
+import { User, Lock, Mail, ArrowRight, Phone, GraduationCap, Building2, FileText, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -68,6 +68,9 @@ export default function AuthForm({
     grade: undefined,
     privacyConsent: false,
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [localErrors, setLocalErrors] = useState<{ passwordConfirm?: string }>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -85,12 +88,21 @@ export default function AuthForm({
     }
   };
 
+  const handlePasswordConfirmBlur = () => {
+    if (form.passwordConfirm && form.passwordConfirm !== form.password) {
+      setLocalErrors({ passwordConfirm: '비밀번호가 일치하지 않습니다.' });
+    } else {
+      setLocalErrors({});
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit?.(form);
   };
 
   const isLogin = mode === 'login';
+  const passwordConfirmError = errors.passwordConfirm || localErrors.passwordConfirm;
 
   return (
     <Card className={`${isLogin ? 'p-s4' : 'p-s1'} lg:p-s7 rounded-r4 border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}>
@@ -292,21 +304,29 @@ export default function AuthForm({
           )}
 
           <div>
-            <div className="relative">
+            <div className="relative group">
               <Lock size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 placeholder="비밀번호 (영문, 숫자 포함 8자 이상)"
                 value={form.password}
                 onChange={handleChange}
                 required
-                className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
+                className={`w-full rounded-r4 pl-12 pr-12 py-s6 border transition-all ${
                   errors.password
                     ? 'border-red-500 focus:border-red-500'
                     : 'focus:border-primary border-border'
                 } ${isDark ? 'bg-white/5' : 'bg-muted'}`}
               />
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-s4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-all opacity-0 group-focus-within:opacity-100"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
             {errors.password && (
               <p className="mt-s1 text-sm text-red-500">{errors.password}</p>
@@ -316,24 +336,33 @@ export default function AuthForm({
           {!isLogin && (
             <>
               <div>
-                <div className="relative">
+                <div className="relative group">
                   <Lock size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    type="password"
+                    type={showPasswordConfirm ? 'text' : 'password'}
                     name="passwordConfirm"
                     placeholder="비밀번호 확인"
                     value={form.passwordConfirm}
                     onChange={handleChange}
+                    onBlur={handlePasswordConfirmBlur}
                     required
-                    className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
-                      errors.passwordConfirm
+                    className={`w-full rounded-r4 pl-12 pr-12 py-s6 border transition-all ${
+                      passwordConfirmError
                         ? 'border-red-500 focus:border-red-500'
                         : 'focus:border-primary border-border'
                     } ${isDark ? 'bg-white/5' : 'bg-muted'}`}
                   />
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                    className="absolute right-s4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-all opacity-0 group-focus-within:opacity-100"
+                  >
+                    {showPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
-                {errors.passwordConfirm && (
-                  <p className="mt-s1 text-sm text-red-500">{errors.passwordConfirm}</p>
+                {passwordConfirmError && (
+                  <p className="mt-s1 text-sm text-red-500">{passwordConfirmError}</p>
                 )}
               </div>
 
