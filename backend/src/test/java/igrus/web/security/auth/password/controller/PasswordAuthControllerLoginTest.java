@@ -6,6 +6,7 @@ import igrus.web.security.auth.common.exception.account.AccountSuspendedExceptio
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
+import igrus.web.security.auth.common.service.account.CheckReRegistrationEligibilityService;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
@@ -104,6 +105,9 @@ class PasswordAuthControllerLoginTest {
 
     @MockitoBean
     private SecurityConfigUtil securityConfigUtil;
+
+    @MockitoBean
+    private CheckReRegistrationEligibilityService checkReRegistrationEligibilityService;
 
     @MockitoBean
     private CheckRecoveryEligibilityService checkRecoveryEligibilityService;

@@ -6,6 +6,7 @@ import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
+import igrus.web.security.auth.common.service.account.CheckReRegistrationEligibilityService;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
@@ -84,6 +85,9 @@ class PasswordAuthControllerSignupTest {
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CheckReRegistrationEligibilityService checkReRegistrationEligibilityService;
 
     @MockitoBean
     private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
@@ -213,22 +217,6 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 department,
                 VALID_MOTIVATION,
-                List.of(),
-                Gender.MALE,
-                1,
-                true
-        );
-    }
-
-    private PasswordSignupRequest createRequestWithMotivation(String motivation) {
-        return new PasswordSignupRequest(
-                VALID_STUDENT_ID,
-                VALID_NAME,
-                VALID_EMAIL,
-                VALID_PASSWORD,
-                VALID_PHONE,
-                VALID_DEPARTMENT,
-                motivation,
                 List.of(),
                 Gender.MALE,
                 1,
@@ -421,25 +409,6 @@ class PasswordAuthControllerSignupTest {
         }
     }
 
-    @Nested
-    @DisplayName("가입 동기 검증")
-    class MotivationValidationTest {
-
-        @Test
-        @DisplayName("[REG-018] 가입 동기 미입력 - 400 반환")
-        void signup_WithBlankMotivation_Returns400() throws Exception {
-            // given
-            PasswordSignupRequest request = createRequestWithMotivation("");
-
-            // when & then
-            mockMvc.perform(post(SIGNUP_URL)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
-        }
-    }
 
     @Nested
     @DisplayName("비밀번호 검증")

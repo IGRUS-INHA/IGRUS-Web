@@ -6,6 +6,7 @@ import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.request.AccountRecoveryRequest;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.account.AccountNotRecoverableException;
+import igrus.web.security.auth.common.service.account.CheckReRegistrationEligibilityService;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
@@ -88,6 +89,9 @@ class PasswordAuthControllerAccountRecoveryTest {
 
     @MockitoBean
     private ValidateResetTokenService validateResetTokenService;
+
+    @MockitoBean
+    private CheckReRegistrationEligibilityService checkReRegistrationEligibilityService;
 
     @MockitoBean
     private CheckRecoveryEligibilityService checkRecoveryEligibilityService;

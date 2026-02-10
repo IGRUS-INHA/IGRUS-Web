@@ -9,7 +9,9 @@ import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenTheftException;
+import igrus.web.security.auth.common.service.account.CheckReRegistrationEligibilityService;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
+import igrus.web.security.auth.common.service.account.ReRegistrationCheckResult;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
@@ -73,6 +75,7 @@ public class PasswordAuthController {
     private final RequestPasswordResetService requestPasswordResetService;
     private final ResetPasswordService resetPasswordService;
     private final ValidateResetTokenService validateResetTokenService;
+    private final CheckReRegistrationEligibilityService checkReRegistrationEligibilityService;
     private final CheckRecoveryEligibilityService checkRecoveryEligibilityService;
     private final RecoverAccountService recoverAccountService;
     private final CookieUtil cookieUtil;
@@ -275,6 +278,28 @@ public class PasswordAuthController {
     public ResponseEntity<VerificationResendResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
         VerificationResendResponse response = resendVerificationService.resendVerification(request);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "재가입 가능 여부 확인",
+            description = "탈퇴 후 재가입 제한 기간(5일)이 지났는지 확인합니다. 회원가입 전 호출하여 재가입 가능 여부를 확인할 수 있습니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (학번 형식 오류)"
+            )
+    })
+    @GetMapping("/account/reregistration-check")
+    public ResponseEntity<ReRegistrationCheckResult> checkReRegistrationEligibility(
+            @Parameter(description = "재가입 가능 여부를 확인할 학번 (8자리 숫자)", example = "12345678", required = true)
+            @RequestParam @Pattern(regexp = "^\\d{8}$", message = "학번은 8자리 숫자여야 합니다") String studentId) {
+        ReRegistrationCheckResult result = checkReRegistrationEligibilityService.checkReRegistrationEligibility(studentId);
+        return ResponseEntity.ok(result);
     }
 
     @Operation(
