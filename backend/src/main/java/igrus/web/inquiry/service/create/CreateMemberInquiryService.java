@@ -7,7 +7,7 @@ import igrus.web.inquiry.exception.InquiryNumberGenerationException;
 import igrus.web.inquiry.repository.MemberInquiryRepository;
 import igrus.web.inquiry.service.support.InquiryAttachmentHelper;
 import igrus.web.inquiry.service.support.InquiryNotificationService;
-import igrus.web.inquiry.service.support.InquiryNumberGenerator;
+import igrus.web.inquiry.service.support.InquiryPersistenceExecutor;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -28,7 +28,7 @@ public class CreateMemberInquiryService {
 
     private final MemberInquiryRepository memberInquiryRepository;
     private final UserRepository userRepository;
-    private final InquiryNumberGenerator inquiryNumberGenerator;
+    private final InquiryPersistenceExecutor inquiryPersistenceExecutor;
     private final InquiryNotificationService inquiryNotificationService;
     private final InquiryAttachmentHelper inquiryAttachmentHelper;
 
@@ -48,27 +48,28 @@ public class CreateMemberInquiryService {
         DataIntegrityViolationException lastException = null;
         for (int attempt = 0; attempt < MAX_INQUIRY_NUMBER_RETRIES; attempt++) {
             try {
-                String inquiryNumber = inquiryNumberGenerator.generate();
-
-                MemberInquiry inquiry = MemberInquiry.create(
-                        inquiryNumber,
-                        request.getType(),
-                        request.getTitle(),
-                        request.getContent(),
-                        user
+                MemberInquiry saved = inquiryPersistenceExecutor.persistInquiry(
+                        inquiryNumber -> {
+                            MemberInquiry inquiry = MemberInquiry.create(
+                                    inquiryNumber,
+                                    request.getType(),
+                                    request.getTitle(),
+                                    request.getContent(),
+                                    user
+                            );
+                            inquiryAttachmentHelper.addAttachments(inquiry, request.getAttachments());
+                            return inquiry;
+                        },
+                        memberInquiryRepository
                 );
-
-                inquiryAttachmentHelper.addAttachments(inquiry, request.getAttachments());
-
-                MemberInquiry saved = memberInquiryRepository.save(inquiry);
 
                 inquiryNotificationService.sendInquiryConfirmation(
                         user.getEmail(),
-                        inquiryNumber,
+                        saved.getInquiryNumber(),
                         request.getTitle()
                 );
 
-                log.info("회원 문의 생성: inquiryNumber={}, userId={}", inquiryNumber, userId);
+                log.info("회원 문의 생성: inquiryNumber={}, userId={}", saved.getInquiryNumber(), userId);
 
                 return InquiryCreateResponse.from(saved);
             } catch (DataIntegrityViolationException e) {
