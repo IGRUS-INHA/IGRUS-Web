@@ -16,6 +16,7 @@ import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
 import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
 import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
@@ -74,6 +75,9 @@ class PasswordAuthControllerAccountRecoveryTest {
 
     @MockitoBean
     private SignupService signupService;
+
+    @MockitoBean
+    private CheckDuplicateService checkDuplicateService;
 
     @MockitoBean
     private VerifyEmailService verifyEmailService;
