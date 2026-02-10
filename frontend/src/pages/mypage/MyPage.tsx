@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { Layers, Heart, Bookmark, Award, Eye, ThumbsUp, RefreshCw, Loader2 } from 'lucide-react';
@@ -10,10 +9,7 @@ import { Button } from '@/components/ui/button';
 import ProfileHeader from '@/components/feature/mypage/ProfileHeader';
 import { cn } from '@/lib/utils';
 import { useMyProfile, useMyPosts, useMyLikes, useMyBookmarks, useMyRegistrations } from '@/hooks/queries/useMyPage';
-import { useUpdateMyProfile, getGetMyProfileQueryKey } from '@/api/model/my-page/my-page';
-import { hasErrorCode, getErrorMessage } from '@/utils/error';
 import { formatRelativeTime, formatDate } from '@/utils';
-import type { UpdateProfileRequest } from '@/api/model/models/updateProfileRequest';
 import type { MyRegistrationResponseStatus } from '@/api/model/models/myRegistrationResponseStatus';
 
 type TabType = 'posts' | 'likes' | 'scraps' | 'events';
@@ -48,8 +44,6 @@ export default function MyPage() {
   const isDark = theme === 'dark';
   const [activeTab, setActiveTab] = useState<TabType>('posts');
 
-  const queryClient = useQueryClient();
-
   // API 조회
   const profile = useMyProfile();
   const postsQuery = useMyPosts({ page: 0, size: 10 });
@@ -57,28 +51,7 @@ export default function MyPage() {
   const bookmarksQuery = useMyBookmarks({ page: 0, size: 10 });
   const registrationsQuery = useMyRegistrations();
 
-  // 프로필 수정 mutation
-  const { mutateAsync: updateProfile, isPending: isProfileUpdating } = useUpdateMyProfile({
-    mutation: {
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
-        void Swal.fire({ icon: 'success', title: '수정 완료', text: '프로필이 수정되었습니다.', timer: 1500, showConfirmButton: false, showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
-      },
-      onError: (error: unknown) => {
-        let errorMessage = getErrorMessage(error);
-        if (hasErrorCode(error, 'DUPLICATE_EMAIL')) {
-          errorMessage = '이미 사용 중인 이메일입니다.';
-        } else if (hasErrorCode(error, 'DUPLICATE_PHONE_NUMBER')) {
-          errorMessage = '이미 사용 중인 전화번호입니다.';
-        }
-        void Swal.fire({ icon: 'error', title: '수정 실패', text: errorMessage, showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
-      },
-    },
-  });
-
-  const handleUpdateProfile = async (data: UpdateProfileRequest) => {
-    await updateProfile({ data });
-  };
+  // TODO: 이메일/전화번호 변경 API 연동 필요 (ChangeEmail, ChangePhoneNumber)
 
   const handleChangePassword = () => {
     navigate('/mypage/change-password');
@@ -131,8 +104,6 @@ export default function MyPage() {
         onChangePassword={handleChangePassword}
         onLogout={handleLogout}
         onWithdraw={() => navigate('/mypage/withdraw')}
-        onUpdateProfile={handleUpdateProfile}
-        isUpdating={isProfileUpdating}
       />
 
       {/* Tabs */}

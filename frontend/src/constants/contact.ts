@@ -7,8 +7,8 @@
 
 export const CLUB_INFO = {
   name: 'IGRUS',
-  fullName: '인하대학교 웹 개발 동아리',
-  description: '인하대학교의 웹 개발 동아리입니다.',
+  fullName: '인하대학교 IT 동아리',
+  description: '인하대학교의 IT 동아리입니다.',
   // TODO: 실제 동아리 방 주소로 교체 필요
   address: '인천광역시 미추홀구 인하로 100, 5호관 동쪽 지하 003',
   // TODO: 실제 이메일 주소로 교체 필요

@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Check,
   Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import { useSignup } from '@/api/model/password-authentication/password-authentication';
 import { majorOptions } from '@/constants/majorOptions';
@@ -42,10 +43,10 @@ const signupSchema = z
       .min(1, '이름을 입력해주세요.')
       .max(50, '이름은 50자 이내여야 합니다.'),
     gender: z.enum(['MALE', 'FEMALE'], {
-      required_error: '성별을 선택해주세요.',
+      message: '성별을 선택해주세요.',
     }),
     grade: z
-      .number({ required_error: '학년을 선택해주세요.' })
+      .number({ message: '학년을 선택해주세요.' })
       .min(1, '학년을 선택해주세요.')
       .max(4, '학년은 1~4 사이여야 합니다.'),
     emailLocal: z.string().min(1, '이메일 아이디를 입력해주세요.'),
@@ -65,28 +66,15 @@ const signupSchema = z
         '비밀번호는 영문과 숫자를 포함해야 합니다.',
       ),
     passwordConfirm: z.string().min(1, '비밀번호 확인을 입력해주세요.'),
-    wishes: z.array(z.string()).optional(),
-    motivation: z.string().min(1, '가입 동기를 작성해주세요.'),
+    wishes: z.array(z.string()).min(1, '희망 활동을 1개 이상 선택해주세요.'),
+    motivation: z.string().optional(),
     privacyConsent: z.literal(true, {
-      errorMap: () => ({ message: '개인정보 처리방침에 동의해주세요.' }),
+      message: '개인정보 처리방침에 동의해주세요.',
     }),
-  })
-  .refine((data) => data.password === data.passwordConfirm, {
-    message: '비밀번호가 일치하지 않습니다.',
-    path: ['passwordConfirm'],
-  })
-  .refine(
-    (data) => {
-      if (data.emailDomain === 'custom') {
-        return !!data.customDomain && data.customDomain.length > 0;
-      }
-      return true;
-    },
-    {
-      message: '도메인을 입력해주세요.',
-      path: ['customDomain'],
-    },
-  );
+    termsConsent: z.literal(true, {
+      message: '이용약관에 동의해주세요.',
+    }),
+  });
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
@@ -100,10 +88,10 @@ const STEPS = [
 ] as const;
 
 const STEP_FIELDS: (keyof SignupFormData)[][] = [
-  ['studentId', 'name', 'gender', 'grade'],
+  ['studentId', 'name', 'gender', 'grade', 'privacyConsent', 'termsConsent'],
   ['emailLocal', 'emailDomain', 'customDomain', 'phoneNumber', 'department'],
   ['password', 'passwordConfirm'],
-  ['wishes', 'motivation', 'privacyConsent'],
+  ['wishes', 'motivation'],
 ];
 
 // --- Component ---
@@ -114,6 +102,8 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [serverError, setServerError] = useState<string>();
+  const [passwordConfirmTouched, setPasswordConfirmTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const signupMutation = useSignup();
 
   const {
@@ -123,6 +113,8 @@ export default function SignupPage() {
     watch,
     setValue,
     getValues,
+    clearErrors,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -141,6 +133,7 @@ export default function SignupPage() {
       wishes: [],
       motivation: '',
       privacyConsent: undefined as unknown as true,
+      termsConsent: undefined as unknown as true,
     },
     mode: 'onTouched',
   });
@@ -160,6 +153,10 @@ export default function SignupPage() {
     const fields = STEP_FIELDS[step];
     const valid = await trigger(fields);
     if (valid) {
+      const nextStep = step + 1;
+      if (nextStep < STEP_FIELDS.length) {
+        clearErrors(STEP_FIELDS[nextStep]);
+      }
       setStep((s) => Math.min(s + 1, STEPS.length - 1));
     }
   };
@@ -201,13 +198,13 @@ export default function SignupPage() {
     } catch (error: unknown) {
       if (hasErrorCode(error, 'DUPLICATE_STUDENT_ID')) {
         setStep(0);
-        setServerError('이미 가입된 학번입니다.');
+        setError('studentId', { message: '이미 가입된 학번입니다.' });
       } else if (hasErrorCode(error, 'DUPLICATE_EMAIL')) {
         setStep(1);
-        setServerError('이미 존재하는 이메일입니다.');
+        setError('emailLocal', { message: '이미 존재하는 이메일입니다.' });
       } else if (hasErrorCode(error, 'DUPLICATE_PHONE_NUMBER')) {
         setStep(1);
-        setServerError('이미 등록된 전화번호입니다.');
+        setError('phoneNumber', { message: '이미 등록된 전화번호입니다.' });
       } else {
         setServerError(getErrorMessage(error));
       }
@@ -286,7 +283,7 @@ export default function SignupPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={(e) => { setSubmitted(true); handleSubmit(onSubmit)(e); }}>
             {/* Step 1: 기본 정보 */}
             <div className={cn('space-y-s4', step !== 0 && 'hidden')}>
               <FormField label="학번" error={errors.studentId?.message}>
@@ -361,6 +358,44 @@ export default function SignupPage() {
                   ))}
                 </div>
               </FormField>
+
+              <div className="space-y-s3 rounded-r2 border border-border p-s4">
+                <FormField error={errors.privacyConsent?.message}>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-s3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        {...register('privacyConsent')}
+                        className="cursor-pointer accent-primary"
+                      />
+                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                        개인정보 처리방침에 동의합니다 (필수)
+                      </span>
+                    </label>
+                    <Link to="/privacy" target="_blank" className="text-muted-foreground hover:text-foreground transition-colors">
+                      <ExternalLink size={16} />
+                    </Link>
+                  </div>
+                </FormField>
+
+                <FormField error={errors.termsConsent?.message}>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-s3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        {...register('termsConsent')}
+                        className="cursor-pointer accent-primary"
+                      />
+                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                        이용약관에 동의합니다 (필수)
+                      </span>
+                    </label>
+                    <Link to="/terms" target="_blank" className="text-muted-foreground hover:text-foreground transition-colors">
+                      <ExternalLink size={16} />
+                    </Link>
+                  </div>
+                </FormField>
+              </div>
             </div>
 
             {/* Step 2: 연락처 & 학과 */}
@@ -405,7 +440,14 @@ export default function SignupPage() {
                 </div>
                 {emailDomain === 'custom' && (
                   <Input
-                    {...register('customDomain')}
+                    {...register('customDomain', {
+                      validate: (value) => {
+                        if (getValues('emailDomain') === 'custom' && (!value || value.length === 0)) {
+                          return '도메인을 입력해주세요.';
+                        }
+                        return true;
+                      },
+                    })}
                     placeholder="도메인 입력 (예: example.com)"
                     className="mt-s2"
                   />
@@ -504,6 +546,7 @@ export default function SignupPage() {
               <FormField
                 label="비밀번호 확인"
                 error={errors.passwordConfirm?.message}
+                success={passwordConfirmTouched && !errors.passwordConfirm && watch('passwordConfirm') ? '비밀번호가 일치합니다.' : undefined}
               >
                 <div className="relative">
                   <Lock
@@ -511,7 +554,18 @@ export default function SignupPage() {
                     className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
                   />
                   <Input
-                    {...register('passwordConfirm')}
+                    {...register('passwordConfirm', {
+                      onBlur: () => {
+                        setPasswordConfirmTouched(true);
+                        trigger('passwordConfirm');
+                      },
+                      validate: (value) => {
+                        if (value && value !== getValues('password')) {
+                          return '비밀번호가 일치하지 않습니다.';
+                        }
+                        return true;
+                      },
+                    })}
                     type={showPasswordConfirm ? 'text' : 'password'}
                     placeholder="비밀번호 재입력"
                     className="pl-10 pr-10"
@@ -534,7 +588,7 @@ export default function SignupPage() {
 
             {/* Step 4: 가입 동기 */}
             <div className={cn('space-y-s4', step !== 3 && 'hidden')}>
-              <FormField label={WISH_TITLE}>
+              <FormField label={WISH_TITLE} error={submitted ? errors.wishes?.message : undefined} mutedError>
                 <div className="flex flex-wrap gap-s2">
                   {wishOptions.map((wish) => (
                     <button
@@ -554,7 +608,7 @@ export default function SignupPage() {
                 </div>
               </FormField>
 
-              <FormField label="가입 동기" error={errors.motivation?.message}>
+              <FormField label="가입 동기 (선택)">
                 <div className="relative">
                   <FileText
                     size={18}
@@ -568,25 +622,11 @@ export default function SignupPage() {
                       'w-full rounded-r2 border border-input bg-transparent pl-10 pr-s3 py-s2 text-sm',
                       'placeholder:text-muted-foreground resize-none transition-all outline-none',
                       'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
-                      errors.motivation && 'border-destructive',
                     )}
                   />
                 </div>
               </FormField>
 
-              <FormField error={errors.privacyConsent?.message}>
-                <label className="flex items-start gap-s3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    {...register('privacyConsent')}
-                    className="mt-0.5 cursor-pointer accent-primary"
-                  />
-                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                    개인정보 처리방침에 동의합니다{' '}
-                    <span className="text-destructive">(필수)</span>
-                  </span>
-                </label>
-              </FormField>
             </div>
 
             {/* Navigation Buttons */}
@@ -655,10 +695,14 @@ export default function SignupPage() {
 function FormField({
   label,
   error,
+  success,
+  mutedError,
   children,
 }: {
-  label?: string;
-  error?: string;
+  label?: string | undefined;
+  error?: string | undefined;
+  success?: string | undefined;
+  mutedError?: boolean | undefined;
   children: React.ReactNode;
 }) {
   return (
@@ -669,7 +713,8 @@ function FormField({
         </label>
       )}
       {children}
-      {error && <p className="mt-s1 text-sm text-destructive">{error}</p>}
+      {error && <p className={cn('mt-s1 text-sm', mutedError ? 'text-muted-foreground' : 'text-destructive')}>{error}</p>}
+      {!error && success && <p className="mt-s1 text-sm text-green-600">{success}</p>}
     </div>
   );
 }

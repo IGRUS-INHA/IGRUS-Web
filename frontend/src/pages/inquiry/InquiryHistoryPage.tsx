@@ -1,70 +1,68 @@
 import { useState } from 'react';
-import { useUIStore } from '@/stores/uiStore';
+import { Link } from 'react-router-dom';
+import { PenLine, Inbox } from 'lucide-react';
 import { useGetMyInquiries } from '@/api/model/inquiry/inquiry';
-import type { PageInquiryListResponse } from '@/api/model/models';
+import type { InquiryListPageResponse } from '@/api/model/models/inquiryListPageResponse';
 import InquiryListItem from '@/components/feature/inquiry/InquiryListItem';
-import { cn } from '@/lib/utils';
-import type { Inquiry } from '@/types/entities';
 
 export default function InquiryHistoryPage() {
-  const { theme } = useUIStore();
-  const isDark = theme === 'dark';
-  const [currentPage] = useState(1);
+  const [currentPage] = useState(0);
 
   const { data: response, isLoading } = useGetMyInquiries({
-    page: currentPage - 1,
+    page: currentPage,
     size: 10,
   });
 
-  // Blob 타입 우회하여 실제 데이터 추출
-  const inquiriesData = response?.data ? (response.data as unknown as PageInquiryListResponse) : null;
-  const inquiries: Inquiry[] = inquiriesData?.content?.map((item) => ({
-    id: item.id?.toString() || '',
-    inquiryNumber: `INQ-${item.id}`,
-    category: item.type || 'GENERAL',
-    title: item.title || '',
-    content: item.content || '',
-    status: item.status || 'PENDING',
-    createdAt: item.createdAt || '',
-    answeredAt: item.reply?.createdAt,
-    answer: item.reply?.content,
-  })) || [];
+  const pageData = response?.data as InquiryListPageResponse | undefined;
+  const inquiries = pageData?.inquiries ?? [];
 
   return (
-    <div className="animate-in fade-in duration-500">
-      <section>
-        <div className="mb-s6">
-          <h3
-            className={cn(
-              'text-2xl font-bold transition-colors',
-              isDark ? 'text-white' : 'text-black'
-            )}
+    <div className="mx-auto max-w-2xl py-s6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header */}
+      <div className="mb-s7">
+        <div className="flex items-center justify-between gap-s4">
+          <div>
+            <h1 className="typo-h2 text-foreground">문의 내역</h1>
+            <p className="mt-s1 typo-b2 text-muted-foreground">
+              제출한 문의의 처리 현황을 확인하세요.
+            </p>
+          </div>
+
+          <Link
+            to="/inquiry"
+            className="flex shrink-0 items-center gap-s2 text-muted-foreground typo-b2 transition hover:text-primary"
           >
-            문의 내역
-          </h3>
-          <p className="text-gray-500 text-sm">
-            제출한 문의의 처리 현황을 확인하세요.
-          </p>
+            <PenLine size={15} />
+            문의하기
+          </Link>
         </div>
 
-        <div className="space-y-s4">
-          {isLoading ? (
-            <div className="flex items-center justify-center min-h-[27rem]">
-              <div className="text-center text-muted-foreground">로딩 중...</div>
-            </div>
-          ) : inquiries.length === 0 ? (
-            <div className="flex items-center justify-center min-h-[27rem]">
-              <div className="text-center text-muted-foreground">
-                문의 내역이 없습니다.
-              </div>
-            </div>
-          ) : (
-            inquiries.map((inquiry) => (
-              <InquiryListItem key={inquiry.id} inquiry={inquiry} />
-            ))
-          )}
+        {/* 액센트 라인 */}
+        <div className="mt-s5 h-px bg-border" />
+      </div>
+
+      {/* List */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-s8">
+          <p className="typo-b2 text-muted-foreground">로딩 중...</p>
         </div>
-      </section>
+      ) : inquiries.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-s8 text-center">
+          <Inbox size={48} className="mb-s4 text-muted-foreground/40" />
+          <p className="typo-b1 font-semibold text-muted-foreground">
+            문의 내역이 없습니다
+          </p>
+          <p className="mt-s1 typo-b2 text-muted-foreground/70">
+            궁금한 점이 있으면 문의를 남겨보세요.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-s3">
+          {inquiries.map((inquiry) => (
+            <InquiryListItem key={inquiry.id} inquiry={inquiry} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

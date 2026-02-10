@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { User, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { User, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface LoginFormData {
   studentId: string;
@@ -23,8 +23,8 @@ export default function LoginForm({
   loading = false,
   errors = {},
 }: LoginFormProps) {
-  const [studentId, setStudentId] = useState('');
-  const [password, setPassword] = useState('');
+  const [studentId, setStudentId] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -59,25 +59,23 @@ export default function LoginForm({
               </span>
             </div>
 
-            <h1 className="mb-s3 hidden text-4xl font-extrabold leading-tight text-white lg:block">
+            <h1 className="mb-s2 hidden text-4xl font-extrabold leading-tight text-white lg:block">
               Welcome
-              <br />
-              Back
             </h1>
             <p className="hidden text-white/60 typo-b1 lg:block">
-              IGRUS 동아리 포털에
+              IGRUS에
               <br />
               오신 것을 환영합니다.
             </p>
 
             {/* Mobile-only compact text */}
             <p className="text-white/80 typo-b2 lg:hidden">
-              IGRUS 동아리 포털에 오신 것을 환영합니다.
+              IGRUS에 오신 것을 환영합니다.
             </p>
           </div>
 
           <p className="relative z-10 hidden text-white/40 typo-c1 lg:block">
-            인하대학교 정보통신 동아리
+            인하대학교 IT 동아리
           </p>
         </div>
 
@@ -109,8 +107,8 @@ export default function LoginForm({
                   required
                   className={`w-full rounded-r3 border py-s5 pl-12 pr-s4 transition-all ${
                     errors.studentId
-                      ? 'border-destructive focus:border-destructive'
-                      : 'border-border focus:border-primary'
+                      ? "border-destructive focus:border-destructive"
+                      : "border-border focus:border-primary"
                   }`}
                 />
               </div>
@@ -132,15 +130,15 @@ export default function LoginForm({
                   className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground"
                 />
                 <Input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="영문, 숫자 포함 8자 이상"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className={`w-full rounded-r3 border py-s5 pl-12 pr-12 transition-all ${
                     errors.password
-                      ? 'border-destructive focus:border-destructive'
-                      : 'border-border focus:border-primary'
+                      ? "border-destructive focus:border-destructive"
+                      : "border-border focus:border-primary"
                   }`}
                 />
                 <button
@@ -175,7 +173,7 @@ export default function LoginForm({
               disabled={loading}
               className="flex w-full items-center justify-center gap-s2 rounded-r3 py-s5 font-bold"
             >
-              {loading ? '로그인 중...' : '로그인'}
+              {loading ? "로그인 중..." : "로그인"}
               {!loading && <ArrowRight size={18} />}
             </Button>
           </form>
@@ -183,7 +181,7 @@ export default function LoginForm({
           {/* Sign up link */}
           <div className="mt-s6 text-center">
             <p className="text-muted-foreground typo-b2">
-              아직 계정이 없으신가요?{' '}
+              아직 계정이 없으신가요?{" "}
               <Link
                 to="/signup"
                 className="font-semibold text-primary transition hover:text-primary/80"

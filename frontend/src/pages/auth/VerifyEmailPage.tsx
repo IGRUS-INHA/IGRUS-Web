@@ -24,9 +24,14 @@ export default function VerifyEmailPage() {
   const savedEmail = sessionStorage.getItem(VERIFY_EMAIL_KEY);
   const initialEmail = signupEmail || savedEmail || '';
 
-  // 새로 전달받은 이메일이 있으면 sessionStorage에 저장
+  // 새로 전달받은 이메일이 다르면 기존 타이머 초기화
+  const isNewEmail = signupEmail && signupEmail !== savedEmail;
   if (signupEmail) {
     sessionStorage.setItem(VERIFY_EMAIL_KEY, signupEmail);
+  }
+  if (isNewEmail) {
+    sessionStorage.removeItem('verify-email-code-timer');
+    sessionStorage.removeItem('verify-email-resend-cooldown');
   }
 
   const hasEmail = !!initialEmail;

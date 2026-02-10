@@ -11,6 +11,7 @@
 | 문서 | 설명 |
 |------|------|
 | [auth-flow-diagram.md](./architecture/auth-flow-diagram.md) | 인증 흐름 다이어그램 |
+| [architecture-review.md](./architecture/architecture-review.md) | 아키텍처 리뷰 및 개선 우선순위 |
 
 ### `design/` - 디자인 시스템
 UI 컴포넌트 및 디자인 규칙
