@@ -95,20 +95,19 @@ export default function ChangePasswordPage() {
     });
   };
 
-  const handleGoToLogin = () => {
-    logout();
-    navigate('/login');
+  const handleGoBack = () => {
+    navigate('/mypage');
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-s6 animate-in fade-in duration-300">
       <button
         type="button"
-        onClick={handleGoToLogin}
+        onClick={handleGoBack}
         className="flex items-center gap-s2 text-muted-foreground hover:text-foreground transition cursor-pointer"
       >
         <ArrowLeft size={16} />
-        로그인 페이지로 돌아가기
+        마이페이지로 돌아가기
       </button>
 
       <Card className="border-primary/30 bg-primary/5">
@@ -133,6 +132,7 @@ export default function ChangePasswordPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-s6">
+            <input type="text" name="username" autoComplete="username" className="hidden" tabIndex={-1} aria-hidden="true" />
             <div>
               <label className="block text-sm font-medium mb-s2">
                 현재 비밀번호 <span className="text-destructive">*</span>
