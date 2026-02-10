@@ -63,6 +63,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -191,6 +192,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE,
                     "기타학과",
                     "동기",
+                    List.of(),
                     Gender.MALE,
                     1
             );

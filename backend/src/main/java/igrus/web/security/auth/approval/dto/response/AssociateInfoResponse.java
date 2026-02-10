@@ -1,9 +1,11 @@
 package igrus.web.security.auth.approval.dto.response;
 
 import igrus.web.user.domain.User;
+import igrus.web.user.domain.Wish;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
+import java.util.List;
 
 @Schema(description = "준회원(가입 승인 대기자) 정보 응답")
 public record AssociateInfoResponse(
@@ -22,6 +24,9 @@ public record AssociateInfoResponse(
         @Schema(description = "가입 동기", example = "웹 개발 역량을 키우고 싶습니다.")
         String motivation,
 
+        @Schema(description = "가입 목적")
+        List<Wish> wishes,
+
         @Schema(description = "가입 신청 일시", example = "2024-01-15T10:30:00Z")
         Instant createdAt,
 
@@ -35,6 +40,7 @@ public record AssociateInfoResponse(
                 user.getName(),
                 user.getDepartment(),
                 user.getMotivation(),
+                user.getWishes(),
                 user.getCreatedAt(),
                 demoted
         );

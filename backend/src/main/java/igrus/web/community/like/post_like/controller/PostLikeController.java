@@ -1,6 +1,5 @@
 package igrus.web.community.like.post_like.controller;
 
-import igrus.web.common.exception.ErrorResponse;
 import igrus.web.community.like.post_like.dto.response.PostLikeStatusResponse;
 import igrus.web.community.like.post_like.dto.response.PostLikeToggleResponse;
 import igrus.web.community.like.post_like.dto.response.LikedPostPageResponse;
@@ -62,35 +61,19 @@ public class PostLikeController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "게시글 접근 권한 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글 접근 권한 필요"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글을 찾을 수 없음"
             ),
             @ApiResponse(
                     responseCode = "410",
-                    description = "삭제된 게시글",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "삭제된 게시글"
             )
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
@@ -122,19 +105,11 @@ public class PostLikeController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글을 찾을 수 없음"
             )
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
@@ -162,11 +137,7 @@ public class PostLikeController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             )
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)

@@ -7,7 +7,7 @@ import igrus.web.community.comment.service.read.GetCommentsByPostService;
 import igrus.web.community.comment.service.write.CreateCommentReplyService;
 import igrus.web.community.comment.service.write.CreateCommentService;
 import igrus.web.community.comment.service.write.DeleteCommentService;
-import igrus.web.common.exception.ErrorResponse;
+
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -65,35 +65,19 @@ public class CommentController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (내용 누락, 500자 초과, 익명 불가 게시판 등)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "잘못된 요청 (내용 누락, 500자 초과, 익명 불가 게시판 등)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "작성 권한 없음 (정회원 이상 권한 필요)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "작성 권한 없음 (정회원 이상 권한 필요)"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글을 찾을 수 없음"
             )
     })
     @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
@@ -126,35 +110,19 @@ public class CommentController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (대댓글에 답글 시도, 내용 누락, 500자 초과 등)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "잘못된 요청 (대댓글에 답글 시도, 내용 누락, 500자 초과 등)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "작성 권한 없음 (정회원 이상 권한 필요)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "작성 권한 없음 (정회원 이상 권한 필요)"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글 또는 부모 댓글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글 또는 부모 댓글을 찾을 수 없음"
             )
     })
     @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
@@ -189,11 +157,7 @@ public class CommentController {
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글을 찾을 수 없음"
             )
     })
     @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
@@ -222,27 +186,15 @@ public class CommentController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "삭제 권한 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "삭제 권한 없음"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "댓글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "댓글을 찾을 수 없음"
             )
     })
     @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")

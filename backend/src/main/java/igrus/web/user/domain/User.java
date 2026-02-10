@@ -1,8 +1,10 @@
 package igrus.web.user.domain;
 
+import igrus.web.common.converter.WishListConverter;
 import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.user.exception.InvalidEmailException;
 import igrus.web.user.exception.InvalidGradeException;
+import igrus.web.user.exception.InvalidPhoneNumberException;
 import igrus.web.user.exception.InvalidStudentIdException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -62,6 +64,11 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_motivation", columnDefinition = "TEXT")
     private String motivation;
 
+    /** 가입 목적 (JSON 배열) */
+    @Convert(converter = WishListConverter.class)
+    @Column(name = "users_wishes", columnDefinition = "JSON")
+    private List<Wish> wishes = new ArrayList<>();
+
     /** 성별 (MALE, FEMALE) */
     @Enumerated(EnumType.STRING)
     @Column(name = "users_gender", nullable = false, length = 10)
@@ -89,7 +96,7 @@ public class User extends SoftDeletableEntity {
 
     public static User create(String studentId, String name, String email,
                               String phoneNumber, String department, String motivation,
-                              Gender gender, int grade) {
+                              List<Wish> wishes, Gender gender, int grade) {
         validateStudentId(studentId);
         validateEmail(email);
         validateGrade(grade);
@@ -98,9 +105,11 @@ public class User extends SoftDeletableEntity {
         user.studentId = studentId;
         user.name = name;
         user.email = email;
+        validatePhoneNumber(phoneNumber);
         user.phoneNumber = phoneNumber;
         user.department = department;
         user.motivation = motivation;
+        user.wishes = wishes != null ? new ArrayList<>(wishes) : new ArrayList<Wish>();
         user.gender = gender;
         user.grade = grade;
         user.role = UserRole.ASSOCIATE;
@@ -124,6 +133,22 @@ public class User extends SoftDeletableEntity {
         if (grade < 1) {
             throw new InvalidGradeException(grade);
         }
+    }
+
+    /**
+     * 전화번호가 000-0000-0000 형식인지 검증합니다.
+     */
+    public static void validatePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null) {
+            return;
+        }
+        if (!phoneNumber.matches("^\\d{3}-\\d{4}-\\d{4}$")) {
+            throw new InvalidPhoneNumberException(phoneNumber);
+        }
+    }
+
+    public List<Wish> getWishes() {
+        return Collections.unmodifiableList(this.wishes);
     }
 
     // === 역할 변경 ===
@@ -286,6 +311,7 @@ public class User extends SoftDeletableEntity {
                               Gender gender, int grade) {
         validateGrade(grade);
         this.name = name;
+        validatePhoneNumber(phoneNumber);
         this.phoneNumber = phoneNumber;
         this.department = department;
         this.gender = gender;
@@ -297,10 +323,12 @@ public class User extends SoftDeletableEntity {
     }
 
     public void updateEmail(String email) {
+        validateEmail(email);
         this.email = email;
     }
 
     public void updatePhoneNumber(String phoneNumber) {
+        validatePhoneNumber(phoneNumber);
         this.phoneNumber = phoneNumber;
     }
 

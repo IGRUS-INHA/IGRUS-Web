@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface EmailVerificationRepository extends JpaRepository<EmailVerification, Long> {
     Optional<EmailVerification> findByEmailAndVerifiedFalse(String email);
+    Optional<EmailVerification> findByEmailAndUserIdAndVerifiedFalse(String email, Long userId);
     Optional<EmailVerification> findByEmailAndCodeAndVerifiedFalse(String email, String code);
     List<EmailVerification> findByExpiresAtBeforeAndVerifiedFalse(Instant dateTime);
     void deleteByExpiresAtBeforeAndVerifiedFalse(Instant dateTime);

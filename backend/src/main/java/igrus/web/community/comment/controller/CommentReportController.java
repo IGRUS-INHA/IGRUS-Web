@@ -6,7 +6,6 @@ import igrus.web.community.comment.dto.response.CommentReportResponse;
 import igrus.web.community.comment.service.support.GetPendingReportsService;
 import igrus.web.community.comment.service.support.ReportCommentService;
 import igrus.web.community.comment.service.support.UpdateReportStatusService;
-import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -63,27 +62,15 @@ public class CommentReportController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (신고 사유 누락, 중복 신고)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "잘못된 요청 (신고 사유 누락, 중복 신고)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "댓글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "댓글을 찾을 수 없음"
             )
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
@@ -111,19 +98,11 @@ public class CommentReportController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (OPERATOR 이상 필요)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "권한 없음 (OPERATOR 이상 필요)"
             )
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
@@ -149,35 +128,19 @@ public class CommentReportController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (상태 누락)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "잘못된 요청 (상태 누락)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (OPERATOR 이상 필요)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "권한 없음 (OPERATOR 이상 필요)"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "신고를 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "신고를 찾을 수 없음"
             )
     })
     @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)

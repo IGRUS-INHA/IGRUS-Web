@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,6 +82,7 @@ class GetUserDetailServiceTest {
                 "010-1234-5678",
                 "컴퓨터공학과",
                 "프로그래밍을 배우고 싶어서",
+                List.of(),
                 Gender.MALE,
                 2
         );

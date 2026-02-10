@@ -331,9 +331,9 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.posts").isEmpty());
         }
 
-        @DisplayName("LKB-090: 삭제된 게시글 좋아요 목록에 표시")
+        @DisplayName("LKB-090: 삭제된 게시글은 좋아요 목록에서 제외")
         @Test
-        void getMyLikes_DeletedPost_ShowsDeletedMessage() throws Exception {
+        void getMyLikes_DeletedPost_ExcludedFromList() throws Exception {
             // given: 좋아요 생성 및 삭제를 트랜잭션 내에서 처리
             Long postId = post.getId();
             transactionTemplate.executeWithoutResult(status -> {
@@ -351,9 +351,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.posts[0].isDeleted").value(true))
-                    .andExpect(jsonPath("$.posts[0].deletedMessage").value("삭제된 게시글입니다"));
+                    .andExpect(jsonPath("$.totalElements").value(0))
+                    .andExpect(jsonPath("$.posts").isEmpty());
         }
 
         @DisplayName("준회원 좋아요 목록 조회 시 200 OK (빈 목록)")

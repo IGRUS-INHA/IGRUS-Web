@@ -36,6 +36,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -115,6 +117,7 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -130,6 +133,7 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -145,6 +149,7 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -160,6 +165,7 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -175,6 +181,7 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -190,6 +197,7 @@ class PasswordAuthControllerSignupTest {
                 phone,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -205,6 +213,7 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 department,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -220,6 +229,7 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 motivation,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -235,6 +245,7 @@ class PasswordAuthControllerSignupTest {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 privacyConsent
