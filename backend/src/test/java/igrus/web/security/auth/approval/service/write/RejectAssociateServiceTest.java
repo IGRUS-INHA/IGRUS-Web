@@ -108,6 +108,23 @@ class RejectAssociateServiceTest extends ServiceIntegrationTestBase {
         }
 
         @Test
+        @DisplayName("강등된 준회원 거절 성공 - DEMOTED 결정이 비활성화되고 REJECTED 결정 생성")
+        void rejectAssociate_DemotedUser_DeactivatesDemotedAndCreatesRejected() {
+            // given
+            AssociateDecision demotedDecision = AssociateDecision.demote(associateUser, adminUser.getId(), "관리자에 의한 역할 강등");
+            associateDecisionRepository.save(demotedDecision);
+
+            // when
+            rejectAssociateService.rejectAssociate(associateUser.getId(), adminUser.getId(), "거절 사유");
+
+            // then
+            Optional<AssociateDecision> activeDecision = associateDecisionRepository.findByUserIdAndActiveTrue(associateUser.getId());
+            assertThat(activeDecision).isPresent();
+            assertThat(activeDecision.get().getType()).isEqualTo(AssociateDecisionType.REJECTED);
+            assertThat(activeDecision.get().getReason()).isEqualTo("거절 사유");
+        }
+
+        @Test
         @DisplayName("이미 거절된 준회원 재거절 시도 시 AssociateAlreadyDecidedException 발생")
         void rejectAssociate_AlreadyRejected_ThrowsException() {
             // given

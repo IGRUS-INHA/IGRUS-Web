@@ -36,10 +36,10 @@ public class UserRoleHistory extends BaseEntity {
      * 대상 사용자.
      * <p>User 엔티티의 {@code @SQLRestriction("users_deleted = false")}로 인해
      * 탈퇴 사용자는 로딩 불가하므로 {@code @NotFound(IGNORE)}로 null 허용.</p>
-     * <p>주의: {@code @NotFound}는 지연 로딩을 비활성화합니다.
-     * findByFilters()는 LEFT JOIN FETCH 사용으로 영향 없음.</p>
+     * <p>{@code @NotFound}는 EAGER 로딩을 강제하므로 FetchType.EAGER를 명시적으로 사용.
+     * findByFilters()는 LEFT JOIN FETCH 사용으로 추가 쿼리 발생 없음.</p>
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_role_histories_user_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User user;

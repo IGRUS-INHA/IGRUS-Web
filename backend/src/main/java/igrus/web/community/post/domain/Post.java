@@ -67,8 +67,9 @@ public class Post extends SoftDeletableEntity {
     @JoinColumn(name = "posts_board_id", nullable = false)
     private Board board;
 
-    /** 게시글 작성자. 탈퇴(soft-deleted) 사용자는 @SQLRestriction에 의해 로딩 불가하므로 @NotFound로 null 허용 */
-    @ManyToOne(fetch = FetchType.LAZY)
+    /** 게시글 작성자. 탈퇴(soft-deleted) 사용자는 @SQLRestriction에 의해 로딩 불가하므로 @NotFound로 null 허용.
+     * @NotFound는 EAGER 로딩을 강제하므로 FetchType.EAGER를 명시적으로 사용. */
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "posts_author_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User author;
