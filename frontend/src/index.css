@@ -175,58 +175,74 @@
     line-height: 1.5;
   }
 
-  /* Heading 1 - Bold / 42px / 1.2 */
-  h1, .text-h1 {
+  /* Heading 기본 요소 스타일 */
+  h1 {
     font-weight: 700;
     font-size: 42px;
     line-height: 1.2;
   }
 
-  /* Heading 2 - Bold / 28px / 1.3 */
-  h2, .text-h2 {
+  h2 {
     font-weight: 700;
     font-size: 28px;
     line-height: 1.3;
   }
 
-  /* Heading 3 - Semi Bold / 22px / 1.3 */
-  h3, .text-h3 {
+  h3 {
     font-weight: 600;
     font-size: 22px;
     line-height: 1.3;
   }
+}
 
-  /* Body 1 - Regular / 16px / 1.5 */
-  .text-b1 {
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 1.5;
-  }
+/* ============================================
+   Typography Utility Classes
+   @utility로 등록하여 Tailwind 유틸리티 우선순위 보장
+   ============================================ */
 
-  /* Body 2 - Regular / 14px / 1.5 */
-  .text-b2 {
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 1.5;
-  }
+@utility typo-h1 {
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1.2;
+}
 
-  /* Label - Medium / 13px / Auto */
-  .text-label {
-    font-weight: 500;
-    font-size: 13px;
-  }
+@utility typo-h2 {
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.3;
+}
 
-  /* Caption 1 - Medium / 12px / Auto */
-  .text-c1 {
-    font-weight: 500;
-    font-size: 12px;
-  }
+@utility typo-h3 {
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.3;
+}
 
-  /* Caption 2 - Regular / 10px / Auto */
-  .text-c2 {
-    font-weight: 400;
-    font-size: 10px;
-  }
+@utility typo-b1 {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+@utility typo-b2 {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@utility typo-label {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+@utility typo-c1 {
+  font-weight: 500;
+  font-size: 12px;
+}
+
+@utility typo-c2 {
+  font-weight: 400;
+  font-size: 10px;
 }
 
 /* ============================================
@@ -711,4 +727,21 @@
   .hero-glow-orb {
     display: none;
   }
+}
+
+/* ============================================
+   Login Page
+   ============================================ */
+
+/* 브랜드 패널 그라디언트 */
+.login-brand-panel {
+  background: linear-gradient(135deg, #013E3B 0%, #027A75 40%, #03A69E 100%);
+}
+
+/* 브랜드 패널 도트 그리드 */
+.login-dot-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse 70% 60% at 70% 30%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 70% 30%, black 0%, transparent 70%);
 }

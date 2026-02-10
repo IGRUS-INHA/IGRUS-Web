@@ -7,21 +7,21 @@
 
 export const CLUB_INFO = {
   name: 'IGRUS',
-  fullName: '인하대학교 웹 개발 동아리',
-  description: '인하대학교의 웹 개발 동아리입니다.',
+  fullName: '인하대학교 IT 동아리',
+  description: '인하대학교의 IT 동아리입니다.',
   // TODO: 실제 동아리 방 주소로 교체 필요
-  address: '인천광역시 미추홀구 인하로 100, 인하대학교 [실제 동아리방 위치]',
+  address: '인천광역시 미추홀구 인하로 100, 5호관 동쪽 지하 003',
   // TODO: 실제 이메일 주소로 교체 필요
-  email: 'contact@igrus.club',
+  phone1: '회장 구주원 : 010-6587-7550',
   // TODO: 실제 전화번호로 교체 필요
-  phone: '032-860-XXXX',
+  phone2: '부회장 신연우 : 010-2290-3343',
 } as const;
 
 export const SNS_LINKS = {
   // TODO: 실제 인스타그램 URL로 교체 필요
-  instagram: 'https://instagram.com/igrus_official',
+  instagram: 'https://www.instagram.com/igrus_inha',
   // TODO: 실제 블로그 URL로 교체 필요
-  blog: 'https://blog.igrus.club',
+  // blog: 'https://blog.igrus.club',
 } as const;
 
 export const FOOTER_QUICK_LINKS = [

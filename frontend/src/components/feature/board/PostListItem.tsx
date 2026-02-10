@@ -43,11 +43,11 @@ export default function PostListItem({ post, boardType, linkTo }: PostListItemPr
       }`}
     >
       <div className="flex justify-between items-start">
-        <h3 className="text-h3 group-hover:text-primary transition-colors flex-1 flex items-center gap-s2">
+        <h3 className="typo-h3 group-hover:text-primary transition-colors flex-1 flex items-center gap-s2">
           {post.title}
           {post.isQuestion && (
             <span
-              className={`px-s3 py-s1 rounded-full text-c2 font-bold uppercase tracking-widest ${
+              className={`px-s3 py-s1 rounded-full typo-c2 font-bold uppercase tracking-widest ${
                 isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
               }`}
             >
@@ -55,33 +55,33 @@ export default function PostListItem({ post, boardType, linkTo }: PostListItemPr
             </span>
           )}
         </h3>
-        <p className="text-c1 text-muted-foreground ml-s4 whitespace-nowrap">조회 {post.viewCount ?? 0} · {formatDate(post.createdAt)}</p>
+        <p className="typo-c1 text-muted-foreground ml-s4 whitespace-nowrap">조회 {post.viewCount ?? 0} · {formatDate(post.createdAt)}</p>
       </div>
 
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-s2">
           <div
-            className={`w-6 h-6 rounded-full flex items-center justify-center text-c2 font-bold ${
+            className={`w-6 h-6 rounded-full flex items-center justify-center typo-c2 font-bold ${
               isDark ? 'bg-white/10' : 'bg-muted'
             }`}
           >
             {authorInitial}
           </div>
-          <span className="text-c1 font-medium text-muted-foreground">{authorName}</span>
+          <span className="typo-c1 font-medium text-muted-foreground">{authorName}</span>
         </div>
 
         <div className="flex items-center gap-s4 text-muted-foreground">
           <div className="flex items-center gap-s2 hover:text-primary transition-colors">
             <Heart size={16} />
-            <span className="text-c1">{post.likeCount ?? 0}</span>
+            <span className="typo-c1">{post.likeCount ?? 0}</span>
           </div>
           <div className="flex items-center gap-s2 hover:text-primary transition-colors">
             <MessageCircle size={16} />
-            <span className="text-c1">{post.commentCount ?? 0}</span>
+            <span className="typo-c1">{post.commentCount ?? 0}</span>
           </div>
           <div className="flex items-center gap-s2 hover:text-primary transition-colors cursor-pointer">
             <Bookmark size={16} />
-            <span className="text-c1">{post.bookmarkCount ?? 0}</span>
+            <span className="typo-c1">{post.bookmarkCount ?? 0}</span>
           </div>
         </div>
       </div>

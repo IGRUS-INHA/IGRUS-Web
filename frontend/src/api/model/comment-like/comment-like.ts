@@ -43,10 +43,6 @@ import type {
   UseMutationResult
 } from '@tanstack/react-query';
 
-import type {
-  ErrorResponse
-} from '.././models';
-
 import { customFetch } from '../../client';
 
 
@@ -64,17 +60,17 @@ export type likeCommentResponse201 = {
 }
 
 export type likeCommentResponse400 = {
-  data: ErrorResponse
+  data: void
   status: 400
 }
 
 export type likeCommentResponse401 = {
-  data: ErrorResponse
+  data: void
   status: 401
 }
 
 export type likeCommentResponse404 = {
-  data: ErrorResponse
+  data: void
   status: 404
 }
     
@@ -109,7 +105,7 @@ export const likeComment = async (commentId: number, options?: RequestInit): Pro
 
 
 
-export const getLikeCommentMutationOptions = <TError = ErrorResponse,
+export const getLikeCommentMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof likeComment>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof likeComment>>, TError,{commentId: number}, TContext> => {
 
@@ -138,12 +134,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type LikeCommentMutationResult = NonNullable<Awaited<ReturnType<typeof likeComment>>>
     
-    export type LikeCommentMutationError = ErrorResponse
+    export type LikeCommentMutationError = void
 
     /**
  * @summary 댓글 좋아요
  */
-export const useLikeComment = <TError = ErrorResponse,
+export const useLikeComment = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof likeComment>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof likeComment>>,
@@ -163,12 +159,12 @@ export type unlikeCommentResponse204 = {
 }
 
 export type unlikeCommentResponse401 = {
-  data: ErrorResponse
+  data: void
   status: 401
 }
 
 export type unlikeCommentResponse404 = {
-  data: ErrorResponse
+  data: void
   status: 404
 }
     
@@ -203,7 +199,7 @@ export const unlikeComment = async (commentId: number, options?: RequestInit): P
 
 
 
-export const getUnlikeCommentMutationOptions = <TError = ErrorResponse,
+export const getUnlikeCommentMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlikeComment>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof unlikeComment>>, TError,{commentId: number}, TContext> => {
 
@@ -232,12 +228,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UnlikeCommentMutationResult = NonNullable<Awaited<ReturnType<typeof unlikeComment>>>
     
-    export type UnlikeCommentMutationError = ErrorResponse
+    export type UnlikeCommentMutationError = void
 
     /**
  * @summary 댓글 좋아요 취소
  */
-export const useUnlikeComment = <TError = ErrorResponse,
+export const useUnlikeComment = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlikeComment>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof unlikeComment>>,

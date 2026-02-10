@@ -99,13 +99,13 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
 
       <div className="flex-1 text-center md:text-left">
         <div className="flex flex-col md:flex-row items-center gap-s3 mb-2">
-          <h2 className="text-h1">{profile?.name ?? user.name}</h2>
-          <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-c2 font-bold uppercase tracking-widest border border-primary/30">
+          <h2 className="typo-h1">{profile?.name ?? user.name}</h2>
+          <span className="px-3 py-1 bg-primary/20 text-primary rounded-full typo-c2 font-bold uppercase tracking-widest border border-primary/30">
             {ROLE_LABELS[user.role]}
           </span>
         </div>
         {/* 학번 / 학과 / 가입일 */}
-        <div className="flex flex-wrap justify-center md:justify-start gap-s5 text-muted-foreground text-b2">
+        <div className="flex flex-wrap justify-center md:justify-start gap-s5 text-muted-foreground typo-b2">
           <div className="flex items-center gap-2">
             <Shield size={16} className="text-primary" />
             {profile?.studentId ?? user.studentId}
@@ -123,7 +123,7 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
         </div>
 
         {/* 이메일 / 전화번호 (인라인 수정) */}
-        <div className="mt-s3 space-y-s2 text-muted-foreground text-b2">
+        <div className="mt-s3 space-y-s2 text-muted-foreground typo-b2">
           {/* 이메일 */}
           <div className="flex items-start justify-center md:justify-start gap-2">
             <Mail size={16} className="text-primary shrink-0 mt-1.5" />
@@ -139,7 +139,7 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
                       if (e.key === 'Escape') cancelEditing();
                     }}
                     className={cn(
-                      'px-2 py-1 text-b2 bg-background border rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-56',
+                      'px-2 py-1 typo-b2 bg-background border rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-56',
                       editError ? 'border-destructive' : 'border-border'
                     )}
                     autoFocus
@@ -162,7 +162,7 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
                     <X size={14} />
                   </button>
                 </div>
-                {editError && <p className="text-destructive text-c2 mt-1">{editError}</p>}
+                {editError && <p className="text-destructive typo-c2 mt-1">{editError}</p>}
               </div>
             ) : (
               <>
@@ -196,7 +196,7 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
                     }}
                     placeholder="01012345678"
                     className={cn(
-                      'px-2 py-1 text-b2 bg-background border rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-44',
+                      'px-2 py-1 typo-b2 bg-background border rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-44',
                       editError ? 'border-destructive' : 'border-border'
                     )}
                     autoFocus
@@ -219,7 +219,7 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
                     <X size={14} />
                   </button>
                 </div>
-                {editError && <p className="text-destructive text-c2 mt-1">{editError}</p>}
+                {editError && <p className="text-destructive typo-c2 mt-1">{editError}</p>}
               </div>
             ) : (
               <>

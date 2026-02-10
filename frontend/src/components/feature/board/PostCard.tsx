@@ -33,7 +33,7 @@ export default function PostCard({ post, linkTo }: PostCardProps) {
           />
         )}
         {post.tag && (
-          <span className="absolute top-s4 right-s4 bg-background text-foreground text-c2 font-bold px-s2 py-s1 rounded-r1 shadow-lg uppercase tracking-wider">
+          <span className="absolute top-s4 right-s4 bg-background text-foreground typo-c2 font-bold px-s2 py-s1 rounded-r1 shadow-lg uppercase tracking-wider">
             {post.tag}
           </span>
         )}
@@ -47,17 +47,17 @@ export default function PostCard({ post, linkTo }: PostCardProps) {
       </div>
       <div className="flex justify-between items-start">
         <div className="flex-1 mr-s4">
-          <h4 className="font-bold text-b1 leading-tight mb-s1 transition-colors group-hover:text-primary">
+          <h4 className="font-bold typo-b1 leading-tight mb-s1 transition-colors group-hover:text-primary">
             {post.title}
           </h4>
           <div className="flex items-center gap-s2">
-            <p className="text-c1 text-muted-foreground">{authorName}</p>
+            <p className="typo-c1 text-muted-foreground">{authorName}</p>
             <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-            <p className="text-c1 text-muted-foreground">{post.date}</p>
+            <p className="typo-c1 text-muted-foreground">{post.date}</p>
           </div>
         </div>
         <span
-          className={`text-c2 border px-s2 py-s1 rounded-full whitespace-nowrap uppercase tracking-widest group-hover:border-primary/50 group-hover:text-primary transition-colors ${
+          className={`typo-c2 border px-s2 py-s1 rounded-full whitespace-nowrap uppercase tracking-widest group-hover:border-primary/50 group-hover:text-primary transition-colors ${
             isDark ? 'text-muted-foreground border-border' : 'text-muted-foreground border-border'
           }`}
         >

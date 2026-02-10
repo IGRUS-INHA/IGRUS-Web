@@ -187,8 +187,8 @@ export default function ResetPasswordPage() {
               <div className="w-16 h-16 bg-primary/20 rounded-r4 flex items-center justify-center mx-auto mb-s5">
                 <Key size={32} className="text-primary" />
               </div>
-              <h2 className="text-h2 mb-s2">비밀번호 재설정</h2>
-              <p className="text-muted-foreground text-b2">
+              <h2 className="typo-h2 mb-s2">비밀번호 재설정</h2>
+              <p className="text-muted-foreground typo-b2">
                 {studentIdFromState
                   ? `학번 ${studentIdFromState}의 비밀번호를 재설정합니다.`
                   : '이메일로 받은 토큰과 새 비밀번호를 입력해주세요.'}
@@ -261,13 +261,13 @@ export default function ResetPasswordPage() {
             <div className="mt-s5 text-center space-y-s3">
               <Link
                 to="/forgot-password"
-                className="text-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
+                className="typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
               >
                 토큰을 못 받으셨나요? 다시 요청하기
               </Link>
               <Link
                 to="/login"
-                className="text-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
+                className="typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
               >
                 로그인 페이지로 이동
               </Link>

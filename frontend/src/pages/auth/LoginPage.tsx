@@ -287,15 +287,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center h-full">
-      <div className="max-w-3xl w-full animate-in slide-in-from-bottom-8 duration-500">
-        <LoginForm
-          icon={<img src="/igruslogo.png" alt="IGRUS Logo" className="w-12 h-12" />}
-          title="Welcome IGRUS"
-          subtitle="IGRUS 동아리 포털에 오신 것을 환영합니다."
-          onSubmit={handleLogin}
-          loading={loading}
-        />
+    <div className="flex h-full items-center justify-center px-s4">
+      <div className="w-full max-w-4xl animate-in slide-in-from-bottom-8 duration-500">
+        <LoginForm onSubmit={handleLogin} loading={loading} />
       </div>
     </div>
   );
