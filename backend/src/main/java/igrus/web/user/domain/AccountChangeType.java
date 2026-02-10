@@ -5,5 +5,6 @@ public enum AccountChangeType {
     SUSPENSION,        // 계정 정지
     SUSPENSION_LIFT,   // 정지 해제
     WITHDRAWAL,        // 탈퇴
+    FORCE_WITHDRAWAL,  // 강제 탈퇴
     APPROVAL           // 준회원 승인
 }
