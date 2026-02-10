@@ -11,8 +11,10 @@ import igrus.web.community.like.post_like.service.read.GetMyLikedPostsService;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
+import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
+import igrus.web.user.mypage.dto.request.ChangeEmailRequest;
 import igrus.web.user.mypage.dto.request.ChangePasswordRequest;
-import igrus.web.user.mypage.dto.request.UpdateProfileRequest;
+import igrus.web.user.mypage.dto.request.ChangePhoneNumberRequest;
 import igrus.web.user.mypage.dto.response.MyCommentPageResponse;
 import igrus.web.user.mypage.dto.response.MyCommentResponse;
 import igrus.web.user.mypage.dto.response.MyPostPageResponse;
@@ -21,8 +23,10 @@ import igrus.web.user.mypage.dto.response.MyProfileResponse;
 import igrus.web.user.mypage.service.read.GetMyCommentsService;
 import igrus.web.user.mypage.service.read.GetMyPostsService;
 import igrus.web.user.mypage.service.read.GetMyProfileService;
+import igrus.web.user.mypage.service.write.ChangeEmailService;
 import igrus.web.user.mypage.service.write.ChangeMyPasswordService;
-import igrus.web.user.mypage.service.write.UpdateMyProfileService;
+import igrus.web.user.mypage.service.write.ChangePhoneNumberService;
+import igrus.web.user.mypage.service.write.VerifyEmailChangeService;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.service.WithdrawService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,8 +68,10 @@ public class MyPageController {
     private final EventRegistrationService eventRegistrationService;
     private final GetMyLikedPostsService getMyLikedPostsService;
     private final GetMyBookmarksService getMyBookmarksService;
-    private final UpdateMyProfileService updateMyProfileService;
     private final ChangeMyPasswordService changeMyPasswordService;
+    private final ChangeEmailService changeEmailService;
+    private final VerifyEmailChangeService verifyEmailChangeService;
+    private final ChangePhoneNumberService changePhoneNumberService;
     private final WithdrawService withdrawService;
 
     // === 프로필 ===
@@ -96,36 +102,6 @@ public class MyPageController {
         return ResponseEntity.ok(response);
     }
 
-    // === 프로필 수정 ===
-
-    @Operation(summary = "프로필 수정", description = "이메일, 전화번호를 수정합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 입력값 (이메일 형식 오류, 전화번호 형식 오류)",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "이메일 또는 전화번호 중복",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    @PatchMapping("/profile")
-    public ResponseEntity<Void> updateMyProfile(
-            @Valid @RequestBody UpdateProfileRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
-        updateMyProfileService.updateProfile(user.userId(), request);
-        return ResponseEntity.ok().build();
-    }
-
     // === 비밀번호 변경 ===
 
     @Operation(summary = "비밀번호 변경", description = "현재 비밀번호 확인 후 새 비밀번호로 변경합니다")
@@ -148,6 +124,114 @@ public class MyPageController {
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
         changeMyPasswordService.changePassword(user.userId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    // === 이메일 변경 ===
+
+    @Operation(summary = "이메일 변경 요청", description = "현재 비밀번호 확인 후 새 이메일로 인증 코드를 발송합니다")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "인증 코드 발송 성공"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "이메일 형식 오류 또는 현재 이메일과 동일",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "현재 비밀번호 불일치 또는 인증 필요",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 사용 중인 이메일",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PatchMapping("/email")
+    public ResponseEntity<Void> changeEmail(
+            @Valid @RequestBody ChangeEmailRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        changeEmailService.changeEmail(user.userId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "이메일 변경 인증 확인", description = "인증 코드를 확인하고 이메일을 변경합니다")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "이메일 변경 완료"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "인증 코드 오류 또는 만료",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 필요",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 사용 중인 이메일",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "429",
+                    description = "인증 시도 횟수 초과",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PostMapping("/email/verify")
+    public ResponseEntity<Void> verifyEmailChange(
+            @Valid @RequestBody EmailVerificationRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        verifyEmailChangeService.verifyAndChangeEmail(user.userId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    // === 전화번호 변경 ===
+
+    @Operation(summary = "전화번호 변경", description = "현재 비밀번호 확인 후 새 전화번호로 변경합니다")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "전화번호 변경 성공"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "전화번호 형식 오류",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "현재 비밀번호 불일치 또는 인증 필요",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 사용 중인 전화번호 또는 현재 전화번호와 동일",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PatchMapping("/phone-number")
+    public ResponseEntity<Void> changePhoneNumber(
+            @Valid @RequestBody ChangePhoneNumberRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        changePhoneNumberService.changePhoneNumber(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 

@@ -172,7 +172,7 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
                 studentId,
                 TEST_NAME,
                 email,
-                "010-" + studentId,
+                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4),
                 TEST_DEPARTMENT,
                 TEST_MOTIVATION,
                 List.of(),
