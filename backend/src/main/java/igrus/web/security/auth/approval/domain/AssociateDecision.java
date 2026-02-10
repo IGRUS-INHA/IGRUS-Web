@@ -26,8 +26,8 @@ public class AssociateDecision extends BaseEntity {
     @Column(name = "associate_decisions_id")
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "associate_decisions_user_id", unique = true, nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "associate_decisions_user_id", nullable = false)
     private User user;
 
     @Enumerated(EnumType.STRING)
@@ -43,12 +43,20 @@ public class AssociateDecision extends BaseEntity {
     @Column(name = "associate_decisions_decided_at", nullable = false)
     private Instant decidedAt;
 
+    @Column(name = "associate_decisions_active", nullable = false)
+    private boolean active;
+
+    @Version
+    @Column(name = "associate_decisions_version")
+    private Long version;
+
     public static AssociateDecision approve(User user, Long decidedBy) {
         AssociateDecision decision = new AssociateDecision();
         decision.user = user;
         decision.type = AssociateDecisionType.APPROVED;
         decision.decidedBy = decidedBy;
         decision.decidedAt = Instant.now();
+        decision.active = true;
         return decision;
     }
 
@@ -59,7 +67,23 @@ public class AssociateDecision extends BaseEntity {
         decision.reason = reason;
         decision.decidedBy = decidedBy;
         decision.decidedAt = Instant.now();
+        decision.active = true;
         return decision;
+    }
+
+    public static AssociateDecision demote(User user, Long decidedBy, String reason) {
+        AssociateDecision decision = new AssociateDecision();
+        decision.user = user;
+        decision.type = AssociateDecisionType.DEMOTED;
+        decision.reason = reason;
+        decision.decidedBy = decidedBy;
+        decision.decidedAt = Instant.now();
+        decision.active = true;
+        return decision;
+    }
+
+    public void deactivate() {
+        this.active = false;
     }
 
     public boolean isApproved() {
@@ -68,5 +92,9 @@ public class AssociateDecision extends BaseEntity {
 
     public boolean isRejected() {
         return this.type == AssociateDecisionType.REJECTED;
+    }
+
+    public boolean isDemoted() {
+        return this.type == AssociateDecisionType.DEMOTED;
     }
 }

@@ -7,7 +7,7 @@ import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import { useGetPostDetail, useUpdatePost } from '@/api/model/post/post';
 import { useUIStore } from '@/stores';
-import { BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type PostFormData } from '@/constants/board';
+import { BOARDS, BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type PostFormData } from '@/constants/board';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -45,7 +45,7 @@ export default function PostEditPage() {
   // Check if anonymous and question posts are allowed
   const allowAnonymous = (POST_OPTIONS.ALLOW_ANONYMOUS as readonly BoardType[]).includes(validBoardType);
   const allowQuestion = (POST_OPTIONS.ALLOW_QUESTION as readonly BoardType[]).includes(validBoardType);
-  const allowVisibleToAssociate = validBoardType === 'notices';
+  const allowVisibleToAssociate = validBoardType === BOARDS.NOTICES;
 
   // Form setup
   const {

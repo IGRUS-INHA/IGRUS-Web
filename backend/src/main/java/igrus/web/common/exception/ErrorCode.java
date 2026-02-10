@@ -20,6 +20,7 @@ public enum ErrorCode {
     INVALID_STUDENT_ID(400, "학번은 8자리 숫자여야 합니다"),
     INVALID_EMAIL_FORMAT(400, "유효하지 않은 이메일 형식입니다"),
     INVALID_GRADE(400, "학년은 1 이상이어야 합니다"),
+    INVALID_PHONE_NUMBER_FORMAT(400, "전화번호는 000-0000-0000 형식이어야 합니다"),
 
     // Inquiry
     INQUIRY_NOT_FOUND(404, "문의를 찾을 수 없습니다"),
@@ -60,6 +61,8 @@ public enum ErrorCode {
     DUPLICATE_PHONE_NUMBER(409, "이미 등록된 전화번호입니다"),
     INVALID_PASSWORD_FORMAT(400, "비밀번호는 영문, 숫자를 포함하여 8자 이상이어야 합니다"),
     SAME_PASSWORD(400, "현재 비밀번호와 다른 비밀번호를 입력해주세요"),
+    SAME_EMAIL(400, "현재 이메일과 다른 이메일을 입력해주세요"),
+    SAME_PHONE_NUMBER(400, "현재 전화번호와 다른 전화번호를 입력해주세요"),
 
     PRIVACY_CONSENT_REQUIRED(400, "개인정보 처리방침 동의가 필요합니다"),
     ACCOUNT_SUSPENDED(403, "정지된 계정입니다"),

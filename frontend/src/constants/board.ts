@@ -87,17 +87,17 @@ import { z } from 'zod';
 // 질문글 허용 게시판
 export const ALLOW_QUESTION = [BOARDS.GENERAL] as const;
 
-// 게시판별 카테고리 (소문자 BoardType 키 사용)
+// 게시판별 카테고리
 export const BOARD_CATEGORIES: Record<string, { value: string; label: string }[]> = {
-  notices: [{ value: 'general', label: '일반' }],
-  general: [{ value: 'general', label: '일반' }],
-  insight: [{ value: 'general', label: '일반' }],
+  [BOARDS.NOTICES]: [{ value: 'general', label: '일반' }],
+  [BOARDS.GENERAL]: [{ value: 'general', label: '일반' }],
+  [BOARDS.INSIGHT]: [{ value: 'general', label: '일반' }],
 };
 
-// 게시글 작성 옵션 (소문자 BoardType 값 사용)
+// 게시글 작성 옵션
 export const POST_OPTIONS = {
-  ALLOW_ANONYMOUS: ['general'] as const,
-  ALLOW_QUESTION: ['general'] as const,
+  ALLOW_ANONYMOUS: [BOARDS.GENERAL] as const,
+  ALLOW_QUESTION: [BOARDS.GENERAL] as const,
 } as const;
 
 export const postFormSchema = z.object({

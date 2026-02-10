@@ -38,6 +38,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -141,6 +142,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                 TEST_PHONE,
                 TEST_DEPARTMENT,
                 TEST_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -419,6 +421,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     TEST_PHONE,
                     TEST_DEPARTMENT,
                     TEST_MOTIVATION,
+                    List.of(),
                     Gender.MALE,
                     1
             );
@@ -454,6 +457,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     TEST_PHONE,
                     TEST_DEPARTMENT,
                     TEST_MOTIVATION,
+                    List.of(),
                     Gender.MALE,
                     1
             );
@@ -504,6 +508,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     TEST_PHONE,
                     TEST_DEPARTMENT,
                     TEST_MOTIVATION,
+                    List.of(),
                     Gender.MALE,
                     1
             );
@@ -539,6 +544,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     TEST_PHONE,
                     TEST_DEPARTMENT,
                     TEST_MOTIVATION,
+                    List.of(),
                     Gender.MALE,
                     1
             );

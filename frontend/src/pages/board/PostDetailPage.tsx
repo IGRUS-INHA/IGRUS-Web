@@ -19,6 +19,7 @@ import { Card } from '@/components/ui/card';
 import { CommentSection } from '@/components/feature/comment';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
+import MDEditor from '@uiw/react-md-editor';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
 import { usePermission } from '@/hooks/usePermission';
@@ -328,7 +329,9 @@ export default function PostDetailPage() {
               <img src={post.imageUrls[0]} alt={post.title} className="w-full h-full object-cover" />
             </div>
           )}
-          <div className="text-lg leading-relaxed whitespace-pre-wrap">{post.content}</div>
+          <div data-color-mode={isDark ? 'dark' : 'light'}>
+            <MDEditor.Markdown source={post.content} className="!text-lg !leading-relaxed" />
+          </div>
         </div>
 
         {/* Actions */}

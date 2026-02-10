@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
@@ -41,7 +43,7 @@ class CheckPostRateLimitServiceTest {
 
     @BeforeEach
     void setUp() {
-        testUser = User.create("20200001", "테스트유저", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기", Gender.MALE, 1);
+        testUser = User.create("20200001", "테스트유저", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1);
         testUser.changeRole(UserRole.MEMBER);
         testUser.verifyEmail();
         ReflectionTestUtils.setField(testUser, "id", 1L);

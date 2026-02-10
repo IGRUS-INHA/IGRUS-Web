@@ -1,7 +1,10 @@
 package igrus.web.admin.user.service;
 
 import igrus.web.admin.user.exception.SelfRoleChangeException;
+import igrus.web.security.auth.approval.domain.AssociateDecision;
+import igrus.web.security.auth.approval.domain.AssociateDecisionType;
 import igrus.web.security.auth.approval.exception.LastAdminCannotChangeException;
+import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.manage.ValidateNotLastAdminService;
 import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.user.domain.Gender;
@@ -22,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,6 +44,9 @@ class ChangeUserRoleServiceTest {
 
     @Mock
     private UserRoleHistoryRepository userRoleHistoryRepository;
+
+    @Mock
+    private AssociateDecisionRepository associateDecisionRepository;
 
     @Mock
     private ValidateNotLastAdminService validateNotLastAdminService;
@@ -77,6 +84,67 @@ class ChangeUserRoleServiceTest {
             verify(validateNotLastAdminService).validateNotLastAdmin(targetUserId);
             verify(refreshTokenRepository).revokeAllByUserId(targetUserId);
             verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+        }
+
+        @Test
+        @DisplayName("MEMBER를 ASSOCIATE로 강등하면 DEMOTED 기록이 생성됨")
+        void changeRole_MemberToAssociate_CreatesDemotedRecord() {
+            // given
+            Long targetUserId = 1L;
+            Long currentUserId = 2L;
+            User targetUser = createTestUser();
+            targetUser.verifyEmail();
+            targetUser.changeRole(UserRole.MEMBER);
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+            given(associateDecisionRepository.findByUserIdAndActiveTrue(targetUserId)).willReturn(Optional.empty());
+
+            // when
+            changeUserRoleService.changeUserRole(targetUserId, UserRole.ASSOCIATE, currentUserId);
+
+            // then
+            assertThat(targetUser.getRole()).isEqualTo(UserRole.ASSOCIATE);
+            verify(associateDecisionRepository).save(any(AssociateDecision.class));
+        }
+
+        @Test
+        @DisplayName("MEMBER를 ASSOCIATE로 강등하면 기존 APPROVED 결정이 비활성화됨")
+        void changeRole_MemberToAssociate_DeactivatesExistingDecision() {
+            // given
+            Long targetUserId = 1L;
+            Long currentUserId = 2L;
+            User targetUser = createTestUser();
+            targetUser.verifyEmail();
+            targetUser.changeRole(UserRole.MEMBER);
+            AssociateDecision existingDecision = AssociateDecision.approve(targetUser, currentUserId);
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+            given(associateDecisionRepository.findByUserIdAndActiveTrue(targetUserId)).willReturn(Optional.of(existingDecision));
+
+            // when
+            changeUserRoleService.changeUserRole(targetUserId, UserRole.ASSOCIATE, currentUserId);
+
+            // then
+            assertThat(existingDecision.isActive()).isFalse();
+            verify(associateDecisionRepository).save(any(AssociateDecision.class));
+        }
+
+        @Test
+        @DisplayName("OPERATOR를 ASSOCIATE로 강등해도 DEMOTED 기록이 생성됨")
+        void changeRole_OperatorToAssociate_CreatesDemotedRecord() {
+            // given
+            Long targetUserId = 1L;
+            Long currentUserId = 2L;
+            User targetUser = createTestUser();
+            targetUser.verifyEmail();
+            targetUser.changeRole(UserRole.OPERATOR);
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+            given(associateDecisionRepository.findByUserIdAndActiveTrue(targetUserId)).willReturn(Optional.empty());
+
+            // when
+            changeUserRoleService.changeUserRole(targetUserId, UserRole.ASSOCIATE, currentUserId);
+
+            // then
+            assertThat(targetUser.getRole()).isEqualTo(UserRole.ASSOCIATE);
+            verify(associateDecisionRepository).save(any(AssociateDecision.class));
         }
 
         @Test
@@ -167,6 +235,7 @@ class ChangeUserRoleServiceTest {
                 "010-1234-5678",
                 "컴퓨터공학과",
                 "테스트 동기",
+                List.of(),
                 Gender.MALE,
                 1
         );

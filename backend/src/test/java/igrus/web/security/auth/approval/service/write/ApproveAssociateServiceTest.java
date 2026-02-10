@@ -80,7 +80,7 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
             approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
 
             // then
-            Optional<AssociateDecision> decision = associateDecisionRepository.findByUserId(associateUser.getId());
+            Optional<AssociateDecision> decision = associateDecisionRepository.findByUserIdAndActiveTrue(associateUser.getId());
             assertThat(decision).isPresent();
             assertThat(decision.get().getType()).isEqualTo(AssociateDecisionType.APPROVED);
             assertThat(decision.get().getDecidedBy()).isEqualTo(adminUser.getId());

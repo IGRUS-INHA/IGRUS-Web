@@ -100,6 +100,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -115,6 +116,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -130,6 +132,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -145,6 +148,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 phone,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -396,6 +400,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     VALID_PHONE,
                     "기타학과",
                     "동기",
+                    List.of(),
                     Gender.MALE,
                     1
             );
@@ -448,6 +453,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     "010-1234-5678",
                     "기타학과",
                     "동기",
+                    List.of(),
                     Gender.MALE,
                     1
             );
@@ -856,6 +862,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     "010-9999-9999",
                     VALID_DEPARTMENT,
                     VALID_MOTIVATION,
+                    List.of(),
                     Gender.MALE,
                     1,
                     true
