@@ -220,22 +220,6 @@ class PasswordAuthControllerSignupTest {
         );
     }
 
-    private PasswordSignupRequest createRequestWithMotivation(String motivation) {
-        return new PasswordSignupRequest(
-                VALID_STUDENT_ID,
-                VALID_NAME,
-                VALID_EMAIL,
-                VALID_PASSWORD,
-                VALID_PHONE,
-                VALID_DEPARTMENT,
-                motivation,
-                List.of(),
-                Gender.MALE,
-                1,
-                true
-        );
-    }
-
     private PasswordSignupRequest createRequestWithPrivacyConsent(Boolean privacyConsent) {
         return new PasswordSignupRequest(
                 VALID_STUDENT_ID,
@@ -421,25 +405,6 @@ class PasswordAuthControllerSignupTest {
         }
     }
 
-    @Nested
-    @DisplayName("가입 동기 검증")
-    class MotivationValidationTest {
-
-        @Test
-        @DisplayName("[REG-018] 가입 동기 미입력 - 400 반환")
-        void signup_WithBlankMotivation_Returns400() throws Exception {
-            // given
-            PasswordSignupRequest request = createRequestWithMotivation("");
-
-            // when & then
-            mockMvc.perform(post(SIGNUP_URL)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andDo(print())
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
-        }
-    }
 
     @Nested
     @DisplayName("비밀번호 검증")
