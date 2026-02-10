@@ -359,24 +359,28 @@
   align-self: center !important;
 }
 
-/* 마크다운 에디터 기본 폰트 크기 */
-.w-md-editor-text-pre,
-.w-md-editor-text-input,
-.w-md-editor-text {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-  font-size: 17px !important;
-  line-height: 1.6 !important;
+/* pre 오버레이 숨기고 textarea 직접 표시 */
+.w-md-editor-text-pre {
+  display: none !important;
 }
 
-/* CodeMirror textarea 폰트 설정 (커서 위치 정확도 향상) */
-.w-md-editor-text-pre > code,
 .w-md-editor-text-input {
   font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  font-size: 18px !important;
+  line-height: 1.6 !important;
+  padding: 18px !important;
+  opacity: 1 !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  caret-color: currentColor !important;
 }
 
-.wmde-markdown {
+/* 에디터-프리뷰 폰트 통일 */
+.wmde-markdown,
+.wmde-markdown p,
+.wmde-markdown span {
   font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-  font-size: 17px !important;
+  font-size: 18px !important;
   line-height: 1.6 !important;
 }
 
