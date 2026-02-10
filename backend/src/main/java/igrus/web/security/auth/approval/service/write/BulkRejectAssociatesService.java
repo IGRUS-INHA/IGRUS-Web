@@ -60,7 +60,7 @@ public class BulkRejectAssociatesService {
                     continue;
                 }
 
-                if (associateDecisionRepository.findByUserId(userId).isPresent()) {
+                if (associateDecisionRepository.findByUserIdAndActiveTrue(userId).isPresent()) {
                     failedUserIds.add(userId);
                     continue;
                 }

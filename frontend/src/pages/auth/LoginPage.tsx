@@ -18,6 +18,7 @@ import {
   isEmailNotVerified,
   isAccountWithdrawn,
   isAccountSuspended,
+  isAccountLocked,
   isRateLimitError,
   getErrorMessage,
 } from '@/utils/error';
@@ -259,6 +260,16 @@ export default function LoginPage() {
           html: '관리자 승인 대기 중입니다.<br><br>승인 완료 후 로그인이 가능합니다.',
           confirmButtonText: '확인',
           confirmButtonColor: '#17A2B8',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
+      } else if (isAccountLocked(error)) {
+        Swal.fire({
+          icon: 'error',
+          title: '로그인 실패',
+          html: '로그인 실패 횟수 초과(5회)로 인해<br>계정이 10분간 잠금 처리되었습니다.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#DC3545',
           showClass: { popup: '', backdrop: '' },
           hideClass: { popup: '', backdrop: '' },
         });

@@ -8,7 +8,9 @@ import igrus.web.security.auth.approval.dto.response.AssociateInfoPageResponse;
 import igrus.web.security.auth.approval.dto.response.AssociateInfoResponse;
 import igrus.web.security.auth.approval.dto.response.BulkApprovalResultResponse;
 import igrus.web.security.auth.approval.dto.response.BulkRejectionResultResponse;
+import igrus.web.security.auth.approval.dto.response.DemotedAssociateInfoResponse;
 import igrus.web.security.auth.approval.dto.response.RejectedAssociateInfoResponse;
+import igrus.web.security.auth.approval.service.read.GetDemotedAssociatesService;
 import igrus.web.security.auth.approval.service.read.GetPendingAssociatesService;
 import igrus.web.security.auth.approval.service.read.GetRejectedAssociatesService;
 import igrus.web.security.auth.approval.service.write.ApproveAssociateService;
@@ -50,6 +52,7 @@ public class AdminMemberController {
 
     private final GetPendingAssociatesService getPendingAssociatesService;
     private final GetRejectedAssociatesService getRejectedAssociatesService;
+    private final GetDemotedAssociatesService getDemotedAssociatesService;
     private final ApproveAssociateService approveAssociateService;
     private final BulkApproveAssociatesService bulkApproveAssociatesService;
     private final RejectAssociateService rejectAssociateService;
@@ -297,5 +300,39 @@ public class AdminMemberController {
                 authenticatedUser.userId()
         );
         return ResponseEntity.ok(rejectedAssociates);
+    }
+
+    @Operation(
+            summary = "강등된 준회원 목록 조회",
+            description = "정회원에서 준회원으로 강등된 목록을 페이지네이션하여 조회합니다. ADMIN 권한이 필요합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    useReturnTypeSchema = true
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 필요 (로그인하지 않음)",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "권한 없음 (ADMIN 권한 필요)",
+                    content = @Content
+            )
+    })
+    @GetMapping("/demoted")
+    public ResponseEntity<Page<DemotedAssociateInfoResponse>> getDemotedAssociates(
+            @ParameterObject @PageableDefault(size = 20, sort = "decidedAt", direction = Sort.Direction.DESC)
+            Pageable pageable,
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        Page<DemotedAssociateInfoResponse> demotedAssociates = getDemotedAssociatesService.getDemotedAssociates(
+                pageable,
+                authenticatedUser.userId()
+        );
+        return ResponseEntity.ok(demotedAssociates);
     }
 }

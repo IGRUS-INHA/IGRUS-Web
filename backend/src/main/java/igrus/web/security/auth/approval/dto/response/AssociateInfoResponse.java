@@ -27,9 +27,12 @@ public record AssociateInfoResponse(
         List<String> wishes,
 
         @Schema(description = "가입 신청 일시", example = "2024-01-15T10:30:00Z")
-        Instant createdAt
+        Instant createdAt,
+
+        @Schema(description = "강등된 유저 여부", example = "false")
+        boolean demoted
 ) {
-    public static AssociateInfoResponse from(User user) {
+    public static AssociateInfoResponse from(User user, boolean demoted) {
         return new AssociateInfoResponse(
                 user.getId(),
                 user.getStudentId(),
@@ -37,7 +40,8 @@ public record AssociateInfoResponse(
                 user.getDepartment(),
                 user.getMotivation(),
                 user.getWishes(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                demoted
         );
     }
 }
