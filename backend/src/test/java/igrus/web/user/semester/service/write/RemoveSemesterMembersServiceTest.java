@@ -47,7 +47,7 @@ class RemoveSemesterMembersServiceTest {
 
     private User createTestUser(Long id, String studentId, UserRole role) {
         User user = User.create(studentId, "테스트" + id, studentId + "@inha.edu",
-                "010-" + studentId, "컴퓨터공학과", "동기", Gender.MALE, 1);
+                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4), "컴퓨터공학과", "동기", Gender.MALE, 1);
         user.changeRole(role);
         user.verifyEmail();
         ReflectionTestUtils.setField(user, "id", id);
