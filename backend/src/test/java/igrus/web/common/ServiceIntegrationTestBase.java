@@ -169,7 +169,7 @@ public abstract class ServiceIntegrationTestBase {
                 studentId,
                 "테스트유저",
                 email,
-                "010-" + studentId,
+                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4),
                 "컴퓨터공학과",
                 "테스트 동기",
                 Gender.MALE,

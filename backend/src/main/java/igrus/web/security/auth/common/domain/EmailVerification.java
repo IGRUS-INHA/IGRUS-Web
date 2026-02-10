@@ -67,7 +67,13 @@ public class EmailVerification extends BaseEntity {
     private Instant expiresAt;
 
     /**
-     * EmailVerification 엔티티를 생성합니다.
+     * 인증 요청 사용자 ID. 회원가입 시에는 null.
+     */
+    @Column(name = "email_verifications_user_id")
+    private Long userId;
+
+    /**
+     * EmailVerification 엔티티를 생성합니다. (회원가입용)
      *
      * @param email 인증할 이메일 주소
      * @param code 6자리 인증 코드
@@ -79,6 +85,21 @@ public class EmailVerification extends BaseEntity {
         emailVerification.email = email;
         emailVerification.code = code;
         emailVerification.expiresAt = Instant.now().plusMillis(expiryMillis);
+        return emailVerification;
+    }
+
+    /**
+     * EmailVerification 엔티티를 생성합니다. (이메일 변경용)
+     *
+     * @param email 인증할 이메일 주소
+     * @param code 6자리 인증 코드
+     * @param expiryMillis 만료 시간 (밀리초)
+     * @param userId 인증 요청 사용자 ID
+     * @return 생성된 EmailVerification 엔티티
+     */
+    public static EmailVerification create(String email, String code, long expiryMillis, Long userId) {
+        EmailVerification emailVerification = create(email, code, expiryMillis);
+        emailVerification.userId = userId;
         return emailVerification;
     }
 
