@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { Layers, Heart, Bookmark, Award, Eye, ThumbsUp, RefreshCw, Loader2 } from 'lucide-react';
@@ -10,10 +9,7 @@ import { Button } from '@/components/ui/button';
 import ProfileHeader from '@/components/feature/mypage/ProfileHeader';
 import { cn } from '@/lib/utils';
 import { useMyProfile, useMyPosts, useMyLikes, useMyBookmarks, useMyRegistrations } from '@/hooks/queries/useMyPage';
-import { useUpdateMyProfile, getGetMyProfileQueryKey } from '@/api/model/my-page/my-page';
-import { hasErrorCode, getErrorMessage } from '@/utils/error';
 import { formatRelativeTime, formatDate } from '@/utils';
-import type { UpdateProfileRequest } from '@/api/model/models/updateProfileRequest';
 import type { MyRegistrationResponseStatus } from '@/api/model/models/myRegistrationResponseStatus';
 
 type TabType = 'posts' | 'likes' | 'scraps' | 'events';
@@ -48,8 +44,6 @@ export default function MyPage() {
   const isDark = theme === 'dark';
   const [activeTab, setActiveTab] = useState<TabType>('posts');
 
-  const queryClient = useQueryClient();
-
   // API 조회
   const profile = useMyProfile();
   const postsQuery = useMyPosts({ page: 0, size: 10 });
@@ -57,28 +51,7 @@ export default function MyPage() {
   const bookmarksQuery = useMyBookmarks({ page: 0, size: 10 });
   const registrationsQuery = useMyRegistrations();
 
-  // 프로필 수정 mutation
-  const { mutateAsync: updateProfile, isPending: isProfileUpdating } = useUpdateMyProfile({
-    mutation: {
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
-        void Swal.fire({ icon: 'success', title: '수정 완료', text: '프로필이 수정되었습니다.', timer: 1500, showConfirmButton: false, showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
-      },
-      onError: (error: unknown) => {
-        let errorMessage = getErrorMessage(error);
-        if (hasErrorCode(error, 'DUPLICATE_EMAIL')) {
-          errorMessage = '이미 사용 중인 이메일입니다.';
-        } else if (hasErrorCode(error, 'DUPLICATE_PHONE_NUMBER')) {
-          errorMessage = '이미 사용 중인 전화번호입니다.';
-        }
-        void Swal.fire({ icon: 'error', title: '수정 실패', text: errorMessage, showClass: { popup: '', backdrop: '' }, hideClass: { popup: '', backdrop: '' } });
-      },
-    },
-  });
-
-  const handleUpdateProfile = async (data: UpdateProfileRequest) => {
-    await updateProfile({ data });
-  };
+  // TODO: 이메일/전화번호 변경 API 연동 필요 (ChangeEmail, ChangePhoneNumber)
 
   const handleChangePassword = () => {
     navigate('/mypage/change-password');
@@ -131,8 +104,6 @@ export default function MyPage() {
         onChangePassword={handleChangePassword}
         onLogout={handleLogout}
         onWithdraw={() => navigate('/mypage/withdraw')}
-        onUpdateProfile={handleUpdateProfile}
-        isUpdating={isProfileUpdating}
       />
 
       {/* Tabs */}
@@ -154,7 +125,7 @@ export default function MyPage() {
             </div>
             <div
               className={cn(
-                'text-c2 uppercase font-bold tracking-widest',
+                'typo-c2 uppercase font-bold tracking-widest',
                 activeTab === tab ? 'text-primary' : 'text-muted-foreground'
               )}
             >
@@ -199,11 +170,11 @@ export default function MyPage() {
                   )}
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-c1 text-muted-foreground mb-s1 font-bold">
+                    <p className="typo-c1 text-muted-foreground mb-s1 font-bold">
                       {post.boardName ?? '게시판'} {post.createdAt ? `\u2022 ${formatRelativeTime(post.createdAt)}` : ''}
                     </p>
                     <h4 className="font-bold text-lg truncate">{post.title ?? '제목 없음'}</h4>
-                    <div className="flex items-center gap-s4 mt-s2 text-c1 text-muted-foreground">
+                    <div className="flex items-center gap-s4 mt-s2 typo-c1 text-muted-foreground">
                       <span className="flex items-center gap-1"><Eye size={12} /> {post.viewCount ?? 0}</span>
                       <span className="flex items-center gap-1"><ThumbsUp size={12} /> {post.likeCount ?? 0}</span>
                     </div>
@@ -237,13 +208,13 @@ export default function MyPage() {
                       <Heart size={18} className="fill-current" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-c1 text-muted-foreground mb-s1 font-bold">
+                      <p className="typo-c1 text-muted-foreground mb-s1 font-bold">
                         {post.boardName ?? '게시판'} {post.createdAt ? `\u2022 ${formatRelativeTime(post.createdAt)}` : ''}
                       </p>
                       <h4 className="font-bold text-lg truncate">
                         {post.title ?? '제목 없음'}
                       </h4>
-                      <p className="text-c1 text-muted-foreground">
+                      <p className="typo-c1 text-muted-foreground">
                         작성자: {post.authorName ?? '알 수 없음'}
                         {post.likeCount !== undefined && ` \u2022 좋아요 ${post.likeCount}`}
                       </p>
@@ -275,12 +246,12 @@ export default function MyPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-s2 mb-s1">
                       <Bookmark size={14} className="text-primary fill-current" />
-                      <p className="text-c1 text-primary font-bold">{post.boardName ?? '스크랩한 자료'}</p>
+                      <p className="typo-c1 text-primary font-bold">{post.boardName ?? '스크랩한 자료'}</p>
                     </div>
                     <h4 className="font-bold text-lg mb-s1 truncate">
                       {post.title ?? '제목 없음'}
                     </h4>
-                    <p className="text-c1 text-muted-foreground">
+                    <p className="typo-c1 text-muted-foreground">
                       작성자: {post.authorName ?? '알 수 없음'}
                       {post.createdAt ? ` \u2022 ${formatDate(post.createdAt)}` : ''}
                     </p>
@@ -308,10 +279,10 @@ export default function MyPage() {
                   >
                     <div>
                       <h4 className="font-bold text-lg">{reg.eventTitle ?? '행사명 없음'}</h4>
-                      <p className={cn('text-c1 mt-s1 font-bold', getRegistrationStatusColor(reg.status))}>
+                      <p className={cn('typo-c1 mt-s1 font-bold', getRegistrationStatusColor(reg.status))}>
                         상태: {reg.status ? (REGISTRATION_STATUS_LABELS[reg.status] ?? reg.status) : '-'}
                       </p>
-                      <p className="text-c1 text-muted-foreground mt-s2">
+                      <p className="typo-c1 text-muted-foreground mt-s2">
                         {reg.eventStartAt ? formatDate(reg.eventStartAt) : '일정 미정'}
                         {reg.registeredAt ? ` \u2022 신청일 ${formatDate(reg.registeredAt)}` : ''}
                       </p>
@@ -347,7 +318,7 @@ function TabContent({
     return (
       <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
         <Loader2 size={32} className="animate-spin mb-s4" />
-        <p className="text-b2">데이터를 불러오는 중...</p>
+        <p className="typo-b2">데이터를 불러오는 중...</p>
       </div>
     );
   }
@@ -355,7 +326,7 @@ function TabContent({
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <p className="text-b2 mb-s4">데이터를 불러올 수 없습니다.</p>
+        <p className="typo-b2 mb-s4">데이터를 불러올 수 없습니다.</p>
         <Button
           type="button"
           variant="outline"
@@ -372,7 +343,7 @@ function TabContent({
   if (isEmpty) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
-        <p className="text-b2">{emptyMessage}</p>
+        <p className="typo-b2">{emptyMessage}</p>
       </div>
     );
   }

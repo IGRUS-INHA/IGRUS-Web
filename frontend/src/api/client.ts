@@ -150,6 +150,27 @@ export async function customFetch<T>(
   }
 
   if (response.status === 401 && !isPublicEndpoint) {
+    // 먼저 응답 본문을 파싱하여 에러 유형을 확인
+    const errorBody401 = (await response.json().catch(() => ({}))) as ErrorResponseDto;
+
+    // 토큰 문제가 아닌 비즈니스 로직 에러(예: 비밀번호 변경 시 현재 비밀번호 불일치)는
+    // 토큰 갱신 없이 바로 에러를 던짐
+    const tokenErrorCodes: ReadonlySet<string> = new Set([
+      'ACCESS_TOKEN_INVALID',
+      'ACCESS_TOKEN_EXPIRED',
+      'INVALID_TOKEN_TYPE',
+      'TOKEN_EXPIRED',
+    ]);
+
+    if (errorBody401.code && !tokenErrorCodes.has(errorBody401.code)) {
+      throw new ApiError(
+        401,
+        errorBody401.code,
+        errorBody401.message ?? 'HTTP 401',
+        errorBody401.timestamp
+      );
+    }
+
     try {
       const newAccessToken = await ensureRefresh();
 

@@ -34,6 +34,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 import type { CandidateMemberResponseRole } from './candidateMemberResponseRole';
+import type { CandidateMemberResponseWishesItem } from './candidateMemberResponseWishesItem';
 
 /**
  * 학기별 회원 등록 후보 응답
@@ -53,4 +54,6 @@ export interface CandidateMemberResponse {
   alreadyRegistered?: boolean;
   /** 가입 동기 */
   motivation?: string;
+  /** 가입 목적 */
+  wishes?: CandidateMemberResponseWishesItem[];
 }

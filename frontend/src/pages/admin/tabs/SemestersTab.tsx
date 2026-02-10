@@ -135,7 +135,7 @@ export default function SemestersTab() {
       <Card className="p-s5 overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="text-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
+            <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
               <th className="pb-s4">
                 <input
                   type="checkbox"
@@ -161,12 +161,12 @@ export default function SemestersTab() {
                     className="accent-primary"
                   />
                 </td>
-                <td className="py-s4 text-b2 font-medium">{c.studentId}</td>
-                <td className="py-s4 text-b2 font-bold">{c.name}</td>
-                <td className="py-s4 text-b2">{ROLE_LABELS[c.role ?? ''] ?? c.role}</td>
+                <td className="py-s4 typo-b2 font-medium">{c.studentId}</td>
+                <td className="py-s4 typo-b2 font-bold">{c.name}</td>
+                <td className="py-s4 typo-b2">{ROLE_LABELS[c.role ?? ''] ?? c.role}</td>
                 <td className="py-s4 hidden lg:table-cell">
                   <span className={cn(
-                    'px-2 py-1 rounded-r2 text-c2 font-bold',
+                    'px-2 py-1 rounded-r2 typo-c2 font-bold',
                     c.alreadyRegistered ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
                   )}>
                     {c.alreadyRegistered ? '등록됨' : '미등록'}

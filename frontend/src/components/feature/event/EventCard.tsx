@@ -40,7 +40,7 @@ export default function EventCard({ event }: EventCardProps) {
           className={event.image ? 'w-full h-full object-cover opacity-80' : 'absolute inset-0 m-auto h-40 w-40 object-contain'}
         />
         <div
-          className={`absolute top-s4 right-s4 px-s3 py-s1 rounded-full text-c2 font-bold uppercase tracking-wider ${
+          className={`absolute top-s4 right-s4 px-s3 py-s1 rounded-full typo-c2 font-bold uppercase tracking-wider ${
             STATUS_STYLES[event.status] ?? STATUS_STYLES.Closed
           }`}
         >

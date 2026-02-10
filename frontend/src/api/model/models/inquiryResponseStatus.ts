@@ -43,6 +43,5 @@ export type InquiryResponseStatus = typeof InquiryResponseStatus[keyof typeof In
 export const InquiryResponseStatus = {
   PENDING: 'PENDING',
   IN_PROGRESS: 'IN_PROGRESS',
-  ANSWERED: 'ANSWERED',
-  CLOSED: 'CLOSED',
+  COMPLETED: 'COMPLETED',
 } as const;

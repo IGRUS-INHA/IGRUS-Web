@@ -25,7 +25,7 @@ export default function ActivityList({ activities = [] }: ActivityListProps) {
 
   return (
     <Card className={`p-s6 rounded-[2.5rem] border ${isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'}`}>
-      <h3 className="text-h3 mb-s5 flex items-center gap-2">
+      <h3 className="typo-h3 mb-s5 flex items-center gap-2">
         <Layers size={20} className="text-primary" />
         최근 활동
       </h3>
@@ -35,10 +35,10 @@ export default function ActivityList({ activities = [] }: ActivityListProps) {
             key={activity.id}
             className={`p-s4 rounded-r4 border ${isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'}`}
           >
-            <p className="text-c1 text-muted-foreground mb-1">
+            <p className="typo-c1 text-muted-foreground mb-1">
               {activity.board} • {activity.date}
             </p>
-            <h4 className="font-bold text-b2">{activity.title}</h4>
+            <h4 className="font-bold typo-b2">{activity.title}</h4>
           </div>
         ))}
       </div>

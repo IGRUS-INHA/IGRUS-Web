@@ -71,12 +71,12 @@ export type getSemesterListResponse200 = {
 }
 
 export type getSemesterListResponse401 = {
-  data: void
+  data: SemesterSummaryResponse[]
   status: 401
 }
 
 export type getSemesterListResponse403 = {
-  data: void
+  data: SemesterSummaryResponse[]
   status: 403
 }
     
@@ -119,7 +119,7 @@ export const getGetSemesterListQueryKey = () => {
     }
 
     
-export const getGetSemesterListQueryOptions = <TData = Awaited<ReturnType<typeof getSemesterList>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSemesterList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetSemesterListQueryOptions = <TData = Awaited<ReturnType<typeof getSemesterList>>, TError = SemesterSummaryResponse[]>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSemesterList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -138,10 +138,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetSemesterListQueryResult = NonNullable<Awaited<ReturnType<typeof getSemesterList>>>
-export type GetSemesterListQueryError = void
+export type GetSemesterListQueryError = SemesterSummaryResponse[]
 
 
-export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemesterList>>, TError = void>(
+export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemesterList>>, TError = SemesterSummaryResponse[]>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSemesterList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSemesterList>>,
@@ -151,7 +151,7 @@ export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemester
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemesterList>>, TError = void>(
+export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemesterList>>, TError = SemesterSummaryResponse[]>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSemesterList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSemesterList>>,
@@ -161,7 +161,7 @@ export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemester
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemesterList>>, TError = void>(
+export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemesterList>>, TError = SemesterSummaryResponse[]>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSemesterList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -169,7 +169,7 @@ export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemester
  * @summary 학기 목록 조회
  */
 
-export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemesterList>>, TError = void>(
+export function useGetSemesterList<TData = Awaited<ReturnType<typeof getSemesterList>>, TError = SemesterSummaryResponse[]>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSemesterList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -194,17 +194,17 @@ export type getMemberListResponse200 = {
 }
 
 export type getMemberListResponse400 = {
-  data: void
+  data: SemesterMemberListResponse[]
   status: 400
 }
 
 export type getMemberListResponse401 = {
-  data: void
+  data: SemesterMemberListResponse[]
   status: 401
 }
 
 export type getMemberListResponse403 = {
-  data: void
+  data: SemesterMemberListResponse[]
   status: 403
 }
     
@@ -260,7 +260,7 @@ export const getGetMemberListQueryKey = (year: number,
     }
 
     
-export const getGetMemberListQueryOptions = <TData = Awaited<ReturnType<typeof getMemberList>>, TError = void>(year: number,
+export const getGetMemberListQueryOptions = <TData = Awaited<ReturnType<typeof getMemberList>>, TError = SemesterMemberListResponse[]>(year: number,
     semester: number,
     params?: GetMemberListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
@@ -281,10 +281,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetMemberListQueryResult = NonNullable<Awaited<ReturnType<typeof getMemberList>>>
-export type GetMemberListQueryError = void
+export type GetMemberListQueryError = SemesterMemberListResponse[]
 
 
-export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList>>, TError = void>(
+export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList>>, TError = SemesterMemberListResponse[]>(
  year: number,
     semester: number,
     params: undefined |  GetMemberListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberList>>, TError, TData>> & Pick<
@@ -296,7 +296,7 @@ export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList>>, TError = void>(
+export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList>>, TError = SemesterMemberListResponse[]>(
  year: number,
     semester: number,
     params?: GetMemberListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberList>>, TError, TData>> & Pick<
@@ -308,7 +308,7 @@ export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList>>, TError = void>(
+export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList>>, TError = SemesterMemberListResponse[]>(
  year: number,
     semester: number,
     params?: GetMemberListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
@@ -318,7 +318,7 @@ export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList
  * @summary 학기별 회원 명단 조회
  */
 
-export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList>>, TError = void>(
+export function useGetMemberList<TData = Awaited<ReturnType<typeof getMemberList>>, TError = SemesterMemberListResponse[]>(
  year: number,
     semester: number,
     params?: GetMemberListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMemberList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}

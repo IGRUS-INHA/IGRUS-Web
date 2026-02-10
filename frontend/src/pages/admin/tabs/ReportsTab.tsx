@@ -37,7 +37,7 @@ export default function ReportsTab() {
     <Card className="p-s5 overflow-x-auto">
       <table className="w-full text-left">
         <thead>
-          <tr className="text-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
+          <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
             <th className="pb-s4 font-bold">ID</th>
             <th className="pb-s4 font-bold">댓글 내용</th>
             <th className="pb-s4 font-bold">신고자</th>
@@ -50,13 +50,13 @@ export default function ReportsTab() {
         <tbody className="divide-y divide-border">
           {reports.map((r) => (
             <tr key={r.id}>
-              <td className="py-s4 text-b2 font-medium">{r.id}</td>
-              <td className="py-s4 text-b2 max-w-[200px] truncate">{r.commentContent}</td>
-              <td className="py-s4 text-b2 text-muted-foreground">{r.reporterName}</td>
-              <td className="py-s4 text-b2 text-muted-foreground max-w-[150px] truncate">{r.reason}</td>
+              <td className="py-s4 typo-b2 font-medium">{r.id}</td>
+              <td className="py-s4 typo-b2 max-w-[200px] truncate">{r.commentContent}</td>
+              <td className="py-s4 typo-b2 text-muted-foreground">{r.reporterName}</td>
+              <td className="py-s4 typo-b2 text-muted-foreground max-w-[150px] truncate">{r.reason}</td>
               <td className="py-s4">
                 <span className={cn(
-                  'px-2 py-1 rounded-r2 text-c2 font-bold',
+                  'px-2 py-1 rounded-r2 typo-c2 font-bold',
                   r.status === 'PENDING' ? 'bg-warning/10 text-warning'
                     : r.status === 'RESOLVED' ? 'bg-success/10 text-success'
                     : 'bg-muted text-muted-foreground'
@@ -64,7 +64,7 @@ export default function ReportsTab() {
                   {r.status === 'PENDING' ? '대기' : r.status === 'RESOLVED' ? '처리됨' : '기각'}
                 </span>
               </td>
-              <td className="py-s4 text-b2 text-muted-foreground">
+              <td className="py-s4 typo-b2 text-muted-foreground">
                 {r.createdAt ? new Date(r.createdAt).toLocaleDateString('ko-KR') : '-'}
               </td>
               <td className="py-s4 text-right">

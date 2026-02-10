@@ -153,7 +153,7 @@ export default function AssociatesTab() {
         <Card className="p-s5 overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
+              <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
                 <th className="pb-s4">
                   <input
                     type="checkbox"
@@ -181,11 +181,11 @@ export default function AssociatesTab() {
                       className="accent-primary"
                     />
                   </td>
-                  <td className="py-s4 text-b2 font-medium">{a.studentId}</td>
-                  <td className="py-s4 text-b2 font-bold">{a.name}</td>
-                  <td className="py-s4 text-b2 text-muted-foreground hidden lg:table-cell">{a.department}</td>
-                  <td className="py-s4 text-b2 text-muted-foreground hidden lg:table-cell max-w-[200px] truncate">{a.motivation}</td>
-                  <td className="py-s4 text-b2 text-muted-foreground">
+                  <td className="py-s4 typo-b2 font-medium">{a.studentId}</td>
+                  <td className="py-s4 typo-b2 font-bold">{a.name}</td>
+                  <td className="py-s4 typo-b2 text-muted-foreground hidden lg:table-cell">{a.department}</td>
+                  <td className="py-s4 typo-b2 text-muted-foreground hidden lg:table-cell max-w-[200px] truncate">{a.motivation}</td>
+                  <td className="py-s4 typo-b2 text-muted-foreground">
                     {a.createdAt ? new Date(a.createdAt).toLocaleDateString('ko-KR') : '-'}
                   </td>
                   <td className="py-s4 text-right">
@@ -236,7 +236,7 @@ export default function AssociatesTab() {
         <Card className="p-s5 overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
+              <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
                 <th className="pb-s4 font-bold">학번</th>
                 <th className="pb-s4 font-bold">이름</th>
                 <th className="pb-s4 font-bold">거절 사유</th>
@@ -246,10 +246,10 @@ export default function AssociatesTab() {
             <tbody className="divide-y divide-border">
               {rejectedList.map((a) => (
                 <tr key={a.userId}>
-                  <td className="py-s4 text-b2 font-medium">{a.studentId}</td>
-                  <td className="py-s4 text-b2 font-bold">{a.name}</td>
-                  <td className="py-s4 text-b2 text-muted-foreground">{a.rejectionReason ?? '-'}</td>
-                  <td className="py-s4 text-b2 text-muted-foreground">
+                  <td className="py-s4 typo-b2 font-medium">{a.studentId}</td>
+                  <td className="py-s4 typo-b2 font-bold">{a.name}</td>
+                  <td className="py-s4 typo-b2 text-muted-foreground">{a.rejectionReason ?? '-'}</td>
+                  <td className="py-s4 typo-b2 text-muted-foreground">
                     {a.rejectedAt ? new Date(a.rejectedAt).toLocaleDateString('ko-KR') : '-'}
                   </td>
                 </tr>

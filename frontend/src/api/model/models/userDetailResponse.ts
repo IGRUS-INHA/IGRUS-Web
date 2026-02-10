@@ -36,6 +36,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 import type { UserDetailResponseGender } from './userDetailResponseGender';
 import type { UserDetailResponseRole } from './userDetailResponseRole';
 import type { UserDetailResponseStatus } from './userDetailResponseStatus';
+import type { UserDetailResponseWishesItem } from './userDetailResponseWishesItem';
 
 /**
  * 관리자용 회원 상세 응답
@@ -55,6 +56,8 @@ export interface UserDetailResponse {
   department?: string;
   /** 가입 동기 */
   motivation?: string;
+  /** 가입 목적 */
+  wishes?: UserDetailResponseWishesItem[];
   /** 성별 */
   gender?: UserDetailResponseGender;
   /** 학년 */

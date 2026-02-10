@@ -61,7 +61,7 @@ export function CommentActions({
         )}
       >
         <Heart size={16} className={cn(comment.likedByMe && 'fill-current')} />
-        <span className="text-c1">{comment.likeCount ?? 0}</span>
+        <span className="typo-c1">{comment.likeCount ?? 0}</span>
       </button>
 
       {/* 답글 버튼 (1단계 대댓글에는 표시 안 함) */}
@@ -72,7 +72,7 @@ export function CommentActions({
           className="flex items-center gap-s2 hover:text-primary transition-colors cursor-pointer"
         >
           <MessageCircle size={16} />
-          <span className="text-c1">{comment.replies?.length ?? 0}</span>
+          <span className="typo-c1">{comment.replies?.length ?? 0}</span>
         </button>
       )}
 
@@ -88,7 +88,7 @@ export function CommentActions({
           )}
         >
           <Trash2 size={16} />
-          <span className="text-c1">삭제</span>
+          <span className="typo-c1">삭제</span>
         </button>
       )}
     </div>

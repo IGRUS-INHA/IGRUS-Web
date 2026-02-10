@@ -63,14 +63,14 @@
 
 | 클래스 | 굵기 | 크기 | 행간 | 용도 |
 |--------|------|------|------|------|
-| `.text-h1` / `h1` | Bold (700) | 42px | 1.2 | 메인 타이틀 |
-| `.text-h2` / `h2` | Bold (700) | 28px | 1.3 | 섹션 타이틀 |
-| `.text-h3` / `h3` | SemiBold (600) | 22px | 1.3 | 카드 타이틀 |
-| `.text-b1` | Regular (400) | 16px | 1.5 | 본문 |
-| `.text-b2` | Regular (400) | 14px | 1.5 | 작은 본문 |
-| `.text-label` | Medium (500) | 13px | auto | 라벨 |
-| `.text-c1` | Medium (500) | 12px | auto | 캡션 |
-| `.text-c2` | Regular (400) | 10px | auto | 작은 캡션 |
+| `.typo-h1` / `h1` | Bold (700) | 42px | 1.2 | 메인 타이틀 |
+| `.typo-h2` / `h2` | Bold (700) | 28px | 1.3 | 섹션 타이틀 |
+| `.typo-h3` / `h3` | SemiBold (600) | 22px | 1.3 | 카드 타이틀 |
+| `.typo-b1` | Regular (400) | 16px | 1.5 | 본문 |
+| `.typo-b2` | Regular (400) | 14px | 1.5 | 작은 본문 |
+| `.typo-label` | Medium (500) | 13px | auto | 라벨 |
+| `.typo-c1` | Medium (500) | 12px | auto | 캡션 |
+| `.typo-c2` | Regular (400) | 10px | auto | 작은 캡션 |
 
 ---
 
@@ -135,9 +135,9 @@
 <p className="text-brand-l6">L6 텍스트</p>
 
 // 타이포그래피
-<h1 className="text-h1">제목</h1>
-<p className="text-b1">본문</p>
-<span className="text-c1 text-muted-foreground">캡션</span>
+<h1 className="typo-h1">제목</h1>
+<p className="typo-b1">본문</p>
+<span className="typo-c1 text-muted-foreground">캡션</span>
 
 // 간격
 <div className="p-s4 gap-s3 mb-s5">콘텐츠</div>

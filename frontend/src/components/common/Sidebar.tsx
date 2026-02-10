@@ -43,7 +43,7 @@ const MenuItem = ({ to, icon, label, active, onClick }: MenuItemProps) => {
       <span className={`${active ? 'text-primary' : 'group-hover:text-primary'} transition-colors`}>
         {icon}
       </span>
-      <span className="text-label">{label}</span>
+      <span className="typo-label">{label}</span>
       {active && <span className="absolute left-0 w-1 h-s5 bg-primary rounded-r-full" />}
     </Link>
   );
@@ -91,7 +91,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         {/* Logo */}
         <div className="flex justify-between items-center">
-          <Link to="/" className="text-h3 ml-s2 flex items-center gap-s2">
+          <Link to="/" className="typo-h3 ml-s2 flex items-center gap-s2">
             <Code className="w-6 h-6 text-primary" />
             <span>IGRUS</span>
           </Link>
@@ -153,7 +153,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             ) : (
               <Moon size={20} className="text-primary" />
             )}
-            <span className="text-label">{isDark ? '라이트 모드' : '다크 모드'}</span>
+            <span className="typo-label">{isDark ? '라이트 모드' : '다크 모드'}</span>
           </button>
 
           {isAuthenticated ? (

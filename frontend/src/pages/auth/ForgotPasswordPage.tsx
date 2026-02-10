@@ -116,8 +116,8 @@ export default function ForgotPasswordPage() {
               <div className="w-16 h-16 bg-primary/20 rounded-r4 flex items-center justify-center mx-auto mb-s5">
                 <Lock size={32} className="text-primary" />
               </div>
-              <h2 className="text-h2 mb-s2">비밀번호 찾기</h2>
-              <p className="text-muted-foreground text-b2">
+              <h2 className="typo-h2 mb-s2">비밀번호 찾기</h2>
+              <p className="text-muted-foreground typo-b2">
                 학번을 입력하시면 등록된 이메일로 비밀번호 재설정 링크를
                 보내드립니다.
               </p>
@@ -157,13 +157,13 @@ export default function ForgotPasswordPage() {
             <div className="mt-s5 text-center space-y-s3">
               <Link
                 to="/login"
-                className="text-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
+                className="typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
               >
                 로그인 페이지로 이동
               </Link>
               <Link
                 to="/signup"
-                className="text-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
+                className="typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
               >
                 계정이 없으신가요? 회원가입
               </Link>

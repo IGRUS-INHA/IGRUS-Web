@@ -71,7 +71,7 @@ export default function LoginHistoryTab() {
       <Card className="p-s5 overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="text-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
+            <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
               <th className="pb-s4 font-bold">학번</th>
               <th className="pb-s4 font-bold">결과</th>
               <th className="pb-s4 font-bold">IP 주소</th>
@@ -81,17 +81,17 @@ export default function LoginHistoryTab() {
           <tbody className="divide-y divide-border">
             {(histories as Record<string, unknown>[]).map((h, idx) => (
               <tr key={idx}>
-                <td className="py-s4 text-b2 font-medium">{h.studentId as string}</td>
+                <td className="py-s4 typo-b2 font-medium">{h.studentId as string}</td>
                 <td className="py-s4">
                   <span className={cn(
-                    'px-2 py-1 rounded-r2 text-c2 font-bold',
+                    'px-2 py-1 rounded-r2 typo-c2 font-bold',
                     h.success ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
                   )}>
                     {h.success ? '성공' : '실패'}
                   </span>
                 </td>
-                <td className="py-s4 text-b2 text-muted-foreground font-mono">{h.ipAddress as string}</td>
-                <td className="py-s4 text-b2 text-muted-foreground">
+                <td className="py-s4 typo-b2 text-muted-foreground font-mono">{h.ipAddress as string}</td>
+                <td className="py-s4 typo-b2 text-muted-foreground">
                   {h.loginAt ? new Date(h.loginAt as string).toLocaleString('ko-KR') : '-'}
                 </td>
               </tr>

@@ -24,9 +24,14 @@ export default function VerifyEmailPage() {
   const savedEmail = sessionStorage.getItem(VERIFY_EMAIL_KEY);
   const initialEmail = signupEmail || savedEmail || '';
 
-  // 새로 전달받은 이메일이 있으면 sessionStorage에 저장
+  // 새로 전달받은 이메일이 다르면 기존 타이머 초기화
+  const isNewEmail = signupEmail && signupEmail !== savedEmail;
   if (signupEmail) {
     sessionStorage.setItem(VERIFY_EMAIL_KEY, signupEmail);
+  }
+  if (isNewEmail) {
+    sessionStorage.removeItem('verify-email-code-timer');
+    sessionStorage.removeItem('verify-email-resend-cooldown');
   }
 
   const hasEmail = !!initialEmail;
@@ -150,8 +155,8 @@ export default function VerifyEmailPage() {
             <div className="w-16 h-16 bg-primary/20 rounded-r4 flex items-center justify-center mx-auto mb-s5">
               <Mail size={32} className="text-primary" />
             </div>
-            <h2 className="text-h2 mb-s2">이메일 인증</h2>
-            <p className="text-muted-foreground text-b2">
+            <h2 className="typo-h2 mb-s2">이메일 인증</h2>
+            <p className="text-muted-foreground typo-b2">
               입력하신 이메일로 발송된 6자리 인증 코드를 입력해주세요.
             </p>
           </div>
@@ -189,13 +194,13 @@ export default function VerifyEmailPage() {
 
             {/* 인증 코드 유효시간 타이머 */}
             {codeTimer.isRunning && (
-              <div className={`flex items-center justify-center gap-s2 text-b2 ${getTimerColor()} transition-colors`}>
+              <div className={`flex items-center justify-center gap-s2 typo-b2 ${getTimerColor()} transition-colors`}>
                 <Clock size={16} />
                 <span>남은 시간 {codeTimer.formatted}</span>
               </div>
             )}
             {codeTimer.isExpired && hasEmail && (
-              <p className="text-center text-b2 text-destructive">
+              <p className="text-center typo-b2 text-destructive">
                 인증 코드가 만료되었습니다. 재발송해주세요.
               </p>
             )}
@@ -215,7 +220,7 @@ export default function VerifyEmailPage() {
               type="button"
               onClick={handleResendCode}
               disabled={resendLoading || !resendCooldown.isExpired}
-              className="w-full text-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {resendLoading
                 ? '재발송 중...'
@@ -227,7 +232,7 @@ export default function VerifyEmailPage() {
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className="w-full text-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest"
+              className="w-full typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest"
             >
               로그인 페이지로 이동
             </button>

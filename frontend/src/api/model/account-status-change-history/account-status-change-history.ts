@@ -50,7 +50,8 @@ import type {
 
 import type {
   GetHistoriesParams,
-  Page
+  Page,
+  PageAccountStatusChangeHistoryResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -70,12 +71,12 @@ export type getHistoriesResponse200 = {
 }
 
 export type getHistoriesResponse401 = {
-  data: void
+  data: PageAccountStatusChangeHistoryResponse
   status: 401
 }
 
 export type getHistoriesResponse403 = {
-  data: void
+  data: PageAccountStatusChangeHistoryResponse
   status: 403
 }
     
@@ -125,7 +126,7 @@ export const getGetHistoriesQueryKey = (params?: GetHistoriesParams,) => {
     }
 
     
-export const getGetHistoriesQueryOptions = <TData = Awaited<ReturnType<typeof getHistories>>, TError = void>(params?: GetHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetHistoriesQueryOptions = <TData = Awaited<ReturnType<typeof getHistories>>, TError = PageAccountStatusChangeHistoryResponse>(params?: GetHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -144,10 +145,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetHistoriesQueryResult = NonNullable<Awaited<ReturnType<typeof getHistories>>>
-export type GetHistoriesQueryError = void
+export type GetHistoriesQueryError = PageAccountStatusChangeHistoryResponse
 
 
-export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>, TError = void>(
+export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>, TError = PageAccountStatusChangeHistoryResponse>(
  params: undefined |  GetHistoriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistories>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHistories>>,
@@ -157,7 +158,7 @@ export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>, TError = void>(
+export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>, TError = PageAccountStatusChangeHistoryResponse>(
  params?: GetHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistories>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHistories>>,
@@ -167,7 +168,7 @@ export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>, TError = void>(
+export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>, TError = PageAccountStatusChangeHistoryResponse>(
  params?: GetHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -175,7 +176,7 @@ export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>
  * @summary 계정 상태 변경 감사 이력 조회
  */
 
-export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>, TError = void>(
+export function useGetHistories<TData = Awaited<ReturnType<typeof getHistories>>, TError = PageAccountStatusChangeHistoryResponse>(
  params?: GetHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

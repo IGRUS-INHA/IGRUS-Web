@@ -34,6 +34,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 import type { PasswordSignupRequestGender } from './passwordSignupRequestGender';
+import type { PasswordSignupRequestWishesItem } from './passwordSignupRequestWishesItem';
 
 /**
  * 비밀번호 기반 회원가입 요청
@@ -66,7 +67,7 @@ export interface PasswordSignupRequest {
   /**
    * 전화번호
    * @minLength 1
-   * @pattern ^01[0-9]-?\d{3,4}-?\d{4}$
+   * @pattern ^\d{3}-\d{4}-\d{4}$
    */
   phoneNumber: string;
   /**
@@ -75,11 +76,14 @@ export interface PasswordSignupRequest {
    * @maxLength 50
    */
   department: string;
+  /** 동아리 가입 동기 */
+  motivation?: string;
   /**
-   * 동아리 가입 동기
-   * @minLength 1
+   * 가입 목적 (복수 선택 가능)
+   * @minItems 0
+   * @maxItems 10
    */
-  motivation: string;
+  wishes?: PasswordSignupRequestWishesItem[];
   /** 성별 */
   gender: PasswordSignupRequestGender;
   /**
