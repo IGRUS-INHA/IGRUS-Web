@@ -64,8 +64,9 @@ public class Comment extends SoftDeletableEntity {
     @JoinColumn(name = "comments_parent_comment_id")
     private Comment parentComment;
 
-    /** 댓글 작성자. 탈퇴(soft-deleted) 사용자는 @SQLRestriction에 의해 로딩 불가하므로 @NotFound로 null 허용 */
-    @ManyToOne(fetch = FetchType.LAZY)
+    /** 댓글 작성자. 탈퇴(soft-deleted) 사용자는 @SQLRestriction에 의해 로딩 불가하므로 @NotFound로 null 허용.
+     * @NotFound는 EAGER 로딩을 강제하므로 FetchType.EAGER를 명시적으로 사용. */
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "comments_author_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User author;
