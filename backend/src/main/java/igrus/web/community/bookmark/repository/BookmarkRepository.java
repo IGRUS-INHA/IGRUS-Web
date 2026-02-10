@@ -41,7 +41,7 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
      * 사용자가 북마크한 게시글 목록을 최신순으로 조회합니다.
      */
     @EntityGraph(attributePaths = {"post", "post.board", "post.author"})
-    @Query("SELECT b FROM Bookmark b WHERE b.user.id = :userId ORDER BY b.createdAt DESC")
+    @Query("SELECT b FROM Bookmark b WHERE b.user.id = :userId AND b.post.deleted = false ORDER BY b.createdAt DESC")
     Page<Bookmark> findAllByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 
     /**

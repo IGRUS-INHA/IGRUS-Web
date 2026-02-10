@@ -16,7 +16,6 @@ import igrus.web.community.post.service.read.GetPostViewStatsService;
 import igrus.web.community.post.service.write.CreatePostService;
 import igrus.web.community.post.service.write.DeletePostService;
 import igrus.web.community.post.service.write.UpdatePostService;
-import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -75,43 +74,23 @@ public class PostController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (제목 누락, 100자 초과, 이미지 5개 초과 등)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "잘못된 요청 (제목 누락, 100자 초과, 이미지 5개 초과 등)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "쓰기 권한 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "쓰기 권한 없음"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시판을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시판을 찾을 수 없음"
             ),
             @ApiResponse(
                     responseCode = "429",
-                    description = "게시글 작성 제한 초과 (시간당 20회)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글 작성 제한 초과 (시간당 20회)"
             )
     })
     @PostMapping
@@ -143,27 +122,15 @@ public class PostController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "읽기 권한 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "읽기 권한 없음"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시판을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시판을 찾을 수 없음"
             )
     })
     @GetMapping
@@ -200,27 +167,15 @@ public class PostController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "읽기 권한 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "읽기 권한 없음"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글을 찾을 수 없음"
             )
     })
     @GetMapping("/{postId}")
@@ -253,35 +208,19 @@ public class PostController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (제목 누락, 100자 초과, 이미지 5개 초과 등)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "잘못된 요청 (제목 누락, 100자 초과, 이미지 5개 초과 등)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "수정 권한 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "수정 권한 없음"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글을 찾을 수 없음"
             )
     })
     @PutMapping("/{postId}")
@@ -311,27 +250,15 @@ public class PostController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "삭제 권한 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "삭제 권한 없음"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글을 찾을 수 없음"
             )
     })
     @DeleteMapping("/{postId}")
@@ -364,27 +291,15 @@ public class PostController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "조회 권한 없음 (OPERATOR 이상 필요)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "조회 권한 없음 (OPERATOR 이상 필요)"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글을 찾을 수 없음"
             )
     })
     @GetMapping("/{postId}/view-stats")
@@ -413,27 +328,15 @@ public class PostController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "조회 권한 없음 (OPERATOR 이상 필요)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "조회 권한 없음 (OPERATOR 이상 필요)"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시글을 찾을 수 없음"
             )
     })
     @GetMapping("/{postId}/view-history")

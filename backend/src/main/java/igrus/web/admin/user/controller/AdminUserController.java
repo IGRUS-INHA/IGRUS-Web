@@ -62,9 +62,9 @@ public class AdminUserController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (날짜 범위 역전 등)", content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)", content = @Content)
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (날짜 범위 역전 등)"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/role-histories")
@@ -91,8 +91,8 @@ public class AdminUserController {
             description = "조회 성공",
     content = @Content(schema = @Schema(implementation = UserListPageResponse.class))
             ),
-    @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-    @ApiResponse(responseCode = "403", description = "권한 없음 (OPERATOR 이상 필요)", content = @Content)
+    @ApiResponse(responseCode = "401", description = "인증 필요"),
+    @ApiResponse(responseCode = "403", description = "권한 없음 (OPERATOR 이상 필요)")
     })
     @GetMapping
     public ResponseEntity<UserListPageResponse> getUserList(
@@ -112,9 +112,9 @@ public class AdminUserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = UserDetailResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (OPERATOR 이상 필요)", content = @Content),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content)
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (OPERATOR 이상 필요)"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @GetMapping("/{userId}")
     public ResponseEntity<UserDetailResponse> getUserDetail(
@@ -129,10 +129,10 @@ public class AdminUserController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "변경 성공"),
-            @ApiResponse(responseCode = "400", description = "자기 자신 권한 변경, 동일 역할 변경, 또는 마지막 ADMIN 권한 변경 시도", content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)", content = @Content),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content)
+            @ApiResponse(responseCode = "400", description = "자기 자신 권한 변경, 동일 역할 변경, 또는 마지막 ADMIN 권한 변경 시도"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{userId}/role")
@@ -151,11 +151,10 @@ public class AdminUserController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "상태 변경 성공"),
-            @ApiResponse(responseCode = "400", description = "자기 자신 상태 변경 / 사유 미입력 / 종료일 미입력 / 이미 정지 / 해제할 정지 없음",
-                    content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)", content = @Content),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content)
+            @ApiResponse(responseCode = "400", description = "자기 자신 상태 변경 / 사유 미입력 / 종료일 미입력 / 이미 정지 / 해제할 정지 없음"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{userId}/status")

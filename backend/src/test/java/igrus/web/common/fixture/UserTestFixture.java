@@ -3,6 +3,7 @@ package igrus.web.common.fixture;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import java.util.List;
 
 import static igrus.web.common.fixture.TestConstants.*;
 import static igrus.web.common.fixture.TestEntityIdAssigner.withId;
@@ -75,6 +76,7 @@ public final class UserTestFixture {
                 DEFAULT_PHONE,
                 DEFAULT_DEPARTMENT,
                 DEFAULT_MOTIVATION,
+                List.of(),
                 DEFAULT_GENDER,
                 DEFAULT_GRADE
         );

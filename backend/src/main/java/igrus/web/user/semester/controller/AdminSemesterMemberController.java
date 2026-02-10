@@ -11,7 +11,6 @@ import igrus.web.user.semester.service.write.RegisterSemesterMembersService;
 import igrus.web.user.semester.service.write.RemoveSemesterMembersService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -41,9 +40,9 @@ public class AdminSemesterMemberController {
             description = "특정 학기에 등록 가능한 회원 목록을 조회합니다. ASSOCIATE 이상 + ACTIVE 상태 회원이 대상입니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 연도 또는 학기", content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 권한 필요)", content = @Content)
+            @ApiResponse(responseCode = "400", description = "잘못된 연도 또는 학기"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 권한 필요)")
     })
     @GetMapping("/{year}/{semester}/candidates")
     public ResponseEntity<List<CandidateMemberResponse>> getCandidateMembers(
@@ -59,9 +58,9 @@ public class AdminSemesterMemberController {
             description = "선택된 회원들을 특정 학기에 일괄 등록합니다. 이미 등록된 회원은 건너뜁니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "등록 완료"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (빈 목록, 잘못된 연도/학기)", content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 권한 필요)", content = @Content)
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (빈 목록, 잘못된 연도/학기)"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 권한 필요)")
     })
     @PostMapping("/{year}/{semester}/members")
     public ResponseEntity<RegisterSemesterMembersResponse> registerMembers(
@@ -78,9 +77,9 @@ public class AdminSemesterMemberController {
             description = "선택된 회원들을 특정 학기에서 일괄 제외합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "제외 완료"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (빈 목록, 잘못된 연도/학기)", content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 권한 필요)", content = @Content)
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (빈 목록, 잘못된 연도/학기)"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 권한 필요)")
     })
     @DeleteMapping("/{year}/{semester}/members")
     public ResponseEntity<Integer> removeMembers(

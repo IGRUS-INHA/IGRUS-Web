@@ -312,9 +312,9 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.posts").isEmpty());
         }
 
-        @DisplayName("LKB-091: 삭제된 게시글 북마크 목록에 표시")
+        @DisplayName("LKB-091: 삭제된 게시글은 북마크 목록에서 제외")
         @Test
-        void getMyBookmarks_DeletedPost_ShowsDeletedMessage() throws Exception {
+        void getMyBookmarks_DeletedPost_ExcludedFromList() throws Exception {
             // given: 북마크 후 게시글 삭제
             createBookmark(post, memberUser2);
             post.delete(memberUser.getId());
@@ -326,9 +326,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.posts[0].isDeleted").value(true))
-                    .andExpect(jsonPath("$.posts[0].deletedMessage").value("삭제된 게시글입니다"));
+                    .andExpect(jsonPath("$.totalElements").value(0))
+                    .andExpect(jsonPath("$.posts").isEmpty());
         }
 
         @DisplayName("준회원 북마크 목록 조회 시 200 OK (빈 목록)")

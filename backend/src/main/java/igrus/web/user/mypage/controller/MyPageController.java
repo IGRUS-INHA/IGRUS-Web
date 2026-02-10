@@ -1,7 +1,6 @@
 package igrus.web.user.mypage.controller;
 
 import igrus.web.common.config.SwaggerConfig;
-import igrus.web.common.exception.ErrorResponse;
 import igrus.web.community.bookmark.dto.response.BookmarkedPostPageResponse;
 import igrus.web.community.bookmark.dto.response.BookmarkedPostResponse;
 import igrus.web.community.bookmark.service.read.GetMyBookmarksService;
@@ -12,7 +11,6 @@ import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.mypage.dto.request.ChangePasswordRequest;
-import igrus.web.user.mypage.dto.request.UpdateProfileRequest;
 import igrus.web.user.mypage.dto.response.MyCommentPageResponse;
 import igrus.web.user.mypage.dto.response.MyCommentResponse;
 import igrus.web.user.mypage.dto.response.MyPostPageResponse;
@@ -22,7 +20,6 @@ import igrus.web.user.mypage.service.read.GetMyCommentsService;
 import igrus.web.user.mypage.service.read.GetMyPostsService;
 import igrus.web.user.mypage.service.read.GetMyProfileService;
 import igrus.web.user.mypage.service.write.ChangeMyPasswordService;
-import igrus.web.user.mypage.service.write.UpdateMyProfileService;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.service.WithdrawService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,7 +61,6 @@ public class MyPageController {
     private final EventRegistrationService eventRegistrationService;
     private final GetMyLikedPostsService getMyLikedPostsService;
     private final GetMyBookmarksService getMyBookmarksService;
-    private final UpdateMyProfileService updateMyProfileService;
     private final ChangeMyPasswordService changeMyPasswordService;
     private final WithdrawService withdrawService;
 
@@ -79,13 +75,11 @@ public class MyPageController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "사용자를 찾을 수 없음"
             )
     })
     @GetMapping("/profile")
@@ -96,36 +90,6 @@ public class MyPageController {
         return ResponseEntity.ok(response);
     }
 
-    // === 프로필 수정 ===
-
-    @Operation(summary = "프로필 수정", description = "이메일, 전화번호를 수정합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 입력값 (이메일 형식 오류, 전화번호 형식 오류)",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "이메일 또는 전화번호 중복",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    @PatchMapping("/profile")
-    public ResponseEntity<Void> updateMyProfile(
-            @Valid @RequestBody UpdateProfileRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
-        updateMyProfileService.updateProfile(user.userId(), request);
-        return ResponseEntity.ok().build();
-    }
-
     // === 비밀번호 변경 ===
 
     @Operation(summary = "비밀번호 변경", description = "현재 비밀번호 확인 후 새 비밀번호로 변경합니다")
@@ -133,13 +97,11 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "새 비밀번호 형식 오류 또는 현재 비밀번호와 동일",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "새 비밀번호 형식 오류 또는 현재 비밀번호와 동일"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "현재 비밀번호 불일치 또는 인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "현재 비밀번호 불일치 또는 인증 필요"
             )
     })
     @PatchMapping("/password")
@@ -158,13 +120,11 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 입력값",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "잘못된 입력값"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "비밀번호 불일치 또는 인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "비밀번호 불일치 또는 인증 필요"
             )
     })
     @DeleteMapping("/account")
@@ -183,8 +143,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/posts")
@@ -202,8 +161,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/comments")
@@ -221,8 +179,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "행사 신청 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/registrations")
@@ -238,8 +195,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "좋아요한 게시글 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/likes")
@@ -257,8 +213,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "북마크한 게시글 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/bookmarks")

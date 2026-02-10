@@ -4,7 +4,6 @@ import igrus.web.community.board.dto.response.BoardDetailResponse;
 import igrus.web.community.board.dto.response.BoardListResponse;
 import igrus.web.community.board.service.read.GetBoardByCodeService;
 import igrus.web.community.board.service.read.GetBoardListService;
-import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.UserRole;
 import io.swagger.v3.oas.annotations.Operation;
@@ -58,11 +57,7 @@ public class BoardController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             )
     })
     @GetMapping
@@ -92,19 +87,11 @@ public class BoardController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "게시판을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "게시판을 찾을 수 없음"
             )
     })
     @GetMapping("/{code}")

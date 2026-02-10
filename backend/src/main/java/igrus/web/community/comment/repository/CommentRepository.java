@@ -4,6 +4,7 @@ import igrus.web.community.comment.domain.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -76,4 +77,17 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      */
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.deleted = false AND c.createdAt >= :startTime")
     long countByDeletedFalseAndCreatedAtAfter(@Param("startTime") Instant startTime);
+
+    /**
+     * 특정 게시글의 삭제되지 않은 댓글을 일괄 soft delete합니다.
+     *
+     * @param postId    게시글 ID
+     * @param deletedBy 삭제 수행자 ID
+     * @param now       삭제 시각
+     * @return 삭제된 댓글 수
+     */
+    @Modifying
+    @Query("UPDATE Comment c SET c.deleted = true, c.deletedAt = :now, c.deletedBy = :deletedBy " +
+            "WHERE c.post.id = :postId AND c.deleted = false")
+    int softDeleteByPostId(@Param("postId") Long postId, @Param("deletedBy") Long deletedBy, @Param("now") Instant now);
 }

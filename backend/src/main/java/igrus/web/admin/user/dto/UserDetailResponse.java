@@ -4,9 +4,11 @@ import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
+import igrus.web.user.domain.Wish;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
+import java.util.List;
 
 @Schema(description = "관리자용 회원 상세 응답")
 public record UserDetailResponse(
@@ -30,6 +32,9 @@ public record UserDetailResponse(
 
         @Schema(description = "가입 동기", example = "프로그래밍을 배우고 싶어서")
         String motivation,
+
+        @Schema(description = "가입 목적")
+        List<Wish> wishes,
 
         @Schema(description = "성별", example = "MALE")
         Gender gender,
@@ -55,6 +60,7 @@ public record UserDetailResponse(
                 user.getPhoneNumber(),
                 user.getDepartment(),
                 user.getMotivation(),
+                user.getWishes(),
                 user.getGender(),
                 user.getGrade(),
                 user.getRole(),

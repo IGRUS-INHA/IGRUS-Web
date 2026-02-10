@@ -64,6 +64,7 @@ public class SignupService {
             request.phoneNumber(),
             request.department(),
             request.motivation(),
+            request.wishes(),
             request.gender(),
             request.grade()
         );
