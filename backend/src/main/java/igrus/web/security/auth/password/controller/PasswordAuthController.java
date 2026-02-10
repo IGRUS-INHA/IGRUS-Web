@@ -19,6 +19,7 @@ import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordResetConfirmRequest;
 import igrus.web.security.auth.password.dto.request.PasswordResetRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
+import igrus.web.security.auth.password.dto.response.DuplicateCheckResponse;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
@@ -30,6 +31,7 @@ import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
+import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
 import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
@@ -70,6 +72,7 @@ public class PasswordAuthController {
     private final LogoutService logoutService;
     private final RefreshTokenService refreshTokenService;
     private final SignupService signupService;
+    private final CheckDuplicateService checkDuplicateService;
     private final VerifyEmailService verifyEmailService;
     private final ResendVerificationService resendVerificationService;
     private final RequestPasswordResetService requestPasswordResetService;
@@ -236,6 +239,58 @@ public class PasswordAuthController {
     public ResponseEntity<PasswordSignupResponse> signup(@Valid @RequestBody PasswordSignupRequest request) {
         PasswordSignupResponse response = signupService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Operation(
+            summary = "학번 중복 체크",
+            description = "학번의 유효성 검사 및 중복 여부를 확인합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "사용 가능한 학번"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "학번 형식 오류 (8자리 숫자가 아님)"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 가입된 학번"
+            )
+    })
+    @GetMapping("/check-student-id")
+    public ResponseEntity<DuplicateCheckResponse> checkStudentIdDuplicate(
+            @Parameter(description = "확인할 학번 (8자리 숫자)", example = "12345678", required = true)
+            @RequestParam String studentId) {
+        DuplicateCheckResponse response = checkDuplicateService.checkStudentId(studentId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "이메일 중복 체크",
+            description = "이메일의 유효성 검사 및 중복 여부를 확인합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "사용 가능한 이메일"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "이메일 형식 오류"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 존재하는 이메일"
+            )
+    })
+    @GetMapping("/check-email")
+    public ResponseEntity<DuplicateCheckResponse> checkEmailDuplicate(
+            @Parameter(description = "확인할 이메일", example = "user@example.com", required = true)
+            @RequestParam String email) {
+        DuplicateCheckResponse response = checkDuplicateService.checkEmail(email);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "이메일 인증", description = "이메일로 발송된 인증 코드를 확인합니다.")
