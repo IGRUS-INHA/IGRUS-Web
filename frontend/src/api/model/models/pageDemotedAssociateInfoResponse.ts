@@ -45,8 +45,8 @@ export interface PageDemotedAssociateInfoResponse {
   content?: DemotedAssociateInfoResponse[];
   number?: number;
   sort?: SortObject;
-  numberOfElements?: number;
   first?: boolean;
   last?: boolean;
+  numberOfElements?: number;
   empty?: boolean;
 }

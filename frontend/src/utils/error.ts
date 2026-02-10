@@ -164,7 +164,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   COMMENT_CONTENT_EMPTY: '댓글 내용을 입력해주세요.',
   REPLY_TO_REPLY_NOT_ALLOWED: '대댓글에는 답글을 달 수 없습니다.',
   POST_DELETED_CANNOT_COMMENT: '삭제된 게시글에는 댓글을 달 수 없습니다.',
-  ANONYMOUS_NOT_ALLOWED: '익명 댓글은 허용되지 않습니다.',
+  ANONYMOUS_NOT_ALLOWED: '공지 게시판에서 익명 댓글은 허용되지 않습니다.',
 
   // Comment Like (3개)
   CANNOT_LIKE_OWN_COMMENT: '자신의 댓글에는 좋아요를 누를 수 없습니다.',

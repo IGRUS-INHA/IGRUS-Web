@@ -55,8 +55,11 @@ import type {
 import type {
   AccountRecoveryRequest,
   AccountRecoveryResponse,
+  CheckEmailDuplicateParams,
   CheckReRegistrationEligibilityParams,
   CheckRecoveryEligibilityParams,
+  CheckStudentIdDuplicateParams,
+  DuplicateCheckResponse,
   EmailVerificationRequest,
   PasswordLoginRequest,
   PasswordLoginResponse,
@@ -1043,6 +1046,266 @@ export function useValidateResetToken<TData = Awaited<ReturnType<typeof validate
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getValidateResetTokenQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
+ * 학번의 유효성 검사 및 중복 여부를 확인합니다.
+ * @summary 학번 중복 체크
+ */
+export type checkStudentIdDuplicateResponse200 = {
+  data: DuplicateCheckResponse
+  status: 200
+}
+
+export type checkStudentIdDuplicateResponse400 = {
+  data: DuplicateCheckResponse
+  status: 400
+}
+
+export type checkStudentIdDuplicateResponse409 = {
+  data: DuplicateCheckResponse
+  status: 409
+}
+    
+export type checkStudentIdDuplicateResponseSuccess = (checkStudentIdDuplicateResponse200) & {
+  headers: Headers;
+};
+export type checkStudentIdDuplicateResponseError = (checkStudentIdDuplicateResponse400 | checkStudentIdDuplicateResponse409) & {
+  headers: Headers;
+};
+
+export type checkStudentIdDuplicateResponse = (checkStudentIdDuplicateResponseSuccess | checkStudentIdDuplicateResponseError)
+
+export const getCheckStudentIdDuplicateUrl = (params: CheckStudentIdDuplicateParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/auth/password/check-student-id?${stringifiedParams}` : `/api/v1/auth/password/check-student-id`
+}
+
+export const checkStudentIdDuplicate = async (params: CheckStudentIdDuplicateParams, options?: RequestInit): Promise<checkStudentIdDuplicateResponse> => {
+  
+  return customFetch<checkStudentIdDuplicateResponse>(getCheckStudentIdDuplicateUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getCheckStudentIdDuplicateQueryKey = (params?: CheckStudentIdDuplicateParams,) => {
+    return [
+    `/api/v1/auth/password/check-student-id`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getCheckStudentIdDuplicateQueryOptions = <TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(params: CheckStudentIdDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckStudentIdDuplicateQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkStudentIdDuplicate>>> = ({ signal }) => checkStudentIdDuplicate(params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckStudentIdDuplicateQueryResult = NonNullable<Awaited<ReturnType<typeof checkStudentIdDuplicate>>>
+export type CheckStudentIdDuplicateQueryError = DuplicateCheckResponse
+
+
+export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckStudentIdDuplicateParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkStudentIdDuplicate>>,
+          TError,
+          Awaited<ReturnType<typeof checkStudentIdDuplicate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckStudentIdDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkStudentIdDuplicate>>,
+          TError,
+          Awaited<ReturnType<typeof checkStudentIdDuplicate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckStudentIdDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary 학번 중복 체크
+ */
+
+export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckStudentIdDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCheckStudentIdDuplicateQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
+ * 이메일의 유효성 검사 및 중복 여부를 확인합니다.
+ * @summary 이메일 중복 체크
+ */
+export type checkEmailDuplicateResponse200 = {
+  data: DuplicateCheckResponse
+  status: 200
+}
+
+export type checkEmailDuplicateResponse400 = {
+  data: DuplicateCheckResponse
+  status: 400
+}
+
+export type checkEmailDuplicateResponse409 = {
+  data: DuplicateCheckResponse
+  status: 409
+}
+    
+export type checkEmailDuplicateResponseSuccess = (checkEmailDuplicateResponse200) & {
+  headers: Headers;
+};
+export type checkEmailDuplicateResponseError = (checkEmailDuplicateResponse400 | checkEmailDuplicateResponse409) & {
+  headers: Headers;
+};
+
+export type checkEmailDuplicateResponse = (checkEmailDuplicateResponseSuccess | checkEmailDuplicateResponseError)
+
+export const getCheckEmailDuplicateUrl = (params: CheckEmailDuplicateParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/auth/password/check-email?${stringifiedParams}` : `/api/v1/auth/password/check-email`
+}
+
+export const checkEmailDuplicate = async (params: CheckEmailDuplicateParams, options?: RequestInit): Promise<checkEmailDuplicateResponse> => {
+  
+  return customFetch<checkEmailDuplicateResponse>(getCheckEmailDuplicateUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getCheckEmailDuplicateQueryKey = (params?: CheckEmailDuplicateParams,) => {
+    return [
+    `/api/v1/auth/password/check-email`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getCheckEmailDuplicateQueryOptions = <TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(params: CheckEmailDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckEmailDuplicateQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkEmailDuplicate>>> = ({ signal }) => checkEmailDuplicate(params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckEmailDuplicateQueryResult = NonNullable<Awaited<ReturnType<typeof checkEmailDuplicate>>>
+export type CheckEmailDuplicateQueryError = DuplicateCheckResponse
+
+
+export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckEmailDuplicateParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkEmailDuplicate>>,
+          TError,
+          Awaited<ReturnType<typeof checkEmailDuplicate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckEmailDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkEmailDuplicate>>,
+          TError,
+          Awaited<ReturnType<typeof checkEmailDuplicate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckEmailDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary 이메일 중복 체크
+ */
+
+export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckEmailDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCheckEmailDuplicateQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

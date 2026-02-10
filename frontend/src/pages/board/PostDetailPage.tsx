@@ -9,8 +9,12 @@ import {
   Bookmark,
   Edit,
   Trash2,
+  Pin,
+  PinOff,
 } from 'lucide-react';
 import { useGetPostDetail, useDeletePost } from '@/api/model/post/post';
+import { useCreatePinnedPost, useDeletePinnedPost, useGetPinnedPostList } from '@/api/model/pinned-post/pinned-post';
+import type { PinnedPostListResponse } from '@/api/model/models';
 import { useToggleLike } from '@/api/model/post-like/post-like';
 import { useToggleBookmark, useGetBookmarkStatus } from '@/api/model/bookmark/bookmark';
 import { useUIStore } from '@/stores';
@@ -20,11 +24,11 @@ import { CommentSection } from '@/components/feature/comment';
 import type { BoardType } from '@/types/common';
 import type { PostDetailResponse } from '@/api/model/models';
 import { cn } from '@/lib/utils';
-import MDEditor from '@uiw/react-md-editor';
+import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
 import { usePermission } from '@/hooks/usePermission';
-import { isForbiddenError, isNotFoundError, getErrorMessage } from '@/utils/error';
+import { isForbiddenError, isNotFoundError, isConflictError, getErrorMessage } from '@/utils/error';
 import { formatRelativeTime } from '@/utils';
 import { myPageKeys } from '@/hooks/queries/useMyPage';
 
@@ -34,7 +38,8 @@ export default function PostDetailPage() {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
   const isMockMode = useMockData();
-  const { isAuthenticated } = usePermission();
+  const { isAuthenticated, isOperator } = usePermission();
+  const canManagePins = isOperator();
 
   // Fetch post data (Mock 또는 실제 API)
   const realQuery = useGetPostDetail(
@@ -61,12 +66,22 @@ export default function PostDetailPage() {
   const toggleBookmark = useToggleBookmark();
   const queryClient = useQueryClient();
   const deletePost = useDeletePost();
+  const createPinnedPost = useCreatePinnedPost();
+  const deletePinnedPost = useDeletePinnedPost();
 
   // Bookmark status query (로그인한 경우에만 조회)
   const { data: bookmarkStatusResponse } = useGetBookmarkStatus(Number(postId), {
     query: { enabled: !isMockMode && !!postId && isAuthenticated },
   });
   const isBookmarked = bookmarkStatusResponse?.data?.bookmarked ?? false;
+
+  // 고정 게시글 상태 조회
+  const { data: pinnedResponse } = useGetPinnedPostList({
+    query: { enabled: !isMockMode && canManagePins },
+  });
+  const pinnedPosts = (pinnedResponse?.data ?? []) as PinnedPostListResponse[];
+  const pinnedInfo = pinnedPosts.find((p) => p.post?.id === Number(postId));
+  const isPinned = !!pinnedInfo;
 
   // Click outside handler
   useEffect(() => {
@@ -185,6 +200,60 @@ export default function PostDetailPage() {
     setIsMoreMenuOpen(false);
   };
 
+  const handleTogglePin = () => {
+    if (!post?.postId) return;
+
+    if (isPinned) {
+      if (!window.confirm('게시글 고정을 해제하시겠습니까?')) return;
+      if (!pinnedInfo?.id) return;
+      deletePinnedPost.mutate(
+        { id: pinnedInfo.id },
+        {
+          onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ['/api/v1/pinned-posts'] });
+            alert('게시글 고정이 해제되었습니다.');
+          },
+          onError: (error: unknown) => {
+            let errorMessage = '고정 해제에 실패했습니다.';
+            if (isForbiddenError(error)) {
+              errorMessage = '고정을 해제할 권한이 없습니다.';
+            } else if (isNotFoundError(error)) {
+              errorMessage = '고정 게시글을 찾을 수 없습니다.';
+            } else {
+              errorMessage = getErrorMessage(error);
+            }
+            alert(errorMessage);
+          },
+        }
+      );
+    } else {
+      if (!window.confirm('이 게시글을 메인 페이지에 고정하시겠습니까?')) return;
+      createPinnedPost.mutate(
+        { data: { postId: post.postId, displayOrder: pinnedPosts.length + 1 } },
+        {
+          onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ['/api/v1/pinned-posts'] });
+            alert('게시글이 고정되었습니다.');
+          },
+          onError: (error: unknown) => {
+            let errorMessage = '게시글 고정에 실패했습니다.';
+            if (isForbiddenError(error)) {
+              errorMessage = '게시글을 고정할 권한이 없습니다.';
+            } else if (isConflictError(error)) {
+              errorMessage = '이미 고정된 게시글입니다.';
+            } else if (isNotFoundError(error)) {
+              errorMessage = '게시글을 찾을 수 없습니다.';
+            } else {
+              errorMessage = getErrorMessage(error);
+            }
+            alert(errorMessage);
+          },
+        }
+      );
+    }
+    setIsMoreMenuOpen(false);
+  };
+
   const handleBack = () => {
     navigate(`/board/${boardType}`);
   };
@@ -280,6 +349,22 @@ export default function PostDetailPage() {
                     'bg-popover border-border'
                   )}
                 >
+                  {canManagePins && (
+                    <button
+                      onClick={handleTogglePin}
+                      type="button"
+                      className={cn(
+                        'w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer',
+                        isDark ? 'text-foreground hover:bg-white/5' : 'text-foreground hover:bg-muted'
+                      )}
+                    >
+                      {isPinned ? (
+                        <><PinOff size={16} /> 고정 해제</>
+                      ) : (
+                        <><Pin size={16} /> 고정하기</>
+                      )}
+                    </button>
+                  )}
                   {post.isAuthor ? (
                     // 작성자: 수정/삭제
                     <>
@@ -342,7 +427,7 @@ export default function PostDetailPage() {
             </div>
           )}
           <div data-color-mode={isDark ? 'dark' : 'light'}>
-            <MDEditor.Markdown source={post.content} className="!text-lg !leading-relaxed" />
+            <MarkdownPreview source={post.content?.replace(/\n/g, "  \n") ?? ""} className="!text-lg !leading-relaxed" />
           </div>
         </div>
 

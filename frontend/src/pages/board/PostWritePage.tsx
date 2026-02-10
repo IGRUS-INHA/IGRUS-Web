@@ -4,6 +4,7 @@ import { ArrowLeft, Save, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import MDEditor from '@uiw/react-md-editor';
+import remarkBreaks from 'remark-breaks';
 import '@uiw/react-md-editor/markdown-editor.css';
 import { useCreatePost } from '@/api/model/post/post';
 import { useUIStore } from '@/stores';
@@ -273,6 +274,9 @@ export default function PostWritePage() {
                       return false;
                     }
                     return command;
+                  }}
+                  previewOptions={{
+                    remarkPlugins: [remarkBreaks],
                   }}
                   className={cn(
                     errors.content && 'border-2 border-destructive rounded-r2'
