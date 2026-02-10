@@ -44,7 +44,6 @@ public record PasswordSignupRequest(
     String department,
 
     @Schema(description = "동아리 가입 동기", example = "웹 개발 역량을 키우고 싶습니다.")
-    @NotBlank(message = "가입 동기는 필수입니다")
     String motivation,
 
     @Schema(description = "가입 목적 (복수 선택 가능)", example = "[\"NETWORKING\", \"PROGRAMMING\"]")
