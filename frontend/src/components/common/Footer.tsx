@@ -17,7 +17,7 @@ export default function Footer() {
     >
       <div className="px-s4 lg:px-s7 py-s4">
         {/* Main content - 2 columns on desktop, stack on mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-s5 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-s3 sm:gap-s5 max-w-7xl mx-auto">
           {/* Left: Club Info & Address */}
           <div className="space-y-s2" data-testid="club-info">
             <div>
@@ -31,7 +31,7 @@ export default function Footer() {
               </h3>
               <p
                 className={cn(
-                  "text-xs",
+                  "hidden sm:block text-xs",
                   isDark ? "text-gray-400" : "text-gray-600",
                 )}
               >
@@ -71,7 +71,7 @@ export default function Footer() {
             </h4>
 
             <div className="space-y-s2">
-              {/* Email */}
+              {/* Phone1 */}
               <div className="flex items-center gap-s2 lg:justify-end">
                 <Phone
                   size={14}
@@ -91,8 +91,8 @@ export default function Footer() {
                 </a>
               </div>
 
-              {/* Phone */}
-              <div className="flex items-center gap-s2 lg:justify-end">
+              {/* Phone2 - hidden on mobile/small */}
+              <div className="hidden sm:flex items-center gap-s2 lg:justify-end">
                 <Phone
                   size={14}
                   className={cn(
@@ -112,7 +112,7 @@ export default function Footer() {
               </div>
 
               {/* SNS Links */}
-              <div className="mt-2">
+              <div className="mt-s3 sm:mt-2">
                 <h5
                   className={cn(
                     "text-sm font-semibold mb-2",
@@ -134,18 +134,6 @@ export default function Footer() {
                   >
                     <Instagram size={16} />
                   </a>
-                  {/* <a
-                  href={SNS_LINKS.blog}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Blog"
-                  className={cn(
-                    'hover:text-primary transition-colors',
-                    isDark ? 'text-gray-400' : 'text-gray-600'
-                  )}
-                >
-                  <Pen size={16} />
-                </a> */}
                 </div>
               </div>
             </div>
