@@ -33,16 +33,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { PinnedByInfo } from './pinnedByInfo';
 
-/**
- * 프로필 수정 요청
- */
-export interface UpdateProfileRequest {
-  /** 이메일 */
-  email?: string;
-  /**
-   * 전화번호
-   * @pattern ^01[0-9]-?\d{3,4}-?\d{4}$
-   */
-  phoneNumber?: string;
+export interface PinnedPostDetailResponse {
+  id?: number;
+  postId?: number;
+  postTitle?: string;
+  boardCode?: string;
+  displayOrder?: number;
+  pinnedBy?: PinnedByInfo;
+  createdAt?: string;
 }

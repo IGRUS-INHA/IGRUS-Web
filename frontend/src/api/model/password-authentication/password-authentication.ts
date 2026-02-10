@@ -55,6 +55,7 @@ import type {
 import type {
   AccountRecoveryRequest,
   AccountRecoveryResponse,
+  CheckReRegistrationEligibilityParams,
   CheckRecoveryEligibilityParams,
   EmailVerificationRequest,
   PasswordLoginRequest,
@@ -63,6 +64,7 @@ import type {
   PasswordResetRequest,
   PasswordSignupRequest,
   PasswordSignupResponse,
+  ReRegistrationCheckResult,
   RecoveryEligibilityResponse,
   ResendVerificationRequest,
   TokenRefreshResponse,
@@ -87,12 +89,12 @@ export type verifyEmailResponse200 = {
 }
 
 export type verifyEmailResponse400 = {
-  data: void
+  data: PasswordSignupResponse
   status: 400
 }
 
 export type verifyEmailResponse429 = {
-  data: void
+  data: PasswordSignupResponse
   status: 429
 }
     
@@ -128,7 +130,7 @@ export const verifyEmail = async (emailVerificationRequest: EmailVerificationReq
 
 
 
-export const getVerifyEmailMutationOptions = <TError = void,
+export const getVerifyEmailMutationOptions = <TError = PasswordSignupResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyEmail>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof verifyEmail>>, TError,{data: EmailVerificationRequest}, TContext> => {
 
@@ -157,12 +159,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type VerifyEmailMutationResult = NonNullable<Awaited<ReturnType<typeof verifyEmail>>>
     export type VerifyEmailMutationBody = EmailVerificationRequest
-    export type VerifyEmailMutationError = void
+    export type VerifyEmailMutationError = PasswordSignupResponse
 
     /**
  * @summary 이메일 인증
  */
-export const useVerifyEmail = <TError = void,
+export const useVerifyEmail = <TError = PasswordSignupResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyEmail>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof verifyEmail>>,
@@ -182,12 +184,12 @@ export type signupResponse201 = {
 }
 
 export type signupResponse400 = {
-  data: void
+  data: PasswordSignupResponse
   status: 400
 }
 
 export type signupResponse409 = {
-  data: void
+  data: PasswordSignupResponse
   status: 409
 }
     
@@ -223,7 +225,7 @@ export const signup = async (passwordSignupRequest: PasswordSignupRequest, optio
 
 
 
-export const getSignupMutationOptions = <TError = void,
+export const getSignupMutationOptions = <TError = PasswordSignupResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: PasswordSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: PasswordSignupRequest}, TContext> => {
 
@@ -252,12 +254,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SignupMutationResult = NonNullable<Awaited<ReturnType<typeof signup>>>
     export type SignupMutationBody = PasswordSignupRequest
-    export type SignupMutationError = void
+    export type SignupMutationError = PasswordSignupResponse
 
     /**
  * @summary 회원가입
  */
-export const useSignup = <TError = void,
+export const useSignup = <TError = PasswordSignupResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: PasswordSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof signup>>,
@@ -457,12 +459,12 @@ export type resendVerificationResponse200 = {
 }
 
 export type resendVerificationResponse400 = {
-  data: void
+  data: VerificationResendResponse
   status: 400
 }
 
 export type resendVerificationResponse429 = {
-  data: void
+  data: VerificationResendResponse
   status: 429
 }
     
@@ -498,7 +500,7 @@ export const resendVerification = async (resendVerificationRequest: ResendVerifi
 
 
 
-export const getResendVerificationMutationOptions = <TError = void,
+export const getResendVerificationMutationOptions = <TError = VerificationResendResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendVerification>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof resendVerification>>, TError,{data: ResendVerificationRequest}, TContext> => {
 
@@ -527,12 +529,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ResendVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof resendVerification>>>
     export type ResendVerificationMutationBody = ResendVerificationRequest
-    export type ResendVerificationMutationError = void
+    export type ResendVerificationMutationError = VerificationResendResponse
 
     /**
  * @summary 인증 코드 재발송
  */
-export const useResendVerification = <TError = void,
+export const useResendVerification = <TError = VerificationResendResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendVerification>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof resendVerification>>,
@@ -552,12 +554,12 @@ export type refreshTokenResponse200 = {
 }
 
 export type refreshTokenResponse400 = {
-  data: void
+  data: TokenRefreshResponse
   status: 400
 }
 
 export type refreshTokenResponse401 = {
-  data: void
+  data: TokenRefreshResponse
   status: 401
 }
     
@@ -592,7 +594,7 @@ export const refreshToken = async ( options?: RequestInit): Promise<refreshToken
 
 
 
-export const getRefreshTokenMutationOptions = <TError = void,
+export const getRefreshTokenMutationOptions = <TError = TokenRefreshResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,void, TContext> => {
 
@@ -621,12 +623,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RefreshTokenMutationResult = NonNullable<Awaited<ReturnType<typeof refreshToken>>>
     
-    export type RefreshTokenMutationError = void
+    export type RefreshTokenMutationError = TokenRefreshResponse
 
     /**
  * @summary 토큰 갱신
  */
-export const useRefreshToken = <TError = void,
+export const useRefreshToken = <TError = TokenRefreshResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof refreshToken>>,
@@ -740,17 +742,17 @@ export type loginResponse200 = {
 }
 
 export type loginResponse400 = {
-  data: void
+  data: PasswordLoginResponse
   status: 400
 }
 
 export type loginResponse401 = {
-  data: void
+  data: PasswordLoginResponse
   status: 401
 }
 
 export type loginResponse403 = {
-  data: void
+  data: PasswordLoginResponse
   status: 403
 }
     
@@ -786,7 +788,7 @@ export const login = async (passwordLoginRequest: PasswordLoginRequest, options?
 
 
 
-export const getLoginMutationOptions = <TError = void,
+export const getLoginMutationOptions = <TError = PasswordLoginResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PasswordLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PasswordLoginRequest}, TContext> => {
 
@@ -815,12 +817,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
     export type LoginMutationBody = PasswordLoginRequest
-    export type LoginMutationError = void
+    export type LoginMutationError = PasswordLoginResponse
 
     /**
  * @summary 로그인
  */
-export const useLogin = <TError = void,
+export const useLogin = <TError = PasswordLoginResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PasswordLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof login>>,
@@ -840,12 +842,12 @@ export type recoverAccountResponse200 = {
 }
 
 export type recoverAccountResponse400 = {
-  data: void
+  data: AccountRecoveryResponse
   status: 400
 }
 
 export type recoverAccountResponse401 = {
-  data: void
+  data: AccountRecoveryResponse
   status: 401
 }
     
@@ -881,7 +883,7 @@ export const recoverAccount = async (accountRecoveryRequest: AccountRecoveryRequ
 
 
 
-export const getRecoverAccountMutationOptions = <TError = void,
+export const getRecoverAccountMutationOptions = <TError = AccountRecoveryResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: AccountRecoveryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: AccountRecoveryRequest}, TContext> => {
 
@@ -910,12 +912,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RecoverAccountMutationResult = NonNullable<Awaited<ReturnType<typeof recoverAccount>>>
     export type RecoverAccountMutationBody = AccountRecoveryRequest
-    export type RecoverAccountMutationError = void
+    export type RecoverAccountMutationError = AccountRecoveryResponse
 
     /**
  * @summary 계정 복구
  */
-export const useRecoverAccount = <TError = void,
+export const useRecoverAccount = <TError = AccountRecoveryResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: AccountRecoveryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof recoverAccount>>,
@@ -1051,6 +1053,131 @@ export function useValidateResetToken<TData = Awaited<ReturnType<typeof validate
 
 
 /**
+ * 탈퇴 후 재가입 제한 기간(5일)이 지났는지 확인합니다. 회원가입 전 호출하여 재가입 가능 여부를 확인할 수 있습니다.
+ * @summary 재가입 가능 여부 확인
+ */
+export type checkReRegistrationEligibilityResponse200 = {
+  data: ReRegistrationCheckResult
+  status: 200
+}
+
+export type checkReRegistrationEligibilityResponse400 = {
+  data: ReRegistrationCheckResult
+  status: 400
+}
+    
+export type checkReRegistrationEligibilityResponseSuccess = (checkReRegistrationEligibilityResponse200) & {
+  headers: Headers;
+};
+export type checkReRegistrationEligibilityResponseError = (checkReRegistrationEligibilityResponse400) & {
+  headers: Headers;
+};
+
+export type checkReRegistrationEligibilityResponse = (checkReRegistrationEligibilityResponseSuccess | checkReRegistrationEligibilityResponseError)
+
+export const getCheckReRegistrationEligibilityUrl = (params: CheckReRegistrationEligibilityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/auth/password/account/reregistration-check?${stringifiedParams}` : `/api/v1/auth/password/account/reregistration-check`
+}
+
+export const checkReRegistrationEligibility = async (params: CheckReRegistrationEligibilityParams, options?: RequestInit): Promise<checkReRegistrationEligibilityResponse> => {
+  
+  return customFetch<checkReRegistrationEligibilityResponse>(getCheckReRegistrationEligibilityUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getCheckReRegistrationEligibilityQueryKey = (params?: CheckReRegistrationEligibilityParams,) => {
+    return [
+    `/api/v1/auth/password/account/reregistration-check`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getCheckReRegistrationEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(params: CheckReRegistrationEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckReRegistrationEligibilityQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkReRegistrationEligibility>>> = ({ signal }) => checkReRegistrationEligibility(params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckReRegistrationEligibilityQueryResult = NonNullable<Awaited<ReturnType<typeof checkReRegistrationEligibility>>>
+export type CheckReRegistrationEligibilityQueryError = ReRegistrationCheckResult
+
+
+export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(
+ params: CheckReRegistrationEligibilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkReRegistrationEligibility>>,
+          TError,
+          Awaited<ReturnType<typeof checkReRegistrationEligibility>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(
+ params: CheckReRegistrationEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkReRegistrationEligibility>>,
+          TError,
+          Awaited<ReturnType<typeof checkReRegistrationEligibility>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(
+ params: CheckReRegistrationEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary 재가입 가능 여부 확인
+ */
+
+export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(
+ params: CheckReRegistrationEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCheckReRegistrationEligibilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
  * 탈퇴한 계정의 복구 가능 여부를 확인합니다. 탈퇴 후 5일 이내에는 계정을 복구할 수 있습니다.
  * @summary 계정 복구 가능 여부 확인
  */
@@ -1060,7 +1187,7 @@ export type checkRecoveryEligibilityResponse200 = {
 }
 
 export type checkRecoveryEligibilityResponse400 = {
-  data: void
+  data: RecoveryEligibilityResponse
   status: 400
 }
     
@@ -1110,7 +1237,7 @@ export const getCheckRecoveryEligibilityQueryKey = (params?: CheckRecoveryEligib
     }
 
     
-export const getCheckRecoveryEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = void>(params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCheckRecoveryEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1129,10 +1256,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CheckRecoveryEligibilityQueryResult = NonNullable<Awaited<ReturnType<typeof checkRecoveryEligibility>>>
-export type CheckRecoveryEligibilityQueryError = void
+export type CheckRecoveryEligibilityQueryError = RecoveryEligibilityResponse
 
 
-export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = void>(
+export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(
  params: CheckRecoveryEligibilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkRecoveryEligibility>>,
@@ -1142,7 +1269,7 @@ export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof ch
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = void>(
+export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(
  params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkRecoveryEligibility>>,
@@ -1152,7 +1279,7 @@ export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof ch
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = void>(
+export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(
  params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1160,7 +1287,7 @@ export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof ch
  * @summary 계정 복구 가능 여부 확인
  */
 
-export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = void>(
+export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(
  params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

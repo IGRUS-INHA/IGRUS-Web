@@ -291,12 +291,12 @@ export type getUserListResponse200 = {
 }
 
 export type getUserListResponse401 = {
-  data: void
+  data: UserListPageResponse
   status: 401
 }
 
 export type getUserListResponse403 = {
-  data: void
+  data: UserListPageResponse
   status: 403
 }
     
@@ -346,7 +346,7 @@ export const getGetUserListQueryKey = (params?: GetUserListParams,) => {
     }
 
     
-export const getGetUserListQueryOptions = <TData = Awaited<ReturnType<typeof getUserList>>, TError = void>(params?: GetUserListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetUserListQueryOptions = <TData = Awaited<ReturnType<typeof getUserList>>, TError = UserListPageResponse>(params?: GetUserListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -365,10 +365,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetUserListQueryResult = NonNullable<Awaited<ReturnType<typeof getUserList>>>
-export type GetUserListQueryError = void
+export type GetUserListQueryError = UserListPageResponse
 
 
-export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, TError = void>(
+export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, TError = UserListPageResponse>(
  params: undefined |  GetUserListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUserList>>,
@@ -378,7 +378,7 @@ export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, 
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, TError = void>(
+export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, TError = UserListPageResponse>(
  params?: GetUserListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUserList>>,
@@ -388,7 +388,7 @@ export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, 
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, TError = void>(
+export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, TError = UserListPageResponse>(
  params?: GetUserListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -396,7 +396,7 @@ export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, 
  * @summary 회원 목록 조회
  */
 
-export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, TError = void>(
+export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, TError = UserListPageResponse>(
  params?: GetUserListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -421,17 +421,17 @@ export type getUserDetailResponse200 = {
 }
 
 export type getUserDetailResponse401 = {
-  data: void
+  data: UserDetailResponse
   status: 401
 }
 
 export type getUserDetailResponse403 = {
-  data: void
+  data: UserDetailResponse
   status: 403
 }
 
 export type getUserDetailResponse404 = {
-  data: void
+  data: UserDetailResponse
   status: 404
 }
     
@@ -474,7 +474,7 @@ export const getGetUserDetailQueryKey = (userId: number,) => {
     }
 
     
-export const getGetUserDetailQueryOptions = <TData = Awaited<ReturnType<typeof getUserDetail>>, TError = void>(userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetUserDetailQueryOptions = <TData = Awaited<ReturnType<typeof getUserDetail>>, TError = UserDetailResponse>(userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -493,10 +493,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetUserDetailQueryResult = NonNullable<Awaited<ReturnType<typeof getUserDetail>>>
-export type GetUserDetailQueryError = void
+export type GetUserDetailQueryError = UserDetailResponse
 
 
-export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail>>, TError = void>(
+export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail>>, TError = UserDetailResponse>(
  userId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserDetail>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUserDetail>>,
@@ -506,7 +506,7 @@ export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail>>, TError = void>(
+export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail>>, TError = UserDetailResponse>(
  userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserDetail>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUserDetail>>,
@@ -516,7 +516,7 @@ export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail>>, TError = void>(
+export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail>>, TError = UserDetailResponse>(
  userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -524,7 +524,7 @@ export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail
  * @summary 회원 상세 조회
  */
 
-export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail>>, TError = void>(
+export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail>>, TError = UserDetailResponse>(
  userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -549,17 +549,17 @@ export type getRoleHistoriesResponse200 = {
 }
 
 export type getRoleHistoriesResponse400 = {
-  data: void
+  data: PageUserRoleHistoryResponse
   status: 400
 }
 
 export type getRoleHistoriesResponse401 = {
-  data: void
+  data: PageUserRoleHistoryResponse
   status: 401
 }
 
 export type getRoleHistoriesResponse403 = {
-  data: void
+  data: PageUserRoleHistoryResponse
   status: 403
 }
     
@@ -609,7 +609,7 @@ export const getGetRoleHistoriesQueryKey = (params?: GetRoleHistoriesParams,) =>
     }
 
     
-export const getGetRoleHistoriesQueryOptions = <TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(params?: GetRoleHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetRoleHistoriesQueryOptions = <TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = PageUserRoleHistoryResponse>(params?: GetRoleHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -628,10 +628,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRoleHistoriesQueryResult = NonNullable<Awaited<ReturnType<typeof getRoleHistories>>>
-export type GetRoleHistoriesQueryError = void
+export type GetRoleHistoriesQueryError = PageUserRoleHistoryResponse
 
 
-export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(
+export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = PageUserRoleHistoryResponse>(
  params: undefined |  GetRoleHistoriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRoleHistories>>,
@@ -641,7 +641,7 @@ export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHis
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(
+export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = PageUserRoleHistoryResponse>(
  params?: GetRoleHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRoleHistories>>,
@@ -651,7 +651,7 @@ export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHis
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(
+export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = PageUserRoleHistoryResponse>(
  params?: GetRoleHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -659,7 +659,7 @@ export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHis
  * @summary 권한 변경 이력 조회
  */
 
-export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = void>(
+export function useGetRoleHistories<TData = Awaited<ReturnType<typeof getRoleHistories>>, TError = PageUserRoleHistoryResponse>(
  params?: GetRoleHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoleHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

@@ -42,7 +42,8 @@ export type CreateMemberInquiryRequestType = typeof CreateMemberInquiryRequestTy
 
 export const CreateMemberInquiryRequestType = {
   JOIN: 'JOIN',
-  GENERAL: 'GENERAL',
-  BUG_REPORT: 'BUG_REPORT',
-  SUGGESTION: 'SUGGESTION',
+  EVENT: 'EVENT',
+  REPORT: 'REPORT',
+  ACCOUNT: 'ACCOUNT',
+  OTHER: 'OTHER',
 } as const;

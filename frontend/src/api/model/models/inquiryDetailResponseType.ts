@@ -42,7 +42,8 @@ export type InquiryDetailResponseType = typeof InquiryDetailResponseType[keyof t
 
 export const InquiryDetailResponseType = {
   JOIN: 'JOIN',
-  GENERAL: 'GENERAL',
-  BUG_REPORT: 'BUG_REPORT',
-  SUGGESTION: 'SUGGESTION',
+  EVENT: 'EVENT',
+  REPORT: 'REPORT',
+  ACCOUNT: 'ACCOUNT',
+  OTHER: 'OTHER',
 } as const;

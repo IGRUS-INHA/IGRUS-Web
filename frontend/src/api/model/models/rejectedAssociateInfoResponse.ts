@@ -33,6 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { RejectedAssociateInfoResponseWishesItem } from './rejectedAssociateInfoResponseWishesItem';
 
 /**
  * 거절된 준회원 정보 응답
@@ -48,6 +49,8 @@ export interface RejectedAssociateInfoResponse {
   department?: string;
   /** 가입 동기 */
   motivation?: string;
+  /** 가입 목적 */
+  wishes?: RejectedAssociateInfoResponseWishesItem[];
   /** 가입 신청 일시 */
   createdAt?: string;
   /** 거절 사유 */
