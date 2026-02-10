@@ -6,6 +6,7 @@ import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
+import igrus.web.security.auth.common.service.account.CheckReRegistrationEligibilityService;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
@@ -84,6 +85,9 @@ class PasswordAuthControllerSignupTest {
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CheckReRegistrationEligibilityService checkReRegistrationEligibilityService;
 
     @MockitoBean
     private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
