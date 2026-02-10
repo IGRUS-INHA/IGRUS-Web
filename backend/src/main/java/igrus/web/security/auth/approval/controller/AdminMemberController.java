@@ -295,13 +295,11 @@ public class AdminMemberController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)",
-                    content = @Content
+                    description = "인증 필요 (로그인하지 않음)"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)",
-                    content = @Content
+                    description = "권한 없음 (ADMIN 권한 필요)"
             )
     })
     @GetMapping("/demoted")

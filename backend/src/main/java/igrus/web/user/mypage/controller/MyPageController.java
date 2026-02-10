@@ -11,7 +11,6 @@ import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.mypage.dto.request.ChangePasswordRequest;
-import igrus.web.user.mypage.dto.request.UpdateProfileRequest;
 import igrus.web.user.mypage.dto.response.MyCommentPageResponse;
 import igrus.web.user.mypage.dto.response.MyCommentResponse;
 import igrus.web.user.mypage.dto.response.MyPostPageResponse;
@@ -21,7 +20,6 @@ import igrus.web.user.mypage.service.read.GetMyCommentsService;
 import igrus.web.user.mypage.service.read.GetMyPostsService;
 import igrus.web.user.mypage.service.read.GetMyProfileService;
 import igrus.web.user.mypage.service.write.ChangeMyPasswordService;
-import igrus.web.user.mypage.service.write.UpdateMyProfileService;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.service.WithdrawService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,7 +61,6 @@ public class MyPageController {
     private final EventRegistrationService eventRegistrationService;
     private final GetMyLikedPostsService getMyLikedPostsService;
     private final GetMyBookmarksService getMyBookmarksService;
-    private final UpdateMyProfileService updateMyProfileService;
     private final ChangeMyPasswordService changeMyPasswordService;
     private final WithdrawService withdrawService;
 
@@ -91,33 +88,6 @@ public class MyPageController {
     ) {
         MyProfileResponse response = getMyProfileService.getMyProfile(user.userId());
         return ResponseEntity.ok(response);
-    }
-
-    // === 프로필 수정 ===
-
-    @Operation(summary = "프로필 수정", description = "이메일, 전화번호를 수정합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 입력값 (이메일 형식 오류, 전화번호 형식 오류)"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "이메일 또는 전화번호 중복"
-            )
-    })
-    @PatchMapping("/profile")
-    public ResponseEntity<Void> updateMyProfile(
-            @Valid @RequestBody UpdateProfileRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
-        updateMyProfileService.updateProfile(user.userId(), request);
-        return ResponseEntity.ok().build();
     }
 
     // === 비밀번호 변경 ===
