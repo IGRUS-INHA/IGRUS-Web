@@ -51,5 +51,3 @@ frontend/*.lcov
 .claude/settings.local.json
 
 nul
-
-frontend/src/api/model/
