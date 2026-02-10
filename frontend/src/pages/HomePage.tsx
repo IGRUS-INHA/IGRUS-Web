@@ -139,9 +139,13 @@ export default function HomePage() {
                 isDark ? "text-[#9CA3AF]" : "text-gray-500",
               )}
             >
-              2000년부터 이어진 정보통신처 직속 컴퓨터 학술 자치회 IGRUS. <br />
-              26년간 수많은 성과와 인재를 배출하며 실력으로 증명해온
-              동아리입니다.
+              2000년부터 이어진 정보통신처 직속
+              <br className="sm:hidden" />
+              컴퓨터 학술 자치회 IGRUS.
+              <br />
+              26년간 수많은 성과와 인재를 배출하며
+              <br className="sm:hidden" />
+              실력으로 증명해온 동아리입니다.
             </p>
 
             {/* CTA Buttons */}
