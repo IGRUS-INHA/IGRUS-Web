@@ -1,7 +1,6 @@
 package igrus.web.event.controller;
 
 import igrus.web.common.config.SwaggerConfig;
-import igrus.web.common.exception.ErrorResponse;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.dto.response.RegistrationListResponse;
 import igrus.web.event.dto.response.RegistrationResponse;
@@ -49,16 +48,11 @@ public class EventRegistrationController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "신청 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = RegistrationResponse.class))),
-            @ApiResponse(responseCode = "400", description = "신청 불가 (정원 초과, 기간 외 등)",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (준회원)",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "이미 신청함",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "신청 불가 (정원 초과, 기간 외 등)"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (준회원)"),
+            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "이미 신청함")
     })
     @PostMapping("/events/{eventId}/registrations")
     public ResponseEntity<RegistrationResponse> registerEvent(
@@ -74,10 +68,8 @@ public class EventRegistrationController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "취소 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = RegistrationResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "신청을 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "404", description = "신청을 찾을 수 없음")
     })
     @DeleteMapping("/events/{eventId}/registrations")
     public ResponseEntity<RegistrationResponse> cancelRegistration(
@@ -92,8 +84,7 @@ public class EventRegistrationController {
     @Operation(summary = "내 신청 목록 조회", description = "내가 신청한 행사 목록을 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요")
     })
     @GetMapping("/my/registrations")
     public ResponseEntity<List<MyRegistrationResponse>> getMyRegistrations(
@@ -110,12 +101,9 @@ public class EventRegistrationController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음")
     })
     @GetMapping("/events/{eventId}/registrations")
     public ResponseEntity<Page<RegistrationListResponse>> getRegistrationList(
@@ -132,12 +120,9 @@ public class EventRegistrationController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "승인 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = RegistrationResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "신청을 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "신청을 찾을 수 없음")
     })
     @PostMapping("/registrations/{registrationId}/approve")
     public ResponseEntity<RegistrationResponse> approveRegistration(
@@ -153,12 +138,9 @@ public class EventRegistrationController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "거절 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = RegistrationResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "신청을 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "신청을 찾을 수 없음")
     })
     @PostMapping("/registrations/{registrationId}/reject")
     public ResponseEntity<RegistrationResponse> rejectRegistration(
@@ -175,15 +157,9 @@ public class EventRegistrationController {
             @ApiResponse(responseCode = "200", description = "되돌리기 성공",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = RegistrationResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "신청을 찾을 수 없음",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "신청을 찾을 수 없음")
     })
     @PostMapping("/registrations/{registrationId}/revert")
     public ResponseEntity<RegistrationResponse> revertRegistration(

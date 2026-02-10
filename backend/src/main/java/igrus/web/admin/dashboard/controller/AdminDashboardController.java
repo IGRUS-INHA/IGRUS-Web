@@ -37,8 +37,8 @@ public class AdminDashboardController {
                     description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = DashboardStatsResponse.class))
             ),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 필요)", content = @Content)
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 필요)")
     })
     @GetMapping
     public ResponseEntity<DashboardStatsResponse> getDashboardStats() {

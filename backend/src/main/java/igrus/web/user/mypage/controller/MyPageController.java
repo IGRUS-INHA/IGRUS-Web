@@ -1,7 +1,6 @@
 package igrus.web.user.mypage.controller;
 
 import igrus.web.common.config.SwaggerConfig;
-import igrus.web.common.exception.ErrorResponse;
 import igrus.web.community.bookmark.dto.response.BookmarkedPostPageResponse;
 import igrus.web.community.bookmark.dto.response.BookmarkedPostResponse;
 import igrus.web.community.bookmark.service.read.GetMyBookmarksService;
@@ -79,13 +78,11 @@ public class MyPageController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "사용자를 찾을 수 없음"
             )
     })
     @GetMapping("/profile")
@@ -103,18 +100,15 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 입력값 (이메일 형식 오류, 전화번호 형식 오류)",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "잘못된 입력값 (이메일 형식 오류, 전화번호 형식 오류)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "409",
-                    description = "이메일 또는 전화번호 중복",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "이메일 또는 전화번호 중복"
             )
     })
     @PatchMapping("/profile")
@@ -133,13 +127,11 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "새 비밀번호 형식 오류 또는 현재 비밀번호와 동일",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "새 비밀번호 형식 오류 또는 현재 비밀번호와 동일"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "현재 비밀번호 불일치 또는 인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "현재 비밀번호 불일치 또는 인증 필요"
             )
     })
     @PatchMapping("/password")
@@ -158,13 +150,11 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 입력값",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "잘못된 입력값"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "비밀번호 불일치 또는 인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "비밀번호 불일치 또는 인증 필요"
             )
     })
     @DeleteMapping("/account")
@@ -183,8 +173,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/posts")
@@ -202,8 +191,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/comments")
@@ -221,8 +209,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "행사 신청 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/registrations")
@@ -238,8 +225,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "좋아요한 게시글 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/likes")
@@ -257,8 +243,7 @@ public class MyPageController {
             @ApiResponse(responseCode = "200", description = "북마크한 게시글 목록 조회 성공"),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    description = "인증 필요"
             )
     })
     @GetMapping("/bookmarks")

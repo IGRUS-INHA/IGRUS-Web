@@ -2,12 +2,9 @@ package igrus.web.community.like.comment_like.controller;
 
 import igrus.web.community.like.comment_like.service.write.LikeCommentService;
 import igrus.web.community.like.comment_like.service.write.UnlikeCommentService;
-import igrus.web.common.exception.ErrorResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -52,27 +49,15 @@ public class CommentLikeController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (본인 댓글에 좋아요, 이미 좋아요한 댓글)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "잘못된 요청 (본인 댓글에 좋아요, 이미 좋아요한 댓글)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "댓글을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "댓글을 찾을 수 없음"
             )
     })
     @PostMapping
@@ -98,19 +83,11 @@ public class CommentLikeController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "인증 필요"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "댓글 또는 좋아요 정보를 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
+                    description = "댓글 또는 좋아요 정보를 찾을 수 없음"
             )
     })
     @DeleteMapping

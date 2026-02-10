@@ -3,6 +3,9 @@ package igrus.web.common.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
@@ -99,6 +102,28 @@ public class SwaggerConfig {
                         - Refresh Token도 만료되면 다시 로그인해야 합니다.
                         """)
                 .version("v1.0.0");
+    }
+
+    @Bean
+    public OpenApiCustomizer errorResponseSchemaCustomizer() {
+        return openApi -> {
+            var schemas = openApi.getComponents().getSchemas();
+            if (schemas == null || !schemas.containsKey("ErrorResponse")) {
+                Schema<?> errorSchema = new Schema<>()
+                        .type("object")
+                        .description("에러 응답")
+                        .addProperty("status", new IntegerSchema()
+                                .description("HTTP 상태 코드").example(400))
+                        .addProperty("code", new StringSchema()
+                                .description("에러 코드").example("AUTH_001"))
+                        .addProperty("message", new StringSchema()
+                                .description("에러 메시지").example("잘못된 요청입니다."))
+                        .addProperty("timestamp", new StringSchema()
+                                .format("date-time")
+                                .description("에러 발생 시각").example("2024-01-15T10:30:00Z"));
+                openApi.getComponents().addSchemas("ErrorResponse", errorSchema);
+            }
+        };
     }
 
     private SecurityScheme securityScheme() {

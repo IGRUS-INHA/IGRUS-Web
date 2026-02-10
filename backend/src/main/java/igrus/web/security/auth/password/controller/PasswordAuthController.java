@@ -33,7 +33,6 @@ import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -86,23 +85,19 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)",
-                    content = @Content
+                    description = "잘못된 요청 (유효성 검증 실패)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 실패 (학번 또는 비밀번호 불일치)",
-                    content = @Content
+                    description = "인증 실패 (학번 또는 비밀번호 불일치)"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "계정 정지 또는 탈퇴 상태",
-                    content = @Content
+                    description = "계정 정지 또는 탈퇴 상태"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "이메일 인증 미완료",
-                    content = @Content
+                    description = "이메일 인증 미완료"
             )
     })
     @PostMapping("/login")
@@ -150,13 +145,11 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)",
-                    content = @Content
+                    description = "잘못된 요청 (유효성 검증 실패)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "유효하지 않은 리프레시 토큰",
-                    content = @Content
+                    description = "유효하지 않은 리프레시 토큰"
             )
     })
     @PostMapping("/logout")
@@ -187,13 +180,11 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)",
-                    content = @Content
+                    description = "잘못된 요청 (유효성 검증 실패)"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "유효하지 않거나 만료된 리프레시 토큰, 또는 토큰 탈취 감지",
-                    content = @Content
+                    description = "유효하지 않거나 만료된 리프레시 토큰, 또는 토큰 탈취 감지"
             )
     })
     @PostMapping("/refresh")
@@ -231,13 +222,11 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)",
-                    content = @Content
+                    description = "잘못된 요청 (유효성 검증 실패)"
             ),
             @ApiResponse(
                     responseCode = "409",
-                    description = "중복된 학번, 이메일 또는 전화번호",
-                    content = @Content
+                    description = "중복된 학번, 이메일 또는 전화번호"
             )
     })
     @PostMapping("/signup")
@@ -254,13 +243,11 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 인증 코드 또는 만료된 코드",
-                    content = @Content
+                    description = "잘못된 인증 코드 또는 만료된 코드"
             ),
             @ApiResponse(
                     responseCode = "429",
-                    description = "인증 시도 횟수 초과",
-                    content = @Content
+                    description = "인증 시도 횟수 초과"
             )
     })
     @PostMapping("/verify-email")
@@ -277,13 +264,11 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)",
-                    content = @Content
+                    description = "잘못된 요청 (유효성 검증 실패)"
             ),
             @ApiResponse(
                     responseCode = "429",
-                    description = "재발송 요청 횟수 초과 (5분 내 재요청 불가)",
-                    content = @Content
+                    description = "재발송 요청 횟수 초과 (5분 내 재요청 불가)"
             )
     })
     @PostMapping("/resend-verification")
@@ -303,8 +288,7 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (학번 형식 오류)",
-                    content = @Content
+                    description = "잘못된 요청 (학번 형식 오류)"
             )
     })
     @GetMapping("/account/recovery-check")
@@ -327,13 +311,11 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패) 또는 복구 기간 만료",
-                    content = @Content
+                    description = "잘못된 요청 (유효성 검증 실패) 또는 복구 기간 만료"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 실패 (학번 또는 비밀번호 불일치)",
-                    content = @Content
+                    description = "인증 실패 (학번 또는 비밀번호 불일치)"
             )
     })
     @PostMapping("/account/recover")
@@ -362,8 +344,7 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (학번 형식 오류)",
-                    content = @Content
+                    description = "잘못된 요청 (학번 형식 오류)"
             )
     })
     @PostMapping("/reset-request")
@@ -383,8 +364,7 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패) 또는 유효하지 않은/만료된 토큰",
-                    content = @Content
+                    description = "잘못된 요청 (유효성 검증 실패) 또는 유효하지 않은/만료된 토큰"
             )
     })
     @PostMapping("/reset-confirm")
@@ -404,8 +384,7 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "유효하지 않거나 만료된 토큰",
-                    content = @Content
+                    description = "유효하지 않거나 만료된 토큰"
             )
     })
     @GetMapping("/reset-validate")

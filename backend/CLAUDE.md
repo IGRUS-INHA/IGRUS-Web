@@ -253,8 +253,14 @@ public class UserService {
 - 인증이 필요한 엔드포인트에는 `@SecurityRequirement` 를 붙일 것
 
 ##### @ApiResponse 작성 시 필수 규칙
+
+**성공 응답(2xx):**
 - **`@Content`에 반드시 `mediaType = "application/json"` 명시**: 생략하면 SpringDoc이 `*/*`로 생성하여 Orval이 Blob 타입으로 처리함
 - **제네릭 타입(`Page<T>`, `List<T>` 등)은 `@Schema(implementation = ...)` 사용 금지**: 제네릭 정보가 유실되어 빈 객체(`{}`)로 생성됨. 대신 메서드 반환 타입으로부터 SpringDoc이 자동 추론하도록 `@Content`의 `schema`를 생략하거나, 구체적인 응답 DTO 클래스를 지정할 것
+
+**에러 응답(4xx/5xx):**
+- **`content` 파라미터 생략**: 에러 응답에 `@Content`와 `@Schema(implementation = ErrorResponse.class)`를 지정하면 Orval이 `ErrorResponse`를 성공 응답과 union 타입으로 생성하여 프론트엔드 타입 에러를 유발함. 프론트엔드 `client.ts`가 non-2xx 응답을 `ApiError`로 throw하므로, 에러 응답 스키마는 Orval 생성 타입에 포함되어서는 안 됨. `responseCode`와 `description`만 지정할 것
+
 ```java
 // Bad - Content-Type */*로 생성, 제네릭 정보 유실
 @ApiResponse(
@@ -278,6 +284,27 @@ public class UserService {
         mediaType = "application/json",
         schema = @Schema(implementation = UserDetailResponse.class)
     )
+)
+
+// Bad - Orval이 ErrorResponse를 union 타입에 포함시킴
+@ApiResponse(
+    responseCode = "400",
+    description = "잘못된 요청",
+    content = @Content(mediaType = "application/json",
+        schema = @Schema(implementation = ErrorResponse.class))
+)
+
+// Bad - content = @Content 도 불필요
+@ApiResponse(
+    responseCode = "400",
+    description = "잘못된 요청",
+    content = @Content
+)
+
+// Good - 에러 응답에는 content 파라미터 생략
+@ApiResponse(
+    responseCode = "400",
+    description = "잘못된 요청"
 )
 ```
 
