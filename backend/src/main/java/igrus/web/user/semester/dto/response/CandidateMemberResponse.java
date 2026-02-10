@@ -2,6 +2,7 @@ package igrus.web.user.semester.dto.response;
 
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.Wish;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public record CandidateMemberResponse(
         @Schema(description = "가입 동기", example = "웹 개발 역량을 키우고 싶습니다.")
         String motivation,
         @Schema(description = "가입 목적")
-        List<String> wishes
+        List<Wish> wishes
 ) {
     public static CandidateMemberResponse from(User user, boolean alreadyRegistered) {
         return new CandidateMemberResponse(

@@ -1,6 +1,7 @@
 package igrus.web.security.auth.password.dto.request;
 
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.Wish;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
@@ -46,9 +47,9 @@ public record PasswordSignupRequest(
     @NotBlank(message = "가입 동기는 필수입니다")
     String motivation,
 
-    @Schema(description = "가입 목적 (복수 선택 가능)", example = "[\"네트워킹 및 친목 활동\", \"프로그래밍 실력 향상\"]")
+    @Schema(description = "가입 목적 (복수 선택 가능)", example = "[\"NETWORKING\", \"PROGRAMMING\"]")
     @Size(max = 10, message = "가입 목적은 최대 10개까지 선택 가능합니다")
-    List<@Size(max = 100, message = "각 항목은 100자 이내여야 합니다") String> wishes,
+    List<Wish> wishes,
 
     @Schema(description = "성별", example = "MALE")
     @NotNull(message = "성별은 필수입니다")

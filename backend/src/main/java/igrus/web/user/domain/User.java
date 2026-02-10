@@ -1,6 +1,6 @@
 package igrus.web.user.domain;
 
-import igrus.web.common.converter.StringListConverter;
+import igrus.web.common.converter.WishListConverter;
 import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.user.exception.InvalidEmailException;
 import igrus.web.user.exception.InvalidGradeException;
@@ -65,9 +65,9 @@ public class User extends SoftDeletableEntity {
     private String motivation;
 
     /** 가입 목적 (JSON 배열) */
-    @Convert(converter = StringListConverter.class)
+    @Convert(converter = WishListConverter.class)
     @Column(name = "users_wishes", columnDefinition = "JSON")
-    private List<String> wishes = new ArrayList<>();
+    private List<Wish> wishes = new ArrayList<>();
 
     /** 성별 (MALE, FEMALE) */
     @Enumerated(EnumType.STRING)
@@ -96,7 +96,7 @@ public class User extends SoftDeletableEntity {
 
     public static User create(String studentId, String name, String email,
                               String phoneNumber, String department, String motivation,
-                              List<String> wishes, Gender gender, int grade) {
+                              List<Wish> wishes, Gender gender, int grade) {
         validateStudentId(studentId);
         validateEmail(email);
         validateGrade(grade);
@@ -109,7 +109,7 @@ public class User extends SoftDeletableEntity {
         user.phoneNumber = phoneNumber;
         user.department = department;
         user.motivation = motivation;
-        user.wishes = wishes != null ? new ArrayList<>(wishes) : new ArrayList<>();
+        user.wishes = wishes != null ? new ArrayList<>(wishes) : new ArrayList<Wish>();
         user.gender = gender;
         user.grade = grade;
         user.role = UserRole.ASSOCIATE;
@@ -145,6 +145,10 @@ public class User extends SoftDeletableEntity {
         if (!phoneNumber.matches("^\\d{3}-\\d{4}-\\d{4}$")) {
             throw new InvalidPhoneNumberException(phoneNumber);
         }
+    }
+
+    public List<Wish> getWishes() {
+        return Collections.unmodifiableList(this.wishes);
     }
 
     // === 역할 변경 ===

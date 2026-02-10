@@ -3,6 +3,7 @@ package igrus.web.common.converter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import igrus.web.user.domain.Wish;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
@@ -10,31 +11,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Converter
-public class StringListConverter implements AttributeConverter<List<String>, String> {
+public class WishListConverter implements AttributeConverter<List<Wish>, String> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public String convertToDatabaseColumn(List<String> attribute) {
+    public String convertToDatabaseColumn(List<Wish> attribute) {
         if (attribute == null || attribute.isEmpty()) {
             return null;
         }
         try {
-            return objectMapper.writeValueAsString(attribute);
+            List<String> names = attribute.stream().map(Wish::name).toList();
+            return objectMapper.writeValueAsString(names);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Failed to convert list to JSON", e);
+            throw new IllegalArgumentException("Failed to convert wish list to JSON", e);
         }
     }
 
     @Override
-    public List<String> convertToEntityAttribute(String dbData) {
+    public List<Wish> convertToEntityAttribute(String dbData) {
         if (dbData == null || dbData.isBlank()) {
             return new ArrayList<>();
         }
         try {
-            return objectMapper.readValue(dbData, new TypeReference<>() {});
+            List<String> names = objectMapper.readValue(dbData, new TypeReference<>() {});
+            return new ArrayList<>(names.stream().map(Wish::valueOf).toList());
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Failed to convert JSON to list", e);
+            throw new IllegalArgumentException("Failed to convert JSON to wish list", e);
         }
     }
 }

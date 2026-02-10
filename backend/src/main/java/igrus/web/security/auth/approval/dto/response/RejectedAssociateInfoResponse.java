@@ -2,6 +2,7 @@ package igrus.web.security.auth.approval.dto.response;
 
 import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.user.domain.User;
+import igrus.web.user.domain.Wish;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
@@ -25,7 +26,7 @@ public record RejectedAssociateInfoResponse(
         String motivation,
 
         @Schema(description = "가입 목적")
-        List<String> wishes,
+        List<Wish> wishes,
 
         @Schema(description = "가입 신청 일시", example = "2024-01-15T10:30:00Z")
         Instant createdAt,
