@@ -1,17 +1,32 @@
 import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import type { Inquiry, InquiryStatus } from '@/types/entities';
+import type { InquiryListResponse } from '@/api/model/models/inquiryListResponse';
 import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-// 카테고리 한글 변환
-const CATEGORY_LABELS: Record<string, string> = {
-  TECHNICAL: '기술',
-  ACCOUNT: '계정',
-  EVENT: '행사',
-  GENERAL: '일반',
+interface StatusConfig {
+  icon: LucideIcon;
+  label: string;
+  className: string;
+}
+
+const STATUS_CONFIG: Record<string, StatusConfig> = {
+  PENDING: {
+    icon: AlertCircle,
+    label: '대기중',
+    className: 'bg-warning/15 text-warning',
+  },
+  IN_PROGRESS: {
+    icon: Clock,
+    label: '처리중',
+    className: 'bg-primary/15 text-primary',
+  },
+  COMPLETED: {
+    icon: CheckCircle,
+    label: '완료',
+    className: 'bg-success/15 text-success',
+  },
 };
 
-// 날짜 포맷팅
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -24,74 +39,57 @@ const formatDate = (dateString?: string): string => {
   });
 };
 
-// 상태별 스타일 및 아이콘
-interface StatusInfo {
-  icon: LucideIcon;
-  label: string;
-  className: string;
-}
-
-const getStatusInfo = (status: InquiryStatus): StatusInfo => {
-  switch (status) {
-    case 'ANSWERED':
-      return {
-        icon: CheckCircle,
-        label: '답변완료',
-        className: 'bg-success/20 text-success',
-      };
-    case 'IN_PROGRESS':
-      return {
-        icon: Clock,
-        label: '처리중',
-        className: 'bg-primary/20 text-primary',
-      };
-    case 'PENDING':
-    default:
-      return {
-        icon: AlertCircle,
-        label: '대기중',
-        className: 'bg-warning/20 text-warning',
-      };
-  }
-};
-
 interface InquiryListItemProps {
-  inquiry: Inquiry;
+  inquiry: InquiryListResponse;
 }
 
 export default function InquiryListItem({ inquiry }: InquiryListItemProps) {
-  const statusInfo = getStatusInfo(inquiry.status);
-  const StatusIcon = statusInfo.icon;
+  const status = inquiry.status ?? 'PENDING';
+  const config: StatusConfig = STATUS_CONFIG[status] ?? {
+    icon: AlertCircle,
+    label: '대기중',
+    className: 'bg-warning/15 text-warning',
+  };
+  const StatusIcon = config.icon;
 
   return (
-    <Card className="p-6 rounded-[2rem] border bg-card border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="typo-c2 text-muted-foreground font-bold uppercase tracking-widest">
-              {CATEGORY_LABELS[inquiry.category] ?? inquiry.category}
-            </span>
-            <span className="typo-c2 text-muted-foreground">
-              {inquiry.inquiryNumber}
-            </span>
+    <div className="rounded-r3 border border-border bg-card p-s5 transition-colors hover:border-primary/30">
+      <div className="flex items-start justify-between gap-s4">
+        <div className="min-w-0 flex-1">
+          {/* 유형 + 문의번호 */}
+          <div className="mb-s2 flex items-center gap-s3">
+            {inquiry.typeDescription && (
+              <span className="typo-c1 font-semibold text-primary">
+                {inquiry.typeDescription}
+              </span>
+            )}
+            {inquiry.inquiryNumber && (
+              <span className="typo-c1 text-muted-foreground">
+                {inquiry.inquiryNumber}
+              </span>
+            )}
           </div>
-          <h4 className="font-bold typo-b1 mb-2 truncate">{inquiry.title}</h4>
-          <p className="typo-c1 text-muted-foreground">
-            작성일: {formatDate(inquiry.createdAt)}
+
+          {/* 제목 */}
+          <h4 className="typo-b1 font-bold truncate">{inquiry.title}</h4>
+
+          {/* 작성일 */}
+          <p className="mt-s1 typo-c1 text-muted-foreground">
+            {formatDate(inquiry.createdAt)}
           </p>
-          {inquiry.answeredAt && (
-            <p className="typo-c1 text-muted-foreground">
-              답변일: {formatDate(inquiry.answeredAt)}
-            </p>
-          )}
         </div>
+
+        {/* 상태 뱃지 */}
         <div
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-full typo-c2 font-bold whitespace-nowrap ${statusInfo.className}`}
+          className={cn(
+            'flex shrink-0 items-center gap-s1 rounded-full px-s3 py-s1 typo-c1 font-semibold',
+            config.className,
+          )}
         >
-          <StatusIcon size={14} />
-          {statusInfo.label}
+          <StatusIcon size={13} />
+          {config.label}
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
