@@ -1,12 +1,13 @@
 package igrus.web.security.auth.approval.dto.response;
 
+import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
-@Schema(description = "준회원(가입 승인 대기자) 정보 응답")
-public record AssociateInfoResponse(
+@Schema(description = "강등된 준회원 정보 응답")
+public record DemotedAssociateInfoResponse(
         @Schema(description = "사용자 고유 ID", example = "1")
         Long userId,
 
@@ -19,24 +20,21 @@ public record AssociateInfoResponse(
         @Schema(description = "학과", example = "컴퓨터공학과")
         String department,
 
-        @Schema(description = "가입 동기", example = "웹 개발 역량을 키우고 싶습니다.")
-        String motivation,
+        @Schema(description = "강등 일시", example = "2024-01-20T14:00:00Z")
+        Instant demotedAt,
 
-        @Schema(description = "가입 신청 일시", example = "2024-01-15T10:30:00Z")
-        Instant createdAt,
-
-        @Schema(description = "강등된 유저 여부", example = "false")
-        boolean demoted
+        @Schema(description = "강등 처리자 ID", example = "100")
+        Long demotedBy
 ) {
-    public static AssociateInfoResponse from(User user, boolean demoted) {
-        return new AssociateInfoResponse(
+    public static DemotedAssociateInfoResponse from(AssociateDecision decision) {
+        User user = decision.getUser();
+        return new DemotedAssociateInfoResponse(
                 user.getId(),
                 user.getStudentId(),
                 user.getName(),
                 user.getDepartment(),
-                user.getMotivation(),
-                user.getCreatedAt(),
-                demoted
+                decision.getDecidedAt(),
+                decision.getDecidedBy()
         );
     }
 }

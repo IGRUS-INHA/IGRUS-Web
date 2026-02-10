@@ -11,17 +11,35 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface AssociateDecisionRepository extends JpaRepository<AssociateDecision, Long> {
 
-    Optional<AssociateDecision> findByUserId(Long userId);
+    Optional<AssociateDecision> findByUserIdAndActiveTrue(Long userId);
 
-    @Query("SELECT u FROM User u WHERE u.role = :role AND NOT EXISTS (SELECT 1 FROM AssociateDecision ad WHERE ad.user = u)")
-    Page<User> findPendingAssociates(@Param("role") UserRole role, Pageable pageable);
+    @Query("""
+        SELECT u FROM User u WHERE u.role = :role
+        AND NOT EXISTS (
+            SELECT 1 FROM AssociateDecision ad
+            WHERE ad.user = u AND ad.active = true AND ad.type IN (:excludeTypes)
+        )
+        """)
+    Page<User> findPendingAssociates(@Param("role") UserRole role, @Param("excludeTypes") List<AssociateDecisionType> excludeTypes, Pageable pageable);
 
-    @Query(value = "SELECT ad FROM AssociateDecision ad JOIN FETCH ad.user WHERE ad.user.role = :role AND ad.type = :type",
-            countQuery = "SELECT COUNT(ad) FROM AssociateDecision ad WHERE ad.user.role = :role AND ad.type = :type")
-    Page<AssociateDecision> findByUserRoleAndType(@Param("role") UserRole role, @Param("type") AssociateDecisionType type, Pageable pageable);
+    @Query(value = """
+        SELECT ad FROM AssociateDecision ad JOIN FETCH ad.user
+        WHERE ad.active = true AND ad.type = :type AND ad.user.role = :role
+        """,
+        countQuery = """
+        SELECT COUNT(ad) FROM AssociateDecision ad
+        WHERE ad.active = true AND ad.type = :type AND ad.user.role = :role
+        """)
+    Page<AssociateDecision> findActiveByType(@Param("role") UserRole role, @Param("type") AssociateDecisionType type, Pageable pageable);
+
+    @Query("SELECT ad.user.id FROM AssociateDecision ad WHERE ad.active = true AND ad.type = 'DEMOTED' AND ad.user.id IN :userIds")
+    Set<Long> findDemotedUserIds(@Param("userIds") Collection<Long> userIds);
 }
