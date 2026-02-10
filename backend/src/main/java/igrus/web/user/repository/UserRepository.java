@@ -58,6 +58,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
                              @Param("status") UserStatus status,
                              Pageable pageable);
 
+    // === 삭제된 데이터 포함 존재 여부 확인 (native query로 @SQLRestriction 우회) ===
+
+    @Query(value = "SELECT COUNT(*) > 0 FROM users u WHERE u.users_student_id = :studentId", nativeQuery = true)
+    boolean existsByStudentIdIncludingDeleted(@Param("studentId") String studentId);
+
+    @Query(value = "SELECT COUNT(*) > 0 FROM users u WHERE u.users_email = :email", nativeQuery = true)
+    boolean existsByEmailIncludingDeleted(@Param("email") String email);
+
     // === 삭제된 데이터 포함 조회 (관리자용, native query로 @SQLRestriction 우회) ===
 
     @Query(value = "SELECT * FROM users u WHERE u.users_id = :id", nativeQuery = true)
