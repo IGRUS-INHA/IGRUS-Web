@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useUIStore } from '@/stores';
 import { User, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import type { ReactNode } from 'react';
 
 interface LoginFormData {
   studentId: string;
@@ -13,9 +10,6 @@ interface LoginFormData {
 }
 
 interface LoginFormProps {
-  icon?: ReactNode;
-  title: string;
-  subtitle: string;
   onSubmit?: (data: LoginFormData) => void;
   loading?: boolean;
   errors?: {
@@ -25,16 +19,10 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({
-  icon,
-  title,
-  subtitle,
   onSubmit,
   loading = false,
   errors = {},
 }: LoginFormProps) {
-  const { theme } = useUIStore();
-  const isDark = theme === 'dark';
-
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -45,94 +33,167 @@ export default function LoginForm({
   };
 
   return (
-    <Card className={`p-s4 lg:p-s7 rounded-r4 border ${isDark ? 'bg-card' : 'bg-card shadow-xl'}`}>
-      <CardContent className="p-0">
-        <div className={`mb-s6 ${icon ? 'text-center' : 'text-left pt-s4'}`}>
-          {icon && (
-            <div className="w-16 h-16 bg-primary/20 rounded-r4 flex items-center justify-center mx-auto mb-s5">
-              {icon}
-            </div>
-          )}
-          <h2 className="typo-h2 mb-s2">{title}</h2>
-          <p className="text-muted-foreground typo-b2">{subtitle}</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-s4">
-          <div>
-            <div className="relative">
-              <User size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="학번 (8자리)"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
-                required
-                className={`w-full rounded-r4 pl-12 pr-s4 py-s6 border transition-all ${
-                  errors.studentId
-                    ? 'border-red-500 focus:border-red-500'
-                    : 'focus:border-primary border-border'
-                } ${isDark ? 'bg-white/5' : 'bg-muted'}`}
-              />
-            </div>
-            {errors.studentId && (
-              <p className="mt-s1 text-sm text-red-500">{errors.studentId}</p>
-            )}
+    <div className="overflow-hidden rounded-r4 border border-border bg-card shadow-2xl">
+      <div className="grid min-h-[520px] grid-cols-1 lg:grid-cols-5">
+        {/* Brand Panel */}
+        <div className="login-brand-panel relative flex flex-col justify-between overflow-hidden p-s6 lg:col-span-2 lg:p-s7">
+          {/* Decorative circles */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-white/10" />
+            <div className="absolute -left-8 top-1/3 h-24 w-24 rounded-full border border-white/8" />
+            <div className="absolute -bottom-6 right-1/4 h-32 w-32 rounded-full border border-white/5" />
+            {/* Dot grid overlay */}
+            <div className="login-dot-grid absolute inset-0" />
           </div>
 
-          <div>
-            <div className="relative group">
-              <Lock size={18} className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="비밀번호 (영문, 숫자 포함 8자 이상)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className={`w-full rounded-r4 pl-12 pr-12 py-s6 border transition-all ${
-                  errors.password
-                    ? 'border-red-500 focus:border-red-500'
-                    : 'focus:border-primary border-border'
-                } ${isDark ? 'bg-white/5' : 'bg-muted'}`}
+          {/* Brand content */}
+          <div className="relative z-10">
+            <div className="mb-s4 flex items-center gap-s3 lg:mb-s7">
+              <img
+                src="/igruslogo.png"
+                alt="IGRUS"
+                className="h-9 w-9 lg:h-11 lg:w-11"
               />
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-s4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-all opacity-0 group-focus-within:opacity-100"
+              <span className="text-lg font-bold tracking-tight text-white/90">
+                IGRUS
+              </span>
+            </div>
+
+            <h1 className="mb-s3 hidden text-4xl font-extrabold leading-tight text-white lg:block">
+              Welcome
+              <br />
+              Back
+            </h1>
+            <p className="hidden text-white/60 typo-b1 lg:block">
+              IGRUS 동아리 포털에
+              <br />
+              오신 것을 환영합니다.
+            </p>
+
+            {/* Mobile-only compact text */}
+            <p className="text-white/80 typo-b2 lg:hidden">
+              IGRUS 동아리 포털에 오신 것을 환영합니다.
+            </p>
+          </div>
+
+          <p className="relative z-10 hidden text-white/40 typo-c1 lg:block">
+            인하대학교 정보통신 동아리
+          </p>
+        </div>
+
+        {/* Form Panel */}
+        <div className="flex flex-col justify-center p-s6 lg:col-span-3 lg:p-s7">
+          <div className="mb-s6">
+            <h2 className="mb-s2 typo-h2">로그인</h2>
+            <p className="text-muted-foreground typo-b2">
+              학번과 비밀번호를 입력해주세요
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-s5">
+            {/* Student ID */}
+            <div>
+              <label className="mb-s2 block text-muted-foreground typo-label">
+                학번
+              </label>
+              <div className="relative">
+                <User
+                  size={18}
+                  className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  type="text"
+                  placeholder="8자리 학번 입력"
+                  value={studentId}
+                  onChange={(e) => setStudentId(e.target.value)}
+                  required
+                  className={`w-full rounded-r3 border py-s5 pl-12 pr-s4 transition-all ${
+                    errors.studentId
+                      ? 'border-destructive focus:border-destructive'
+                      : 'border-border focus:border-primary'
+                  }`}
+                />
+              </div>
+              {errors.studentId && (
+                <p className="mt-s1 text-destructive typo-c1">
+                  {errors.studentId}
+                </p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="mb-s2 block text-muted-foreground typo-label">
+                비밀번호
+              </label>
+              <div className="group relative">
+                <Lock
+                  size={18}
+                  className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="영문, 숫자 포함 8자 이상"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className={`w-full rounded-r3 border py-s5 pl-12 pr-12 transition-all ${
+                    errors.password
+                      ? 'border-destructive focus:border-destructive'
+                      : 'border-border focus:border-primary'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-s4 top-1/2 -translate-y-1/2 text-muted-foreground opacity-0 transition-all hover:text-foreground group-focus-within:opacity-100"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="mt-s1 text-destructive typo-c1">
+                  {errors.password}
+                </p>
+              )}
+            </div>
+
+            {/* Forgot password */}
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-primary transition hover:text-primary/80 typo-c1"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+                비밀번호를 잊으셨나요?
+              </Link>
             </div>
-            {errors.password && (
-              <p className="mt-s1 text-sm text-red-500">{errors.password}</p>
-            )}
+
+            {/* Submit */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-s2 rounded-r3 py-s5 font-bold"
+            >
+              {loading ? '로그인 중...' : '로그인'}
+              {!loading && <ArrowRight size={18} />}
+            </Button>
+          </form>
+
+          {/* Sign up link */}
+          <div className="mt-s6 text-center">
+            <p className="text-muted-foreground typo-b2">
+              아직 계정이 없으신가요?{' '}
+              <Link
+                to="/signup"
+                className="font-semibold text-primary transition hover:text-primary/80"
+              >
+                회원가입
+              </Link>
+            </p>
           </div>
-
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full py-s6 rounded-r4 font-bold flex items-center justify-center gap-s2 shadow-lg shadow-primary/20"
-          >
-            {loading ? '로그인 중...' : '로그인'}
-            <ArrowRight size={18} />
-          </Button>
-        </form>
-
-        <div className="mt-s5 text-center space-y-s3">
-          <Link
-            to="/forgot-password"
-            className="typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
-          >
-            비밀번호를 잊으셨나요?
-          </Link>
-          <Link
-            to="/signup"
-            className="typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
-          >
-            계정이 없으신가요? 회원가입
-          </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

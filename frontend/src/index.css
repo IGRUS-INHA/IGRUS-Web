@@ -728,3 +728,20 @@
     display: none;
   }
 }
+
+/* ============================================
+   Login Page
+   ============================================ */
+
+/* 브랜드 패널 그라디언트 */
+.login-brand-panel {
+  background: linear-gradient(135deg, #013E3B 0%, #027A75 40%, #03A69E 100%);
+}
+
+/* 브랜드 패널 도트 그리드 */
+.login-dot-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse 70% 60% at 70% 30%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 70% 30%, black 0%, transparent 70%);
+}
