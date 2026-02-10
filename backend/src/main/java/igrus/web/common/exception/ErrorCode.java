@@ -159,7 +159,12 @@ public enum ErrorCode {
     EVENT_NOT_IN_REGISTRATION_PERIOD(400, "신청 기간이 아닙니다"),
     EVENT_NOT_EDITABLE(400, "수정 불가능한 상태의 행사입니다"),
     EVENT_INVALID_STATE_TRANSITION(400, "허용되지 않은 행사 상태 변경입니다"),
-    EVENT_TIME_OVERLAP(409, "이미 신청한 다른 행사와 시간이 겹칩니다");
+    EVENT_TIME_OVERLAP(409, "이미 신청한 다른 행사와 시간이 겹칩니다"),
+
+    // Pinned Post (고정 게시글)
+    PINNED_POST_NOT_FOUND(404, "고정 게시글을 찾을 수 없습니다"),
+    PINNED_POST_ALREADY_EXISTS(409, "이미 고정된 게시글입니다"),
+    INVALID_DISPLAY_ORDER(400, "표시 순서는 1 이상이어야 합니다");
 
     private final int status;
     private final String message;
