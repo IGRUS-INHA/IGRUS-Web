@@ -112,15 +112,28 @@ class DemotionReapprovalFlowTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("강등된 유저를 거절하려 하면 AssociateAlreadyDecidedException 발생")
-        void demotedUser_rejected_throwsException() {
+        @DisplayName("강등된 유저를 거절하면 DEMOTED 비활성화 후 REJECTED 결정 생성")
+        void demotedUser_rejected_deactivatesDemotedAndCreatesRejected() {
             // given: 승인 → 강등
             approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
             changeUserRoleService.changeUserRole(associateUser.getId(), UserRole.ASSOCIATE, adminUser.getId());
 
-            // when & then
-            assertThatThrownBy(() -> rejectAssociateService.rejectAssociate(associateUser.getId(), adminUser.getId(), "재심사 결과 거절"))
-                    .isInstanceOf(AssociateAlreadyDecidedException.class);
+            // when
+            rejectAssociateService.rejectAssociate(associateUser.getId(), adminUser.getId(), "재심사 결과 거절");
+
+            // then
+            User updatedUser = userRepository.findById(associateUser.getId()).orElseThrow();
+            assertThat(updatedUser.getRole()).isEqualTo(UserRole.ASSOCIATE);
+
+            Optional<AssociateDecision> activeDecision = associateDecisionRepository.findByUserIdAndActiveTrue(associateUser.getId());
+            assertThat(activeDecision).isPresent();
+            assertThat(activeDecision.get().getType()).isEqualTo(AssociateDecisionType.REJECTED);
+            assertThat(activeDecision.get().getReason()).isEqualTo("재심사 결과 거절");
+
+            List<AssociateDecision> allDecisions = associateDecisionRepository.findAll();
+            assertThat(allDecisions).hasSize(3); // APPROVED(비활성) + DEMOTED(비활성) + REJECTED(활성)
+            long activeCount = allDecisions.stream().filter(AssociateDecision::isActive).count();
+            assertThat(activeCount).isEqualTo(1);
         }
     }
 

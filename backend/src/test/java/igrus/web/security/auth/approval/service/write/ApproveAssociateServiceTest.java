@@ -167,6 +167,25 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
     class EdgeCaseTest {
 
         @Test
+        @DisplayName("강등된 준회원 재승인 성공 - DEMOTED 결정이 비활성화되고 APPROVED 결정 생성")
+        void approveAssociate_DemotedUser_DeactivatesDemotedAndCreatesApproved() {
+            // given
+            AssociateDecision demotedDecision = AssociateDecision.demote(associateUser, adminUser.getId(), "관리자에 의한 역할 강등");
+            associateDecisionRepository.save(demotedDecision);
+
+            // when
+            approveAssociateService.approveAssociate(associateUser.getId(), adminUser.getId());
+
+            // then
+            Optional<AssociateDecision> activeDecision = associateDecisionRepository.findByUserIdAndActiveTrue(associateUser.getId());
+            assertThat(activeDecision).isPresent();
+            assertThat(activeDecision.get().getType()).isEqualTo(AssociateDecisionType.APPROVED);
+
+            User updatedUser = userRepository.findById(associateUser.getId()).orElseThrow();
+            assertThat(updatedUser.getRole()).isEqualTo(UserRole.MEMBER);
+        }
+
+        @Test
         @DisplayName("이미 MEMBER인 사용자 승인 시도 시 UserNotAssociateException 발생")
         void approveAssociate_AlreadyMember_ThrowsException() {
             // when & then

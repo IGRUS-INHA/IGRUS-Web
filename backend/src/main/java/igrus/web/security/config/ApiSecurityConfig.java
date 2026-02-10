@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -37,6 +38,9 @@ public class ApiSecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 // 인증 없이 접근 가능 (SecurityPaths에서 중앙 관리)
                 .requestMatchers(SecurityPaths.PUBLIC_PATHS).permitAll()
+
+                // 고정 게시글 목록 조회 (GET만 공개, POST/PUT/DELETE는 인증 필요)
+                .requestMatchers(HttpMethod.GET, "/api/v1/pinned-posts").permitAll()
 
                 // 학기별 회원 명단 조회 (운영진 이상)
                 .requestMatchers("/api/v1/semesters/**").hasAnyRole("OPERATOR", "ADMIN")
