@@ -22,7 +22,7 @@ import java.util.List;
 @Schema(description = "비회원 문의 생성 요청")
 public class CreateGuestInquiryRequest {
 
-    @Schema(description = "문의 유형", example = "JOIN", allowableValues = {"JOIN", "GENERAL", "BUG_REPORT", "SUGGESTION"})
+    @Schema(description = "문의 유형", example = "JOIN")
     @NotNull(message = "문의 유형은 필수입니다")
     private InquiryType type;
 
