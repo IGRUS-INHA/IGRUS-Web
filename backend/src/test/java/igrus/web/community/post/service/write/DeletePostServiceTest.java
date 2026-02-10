@@ -2,6 +2,7 @@ package igrus.web.community.post.service.write;
 
 import igrus.web.community.board.domain.Board;
 import igrus.web.community.board.service.read.GetBoardEntityService;
+import igrus.web.community.comment.repository.CommentRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.exception.PostAccessDeniedException;
 import igrus.web.community.post.repository.PostRepository;
@@ -43,6 +44,9 @@ class DeletePostServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private UserRepository userRepository;

@@ -2,6 +2,7 @@ package igrus.web.community.post.service.write;
 
 import igrus.web.community.board.domain.Board;
 import igrus.web.community.board.service.read.GetBoardEntityService;
+import igrus.web.community.comment.repository.CommentRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.exception.PostAccessDeniedException;
 import igrus.web.community.post.exception.PostDeletedException;
@@ -16,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 /**
  * 게시글 삭제 서비스.
  */
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DeletePostService {
 
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final GetBoardEntityService getBoardEntityService;
 
@@ -65,5 +69,9 @@ public class DeletePostService {
 
         // Soft Delete 적용
         post.delete(user.getId());
+
+        // 게시글에 달린 댓글도 함께 Soft Delete
+        int deletedCommentCount = commentRepository.softDeleteByPostId(postId, user.getId(), Instant.now());
+        log.info("게시글 삭제 - postId: {}, 함께 삭제된 댓글 수: {}", postId, deletedCommentCount);
     }
 }
