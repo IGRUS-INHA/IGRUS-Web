@@ -4,7 +4,7 @@ import igrus.web.community.board.domain.Board;
 import igrus.web.community.board.domain.BoardCode;
 import igrus.web.community.board.service.permission.CheckReadPermissionService;
 import igrus.web.community.post.domain.Post;
-import igrus.web.community.post.exception.PostNotFoundException;
+import igrus.web.community.post.exception.PostAccessDeniedException;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class PostAccessChecker {
      * @param post 게시글
      * @param user 사용자
      * @throws igrus.web.community.board.exception.BoardReadDeniedException 게시판 읽기 권한이 없는 경우
-     * @throws PostNotFoundException 준회원이 비공개 공지사항에 접근하는 경우
+     * @throws PostAccessDeniedException 준회원이 비공개 공지사항에 접근하는 경우
      */
     public void checkPostAccess(Post post, User user) {
         Board board = post.getBoard();
@@ -38,7 +38,7 @@ public class PostAccessChecker {
         if (user.getRole() == UserRole.ASSOCIATE
                 && board.getCode() == BoardCode.NOTICES
                 && !post.isVisibleToAssociate()) {
-            throw new PostNotFoundException(post.getId());
+            throw new PostAccessDeniedException("준회원은 해당 공지사항에 접근할 수 없습니다.");
         }
     }
 }
