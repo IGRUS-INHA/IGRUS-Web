@@ -26,7 +26,7 @@ public class RecordFailedAttemptService {
     @Value("${app.security.login-attempts-max:5}")
     private int maxAttempts;
 
-    @Value("${app.security.login-lockout-minutes:30}")
+    @Value("${app.security.login-lockout-minutes:10}")
     private int lockoutMinutes;
 
     /**

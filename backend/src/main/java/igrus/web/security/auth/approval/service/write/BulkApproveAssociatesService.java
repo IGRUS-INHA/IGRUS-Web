@@ -69,10 +69,8 @@ public class BulkApproveAssociatesService {
                     continue;
                 }
 
-                if (associateDecisionRepository.findByUserId(userId).isPresent()) {
-                    failedUserIds.add(userId);
-                    continue;
-                }
+                associateDecisionRepository.findByUserIdAndActiveTrue(userId)
+                        .ifPresent(AssociateDecision::deactivate);
 
                 UserRole previousRole = user.getRole();
                 user.promoteToMember();
