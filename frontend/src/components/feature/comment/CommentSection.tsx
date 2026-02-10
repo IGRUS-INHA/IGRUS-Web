@@ -127,7 +127,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                 disabled={createComment.isPending}
                 className="cursor-pointer"
               />
-              <span className="text-c1 text-muted-foreground">익명</span>
+              <span className="typo-c1 text-muted-foreground">익명</span>
             </label>
           )}
         </div>

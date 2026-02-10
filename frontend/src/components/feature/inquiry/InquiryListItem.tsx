@@ -68,25 +68,25 @@ export default function InquiryListItem({ inquiry }: InquiryListItemProps) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-c2 text-muted-foreground font-bold uppercase tracking-widest">
+            <span className="typo-c2 text-muted-foreground font-bold uppercase tracking-widest">
               {CATEGORY_LABELS[inquiry.category] ?? inquiry.category}
             </span>
-            <span className="text-c2 text-muted-foreground">
+            <span className="typo-c2 text-muted-foreground">
               {inquiry.inquiryNumber}
             </span>
           </div>
-          <h4 className="font-bold text-b1 mb-2 truncate">{inquiry.title}</h4>
-          <p className="text-c1 text-muted-foreground">
+          <h4 className="font-bold typo-b1 mb-2 truncate">{inquiry.title}</h4>
+          <p className="typo-c1 text-muted-foreground">
             작성일: {formatDate(inquiry.createdAt)}
           </p>
           {inquiry.answeredAt && (
-            <p className="text-c1 text-muted-foreground">
+            <p className="typo-c1 text-muted-foreground">
               답변일: {formatDate(inquiry.answeredAt)}
             </p>
           )}
         </div>
         <div
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-c2 font-bold whitespace-nowrap ${statusInfo.className}`}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full typo-c2 font-bold whitespace-nowrap ${statusInfo.className}`}
         >
           <StatusIcon size={14} />
           {statusInfo.label}

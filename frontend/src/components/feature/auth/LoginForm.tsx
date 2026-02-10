@@ -53,8 +53,8 @@ export default function LoginForm({
               {icon}
             </div>
           )}
-          <h2 className="text-h2 mb-s2">{title}</h2>
-          <p className="text-muted-foreground text-b2">{subtitle}</p>
+          <h2 className="typo-h2 mb-s2">{title}</h2>
+          <p className="text-muted-foreground typo-b2">{subtitle}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-s4">
@@ -121,13 +121,13 @@ export default function LoginForm({
         <div className="mt-s5 text-center space-y-s3">
           <Link
             to="/forgot-password"
-            className="text-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
+            className="typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
           >
             비밀번호를 잊으셨나요?
           </Link>
           <Link
             to="/signup"
-            className="text-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
+            className="typo-c1 font-bold text-muted-foreground hover:text-primary transition uppercase tracking-widest block"
           >
             계정이 없으신가요? 회원가입
           </Link>

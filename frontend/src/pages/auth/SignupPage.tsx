@@ -221,8 +221,8 @@ export default function SignupPage() {
       <div className="w-full max-w-lg animate-in slide-in-from-bottom-6 duration-500">
         {/* Header */}
         <div className="text-center mb-s7">
-          <h1 className="text-h2 text-foreground">IGRUS 회원가입</h1>
-          <p className="text-b2 text-muted-foreground mt-s1">
+          <h1 className="typo-h2 text-foreground">IGRUS 회원가입</h1>
+          <p className="typo-b2 text-muted-foreground mt-s1">
             동아리에 가입하여 다양한 활동에 참여하세요
           </p>
         </div>
@@ -256,7 +256,7 @@ export default function SignupPage() {
                   </button>
                   <span
                     className={cn(
-                      'text-c1 font-medium whitespace-nowrap',
+                      'typo-c1 font-medium whitespace-nowrap',
                       (isActive || isCompleted) && 'text-primary',
                       !isActive && !isCompleted && 'text-muted-foreground',
                     )}
@@ -469,7 +469,7 @@ export default function SignupPage() {
             {/* Step 3: 계정 보안 */}
             <div className={cn('space-y-s4', step !== 2 && 'hidden')}>
               <div className="rounded-r2 bg-muted/50 border border-border p-s4">
-                <p className="text-c1 text-muted-foreground">
+                <p className="typo-c1 text-muted-foreground">
                   비밀번호는{' '}
                   <strong className="text-foreground">
                     영문, 숫자를 포함하여 8자 이상

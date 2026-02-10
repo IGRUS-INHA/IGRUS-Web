@@ -49,7 +49,7 @@ function UserDetailRow({ userId, colSpan }: { userId: number; colSpan: number })
   if (isLoading) {
     return (
       <tr>
-        <td colSpan={colSpan} className="py-s3 px-s4 bg-muted/30 text-center text-b2 text-muted-foreground">
+        <td colSpan={colSpan} className="py-s3 px-s4 bg-muted/30 text-center typo-b2 text-muted-foreground">
           로딩 중...
         </td>
       </tr>
@@ -61,7 +61,7 @@ function UserDetailRow({ userId, colSpan }: { userId: number; colSpan: number })
   return (
     <tr>
       <td colSpan={colSpan} className="py-s3 px-s4 bg-muted/30">
-        <div className="flex gap-s6 text-b2">
+        <div className="flex gap-s6 typo-b2">
           <div>
             <span className="text-muted-foreground">학과: </span>
             <span className="font-medium">{detail.department || '-'}</span>
@@ -187,7 +187,7 @@ export default function UsersTab() {
       <Card className="p-s5 overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="text-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
+            <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
               <th className="pb-s4 font-bold w-8"></th>
               <th className="pb-s4 font-bold">학번</th>
               <th className="pb-s4 font-bold">이름</th>
@@ -215,16 +215,16 @@ export default function UsersTab() {
                     <td className="py-s4 text-muted-foreground">
                       {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     </td>
-                    <td className="py-s4 text-b2 font-medium">{u.studentId}</td>
-                    <td className="py-s4 text-b2 font-bold">{u.name}</td>
-                    <td className="py-s4 text-b2 text-muted-foreground hidden lg:table-cell">{u.email}</td>
-                    <td className="py-s4 text-b2">{ROLE_LABELS[u.role ?? ''] ?? u.role}</td>
+                    <td className="py-s4 typo-b2 font-medium">{u.studentId}</td>
+                    <td className="py-s4 typo-b2 font-bold">{u.name}</td>
+                    <td className="py-s4 typo-b2 text-muted-foreground hidden lg:table-cell">{u.email}</td>
+                    <td className="py-s4 typo-b2">{ROLE_LABELS[u.role ?? ''] ?? u.role}</td>
                     <td className="py-s4">
-                      <span className={cn('px-2 py-1 rounded-r2 text-c2 font-bold', STATUS_BADGE[u.status ?? ''] ?? 'bg-muted text-muted-foreground')}>
+                      <span className={cn('px-2 py-1 rounded-r2 typo-c2 font-bold', STATUS_BADGE[u.status ?? ''] ?? 'bg-muted text-muted-foreground')}>
                         {u.status === 'ACTIVE' ? '활성' : u.status === 'SUSPENDED' ? '정지' : u.status === 'WITHDRAWN' ? '탈퇴' : u.status}
                       </span>
                     </td>
-                    <td className="py-s4 text-b2 text-muted-foreground hidden lg:table-cell">
+                    <td className="py-s4 typo-b2 text-muted-foreground hidden lg:table-cell">
                       {u.createdAt ? new Date(u.createdAt).toLocaleDateString('ko-KR') : '-'}
                     </td>
                     {isAdmin && (
@@ -259,7 +259,7 @@ export default function UsersTab() {
                         ) : (
                           <button
                             type="button"
-                            className="text-primary hover:underline text-c1 font-bold cursor-pointer"
+                            className="text-primary hover:underline typo-c1 font-bold cursor-pointer"
                             onClick={() => setEditingUserId(u.userId!)}
                           >
                             권한 변경

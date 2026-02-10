@@ -88,12 +88,12 @@ export function CommentInput({
             disabled={isSubmitting}
             className="cursor-pointer"
           />
-          <span className="text-c1 text-muted-foreground">익명</span>
+          <span className="typo-c1 text-muted-foreground">익명</span>
         </label>
 
         <span
           className={cn(
-            'text-c1',
+            'typo-c1',
             isOverLimit ? 'text-red-500' : 'text-muted-foreground'
           )}
         >

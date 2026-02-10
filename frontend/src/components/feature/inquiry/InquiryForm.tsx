@@ -29,7 +29,7 @@ export default function InquiryForm({ onSubmit, loading = false }: InquiryFormPr
     <Card className="py-5 px-11 rounded-[2.5rem] border bg-card shadow-xl">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-c1 font-bold text-muted-foreground uppercase tracking-widest mb-2">
+          <label className="block typo-c1 font-bold text-muted-foreground uppercase tracking-widest mb-2">
             문의 유형
           </label>
           <select
@@ -44,7 +44,7 @@ export default function InquiryForm({ onSubmit, loading = false }: InquiryFormPr
           </select>
         </div>
         <div>
-          <label className="block text-c1 font-bold text-muted-foreground uppercase tracking-widest mb-2">
+          <label className="block typo-c1 font-bold text-muted-foreground uppercase tracking-widest mb-2">
             제목
           </label>
           <Input
@@ -55,7 +55,7 @@ export default function InquiryForm({ onSubmit, loading = false }: InquiryFormPr
           />
         </div>
         <div>
-          <label className="block text-c1 font-bold text-muted-foreground uppercase tracking-widest mb-2">
+          <label className="block typo-c1 font-bold text-muted-foreground uppercase tracking-widest mb-2">
             내용
           </label>
           <textarea

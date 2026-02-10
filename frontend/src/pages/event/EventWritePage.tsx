@@ -148,7 +148,7 @@ export default function EventWritePage() {
                   <div className="text-center text-muted-foreground">
                     <ImageIcon className="mx-auto mb-s2" />
                     <span className="text-xs font-bold">Upload Cover</span>
-                    <p className="text-c2 mt-s1">(Coming soon)</p>
+                    <p className="typo-c2 mt-s1">(Coming soon)</p>
                   </div>
                 </div>
 

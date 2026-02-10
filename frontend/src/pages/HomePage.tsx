@@ -1,55 +1,55 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, UserPlus, MessageCircle, Megaphone } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useUIStore } from '@/stores/uiStore';
-import { useAuth } from '@/hooks';
-import { cn } from '@/lib/utils';
-import type { Post } from '@/types/entities';
+import { Link } from "react-router-dom";
+import { ArrowRight, UserPlus, MessageCircle, Megaphone } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useUIStore } from "@/stores/uiStore";
+import { useAuth } from "@/hooks";
+import { cn } from "@/lib/utils";
+import type { Post } from "@/types/entities";
 
 // Featured posts data (임시 데이터 - 추후 API로 대체)
 const FEATURED_POSTS: Post[] = [
   {
-    id: '1',
-    board: 'notices',
-    category: '공지',
-    title: '2024 봄학기 신입회원 모집',
-    author: '운영진',
-    content: '인하대학교 IGRUS 동아리에서 새로운 멤버를 모집합니다.',
-    date: '2시간 전',
+    id: "1",
+    board: "notices",
+    category: "공지",
+    title: "2024 봄학기 신입회원 모집",
+    author: "운영진",
+    content: "인하대학교 IGRUS 동아리에서 새로운 멤버를 모집합니다.",
+    date: "2시간 전",
     image:
-      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800',
+      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800",
     isAnonymous: false,
     isQuestion: false,
     likes: 120,
     comments: 45,
   },
   {
-    id: '2',
-    board: 'general',
-    category: '활동',
-    title: '게임 개발 프로젝트 전시회',
-    author: 'IGRUS',
-    content: '우리 동아리의 최고의 게임 개발 프로젝트를 만나보세요.',
-    date: '1일 전',
+    id: "2",
+    board: "general",
+    category: "활동",
+    title: "게임 개발 프로젝트 전시회",
+    author: "IGRUS",
+    content: "우리 동아리의 최고의 게임 개발 프로젝트를 만나보세요.",
+    date: "1일 전",
     image:
-      'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&q=80&w=800',
+      "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&q=80&w=800",
     isAnonymous: false,
     isQuestion: false,
     likes: 85,
     comments: 12,
   },
   {
-    id: '3',
-    board: 'general',
-    category: '행사',
-    title: '게임 업계 선배와의 네트워킹 나이트',
-    author: '행사팀',
-    content: '게임 업계 선배들과 함께하는 특별한 밤.',
-    date: '3일 전',
-    tag: 'D-2',
+    id: "3",
+    board: "general",
+    category: "행사",
+    title: "게임 업계 선배와의 네트워킹 나이트",
+    author: "행사팀",
+    content: "게임 업계 선배들과 함께하는 특별한 밤.",
+    date: "3일 전",
+    tag: "D-2",
     image:
-      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=800',
+      "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=800",
     isAnonymous: false,
     isQuestion: false,
     likes: 210,
@@ -59,7 +59,7 @@ const FEATURED_POSTS: Post[] = [
 
 export default function HomePage() {
   const theme = useUIStore((state) => state.theme);
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
   const { isAuthenticated } = useAuth();
 
   return (
@@ -67,8 +67,8 @@ export default function HomePage() {
       {/* Hero Section */}
       <section
         className={cn(
-          'relative w-full min-h-[480px] rounded-r4 overflow-hidden transition-all duration-500 hero-accent-line',
-          isDark ? 'hero-clean-dark' : 'hero-clean-light'
+          "relative w-full min-h-[480px] rounded-r4 overflow-hidden transition-all duration-500 hero-accent-line",
+          isDark ? "hero-clean-dark" : "hero-clean-light",
         )}
       >
         {/* Dot Grid Pattern */}
@@ -77,21 +77,29 @@ export default function HomePage() {
         {/* Decorative Elements */}
         <div
           className="hero-deco-ring"
-          style={{ top: '15%', right: '12%', width: 160, height: 160 }}
+          style={{ top: "15%", right: "12%", width: 160, height: 160 }}
         />
         <div
           className="hero-deco-ring-2"
-          style={{ top: '65%', right: '8%', width: 72, height: 72 }}
+          style={{ top: "65%", right: "8%", width: 72, height: 72 }}
         />
         <div
           className="hero-glow-orb"
-          style={{ top: '10%', right: '5%', width: 200, height: 200 }}
+          style={{ top: "10%", right: "5%", width: 200, height: 200 }}
         />
         <img
           src="/igruslogo.png"
           alt=""
           className="hero-logo-deco"
-          style={{ bottom: -48, left: -100, top: 'auto', right: 'auto', width: 320, height: 320, opacity: 0.12 }}
+          style={{
+            bottom: -48,
+            left: -100,
+            top: "auto",
+            right: "auto",
+            width: 320,
+            height: 320,
+            opacity: 0.12,
+          }}
         />
 
         {/* Content */}
@@ -100,10 +108,10 @@ export default function HomePage() {
             {/* Badge */}
             <div
               className={cn(
-                'inline-flex items-center px-s3 py-s1 rounded-full text-[11px] font-mono tracking-wider transition-colors hero-badge-glow',
+                "inline-flex items-center px-s3 py-s1 rounded-full text-[11px] font-mono tracking-wider transition-colors hero-badge-glow",
                 isDark
-                  ? 'bg-[#03A69E]/10 border border-[#03A69E]/20 text-[#66CBC5]'
-                  : 'bg-[#03A69E]/5 border border-[#03A69E]/12 text-[#03A69E]'
+                  ? "bg-[#03A69E]/10 border border-[#03A69E]/20 text-[#66CBC5]"
+                  : "bg-[#03A69E]/5 border border-[#03A69E]/12 text-[#03A69E]",
               )}
             >
               &lt;IGRUS /&gt;
@@ -113,8 +121,8 @@ export default function HomePage() {
             <h2 className="hero-heading hero-text-glow">
               <span
                 className={cn(
-                  'block transition-colors',
-                  isDark ? 'text-white' : 'text-gray-8'
+                  "block transition-colors",
+                  isDark ? "text-white" : "text-gray-8",
                 )}
               >
                 성장과 낭만의 동아리,
@@ -127,12 +135,13 @@ export default function HomePage() {
             {/* Description */}
             <p
               className={cn(
-                'text-b1 max-w-lg leading-relaxed transition-colors',
-                isDark ? 'text-[#9CA3AF]' : 'text-gray-500'
+                "typo-b2 max-w-lg leading-relaxed transition-colors",
+                isDark ? "text-[#9CA3AF]" : "text-gray-500",
               )}
             >
-              인하대학교 웹 개발 동아리 IGRUS에서 최신 기술로 프로젝트를
-              구현하세요. 함께 성장하는 개발자들의 커뮤니티입니다.
+              2000년부터 이어진 정보통신처 직속 컴퓨터 학술 자치회 IGRUS. <br />
+              26년간 수많은 성과와 인재를 배출하며 실력으로 증명해온
+              동아리입니다.
             </p>
 
             {/* CTA Buttons */}
@@ -142,9 +151,21 @@ export default function HomePage() {
                   asChild
                   className="flex items-center gap-s2 group/btn px-s6 py-s3 rounded-full font-semibold text-sm transition-all bg-[#03A69E] text-white hover:bg-[#029890] hero-btn-glow"
                 >
-                  <Link to={__FEATURE_COMMUNITY__ ? "/board/general" : "/board/notices"}>
-                    {__FEATURE_COMMUNITY__ ? <MessageCircle size={16} /> : <Megaphone size={16} />}
-                    {__FEATURE_COMMUNITY__ ? '커뮤니티 둘러보기' : '공지사항 보기'}
+                  <Link
+                    to={
+                      __FEATURE_COMMUNITY__
+                        ? "/board/general"
+                        : "/board/notices"
+                    }
+                  >
+                    {__FEATURE_COMMUNITY__ ? (
+                      <MessageCircle size={16} />
+                    ) : (
+                      <Megaphone size={16} />
+                    )}
+                    {__FEATURE_COMMUNITY__
+                      ? "커뮤니티 둘러보기"
+                      : "공지사항 보기"}
                     <ArrowRight
                       size={16}
                       className="group-hover/btn:translate-x-1 transition-transform"
@@ -167,7 +188,6 @@ export default function HomePage() {
                 </Button>
               )}
             </div>
-
           </div>
         </div>
       </section>
@@ -179,8 +199,8 @@ export default function HomePage() {
             <div>
               <h3
                 className={cn(
-                  'text-2xl font-bold transition-colors',
-                  isDark ? 'text-white' : 'text-black'
+                  "text-2xl font-bold transition-colors",
+                  isDark ? "text-white" : "text-black",
                 )}
               >
                 주요 게시글
@@ -203,7 +223,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
     </div>
   );
 }
@@ -211,20 +230,20 @@ export default function HomePage() {
 // PostCard Component
 interface PostCardProps {
   post: Post;
-  theme: 'light' | 'dark';
+  theme: "light" | "dark";
 }
 
 function PostCard({ post, theme }: PostCardProps) {
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
 
   return (
     <Link to={`/board/${post.board}/${post.id}`} className="h-full">
       <Card
         className={cn(
-          'h-full flex flex-col overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02]',
+          "h-full flex flex-col overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02]",
           isDark
-            ? 'bg-[#1A1A1A] border-white/5 hover:border-[#03A69E]/30'
-            : 'bg-white border-gray-100 hover:border-[#03A69E]/30 hover:shadow-lg'
+            ? "bg-[#1A1A1A] border-white/5 hover:border-[#03A69E]/30"
+            : "bg-white border-gray-100 hover:border-[#03A69E]/30 hover:shadow-lg",
         )}
       >
         {post.image && (
@@ -245,24 +264,24 @@ function PostCard({ post, theme }: PostCardProps) {
           <div className="space-y-s4 flex-1 flex flex-col">
             <div
               className={cn(
-                'text-xs font-bold uppercase tracking-widest',
-                isDark ? 'text-gray-400' : 'text-gray-500'
+                "text-xs font-bold uppercase tracking-widest",
+                isDark ? "text-gray-400" : "text-gray-500",
               )}
             >
               {post.category}
             </div>
             <h3
               className={cn(
-                'text-2xl font-bold line-clamp-2 transition-colors',
-                isDark ? 'text-white' : 'text-black'
+                "text-2xl font-bold line-clamp-2 transition-colors",
+                isDark ? "text-white" : "text-black",
               )}
             >
               {post.title}
             </h3>
             <p
               className={cn(
-                'text-sm line-clamp-2 transition-colors',
-                isDark ? 'text-gray-400' : 'text-gray-600'
+                "text-sm line-clamp-2 transition-colors",
+                isDark ? "text-gray-400" : "text-gray-600",
               )}
             >
               {post.content}

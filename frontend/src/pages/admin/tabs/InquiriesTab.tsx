@@ -174,7 +174,7 @@ export default function InquiriesTab() {
         <Card className={cn('p-s5 overflow-x-auto', selectedId ? 'flex-1' : 'w-full')}>
           <table className="w-full text-left">
             <thead>
-              <tr className="text-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
+              <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
                 <th className="pb-s4 font-bold">번호</th>
                 <th className="pb-s4 font-bold">유형</th>
                 <th className="pb-s4 font-bold">제목</th>
@@ -190,16 +190,16 @@ export default function InquiriesTab() {
                   className={cn('cursor-pointer hover:bg-muted/50 transition', selectedId === inq.id && 'bg-muted/50')}
                   onClick={() => setSelectedId(inq.id!)}
                 >
-                  <td className="py-s4 text-b2 font-medium">{inq.inquiryNumber}</td>
-                  <td className="py-s4 text-b2 text-muted-foreground">{inq.typeDescription}</td>
-                  <td className="py-s4 text-b2 font-bold max-w-[200px] truncate">{inq.title}</td>
-                  <td className="py-s4 text-b2 text-muted-foreground">{inq.authorName}{inq.guest ? ' (비회원)' : ''}</td>
+                  <td className="py-s4 typo-b2 font-medium">{inq.inquiryNumber}</td>
+                  <td className="py-s4 typo-b2 text-muted-foreground">{inq.typeDescription}</td>
+                  <td className="py-s4 typo-b2 font-bold max-w-[200px] truncate">{inq.title}</td>
+                  <td className="py-s4 typo-b2 text-muted-foreground">{inq.authorName}{inq.guest ? ' (비회원)' : ''}</td>
                   <td className="py-s4">
-                    <span className={cn('px-2 py-1 rounded-r2 text-c2 font-bold', STATUS_BADGE[inq.status ?? ''])}>
+                    <span className={cn('px-2 py-1 rounded-r2 typo-c2 font-bold', STATUS_BADGE[inq.status ?? ''])}>
                       {STATUS_LABEL[inq.status ?? ''] ?? inq.status}
                     </span>
                   </td>
-                  <td className="py-s4 text-b2 text-muted-foreground">
+                  <td className="py-s4 typo-b2 text-muted-foreground">
                     {inq.createdAt ? new Date(inq.createdAt).toLocaleDateString('ko-KR') : '-'}
                   </td>
                 </tr>
@@ -229,7 +229,7 @@ export default function InquiriesTab() {
             </div>
 
             {/* Content */}
-            <div className="p-s4 bg-muted/30 rounded-r3 text-b2 whitespace-pre-wrap">{detail.content}</div>
+            <div className="p-s4 bg-muted/30 rounded-r3 typo-b2 whitespace-pre-wrap">{detail.content}</div>
 
             {/* Status change */}
             <div className="flex gap-s2 items-center">
@@ -247,10 +247,10 @@ export default function InquiriesTab() {
 
             {/* Reply */}
             <div className="space-y-s3">
-              <h4 className="text-label font-bold">답변</h4>
+              <h4 className="typo-label font-bold">답변</h4>
               {detail.reply ? (
                 <div className="space-y-s2">
-                  <div className="p-s3 bg-primary/5 rounded-r3 text-b2 whitespace-pre-wrap">{detail.reply.content}</div>
+                  <div className="p-s3 bg-primary/5 rounded-r3 typo-b2 whitespace-pre-wrap">{detail.reply.content}</div>
                   <textarea
                     placeholder="답변 수정..."
                     defaultValue={detail.reply.content ?? ''}
@@ -283,11 +283,11 @@ export default function InquiriesTab() {
 
             {/* Memos */}
             <div className="space-y-s3">
-              <h4 className="text-label font-bold">내부 메모</h4>
+              <h4 className="typo-label font-bold">내부 메모</h4>
               {detail.memos?.map((memo) => (
-                <div key={memo.id} className="p-s3 bg-warning/5 rounded-r3 text-c1 border border-warning/20">
+                <div key={memo.id} className="p-s3 bg-warning/5 rounded-r3 typo-c1 border border-warning/20">
                   <p className="whitespace-pre-wrap">{memo.content}</p>
-                  <p className="text-c2 text-muted-foreground mt-s1">
+                  <p className="typo-c2 text-muted-foreground mt-s1">
                     {memo.writtenByName} - {memo.createdAt ? new Date(memo.createdAt).toLocaleString('ko-KR') : ''}
                   </p>
                 </div>
