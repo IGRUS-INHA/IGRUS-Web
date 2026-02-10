@@ -19,7 +19,7 @@ import java.util.List;
 @Schema(description = "문의 생성 요청 (통합)")
 public class CreateInquiryRequest {
 
-    @Schema(description = "문의 유형", example = "JOIN", allowableValues = {"JOIN", "GENERAL", "BUG_REPORT", "SUGGESTION"})
+    @Schema(description = "문의 유형", example = "JOIN")
     @NotNull(message = "문의 유형은 필수입니다")
     private InquiryType type;
 

@@ -20,13 +20,13 @@ public class InquiryListResponse {
     @Schema(description = "문의 번호", example = "INQ-20240115-001")
     private String inquiryNumber;
 
-    @Schema(description = "문의 유형", example = "JOIN", allowableValues = {"JOIN", "GENERAL", "BUG_REPORT", "SUGGESTION"})
+    @Schema(description = "문의 유형", example = "JOIN")
     private InquiryType type;
 
     @Schema(description = "문의 유형 설명", example = "가입 문의")
     private String typeDescription;
 
-    @Schema(description = "문의 상태", example = "PENDING", allowableValues = {"PENDING", "IN_PROGRESS", "ANSWERED", "CLOSED"})
+    @Schema(description = "문의 상태", example = "PENDING")
     private InquiryStatus status;
 
     @Schema(description = "문의 상태 설명", example = "대기중")

@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "문의 상태 변경 요청")
 public class UpdateInquiryStatusRequest {
 
-    @Schema(description = "변경할 문의 상태", example = "IN_PROGRESS", allowableValues = {"PENDING", "IN_PROGRESS", "ANSWERED", "CLOSED"})
+    @Schema(description = "변경할 문의 상태", example = "IN_PROGRESS")
     @NotNull(message = "상태값은 필수입니다")
     private InquiryStatus status;
 }
