@@ -31,8 +31,8 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     @Query("SELECT i FROM Inquiry i WHERE (:type IS NULL OR i.type = :type) AND (:status IS NULL OR i.status = :status)")
     Page<Inquiry> findByFilters(@Param("type") InquiryType type, @Param("status") InquiryStatus status, Pageable pageable);
 
-    // === 오늘 날짜 기준 문의 번호 카운트 (번호 생성용) ===
-    @Query("SELECT COUNT(i) FROM Inquiry i WHERE i.inquiryNumber LIKE :prefix%")
+    // === 오늘 날짜 기준 문의 번호 카운트 (번호 생성용, 소프트 삭제 포함) ===
+    @Query(value = "SELECT COUNT(*) FROM inquiries WHERE inquiries_inquiry_number LIKE CONCAT(:prefix, '%')", nativeQuery = true)
     long countByInquiryNumberPrefix(@Param("prefix") String prefix);
 
     // === 삭제된 데이터 포함 조회 (소프트 삭제 확인용) ===

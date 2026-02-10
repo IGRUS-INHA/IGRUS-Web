@@ -133,6 +133,7 @@ public abstract class ServiceIntegrationTestBase {
 
             // Phase 3: User 종속 테이블
             entityManager.createNativeQuery("DELETE FROM account_status_change_histories").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM withdrawal_logs").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM login_histories").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM refresh_tokens").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM password_reset_tokens").executeUpdate();
