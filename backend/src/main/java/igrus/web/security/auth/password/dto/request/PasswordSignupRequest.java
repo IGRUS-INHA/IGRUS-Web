@@ -4,6 +4,8 @@ import igrus.web.user.domain.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
+import java.util.List;
+
 @Schema(description = "비밀번호 기반 회원가입 요청")
 public record PasswordSignupRequest(
     @Schema(description = "학번 (8자리 숫자)", example = "12345678")
@@ -43,6 +45,9 @@ public record PasswordSignupRequest(
     @Schema(description = "동아리 가입 동기", example = "웹 개발 역량을 키우고 싶습니다.")
     @NotBlank(message = "가입 동기는 필수입니다")
     String motivation,
+
+    @Schema(description = "가입 목적 (복수 선택 가능)", example = "[\"네트워킹 및 친목 활동\", \"프로그래밍 실력 향상\"]")
+    List<String> wishes,
 
     @Schema(description = "성별", example = "MALE")
     @NotNull(message = "성별은 필수입니다")

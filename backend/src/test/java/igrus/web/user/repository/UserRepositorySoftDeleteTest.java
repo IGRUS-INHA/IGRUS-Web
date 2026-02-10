@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +23,7 @@ class UserRepositorySoftDeleteTest extends ServiceIntegrationTestBase {
 
     private User createAndSaveUser(String studentId, String email, String phoneNumber) {
         return transactionTemplate.execute(status -> {
-            User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", Gender.MALE, 1);
+            User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1);
             return userRepository.save(user);
         });
     }

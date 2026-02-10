@@ -8,6 +8,7 @@ import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.exception.UserNotFoundException;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -128,6 +129,7 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 "010-1234-5678",
                 "컴퓨터공학과",
                 "테스트 동기",
+                List.of(),
                 Gender.MALE,
                 1
         );
@@ -147,6 +149,7 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 "010-1234-5679",
                 "컴퓨터공학과",
                 "테스트 동기",
+                List.of(),
                 Gender.MALE,
                 1
         );

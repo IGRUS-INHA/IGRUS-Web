@@ -5,6 +5,7 @@ import igrus.web.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
+import java.util.List;
 
 @Schema(description = "거절된 준회원 정보 응답")
 public record RejectedAssociateInfoResponse(
@@ -22,6 +23,9 @@ public record RejectedAssociateInfoResponse(
 
         @Schema(description = "가입 동기", example = "웹 개발 역량을 키우고 싶습니다.")
         String motivation,
+
+        @Schema(description = "가입 목적")
+        List<String> wishes,
 
         @Schema(description = "가입 신청 일시", example = "2024-01-15T10:30:00Z")
         Instant createdAt,
@@ -43,6 +47,7 @@ public record RejectedAssociateInfoResponse(
                 user.getName(),
                 user.getDepartment(),
                 user.getMotivation(),
+                user.getWishes(),
                 user.getCreatedAt(),
                 decision.getReason(),
                 decision.getDecidedAt(),

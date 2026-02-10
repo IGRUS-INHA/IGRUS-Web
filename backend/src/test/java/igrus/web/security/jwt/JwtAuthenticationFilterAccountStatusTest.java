@@ -7,6 +7,7 @@ import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -205,6 +206,7 @@ class JwtAuthenticationFilterAccountStatusTest extends ServiceIntegrationTestBas
                 "010-1234-5678",
                 "컴퓨터공학과",
                 "테스트 동기",
+                List.of(),
                 Gender.MALE,
                 1
         );

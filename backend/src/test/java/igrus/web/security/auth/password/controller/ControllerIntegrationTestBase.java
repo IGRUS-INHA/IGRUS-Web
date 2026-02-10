@@ -25,6 +25,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.List;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 /**
@@ -173,6 +175,7 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
                 "010-" + studentId,
                 TEST_DEPARTMENT,
                 TEST_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1
         );
