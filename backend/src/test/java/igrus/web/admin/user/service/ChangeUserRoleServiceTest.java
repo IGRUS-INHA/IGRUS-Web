@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -234,6 +235,7 @@ class ChangeUserRoleServiceTest {
                 "010-1234-5678",
                 "컴퓨터공학과",
                 "테스트 동기",
+                List.of(),
                 Gender.MALE,
                 1
         );

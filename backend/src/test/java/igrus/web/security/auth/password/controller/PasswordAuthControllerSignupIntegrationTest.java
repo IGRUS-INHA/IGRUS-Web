@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -50,6 +51,7 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
                 TEST_PHONE,
                 TEST_DEPARTMENT,
                 TEST_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true
@@ -60,7 +62,7 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
                                                        String password, String phone, String department,
                                                        String motivation, Boolean privacyConsent) {
         return new PasswordSignupRequest(
-                studentId, name, email, password, phone, department, motivation, Gender.MALE, 1, privacyConsent
+                studentId, name, email, password, phone, department, motivation, List.of(), Gender.MALE, 1, privacyConsent
         );
     }
 

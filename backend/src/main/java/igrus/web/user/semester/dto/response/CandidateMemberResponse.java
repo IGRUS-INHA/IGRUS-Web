@@ -2,7 +2,10 @@ package igrus.web.user.semester.dto.response;
 
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.Wish;
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.util.List;
 
 @Schema(description = "학기별 회원 등록 후보 응답")
 public record CandidateMemberResponse(
@@ -19,7 +22,9 @@ public record CandidateMemberResponse(
         @Schema(description = "해당 학기 등록 여부")
         boolean alreadyRegistered,
         @Schema(description = "가입 동기", example = "웹 개발 역량을 키우고 싶습니다.")
-        String motivation
+        String motivation,
+        @Schema(description = "가입 목적")
+        List<Wish> wishes
 ) {
     public static CandidateMemberResponse from(User user, boolean alreadyRegistered) {
         return new CandidateMemberResponse(
@@ -29,7 +34,8 @@ public record CandidateMemberResponse(
                 user.getDepartment(),
                 user.getRole(),
                 alreadyRegistered,
-                user.getMotivation()
+                user.getMotivation(),
+                user.getWishes()
         );
     }
 }

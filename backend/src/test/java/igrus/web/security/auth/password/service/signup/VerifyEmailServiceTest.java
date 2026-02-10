@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -60,6 +62,7 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
                 VALID_PHONE,
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
+                List.of(),
                 Gender.MALE,
                 1,
                 true

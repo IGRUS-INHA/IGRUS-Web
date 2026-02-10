@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -45,6 +46,7 @@ class ValidateResetTokenServiceTest extends ServiceIntegrationTestBase {
                 "010-1234-5678",
                 "컴퓨터공학과",
                 "테스트 동기",
+                List.of(),
                 Gender.MALE,
                 1
         );

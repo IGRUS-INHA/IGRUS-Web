@@ -13,6 +13,7 @@ import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.repository.UserRoleHistoryRepository;
+import java.util.List;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -172,6 +173,7 @@ public abstract class ServiceIntegrationTestBase {
                 "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4),
                 "컴퓨터공학과",
                 "테스트 동기",
+                List.of(),
                 Gender.MALE,
                 1
         );
