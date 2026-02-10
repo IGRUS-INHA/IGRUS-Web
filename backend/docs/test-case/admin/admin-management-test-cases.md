@@ -88,7 +88,38 @@
 
 ---
 
-## 5. 인가 모델 요약
+## 5. 회원 강제 탈퇴
+
+### 5.1 강제 탈퇴 (단위 테스트)
+
+| ID | 테스트 케이스 | 예상 결과 | 상태 |
+|----|-------------|----------|------|
+| FW-001 | 활성 회원 강제 탈퇴 성공 | WITHDRAWN 상태, soft-delete, 토큰 무효화, 로그 저장, 이벤트 발행 | ✅ |
+| FW-002 | 정지된 회원 강제 탈퇴 성공 | 정지 상태여도 강제 탈퇴 가능 | ✅ |
+| FW-003 | ADMIN이 여러 명일 때 ADMIN 강제 탈퇴 성공 | 정상 처리 | ✅ |
+| FW-004 | WithdrawalLog에 사유 정확히 저장 | ArgumentCaptor 검증 | ✅ |
+| FW-005 | FORCE_WITHDRAWAL 타입 이벤트 발행 | ArgumentCaptor 검증 | ✅ |
+| FW-006 | PasswordCredential 없을 때도 성공 | 예외 없이 나머지 처리 수행 | ✅ |
+| FW-007 | 자기 자신 강제 탈퇴 시도 | SelfStatusChangeException | ✅ |
+| FW-008 | 존재하지 않는 사용자 | UserNotFoundException | ✅ |
+| FW-009 | 이미 탈퇴한 사용자 | AccountWithdrawnException | ✅ |
+| FW-010 | 마지막 ADMIN 강제 탈퇴 시도 | ForceWithdrawException | ✅ |
+
+### 5.2 강제 탈퇴 (통합 테스트)
+
+| ID | 테스트 케이스 | 역할 | 예상 결과 | 상태 |
+|----|-------------|------|----------|------|
+| FW-INT-001 | 강제 탈퇴 성공 | ADMIN | 204 No Content | ✅ |
+| FW-INT-002 | OPERATOR 강제 탈퇴 거부 | OPERATOR | 403 Forbidden | ✅ |
+| FW-INT-003 | MEMBER 강제 탈퇴 거부 | MEMBER | 403 Forbidden | ✅ |
+| FW-INT-004 | 미인증 강제 탈퇴 거부 | 미인증 | 401 Unauthorized | ✅ |
+| FW-INT-005 | 자기 자신 강제 탈퇴 시 400 | ADMIN | 400 Bad Request (SELF_STATUS_CHANGE_NOT_ALLOWED) | ✅ |
+| FW-INT-006 | 존재하지 않는 사용자 강제 탈퇴 시 404 | ADMIN | 404 Not Found | ✅ |
+| FW-INT-007 | 사유 미입력 시 400 | ADMIN | 400 Bad Request | ✅ |
+
+---
+
+## 6. 인가 모델 요약
 
 | 엔드포인트 | ADMIN | OPERATOR | MEMBER |
 |-----------|-------|----------|--------|
@@ -96,10 +127,11 @@
 | `GET /api/v1/admin/users` | 200 | 200 | 403 |
 | `GET /api/v1/admin/users/{id}` | 200 | 200 | 403 |
 | `PUT /api/v1/admin/users/{id}/role` | 204 | **403** | 403 |
+| `DELETE /api/v1/admin/users/{id}` | 204 | **403** | 403 |
 
 ---
 
-## 6. 관련 테스트 클래스
+## 7. 관련 테스트 클래스
 
 | 테스트 클래스 | 유형 | 테스트 수 |
 |-------------|------|----------|
@@ -108,12 +140,14 @@
 | `GetUserListServiceTest` | 단위 | - |
 | `GetUserDetailServiceTest` | 단위 | - |
 | `ChangeUserRoleServiceTest` | 단위 | 5개 |
-| `AdminUserControllerTest` | 통합 | 13개 |
+| `ForceWithdrawServiceTest` | 단위 | 10개 |
+| `AdminUserControllerTest` | 통합 | 20개 |
 
 ---
 
-## 7. 변경 이력
+## 8. 변경 이력
 
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
 | 1.0 | 2026-02-07 | 최초 작성 (PR #235 리팩토링 시 추가) |
+| 1.1 | 2026-02-10 | 회원 강제 탈퇴 테스트 케이스 추가 (Issue #266) |

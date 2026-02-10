@@ -2,12 +2,14 @@ package igrus.web.admin.user.controller;
 
 import igrus.web.admin.user.dto.ChangeUserRoleRequest;
 import igrus.web.admin.user.dto.ChangeUserStatusRequest;
+import igrus.web.admin.user.dto.ForceWithdrawRequest;
 import igrus.web.admin.user.dto.UserDetailResponse;
 import igrus.web.admin.user.dto.UserListPageResponse;
 import igrus.web.admin.user.dto.UserListResponse;
 import igrus.web.admin.user.dto.UserRoleHistoryResponse;
 import igrus.web.admin.user.service.ChangeUserRoleService;
 import igrus.web.admin.user.service.ChangeUserStatusService;
+import igrus.web.admin.user.service.ForceWithdrawService;
 import igrus.web.admin.user.service.GetUserDetailService;
 import igrus.web.admin.user.service.GetUserListService;
 import igrus.web.admin.user.service.GetUserRoleHistoryService;
@@ -34,6 +36,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
 import java.time.Instant;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -54,6 +57,7 @@ public class AdminUserController {
     private final GetUserDetailService getUserDetailService;
     private final ChangeUserRoleService changeUserRoleService;
     private final ChangeUserStatusService changeUserStatusService;
+    private final ForceWithdrawService forceWithdrawService;
     private final GetUserRoleHistoryService getUserRoleHistoryService;
 
     @Operation(
@@ -164,6 +168,28 @@ public class AdminUserController {
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
         changeUserStatusService.changeUserStatus(userId, request, authenticatedUser.userId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "회원 강제 탈퇴",
+            description = "관리자가 회원을 강제 탈퇴시킵니다. 사유 입력 필수."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "강제 탈퇴 성공"),
+            @ApiResponse(responseCode = "400", description = "자기 자신 강제 탈퇴 / 마지막 ADMIN 강제 탈퇴 시도"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> forceWithdrawUser(
+            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
+            @Valid @RequestBody ForceWithdrawRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        forceWithdrawService.forceWithdraw(userId, request.reason(), authenticatedUser.userId());
         return ResponseEntity.noContent().build();
     }
 }

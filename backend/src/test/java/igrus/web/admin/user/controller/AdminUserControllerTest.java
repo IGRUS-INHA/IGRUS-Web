@@ -2,6 +2,7 @@ package igrus.web.admin.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.admin.user.dto.ChangeUserRoleRequest;
+import igrus.web.admin.user.dto.ForceWithdrawRequest;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.common.exception.ErrorCode;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
@@ -28,6 +29,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -567,6 +569,111 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value("INVALID_DATE_RANGE"));
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 강제 탈퇴")
+    class ForceWithdrawUserTest {
+
+        @Test
+        @DisplayName("ADMIN 권한으로 회원 강제 탈퇴 성공")
+        void forceWithdraw_WithAdminRole_ReturnsNoContent() throws Exception {
+            ForceWithdrawRequest request = new ForceWithdrawRequest("동아리 규정 위반");
+
+            mockMvc.perform(delete(BASE_URL + "/" + memberUser.getId())
+                            .with(withAuth(adminUser))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+
+            assertThat(userRepository.findById(memberUser.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("OPERATOR 권한으로 강제 탈퇴 시 403 반환")
+        void forceWithdraw_WithOperatorRole_Returns403() throws Exception {
+            ForceWithdrawRequest request = new ForceWithdrawRequest("동아리 규정 위반");
+
+            mockMvc.perform(delete(BASE_URL + "/" + memberUser.getId())
+                            .with(withAuth(operatorUser))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("MEMBER 권한으로 강제 탈퇴 시 403 반환")
+        void forceWithdraw_WithMemberRole_Returns403() throws Exception {
+            ForceWithdrawRequest request = new ForceWithdrawRequest("동아리 규정 위반");
+
+            mockMvc.perform(delete(BASE_URL + "/" + memberUser.getId())
+                            .with(withAuth(memberUser))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("미인증 사용자 강제 탈퇴 시 401 반환")
+        void forceWithdraw_Unauthenticated_Returns401() throws Exception {
+            ForceWithdrawRequest request = new ForceWithdrawRequest("동아리 규정 위반");
+
+            mockMvc.perform(delete(BASE_URL + "/" + memberUser.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("자기 자신 강제 탈퇴 시 400 반환")
+        void forceWithdraw_SelfWithdraw_Returns400() throws Exception {
+            ForceWithdrawRequest request = new ForceWithdrawRequest("테스트");
+
+            mockMvc.perform(delete(BASE_URL + "/" + adminUser.getId())
+                            .with(withAuth(adminUser))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(ErrorCode.SELF_STATUS_CHANGE_NOT_ALLOWED.getCode()));
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 사용자 강제 탈퇴 시 404 반환")
+        void forceWithdraw_UserNotFound_Returns404() throws Exception {
+            ForceWithdrawRequest request = new ForceWithdrawRequest("테스트");
+
+            mockMvc.perform(delete(BASE_URL + "/999")
+                            .with(withAuth(adminUser))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.getCode()));
+        }
+
+        @Test
+        @DisplayName("사유 미입력 시 400 반환")
+        void forceWithdraw_EmptyReason_Returns400() throws Exception {
+            ForceWithdrawRequest request = new ForceWithdrawRequest("");
+
+            mockMvc.perform(delete(BASE_URL + "/" + memberUser.getId())
+                            .with(withAuth(adminUser))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
         }
     }
 }

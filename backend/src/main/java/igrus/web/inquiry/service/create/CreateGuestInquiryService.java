@@ -1,15 +1,13 @@
 package igrus.web.inquiry.service.create;
 
 import igrus.web.inquiry.domain.GuestInquiry;
-import igrus.web.inquiry.domain.InquiryAttachment;
-import igrus.web.inquiry.dto.request.AttachmentInfo;
 import igrus.web.inquiry.dto.request.CreateGuestInquiryRequest;
 import igrus.web.inquiry.dto.response.InquiryCreateResponse;
 import igrus.web.inquiry.exception.InquiryNumberGenerationException;
 import igrus.web.inquiry.repository.GuestInquiryRepository;
 import igrus.web.inquiry.service.support.InquiryAttachmentHelper;
 import igrus.web.inquiry.service.support.InquiryNotificationService;
-import igrus.web.inquiry.service.support.InquiryNumberGenerator;
+import igrus.web.inquiry.service.support.InquiryPersistenceExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -27,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateGuestInquiryService {
 
     private final GuestInquiryRepository guestInquiryRepository;
-    private final InquiryNumberGenerator inquiryNumberGenerator;
+    private final InquiryPersistenceExecutor inquiryPersistenceExecutor;
     private final PasswordEncoder passwordEncoder;
     private final InquiryNotificationService inquiryNotificationService;
     private final InquiryAttachmentHelper inquiryAttachmentHelper;
@@ -46,29 +44,30 @@ public class CreateGuestInquiryService {
         DataIntegrityViolationException lastException = null;
         for (int attempt = 0; attempt < MAX_INQUIRY_NUMBER_RETRIES; attempt++) {
             try {
-                String inquiryNumber = inquiryNumberGenerator.generate();
-
-                GuestInquiry inquiry = GuestInquiry.create(
-                        inquiryNumber,
-                        request.getType(),
-                        request.getTitle(),
-                        request.getContent(),
-                        request.getEmail(),
-                        request.getName(),
-                        passwordHash
+                GuestInquiry saved = inquiryPersistenceExecutor.persistInquiry(
+                        inquiryNumber -> {
+                            GuestInquiry inquiry = GuestInquiry.create(
+                                    inquiryNumber,
+                                    request.getType(),
+                                    request.getTitle(),
+                                    request.getContent(),
+                                    request.getEmail(),
+                                    request.getName(),
+                                    passwordHash
+                            );
+                            inquiryAttachmentHelper.addAttachments(inquiry, request.getAttachments());
+                            return inquiry;
+                        },
+                        guestInquiryRepository
                 );
-
-                inquiryAttachmentHelper.addAttachments(inquiry, request.getAttachments());
-
-                GuestInquiry saved = guestInquiryRepository.save(inquiry);
 
                 inquiryNotificationService.sendInquiryConfirmation(
                         request.getEmail(),
-                        inquiryNumber,
+                        saved.getInquiryNumber(),
                         request.getTitle()
                 );
 
-                log.info("비회원 문의 생성: inquiryNumber={}, email={}", inquiryNumber, request.getEmail());
+                log.info("비회원 문의 생성: inquiryNumber={}, email={}", saved.getInquiryNumber(), request.getEmail());
 
                 return InquiryCreateResponse.from(saved);
             } catch (DataIntegrityViolationException e) {
