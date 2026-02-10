@@ -1,7 +1,6 @@
 package igrus.web.event.controller;
 
 import igrus.web.common.config.SwaggerConfig;
-import igrus.web.common.exception.ErrorResponse;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.UpdateEventRequest;
@@ -48,12 +47,9 @@ public class EventController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "행사 생성 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventCreateResponse.class))),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @PostMapping
     public ResponseEntity<EventCreateResponse> createEvent(
@@ -68,8 +64,7 @@ public class EventController {
     @Operation(summary = "행사 목록 조회", description = "행사 목록을 조회합니다. 상태별 필터링이 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "행사 목록 조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요")
     })
     @GetMapping
     public ResponseEntity<List<EventListResponse>> getEventList(
@@ -85,12 +80,9 @@ public class EventController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "행사 상세 조회 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventDetailResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "준회원 접근 불가",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "준회원 접근 불가"),
+            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음")
     })
     @GetMapping("/{eventId}")
     public ResponseEntity<EventDetailResponse> getEvent(
@@ -106,14 +98,10 @@ public class EventController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "행사 수정 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventDetailResponse.class))),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 또는 수정 불가능한 상태",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 또는 수정 불가능한 상태"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음")
     })
     @PutMapping("/{eventId}")
     public ResponseEntity<EventDetailResponse> updateEvent(
@@ -129,12 +117,9 @@ public class EventController {
     @Operation(summary = "행사 삭제", description = "행사를 삭제합니다. 작성자 또는 관리자만 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "행사 삭제 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "행사를 찾을 수 없음")
     })
     @DeleteMapping("/{eventId}")
     public ResponseEntity<Void> deleteEvent(
@@ -152,12 +137,9 @@ public class EventController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "행사 마감 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventDetailResponse.class))),
-            @ApiResponse(responseCode = "400", description = "마감 불가능한 상태",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "마감 불가능한 상태"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @PostMapping("/{eventId}/close")
     public ResponseEntity<EventDetailResponse> closeEvent(

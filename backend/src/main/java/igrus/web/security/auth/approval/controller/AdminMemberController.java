@@ -20,7 +20,6 @@ import igrus.web.security.auth.approval.service.write.RejectAssociateService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -69,13 +68,11 @@ public class AdminMemberController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)",
-                    content = @Content
+                    description = "인증 필요 (로그인하지 않음)"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)",
-                    content = @Content
+                    description = "권한 없음 (ADMIN 권한 필요)"
             )
     })
     @GetMapping("/pending")
@@ -102,23 +99,19 @@ public class AdminMemberController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)",
-                    content = @Content
+                    description = "인증 필요 (로그인하지 않음)"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)",
-                    content = @Content
+                    description = "권한 없음 (ADMIN 권한 필요)"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
-                    content = @Content
+                    description = "사용자를 찾을 수 없음"
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "해당 사용자가 준회원이 아님",
-                    content = @Content
+                    description = "해당 사용자가 준회원이 아님"
             )
     })
     @PostMapping("/{id}/approve")
@@ -142,18 +135,15 @@ public class AdminMemberController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)",
-                    content = @Content
+                    description = "인증 필요 (로그인하지 않음)"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)",
-                    content = @Content
+                    description = "권한 없음 (ADMIN 권한 필요)"
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "승인할 사용자 목록이 비어있음",
-                    content = @Content
+                    description = "승인할 사용자 목록이 비어있음"
             )
     })
     @PostMapping("/approve-batch")
@@ -189,23 +179,19 @@ public class AdminMemberController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "해당 사용자가 준회원이 아니거나 이미 처리됨",
-                    content = @Content
+                    description = "해당 사용자가 준회원이 아니거나 이미 처리됨"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)",
-                    content = @Content
+                    description = "인증 필요 (로그인하지 않음)"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)",
-                    content = @Content
+                    description = "권한 없음 (ADMIN 권한 필요)"
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
-                    content = @Content
+                    description = "사용자를 찾을 수 없음"
             )
     })
     @PostMapping("/{id}/reject")
@@ -231,18 +217,15 @@ public class AdminMemberController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "거절할 사용자 목록이 비어있음",
-                    content = @Content
+                    description = "거절할 사용자 목록이 비어있음"
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)",
-                    content = @Content
+                    description = "인증 필요 (로그인하지 않음)"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)",
-                    content = @Content
+                    description = "권한 없음 (ADMIN 권한 필요)"
             )
     })
     @PostMapping("/reject-batch")
@@ -280,13 +263,11 @@ public class AdminMemberController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)",
-                    content = @Content
+                    description = "인증 필요 (로그인하지 않음)"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)",
-                    content = @Content
+                    description = "권한 없음 (ADMIN 권한 필요)"
             )
     })
     @GetMapping("/rejected")
@@ -314,13 +295,11 @@ public class AdminMemberController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)",
-                    content = @Content
+                    description = "인증 필요 (로그인하지 않음)"
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)",
-                    content = @Content
+                    description = "권한 없음 (ADMIN 권한 필요)"
             )
     })
     @GetMapping("/demoted")
