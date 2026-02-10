@@ -47,7 +47,11 @@ public class RejectAssociateService {
 
         associateDecisionRepository.findByUserIdAndActiveTrue(userId)
                 .ifPresent(decision -> {
-                    throw new AssociateAlreadyDecidedException();
+                    if (decision.isDemoted()) {
+                        decision.deactivate();
+                    } else {
+                        throw new AssociateAlreadyDecidedException();
+                    }
                 });
 
         AssociateDecision decision = AssociateDecision.reject(user, rejectorId, reason);
