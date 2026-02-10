@@ -9,6 +9,10 @@ export default function Layout() {
   const location = useLocation();
   const { sidebarOpen, setSidebarOpen } = useUIStore();
 
+  // 헤더를 숨길 페이지 경로 확인
+  const headerlessPages = ['/login', '/signup'];
+  const isHeaderless = headerlessPages.includes(location.pathname);
+
   // 푸터를 표시할 페이지 경로 확인
   const shouldShowFooter = (pathname: string): boolean => {
     return (
@@ -28,11 +32,11 @@ export default function Layout() {
 
       {/* Main Content */}
       <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-        {/* Header */}
-        <Header />
+        {/* Header - 인증 페이지에서 숨김 */}
+        {!isHeaderless && <Header />}
 
         {/* Page Content */}
-        <main className="px-s5 pb-s5 flex-1">
+        <main className="px-s5 pt-s5 pb-s5 flex-1">
           <div className="max-w-7xl mx-auto h-full">
             <Outlet />
           </div>
