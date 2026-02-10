@@ -13,7 +13,7 @@ import type {
   RecoveryEligibilityResponse,
   AccountRecoveryResponse,
 } from '@/api/model/models';
-import AuthForm from '@/components/feature/auth/AuthForm';
+import LoginForm from '@/components/feature/auth/LoginForm';
 import {
   isEmailNotVerified,
   isAccountWithdrawn,
@@ -203,10 +203,7 @@ export default function LoginPage() {
 
   const handleLogin = async (data: {
     studentId: string;
-    name: string;
-    email: string;
     password: string;
-    passwordConfirm: string;
   }) => {
     setLoading(true);
     try {
@@ -292,8 +289,7 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center h-full">
       <div className="max-w-3xl w-full animate-in slide-in-from-bottom-8 duration-500">
-        <AuthForm
-          mode="login"
+        <LoginForm
           icon={<img src="/igruslogo.png" alt="IGRUS Logo" className="w-12 h-12" />}
           title="Welcome IGRUS"
           subtitle="IGRUS 동아리 포털에 오신 것을 환영합니다."

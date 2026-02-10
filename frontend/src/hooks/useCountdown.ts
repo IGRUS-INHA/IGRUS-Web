@@ -26,19 +26,14 @@ interface UseCountdownReturn {
   stop: () => void;
 }
 
-function getPersistedRemaining(key: string, initialSeconds: number): number {
+function getPersistedRemaining(key: string): number {
   const stored = sessionStorage.getItem(key);
   if (!stored) return -1;
 
   const endTime = Number(stored);
-  const now = Date.now();
-  const remaining = Math.floor((endTime - now) / 1000);
+  const remaining = Math.floor((endTime - Date.now()) / 1000);
 
-  if (remaining <= 0) {
-    sessionStorage.removeItem(key);
-    return 0;
-  }
-  return remaining;
+  return Math.max(remaining, 0);
 }
 
 function persistEndTime(key: string, seconds: number) {
@@ -48,7 +43,7 @@ function persistEndTime(key: string, seconds: number) {
 export function useCountdown({ initialSeconds, autoStart = false, persistKey }: UseCountdownOptions): UseCountdownReturn {
   const [remaining, setRemaining] = useState(() => {
     if (persistKey) {
-      const persisted = getPersistedRemaining(persistKey, initialSeconds);
+      const persisted = getPersistedRemaining(persistKey);
       if (persisted >= 0) return persisted;
     }
     if (autoStart) {
@@ -60,7 +55,7 @@ export function useCountdown({ initialSeconds, autoStart = false, persistKey }: 
 
   const [isRunning, setIsRunning] = useState(() => {
     if (persistKey) {
-      const persisted = getPersistedRemaining(persistKey, initialSeconds);
+      const persisted = getPersistedRemaining(persistKey);
       return persisted > 0;
     }
     return autoStart;
@@ -76,7 +71,6 @@ export function useCountdown({ initialSeconds, autoStart = false, persistKey }: 
       setRemaining((prev) => {
         if (prev <= 1) {
           setIsRunning(false);
-          if (persistKey) sessionStorage.removeItem(persistKey);
           return 0;
         }
         return prev - 1;
