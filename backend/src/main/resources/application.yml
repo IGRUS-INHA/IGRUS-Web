@@ -28,5 +28,10 @@ app:
     verification-max-attempts: 5
     password-reset-expiry: 1800000      # 30분
     resend-rate-limit-seconds: 60       # 1분
+  webhook:
+    baebdung-i:
+      url: https://v2zb74shbf.execute-api.ap-northeast-2.amazonaws.com/prod/api/webhooks/submissions
+      enabled: true
+      timeout: 5000
   cleanup:
     unverified-user-retention-hours: 24 # 24시간

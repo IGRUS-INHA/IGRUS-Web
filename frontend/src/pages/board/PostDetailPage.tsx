@@ -336,14 +336,26 @@ export default function PostDetailPage() {
         {/* Header */}
         <div className="flex flex-col gap-s6 mb-s8 border-b border-border pb-s8">
           <div className="flex justify-between items-start">
-            <span
-              className={cn(
-                'px-s4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest',
-                isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
+            <div className="flex items-center gap-s2">
+              <span
+                className={cn(
+                  'px-s4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest',
+                  isDark ? 'bg-primary/10 text-primary' : 'bg-primary/10 text-primary'
+                )}
+              >
+                {post.boardCode}
+              </span>
+              {post.isVisibleToAssociate && (
+                <span
+                  className={cn(
+                    'px-s4 py-1.5 rounded-full text-xs font-bold tracking-widest',
+                    isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
+                  )}
+                >
+                  준회원 공개
+                </span>
               )}
-            >
-              {post.boardCode}
-            </span>
+            </div>
 
             {/* More Options Menu */}
             <div className="relative" ref={moreMenuRef}>

@@ -38,3 +38,9 @@ app:
     verification-code-expiry: 600000
     verification-max-attempts: 5
     password-reset-expiry: 1800000
+  webhook:
+    baebdung-i:
+      url: https://test-webhook.example.com/api/webhooks/submissions
+      secret: test-secret
+      enabled: false
+      timeout: 5000
