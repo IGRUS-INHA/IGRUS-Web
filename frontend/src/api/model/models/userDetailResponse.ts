@@ -33,6 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { UserDetailResponseEnrollmentStatus } from './userDetailResponseEnrollmentStatus';
 import type { UserDetailResponseGender } from './userDetailResponseGender';
 import type { UserDetailResponseInterestsItem } from './userDetailResponseInterestsItem';
 import type { UserDetailResponseJoinRoute } from './userDetailResponseJoinRoute';
@@ -72,6 +73,8 @@ export interface UserDetailResponse {
   gender?: UserDetailResponseGender;
   /** 학년 */
   grade?: number;
+  /** 재학 상태 */
+  enrollmentStatus?: UserDetailResponseEnrollmentStatus;
   /** 역할 */
   role?: UserDetailResponseRole;
   /** 상태 */

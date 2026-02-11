@@ -33,20 +33,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { LoginHistoryResponse } from './loginHistoryResponse';
-import type { PageableObject } from './pageableObject';
-import type { SortObject } from './sortObject';
 
-export interface PageLoginHistoryResponse {
-  totalElements?: number;
-  totalPages?: number;
-  first?: boolean;
-  last?: boolean;
-  size?: number;
-  content?: LoginHistoryResponse[];
-  number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  pageable?: PageableObject;
-  empty?: boolean;
-}
+/**
+ * 재학 상태
+ */
+export type UserDetailResponseEnrollmentStatus = typeof UserDetailResponseEnrollmentStatus[keyof typeof UserDetailResponseEnrollmentStatus];
+
+
+export const UserDetailResponseEnrollmentStatus = {
+  ENROLLED: 'ENROLLED',
+  GENERAL_LEAVE: 'GENERAL_LEAVE',
+  MILITARY_LEAVE: 'MILITARY_LEAVE',
+} as const;
