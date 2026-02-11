@@ -87,15 +87,15 @@ export default function BoardListPage() {
   return (
     <div className="space-y-s8 animate-in fade-in duration-300">
       {/* Header with Tabs and Write Button */}
-      <div className="flex justify-between items-center border-b border-border pb-s4">
-        <div className="flex gap-s4 overflow-x-auto">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-s3 border-b border-border pb-s4">
+        <div className="flex gap-s4 overflow-x-auto justify-center md:justify-start">
           {ENABLED_BOARDS.map((tab) => (
             <button
               key={tab}
               onClick={() => navigate(`/board/${tab}`)}
               type="button"
               className={cn(
-                'px-s6 py-s2 rounded-full text-sm font-bold transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer',
+                'px-s5 py-s2 rounded-full text-sm font-bold transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer',
                 validBoardType === tab
                   ? 'bg-primary text-primary-foreground shadow-lg'
                   : 'text-muted-foreground hover:bg-muted'
@@ -105,7 +105,7 @@ export default function BoardListPage() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-s4">
+        <div className="flex items-center gap-s4 self-start md:self-auto">
           <SortSelect value={sortType} onChange={handleSortChange} />
           {board.canWrite && (
             <Button
