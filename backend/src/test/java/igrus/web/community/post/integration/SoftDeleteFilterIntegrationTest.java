@@ -12,6 +12,8 @@ import igrus.web.community.comment.domain.Comment;
 import igrus.web.community.comment.repository.CommentRepository;
 import igrus.web.community.like.post_like.domain.PostLike;
 import igrus.web.community.like.post_like.repository.PostLikeRepository;
+import igrus.web.community.pinnedpost.domain.PinnedPost;
+import igrus.web.community.pinnedpost.repository.PinnedPostRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.repository.PostRepository;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
@@ -46,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *     <li>좋아요 목록에서 해당 게시글이 제외되는지 검증</li>
  *     <li>북마크 목록에서 해당 게시글이 제외되는지 검증</li>
  *     <li>내 댓글 목록에서 삭제된 게시글의 댓글이 제외되는지 검증</li>
+ *     <li>고정 게시글 목록에서 삭제된 게시글이 제외되는지 검증</li>
  * </ul>
  */
 @AutoConfigureMockMvc
@@ -73,8 +76,12 @@ class SoftDeleteFilterIntegrationTest extends ServiceIntegrationTestBase {
     @Autowired
     private CommentRepository commentRepository;
 
+    @Autowired
+    private PinnedPostRepository pinnedPostRepository;
+
     private User postAuthor;
     private User interactingUser;
+    private User operatorUser;
     private Board generalBoard;
     private Post post;
 
@@ -88,6 +95,7 @@ class SoftDeleteFilterIntegrationTest extends ServiceIntegrationTestBase {
 
         postAuthor = createAndSaveUser("20200001", "author@inha.edu", UserRole.MEMBER);
         interactingUser = createAndSaveUser("20200002", "user@inha.edu", UserRole.MEMBER);
+        operatorUser = createAndSaveUser("20200003", "operator@inha.edu", UserRole.OPERATOR);
 
         post = Post.createPost(generalBoard, postAuthor, "테스트 게시글", "테스트 내용");
         postRepository.save(post);
@@ -185,6 +193,32 @@ class SoftDeleteFilterIntegrationTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(0))
                     .andExpect(jsonPath("$.comments").isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("삭제된 게시글 고정 게시글 필터링")
+    class PinnedPostSoftDeleteFilterTest {
+
+        @DisplayName("삭제된 게시글은 고정 게시글 목록에서 제외된다")
+        @Test
+        void getPinnedPosts_WhenPostDeleted_ExcludesFromList() throws Exception {
+            // given: 게시글 고정 후 게시글 삭제
+            transactionTemplate.executeWithoutResult(status -> {
+                PinnedPost pinnedPost = PinnedPost.create(post, operatorUser, 1);
+                pinnedPostRepository.save(pinnedPost);
+                Post freshPost = postRepository.findById(post.getId()).orElseThrow();
+                freshPost.delete(postAuthor.getId());
+                postRepository.save(freshPost);
+            });
+
+            // when & then
+            mockMvc.perform(get("/api/v1/pinned-posts")
+                            .with(withAuth(interactingUser))
+                            .with(csrf()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isEmpty());
         }
     }
 }

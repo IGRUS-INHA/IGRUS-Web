@@ -116,6 +116,24 @@ class BulkRejectAssociatesServiceTest extends ServiceIntegrationTestBase {
         }
 
         @Test
+        @DisplayName("이메일 미인증 사용자는 skip되고 나머지는 정상 처리")
+        void rejectBulk_SomeUsersUnverified_ProcessesOthers() {
+            // given
+            User associate1 = createAndSaveUser("20230010", "a10@inha.edu", UserRole.ASSOCIATE);
+            User unverifiedUser = createAndSaveUnverifiedUser("20230011", "unverified@inha.edu", UserRole.ASSOCIATE);
+
+            List<Long> userIds = List.of(associate1.getId(), unverifiedUser.getId());
+
+            // when
+            int rejectedCount = bulkRejectAssociatesService.rejectBulk(userIds, adminUser.getId(), "거절 사유");
+
+            // then
+            assertThat(rejectedCount).isEqualTo(1);
+            assertThat(associateDecisionRepository.findByUserIdAndActiveTrue(associate1.getId())).isPresent();
+            assertThat(associateDecisionRepository.findByUserIdAndActiveTrue(unverifiedUser.getId())).isEmpty();
+        }
+
+        @Test
         @DisplayName("일부 사용자가 ASSOCIATE가 아닌 경우 나머지는 정상 처리")
         void rejectBulk_SomeUsersNotAssociate_ProcessesOthers() {
             // given

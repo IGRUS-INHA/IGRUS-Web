@@ -3,6 +3,7 @@ package igrus.web.security.auth.approval.service.write;
 import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.exception.AssociateAlreadyDecidedException;
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
+import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
 import igrus.web.user.domain.User;
@@ -43,6 +44,10 @@ public class RejectAssociateService {
 
         if (!user.isAssociate()) {
             throw new UserNotAssociateException(userId);
+        }
+
+        if (user.isPendingVerification()) {
+            throw new EmailNotVerifiedException();
         }
 
         associateDecisionRepository.findByUserIdAndActiveTrue(userId)

@@ -5,6 +5,7 @@ import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.domain.AssociateDecisionType;
 import igrus.web.security.auth.approval.exception.AdminRequiredException;
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
+import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.common.domain.RefreshToken;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -183,6 +184,17 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
 
             User updatedUser = userRepository.findById(associateUser.getId()).orElseThrow();
             assertThat(updatedUser.getRole()).isEqualTo(UserRole.MEMBER);
+        }
+
+        @Test
+        @DisplayName("이메일 미인증 사용자 승인 시도 시 EmailNotVerifiedException 발생")
+        void approveAssociate_UnverifiedEmail_ThrowsException() {
+            // given
+            User unverifiedUser = createAndSaveUnverifiedUser("20230099", "unverified@inha.edu", UserRole.ASSOCIATE);
+
+            // when & then
+            assertThatThrownBy(() -> approveAssociateService.approveAssociate(unverifiedUser.getId(), adminUser.getId()))
+                    .isInstanceOf(EmailNotVerifiedException.class);
         }
 
         @Test

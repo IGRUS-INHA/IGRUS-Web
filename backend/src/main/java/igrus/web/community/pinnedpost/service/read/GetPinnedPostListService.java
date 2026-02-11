@@ -23,7 +23,7 @@ public class GetPinnedPostListService {
      * @return 고정 게시글 목록
      */
     public List<PinnedPostListResponse> getPinnedPostList() {
-        return pinnedPostRepository.findAllByDeletedFalseOrderByDisplayOrderAsc()
+        return pinnedPostRepository.findAllActiveWithActivePost()
                 .stream()
                 .map(PinnedPostListResponse::from)
                 .toList();

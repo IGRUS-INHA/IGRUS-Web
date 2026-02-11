@@ -4,6 +4,7 @@ import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.domain.AssociateDecisionType;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,13 +23,13 @@ public interface AssociateDecisionRepository extends JpaRepository<AssociateDeci
     Optional<AssociateDecision> findByUserIdAndActiveTrue(Long userId);
 
     @Query("""
-        SELECT u FROM User u WHERE u.role = :role
+        SELECT u FROM User u WHERE u.role = :role AND u.status = :status
         AND NOT EXISTS (
             SELECT 1 FROM AssociateDecision ad
             WHERE ad.user = u AND ad.active = true AND ad.type IN (:excludeTypes)
         )
         """)
-    Page<User> findPendingAssociates(@Param("role") UserRole role, @Param("excludeTypes") List<AssociateDecisionType> excludeTypes, Pageable pageable);
+    Page<User> findPendingAssociates(@Param("role") UserRole role, @Param("status") UserStatus status, @Param("excludeTypes") List<AssociateDecisionType> excludeTypes, Pageable pageable);
 
     @Query(value = """
         SELECT ad FROM AssociateDecision ad JOIN FETCH ad.user

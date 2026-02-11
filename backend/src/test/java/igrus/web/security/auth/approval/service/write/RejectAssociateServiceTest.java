@@ -6,6 +6,7 @@ import igrus.web.security.auth.approval.domain.AssociateDecisionType;
 import igrus.web.security.auth.approval.exception.AdminRequiredException;
 import igrus.web.security.auth.approval.exception.AssociateAlreadyDecidedException;
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
+import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.exception.UserNotFoundException;
@@ -98,6 +99,17 @@ class RejectAssociateServiceTest extends ServiceIntegrationTestBase {
         void rejectAssociate_NonExistentUser_ThrowsException() {
             assertThatThrownBy(() -> rejectAssociateService.rejectAssociate(999L, adminUser.getId(), "사유"))
                     .isInstanceOf(UserNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("이메일 미인증 사용자 거절 시도 시 EmailNotVerifiedException 발생")
+        void rejectAssociate_UnverifiedEmail_ThrowsException() {
+            // given
+            User unverifiedUser = createAndSaveUnverifiedUser("20230099", "unverified@inha.edu", UserRole.ASSOCIATE);
+
+            // when & then
+            assertThatThrownBy(() -> rejectAssociateService.rejectAssociate(unverifiedUser.getId(), adminUser.getId(), "거절 사유"))
+                    .isInstanceOf(EmailNotVerifiedException.class);
         }
 
         @Test
