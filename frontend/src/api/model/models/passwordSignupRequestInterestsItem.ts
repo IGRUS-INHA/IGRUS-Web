@@ -33,18 +33,19 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { AuthorInfo } from './authorInfo';
 
-export interface PostInfo {
-  id?: number;
-  title?: string;
-  contentPreview?: string;
-  boardCode?: string;
-  boardName?: string;
-  author?: AuthorInfo;
-  isVisibleToAssociate?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  createdAt?: string;
-}
+export type PasswordSignupRequestInterestsItem = typeof PasswordSignupRequestInterestsItem[keyof typeof PasswordSignupRequestInterestsItem];
+
+
+export const PasswordSignupRequestInterestsItem = {
+  WEB_FRONTEND: 'WEB_FRONTEND',
+  WEB_BACKEND: 'WEB_BACKEND',
+  APP: 'APP',
+  SECURITY: 'SECURITY',
+  UI_UX_DESIGN: 'UI_UX_DESIGN',
+  OTHER_DESIGN: 'OTHER_DESIGN',
+  AI: 'AI',
+  CLOUD: 'CLOUD',
+  GAME: 'GAME',
+  OTHER: 'OTHER',
+} as const;

@@ -54,6 +54,15 @@ export default function PostListItem({ post, boardType, linkTo }: PostListItemPr
               Q&A
             </span>
           )}
+          {post.isVisibleToAssociate && (
+            <span
+              className={`px-s3 py-s1 rounded-full typo-c2 font-bold tracking-widest ${
+                isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              준회원 공개
+            </span>
+          )}
         </h3>
         <p className="typo-c1 text-muted-foreground ml-s4 whitespace-nowrap">조회 {post.viewCount ?? 0} · {formatDate(post.createdAt)}</p>
       </div>

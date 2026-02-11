@@ -297,14 +297,42 @@
   color: #212529 !important; /* gray-8 */
   border: 2px solid #DEE2E6 !important; /* gray-3 */
   border-radius: 16px !important; /* r4 */
+  width: 16em !important;
+  padding: 1rem !important;
+}
+
+/* Tailwind preflight가 border-width: 0으로 리셋하므로 아이콘 원형 테두리 복원 */
+.swal2-icon {
+  transform: scale(0.5) !important;
+  margin: -0.5em auto !important;
+  border-width: 0.25em !important;
+  border-style: solid !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+  border-width: 0.25em !important;
+  border-style: solid !important;
 }
 
 .swal2-title {
   color: #212529 !important; /* gray-8 */
+  font-size: 1rem !important;
+  padding: 0.5em 0 0 !important;
 }
 
 .swal2-html-container {
   color: #495057 !important; /* gray-6 */
+  font-size: 0.8rem !important;
+  padding: 0.5em 0 !important;
+}
+
+.swal2-actions {
+  margin: 0.5em auto 0 !important;
+}
+
+.swal2-actions button {
+  font-size: 0.8rem !important;
+  padding: 0.4em 1.2em !important;
 }
 
 /* 다크 모드 */

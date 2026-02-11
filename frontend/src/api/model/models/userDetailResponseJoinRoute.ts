@@ -33,18 +33,17 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { AuthorInfo } from './authorInfo';
 
-export interface PostInfo {
-  id?: number;
-  title?: string;
-  contentPreview?: string;
-  boardCode?: string;
-  boardName?: string;
-  author?: AuthorInfo;
-  isVisibleToAssociate?: boolean;
-  viewCount?: number;
-  likeCount?: number;
-  commentCount?: number;
-  createdAt?: string;
-}
+/**
+ * 가입 경로
+ */
+export type UserDetailResponseJoinRoute = typeof UserDetailResponseJoinRoute[keyof typeof UserDetailResponseJoinRoute];
+
+
+export const UserDetailResponseJoinRoute = {
+  EVERYTIME: 'EVERYTIME',
+  POSTER: 'POSTER',
+  OT: 'OT',
+  REFERRAL: 'REFERRAL',
+  OTHER: 'OTHER',
+} as const;

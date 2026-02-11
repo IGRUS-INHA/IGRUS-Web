@@ -19,11 +19,16 @@ import {
   Check,
   Loader2,
   ExternalLink,
+  Wallet,
+  AlertTriangle,
 } from 'lucide-react';
 import { useSignup } from '@/api/model/password-authentication/password-authentication';
 import { majorOptions } from '@/constants/majorOptions';
 import { domainOptions } from '@/constants/domainOptions';
-import { WISH_TITLE, wishOptions } from '@/constants/wishOptions';
+import { WISH_TITLE, wishOptions, wishToEnum } from '@/constants/wishOptions';
+import { INTEREST_TITLE, interestOptions, interestToEnum } from '@/constants/interestOptions';
+import { JOIN_ROUTE_TITLE, joinRouteOptions, joinRouteToEnum } from '@/constants/joinRouteOptions';
+import { ENROLLMENT_STATUS_TITLE, enrollmentStatusOptions } from '@/constants/enrollmentStatusOptions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -42,20 +47,26 @@ const signupSchema = z
       .string()
       .min(1, '이름을 입력해주세요.')
       .max(50, '이름은 50자 이내여야 합니다.'),
-    gender: z.enum(['MALE', 'FEMALE'], {
-      message: '성별을 선택해주세요.',
-    }),
+    gender: z
+      .enum(['MALE', 'FEMALE'], {
+        message: '성별을 선택해주세요.',
+      })
+      .optional()
+      .refine((v) => v !== undefined, { message: '성별을 선택해주세요.' }),
     grade: z
       .number({ message: '학년을 선택해주세요.' })
       .min(1, '학년을 선택해주세요.')
-      .max(4, '학년은 1~4 사이여야 합니다.'),
+      .max(4, '학년은 1~4 사이여야 합니다.')
+      .optional()
+      .refine((v) => v !== undefined, { message: '학년을 선택해주세요.' }),
+    enrollmentStatus: z.string().min(1, '재학/휴학 여부를 선택해주세요.'),
     emailLocal: z.string().min(1, '이메일 아이디를 입력해주세요.'),
     emailDomain: z.string().min(1, '도메인을 선택해주세요.'),
     customDomain: z.string().optional(),
     phoneNumber: z
       .string()
       .min(1, '전화번호를 입력해주세요.')
-      .regex(/^\d{10,11}$/, '올바른 전화번호를 입력해주세요.'),
+      .regex(/^\d{3}-\d{4}-\d{4}$/, '올바른 전화번호를 입력해주세요.'),
     department: z.string().min(1, '학과를 선택해주세요.'),
     password: z
       .string()
@@ -67,6 +78,10 @@ const signupSchema = z
       ),
     passwordConfirm: z.string().min(1, '비밀번호 확인을 입력해주세요.'),
     wishes: z.array(z.string()).min(1, '희망 활동을 1개 이상 선택해주세요.'),
+    interests: z.array(z.string()).min(1, '관심 분야를 1개 이상 선택해주세요.'),
+    customInterest: z.string().optional(),
+    joinRoute: z.string().min(1, '가입 경로를 선택해주세요.'),
+    customJoinRoute: z.string().optional(),
     motivation: z.string().optional(),
     privacyConsent: z.literal(true, {
       message: '개인정보 처리방침에 동의해주세요.',
@@ -84,20 +99,22 @@ const STEPS = [
   { title: '기본 정보', icon: User },
   { title: '연락처', icon: Mail },
   { title: '계정 보안', icon: Lock },
-  { title: '가입 동기', icon: FileText },
+  { title: '기타', icon: FileText },
 ] as const;
 
 const STEP_FIELDS: (keyof SignupFormData)[][] = [
-  ['studentId', 'name', 'gender', 'grade', 'privacyConsent', 'termsConsent'],
+  ['studentId', 'name', 'gender', 'grade', 'enrollmentStatus', 'privacyConsent', 'termsConsent'],
   ['emailLocal', 'emailDomain', 'customDomain', 'phoneNumber', 'department'],
   ['password', 'passwordConfirm'],
-  ['wishes', 'motivation'],
+  ['wishes', 'interests', 'customInterest', 'joinRoute', 'customJoinRoute', 'motivation'],
 ];
 
 // --- Component ---
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const [feeConfirmed, setFeeConfirmed] = useState(false);
+  const [feeChecked, setFeeChecked] = useState(false);
   const [step, setStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
@@ -121,8 +138,9 @@ export default function SignupPage() {
     defaultValues: {
       studentId: '',
       name: '',
-      gender: undefined,
-      grade: undefined,
+      gender: undefined as unknown as 'MALE' | 'FEMALE',
+      grade: undefined as unknown as number,
+      enrollmentStatus: '',
       emailLocal: '',
       emailDomain: 'inha.edu',
       customDomain: '',
@@ -131,6 +149,10 @@ export default function SignupPage() {
       password: '',
       passwordConfirm: '',
       wishes: [],
+      interests: [],
+      customInterest: '',
+      joinRoute: '',
+      customJoinRoute: '',
       motivation: '',
       privacyConsent: undefined as unknown as true,
       termsConsent: undefined as unknown as true,
@@ -139,6 +161,8 @@ export default function SignupPage() {
   });
 
   const selectedWishes = watch('wishes') ?? [];
+  const selectedInterests = watch('interests') ?? [];
+  const selectedJoinRoute = watch('joinRoute') ?? '';
   const emailDomain = watch('emailDomain');
 
   const handleWishToggle = (wish: string) => {
@@ -147,6 +171,34 @@ export default function SignupPage() {
       ? current.filter((w) => w !== wish)
       : [...current, wish];
     setValue('wishes', updated);
+  };
+
+  const handleInterestToggle = (interest: string) => {
+    const current = getValues('interests') ?? [];
+    if (interest === '기타') {
+      if (current.includes('기타')) {
+        setValue('interests', current.filter((i) => i !== '기타'));
+        setValue('customInterest', '');
+      } else {
+        setValue('interests', [...current, '기타']);
+      }
+    } else {
+      const updated = current.includes(interest)
+        ? current.filter((i) => i !== interest)
+        : [...current, interest];
+      setValue('interests', updated);
+    }
+  };
+
+  const handleJoinRouteSelect = (route: string) => {
+    if (selectedJoinRoute === route) {
+      setValue('joinRoute', '');
+    } else {
+      setValue('joinRoute', route);
+    }
+    if (route !== '기타') {
+      setValue('customJoinRoute', '');
+    }
   };
 
   const handleNext = async () => {
@@ -162,7 +214,11 @@ export default function SignupPage() {
   };
 
   const handlePrev = () => {
-    setStep((s) => Math.max(s - 1, 0));
+    if (step === 0) {
+      setFeeConfirmed(false);
+    } else {
+      setStep((s) => s - 1);
+    }
   };
 
   const onSubmit = async (data: SignupFormData) => {
@@ -172,10 +228,6 @@ export default function SignupPage() {
         data.emailDomain === 'custom' ? data.customDomain : data.emailDomain;
       const fullEmail = `${data.emailLocal}@${domain}`;
 
-      const wishText = data.wishes?.length
-        ? `[목적: ${data.wishes.join(', ')}]\n`
-        : '';
-
       await signupMutation.mutateAsync({
         data: {
           studentId: data.studentId,
@@ -184,9 +236,18 @@ export default function SignupPage() {
           email: fullEmail,
           phoneNumber: formatPhoneNumber(data.phoneNumber),
           department: data.department,
-          motivation: wishText + data.motivation,
-          gender: data.gender,
-          grade: data.grade,
+          motivation: data.motivation || undefined,
+          gender: data.gender!,
+          grade: data.grade!,
+          wishes: data.wishes
+            .map((w) => wishToEnum[w])
+            .filter(Boolean),
+          interests: data.interests
+            .map((i) => interestToEnum[i])
+            .filter(Boolean),
+          customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
+          joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
+          customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,
           privacyConsent: data.privacyConsent,
         },
       });
@@ -215,7 +276,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex items-center justify-center min-h-full py-s6 px-s4">
-      <div className="w-full max-w-lg animate-in slide-in-from-bottom-6 duration-500">
+      <div className="w-full max-w-2xl animate-in slide-in-from-bottom-6 duration-500">
         {/* Header */}
         <div className="text-center mb-s7">
           <h1 className="typo-h2 text-foreground">IGRUS 회원가입</h1>
@@ -224,7 +285,74 @@ export default function SignupPage() {
           </p>
         </div>
 
+        {/* Fee Payment Confirmation Gate */}
+        {!feeConfirmed && (
+          <div className="rounded-r4 border bg-card p-s6 shadow-sm">
+            <div className="flex items-center gap-s2 mb-s5">
+              <Wallet size={22} className="text-primary" />
+              <h2 className="typo-h4 text-foreground">회비 납부 안내</h2>
+            </div>
+
+            <p className="typo-b2 text-foreground mb-s5">
+              IGRUS의 활동에 참여하기 위해선 회비 <strong>2만원</strong>을 납부해주셔야 합니다.
+            </p>
+
+            <div className="bg-muted/50 border border-border rounded-r2 p-s4 mb-s5 space-y-s2">
+              <div className="relative flex flex-col sm:block gap-s1">
+                <span className="text-sm text-muted-foreground shrink-0">입금자명 양식</span>
+                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-baseline sm:justify-center">학번 2자리+이름 (ex. 26김아그)</span>
+              </div>
+              <div className="relative flex flex-col sm:block gap-s1">
+                <span className="text-sm text-muted-foreground shrink-0">입금계좌</span>
+                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-baseline sm:justify-center">토스뱅크 1002-3803-2581</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-s2 mb-s5 rounded-r2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-s3">
+              <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                입금자명 양식을 지키지 않으실 경우, 회비 납부 명단에서 누락될 수 있습니다.
+                <br />
+                정확한 형식으로 입금해 주시기 바랍니다.
+              </p>
+            </div>
+
+            <label className="flex items-center gap-s3 cursor-pointer group mb-s5">
+              <input
+                type="checkbox"
+                checked={feeChecked}
+                onChange={(e) => setFeeChecked(e.target.checked)}
+                className="cursor-pointer accent-primary"
+              />
+              <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                회비 납부를 완료했습니다
+              </span>
+            </label>
+
+            <Button
+              type="button"
+              disabled={!feeChecked}
+              onClick={() => setFeeConfirmed(true)}
+              className="w-full cursor-pointer"
+            >
+              회원가입 진행하기
+              <ChevronRight size={18} />
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground mt-s5">
+              이미 계정이 있으신가요?{' '}
+              <Link
+                to="/login"
+                className="text-primary font-medium hover:underline"
+              >
+                로그인
+              </Link>
+            </p>
+          </div>
+        )}
+
         {/* Step Indicator */}
+        {feeConfirmed && (
         <div className="flex items-center justify-between mb-s7 px-s2">
           {STEPS.map((s, i) => {
             const Icon = s.icon;
@@ -274,8 +402,10 @@ export default function SignupPage() {
             );
           })}
         </div>
+        )}
 
         {/* Form Card */}
+        {feeConfirmed && (
         <div className="rounded-r4 border bg-card p-s6 shadow-sm">
           {serverError && (
             <div className="mb-s5 rounded-r2 bg-destructive/10 border border-destructive/20 p-s4 text-sm text-destructive">
@@ -283,7 +413,7 @@ export default function SignupPage() {
             </div>
           )}
 
-          <form onSubmit={(e) => { setSubmitted(true); handleSubmit(onSubmit)(e); }}>
+          <form onSubmit={(e) => e.preventDefault()}>
             {/* Step 1: 기본 정보 */}
             <div className={cn('space-y-s4', step !== 0 && 'hidden')}>
               <FormField label="학번" error={errors.studentId?.message}>
@@ -354,6 +484,28 @@ export default function SignupPage() {
                       )}
                     >
                       {g}학년
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+
+              <FormField label={ENROLLMENT_STATUS_TITLE} error={errors.enrollmentStatus?.message}>
+                <div className="grid grid-cols-3 gap-s2">
+                  {enrollmentStatusOptions.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() =>
+                        setValue('enrollmentStatus', status, { shouldValidate: true })
+                      }
+                      className={cn(
+                        'h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer',
+                        watch('enrollmentStatus') === status
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted border-border text-foreground hover:border-primary/50',
+                      )}
+                    >
+                      {status}
                     </button>
                   ))}
                 </div>
@@ -464,11 +616,11 @@ export default function SignupPage() {
                     {...register('phoneNumber', {
                       onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                         const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-                        setValue('phoneNumber', digits);
+                        setValue('phoneNumber', formatPhoneNumber(digits));
                       },
                     })}
-                    placeholder="01012345678"
-                    maxLength={11}
+                    placeholder="010-1234-5678"
+                    maxLength={13}
                     className="pl-10"
                   />
                 </div>
@@ -588,7 +740,7 @@ export default function SignupPage() {
 
             {/* Step 4: 가입 동기 */}
             <div className={cn('space-y-s4', step !== 3 && 'hidden')}>
-              <FormField label={WISH_TITLE} error={submitted ? errors.wishes?.message : undefined} mutedError>
+              <FormField label={WISH_TITLE} error={submitted ? errors.wishes?.message : undefined}>
                 <div className="flex flex-wrap gap-s2">
                   {wishOptions.map((wish) => (
                     <button
@@ -606,6 +758,86 @@ export default function SignupPage() {
                     </button>
                   ))}
                 </div>
+              </FormField>
+
+              <FormField label={INTEREST_TITLE} error={submitted ? errors.interests?.message : undefined}>
+                <div className="flex flex-wrap gap-s2">
+                  {interestOptions.map((interest) => (
+                    <button
+                      key={interest}
+                      type="button"
+                      onClick={() => handleInterestToggle(interest)}
+                      className={cn(
+                        'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
+                        selectedInterests.includes(interest)
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'border-border bg-muted text-foreground hover:border-primary/50',
+                      )}
+                    >
+                      {interest}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleInterestToggle('기타')}
+                    className={cn(
+                      'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
+                      selectedInterests.includes('기타')
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'border-border bg-muted text-foreground hover:border-primary/50',
+                    )}
+                  >
+                    기타
+                  </button>
+                </div>
+                {selectedInterests.includes('기타') && (
+                  <Input
+                    {...register('customInterest')}
+                    placeholder="관심 분야를 입력해주세요"
+                    className="mt-s2"
+                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                  />
+                )}
+              </FormField>
+
+              <FormField label={JOIN_ROUTE_TITLE} error={submitted ? errors.joinRoute?.message : undefined}>
+                <div className="flex flex-wrap gap-s2">
+                  {joinRouteOptions.map((route) => (
+                    <button
+                      key={route}
+                      type="button"
+                      onClick={() => handleJoinRouteSelect(route)}
+                      className={cn(
+                        'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
+                        selectedJoinRoute === route
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'border-border bg-muted text-foreground hover:border-primary/50',
+                      )}
+                    >
+                      {route}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleJoinRouteSelect('기타')}
+                    className={cn(
+                      'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
+                      selectedJoinRoute === '기타'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'border-border bg-muted text-foreground hover:border-primary/50',
+                    )}
+                  >
+                    기타
+                  </button>
+                </div>
+                {selectedJoinRoute === '기타' && (
+                  <Input
+                    {...register('customJoinRoute')}
+                    placeholder="가입 경로를 입력해주세요"
+                    className="mt-s2"
+                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                  />
+                )}
               </FormField>
 
               <FormField label="가입 동기 (선택)">
@@ -631,31 +863,30 @@ export default function SignupPage() {
 
             {/* Navigation Buttons */}
             <div className="flex items-center gap-s3 mt-s6">
-              {step > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrev}
-                  className="flex-1 cursor-pointer"
-                >
-                  <ChevronLeft size={18} />
-                  이전
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePrev}
+                className="flex-1 cursor-pointer"
+              >
+                <ChevronLeft size={18} />
+                이전
+              </Button>
 
               {!isLastStep ? (
                 <Button
                   type="button"
                   onClick={handleNext}
-                  className={cn('flex-1 cursor-pointer', step === 0 && 'w-full')}
+                  className="flex-1 cursor-pointer"
                 >
                   다음
                   <ChevronRight size={18} />
                 </Button>
               ) : (
                 <Button
-                  type="submit"
+                  type="button"
                   disabled={isSubmitting}
+                  onClick={() => { setSubmitted(true); handleSubmit(onSubmit)(); }}
                   className="flex-1 cursor-pointer"
                 >
                   {isSubmitting ? (
@@ -685,6 +916,7 @@ export default function SignupPage() {
             </Link>
           </p>
         </div>
+        )}
       </div>
     </div>
   );

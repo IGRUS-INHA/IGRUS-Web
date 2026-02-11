@@ -38,6 +38,5 @@ springdoc:
 app:
   cookie:
     secure: true
-    same-site: None
-    # same-site: Strict
-    # domain: igrus.org
+    same-site: Lax
+    domain: igrus.co.kr

@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __FEATURE_COMMUNITY__: env.FEATURE_COMMUNITY !== 'false',
       __FEATURE_SEARCH__: env.FEATURE_SEARCH !== 'false',
+      __FEATURE_PROFILE_EDIT__: env.FEATURE_PROFILE_EDIT !== 'false',
     },
   };
 });

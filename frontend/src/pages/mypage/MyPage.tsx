@@ -107,14 +107,14 @@ export default function MyPage() {
       />
 
       {/* Tabs */}
-      <div className="flex gap-s4 overflow-x-auto pb-s2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-s4">
         {(['posts', 'likes', 'scraps', 'events'] as TabType[]).map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'flex-1 min-w-[120px] text-center px-s6 py-s4 rounded-r4 border transition-all cursor-pointer',
+              'text-center px-s6 py-s4 rounded-r4 border transition-all cursor-pointer',
               activeTab === tab
                 ? 'bg-primary/10 border-primary'
                 : 'bg-white/5 border-border hover:border-primary/30'
