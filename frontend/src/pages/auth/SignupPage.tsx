@@ -28,6 +28,7 @@ import { domainOptions } from '@/constants/domainOptions';
 import { WISH_TITLE, wishOptions } from '@/constants/wishOptions';
 import { INTEREST_TITLE, interestOptions } from '@/constants/interestOptions';
 import { JOIN_ROUTE_TITLE, joinRouteOptions } from '@/constants/joinRouteOptions';
+import { ENROLLMENT_STATUS_TITLE, enrollmentStatusOptions } from '@/constants/enrollmentStatusOptions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -58,6 +59,7 @@ const signupSchema = z
       .max(4, '학년은 1~4 사이여야 합니다.')
       .optional()
       .refine((v) => v !== undefined, { message: '학년을 선택해주세요.' }),
+    enrollmentStatus: z.string().min(1, '재학/휴학 여부를 선택해주세요.'),
     emailLocal: z.string().min(1, '이메일 아이디를 입력해주세요.'),
     emailDomain: z.string().min(1, '도메인을 선택해주세요.'),
     customDomain: z.string().optional(),
@@ -101,7 +103,7 @@ const STEPS = [
 ] as const;
 
 const STEP_FIELDS: (keyof SignupFormData)[][] = [
-  ['studentId', 'name', 'gender', 'grade', 'privacyConsent', 'termsConsent'],
+  ['studentId', 'name', 'gender', 'grade', 'enrollmentStatus', 'privacyConsent', 'termsConsent'],
   ['emailLocal', 'emailDomain', 'customDomain', 'phoneNumber', 'department'],
   ['password', 'passwordConfirm'],
   ['wishes', 'interests', 'customInterest', 'joinRoute', 'customJoinRoute', 'motivation'],
@@ -136,8 +138,9 @@ export default function SignupPage() {
     defaultValues: {
       studentId: '',
       name: '',
-      gender: undefined,
-      grade: undefined,
+      gender: undefined as unknown as 'MALE' | 'FEMALE',
+      grade: undefined as unknown as number,
+      enrollmentStatus: '',
       emailLocal: '',
       emailDomain: 'inha.edu',
       customDomain: '',
@@ -240,6 +243,8 @@ export default function SignupPage() {
           motivation: wishText + data.motivation,
           gender: data.gender!,
           grade: data.grade!,
+          // TODO: 백엔드 API 스펙 업데이트 후 주석 해제
+          // enrollmentStatus: data.enrollmentStatus,
           privacyConsent: data.privacyConsent,
         },
       });
@@ -476,6 +481,28 @@ export default function SignupPage() {
                       )}
                     >
                       {g}학년
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+
+              <FormField label={ENROLLMENT_STATUS_TITLE} error={errors.enrollmentStatus?.message}>
+                <div className="grid grid-cols-3 gap-s2">
+                  {enrollmentStatusOptions.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() =>
+                        setValue('enrollmentStatus', status, { shouldValidate: true })
+                      }
+                      className={cn(
+                        'h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer',
+                        watch('enrollmentStatus') === status
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted border-border text-foreground hover:border-primary/50',
+                      )}
+                    >
+                      {status}
                     </button>
                   ))}
                 </div>

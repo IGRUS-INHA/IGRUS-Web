@@ -98,3 +98,4 @@ export * from './domainOptions';
 export * from './wishOptions';
 export * from './interestOptions';
 export * from './joinRouteOptions';
+export * from './enrollmentStatusOptions';
