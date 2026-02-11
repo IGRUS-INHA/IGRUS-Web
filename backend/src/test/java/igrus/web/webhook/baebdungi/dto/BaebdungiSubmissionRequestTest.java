@@ -39,7 +39,7 @@ class BaebdungiSubmissionRequestTest {
         assertThat(request.gender()).isEqualTo("남");
         assertThat(request.grade()).isEqualTo("2학년");
         assertThat(request.enrollmentStatus()).isNull();
-        assertThat(request.hasPaid()).isNull();
+        assertThat(request.hasPaid()).isEqualTo("네");
         assertThat(request.submittedAt()).isEqualTo("2025-03-15T10:30:00Z");
     }
 
