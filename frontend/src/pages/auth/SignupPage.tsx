@@ -298,13 +298,13 @@ export default function SignupPage() {
             </p>
 
             <div className="bg-muted/50 border border-border rounded-r2 p-s4 mb-s5 space-y-s2">
-              <div className="relative flex items-baseline">
+              <div className="relative flex flex-col sm:block gap-s1">
                 <span className="text-sm text-muted-foreground shrink-0">입금자명 양식</span>
-                <span className="text-sm font-medium text-foreground absolute inset-0 flex items-baseline justify-center">학번 2자리+이름 (ex. 26김아그)</span>
+                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-baseline sm:justify-center">학번 2자리+이름 (ex. 26김아그)</span>
               </div>
-              <div className="relative flex items-baseline">
+              <div className="relative flex flex-col sm:block gap-s1">
                 <span className="text-sm text-muted-foreground shrink-0">입금계좌</span>
-                <span className="text-sm font-medium text-foreground absolute inset-0 flex items-baseline justify-center">토스뱅크 1002-3803-2581</span>
+                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-baseline sm:justify-center">토스뱅크 1002-3803-2581</span>
               </div>
             </div>
 

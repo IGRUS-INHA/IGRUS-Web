@@ -112,7 +112,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
     <div
       className={cn(
         'flex items-start gap-s3 rounded-r2 border p-s4 shadow-lg animate-in slide-in-from-right-full',
-        'min-w-[300px] max-w-[400px]',
+        'min-w-[150px] max-w-[200px] sm:min-w-[300px] sm:max-w-[400px]',
         variants[type]
       )}
     >

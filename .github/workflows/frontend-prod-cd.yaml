@@ -1,4 +1,4 @@
-name: Frontend Deploy to S3 & CloudFront
+name: Frontend Production CD Pipeline
 
 on:
   push:

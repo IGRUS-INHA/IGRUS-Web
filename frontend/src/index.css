@@ -297,14 +297,39 @@
   color: #212529 !important; /* gray-8 */
   border: 2px solid #DEE2E6 !important; /* gray-3 */
   border-radius: 16px !important; /* r4 */
+  width: 16em !important;
+  padding: 1rem !important;
+}
+
+.swal2-icon {
+  width: 2.5em !important;
+  height: 2.5em !important;
+  margin: 0.5em auto !important;
+}
+
+.swal2-icon .swal2-icon-content {
+  font-size: 1.5em !important;
 }
 
 .swal2-title {
   color: #212529 !important; /* gray-8 */
+  font-size: 1rem !important;
+  padding: 0.5em 0 0 !important;
 }
 
 .swal2-html-container {
   color: #495057 !important; /* gray-6 */
+  font-size: 0.8rem !important;
+  padding: 0.5em 0 !important;
+}
+
+.swal2-actions {
+  margin: 0.5em auto 0 !important;
+}
+
+.swal2-actions button {
+  font-size: 0.8rem !important;
+  padding: 0.4em 1.2em !important;
 }
 
 /* 다크 모드 */
