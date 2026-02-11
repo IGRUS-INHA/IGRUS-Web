@@ -45,8 +45,8 @@ export interface PageRejectedAssociateInfoResponse {
   content?: RejectedAssociateInfoResponse[];
   number?: number;
   sort?: SortObject;
-  numberOfElements?: number;
   first?: boolean;
   last?: boolean;
+  numberOfElements?: number;
   empty?: boolean;
 }

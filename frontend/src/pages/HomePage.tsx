@@ -1,66 +1,22 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, UserPlus, MessageCircle, Megaphone } from "lucide-react";
+import { ArrowRight, UserPlus, MessageCircle, Megaphone, Eye, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/stores/uiStore";
 import { useAuth } from "@/hooks";
 import { cn } from "@/lib/utils";
-import type { Post } from "@/types/entities";
-
-// Featured posts data (임시 데이터 - 추후 API로 대체)
-const FEATURED_POSTS: Post[] = [
-  {
-    id: "1",
-    board: "notices",
-    category: "공지",
-    title: "2024 봄학기 신입회원 모집",
-    author: "운영진",
-    content: "인하대학교 IGRUS 동아리에서 새로운 멤버를 모집합니다.",
-    date: "2시간 전",
-    image:
-      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800",
-    isAnonymous: false,
-    isQuestion: false,
-    likes: 120,
-    comments: 45,
-  },
-  {
-    id: "2",
-    board: "general",
-    category: "활동",
-    title: "게임 개발 프로젝트 전시회",
-    author: "IGRUS",
-    content: "우리 동아리의 최고의 게임 개발 프로젝트를 만나보세요.",
-    date: "1일 전",
-    image:
-      "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&q=80&w=800",
-    isAnonymous: false,
-    isQuestion: false,
-    likes: 85,
-    comments: 12,
-  },
-  {
-    id: "3",
-    board: "general",
-    category: "행사",
-    title: "게임 업계 선배와의 네트워킹 나이트",
-    author: "행사팀",
-    content: "게임 업계 선배들과 함께하는 특별한 밤.",
-    date: "3일 전",
-    tag: "D-2",
-    image:
-      "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=800",
-    isAnonymous: false,
-    isQuestion: false,
-    likes: 210,
-    comments: 38,
-  },
-];
+import { useGetPinnedPostList } from "@/api/model/pinned-post/pinned-post";
+import type { PinnedPostListResponse } from "@/api/model/models";
+import { formatRelativeTime } from "@/utils";
+import MarkdownPreview from "@uiw/react-markdown-preview";
 
 export default function HomePage() {
   const theme = useUIStore((state) => state.theme);
   const isDark = theme === "dark";
   const { isAuthenticated } = useAuth();
+  const { data: pinnedResponse, isLoading: isPinnedLoading } =
+    useGetPinnedPostList();
+  const pinnedPosts = (pinnedResponse?.data ?? []) as PinnedPostListResponse[];
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -197,7 +153,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Section */}
-      {__FEATURE_COMMUNITY__ && (
+      {__FEATURE_COMMUNITY__ && !isPinnedLoading && pinnedPosts.length > 0 && (
         <section className="mt-s6">
           <div className="flex justify-between items-center mb-s6">
             <div>
@@ -221,8 +177,8 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-s7 items-stretch">
-            {FEATURED_POSTS.map((post) => (
-              <PostCard key={post.id} post={post} theme={theme} />
+            {pinnedPosts.map((pinned) => (
+              <PinnedPostCard key={pinned.id} pinned={pinned} theme={theme} />
             ))}
           </div>
         </section>
@@ -231,17 +187,21 @@ export default function HomePage() {
   );
 }
 
-// PostCard Component
-interface PostCardProps {
-  post: Post;
+// PinnedPostCard Component
+interface PinnedPostCardProps {
+  pinned: PinnedPostListResponse;
   theme: "light" | "dark";
 }
 
-function PostCard({ post, theme }: PostCardProps) {
+function PinnedPostCard({ pinned, theme }: PinnedPostCardProps) {
   const isDark = theme === "dark";
+  const post = pinned.post;
 
   return (
-    <Link to={`/board/${post.board}/${post.id}`} className="h-full">
+    <Link
+      to={`/board/${post?.boardCode}/${post?.id}`}
+      className="h-full"
+    >
       <Card
         className={cn(
           "h-full flex flex-col overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02]",
@@ -250,20 +210,18 @@ function PostCard({ post, theme }: PostCardProps) {
             : "bg-white border-gray-100 hover:border-[#03A69E]/30 hover:shadow-lg",
         )}
       >
-        {post.image && (
-          <div className="relative h-64 overflow-hidden">
-            <img
-              src={post.image}
-              alt={post.title}
-              className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-            />
-            {post.tag && (
-              <div className="absolute top-s4 right-s4 bg-primary text-white px-s3 py-s1 rounded-r4 text-xs font-bold">
-                {post.tag}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Image */}
+        <div className={cn(
+          "h-48 relative",
+          isDark ? "bg-white/5" : "bg-muted/30",
+        )}>
+          <img
+            src="/igruslogo2.png"
+            alt=""
+            className="absolute inset-0 m-auto h-40 w-40 object-contain"
+          />
+        </div>
+
         <CardContent className="p-s4 flex-1 flex flex-col">
           <div className="space-y-s4 flex-1 flex flex-col">
             <div
@@ -272,7 +230,7 @@ function PostCard({ post, theme }: PostCardProps) {
                 isDark ? "text-gray-400" : "text-gray-500",
               )}
             >
-              {post.category}
+              {post?.boardName}
             </div>
             <h3
               className={cn(
@@ -280,22 +238,24 @@ function PostCard({ post, theme }: PostCardProps) {
                 isDark ? "text-white" : "text-black",
               )}
             >
-              {post.title}
+              {post?.title}
             </h3>
-            <p
+            <div
               className={cn(
-                "text-sm line-clamp-2 transition-colors",
+                "text-sm line-clamp-2 flex-1 transition-colors overflow-hidden",
                 isDark ? "text-gray-400" : "text-gray-600",
               )}
+              data-color-mode={isDark ? "dark" : "light"}
             >
-              {post.content}
-            </p>
-            <div className="flex items-center justify-between pt-s2">
-              <div className="flex items-center gap-s4 text-xs text-gray-500">
-                <span>👍 {post.likes}</span>
-                <span>💬 {post.comments}</span>
-              </div>
-              <span className="text-xs text-gray-500">{post.date}</span>
+              <MarkdownPreview source={post?.contentPreview?.replace(/\n/g, "  \n") ?? ""} className="!text-sm !bg-transparent" />
+            </div>
+            <div className="flex items-center justify-between pt-s2 text-xs text-gray-500">
+              <span>{post?.author?.name ?? "익명"} · {post?.createdAt ? formatRelativeTime(post.createdAt) : ""}</span>
+            </div>
+            <div className="flex items-center gap-s4 text-xs text-gray-500">
+              <span className="flex items-center gap-1"><Eye size={14} /> {post?.viewCount ?? 0}</span>
+              <span className="flex items-center gap-1"><Heart size={14} /> {post?.likeCount ?? 0}</span>
+              <span className="flex items-center gap-1"><MessageCircle size={14} /> {post?.commentCount ?? 0}</span>
             </div>
           </div>
         </CardContent>

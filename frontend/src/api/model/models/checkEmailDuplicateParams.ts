@@ -33,20 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { LoginHistoryResponse } from './loginHistoryResponse';
-import type { PageableObject } from './pageableObject';
-import type { SortObject } from './sortObject';
 
-export interface PageLoginHistoryResponse {
-  totalElements?: number;
-  totalPages?: number;
-  pageable?: PageableObject;
-  size?: number;
-  content?: LoginHistoryResponse[];
-  number?: number;
-  sort?: SortObject;
-  first?: boolean;
-  last?: boolean;
-  numberOfElements?: number;
-  empty?: boolean;
-}
+export type CheckEmailDuplicateParams = {
+/**
+ * 확인할 이메일
+ */
+email: string;
+};

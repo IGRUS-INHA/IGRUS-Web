@@ -55,6 +55,7 @@ import type {
 import type {
   ChangeUserRoleRequest,
   ChangeUserStatusRequest,
+  ForceWithdrawRequest,
   GetRoleHistoriesParams,
   GetUserListParams,
   PageUserRoleHistoryResponse,
@@ -540,6 +541,112 @@ export function useGetUserDetail<TData = Awaited<ReturnType<typeof getUserDetail
 
 
 /**
+ * 관리자가 회원을 강제 탈퇴시킵니다. 사유 입력 필수.
+ * @summary 회원 강제 탈퇴
+ */
+export type forceWithdrawUserResponse204 = {
+  data: void
+  status: 204
+}
+
+export type forceWithdrawUserResponse400 = {
+  data: void
+  status: 400
+}
+
+export type forceWithdrawUserResponse401 = {
+  data: void
+  status: 401
+}
+
+export type forceWithdrawUserResponse403 = {
+  data: void
+  status: 403
+}
+
+export type forceWithdrawUserResponse404 = {
+  data: void
+  status: 404
+}
+    
+export type forceWithdrawUserResponseSuccess = (forceWithdrawUserResponse204) & {
+  headers: Headers;
+};
+export type forceWithdrawUserResponseError = (forceWithdrawUserResponse400 | forceWithdrawUserResponse401 | forceWithdrawUserResponse403 | forceWithdrawUserResponse404) & {
+  headers: Headers;
+};
+
+export type forceWithdrawUserResponse = (forceWithdrawUserResponseSuccess | forceWithdrawUserResponseError)
+
+export const getForceWithdrawUserUrl = (userId: number,) => {
+
+
+  
+
+  return `/api/v1/admin/users/${userId}`
+}
+
+export const forceWithdrawUser = async (userId: number,
+    forceWithdrawRequest: ForceWithdrawRequest, options?: RequestInit): Promise<forceWithdrawUserResponse> => {
+  
+  return customFetch<forceWithdrawUserResponse>(getForceWithdrawUserUrl(userId),
+  {      
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      forceWithdrawRequest,)
+  }
+);}
+
+
+
+
+export const getForceWithdrawUserMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forceWithdrawUser>>, TError,{userId: number;data: ForceWithdrawRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof forceWithdrawUser>>, TError,{userId: number;data: ForceWithdrawRequest}, TContext> => {
+
+const mutationKey = ['forceWithdrawUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof forceWithdrawUser>>, {userId: number;data: ForceWithdrawRequest}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  forceWithdrawUser(userId,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ForceWithdrawUserMutationResult = NonNullable<Awaited<ReturnType<typeof forceWithdrawUser>>>
+    export type ForceWithdrawUserMutationBody = ForceWithdrawRequest
+    export type ForceWithdrawUserMutationError = void
+
+    /**
+ * @summary 회원 강제 탈퇴
+ */
+export const useForceWithdrawUser = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forceWithdrawUser>>, TError,{userId: number;data: ForceWithdrawRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof forceWithdrawUser>>,
+        TError,
+        {userId: number;data: ForceWithdrawRequest},
+        TContext
+      > => {
+      return useMutation(getForceWithdrawUserMutationOptions(options), queryClient);
+    }
+    /**
  * 권한 변경 이력을 조회합니다. 사용자, 역할, 변경자, 날짜 범위로 필터링 가능합니다.
  * @summary 권한 변경 이력 조회
  */

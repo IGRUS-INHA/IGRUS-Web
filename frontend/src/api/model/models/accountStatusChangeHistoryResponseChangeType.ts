@@ -45,5 +45,6 @@ export const AccountStatusChangeHistoryResponseChangeType = {
   SUSPENSION: 'SUSPENSION',
   SUSPENSION_LIFT: 'SUSPENSION_LIFT',
   WITHDRAWAL: 'WITHDRAWAL',
+  FORCE_WITHDRAWAL: 'FORCE_WITHDRAWAL',
   APPROVAL: 'APPROVAL',
 } as const;

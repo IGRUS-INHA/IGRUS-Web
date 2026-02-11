@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import type { InquiryListResponse } from '@/api/model/models/inquiryListResponse';
 import type { LucideIcon } from 'lucide-react';
@@ -53,7 +54,10 @@ export default function InquiryListItem({ inquiry }: InquiryListItemProps) {
   const StatusIcon = config.icon;
 
   return (
-    <div className="rounded-r3 border border-border bg-card p-s5 transition-colors hover:border-primary/30">
+    <Link
+      to={`/inquiry/history/${inquiry.id}`}
+      className="block rounded-r3 border border-border bg-card p-s5 transition-colors hover:border-primary/30"
+    >
       <div className="flex items-start justify-between gap-s4">
         <div className="min-w-0 flex-1">
           {/* 유형 + 문의번호 */}
@@ -90,6 +94,6 @@ export default function InquiryListItem({ inquiry }: InquiryListItemProps) {
           {config.label}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
