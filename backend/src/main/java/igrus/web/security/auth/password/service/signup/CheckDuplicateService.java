@@ -34,7 +34,7 @@ public class CheckDuplicateService {
             throw new InvalidStudentIdException(studentId);
         }
 
-        if (userRepository.existsByStudentIdIncludingDeleted(studentId)) {
+        if (userRepository.countByStudentIdIncludingDeleted(studentId) > 0) {
             throw new DuplicateStudentIdException();
         }
 
@@ -55,7 +55,7 @@ public class CheckDuplicateService {
             throw new InvalidEmailException(email);
         }
 
-        if (userRepository.existsByEmailIncludingDeleted(email)) {
+        if (userRepository.countByEmailIncludingDeleted(email) > 0) {
             throw new DuplicateEmailException();
         }
 

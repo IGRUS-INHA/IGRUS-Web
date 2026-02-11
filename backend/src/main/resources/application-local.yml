@@ -37,3 +37,6 @@ app:
   cookie:
     secure: false
     same-site: Lax
+  webhook:
+    baebdung-i:
+      enabled: false

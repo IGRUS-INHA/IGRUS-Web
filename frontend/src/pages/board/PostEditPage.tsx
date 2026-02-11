@@ -115,6 +115,9 @@ export default function PostEditPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/boards/${validBoardType}/posts`]
           });
+          void queryClient.invalidateQueries({
+            queryKey: ['/api/v1/pinned-posts']
+          });
 
           navigate(`/board/${validBoardType}/${postId}`);
         },

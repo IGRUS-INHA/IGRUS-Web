@@ -322,7 +322,7 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)"
+                    description = "잘못된 요청 (유효성 검증 실패 또는 해당 이메일로 가입 요청된 계정 없음)"
             ),
             @ApiResponse(
                     responseCode = "429",

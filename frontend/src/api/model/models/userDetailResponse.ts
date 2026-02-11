@@ -34,6 +34,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 import type { UserDetailResponseGender } from './userDetailResponseGender';
+import type { UserDetailResponseInterestsItem } from './userDetailResponseInterestsItem';
+import type { UserDetailResponseJoinRoute } from './userDetailResponseJoinRoute';
 import type { UserDetailResponseRole } from './userDetailResponseRole';
 import type { UserDetailResponseStatus } from './userDetailResponseStatus';
 import type { UserDetailResponseWishesItem } from './userDetailResponseWishesItem';
@@ -58,6 +60,14 @@ export interface UserDetailResponse {
   motivation?: string;
   /** 가입 목적 */
   wishes?: UserDetailResponseWishesItem[];
+  /** 관심 분야 */
+  interests?: UserDetailResponseInterestsItem[];
+  /** 기타 관심 분야 */
+  customInterest?: string;
+  /** 가입 경로 */
+  joinRoute?: UserDetailResponseJoinRoute;
+  /** 기타 가입 경로 */
+  customJoinRoute?: string;
   /** 성별 */
   gender?: UserDetailResponseGender;
   /** 학년 */

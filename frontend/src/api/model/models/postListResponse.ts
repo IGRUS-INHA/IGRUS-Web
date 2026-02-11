@@ -40,6 +40,7 @@ export interface PostListResponse {
   authorName?: string;
   isAnonymous?: boolean;
   isQuestion?: boolean;
+  isVisibleToAssociate?: boolean;
   viewCount?: number;
   likeCount?: number;
   commentCount?: number;

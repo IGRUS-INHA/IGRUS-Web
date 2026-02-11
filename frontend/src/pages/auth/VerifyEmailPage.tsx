@@ -171,7 +171,7 @@ export default function VerifyEmailPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={hasEmail}
-                className={`w-full rounded-r4 pl-12 pr-4 py-s6 border focus:border-primary transition-all ${
+                className={`w-full rounded-r4 pl-12 pr-4 py-s6 border focus:border-primary transition-all text-xs ${
                   isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
                 }`}
               />
@@ -186,7 +186,7 @@ export default function VerifyEmailPage() {
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 required
                 maxLength={6}
-                className={`w-full rounded-r4 pl-12 pr-4 py-s6 border focus:border-primary transition-all text-center text-2xl tracking-widest ${
+                className={`w-full rounded-r4 pl-12 pr-4 py-s6 border focus:border-primary transition-all text-xs tracking-widest ${
                   isDark ? 'bg-white/5 border-border' : 'bg-muted border-border'
                 }`}
               />
