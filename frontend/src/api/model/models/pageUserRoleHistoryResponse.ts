@@ -40,12 +40,12 @@ import type { UserRoleHistoryResponse } from './userRoleHistoryResponse';
 export interface PageUserRoleHistoryResponse {
   totalElements?: number;
   totalPages?: number;
-  first?: boolean;
-  last?: boolean;
   size?: number;
   content?: UserRoleHistoryResponse[];
   number?: number;
   sort?: SortObject;
+  first?: boolean;
+  last?: boolean;
   numberOfElements?: number;
   pageable?: PageableObject;
   empty?: boolean;

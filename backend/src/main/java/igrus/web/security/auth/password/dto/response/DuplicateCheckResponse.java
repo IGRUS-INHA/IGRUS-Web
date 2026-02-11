@@ -17,4 +17,8 @@ public record DuplicateCheckResponse(
     public static DuplicateCheckResponse emailAvailable() {
         return new DuplicateCheckResponse(true, "사용 가능한 이메일입니다");
     }
+
+    public static DuplicateCheckResponse phoneNumberAvailable() {
+        return new DuplicateCheckResponse(true, "사용 가능한 전화번호입니다");
+    }
 }

@@ -293,6 +293,32 @@ public class PasswordAuthController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "전화번호 중복 체크",
+            description = "전화번호의 유효성 검사 및 중복 여부를 확인합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "사용 가능한 전화번호"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "전화번호 형식 오류 (XXX-XXXX-XXXX 형식이 아님)"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 등록된 전화번호"
+            )
+    })
+    @GetMapping("/check-phone-number")
+    public ResponseEntity<DuplicateCheckResponse> checkPhoneNumberDuplicate(
+            @Parameter(description = "확인할 전화번호 (XXX-XXXX-XXXX)", example = "010-1234-5678", required = true)
+            @RequestParam String phoneNumber) {
+        DuplicateCheckResponse response = checkDuplicateService.checkPhoneNumber(phoneNumber);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "이메일 인증", description = "이메일로 발송된 인증 코드를 확인합니다.")
     @ApiResponses(value = {
             @ApiResponse(

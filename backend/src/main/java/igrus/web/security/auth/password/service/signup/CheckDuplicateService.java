@@ -1,9 +1,11 @@
 package igrus.web.security.auth.password.service.signup;
 
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
+import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
 import igrus.web.security.auth.password.dto.response.DuplicateCheckResponse;
 import igrus.web.user.exception.InvalidEmailException;
+import igrus.web.user.exception.InvalidPhoneNumberException;
 import igrus.web.user.exception.InvalidStudentIdException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ public class CheckDuplicateService {
 
     private static final String STUDENT_ID_PATTERN = "^\\d{8}$";
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+    private static final String PHONE_NUMBER_PATTERN = "^\\d{3}-\\d{4}-\\d{4}$";
 
     private final UserRepository userRepository;
 
@@ -60,5 +63,26 @@ public class CheckDuplicateService {
         }
 
         return DuplicateCheckResponse.emailAvailable();
+    }
+
+    /**
+     * 전화번호 중복을 확인합니다.
+     * soft-deleted 사용자를 포함하여 중복을 확인합니다.
+     *
+     * @param phoneNumber 확인할 전화번호
+     * @return 사용 가능 여부 응답
+     * @throws InvalidPhoneNumberException 전화번호 형식이 올바르지 않은 경우
+     * @throws DuplicatePhoneNumberException 이미 등록된 전화번호인 경우
+     */
+    public DuplicateCheckResponse checkPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || !phoneNumber.matches(PHONE_NUMBER_PATTERN)) {
+            throw new InvalidPhoneNumberException(phoneNumber);
+        }
+
+        if (userRepository.countByPhoneNumberIncludingDeleted(phoneNumber) > 0) {
+            throw new DuplicatePhoneNumberException();
+        }
+
+        return DuplicateCheckResponse.phoneNumberAvailable();
     }
 }

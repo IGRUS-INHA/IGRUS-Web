@@ -126,10 +126,13 @@ export default function SignupPage() {
   const {
     studentId: studentIdCheck,
     email: emailCheck,
+    phoneNumber: phoneNumberCheck,
     checkStudentId,
     checkEmail,
+    checkPhoneNumber,
     resetStudentId,
     resetEmail,
+    resetPhoneNumber,
   } = useSignupDuplicateCheck();
 
   const {
@@ -239,7 +242,7 @@ export default function SignupPage() {
       }
     }
 
-    // Step 1: 이메일 중복 체크 확인
+    // Step 1: 이메일, 전화번호 중복 체크 확인
     if (step === 1) {
       const fullEmail = composeEmail();
       if (fullEmail) {
@@ -249,6 +252,18 @@ export default function SignupPage() {
         }
         if (emailCheck.isDuplicate) {
           setError('emailLocal', { message: emailCheck.message ?? '이미 존재하는 이메일입니다.' });
+          return;
+        }
+      }
+
+      const phoneValue = getValues('phoneNumber');
+      if (/^\d{3}-\d{4}-\d{4}$/.test(phoneValue)) {
+        if (!phoneNumberCheck.isChecked) {
+          checkPhoneNumber(phoneValue);
+          return;
+        }
+        if (phoneNumberCheck.isDuplicate) {
+          setError('phoneNumber', { message: phoneNumberCheck.message ?? '이미 등록된 전화번호입니다.' });
           return;
         }
       }
@@ -708,7 +723,11 @@ export default function SignupPage() {
                 )}
               </FormField>
 
-              <FormField label="전화번호" error={errors.phoneNumber?.message}>
+              <FormField
+                label="전화번호"
+                error={errors.phoneNumber?.message || (phoneNumberCheck.isDuplicate ? phoneNumberCheck.message : undefined)}
+                success={phoneNumberCheck.isAvailable ? phoneNumberCheck.message : undefined}
+              >
                 <div className="relative">
                   <Phone
                     size={18}
@@ -716,15 +735,28 @@ export default function SignupPage() {
                   />
                   <Input
                     {...register('phoneNumber', {
+                      onBlur: () => {
+                        const value = getValues('phoneNumber');
+                        if (/^\d{3}-\d{4}-\d{4}$/.test(value)) {
+                          checkPhoneNumber(value);
+                        }
+                      },
                       onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                         const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
                         setValue('phoneNumber', formatPhoneNumber(digits));
+                        resetPhoneNumber();
                       },
                     })}
                     placeholder="010-1234-5678"
                     maxLength={13}
-                    className="pl-10"
+                    className={cn('pl-10', (phoneNumberCheck.isChecking || phoneNumberCheck.isAvailable) && 'pr-10')}
                   />
+                  {phoneNumberCheck.isChecking && (
+                    <Loader2 size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
+                  )}
+                  {phoneNumberCheck.isAvailable && !phoneNumberCheck.isChecking && (
+                    <Check size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 text-green-600" />
+                  )}
                 </div>
               </FormField>
 

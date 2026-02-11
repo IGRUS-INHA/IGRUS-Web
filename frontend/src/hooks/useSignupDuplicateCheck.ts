@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import {
   useCheckStudentIdDuplicate,
   useCheckEmailDuplicate,
+  useCheckPhoneNumberDuplicate,
 } from '@/api/model/password-authentication/password-authentication';
 import { hasErrorCode, getErrorMessage } from '@/utils/error';
 
@@ -16,10 +17,13 @@ interface DuplicateCheckStatus {
 interface UseSignupDuplicateCheckReturn {
   studentId: DuplicateCheckStatus;
   email: DuplicateCheckStatus;
+  phoneNumber: DuplicateCheckStatus;
   checkStudentId: (studentId: string) => void;
   checkEmail: (email: string) => void;
+  checkPhoneNumber: (phoneNumber: string) => void;
   resetStudentId: () => void;
   resetEmail: () => void;
+  resetPhoneNumber: () => void;
 }
 
 const INITIAL_STATUS: DuplicateCheckStatus = {
@@ -33,6 +37,7 @@ const INITIAL_STATUS: DuplicateCheckStatus = {
 export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
   const [studentIdToCheck, setStudentIdToCheck] = useState('');
   const [emailToCheck, setEmailToCheck] = useState('');
+  const [phoneNumberToCheck, setPhoneNumberToCheck] = useState('');
 
   const studentIdQuery = useCheckStudentIdDuplicate(
     { studentId: studentIdToCheck },
@@ -58,8 +63,21 @@ export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
     },
   );
 
+  const phoneNumberQuery = useCheckPhoneNumberDuplicate(
+    { phoneNumber: phoneNumberToCheck },
+    {
+      query: {
+        enabled: /^\d{3}-\d{4}-\d{4}$/.test(phoneNumberToCheck),
+        retry: false,
+        staleTime: 0,
+        gcTime: 0,
+      },
+    },
+  );
+
   const studentIdEnabled = /^\d{8}$/.test(studentIdToCheck);
   const emailEnabled = emailToCheck.length > 0 && emailToCheck.includes('@');
+  const phoneNumberEnabled = /^\d{3}-\d{4}-\d{4}$/.test(phoneNumberToCheck);
 
   const studentIdStatus: DuplicateCheckStatus = !studentIdEnabled
     ? INITIAL_STATUS
@@ -95,12 +113,33 @@ export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
         isChecked: emailQuery.isSuccess || emailQuery.isError,
       };
 
+  const phoneNumberStatus: DuplicateCheckStatus = !phoneNumberEnabled
+    ? INITIAL_STATUS
+    : {
+        isChecking: phoneNumberQuery.isFetching,
+        isAvailable:
+          phoneNumberQuery.isSuccess && phoneNumberQuery.data?.data?.available === true,
+        isDuplicate:
+          hasErrorCode(phoneNumberQuery.error, 'DUPLICATE_PHONE_NUMBER') ||
+          hasErrorCode(phoneNumberQuery.error, 'INVALID_PHONE_NUMBER_FORMAT'),
+        message: phoneNumberQuery.isSuccess
+          ? '사용 가능한 전화번호입니다.'
+          : phoneNumberQuery.error
+            ? getErrorMessage(phoneNumberQuery.error)
+            : undefined,
+        isChecked: phoneNumberQuery.isSuccess || phoneNumberQuery.isError,
+      };
+
   const checkStudentId = useCallback((value: string) => {
     setStudentIdToCheck(value);
   }, []);
 
   const checkEmail = useCallback((value: string) => {
     setEmailToCheck(value);
+  }, []);
+
+  const checkPhoneNumber = useCallback((value: string) => {
+    setPhoneNumberToCheck(value);
   }, []);
 
   const resetStudentId = useCallback(() => {
@@ -111,12 +150,19 @@ export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
     setEmailToCheck('');
   }, []);
 
+  const resetPhoneNumber = useCallback(() => {
+    setPhoneNumberToCheck('');
+  }, []);
+
   return {
     studentId: studentIdStatus,
     email: emailStatus,
+    phoneNumber: phoneNumberStatus,
     checkStudentId,
     checkEmail,
+    checkPhoneNumber,
     resetStudentId,
     resetEmail,
+    resetPhoneNumber,
   };
 }

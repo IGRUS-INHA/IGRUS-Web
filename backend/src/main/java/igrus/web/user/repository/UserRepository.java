@@ -68,6 +68,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = "SELECT COUNT(*) FROM users u WHERE u.users_email = :email", nativeQuery = true)
     long countByEmailIncludingDeleted(@Param("email") String email);
 
+    @Query(value = "SELECT COUNT(*) FROM users u WHERE u.users_phone_number = :phoneNumber", nativeQuery = true)
+    long countByPhoneNumberIncludingDeleted(@Param("phoneNumber") String phoneNumber);
+
     // === 삭제된 데이터 포함 조회 (관리자용, native query로 @SQLRestriction 우회) ===
 
     @Query(value = "SELECT * FROM users u WHERE u.users_id = :id", nativeQuery = true)
