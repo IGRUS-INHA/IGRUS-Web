@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -90,6 +90,10 @@ const signupSchema = z
     termsConsent: z.literal(true, {
       message: '이용약관에 동의해주세요.',
     }),
+  })
+  .refine((data) => data.password === data.passwordConfirm, {
+    message: '비밀번호가 일치하지 않습니다.',
+    path: ['passwordConfirm'],
   });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -172,10 +176,18 @@ export default function SignupPage() {
     mode: 'onTouched',
   });
 
+  const watchedPassword = watch('password');
   const selectedWishes = watch('wishes') ?? [];
   const selectedInterests = watch('interests') ?? [];
   const selectedJoinRoute = watch('joinRoute') ?? '';
   const emailDomain = watch('emailDomain');
+
+  // 비밀번호 변경 시 비밀번호 확인 필드 재검증
+  useEffect(() => {
+    if (passwordConfirmTouched) {
+      trigger('passwordConfirm');
+    }
+  }, [watchedPassword, passwordConfirmTouched, trigger]);
 
   const handleWishToggle = (wish: string) => {
     const current = getValues('wishes') ?? [];
@@ -844,12 +856,6 @@ export default function SignupPage() {
                       onBlur: () => {
                         setPasswordConfirmTouched(true);
                         trigger('passwordConfirm');
-                      },
-                      validate: (value) => {
-                        if (value && value !== getValues('password')) {
-                          return '비밀번호가 일치하지 않습니다.';
-                        }
-                        return true;
                       },
                     })}
                     type={showPasswordConfirm ? 'text' : 'password'}
