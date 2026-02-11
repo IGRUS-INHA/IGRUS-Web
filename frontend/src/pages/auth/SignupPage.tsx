@@ -19,6 +19,8 @@ import {
   Check,
   Loader2,
   ExternalLink,
+  Wallet,
+  AlertTriangle,
 } from 'lucide-react';
 import { useSignup } from '@/api/model/password-authentication/password-authentication';
 import { majorOptions } from '@/constants/majorOptions';
@@ -98,6 +100,8 @@ const STEP_FIELDS: (keyof SignupFormData)[][] = [
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const [feeConfirmed, setFeeConfirmed] = useState(false);
+  const [feeChecked, setFeeChecked] = useState(false);
   const [step, setStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
@@ -162,7 +166,11 @@ export default function SignupPage() {
   };
 
   const handlePrev = () => {
-    setStep((s) => Math.max(s - 1, 0));
+    if (step === 0) {
+      setFeeConfirmed(false);
+    } else {
+      setStep((s) => s - 1);
+    }
   };
 
   const onSubmit = async (data: SignupFormData) => {
@@ -215,7 +223,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex items-center justify-center min-h-full py-s6 px-s4">
-      <div className="w-full max-w-lg animate-in slide-in-from-bottom-6 duration-500">
+      <div className="w-full max-w-2xl animate-in slide-in-from-bottom-6 duration-500">
         {/* Header */}
         <div className="text-center mb-s7">
           <h1 className="typo-h2 text-foreground">IGRUS 회원가입</h1>
@@ -224,7 +232,74 @@ export default function SignupPage() {
           </p>
         </div>
 
+        {/* Fee Payment Confirmation Gate */}
+        {!feeConfirmed && (
+          <div className="rounded-r4 border bg-card p-s6 shadow-sm">
+            <div className="flex items-center gap-s2 mb-s5">
+              <Wallet size={22} className="text-primary" />
+              <h2 className="typo-h4 text-foreground">회비 납부 안내</h2>
+            </div>
+
+            <p className="typo-b2 text-foreground mb-s5">
+              IGRUS의 활동에 참여하기 위해선 회비 <strong>2만원</strong>을 납부해주셔야 합니다.
+            </p>
+
+            <div className="bg-muted/50 border border-border rounded-r2 p-s4 mb-s5 space-y-s2">
+              <div className="relative flex items-baseline">
+                <span className="text-sm text-muted-foreground shrink-0">입금자명 양식</span>
+                <span className="text-sm font-medium text-foreground absolute inset-0 flex items-baseline justify-center">학번 2자리+이름 (ex. 26김아그)</span>
+              </div>
+              <div className="relative flex items-baseline">
+                <span className="text-sm text-muted-foreground shrink-0">입금계좌</span>
+                <span className="text-sm font-medium text-foreground absolute inset-0 flex items-baseline justify-center">토스뱅크 1002-3803-2581</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-s2 mb-s5 rounded-r2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-s3">
+              <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                입금자명 양식을 지키지 않으실 경우, 회비 납부 명단에서 누락될 수 있습니다.
+                <br />
+                정확한 형식으로 입금해 주시기 바랍니다.
+              </p>
+            </div>
+
+            <label className="flex items-center gap-s3 cursor-pointer group mb-s5">
+              <input
+                type="checkbox"
+                checked={feeChecked}
+                onChange={(e) => setFeeChecked(e.target.checked)}
+                className="cursor-pointer accent-primary"
+              />
+              <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                회비 납부를 완료했습니다
+              </span>
+            </label>
+
+            <Button
+              type="button"
+              disabled={!feeChecked}
+              onClick={() => setFeeConfirmed(true)}
+              className="w-full cursor-pointer"
+            >
+              회원가입 진행하기
+              <ChevronRight size={18} />
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground mt-s5">
+              이미 계정이 있으신가요?{' '}
+              <Link
+                to="/login"
+                className="text-primary font-medium hover:underline"
+              >
+                로그인
+              </Link>
+            </p>
+          </div>
+        )}
+
         {/* Step Indicator */}
+        {feeConfirmed && (
         <div className="flex items-center justify-between mb-s7 px-s2">
           {STEPS.map((s, i) => {
             const Icon = s.icon;
@@ -274,8 +349,10 @@ export default function SignupPage() {
             );
           })}
         </div>
+        )}
 
         {/* Form Card */}
+        {feeConfirmed && (
         <div className="rounded-r4 border bg-card p-s6 shadow-sm">
           {serverError && (
             <div className="mb-s5 rounded-r2 bg-destructive/10 border border-destructive/20 p-s4 text-sm text-destructive">
@@ -631,23 +708,21 @@ export default function SignupPage() {
 
             {/* Navigation Buttons */}
             <div className="flex items-center gap-s3 mt-s6">
-              {step > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrev}
-                  className="flex-1 cursor-pointer"
-                >
-                  <ChevronLeft size={18} />
-                  이전
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePrev}
+                className="flex-1 cursor-pointer"
+              >
+                <ChevronLeft size={18} />
+                이전
+              </Button>
 
               {!isLastStep ? (
                 <Button
                   type="button"
                   onClick={handleNext}
-                  className={cn('flex-1 cursor-pointer', step === 0 && 'w-full')}
+                  className="flex-1 cursor-pointer"
                 >
                   다음
                   <ChevronRight size={18} />
@@ -685,6 +760,7 @@ export default function SignupPage() {
             </Link>
           </p>
         </div>
+        )}
       </div>
     </div>
   );
