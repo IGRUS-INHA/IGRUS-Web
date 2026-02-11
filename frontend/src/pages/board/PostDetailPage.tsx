@@ -28,7 +28,7 @@ import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useMockData } from '@/hooks/useMockData';
 import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
 import { usePermission } from '@/hooks/usePermission';
-import { isForbiddenError, isNotFoundError, isConflictError, getErrorMessage } from '@/utils/error';
+import { isForbiddenError, isNotFoundError, isConflictError, isPostAccessDenied, getErrorMessage } from '@/utils/error';
 import { formatRelativeTime } from '@/utils';
 import { myPageKeys } from '@/hooks/queries/useMyPage';
 
@@ -51,7 +51,7 @@ export default function PostDetailPage() {
   );
   const mockQuery = useMockPostDetail(boardType as string, Number(postId));
 
-  const { data: response, isLoading } = isMockMode ? mockQuery : realQuery;
+  const { data: response, isLoading, error } = isMockMode ? mockQuery : realQuery;
   // client.ts에서 에러 응답을 throw하므로 data는 항상 PostDetailResponse
   const post = response?.data as PostDetailResponse | undefined;
 
@@ -178,6 +178,9 @@ export default function PostDetailPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/boards/${boardType}/posts`],
           });
+          void queryClient.invalidateQueries({
+            queryKey: ['/api/v1/pinned-posts'],
+          });
           // 마이페이지 게시글/좋아요/스크랩 목록 새로고침
           void queryClient.invalidateQueries({ queryKey: myPageKeys.posts() });
           void queryClient.invalidateQueries({ queryKey: myPageKeys.likes() });
@@ -272,6 +275,21 @@ export default function PostDetailPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (isPostAccessDenied(error)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-s4">
+        <p className="text-muted-foreground">정회원 승인 후 게시글 열람이 가능합니다.</p>
+        <button
+          type="button"
+          onClick={handleBack}
+          className="text-primary hover:underline cursor-pointer"
+        >
+          목록으로 돌아가기
+        </button>
       </div>
     );
   }
