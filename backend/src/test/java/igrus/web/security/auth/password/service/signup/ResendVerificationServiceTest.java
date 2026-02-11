@@ -3,9 +3,11 @@ package igrus.web.security.auth.password.service.signup;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
+import igrus.web.security.auth.common.exception.verification.VerificationEmailNotFoundException;
 import igrus.web.security.auth.common.exception.verification.VerificationResendRateLimitedException;
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
+import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,12 +37,45 @@ class ResendVerificationServiceTest extends ServiceIntegrationTestBase {
     private AuthEmailService authEmailService;
 
     private static final String VALID_EMAIL = "test@inha.edu";
+    private static final String VALID_STUDENT_ID = "20231234";
 
     @BeforeEach
     void setUp() {
         setUpBase();
         ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", 600000L);
         ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", 300L);
+    }
+
+    @Nested
+    @DisplayName("이메일 검증")
+    class EmailValidationTest {
+
+        @Test
+        @DisplayName("가입 요청되지 않은 이메일로 재발송 시 오류 [REG-046]")
+        void resendVerification_WithNonExistentEmail_ThrowsException() {
+            // given
+            ResendVerificationRequest request = new ResendVerificationRequest("unknown@inha.edu");
+
+            // when & then
+            assertThatThrownBy(() -> resendVerificationService.resendVerification(request))
+                    .isInstanceOf(VerificationEmailNotFoundException.class);
+
+            verify(authEmailService, never()).sendVerificationEmail(anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("이미 인증 완료된(ACTIVE) 이메일로 재발송 시 오류 [REG-047]")
+        void resendVerification_WithActiveUserEmail_ThrowsException() {
+            // given
+            createAndSaveUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
+            ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
+
+            // when & then
+            assertThatThrownBy(() -> resendVerificationService.resendVerification(request))
+                    .isInstanceOf(VerificationEmailNotFoundException.class);
+
+            verify(authEmailService, never()).sendVerificationEmail(anyString(), anyString());
+        }
     }
 
     @Nested
@@ -51,6 +86,7 @@ class ResendVerificationServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("Rate Limit 시간 내 재발송 요청 시 Rate Limit 오류 [REG-044]")
         void resendVerification_WithinRateLimit_ThrowsException() {
             // given
+            createAndSaveUnverifiedUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
             EmailVerification recentVerification = EmailVerification.create(VALID_EMAIL, "111111", 600000L);
             emailVerificationRepository.save(recentVerification);
 
@@ -67,7 +103,7 @@ class ResendVerificationServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("Rate Limit 경과 후 인증 코드 재발송 성공 [REG-045]")
         void resendVerification_AfterRateLimit_ReturnsSuccess() {
             // given
-            // 레코드 없이 테스트 (이전 인증 요청이 없는 경우)
+            createAndSaveUnverifiedUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             // when
@@ -89,6 +125,7 @@ class ResendVerificationServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("재발송 시 기존 미인증 레코드 삭제 후 새 레코드 생성 [REG-045]")
         void resendVerification_DeletesOldRecord_CreatesNew() {
             // given
+            createAndSaveUnverifiedUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
             EmailVerification oldVerification = EmailVerification.create(VALID_EMAIL, "111111", 600000L);
             emailVerificationRepository.save(oldVerification);
 
@@ -125,6 +162,7 @@ class ResendVerificationServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("재발송 시 새로운 6자리 인증 코드 생성 [REG-045]")
         void resendVerification_GeneratesNewCode() {
             // given
+            createAndSaveUnverifiedUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
