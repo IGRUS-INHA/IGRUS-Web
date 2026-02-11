@@ -224,13 +224,25 @@ function PinnedPostCard({ pinned, theme }: PinnedPostCardProps) {
 
         <CardContent className="p-s4 flex-1 flex flex-col">
           <div className="space-y-s4 flex-1 flex flex-col">
-            <div
-              className={cn(
-                "text-xs font-bold uppercase tracking-widest",
-                isDark ? "text-gray-400" : "text-gray-500",
+            <div className="flex items-center gap-s2">
+              <span
+                className={cn(
+                  "text-xs font-bold uppercase tracking-widest",
+                  isDark ? "text-gray-400" : "text-gray-500",
+                )}
+              >
+                {post?.boardName}
+              </span>
+              {post?.isVisibleToAssociate && (
+                <span
+                  className={cn(
+                    "px-s3 py-s1 rounded-full typo-c2 font-bold tracking-widest",
+                    isDark ? "bg-white/5 text-muted-foreground" : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  준회원 공개
+                </span>
               )}
-            >
-              {post?.boardName}
             </div>
             <h3
               className={cn(

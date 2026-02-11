@@ -107,6 +107,26 @@ class GetPinnedPostListServiceTest {
             assertThat(response.post().id()).isEqualTo(post.getId());
             assertThat(response.post().title()).isEqualTo(post.getTitle());
             assertThat(response.post().boardCode()).isEqualTo(board.getCode().name());
+            assertThat(response.post().isVisibleToAssociate()).isFalse();
+        }
+
+        @Test
+        @DisplayName("준회원 공개 공지사항 고정 시 isVisibleToAssociate가 true")
+        void getPinnedPostList_VisibleToAssociateNotice_ReturnsTrue() {
+            // given
+            Board noticeBoard = noticesBoard();
+            Post notice = createVisibleToAssociateNotice(noticeBoard, member);
+            PinnedPost pinned = pinnedPost(notice, operator, 1, 100L);
+
+            given(pinnedPostRepository.findAllActiveWithActivePost())
+                    .willReturn(List.of(pinned));
+
+            // when
+            List<PinnedPostListResponse> result = getPinnedPostListService.getPinnedPostList();
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).post().isVisibleToAssociate()).isTrue();
         }
     }
 }

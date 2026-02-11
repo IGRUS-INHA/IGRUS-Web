@@ -43,6 +43,7 @@ export interface PostDetailResponse {
   authorName?: string;
   isAnonymous?: boolean;
   isQuestion?: boolean;
+  isVisibleToAssociate?: boolean;
   viewCount?: number;
   likeCount?: number;
   bookmarkCount?: number;
