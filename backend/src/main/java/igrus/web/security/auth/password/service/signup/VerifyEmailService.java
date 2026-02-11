@@ -1,8 +1,9 @@
-package igrus.web.security.auth.password.service.signup;
+ package igrus.web.security.auth.password.service.signup;
 
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
+import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
 import igrus.web.security.auth.common.service.EmailVerificationAttemptService;
 import igrus.web.security.auth.common.exception.verification.VerificationAttemptsExceededException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeExpiredException;
@@ -31,6 +32,7 @@ public class VerifyEmailService {
     private final PasswordCredentialRepository passwordCredentialRepository;
     private final EmailVerificationRepository emailVerificationRepository;
     private final EmailVerificationAttemptService emailVerificationAttemptService;
+    private final BaebdungiWebhookService baebdungiWebhookService;
 
     @Value("${app.mail.verification-max-attempts}")
     private int maxAttempts;
@@ -81,6 +83,9 @@ public class VerifyEmailService {
             .orElseThrow(VerificationCodeInvalidException::new);
         credential.verifyEmail();
         passwordCredentialRepository.save(credential);
+
+        // 뱁둥이봇 웹훅 호출 (비동기, 실패해도 인증 프로세스에 영향 없음)
+        baebdungiWebhookService.sendSubmission(user);
 
         log.info("이메일 인증 완료: email={}", request.email());
 

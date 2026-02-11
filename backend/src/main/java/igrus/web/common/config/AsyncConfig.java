@@ -28,6 +28,17 @@ public class AsyncConfig {
         return executor;
     }
 
+    @Bean(name = "webhookTaskExecutor")
+    public Executor webhookTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(3);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("webhook-");
+        executor.initialize();
+        return executor;
+    }
+
     @Bean(name = "postViewTaskExecutor")
     public Executor postViewTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
