@@ -11,6 +11,8 @@ import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.Interest;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,6 +65,10 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 true

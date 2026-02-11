@@ -177,7 +177,8 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
                 TEST_MOTIVATION,
                 List.of(),
                 Gender.MALE,
-                1
+                1,
+                List.of(), null, null, null
         );
         user.changeRole(role);
         applyUserStatus(user, status);

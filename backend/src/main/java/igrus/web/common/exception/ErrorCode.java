@@ -165,7 +165,10 @@ public enum ErrorCode {
     // Pinned Post (고정 게시글)
     PINNED_POST_NOT_FOUND(404, "고정 게시글을 찾을 수 없습니다"),
     PINNED_POST_ALREADY_EXISTS(409, "이미 고정된 게시글입니다"),
-    INVALID_DISPLAY_ORDER(400, "표시 순서는 1 이상이어야 합니다");
+    INVALID_DISPLAY_ORDER(400, "표시 순서는 1 이상이어야 합니다"),
+
+    // Signup - Custom Field Validation
+    INVALID_CUSTOM_FIELD(400, "기타 선택 시 직접 입력 값은 필수입니다");
 
     private final int status;
     private final String message;

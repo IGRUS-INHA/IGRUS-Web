@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class UserTest {
 
     private User createTestUser() {
-        return User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1);
+        return User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, List.of(), null, null, null);
     }
 
     private Position createTestPosition(String name) {
@@ -39,7 +39,7 @@ class UserTest {
             String motivation = "테스트 동기";
 
             // when
-            User user = User.create(studentId, name, email, phoneNumber, department, motivation, List.of(), Gender.MALE, 1);
+            User user = User.create(studentId, name, email, phoneNumber, department, motivation, List.of(), Gender.MALE, 1, List.of(), null, null, null);
 
             // then
             assertThat(user).isNotNull();
@@ -58,7 +58,7 @@ class UserTest {
         void create_WithGenderAndGrade_SetsCorrectly() {
             // when
             User user = User.create("20231234", "홍길동", "test@inha.edu",
-                    "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.FEMALE, 3);
+                    "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.FEMALE, 3, List.of(), null, null, null);
 
             // then
             assertThat(user.getGender()).isEqualTo(Gender.FEMALE);
@@ -84,7 +84,7 @@ class UserTest {
             @DisplayName("null 학번 -> InvalidStudentIdException")
             void create_WithNullStudentId_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create(null, "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1))
+                        User.create(null, "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null))
                         .isInstanceOf(InvalidStudentIdException.class);
             }
 
@@ -92,7 +92,7 @@ class UserTest {
             @DisplayName("빈 문자열 학번 -> InvalidStudentIdException")
             void create_WithEmptyStudentId_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1))
+                        User.create("", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null))
                         .isInstanceOf(InvalidStudentIdException.class);
             }
 
@@ -100,7 +100,7 @@ class UserTest {
             @DisplayName("7자리 학번 -> InvalidStudentIdException")
             void create_With7DigitStudentId_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("2023123", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1))
+                        User.create("2023123", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null))
                         .isInstanceOf(InvalidStudentIdException.class);
             }
 
@@ -108,7 +108,7 @@ class UserTest {
             @DisplayName("9자리 학번 -> InvalidStudentIdException")
             void create_With9DigitStudentId_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("202312345", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1))
+                        User.create("202312345", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null))
                         .isInstanceOf(InvalidStudentIdException.class);
             }
 
@@ -116,7 +116,7 @@ class UserTest {
             @DisplayName("숫자가 아닌 문자 포함 학번 -> InvalidStudentIdException")
             void create_WithNonNumericStudentId_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("2023123a", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1))
+                        User.create("2023123a", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null))
                         .isInstanceOf(InvalidStudentIdException.class);
             }
         }
@@ -129,7 +129,7 @@ class UserTest {
             @DisplayName("null 이메일 -> InvalidEmailException")
             void create_WithNullEmail_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("20231234", "홍길동", null, "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1))
+                        User.create("20231234", "홍길동", null, "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null))
                         .isInstanceOf(InvalidEmailException.class);
             }
 
@@ -137,7 +137,7 @@ class UserTest {
             @DisplayName("빈 문자열 이메일 -> InvalidEmailException")
             void create_WithEmptyEmail_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("20231234", "홍길동", "", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1))
+                        User.create("20231234", "홍길동", "", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null))
                         .isInstanceOf(InvalidEmailException.class);
             }
 
@@ -145,7 +145,7 @@ class UserTest {
             @DisplayName("@ 없는 이메일 -> InvalidEmailException")
             void create_WithoutAtSign_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("20231234", "홍길동", "testinha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1))
+                        User.create("20231234", "홍길동", "testinha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null))
                         .isInstanceOf(InvalidEmailException.class);
             }
 
@@ -153,7 +153,7 @@ class UserTest {
             @DisplayName("도메인 없는 이메일 -> InvalidEmailException")
             void create_WithoutDomain_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("20231234", "홍길동", "test@", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1))
+                        User.create("20231234", "홍길동", "test@", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null))
                         .isInstanceOf(InvalidEmailException.class);
             }
         }
@@ -166,7 +166,7 @@ class UserTest {
             @DisplayName("학년 0 -> InvalidGradeException")
             void create_WithZeroGrade_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 0))
+                        User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 0, List.of(), null, null, null))
                         .isInstanceOf(InvalidGradeException.class);
             }
 
@@ -174,21 +174,21 @@ class UserTest {
             @DisplayName("학년 -1 -> InvalidGradeException")
             void create_WithNegativeGrade_ThrowsException() {
                 assertThatThrownBy(() ->
-                        User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, -1))
+                        User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, -1, List.of(), null, null, null))
                         .isInstanceOf(InvalidGradeException.class);
             }
 
             @Test
             @DisplayName("학년 1 -> 성공")
             void create_WithGradeOne_Succeeds() {
-                User user = User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1);
+                User user = User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null);
                 assertThat(user.getGrade()).isEqualTo(1);
             }
 
             @Test
             @DisplayName("학년 5 이상도 허용")
             void create_WithGradeFiveOrAbove_Succeeds() {
-                User user = User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 6);
+                User user = User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 6, List.of(), null, null, null);
                 assertThat(user.getGrade()).isEqualTo(6);
             }
         }

@@ -184,7 +184,7 @@ class GetAccountStatusChangeHistoryServiceTest extends ServiceIntegrationTestBas
         @DisplayName("조건에 맞는 이력이 없으면 빈 페이지를 반환한다")
         void getHistories_NoMatch_ReturnsEmpty() {
             Page<AccountStatusChangeHistoryResponse> result = getAccountStatusChangeHistoryService.getHistories(
-                    999L, null, null, null, null,
+                    Long.MAX_VALUE, null, null, null, null,
                     PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"))
             );
 

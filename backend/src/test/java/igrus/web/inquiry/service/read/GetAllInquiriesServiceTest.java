@@ -1,12 +1,17 @@
 package igrus.web.inquiry.service.read;
 
+import igrus.web.inquiry.domain.InquiryStatus;
 import igrus.web.inquiry.domain.InquiryType;
 import igrus.web.inquiry.dto.request.CreateGuestInquiryRequest;
+import igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest;
+import igrus.web.inquiry.dto.response.InquiryCreateResponse;
 import igrus.web.inquiry.dto.response.InquiryListResponse;
 import igrus.web.inquiry.service.create.CreateGuestInquiryService;
+import igrus.web.inquiry.service.manage.UpdateInquiryStatusService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +34,9 @@ class GetAllInquiriesServiceTest {
 
     @Autowired
     private CreateGuestInquiryService createGuestInquiryService;
+
+    @Autowired
+    private UpdateInquiryStatusService updateInquiryStatusService;
 
     @Autowired
     private EntityManager entityManager;
@@ -61,70 +69,115 @@ class GetAllInquiriesServiceTest {
         });
     }
 
-    @Test
-    @DisplayName("전체 문의 목록 조회 성공")
-    void getAllInquiries_ReturnsAllInquiries() {
-        // given
-        CreateGuestInquiryRequest request1 = CreateGuestInquiryRequest.builder()
-                .type(InquiryType.JOIN)
-                .title("가입 문의")
+    private InquiryCreateResponse createTestInquiry(InquiryType type, String title, String email) {
+        CreateGuestInquiryRequest request = CreateGuestInquiryRequest.builder()
+                .type(type)
+                .title(title)
                 .content("내용")
-                .email("guest1@test.com")
+                .email(email)
                 .name("홍길동")
                 .password("password123")
                 .build();
-        CreateGuestInquiryRequest request2 = CreateGuestInquiryRequest.builder()
-                .type(InquiryType.EVENT)
-                .title("행사 문의")
-                .content("내용")
-                .email("guest2@test.com")
-                .name("김철수")
-                .password("password456")
-                .build();
-
-        createGuestInquiryService.createGuestInquiry(request1);
-        createGuestInquiryService.createGuestInquiry(request2);
-
-        Pageable pageable = PageRequest.of(0, 10);
-
-        // when
-        Page<InquiryListResponse> response = getAllInquiriesService.getAllInquiries(null, null, pageable);
-
-        // then
-        assertThat(response.getTotalElements()).isEqualTo(2);
+        return createGuestInquiryService.createGuestInquiry(request);
     }
 
-    @Test
-    @DisplayName("유형별 문의 목록 필터링 성공")
-    void getAllInquiries_FilterByType_ReturnsFilteredInquiries() {
-        // given
-        CreateGuestInquiryRequest joinRequest = CreateGuestInquiryRequest.builder()
-                .type(InquiryType.JOIN)
-                .title("가입 문의")
-                .content("내용")
-                .email("guest1@test.com")
-                .name("홍길동")
-                .password("password123")
-                .build();
-        CreateGuestInquiryRequest eventRequest = CreateGuestInquiryRequest.builder()
-                .type(InquiryType.EVENT)
-                .title("행사 문의")
-                .content("내용")
-                .email("guest2@test.com")
-                .name("김철수")
-                .password("password456")
-                .build();
+    @Nested
+    @DisplayName("관리자 문의 목록 조회")
+    class ListQueryTest {
 
-        createGuestInquiryService.createGuestInquiry(joinRequest);
-        createGuestInquiryService.createGuestInquiry(eventRequest);
+        @Test
+        @DisplayName("INQ-A-001: 전체 문의 목록 조회 성공")
+        void getAllInquiries_ReturnsAllInquiries() {
+            // given
+            createTestInquiry(InquiryType.JOIN, "가입 문의", "guest1@test.com");
+            createTestInquiry(InquiryType.EVENT, "행사 문의", "guest2@test.com");
 
-        Pageable pageable = PageRequest.of(0, 10);
+            Pageable pageable = PageRequest.of(0, 10);
 
-        // when
-        Page<InquiryListResponse> response = getAllInquiriesService.getAllInquiries(InquiryType.JOIN, null, pageable);
+            // when
+            Page<InquiryListResponse> response = getAllInquiriesService.getAllInquiries(null, null, pageable);
 
-        // then
-        assertThat(response.getTotalElements()).isEqualTo(1);
-        assertThat(response.getContent().get(0).getType()).isEqualTo(InquiryType.JOIN);
+            // then
+            assertThat(response.getTotalElements()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("INQ-A-002: 유형별 문의 목록 필터링 성공")
+        void getAllInquiries_FilterByType_ReturnsFilteredInquiries() {
+            // given
+            createTestInquiry(InquiryType.JOIN, "가입 문의", "guest1@test.com");
+            createTestInquiry(InquiryType.EVENT, "행사 문의", "guest2@test.com");
+
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when
+            Page<InquiryListResponse> response = getAllInquiriesService.getAllInquiries(InquiryType.JOIN, null, pageable);
+
+            // then
+            assertThat(response.getTotalElements()).isEqualTo(1);
+            assertThat(response.getContent().get(0).getType()).isEqualTo(InquiryType.JOIN);
+        }
+
+        @Test
+        @DisplayName("INQ-A-003: 상태별 문의 목록 필터링 성공")
+        void getAllInquiries_FilterByStatus_ReturnsFilteredInquiries() {
+            // given
+            InquiryCreateResponse inquiry1 = createTestInquiry(InquiryType.JOIN, "가입 문의", "guest1@test.com");
+            createTestInquiry(InquiryType.EVENT, "행사 문의", "guest2@test.com");
+
+            // inquiry1을 IN_PROGRESS로 변경
+            UpdateInquiryStatusRequest statusRequest = UpdateInquiryStatusRequest.builder()
+                    .status(InquiryStatus.IN_PROGRESS)
+                    .build();
+            updateInquiryStatusService.updateInquiryStatus(inquiry1.getId(), statusRequest);
+
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when
+            Page<InquiryListResponse> pendingResult = getAllInquiriesService.getAllInquiries(null, InquiryStatus.PENDING, pageable);
+            Page<InquiryListResponse> inProgressResult = getAllInquiriesService.getAllInquiries(null, InquiryStatus.IN_PROGRESS, pageable);
+
+            // then
+            assertThat(pendingResult.getTotalElements()).isEqualTo(1);
+            assertThat(inProgressResult.getTotalElements()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("INQ-A-004: 유형+상태 복합 필터링 성공")
+        void getAllInquiries_FilterByTypeAndStatus_ReturnsFilteredInquiries() {
+            // given
+            InquiryCreateResponse joinInquiry = createTestInquiry(InquiryType.JOIN, "가입 문의", "guest1@test.com");
+            createTestInquiry(InquiryType.EVENT, "행사 문의", "guest2@test.com");
+            createTestInquiry(InquiryType.JOIN, "가입 문의 2", "guest3@test.com");
+
+            // joinInquiry를 IN_PROGRESS로 변경
+            UpdateInquiryStatusRequest statusRequest = UpdateInquiryStatusRequest.builder()
+                    .status(InquiryStatus.IN_PROGRESS)
+                    .build();
+            updateInquiryStatusService.updateInquiryStatus(joinInquiry.getId(), statusRequest);
+
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when
+            Page<InquiryListResponse> response = getAllInquiriesService.getAllInquiries(InquiryType.JOIN, InquiryStatus.PENDING, pageable);
+
+            // then
+            assertThat(response.getTotalElements()).isEqualTo(1);
+            assertThat(response.getContent().get(0).getTitle()).isEqualTo("가입 문의 2");
+        }
+
+        @Test
+        @DisplayName("INQ-A-005: 문의가 없는 경우 빈 목록 반환")
+        void getAllInquiries_WhenEmpty_ReturnsEmptyPage() {
+            // given
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when
+            Page<InquiryListResponse> response = getAllInquiriesService.getAllInquiries(null, null, pageable);
+
+            // then
+            assertThat(response.getTotalElements()).isZero();
+            assertThat(response.getContent()).isEmpty();
+        }
     }
 }

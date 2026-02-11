@@ -63,13 +63,17 @@ public class CreateMemberInquiryService {
                         memberInquiryRepository
                 );
 
-                inquiryNotificationService.sendInquiryConfirmation(
-                        user.getEmail(),
-                        saved.getInquiryNumber(),
-                        request.getTitle()
-                );
-
                 log.info("회원 문의 생성: inquiryNumber={}, userId={}", saved.getInquiryNumber(), userId);
+
+                try {
+                    inquiryNotificationService.sendInquiryConfirmation(
+                            user.getEmail(),
+                            saved.getInquiryNumber(),
+                            request.getTitle()
+                    );
+                } catch (Exception e) {
+                    log.error("문의 접수 확인 이메일 발송 실패: inquiryNumber={}, userId={}", saved.getInquiryNumber(), userId, e);
+                }
 
                 return InquiryCreateResponse.from(saved);
             } catch (DataIntegrityViolationException e) {

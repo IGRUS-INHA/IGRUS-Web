@@ -13,6 +13,8 @@ import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.Interest;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
@@ -126,6 +128,10 @@ class PasswordAuthControllerSignupTest {
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 true
@@ -142,6 +148,10 @@ class PasswordAuthControllerSignupTest {
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 true
@@ -158,6 +168,10 @@ class PasswordAuthControllerSignupTest {
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 true
@@ -174,6 +188,10 @@ class PasswordAuthControllerSignupTest {
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 true
@@ -190,6 +208,10 @@ class PasswordAuthControllerSignupTest {
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 true
@@ -206,6 +228,10 @@ class PasswordAuthControllerSignupTest {
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 true
@@ -222,6 +248,10 @@ class PasswordAuthControllerSignupTest {
                 department,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 true
@@ -238,6 +268,10 @@ class PasswordAuthControllerSignupTest {
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 privacyConsent

@@ -178,7 +178,7 @@ class BulkApproveAssociatesServiceTest extends ServiceIntegrationTestBase {
         void approveBulk_SomeUsersNotFound_ProcessesOthers() {
             // given
             User associate1 = createAndSaveUser("20230010", "a10@inha.edu", UserRole.ASSOCIATE);
-            Long nonExistentUserId = 999L;
+            Long nonExistentUserId = Long.MAX_VALUE;
 
             List<Long> userIds = List.of(associate1.getId(), nonExistentUserId);
 

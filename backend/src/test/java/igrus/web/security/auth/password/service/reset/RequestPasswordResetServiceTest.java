@@ -53,7 +53,8 @@ class RequestPasswordResetServiceTest extends ServiceIntegrationTestBase {
                 "테스트 동기",
                 List.of(),
                 Gender.MALE,
-                1
+                1,
+                List.of(), null, null, null
         );
         user.changeRole(UserRole.MEMBER);
         return userRepository.save(user);

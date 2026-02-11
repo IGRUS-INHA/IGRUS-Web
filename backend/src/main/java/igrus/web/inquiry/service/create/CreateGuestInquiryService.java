@@ -61,13 +61,17 @@ public class CreateGuestInquiryService {
                         guestInquiryRepository
                 );
 
-                inquiryNotificationService.sendInquiryConfirmation(
-                        request.getEmail(),
-                        saved.getInquiryNumber(),
-                        request.getTitle()
-                );
-
                 log.info("비회원 문의 생성: inquiryNumber={}, email={}", saved.getInquiryNumber(), request.getEmail());
+
+                try {
+                    inquiryNotificationService.sendInquiryConfirmation(
+                            request.getEmail(),
+                            saved.getInquiryNumber(),
+                            request.getTitle()
+                    );
+                } catch (Exception e) {
+                    log.error("문의 접수 확인 이메일 발송 실패: inquiryNumber={}, email={}", saved.getInquiryNumber(), request.getEmail(), e);
+                }
 
                 return InquiryCreateResponse.from(saved);
             } catch (DataIntegrityViolationException e) {

@@ -1,6 +1,8 @@
 package igrus.web.user.semester.service.write;
 
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.Interest;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.repository.UserRepository;
@@ -47,7 +49,7 @@ class RemoveSemesterMembersServiceTest {
 
     private User createTestUser(Long id, String studentId, UserRole role) {
         User user = User.create(studentId, "테스트" + id, studentId + "@inha.edu",
-                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4), "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1);
+                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4), "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null);
         user.changeRole(role);
         user.verifyEmail();
         ReflectionTestUtils.setField(user, "id", id);

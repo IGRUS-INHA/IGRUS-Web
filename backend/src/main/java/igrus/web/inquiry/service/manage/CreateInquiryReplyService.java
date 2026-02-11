@@ -50,14 +50,18 @@ public class CreateInquiryReplyService {
         inquiry.setReply(reply);
         inquiry.complete();
 
-        inquiryNotificationService.sendReplyNotification(
-                inquiry.getAuthorEmail(),
-                inquiry.getInquiryNumber(),
-                inquiry.getTitle(),
-                request.getContent()
-        );
-
         log.info("문의 답변 작성: inquiryId={}, operatorId={}", inquiryId, operatorId);
+
+        try {
+            inquiryNotificationService.sendReplyNotification(
+                    inquiry.getAuthorEmail(),
+                    inquiry.getInquiryNumber(),
+                    inquiry.getTitle(),
+                    request.getContent()
+            );
+        } catch (Exception e) {
+            log.error("답변 알림 이메일 발송 실패: inquiryId={}, email={}", inquiryId, inquiry.getAuthorEmail(), e);
+        }
 
         return InquiryReplyResponse.from(reply);
     }

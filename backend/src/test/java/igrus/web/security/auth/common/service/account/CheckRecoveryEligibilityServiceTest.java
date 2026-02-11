@@ -45,7 +45,8 @@ class CheckRecoveryEligibilityServiceTest extends ServiceIntegrationTestBase {
                 "테스트 동기",
                 List.of(),
                 Gender.MALE,
-                1
+                1,
+                List.of(), null, null, null
         );
         user.changeRole(role);
         User savedUser = userRepository.save(user);
@@ -68,7 +69,8 @@ class CheckRecoveryEligibilityServiceTest extends ServiceIntegrationTestBase {
                 "테스트 동기",
                 List.of(),
                 Gender.MALE,
-                1
+                1,
+                List.of(), null, null, null
         );
         user.changeRole(role);
         return userRepository.save(user);
