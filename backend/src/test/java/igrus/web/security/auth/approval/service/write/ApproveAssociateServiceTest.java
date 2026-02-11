@@ -194,7 +194,8 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
 
             // when & then
             assertThatThrownBy(() -> approveAssociateService.approveAssociate(unverifiedUser.getId(), adminUser.getId()))
-                    .isInstanceOf(EmailNotVerifiedException.class);
+                    .isInstanceOf(EmailNotVerifiedException.class)
+                    .satisfies(ex -> assertThat(((EmailNotVerifiedException) ex).getEmail()).isEqualTo("unverified@inha.edu"));
         }
 
         @Test

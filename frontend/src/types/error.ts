@@ -6,17 +6,20 @@ export class ApiError extends Error {
   public readonly status: number;
   public readonly code: string;
   public readonly timestamp?: string;
+  public readonly data?: Record<string, unknown>;
 
   constructor(
     status: number,
     code: string,
     message: string,
-    timestamp?: string | undefined
+    timestamp?: string | undefined,
+    data?: Record<string, unknown> | undefined
   ) {
     super(message);
     this.status = status;
     this.code = code;
     this.timestamp = timestamp;
+    this.data = data;
     this.name = 'ApiError';
 
     // V8 엔진에서 스택 트레이스 올바르게 캡처
@@ -34,4 +37,5 @@ export interface ErrorResponseDto {
   code?: string;
   message?: string;
   timestamp?: string;
+  [key: string]: unknown;
 }

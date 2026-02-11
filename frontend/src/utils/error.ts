@@ -520,6 +520,17 @@ export function isEmailNotVerified(error: unknown): boolean {
 }
 
 /**
+ * EMAIL_NOT_VERIFIED 에러에서 이메일 주소를 추출
+ */
+export function getEmailFromVerificationError(error: unknown): string | undefined {
+  if (isEmailNotVerified(error) && isApiError(error) && error.data) {
+    const email = error.data['email'];
+    return typeof email === 'string' ? email : undefined;
+  }
+  return undefined;
+}
+
+/**
  * TOKEN_EXPIRED 또는 REFRESH_TOKEN_EXPIRED 에러인지 확인
  */
 export function isTokenExpiredError(error: unknown): boolean {

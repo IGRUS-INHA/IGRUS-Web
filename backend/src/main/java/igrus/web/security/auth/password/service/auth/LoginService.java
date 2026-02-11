@@ -16,6 +16,7 @@ import igrus.web.security.auth.common.service.login.ResetLoginAttemptsService;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
+import igrus.web.security.auth.password.service.signup.AutoResendVerificationService;
 import igrus.web.security.auth.common.exception.account.AccountSuspendedException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.jwt.JwtTokenProvider;
@@ -46,6 +47,7 @@ public class LoginService {
     private final RecordLoginSuccessService recordLoginSuccessService;
     private final ResetLoginAttemptsService resetLoginAttemptsService;
     private final CheckRecoveryEligibilityService checkRecoveryEligibilityService;
+    private final AutoResendVerificationService autoResendVerificationService;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
@@ -110,7 +112,8 @@ public class LoginService {
             recordFailedAttemptService.recordFailedAttempt(request.studentId());
             recordLoginFailureService.recordFailure(user, request.studentId(), ipAddress, userAgent,
                     LoginFailureReason.EMAIL_NOT_VERIFIED);
-            throw new EmailNotVerifiedException();
+            autoResendVerificationService.autoResendIfPossible(user.getEmail());
+            throw new EmailNotVerifiedException(user.getEmail());
         }
 
         if (user.getStatus() == UserStatus.SUSPENDED) {
