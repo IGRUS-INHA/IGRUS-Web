@@ -12,6 +12,7 @@ import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
@@ -134,6 +135,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -154,6 +156,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -174,6 +177,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -194,6 +198,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -214,6 +219,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -234,6 +240,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -254,6 +261,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -274,6 +282,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 privacyConsent
         );
     }

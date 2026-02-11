@@ -12,6 +12,7 @@ import igrus.web.inquiry.exception.InquiryNotFoundException;
 import igrus.web.inquiry.service.create.CreateGuestInquiryService;
 import igrus.web.inquiry.service.create.CreateMemberInquiryService;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
 import igrus.web.user.repository.UserRepository;
@@ -208,7 +209,7 @@ class LookupGuestInquiryServiceTest {
         void lookupGuestInquiry_WithMemberInquiryNumber_ThrowsNotFoundException() {
             // given
             User user = User.create("20231234", "홍길동", "member@inha.edu", "010-1234-5678",
-                    "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, List.of(), null, JoinRoute.EVERYTIME, null);
+                    "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, JoinRoute.EVERYTIME, null);
             user = userRepository.save(user);
 
             CreateMemberInquiryRequest memberRequest = CreateMemberInquiryRequest.builder()

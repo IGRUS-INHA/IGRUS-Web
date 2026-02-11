@@ -7,6 +7,7 @@ import igrus.web.inquiry.dto.request.CreateMemberInquiryRequest;
 import igrus.web.inquiry.dto.response.InquiryCreateResponse;
 import igrus.web.inquiry.repository.MemberInquiryRepository;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
@@ -77,7 +78,7 @@ class CreateMemberInquiryServiceTest {
     }
 
     private User createAndSaveUser(String studentId, String email, String phoneNumber) {
-        User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, List.of(), null, JoinRoute.EVERYTIME, null);
+        User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, JoinRoute.EVERYTIME, null);
         return userRepository.save(user);
     }
 
@@ -216,7 +217,7 @@ class CreateMemberInquiryServiceTest {
         void createMemberInquiry_AuthorInfoFromUser_Verified() {
             // given
             User user = User.create("20231234", "김철수", "user@inha.edu", "010-1234-5678",
-                    "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, List.of(), null, JoinRoute.EVERYTIME, null);
+                    "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, JoinRoute.EVERYTIME, null);
             user = userRepository.save(user);
 
             CreateMemberInquiryRequest request = CreateMemberInquiryRequest.builder()

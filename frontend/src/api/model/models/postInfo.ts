@@ -42,7 +42,6 @@ export interface PostInfo {
   boardCode?: string;
   boardName?: string;
   author?: AuthorInfo;
-  isVisibleToAssociate?: boolean;
   viewCount?: number;
   likeCount?: number;
   commentCount?: number;

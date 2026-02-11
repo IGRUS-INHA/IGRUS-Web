@@ -40,13 +40,13 @@ import type { SortObject } from './sortObject';
 export interface PageRegistrationListResponse {
   totalElements?: number;
   totalPages?: number;
-  pageable?: PageableObject;
   size?: number;
   content?: RegistrationListResponse[];
   number?: number;
   sort?: SortObject;
   first?: boolean;
   last?: boolean;
+  pageable?: PageableObject;
   numberOfElements?: number;
   empty?: boolean;
 }

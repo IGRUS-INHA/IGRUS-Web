@@ -3,6 +3,7 @@ package igrus.web.webhook.baebdungi.service;
 import igrus.web.common.config.BaebdungiWebhookProperties;
 import igrus.web.webhook.baebdungi.dto.BaebdungiSubmissionResponse;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +57,7 @@ class RestClientBaebdungiWebhookServiceTest {
                 "20231234", "홍길동", "test@inha.edu",
                 "010-1234-5678", "컴퓨터공학과", null,
                 List.of(), Gender.MALE, 2,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
 

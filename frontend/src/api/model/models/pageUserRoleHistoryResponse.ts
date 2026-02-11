@@ -40,13 +40,13 @@ import type { UserRoleHistoryResponse } from './userRoleHistoryResponse';
 export interface PageUserRoleHistoryResponse {
   totalElements?: number;
   totalPages?: number;
-  pageable?: PageableObject;
   size?: number;
   content?: UserRoleHistoryResponse[];
   number?: number;
   sort?: SortObject;
   first?: boolean;
   last?: boolean;
+  pageable?: PageableObject;
   numberOfElements?: number;
   empty?: boolean;
 }

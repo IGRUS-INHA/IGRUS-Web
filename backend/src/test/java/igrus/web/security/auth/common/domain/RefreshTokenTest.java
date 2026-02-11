@@ -1,6 +1,7 @@
 package igrus.web.security.auth.common.domain;
 
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,7 +21,7 @@ class RefreshTokenTest {
     private static final String TEST_TOKEN_FAMILY = "test-family-uuid";
 
     private User createTestUser() {
-        return User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, List.of(), null, null, null);
+        return User.create("20231234", "홍길동", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, null, null);
     }
 
     @Nested

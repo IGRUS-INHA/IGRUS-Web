@@ -1,5 +1,6 @@
 package igrus.web.admin.user.dto;
 
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
@@ -56,6 +57,9 @@ public record UserDetailResponse(
         @Schema(description = "학년", example = "2")
         int grade,
 
+        @Schema(description = "재학 상태", example = "ENROLLED")
+        EnrollmentStatus enrollmentStatus,
+
         @Schema(description = "역할", example = "MEMBER")
         UserRole role,
 
@@ -81,6 +85,7 @@ public record UserDetailResponse(
                 user.getCustomJoinRoute(),
                 user.getGender(),
                 user.getGrade(),
+                user.getEnrollmentStatus(),
                 user.getRole(),
                 user.getStatus(),
                 user.getCreatedAt()

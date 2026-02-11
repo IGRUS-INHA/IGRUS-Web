@@ -1,6 +1,7 @@
 package igrus.web.webhook.baebdungi.dto;
 
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ class BaebdungiSubmissionRequestTest {
                 "20231234", "홍길동", "test@inha.edu",
                 "010-1234-5678", "컴퓨터공학과", "동기",
                 List.of(), Gender.MALE, 2,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         Instant createdAt = Instant.parse("2025-03-15T10:30:00Z");
@@ -51,6 +53,7 @@ class BaebdungiSubmissionRequestTest {
                 "20231235", "김영희", "test2@inha.edu",
                 "010-5678-1234", "소프트웨어학과", null,
                 List.of(), Gender.FEMALE, 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
 
@@ -70,6 +73,7 @@ class BaebdungiSubmissionRequestTest {
                 "20231236", "이철수", "test3@inha.edu",
                 null, "정보통신공학과", null,
                 List.of(), Gender.MALE, 3,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         // createdAt은 @CreatedDate로 자동 설정되므로 테스트에서는 null 상태

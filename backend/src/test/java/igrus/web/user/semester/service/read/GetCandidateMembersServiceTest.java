@@ -1,6 +1,7 @@
 package igrus.web.user.semester.service.read;
 
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
@@ -43,7 +44,7 @@ class GetCandidateMembersServiceTest {
 
     private User createTestUser(Long id, String studentId, UserRole role) {
         User user = User.create(studentId, "테스트" + id, studentId + "@inha.edu",
-                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4), "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null);
+                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4), "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, null, null);
         user.changeRole(role);
         user.verifyEmail();
         ReflectionTestUtils.setField(user, "id", id);
@@ -105,7 +106,7 @@ class GetCandidateMembersServiceTest {
     void getCandidateMembers_pendingUser_excludedFromCandidates() {
         // given
         User pendingUser = User.create("20200010", "보류유저", "20200010@inha.edu",
-                "010-2020-0010", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, List.of(), null, null, null);
+                "010-2020-0010", "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, null, null);
         ReflectionTestUtils.setField(pendingUser, "id", 10L);
 
         User activeUser = createTestUser(1L, "20200001", UserRole.MEMBER);

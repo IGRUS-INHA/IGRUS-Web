@@ -1,6 +1,7 @@
 package igrus.web.security.auth.common.domain;
 
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.DisplayName;
@@ -247,6 +248,7 @@ class LoginHistoryTest {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(UserRole.MEMBER);

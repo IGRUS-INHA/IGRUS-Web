@@ -12,6 +12,7 @@ import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
@@ -145,7 +146,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
                     TEST_STUDENT_ID, TEST_NAME, TEST_EMAIL, TEST_PASSWORD,
                     TEST_PHONE, TEST_DEPARTMENT, TEST_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null, JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             mockMvc.perform(post(API_BASE_PATH + "/signup")
@@ -458,7 +459,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
                     TEST_STUDENT_ID, TEST_NAME, TEST_EMAIL, TEST_PASSWORD,
                     TEST_PHONE, TEST_DEPARTMENT, TEST_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null, JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             mockMvc.perform(post(API_BASE_PATH + "/signup")
