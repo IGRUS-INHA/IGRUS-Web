@@ -1,21 +1,14 @@
 package igrus.web.security.auth.approval.service.write;
 
-import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.exception.UserNotAssociateException;
-import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
-import igrus.web.security.auth.common.repository.RefreshTokenRepository;
+import igrus.web.security.auth.approval.service.support.AssociateApprovalExecutor;
+import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.user.domain.User;
-import igrus.web.user.domain.UserRole;
-import igrus.web.user.domain.UserRoleHistory;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
-import igrus.web.user.repository.UserRoleHistoryRepository;
-import igrus.web.user.domain.AccountChangeType;
-import igrus.web.user.event.AccountStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,11 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ApproveAssociateService {
 
     private final UserRepository userRepository;
-    private final AssociateDecisionRepository associateDecisionRepository;
-    private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final AssociateApprovalExecutor approvalExecutor;
 
     /**
      * 개별 준회원을 정회원으로 승인합니다.
@@ -53,32 +43,12 @@ public class ApproveAssociateService {
             throw new UserNotAssociateException(userId);
         }
 
-        associateDecisionRepository.findByUserIdAndActiveTrue(userId)
-                .ifPresent(AssociateDecision::deactivate);
+        if (user.isPendingVerification()) {
+            throw new EmailNotVerifiedException();
+        }
 
-        UserRole previousRole = user.getRole();
-        user.promoteToMember();
+        approvalExecutor.execute(user, approverId, "관리자 승인에 의한 정회원 전환");
 
-        AssociateDecision decision = AssociateDecision.approve(user, approverId);
-        associateDecisionRepository.save(decision);
-
-        UserRoleHistory history = UserRoleHistory.create(
-                user,
-                previousRole,
-                UserRole.MEMBER,
-                "관리자 승인에 의한 정회원 전환"
-        );
-        userRoleHistoryRepository.save(history);
-
-        refreshTokenRepository.revokeAllByUserId(userId);
-        log.info("승인으로 인한 리프레시 토큰 만료: userId={}", userId);
-
-        eventPublisher.publishEvent(new AccountStatusChangeEvent(
-                userId, approverId, AccountChangeType.APPROVAL,
-                previousRole.name(), UserRole.MEMBER.name(),
-                "관리자 승인에 의한 정회원 전환"
-        ));
-
-        log.info("개별 승인 완료: userId={}, previousRole={}, newRole={}", userId, previousRole, UserRole.MEMBER);
+        log.info("개별 승인 완료: userId={}, newRole=MEMBER", userId);
     }
 }

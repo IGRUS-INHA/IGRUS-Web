@@ -8,6 +8,7 @@ import igrus.web.community.bookmark.repository.BookmarkRepository;
 import igrus.web.community.like.post_like.repository.PostLikeRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.dto.response.PostDetailResponse;
+import igrus.web.community.post.exception.PostAccessDeniedException;
 import igrus.web.community.post.exception.PostNotFoundException;
 import igrus.web.community.post.repository.PostRepository;
 import igrus.web.community.post.service.support.IncrementViewCountService;
@@ -66,7 +67,7 @@ public class GetPostDetailService {
         boolean isNoticeBoard = board.getCode() == BoardCode.NOTICES;
 
         if (isAssociate && isNoticeBoard && !post.isVisibleToAssociate()) {
-            throw new PostNotFoundException(postId);
+            throw new PostAccessDeniedException("준회원은 해당 공지사항에 접근할 수 없습니다.");
         }
 
         // 조회 기록 저장 (비동기 - 항상 성공)

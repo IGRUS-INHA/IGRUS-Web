@@ -97,6 +97,21 @@ class GetPendingAssociatesServiceTest extends ServiceIntegrationTestBase {
         }
 
         @Test
+        @DisplayName("이메일 미인증 사용자는 목록에서 제외 [APR-005]")
+        void getPendingAssociates_ExcludesUnverifiedUsers() {
+            // given
+            createAndSaveUnverifiedUser("20230099", "unverified@inha.edu", UserRole.ASSOCIATE);
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when
+            Page<AssociateInfoResponse> result = getPendingAssociatesService.getPendingAssociates(pageable, adminUser.getId());
+
+            // then - 인증된 associateUser만 포함, 미인증 사용자 제외
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            assertThat(result.getContent().get(0).userId()).isEqualTo(associateUser.getId());
+        }
+
+        @Test
         @DisplayName("목록 페이지네이션 적용 확인 [APR-004]")
         void getPendingAssociates_WithPagination_ReturnsPagedResult() {
             // given - 추가 ASSOCIATE 사용자 생성

@@ -61,7 +61,7 @@ class GetPinnedPostListServiceTest {
             PinnedPost pinned2 = pinnedPost(post2, operator, 2, 101L);
             PinnedPost pinned3 = pinnedPost(post3, operator, 3, 102L);
 
-            given(pinnedPostRepository.findAllByDeletedFalseOrderByDisplayOrderAsc())
+            given(pinnedPostRepository.findAllActiveWithActivePost())
                     .willReturn(List.of(pinned1, pinned2, pinned3));
 
             // when
@@ -78,7 +78,7 @@ class GetPinnedPostListServiceTest {
         @DisplayName("고정 게시글이 없으면 빈 목록 반환")
         void getPinnedPostList_WhenEmpty_ReturnsEmptyList() {
             // given
-            given(pinnedPostRepository.findAllByDeletedFalseOrderByDisplayOrderAsc())
+            given(pinnedPostRepository.findAllActiveWithActivePost())
                     .willReturn(List.of());
 
             // when
@@ -95,7 +95,7 @@ class GetPinnedPostListServiceTest {
             Post post = normalPost(board, member, 10L);
             PinnedPost pinned = pinnedPost(post, operator, 1, 100L);
 
-            given(pinnedPostRepository.findAllByDeletedFalseOrderByDisplayOrderAsc())
+            given(pinnedPostRepository.findAllActiveWithActivePost())
                     .willReturn(List.of(pinned));
 
             // when

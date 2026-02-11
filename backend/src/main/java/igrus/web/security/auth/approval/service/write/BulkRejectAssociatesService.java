@@ -55,7 +55,7 @@ public class BulkRejectAssociatesService {
                     continue;
                 }
 
-                if (!user.isAssociate()) {
+                if (!user.isAssociate() || user.isPendingVerification()) {
                     failedUserIds.add(userId);
                     continue;
                 }

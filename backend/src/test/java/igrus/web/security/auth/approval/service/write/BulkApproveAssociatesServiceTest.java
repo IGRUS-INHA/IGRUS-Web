@@ -191,6 +191,24 @@ class BulkApproveAssociatesServiceTest extends ServiceIntegrationTestBase {
         }
 
         @Test
+        @DisplayName("일괄 승인 시 이메일 미인증 사용자는 skip되고 나머지는 정상 처리")
+        void approveBulk_SomeUsersUnverified_ProcessesOthers() {
+            // given
+            User associate1 = createAndSaveUser("20230010", "a10@inha.edu", UserRole.ASSOCIATE);
+            User unverifiedUser = createAndSaveUnverifiedUser("20230011", "unverified@inha.edu", UserRole.ASSOCIATE);
+
+            List<Long> userIds = List.of(associate1.getId(), unverifiedUser.getId());
+
+            // when
+            int approvedCount = bulkApproveAssociatesService.approveBulk(userIds, adminUser.getId());
+
+            // then
+            assertThat(approvedCount).isEqualTo(1);
+            assertThat(userRepository.findById(associate1.getId()).orElseThrow().getRole()).isEqualTo(UserRole.MEMBER);
+            assertThat(userRepository.findById(unverifiedUser.getId()).orElseThrow().getRole()).isEqualTo(UserRole.ASSOCIATE);
+        }
+
+        @Test
         @DisplayName("일괄 승인 시 일부 사용자가 ASSOCIATE가 아닌 경우 나머지는 정상 처리")
         void approveBulk_SomeUsersNotAssociate_ProcessesOthers() {
             // given
