@@ -403,17 +403,15 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
         }
 
         @Test
-        @DisplayName("[RES-002] 존재하지 않는 이메일로 재발송 시도 - 200 OK (새 인증 코드 생성)")
-        void resendVerification_withNonExistentEmail_returns200() throws Exception {
-            // given - 현재 구현에서는 존재하지 않는 이메일도 새 인증 코드를 생성합니다
+        @DisplayName("[RES-002] 존재하지 않는 이메일로 재발송 시도 - 400 Bad Request 응답")
+        void resendVerification_withNonExistentEmail_returns400() throws Exception {
+            // given - 가입 요청되지 않은 이메일로 재발송 시도
             String nonExistentEmail = "nonexistent@inha.edu";
             ResendVerificationRequest resendRequest = new ResendVerificationRequest(nonExistentEmail);
 
-            // when & then - 새 인증 코드가 생성되어 성공 응답
+            // when & then - 해당 이메일로 가입 요청된 계정이 없으므로 400 응답
             performPost("/resend-verification", resendRequest)
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.email").value(nonExistentEmail))
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(status().isBadRequest());
         }
     }
 }
