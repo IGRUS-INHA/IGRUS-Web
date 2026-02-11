@@ -91,7 +91,7 @@ export default function HomePage() {
             {/* Description */}
             <p
               className={cn(
-                "typo-b2 max-w-lg leading-relaxed transition-colors",
+                "typo-b2 md:typo-b1 max-w-xl leading-relaxed transition-colors",
                 isDark ? "text-[#9CA3AF]" : "text-gray-500",
               )}
             >
@@ -100,7 +100,7 @@ export default function HomePage() {
               컴퓨터 학술 자치회 IGRUS.
               <br />
               26년간 수많은 성과와 인재를 배출하며
-              <br className="sm:hidden" />
+              <br className="sm:hidden" />{" "}
               실력으로 증명해온 동아리입니다.
             </p>
 
@@ -153,7 +153,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Section */}
-      {__FEATURE_COMMUNITY__ && !isPinnedLoading && pinnedPosts.length > 0 && (
+      {!isPinnedLoading && pinnedPosts.length > 0 && (
         <section className="mt-s6">
           <div className="flex justify-between items-center mb-s6">
             <div>
@@ -224,13 +224,25 @@ function PinnedPostCard({ pinned, theme }: PinnedPostCardProps) {
 
         <CardContent className="p-s4 flex-1 flex flex-col">
           <div className="space-y-s4 flex-1 flex flex-col">
-            <div
-              className={cn(
-                "text-xs font-bold uppercase tracking-widest",
-                isDark ? "text-gray-400" : "text-gray-500",
+            <div className="flex items-center gap-s2">
+              <span
+                className={cn(
+                  "text-xs font-bold uppercase tracking-widest",
+                  isDark ? "text-gray-400" : "text-gray-500",
+                )}
+              >
+                {post?.boardName}
+              </span>
+              {post?.isVisibleToAssociate && (
+                <span
+                  className={cn(
+                    "px-s3 py-s1 rounded-full typo-c2 font-bold tracking-widest",
+                    isDark ? "bg-white/5 text-muted-foreground" : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  준회원 공개
+                </span>
               )}
-            >
-              {post?.boardName}
             </div>
             <h3
               className={cn(
