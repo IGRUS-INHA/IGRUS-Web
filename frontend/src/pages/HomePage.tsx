@@ -153,7 +153,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Section */}
-      {__FEATURE_COMMUNITY__ && !isPinnedLoading && pinnedPosts.length > 0 && (
+      {!isPinnedLoading && pinnedPosts.length > 0 && (
         <section className="mt-s6">
           <div className="flex justify-between items-center mb-s6">
             <div>
