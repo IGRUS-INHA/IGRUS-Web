@@ -91,7 +91,7 @@ export default function HomePage() {
             {/* Description */}
             <p
               className={cn(
-                "typo-b2 max-w-lg leading-relaxed transition-colors",
+                "typo-b2 md:typo-b1 max-w-xl leading-relaxed transition-colors",
                 isDark ? "text-[#9CA3AF]" : "text-gray-500",
               )}
             >
@@ -100,7 +100,7 @@ export default function HomePage() {
               컴퓨터 학술 자치회 IGRUS.
               <br />
               26년간 수많은 성과와 인재를 배출하며
-              <br className="sm:hidden" />
+              <br className="sm:hidden" />{" "}
               실력으로 증명해온 동아리입니다.
             </p>
 

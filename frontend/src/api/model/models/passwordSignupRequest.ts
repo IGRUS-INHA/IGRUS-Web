@@ -34,6 +34,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 import type { PasswordSignupRequestGender } from './passwordSignupRequestGender';
+import type { PasswordSignupRequestInterestsItem } from './passwordSignupRequestInterestsItem';
+import type { PasswordSignupRequestJoinRoute } from './passwordSignupRequestJoinRoute';
 import type { PasswordSignupRequestWishesItem } from './passwordSignupRequestWishesItem';
 
 /**
@@ -84,6 +86,26 @@ export interface PasswordSignupRequest {
    * @maxItems 10
    */
   wishes?: PasswordSignupRequestWishesItem[];
+  /**
+   * 관심 분야 (최소 1개 선택)
+   * @minItems 1
+   * @maxItems 2147483647
+   */
+  interests: PasswordSignupRequestInterestsItem[];
+  /**
+   * 기타 관심 분야 (기타 선택 시 직접 입력)
+   * @minLength 0
+   * @maxLength 100
+   */
+  customInterest?: string;
+  /** 가입 경로 */
+  joinRoute: PasswordSignupRequestJoinRoute;
+  /**
+   * 기타 가입 경로 (기타 선택 시 직접 입력)
+   * @minLength 0
+   * @maxLength 100
+   */
+  customJoinRoute?: string;
   /** 성별 */
   gender: PasswordSignupRequestGender;
   /**

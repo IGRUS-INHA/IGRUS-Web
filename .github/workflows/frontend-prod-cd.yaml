@@ -35,6 +35,8 @@ jobs:
 
       - name: Build project
         run: pnpm build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
