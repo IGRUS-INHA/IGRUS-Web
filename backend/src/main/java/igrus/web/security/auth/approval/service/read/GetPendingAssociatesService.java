@@ -6,6 +6,7 @@ import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -42,6 +43,7 @@ public class GetPendingAssociatesService {
 
         Page<User> associates = associateDecisionRepository.findPendingAssociates(
                 UserRole.ASSOCIATE,
+                UserStatus.ACTIVE,
                 List.of(AssociateDecisionType.APPROVED, AssociateDecisionType.REJECTED),
                 pageable
         );

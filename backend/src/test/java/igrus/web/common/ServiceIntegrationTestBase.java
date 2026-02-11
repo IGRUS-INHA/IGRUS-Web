@@ -123,6 +123,7 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM likes").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM bookmarks").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM post_views").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM pinned_posts").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM board_permissions").executeUpdate();
@@ -193,6 +194,24 @@ public abstract class ServiceIntegrationTestBase {
      */
     protected User createAndSaveUser(String studentId, String email, UserRole role) {
         User user = createUser(studentId, email, role);
+        return userRepository.save(user);
+    }
+
+    /**
+     * 이메일 미인증 상태(PENDING_VERIFICATION)의 테스트용 사용자를 생성하고 저장합니다.
+     *
+     * @param studentId 학번
+     * @param email 이메일
+     * @param role 역할
+     * @return 저장된 사용자 (status = PENDING_VERIFICATION)
+     */
+    protected User createAndSaveUnverifiedUser(String studentId, String email, UserRole role) {
+        User user = User.create(
+                studentId, "테스트유저", email,
+                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4),
+                "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1
+        );
+        user.changeRole(role);
         return userRepository.save(user);
     }
 

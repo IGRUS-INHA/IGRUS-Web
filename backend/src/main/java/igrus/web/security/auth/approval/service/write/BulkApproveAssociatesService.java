@@ -1,20 +1,12 @@
 package igrus.web.security.auth.approval.service.write;
 
-import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.exception.BulkApprovalEmptyException;
-import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.support.AdminRoleValidator;
-import igrus.web.security.auth.common.repository.RefreshTokenRepository;
+import igrus.web.security.auth.approval.service.support.AssociateApprovalExecutor;
 import igrus.web.user.domain.User;
-import igrus.web.user.domain.UserRole;
-import igrus.web.user.domain.UserRoleHistory;
 import igrus.web.user.repository.UserRepository;
-import igrus.web.user.repository.UserRoleHistoryRepository;
-import igrus.web.user.domain.AccountChangeType;
-import igrus.web.user.event.AccountStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,11 +23,8 @@ import java.util.List;
 public class BulkApproveAssociatesService {
 
     private final UserRepository userRepository;
-    private final AssociateDecisionRepository associateDecisionRepository;
-    private final UserRoleHistoryRepository userRoleHistoryRepository;
     private final AdminRoleValidator adminRoleValidator;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final AssociateApprovalExecutor approvalExecutor;
 
     /**
      * 여러 준회원을 일괄 승인합니다.
@@ -59,41 +48,12 @@ public class BulkApproveAssociatesService {
         for (Long userId : userIds) {
             try {
                 User user = userRepository.findById(userId).orElse(null);
-                if (user == null) {
+                if (user == null || !user.isAssociate() || user.isPendingVerification()) {
                     failedUserIds.add(userId);
                     continue;
                 }
 
-                if (!user.isAssociate()) {
-                    failedUserIds.add(userId);
-                    continue;
-                }
-
-                associateDecisionRepository.findByUserIdAndActiveTrue(userId)
-                        .ifPresent(AssociateDecision::deactivate);
-
-                UserRole previousRole = user.getRole();
-                user.promoteToMember();
-
-                AssociateDecision decision = AssociateDecision.approve(user, approverId);
-                associateDecisionRepository.save(decision);
-
-                UserRoleHistory history = UserRoleHistory.create(
-                        user,
-                        previousRole,
-                        UserRole.MEMBER,
-                        "관리자 일괄 승인에 의한 정회원 전환"
-                );
-                userRoleHistoryRepository.save(history);
-
-                refreshTokenRepository.revokeAllByUserId(userId);
-
-                eventPublisher.publishEvent(new AccountStatusChangeEvent(
-                        userId, approverId, AccountChangeType.APPROVAL,
-                        previousRole.name(), UserRole.MEMBER.name(),
-                        "관리자 일괄 승인에 의한 정회원 전환"
-                ));
-
+                approvalExecutor.execute(user, approverId, "관리자 일괄 승인에 의한 정회원 전환");
                 approvedCount++;
             } catch (Exception e) {
                 log.warn("일괄 승인 중 개별 사용자 처리 실패: userId={}", userId, e);
