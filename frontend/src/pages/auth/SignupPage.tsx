@@ -66,7 +66,7 @@ const signupSchema = z
     phoneNumber: z
       .string()
       .min(1, '전화번호를 입력해주세요.')
-      .regex(/^\d{10,11}$/, '올바른 전화번호를 입력해주세요.'),
+      .regex(/^\d{3}-\d{4}-\d{4}$/, '올바른 전화번호를 입력해주세요.'),
     department: z.string().min(1, '학과를 선택해주세요.'),
     password: z
       .string()
@@ -616,11 +616,11 @@ export default function SignupPage() {
                     {...register('phoneNumber', {
                       onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                         const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-                        setValue('phoneNumber', digits);
+                        setValue('phoneNumber', formatPhoneNumber(digits));
                       },
                     })}
-                    placeholder="01012345678"
-                    maxLength={11}
+                    placeholder="010-1234-5678"
+                    maxLength={13}
                     className="pl-10"
                   />
                 </div>
