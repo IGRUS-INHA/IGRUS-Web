@@ -36,10 +36,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 import type { SortObject } from './sortObject';
 
 export interface PageableObject {
-  paged?: boolean;
-  pageNumber?: number;
-  pageSize?: number;
   offset?: number;
   sort?: SortObject;
+  paged?: boolean;
   unpaged?: boolean;
+  pageNumber?: number;
+  pageSize?: number;
 }
