@@ -836,8 +836,300 @@ const userData = generateUniqueUser();
 
 ---
 
+## 실시간 중복 체크 테스트 (Issue #338)
+
+회원가입 페이지에서 학번과 이메일 입력 시 실시간 중복 검증 API가 호출되고 UI 피드백이 표시되는지 테스트합니다.
+
+### 시나리오 1: 학번 중복 실시간 검증
+
+**목적**: 학번 입력 필드에서 포커스를 벗어날 때 중복 체크 API가 호출되고 결과가 표시되는지 확인
+
+**테스트 단계**:
+1. 회원가입 페이지로 이동
+2. 학번 입력 필드에 8자리 숫자 입력 (예: "12345678")
+3. 다른 필드로 포커스 이동 (blur 이벤트 발생)
+4. **예상 결과**:
+   - Network 탭에서 `GET /api/v1/auth/password/check-student-id?studentId=12345678` 요청 확인
+   - 입력 필드 오른쪽에 스피너 아이콘 표시 (로딩 중)
+   - 사용 가능한 학번인 경우: 초록색 체크 아이콘 + "사용 가능한 학번입니다." 텍스트 표시
+   - 중복된 학번인 경우: 빨간색 에러 메시지 "이미 가입된 학번입니다." 표시
+5. 학번을 수정하면 이전 체크 결과가 리셋되는지 확인
+
+**Playwright 코드 예시**:
+```typescript
+test('학번 중복 실시간 검증 - 사용 가능', async ({ page }) => {
+  const signupPage = new SignupPage(page);
+  await page.goto('/signup');
+
+  // 학번 입력 및 blur
+  const studentId = generateUniqueUser().studentId;
+  await signupPage.studentIdInput.fill(studentId);
+  await signupPage.nameInput.click(); // 포커스 이동
+
+  // API 호출 대기
+  const response = await waitForApiResponse(
+    page,
+    '/api/v1/auth/password/check-student-id',
+    200
+  );
+  expect(response.status()).toBe(200);
+
+  // 로딩 스피너 확인
+  const spinner = page.locator('.animate-spin');
+  await expect(spinner).toBeVisible();
+  await expect(spinner).toBeHidden({ timeout: 3000 });
+
+  // 성공 피드백 확인
+  const successIcon = page.locator('[class*="text-green-600"]').filter({ has: page.locator('svg') });
+  await expect(successIcon).toBeVisible();
+  await expect(page.getByText('사용 가능한 학번입니다.')).toBeVisible();
+});
+
+test('학번 중복 실시간 검증 - 중복', async ({ page }) => {
+  const signupPage = new SignupPage(page);
+  await page.goto('/signup');
+
+  // 이미 존재하는 학번 입력
+  await signupPage.studentIdInput.fill('12345678'); // 기존 사용자 학번
+  await signupPage.nameInput.click();
+
+  // API 호출 대기 (409 Conflict)
+  const response = await waitForApiResponse(
+    page,
+    '/api/v1/auth/password/check-student-id',
+    409
+  );
+  expect(response.status()).toBe(409);
+
+  // 에러 메시지 확인
+  await expect(page.getByText('이미 가입된 학번입니다.')).toBeVisible();
+
+  // 성공 아이콘이 표시되지 않음
+  const successIcon = page.locator('[class*="text-green-600"]');
+  await expect(successIcon).toBeHidden();
+});
+
+test('학번 수정 시 체크 결과 리셋', async ({ page }) => {
+  const signupPage = new SignupPage(page);
+  await page.goto('/signup');
+
+  // 첫 번째 체크
+  await signupPage.studentIdInput.fill('12345678');
+  await signupPage.nameInput.click();
+  await waitForApiResponse(page, '/api/v1/auth/password/check-student-id', 200);
+
+  // 학번 수정
+  await signupPage.studentIdInput.fill('87654321');
+
+  // 이전 체크 결과가 사라졌는지 확인
+  await expect(page.getByText('사용 가능한 학번입니다.')).toBeHidden();
+  const successIcon = page.locator('[class*="text-green-600"]');
+  await expect(successIcon).toBeHidden();
+});
+```
+
+### 시나리오 2: 이메일 중복 실시간 검증
+
+**목적**: 이메일 입력 필드에서 포커스를 벗어날 때 또는 도메인 변경 시 중복 체크 API가 호출되는지 확인
+
+**테스트 단계**:
+1. 회원가입 페이지의 Step 1 (연락처) 진행
+2. 이메일 로컬파트 입력 (예: "testuser")
+3. 도메인 선택 (예: "inha.edu")
+4. 다른 필드로 포커스 이동
+5. **예상 결과**:
+   - Network 탭에서 `GET /api/v1/auth/password/check-email?email=testuser@inha.edu` 요청 확인
+   - "확인 중..." 로딩 텍스트 표시
+   - 사용 가능: "사용 가능한 이메일입니다." 초록색 텍스트
+   - 중복: "이미 사용 중인 이메일입니다." 빨간색 에러
+
+**도메인 변경 시 재검증**:
+1. 이메일 로컬파트 입력 후 `inha.edu` 선택 → 체크 완료
+2. 도메인을 `gmail.com`으로 변경
+3. **예상 결과**:
+   - 이전 체크 결과 리셋
+   - 새로운 이메일(`testuser@gmail.com`)로 자동 재검증 API 호출
+
+**Playwright 코드 예시**:
+```typescript
+test('이메일 중복 실시간 검증 - 사용 가능', async ({ page }) => {
+  const signupPage = new SignupPage(page);
+  await page.goto('/signup');
+
+  // Step 0 완료
+  await signupPage.fillBasicInfo(generateUniqueUser());
+  await signupPage.nextButton.click();
+
+  // 이메일 입력
+  const email = `test${Date.now()}@inha.edu`;
+  const [local, domain] = email.split('@');
+
+  await signupPage.emailLocalInput.fill(local);
+  // 도메인 선택은 기본값 inha.edu 사용
+  await signupPage.phoneNumberInput.click(); // 포커스 이동
+
+  // API 호출 대기
+  const response = await waitForApiResponse(
+    page,
+    '/api/v1/auth/password/check-email',
+    200
+  );
+  expect(response.url()).toContain(`email=${encodeURIComponent(email)}`);
+
+  // 로딩 표시 확인
+  await expect(page.getByText('확인 중...')).toBeVisible();
+  await expect(page.getByText('확인 중...')).toBeHidden({ timeout: 3000 });
+
+  // 성공 피드백 확인
+  await expect(page.getByText('사용 가능한 이메일입니다.')).toBeVisible();
+});
+
+test('이메일 도메인 변경 시 재검증', async ({ page }) => {
+  const signupPage = new SignupPage(page);
+  await page.goto('/signup');
+
+  // Step 0 완료
+  await signupPage.fillBasicInfo(generateUniqueUser());
+  await signupPage.nextButton.click();
+
+  // 이메일 로컬파트 입력
+  await signupPage.emailLocalInput.fill('testuser');
+  await signupPage.phoneNumberInput.click(); // blur → inha.edu로 체크
+
+  // 첫 번째 API 호출 대기
+  await waitForApiResponse(page, '/api/v1/auth/password/check-email', 200);
+  await expect(page.getByText('사용 가능한 이메일입니다.')).toBeVisible();
+
+  // 도메인 변경
+  await signupPage.emailDomainSelect.selectOption('gmail.com');
+
+  // 두 번째 API 호출 대기 (새로운 이메일)
+  const response = await waitForApiResponse(
+    page,
+    '/api/v1/auth/password/check-email',
+    200
+  );
+  expect(response.url()).toContain('email=testuser%40gmail.com');
+
+  // 이전 메시지가 사라지고 새로 체크됨
+  await expect(page.getByText('확인 중...')).toBeVisible();
+  await expect(page.getByText('확인 중...')).toBeHidden({ timeout: 3000 });
+});
+
+test('커스텀 도메인 입력 시 이메일 검증', async ({ page }) => {
+  const signupPage = new SignupPage(page);
+  await page.goto('/signup');
+
+  await signupPage.fillBasicInfo(generateUniqueUser());
+  await signupPage.nextButton.click();
+
+  // 이메일 로컬파트 입력
+  await signupPage.emailLocalInput.fill('testuser');
+
+  // 커스텀 도메인 선택
+  await signupPage.emailDomainSelect.selectOption('custom');
+
+  // 커스텀 도메인 입력 필드가 나타남
+  const customDomainInput = page.locator('input[name="customDomain"]');
+  await expect(customDomainInput).toBeVisible();
+
+  // 커스텀 도메인 입력 및 blur
+  await customDomainInput.fill('example.com');
+  await signupPage.phoneNumberInput.click();
+
+  // API 호출 확인
+  const response = await waitForApiResponse(
+    page,
+    '/api/v1/auth/password/check-email',
+    200
+  );
+  expect(response.url()).toContain('email=testuser%40example.com');
+
+  await expect(page.getByText('사용 가능한 이메일입니다.')).toBeVisible();
+});
+```
+
+### 시나리오 3: 스텝 이동 시 중복 차단
+
+**목적**: 중복된 학번/이메일이 있을 때 다음 스텝으로 이동이 차단되는지 확인
+
+**테스트 단계**:
+1. Step 0에서 중복된 학번 입력
+2. "다음" 버튼 클릭
+3. **예상 결과**:
+   - Step 0에 머물러 있음 (Step 1로 이동 안 됨)
+   - 학번 필드에 에러 메시지 표시
+   - 중복 체크가 완료되지 않은 경우 자동으로 체크 트리거
+
+**Playwright 코드 예시**:
+```typescript
+test('중복 학번으로 다음 스텝 이동 차단', async ({ page }) => {
+  const signupPage = new SignupPage(page);
+  await page.goto('/signup');
+
+  // 중복된 학번으로 기본 정보 입력
+  const userData = generateUniqueUser();
+  userData.studentId = '12345678'; // 기존 사용자 학번
+
+  await signupPage.fillBasicInfo(userData);
+
+  // 중복 체크 완료 대기
+  await waitForApiResponse(page, '/api/v1/auth/password/check-student-id', 409);
+
+  // "다음" 버튼 클릭
+  await signupPage.nextButton.click();
+
+  // Step 0에 머물러 있는지 확인
+  await expect(page.getByText('기본 정보')).toHaveClass(/text-primary/);
+  await expect(signupPage.studentIdInput).toBeVisible();
+
+  // 에러 메시지 표시 확인
+  await expect(page.getByText('이미 가입된 학번입니다.')).toBeVisible();
+});
+
+test('중복 체크 미완료 시 다음 스텝 이동 트리거', async ({ page }) => {
+  const signupPage = new SignupPage(page);
+  await page.goto('/signup');
+
+  const userData = generateUniqueUser();
+
+  // 학번만 입력하고 blur 하지 않음 (체크 안 됨)
+  await signupPage.studentIdInput.fill(userData.studentId);
+  await signupPage.nameInput.fill(userData.name);
+  // ... 나머지 필드 입력
+
+  // "다음" 버튼 클릭 → 체크 트리거
+  await signupPage.nextButton.click();
+
+  // API 호출이 자동으로 발생하는지 확인
+  const response = await waitForApiResponse(
+    page,
+    '/api/v1/auth/password/check-student-id',
+    200
+  );
+  expect(response.status()).toBe(200);
+
+  // 체크 완료 후 자동으로 다음 스텝 이동
+  await expect(page.getByText('연락처')).toHaveClass(/text-primary/, { timeout: 3000 });
+});
+```
+
+### Manual 브라우저 테스트
+
+자동화 테스트 외에도 다음 항목을 수동으로 확인:
+
+1. **로딩 스피너 애니메이션**: 스피너가 부드럽게 회전하는지 확인
+2. **성공 아이콘 색상**: 초록색 체크 아이콘이 명확히 보이는지
+3. **에러 메시지 가독성**: 빨간색 텍스트가 읽기 쉬운지
+4. **포커스 관리**: blur 이벤트가 자연스럽게 동작하는지
+5. **네트워크 탭**: API 요청/응답이 올바른 형식인지 확인
+6. **Console 탭**: 에러 없이 동작하는지
+
+---
+
 ## 참고 자료
 
 - [Playwright 공식 문서](https://playwright.dev/)
 - [Page Object Model 가이드](https://playwright.dev/docs/pom)
 - [Auth 마이그레이션 문서](../migration/auth-inquiries-orval-migration.md)
+- [Issue #338: 회원가입 이메일/학번 검증 API 연결](https://github.com/Hoon-Inha-IGRUS/IGRUS-Web/issues/338)
