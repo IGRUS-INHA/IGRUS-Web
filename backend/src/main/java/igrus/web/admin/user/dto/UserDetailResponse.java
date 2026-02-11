@@ -1,6 +1,8 @@
 package igrus.web.admin.user.dto;
 
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.Interest;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -36,6 +38,18 @@ public record UserDetailResponse(
         @Schema(description = "가입 목적")
         List<Wish> wishes,
 
+        @Schema(description = "관심 분야")
+        List<Interest> interests,
+
+        @Schema(description = "기타 관심 분야")
+        String customInterest,
+
+        @Schema(description = "가입 경로")
+        JoinRoute joinRoute,
+
+        @Schema(description = "기타 가입 경로")
+        String customJoinRoute,
+
         @Schema(description = "성별", example = "MALE")
         Gender gender,
 
@@ -61,6 +75,10 @@ public record UserDetailResponse(
                 user.getDepartment(),
                 user.getMotivation(),
                 user.getWishes(),
+                user.getInterests(),
+                user.getCustomInterest(),
+                user.getJoinRoute(),
+                user.getCustomJoinRoute(),
                 user.getGender(),
                 user.getGrade(),
                 user.getRole(),

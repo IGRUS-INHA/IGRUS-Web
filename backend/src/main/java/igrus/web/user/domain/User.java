@@ -1,5 +1,6 @@
 package igrus.web.user.domain;
 
+import igrus.web.common.converter.InterestListConverter;
 import igrus.web.common.converter.WishListConverter;
 import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.user.exception.InvalidEmailException;
@@ -69,6 +70,24 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_wishes", columnDefinition = "JSON")
     private List<Wish> wishes = new ArrayList<>();
 
+    /** 관심 분야 (JSON 배열) */
+    @Convert(converter = InterestListConverter.class)
+    @Column(name = "users_interests", columnDefinition = "JSON")
+    private List<Interest> interests = new ArrayList<>();
+
+    /** 기타 관심 분야 (OTHER 선택 시) */
+    @Column(name = "users_custom_interest", length = 100)
+    private String customInterest;
+
+    /** 가입 경로 */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "users_join_route", length = 30)
+    private JoinRoute joinRoute;
+
+    /** 기타 가입 경로 (OTHER 선택 시) */
+    @Column(name = "users_custom_join_route", length = 100)
+    private String customJoinRoute;
+
     /** 성별 (MALE, FEMALE) */
     @Enumerated(EnumType.STRING)
     @Column(name = "users_gender", nullable = false, length = 10)
@@ -96,7 +115,9 @@ public class User extends SoftDeletableEntity {
 
     public static User create(String studentId, String name, String email,
                               String phoneNumber, String department, String motivation,
-                              List<Wish> wishes, Gender gender, int grade) {
+                              List<Wish> wishes, Gender gender, int grade,
+                              List<Interest> interests, String customInterest,
+                              JoinRoute joinRoute, String customJoinRoute) {
         validateStudentId(studentId);
         validateEmail(email);
         validateGrade(grade);
@@ -112,6 +133,10 @@ public class User extends SoftDeletableEntity {
         user.wishes = wishes != null ? new ArrayList<>(wishes) : new ArrayList<Wish>();
         user.gender = gender;
         user.grade = grade;
+        user.interests = interests != null ? new ArrayList<>(interests) : new ArrayList<Interest>();
+        user.customInterest = customInterest;
+        user.joinRoute = joinRoute;
+        user.customJoinRoute = customJoinRoute;
         user.role = UserRole.ASSOCIATE;
         return user;
     }
@@ -149,6 +174,10 @@ public class User extends SoftDeletableEntity {
 
     public List<Wish> getWishes() {
         return Collections.unmodifiableList(this.wishes);
+    }
+
+    public List<Interest> getInterests() {
+        return Collections.unmodifiableList(this.interests);
     }
 
     // === 역할 변경 ===

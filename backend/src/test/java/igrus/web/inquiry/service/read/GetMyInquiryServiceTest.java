@@ -7,12 +7,14 @@ import igrus.web.inquiry.dto.response.InquiryResponse;
 import igrus.web.inquiry.exception.InquiryAccessDeniedException;
 import igrus.web.inquiry.service.create.CreateMemberInquiryService;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
 import igrus.web.user.repository.UserRepository;
 import java.util.List;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -69,46 +71,67 @@ class GetMyInquiryServiceTest {
     }
 
     private User createAndSaveUser(String studentId, String email, String phoneNumber) {
-        User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1);
+        User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, List.of(), null, JoinRoute.EVERYTIME, null);
         return userRepository.save(user);
     }
 
-    @Test
-    @DisplayName("내 문의 상세 조회 성공")
-    void getMyInquiry_WithValidIdAndUserId_ReturnsInquiry() {
-        // given
-        User user = createAndSaveUser("20231234", "test@inha.edu", "010-1234-5678");
-        CreateMemberInquiryRequest request = CreateMemberInquiryRequest.builder()
-                .type(InquiryType.EVENT)
-                .title("행사 문의")
-                .content("내용")
-                .build();
-        InquiryCreateResponse createResponse = createMemberInquiryService.createMemberInquiry(request, user.getId());
+    @Nested
+    @DisplayName("내 문의 상세 조회 - 성공")
+    class GetMyInquirySuccessTest {
 
-        // when
-        InquiryResponse response = getMyInquiryService.getMyInquiry(createResponse.getId(), user.getId());
+        @Test
+        @DisplayName("INQ-M-040: 내 문의 상세 조회 성공")
+        void getMyInquiry_WithValidIdAndUserId_ReturnsInquiry() {
+            // given
+            User user = createAndSaveUser("20231234", "test@inha.edu", "010-1234-5678");
+            CreateMemberInquiryRequest request = CreateMemberInquiryRequest.builder()
+                    .type(InquiryType.EVENT)
+                    .title("행사 문의")
+                    .content("내용")
+                    .build();
+            InquiryCreateResponse createResponse = createMemberInquiryService.createMemberInquiry(request, user.getId());
 
-        // then
-        assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo(createResponse.getId());
-        assertThat(response.getTitle()).isEqualTo("행사 문의");
+            // when
+            InquiryResponse response = getMyInquiryService.getMyInquiry(createResponse.getId(), user.getId());
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getId()).isEqualTo(createResponse.getId());
+            assertThat(response.getTitle()).isEqualTo("행사 문의");
+        }
     }
 
-    @Test
-    @DisplayName("다른 사용자의 문의 조회 시 예외 발생")
-    void getMyInquiry_WithDifferentUserId_ThrowsException() {
-        // given
-        User user1 = createAndSaveUser("20231234", "test1@inha.edu", "010-1234-5678");
-        User user2 = createAndSaveUser("20235678", "test2@inha.edu", "010-5678-1234");
-        CreateMemberInquiryRequest request = CreateMemberInquiryRequest.builder()
-                .type(InquiryType.EVENT)
-                .title("행사 문의")
-                .content("내용")
-                .build();
-        InquiryCreateResponse createResponse = createMemberInquiryService.createMemberInquiry(request, user1.getId());
+    @Nested
+    @DisplayName("내 문의 상세 조회 - 실패")
+    class GetMyInquiryFailureTest {
 
-        // when & then
-        assertThatThrownBy(() -> getMyInquiryService.getMyInquiry(createResponse.getId(), user2.getId()))
-                .isInstanceOf(InquiryAccessDeniedException.class);
+        @Test
+        @DisplayName("INQ-M-050: 다른 사용자의 문의 조회 시 예외 발생")
+        void getMyInquiry_WithDifferentUserId_ThrowsException() {
+            // given
+            User user1 = createAndSaveUser("20231234", "test1@inha.edu", "010-1234-5678");
+            User user2 = createAndSaveUser("20235678", "test2@inha.edu", "010-5678-1234");
+            CreateMemberInquiryRequest request = CreateMemberInquiryRequest.builder()
+                    .type(InquiryType.EVENT)
+                    .title("행사 문의")
+                    .content("내용")
+                    .build();
+            InquiryCreateResponse createResponse = createMemberInquiryService.createMemberInquiry(request, user1.getId());
+
+            // when & then
+            assertThatThrownBy(() -> getMyInquiryService.getMyInquiry(createResponse.getId(), user2.getId()))
+                    .isInstanceOf(InquiryAccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("INQ-M-051: 존재하지 않는 문의 ID로 조회 시 예외 발생")
+        void getMyInquiry_WithNonExistentId_ThrowsException() {
+            // given
+            User user = createAndSaveUser("20231234", "test@inha.edu", "010-1234-5678");
+
+            // when & then
+            assertThatThrownBy(() -> getMyInquiryService.getMyInquiry(99999L, user.getId()))
+                    .isInstanceOf(InquiryAccessDeniedException.class);
+        }
     }
 }

@@ -124,7 +124,8 @@ class GetUserListServiceTest {
                 "테스트 동기",
                 List.of(),
                 Gender.MALE,
-                1
+                1,
+                List.of(), null, null, null
         );
     }
 }

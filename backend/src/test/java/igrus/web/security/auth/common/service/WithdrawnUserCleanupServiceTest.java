@@ -47,7 +47,8 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
                     "테스트 동기",
                     List.of(),
                     Gender.MALE,
-                    3
+                    3,
+                    List.of(), null, null, null
             );
             user.changeRole(UserRole.MEMBER);
             User savedUser = userRepository.save(user);
@@ -159,13 +160,13 @@ class WithdrawnUserCleanupServiceTest extends ServiceIntegrationTestBase {
             // given
             Instant deletedAt = Instant.now().minus(Duration.ofDays(6));
 
-            User user1 = User.create("11111111", "유저1", "user1@inha.edu", "010-1111-1111", "컴퓨터공학과", "동기1", List.of(), Gender.MALE, 2);
+            User user1 = User.create("11111111", "유저1", "user1@inha.edu", "010-1111-1111", "컴퓨터공학과", "동기1", List.of(), Gender.MALE, 2, List.of(), null, null, null);
             user1.withdraw();
             setField(user1, "deleted", true);
             setField(user1, "deletedAt", deletedAt);
             userRepository.save(user1);
 
-            User user2 = User.create("22222222", "유저2", "user2@inha.edu", "010-2222-2222", "전자공학과", "동기2", List.of(), Gender.FEMALE, 1);
+            User user2 = User.create("22222222", "유저2", "user2@inha.edu", "010-2222-2222", "전자공학과", "동기2", List.of(), Gender.FEMALE, 1, List.of(), null, null, null);
             user2.withdraw();
             setField(user2, "deleted", true);
             setField(user2, "deletedAt", deletedAt);

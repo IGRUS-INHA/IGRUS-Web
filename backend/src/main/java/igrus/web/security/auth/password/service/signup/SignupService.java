@@ -8,6 +8,9 @@ import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
+import igrus.web.security.auth.common.exception.signup.InvalidCustomFieldException;
+import igrus.web.user.domain.Interest;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
@@ -53,6 +56,9 @@ public class SignupService {
         // 중복 검증
         validateDuplicates(request);
 
+        // OTHER 교차 검증 (INT-INV-03, INT-INV-04)
+        validateOtherFields(request);
+
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.password());
 
@@ -66,7 +72,11 @@ public class SignupService {
             request.motivation(),
             request.wishes(),
             request.gender(),
-            request.grade()
+            request.grade(),
+            request.interests(),
+            request.customInterest(),
+            request.joinRoute(),
+            request.customJoinRoute()
         );
         userRepository.save(user);
 
@@ -97,6 +107,22 @@ public class SignupService {
         log.info("회원가입 완료, 이메일 인증 대기: email={}", request.email());
 
         return PasswordSignupResponse.pendingVerification(request.email());
+    }
+
+    /**
+     * OTHER 선택 시 custom 필드 교차 검증을 수행합니다. (INT-INV-03, INT-INV-04)
+     */
+    private void validateOtherFields(PasswordSignupRequest request) {
+        if (request.interests() != null
+                && request.interests().contains(Interest.OTHER)
+                && (request.customInterest() == null || request.customInterest().isBlank())) {
+            throw new InvalidCustomFieldException();
+        }
+
+        if (request.joinRoute() == JoinRoute.OTHER
+                && (request.customJoinRoute() == null || request.customJoinRoute().isBlank())) {
+            throw new InvalidCustomFieldException();
+        }
     }
 
     /**

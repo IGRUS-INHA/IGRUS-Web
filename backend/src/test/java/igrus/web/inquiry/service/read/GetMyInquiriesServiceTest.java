@@ -5,12 +5,14 @@ import igrus.web.inquiry.dto.request.CreateMemberInquiryRequest;
 import igrus.web.inquiry.dto.response.InquiryListResponse;
 import igrus.web.inquiry.service.create.CreateMemberInquiryService;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
 import igrus.web.user.repository.UserRepository;
 import java.util.List;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -69,51 +71,87 @@ class GetMyInquiriesServiceTest {
     }
 
     private User createAndSaveUser(String studentId, String email, String phoneNumber) {
-        User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1);
+        User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, List.of(), null, JoinRoute.EVERYTIME, null);
         return userRepository.save(user);
     }
 
-    @Test
-    @DisplayName("회원의 문의 목록 조회 성공")
-    void getMyInquiries_WithValidUserId_ReturnsInquiries() {
-        // given
-        User user = createAndSaveUser("20231234", "test@inha.edu", "010-1234-5678");
+    @Nested
+    @DisplayName("내 문의 목록 조회 - 성공")
+    class ListSuccessTest {
 
-        CreateMemberInquiryRequest request1 = CreateMemberInquiryRequest.builder()
-                .type(InquiryType.EVENT)
-                .title("행사 문의 1")
-                .content("내용 1")
-                .build();
-        CreateMemberInquiryRequest request2 = CreateMemberInquiryRequest.builder()
-                .type(InquiryType.ACCOUNT)
-                .title("계정 문의")
-                .content("내용 2")
-                .build();
+        @Test
+        @DisplayName("INQ-M-030: 회원의 문의 목록 조회 성공")
+        void getMyInquiries_WithValidUserId_ReturnsInquiries() {
+            // given
+            User user = createAndSaveUser("20231234", "test@inha.edu", "010-1234-5678");
 
-        createMemberInquiryService.createMemberInquiry(request1, user.getId());
-        createMemberInquiryService.createMemberInquiry(request2, user.getId());
+            CreateMemberInquiryRequest request1 = CreateMemberInquiryRequest.builder()
+                    .type(InquiryType.EVENT)
+                    .title("행사 문의 1")
+                    .content("내용 1")
+                    .build();
+            CreateMemberInquiryRequest request2 = CreateMemberInquiryRequest.builder()
+                    .type(InquiryType.ACCOUNT)
+                    .title("계정 문의")
+                    .content("내용 2")
+                    .build();
 
-        Pageable pageable = PageRequest.of(0, 10);
+            createMemberInquiryService.createMemberInquiry(request1, user.getId());
+            createMemberInquiryService.createMemberInquiry(request2, user.getId());
 
-        // when
-        Page<InquiryListResponse> response = getMyInquiriesService.getMyInquiries(user.getId(), pageable);
+            Pageable pageable = PageRequest.of(0, 10);
 
-        // then
-        assertThat(response.getTotalElements()).isEqualTo(2);
-    }
+            // when
+            Page<InquiryListResponse> response = getMyInquiriesService.getMyInquiries(user.getId(), pageable);
 
-    @Test
-    @DisplayName("문의 없는 경우 빈 페이지 반환")
-    void getMyInquiries_WhenEmpty_ReturnsEmptyPage() {
-        // given
-        User user = createAndSaveUser("20231234", "test@inha.edu", "010-1234-5678");
-        Pageable pageable = PageRequest.of(0, 10);
+            // then
+            assertThat(response.getTotalElements()).isEqualTo(2);
+        }
 
-        // when
-        Page<InquiryListResponse> response = getMyInquiriesService.getMyInquiries(user.getId(), pageable);
+        @Test
+        @DisplayName("INQ-M-031: 문의 없는 경우 빈 페이지 반환")
+        void getMyInquiries_WhenEmpty_ReturnsEmptyPage() {
+            // given
+            User user = createAndSaveUser("20231234", "test@inha.edu", "010-1234-5678");
+            Pageable pageable = PageRequest.of(0, 10);
 
-        // then
-        assertThat(response.getTotalElements()).isZero();
-        assertThat(response.getContent()).isEmpty();
+            // when
+            Page<InquiryListResponse> response = getMyInquiriesService.getMyInquiries(user.getId(), pageable);
+
+            // then
+            assertThat(response.getTotalElements()).isZero();
+            assertThat(response.getContent()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("INQ-M-032: 다른 사용자의 문의는 포함되지 않음")
+        void getMyInquiries_ExcludesOtherUsersInquiries() {
+            // given
+            User user1 = createAndSaveUser("20231234", "user1@inha.edu", "010-1234-5678");
+            User user2 = createAndSaveUser("20235678", "user2@inha.edu", "010-5678-1234");
+
+            CreateMemberInquiryRequest request1 = CreateMemberInquiryRequest.builder()
+                    .type(InquiryType.EVENT)
+                    .title("user1 문의")
+                    .content("내용")
+                    .build();
+            CreateMemberInquiryRequest request2 = CreateMemberInquiryRequest.builder()
+                    .type(InquiryType.ACCOUNT)
+                    .title("user2 문의")
+                    .content("내용")
+                    .build();
+
+            createMemberInquiryService.createMemberInquiry(request1, user1.getId());
+            createMemberInquiryService.createMemberInquiry(request2, user2.getId());
+
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when
+            Page<InquiryListResponse> response = getMyInquiriesService.getMyInquiries(user1.getId(), pageable);
+
+            // then
+            assertThat(response.getTotalElements()).isEqualTo(1);
+            assertThat(response.getContent().get(0).getTitle()).isEqualTo("user1 문의");
+        }
     }
 }

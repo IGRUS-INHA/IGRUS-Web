@@ -78,7 +78,8 @@ public final class UserTestFixture {
                 DEFAULT_MOTIVATION,
                 List.of(),
                 DEFAULT_GENDER,
-                DEFAULT_GRADE
+                DEFAULT_GRADE,
+                List.of(), null, null, null
         );
         user.changeRole(role);
         user.verifyEmail();

@@ -131,7 +131,8 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 "테스트 동기",
                 List.of(),
                 Gender.MALE,
-                1
+                1,
+                List.of(), null, null, null
         );
         user.changeRole(UserRole.ASSOCIATE);
         user.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
@@ -151,7 +152,8 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 "테스트 동기",
                 List.of(),
                 Gender.MALE,
-                1
+                1,
+                List.of(), null, null, null
         );
         user.changeRole(UserRole.ASSOCIATE);
         // verifyEmail() 호출하지 않아 PENDING_VERIFICATION 상태 유지

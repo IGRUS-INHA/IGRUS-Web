@@ -84,7 +84,8 @@ class GetUserDetailServiceTest {
                 "프로그래밍을 배우고 싶어서",
                 List.of(),
                 Gender.MALE,
-                2
+                2,
+                List.of(), null, null, null
         );
     }
 }

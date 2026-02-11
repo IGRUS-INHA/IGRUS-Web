@@ -1,6 +1,7 @@
 package igrus.web.inquiry.domain;
 
 import igrus.web.inquiry.exception.InquiryMaxAttachmentsExceededException;
+import igrus.web.inquiry.exception.InvalidStatusTransitionException;
 import igrus.web.user.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -74,6 +75,20 @@ class InquiryTest {
             assertThat(inquiry.getAuthorEmail()).isEqualTo(GUEST_EMAIL);
             assertThat(inquiry.getAuthorUserId()).isNull();
         }
+
+        @Test
+        @DisplayName("INQ-D-006: 비밀번호 해시 저장 확인 (INQ-INV-05)")
+        void createGuestInquiry_PasswordHash_StoredCorrectly() {
+            // when
+            GuestInquiry inquiry = GuestInquiry.create(
+                    INQUIRY_NUMBER, InquiryType.JOIN, TITLE, CONTENT,
+                    GUEST_EMAIL, GUEST_NAME, PASSWORD_HASH
+            );
+
+            // then
+            assertThat(inquiry.getPasswordHash()).isEqualTo(PASSWORD_HASH);
+            assertThat(inquiry.getPasswordHash()).isNotBlank();
+        }
     }
 
     @Nested
@@ -139,6 +154,22 @@ class InquiryTest {
             assertThat(inquiry.getAuthorEmail()).isEqualTo("user@test.com");
             assertThat(inquiry.getAuthorUserId()).isEqualTo(1L);
         }
+
+        @Test
+        @DisplayName("INQ-D-014: getAuthorUserId()가 User ID를 반환")
+        void getAuthorUserId_ReturnsUserId() {
+            // given
+            User mockUser = mock(User.class);
+            when(mockUser.getId()).thenReturn(42L);
+
+            // when
+            MemberInquiry inquiry = MemberInquiry.create(
+                    INQUIRY_NUMBER, InquiryType.EVENT, TITLE, CONTENT, mockUser
+            );
+
+            // then
+            assertThat(inquiry.getAuthorUserId()).isEqualTo(42L);
+        }
     }
 
     @Nested
@@ -182,6 +213,28 @@ class InquiryTest {
 
             // then
             assertThat(inquiry.getStatus()).isEqualTo(InquiryStatus.COMPLETED);
+        }
+
+        @Test
+        @DisplayName("INQ-D-030: COMPLETED 상태에서 PENDING으로 변경 시 예외 (INQ-INV-07)")
+        void changeStatus_FromCompletedToPending_ThrowsException() {
+            // given
+            GuestInquiry inquiry = createTestGuestInquiry();
+            inquiry.complete();
+
+            // when & then
+            assertThatThrownBy(() -> inquiry.changeStatus(InquiryStatus.PENDING))
+                    .isInstanceOf(InvalidStatusTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("INQ-D-033: 생성 직후 기본 상태는 PENDING")
+        void newInquiry_DefaultStatus_IsPending() {
+            // when
+            GuestInquiry inquiry = createTestGuestInquiry();
+
+            // then
+            assertThat(inquiry.getStatus()).isEqualTo(InquiryStatus.PENDING);
         }
     }
 
@@ -259,6 +312,17 @@ class InquiryTest {
             assertThatThrownBy(() -> inquiry.getAttachments().add(attachment))
                     .isInstanceOf(UnsupportedOperationException.class);
         }
+
+        @Test
+        @DisplayName("INQ-D-045: 첨부파일 없는 문의의 빈 리스트 반환")
+        void getAttachments_WhenEmpty_ReturnsEmptyList() {
+            // given
+            GuestInquiry inquiry = createTestGuestInquiry();
+
+            // then
+            assertThat(inquiry.getAttachments()).isEmpty();
+            assertThat(inquiry.getAttachments()).hasSize(0);
+        }
     }
 
     @Nested
@@ -289,6 +353,23 @@ class InquiryTest {
             // then
             assertThat(inquiry.hasReply()).isTrue();
             assertThat(inquiry.getReply()).isEqualTo(reply);
+        }
+
+        @Test
+        @DisplayName("INQ-D-054: 답변 설정 후 getReply()가 해당 답변 반환")
+        void getReply_AfterSetReply_ReturnsReply() {
+            // given
+            GuestInquiry inquiry = createTestGuestInquiry();
+            User mockOperator = mock(User.class);
+            InquiryReply reply = InquiryReply.create("답변 내용", mockOperator);
+
+            // when
+            inquiry.setReply(reply);
+
+            // then
+            assertThat(inquiry.getReply()).isNotNull();
+            assertThat(inquiry.getReply().getContent()).isEqualTo("답변 내용");
+            assertThat(inquiry.getReply().getRepliedBy()).isEqualTo(mockOperator);
         }
     }
 
@@ -327,6 +408,17 @@ class InquiryTest {
 
             // then
             assertThat(inquiry.getMemos()).hasSize(5);
+        }
+
+        @Test
+        @DisplayName("INQ-D-063: 메모 없는 문의의 빈 리스트 반환")
+        void getMemos_WhenEmpty_ReturnsEmptyList() {
+            // given
+            GuestInquiry inquiry = createTestGuestInquiry();
+
+            // then
+            assertThat(inquiry.getMemos()).isEmpty();
+            assertThat(inquiry.getMemos()).hasSize(0);
         }
     }
 
