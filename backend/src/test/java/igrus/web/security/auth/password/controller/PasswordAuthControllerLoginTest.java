@@ -123,6 +123,9 @@ class PasswordAuthControllerLoginTest {
     private AccountStatusService accountStatusService;
 
     @MockitoBean
+    private igrus.web.security.auth.password.service.signup.AutoResendVerificationService autoResendVerificationService;
+
+    @MockitoBean
     private CookieUtil cookieUtil;
 
     private static final String LOGIN_URL = "/api/v1/auth/password/login";
@@ -307,9 +310,10 @@ class PasswordAuthControllerLoginTest {
             void login_withUnverifiedEmail_returns401() throws Exception {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
+                String expectedEmail = PasswordAuthTestFixture.VALID_EMAIL;
 
                 given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
-                        .willThrow(new EmailNotVerifiedException());
+                        .willThrow(new EmailNotVerifiedException(expectedEmail));
 
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
@@ -318,7 +322,8 @@ class PasswordAuthControllerLoginTest {
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
                         .andExpect(jsonPath("$.code").value(ErrorCode.EMAIL_NOT_VERIFIED.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.EMAIL_NOT_VERIFIED.getMessage()));
+                        .andExpect(jsonPath("$.message").value(ErrorCode.EMAIL_NOT_VERIFIED.getMessage()))
+                        .andExpect(jsonPath("$.email").value(expectedEmail));
             }
         }
 

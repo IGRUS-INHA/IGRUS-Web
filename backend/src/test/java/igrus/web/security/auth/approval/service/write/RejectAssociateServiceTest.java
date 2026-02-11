@@ -109,7 +109,8 @@ class RejectAssociateServiceTest extends ServiceIntegrationTestBase {
 
             // when & then
             assertThatThrownBy(() -> rejectAssociateService.rejectAssociate(unverifiedUser.getId(), adminUser.getId(), "거절 사유"))
-                    .isInstanceOf(EmailNotVerifiedException.class);
+                    .isInstanceOf(EmailNotVerifiedException.class)
+                    .satisfies(ex -> assertThat(((EmailNotVerifiedException) ex).getEmail()).isEqualTo("unverified@inha.edu"));
         }
 
         @Test
