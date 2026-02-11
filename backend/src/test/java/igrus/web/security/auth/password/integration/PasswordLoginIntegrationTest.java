@@ -281,7 +281,8 @@ class PasswordLoginIntegrationTest extends ServiceIntegrationTestBase {
 
             // when & then
             assertThatThrownBy(() -> loginService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT))
-                    .isInstanceOf(EmailNotVerifiedException.class);
+                    .isInstanceOf(EmailNotVerifiedException.class)
+                    .satisfies(ex -> assertThat(((EmailNotVerifiedException) ex).getEmail()).isEqualTo("test@inha.edu"));
         }
 
         @Test

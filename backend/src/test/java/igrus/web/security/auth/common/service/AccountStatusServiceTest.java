@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -80,7 +81,8 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
 
             // when & then
             assertThatThrownBy(() -> accountStatusService.validateAccountStatus(userId))
-                    .isInstanceOf(EmailNotVerifiedException.class);
+                    .isInstanceOf(EmailNotVerifiedException.class)
+                    .satisfies(ex -> assertThat(((EmailNotVerifiedException) ex).getEmail()).isEqualTo("pending@inha.edu"));
         }
 
         @Test
