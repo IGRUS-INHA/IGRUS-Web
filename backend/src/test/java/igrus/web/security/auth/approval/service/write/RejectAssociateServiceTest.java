@@ -85,7 +85,7 @@ class RejectAssociateServiceTest extends ServiceIntegrationTestBase {
         @Test
         @DisplayName("존재하지 않는 처리자 ID로 거절 시도 시 UserNotFoundException 발생 [REJ-031]")
         void rejectAssociate_WithNonExistentApprover_ThrowsUserNotFoundException() {
-            assertThatThrownBy(() -> rejectAssociateService.rejectAssociate(associateUser.getId(), 999L, "사유"))
+            assertThatThrownBy(() -> rejectAssociateService.rejectAssociate(associateUser.getId(), Long.MAX_VALUE, "사유"))
                     .isInstanceOf(UserNotFoundException.class);
         }
     }
@@ -97,7 +97,7 @@ class RejectAssociateServiceTest extends ServiceIntegrationTestBase {
         @Test
         @DisplayName("존재하지 않는 사용자 거절 시 UserNotFoundException 발생")
         void rejectAssociate_NonExistentUser_ThrowsException() {
-            assertThatThrownBy(() -> rejectAssociateService.rejectAssociate(999L, adminUser.getId(), "사유"))
+            assertThatThrownBy(() -> rejectAssociateService.rejectAssociate(Long.MAX_VALUE, adminUser.getId(), "사유"))
                     .isInstanceOf(UserNotFoundException.class);
         }
 
