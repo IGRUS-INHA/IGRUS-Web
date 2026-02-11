@@ -34,7 +34,12 @@ public class InterestListConverter implements AttributeConverter<List<Interest>,
             return new ArrayList<>();
         }
         try {
-            List<String> names = objectMapper.readValue(dbData, new TypeReference<>() {});
+            String json = dbData.trim();
+            // H2 JSON 컬럼은 값을 JSON 문자열로 이중 인코딩할 수 있음 (e.g., "\"[...]\"")
+            if (json.startsWith("\"")) {
+                json = objectMapper.readValue(json, String.class);
+            }
+            List<String> names = objectMapper.readValue(json, new TypeReference<List<String>>() {});
             return new ArrayList<>(names.stream().map(Interest::valueOf).toList());
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Failed to convert JSON to interest list", e);

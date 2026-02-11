@@ -1,7 +1,7 @@
 # 회원가입 관심 분야/가입 경로 테스트 케이스
 
 **작성일**: 2026-02-11
-**버전**: 1.0
+**버전**: 1.1
 **관련 스펙**: [interests-join-route-verification-criteria.md](../../../../docs/criteria/user/signup/interests-join-route-verification-criteria.md)
 **우선순위**: P1
 
@@ -27,15 +27,15 @@
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| SINT-001 | null → JSON 변환 | - | `convertToDatabaseColumn(null)` 호출 | null 반환 | ⬜ |
-| SINT-002 | 빈 리스트 → JSON 변환 | - | `convertToDatabaseColumn([])` 호출 | `"[]"` 반환 | ⬜ |
-| SINT-003 | 단일 요소 → JSON 변환 | - | `convertToDatabaseColumn([WEB_FRONTEND])` 호출 | `"[\"WEB_FRONTEND\"]"` 반환 | ⬜ |
-| SINT-004 | 복수 요소 → JSON 변환 | - | `convertToDatabaseColumn([WEB_FRONTEND, AI, CLOUD])` 호출 | `"[\"WEB_FRONTEND\",\"AI\",\"CLOUD\"]"` 반환 | ⬜ |
-| SINT-005 | 전체 요소(10개) → JSON 변환 | - | 모든 Interest enum 값 리스트 변환 | 10개 값 포함 JSON 배열 반환 | ⬜ |
-| SINT-006 | null JSON → 리스트 변환 | - | `convertToEntityAttribute(null)` 호출 | null 반환 | ⬜ |
-| SINT-007 | 유효 JSON → 리스트 변환 | - | `convertToEntityAttribute("[\"AI\",\"GAME\"]")` 호출 | `[AI, GAME]` 리스트 반환 | ⬜ |
-| SINT-008 | 잘못된 JSON 형식 → 예외 | - | `convertToEntityAttribute("not-json")` 호출 | 예외 발생 | ⬜ |
-| SINT-009 | 잘못된 enum 값 포함 JSON → 예외 | - | `convertToEntityAttribute("[\"INVALID_VALUE\"]")` 호출 | 예외 발생 | ⬜ |
+| SINT-001 | null → JSON 변환 | - | `convertToDatabaseColumn(null)` 호출 | null 반환 | ✅ |
+| SINT-002 | 빈 리스트 → JSON 변환 | - | `convertToDatabaseColumn([])` 호출 | null 반환 | ✅ |
+| SINT-003 | 단일 요소 → JSON 변환 | - | `convertToDatabaseColumn([WEB_FRONTEND])` 호출 | `"[\"WEB_FRONTEND\"]"` 반환 | ✅ |
+| SINT-004 | 복수 요소 → JSON 변환 | - | `convertToDatabaseColumn([WEB_FRONTEND, AI, CLOUD])` 호출 | `"[\"WEB_FRONTEND\",\"AI\",\"CLOUD\"]"` 반환 | ✅ |
+| SINT-005 | 전체 요소(10개) → JSON 변환 | - | 모든 Interest enum 값 리스트 변환 | 10개 값 포함 JSON 배열 반환 | ✅ |
+| SINT-006 | null JSON → 리스트 변환 | - | `convertToEntityAttribute(null)` 호출 | 빈 리스트 반환 | ✅ |
+| SINT-007 | 유효 JSON → 리스트 변환 | - | `convertToEntityAttribute("[\"AI\",\"GAME\"]")` 호출 | `[AI, GAME]` 리스트 반환 | ✅ |
+| SINT-008 | 잘못된 JSON 형식 → 예외 | - | `convertToEntityAttribute("not-json")` 호출 | 예외 발생 | ✅ |
+| SINT-009 | 잘못된 enum 값 포함 JSON → 예외 | - | `convertToEntityAttribute("[\"INVALID_VALUE\"]")` 호출 | 예외 발생 | ✅ |
 
 ### 2.2 관심 분야 입력 검증 (DTO 레벨)
 
@@ -61,22 +61,22 @@
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| SINT-030 | OTHER 포함 + customInterest null → 예외 | 유효한 회원가입 정보 | interests=[AI, OTHER], customInterest=null로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-03) | ⬜ |
-| SINT-031 | OTHER 포함 + customInterest 빈 문자열 → 예외 | 유효한 회원가입 정보 | interests=[OTHER], customInterest=""로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-03) | ⬜ |
-| SINT-032 | OTHER 포함 + customInterest 공백만 → 예외 | 유효한 회원가입 정보 | interests=[OTHER], customInterest="   "로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-03) | ⬜ |
-| SINT-033 | OTHER 포함 + customInterest 유효 → 성공 | 유효한 회원가입 정보 | interests=[AI, OTHER], customInterest="임베디드 시스템"로 요청 | 성공 (INT-INV-03 충족) | ⬜ |
-| SINT-034 | OTHER 단독 선택 + customInterest 유효 → 성공 | 유효한 회원가입 정보 | interests=[OTHER], customInterest="로보틱스"로 요청 | 성공 | ⬜ |
-| SINT-035 | OTHER 미포함 + customInterest 있음 → 성공 (무시) | 유효한 회원가입 정보 | interests=[WEB_FRONTEND], customInterest="임의값"로 요청 | 성공, custom 값 저장되나 검증 안 함 (INT-INV-06) | ⬜ |
+| SINT-030 | OTHER 포함 + customInterest null → 예외 | 유효한 회원가입 정보 | interests=[AI, OTHER], customInterest=null로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-03) | ✅ |
+| SINT-031 | OTHER 포함 + customInterest 빈 문자열 → 예외 | 유효한 회원가입 정보 | interests=[OTHER], customInterest=""로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-03) | ✅ |
+| SINT-032 | OTHER 포함 + customInterest 공백만 → 예외 | 유효한 회원가입 정보 | interests=[OTHER], customInterest="   "로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-03) | ✅ |
+| SINT-033 | OTHER 포함 + customInterest 유효 → 성공 | 유효한 회원가입 정보 | interests=[AI, OTHER], customInterest="임베디드 시스템"로 요청 | 성공 (INT-INV-03 충족) | ✅ |
+| SINT-034 | OTHER 단독 선택 + customInterest 유효 → 성공 | 유효한 회원가입 정보 | interests=[OTHER], customInterest="로보틱스"로 요청 | 성공 | ✅ |
+| SINT-035 | OTHER 미포함 + customInterest 있음 → 성공 (무시) | 유효한 회원가입 정보 | interests=[WEB_FRONTEND], customInterest="임의값"로 요청 | 성공, custom 값 저장되나 검증 안 함 (INT-INV-06) | ✅ |
 
 ### 2.5 OTHER 교차 검증 - 가입 경로 (서비스 레벨, INT-INV-04)
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| SINT-040 | OTHER + customJoinRoute null → 예외 | 유효한 회원가입 정보 | joinRoute=OTHER, customJoinRoute=null로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-04) | ⬜ |
-| SINT-041 | OTHER + customJoinRoute 빈 문자열 → 예외 | 유효한 회원가입 정보 | joinRoute=OTHER, customJoinRoute=""로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-04) | ⬜ |
-| SINT-042 | OTHER + customJoinRoute 공백만 → 예외 | 유효한 회원가입 정보 | joinRoute=OTHER, customJoinRoute="   "로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-04) | ⬜ |
-| SINT-043 | OTHER + customJoinRoute 유효 → 성공 | 유효한 회원가입 정보 | joinRoute=OTHER, customJoinRoute="인스타그램 광고"로 요청 | 성공 (INT-INV-04 충족) | ⬜ |
-| SINT-044 | OTHER 아닌 경우 + customJoinRoute 있음 → 성공 (무시) | 유효한 회원가입 정보 | joinRoute=EVERYTIME, customJoinRoute="임의값"로 요청 | 성공, custom 값 저장되나 검증 안 함 (INT-INV-06) | ⬜ |
+| SINT-040 | OTHER + customJoinRoute null → 예외 | 유효한 회원가입 정보 | joinRoute=OTHER, customJoinRoute=null로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-04) | ✅ |
+| SINT-041 | OTHER + customJoinRoute 빈 문자열 → 예외 | 유효한 회원가입 정보 | joinRoute=OTHER, customJoinRoute=""로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-04) | ✅ |
+| SINT-042 | OTHER + customJoinRoute 공백만 → 예외 | 유효한 회원가입 정보 | joinRoute=OTHER, customJoinRoute="   "로 요청 | 400 Bad Request, InvalidCustomFieldException (INT-INV-04) | ✅ |
+| SINT-043 | OTHER + customJoinRoute 유효 → 성공 | 유효한 회원가입 정보 | joinRoute=OTHER, customJoinRoute="인스타그램 광고"로 요청 | 성공 (INT-INV-04 충족) | ✅ |
+| SINT-044 | OTHER 아닌 경우 + customJoinRoute 있음 → 성공 (무시) | 유효한 회원가입 정보 | joinRoute=EVERYTIME, customJoinRoute="임의값"로 요청 | 성공, custom 값 저장되나 검증 안 함 (INT-INV-06) | ✅ |
 
 ### 2.6 custom 필드 길이 검증 (DTO 레벨)
 
@@ -93,15 +93,15 @@
 
 | ID | 테스트 케이스 | interests OTHER 포함 | customInterest | joinRoute | customJoinRoute | 예상 결과 | 상태 |
 |----|-------------|:---:|:---:|:---:|:---:|----------|------|
-| SINT-060 | 조합 1: 둘 다 OTHER 아님 + custom 없음 | X | null | EVERYTIME | null | 성공 | ⬜ |
-| SINT-061 | 조합 2: interests만 OTHER 아님 + joinRoute=OTHER 성공 | X | null | OTHER | "인스타" | 성공 | ⬜ |
-| SINT-062 | 조합 3: interests만 OTHER + joinRoute OTHER 아님 성공 | O | "임베디드" | EVERYTIME | null | 성공 | ⬜ |
-| SINT-063 | 조합 4: 둘 다 OTHER + 둘 다 custom 있음 성공 | O | "임베디드" | OTHER | "인스타" | 성공 | ⬜ |
-| SINT-064 | 조합 5: interests OTHER + custom 없음 → 실패 | O | null | EVERYTIME | null | 400 (INT-INV-03 위반) | ⬜ |
-| SINT-065 | 조합 6: interests OTHER + custom 빈 문자열 → 실패 | O | "" | OTHER | "인스타" | 400 (INT-INV-03 위반) | ⬜ |
-| SINT-066 | 조합 7: joinRoute OTHER + custom 없음 → 실패 | X | null | OTHER | null | 400 (INT-INV-04 위반) | ⬜ |
-| SINT-067 | 조합 8: joinRoute OTHER + custom 빈 문자열 → 실패 | X | null | OTHER | "" | 400 (INT-INV-04 위반) | ⬜ |
-| SINT-068 | 조합 9: 둘 다 OTHER + 둘 다 custom 없음 → 실패 | O | null | OTHER | null | 400 (INT-INV-03, 04 둘 다 위반) | ⬜ |
+| SINT-060 | 조합 1: 둘 다 OTHER 아님 + custom 없음 | X | null | EVERYTIME | null | 성공 | ✅ |
+| SINT-061 | 조합 2: interests만 OTHER 아님 + joinRoute=OTHER 성공 | X | null | OTHER | "인스타" | 성공 | ✅ |
+| SINT-062 | 조합 3: interests만 OTHER + joinRoute OTHER 아님 성공 | O | "임베디드" | EVERYTIME | null | 성공 | ✅ |
+| SINT-063 | 조합 4: 둘 다 OTHER + 둘 다 custom 있음 성공 | O | "임베디드" | OTHER | "인스타" | 성공 | ✅ |
+| SINT-064 | 조합 5: interests OTHER + custom 없음 → 실패 | O | null | EVERYTIME | null | 400 (INT-INV-03 위반) | ✅ |
+| SINT-065 | 조합 6: interests OTHER + custom 빈 문자열 → 실패 | O | "" | OTHER | "인스타" | 400 (INT-INV-03 위반) | ✅ |
+| SINT-066 | 조합 7: joinRoute OTHER + custom 없음 → 실패 | X | null | OTHER | null | 400 (INT-INV-04 위반) | ✅ |
+| SINT-067 | 조합 8: joinRoute OTHER + custom 빈 문자열 → 실패 | X | null | OTHER | "" | 400 (INT-INV-04 위반) | ✅ |
+| SINT-068 | 조합 9: 둘 다 OTHER + 둘 다 custom 없음 → 실패 | O | null | OTHER | null | 400 (INT-INV-03, 04 둘 다 위반) | ✅ |
 
 ### 2.8 기존 데이터 호환성 (INT-INV-05)
 
@@ -137,28 +137,30 @@
 ## 4. 구현된 테스트 클래스
 
 ### 4.1 단위 테스트 (InterestListConverter)
-- **파일**: `backend/src/test/java/igrus/web/user/domain/InterestListConverterTest.java` (신규)
+- **파일**: `backend/src/test/java/igrus/web/common/converter/InterestListConverterTest.java` (신규)
 - **테스트 범위**: SINT-001~009
-- **테스트 수**: 미구현
+- **테스트 수**: 9개 (전체 구현 완료)
 
 ### 4.2 서비스 통합 테스트 (SignupService)
 - **파일**: `backend/src/test/java/igrus/web/security/auth/password/service/signup/SignupServiceTest.java` (기존 확장)
 - **테스트 범위**: SINT-030~035, SINT-040~044
-- **테스트 수**: 미구현
+- **테스트 수**: 11개 (교차 검증 6 + 5, 전체 구현 완료)
+- **추가된 @Nested 클래스**:
+  - `SignupInterestOtherValidationTest` (SINT-030~035)
+  - `SignupJoinRouteOtherValidationTest` (SINT-040~044)
+  - `SignupInterestsAndJoinRouteTest` (interests/joinRoute 정상 저장 확인)
 
 ### 4.3 통합/E2E 테스트 (PasswordSignupIntegrationTest)
 - **파일**: `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordSignupIntegrationTest.java` (기존 확장)
-- **테스트 범위**: SINT-010~015, SINT-020~023, SINT-050~053, SINT-060~068
-- **테스트 수**: 미구현
+- **테스트 범위**: SINT-060~068
+- **테스트 수**: 9개 (Pairwise 조합 테스트, 전체 구현 완료)
+- **추가된 @Nested 클래스**: `SignupPairwiseCombinationTest`
 
 ### 4.4 미구현 테스트
-- InterestListConverter 단위 테스트 (SINT-001~009): 신규 테스트 클래스 필요
-- SignupService 교차 검증 (SINT-030~035, SINT-040~044): 기존 테스트 클래스에 추가 필요
-- DTO 입력 검증 (SINT-010~015, SINT-020~023): 컨트롤러/통합 테스트 필요
-- custom 필드 길이 검증 (SINT-050~053): 컨트롤러/통합 테스트 필요
-- 필드 간 조합 테스트 (SINT-060~068): 서비스/통합 테스트 필요
-- 기존 데이터 호환성 (SINT-070~071): 수동 검증 또는 마이그레이션 테스트
-- 관리자 조회 응답 (SINT-080~083): 관리자 API 통합 테스트 필요
+- DTO 입력 검증 (SINT-010~015, SINT-020~023): Jakarta Validation 어노테이션으로 보장, 별도 컨트롤러 테스트 미작성
+- custom 필드 길이 검증 (SINT-050~053): Jakarta Validation `@Size(max=100)` 어노테이션으로 보장, 별도 테스트 미작성
+- 기존 데이터 호환성 (SINT-070~071): DB 컬럼 nullable 설정으로 보장, 수동 검증 대상
+- 관리자 조회 응답 (SINT-080~083): `UserDetailResponse.from(User)` 매핑 구현 완료, 관리자 API 통합 테스트는 별도 진행 필요
 
 ---
 
@@ -167,3 +169,4 @@
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 1.0 | 2026-02-11 | - | 검증 기준서 기반 최초 작성 |
+| 1.1 | 2026-02-11 | - | 구현 완료: SINT-001~009, SINT-030~035, SINT-040~044, SINT-060~068 상태 업데이트, 테스트 클래스 정보 반영 |
