@@ -1,5 +1,6 @@
 package igrus.web.webhook.baebdungi.dto;
 
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.User;
 
@@ -35,7 +36,7 @@ public record BaebdungiSubmissionRequest(
                 user.getPhoneNumber(),
                 convertGender(user.getGender()),
                 convertGrade(user.getGrade()),
-                null,
+                convertEnrollmentStatus(user.getEnrollmentStatus()),
                 "네",
                 user.getCreatedAt() != null ? user.getCreatedAt().toString() : null
         );
@@ -48,6 +49,17 @@ public record BaebdungiSubmissionRequest(
         return switch (gender) {
             case MALE -> "남";
             case FEMALE -> "여";
+        };
+    }
+
+    private static String convertEnrollmentStatus(EnrollmentStatus enrollmentStatus) {
+        if (enrollmentStatus == null) {
+            return null;
+        }
+        return switch (enrollmentStatus) {
+            case ENROLLED -> "재학";
+            case GENERAL_LEAVE -> "휴학(일반)";
+            case MILITARY_LEAVE -> "휴학(군)";
         };
     }
 

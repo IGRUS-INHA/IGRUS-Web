@@ -40,7 +40,7 @@ class BaebdungiSubmissionRequestTest {
         assertThat(request.phone()).isEqualTo("010-1234-5678");
         assertThat(request.gender()).isEqualTo("남");
         assertThat(request.grade()).isEqualTo("2학년");
-        assertThat(request.enrollmentStatus()).isNull();
+        assertThat(request.enrollmentStatus()).isEqualTo("재학");
         assertThat(request.hasPaid()).isEqualTo("네");
         assertThat(request.submittedAt()).isEqualTo("2025-03-15T10:30:00Z");
     }
@@ -63,6 +63,44 @@ class BaebdungiSubmissionRequestTest {
         // then
         assertThat(request.gender()).isEqualTo("여");
         assertThat(request.grade()).isEqualTo("1학년");
+    }
+
+    @Test
+    @DisplayName("GENERAL_LEAVE가 '휴학(일반)'으로 변환된다")
+    void fromUser_GeneralLeave_ConvertedCorrectly() {
+        // given
+        User user = User.create(
+                "20231237", "박민수", "test4@inha.edu",
+                "010-1111-2222", "컴퓨터공학과", null,
+                List.of(), Gender.MALE, 2,
+                EnrollmentStatus.GENERAL_LEAVE,
+                List.of(), null, null, null
+        );
+
+        // when
+        BaebdungiSubmissionRequest request = BaebdungiSubmissionRequest.fromUser(user);
+
+        // then
+        assertThat(request.enrollmentStatus()).isEqualTo("휴학(일반)");
+    }
+
+    @Test
+    @DisplayName("MILITARY_LEAVE가 '휴학(군)'으로 변환된다")
+    void fromUser_MilitaryLeave_ConvertedCorrectly() {
+        // given
+        User user = User.create(
+                "20231238", "최대한", "test5@inha.edu",
+                "010-3333-4444", "정보통신공학과", null,
+                List.of(), Gender.MALE, 3,
+                EnrollmentStatus.MILITARY_LEAVE,
+                List.of(), null, null, null
+        );
+
+        // when
+        BaebdungiSubmissionRequest request = BaebdungiSubmissionRequest.fromUser(user);
+
+        // then
+        assertThat(request.enrollmentStatus()).isEqualTo("휴학(군)");
     }
 
     @Test
