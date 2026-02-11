@@ -112,7 +112,11 @@ public class LoginService {
             recordFailedAttemptService.recordFailedAttempt(request.studentId());
             recordLoginFailureService.recordFailure(user, request.studentId(), ipAddress, userAgent,
                     LoginFailureReason.EMAIL_NOT_VERIFIED);
-            autoResendVerificationService.autoResendIfPossible(user.getEmail());
+            try {
+                autoResendVerificationService.autoResendIfPossible(user.getEmail());
+            } catch (Exception e) {
+                log.warn("이메일 미인증 로그인 시도 - 자동 재발송 중 예외 발생: email={}", user.getEmail(), e);
+            }
             throw new EmailNotVerifiedException(user.getEmail());
         }
 
