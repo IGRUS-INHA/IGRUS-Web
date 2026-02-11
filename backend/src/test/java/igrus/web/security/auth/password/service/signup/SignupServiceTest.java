@@ -12,6 +12,7 @@ import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
@@ -73,6 +74,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -202,6 +204,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             userRepository.save(existingUser);
@@ -343,7 +346,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.AI, Interest.OTHER), null,
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when & then
@@ -360,7 +363,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.OTHER), "",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when & then
@@ -377,7 +380,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.OTHER), "   ",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when & then
@@ -394,7 +397,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.AI, Interest.OTHER), "임베디드 시스템",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when
@@ -416,7 +419,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.OTHER), "로보틱스",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when
@@ -435,7 +438,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), "임의값",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when
@@ -461,7 +464,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.OTHER, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when & then
@@ -478,7 +481,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.OTHER, "",
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when & then
@@ -495,7 +498,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.OTHER, "   ",
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when & then
@@ -512,7 +515,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.OTHER, "인스타그램 광고",
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when
@@ -534,7 +537,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.EVERYTIME, "임의값",
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when
@@ -560,7 +563,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND, Interest.AI, Interest.CLOUD), null,
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
 
             // when

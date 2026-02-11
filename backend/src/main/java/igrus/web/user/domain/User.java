@@ -97,6 +97,11 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_grade", nullable = false)
     private Integer grade;
 
+    /** 재학 상태 (ENROLLED, GENERAL_LEAVE, MILITARY_LEAVE) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "users_enrollment_status", length = 30)
+    private EnrollmentStatus enrollmentStatus;
+
     /** 사용자 역할 (ASSOCIATE, MEMBER, OPERATOR, ADMIN). 기본값: ASSOCIATE */
     @Enumerated(EnumType.STRING)
     @Column(name = "users_role", nullable = false)
@@ -116,6 +121,7 @@ public class User extends SoftDeletableEntity {
     public static User create(String studentId, String name, String email,
                               String phoneNumber, String department, String motivation,
                               List<Wish> wishes, Gender gender, int grade,
+                              EnrollmentStatus enrollmentStatus,
                               List<Interest> interests, String customInterest,
                               JoinRoute joinRoute, String customJoinRoute) {
         validateStudentId(studentId);
@@ -133,6 +139,7 @@ public class User extends SoftDeletableEntity {
         user.wishes = wishes != null ? new ArrayList<>(wishes) : new ArrayList<Wish>();
         user.gender = gender;
         user.grade = grade;
+        user.enrollmentStatus = enrollmentStatus;
         user.interests = interests != null ? new ArrayList<>(interests) : new ArrayList<Interest>();
         user.customInterest = customInterest;
         user.joinRoute = joinRoute;
@@ -337,7 +344,7 @@ public class User extends SoftDeletableEntity {
     // === 프로필 수정 ===
 
     public void updateProfile(String name, String phoneNumber, String department,
-                              Gender gender, int grade) {
+                              Gender gender, int grade, EnrollmentStatus enrollmentStatus) {
         validateGrade(grade);
         this.name = name;
         validatePhoneNumber(phoneNumber);
@@ -345,6 +352,7 @@ public class User extends SoftDeletableEntity {
         this.department = department;
         this.gender = gender;
         this.grade = grade;
+        this.enrollmentStatus = enrollmentStatus;
     }
 
     public void updateMotivation(String motivation) {

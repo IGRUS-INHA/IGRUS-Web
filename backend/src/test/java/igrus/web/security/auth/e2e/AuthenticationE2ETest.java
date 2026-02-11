@@ -25,6 +25,7 @@ import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
@@ -151,6 +152,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -430,6 +432,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.MEMBER);
@@ -467,6 +470,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.MEMBER);
@@ -519,6 +523,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.OPERATOR);
@@ -556,6 +561,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.MEMBER);

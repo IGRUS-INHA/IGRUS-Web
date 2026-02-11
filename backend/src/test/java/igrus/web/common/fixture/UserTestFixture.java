@@ -4,6 +4,7 @@ import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import java.util.List;
+import igrus.web.user.domain.EnrollmentStatus;
 
 import static igrus.web.common.fixture.TestConstants.*;
 import static igrus.web.common.fixture.TestEntityIdAssigner.withId;
@@ -79,6 +80,7 @@ public final class UserTestFixture {
                 List.of(),
                 DEFAULT_GENDER,
                 DEFAULT_GRADE,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(role);

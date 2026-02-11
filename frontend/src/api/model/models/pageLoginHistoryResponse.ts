@@ -40,13 +40,13 @@ import type { SortObject } from './sortObject';
 export interface PageLoginHistoryResponse {
   totalElements?: number;
   totalPages?: number;
-  pageable?: PageableObject;
   size?: number;
   content?: LoginHistoryResponse[];
   number?: number;
   sort?: SortObject;
   first?: boolean;
   last?: boolean;
+  pageable?: PageableObject;
   numberOfElements?: number;
   empty?: boolean;
 }

@@ -28,7 +28,7 @@ import { domainOptions } from '@/constants/domainOptions';
 import { WISH_TITLE, wishOptions, wishToEnum } from '@/constants/wishOptions';
 import { INTEREST_TITLE, interestOptions, interestToEnum } from '@/constants/interestOptions';
 import { JOIN_ROUTE_TITLE, joinRouteOptions, joinRouteToEnum } from '@/constants/joinRouteOptions';
-import { ENROLLMENT_STATUS_TITLE, enrollmentStatusOptions } from '@/constants/enrollmentStatusOptions';
+import { ENROLLMENT_STATUS_TITLE, enrollmentStatusOptions, enrollmentStatusToEnum } from '@/constants/enrollmentStatusOptions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -287,6 +287,7 @@ export default function SignupPage() {
           motivation: data.motivation || undefined,
           gender: data.gender!,
           grade: data.grade!,
+          enrollmentStatus: enrollmentStatusToEnum[data.enrollmentStatus],
           wishes: data.wishes
             .map((w) => wishToEnum[w])
             .filter(Boolean),

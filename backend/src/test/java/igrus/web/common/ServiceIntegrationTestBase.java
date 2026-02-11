@@ -9,6 +9,7 @@ import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.security.auth.password.repository.PasswordResetTokenRepository;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.repository.UserRepository;
@@ -178,6 +179,7 @@ public abstract class ServiceIntegrationTestBase {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(role);
@@ -211,6 +213,7 @@ public abstract class ServiceIntegrationTestBase {
                 studentId, "테스트유저", email,
                 "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4),
                 "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(role);

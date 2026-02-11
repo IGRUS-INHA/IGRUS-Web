@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -209,6 +210,7 @@ class JwtAuthenticationFilterAccountStatusTest extends ServiceIntegrationTestBas
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(UserRole.ADMIN);  // ADMIN 권한으로 설정

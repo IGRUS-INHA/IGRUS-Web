@@ -8,6 +8,7 @@ import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.approval.service.manage.ValidateNotLastAdminService;
 import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
@@ -238,6 +239,7 @@ class ChangeUserRoleServiceTest {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
     }

@@ -11,6 +11,7 @@ import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
@@ -78,6 +79,7 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }

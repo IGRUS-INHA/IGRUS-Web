@@ -22,6 +22,7 @@ import igrus.web.security.auth.password.service.signup.ResendVerificationService
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
@@ -110,6 +111,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -130,6 +132,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -150,6 +153,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -170,6 +174,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -422,6 +427,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             userRepository.save(existingUser);
@@ -476,6 +482,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             userRepository.save(existingUser);
@@ -895,6 +902,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     null,
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     true
             );
 
@@ -918,7 +926,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     interests, customInterest,
                     joinRoute, customJoinRoute,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
         }
 

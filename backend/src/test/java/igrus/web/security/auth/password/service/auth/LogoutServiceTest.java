@@ -7,6 +7,7 @@ import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -57,6 +58,7 @@ class LogoutServiceTest extends ServiceIntegrationTestBase {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(role);

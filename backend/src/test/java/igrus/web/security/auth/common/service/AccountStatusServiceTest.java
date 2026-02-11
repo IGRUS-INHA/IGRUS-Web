@@ -5,6 +5,7 @@ import igrus.web.security.auth.common.exception.account.AccountSuspendedExceptio
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.exception.UserNotFoundException;
@@ -134,6 +135,7 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(UserRole.ASSOCIATE);
@@ -155,6 +157,7 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(UserRole.ASSOCIATE);

@@ -1,5 +1,6 @@
 package igrus.web.security.auth.password.dto.request;
 
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
@@ -77,6 +78,10 @@ public record PasswordSignupRequest(
     @NotNull(message = "학년은 필수입니다")
     @Min(value = 1, message = "학년은 1 이상이어야 합니다")
     Integer grade,
+
+    @Schema(description = "재학 상태", example = "ENROLLED")
+    @NotNull(message = "재학 상태는 필수입니다")
+    EnrollmentStatus enrollmentStatus,
 
     @Schema(description = "개인정보 처리방침 동의 여부", example = "true")
     @NotNull(message = "개인정보 동의는 필수입니다")
