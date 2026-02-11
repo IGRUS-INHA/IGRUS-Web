@@ -89,12 +89,14 @@ export default function ProfileHeader({ user, profile, onChangePassword, onLogou
         <div className="w-32 h-32 rounded-[2.5rem] bg-primary/20 border border-primary/50 flex items-center justify-center">
           <User size={64} className="text-primary" />
         </div>
-        <button
-          type="button"
-          className="absolute -bottom-2 -right-2 w-10 h-10 bg-foreground text-background rounded-r4 flex items-center justify-center hover:bg-primary transition border-2 border-background cursor-pointer"
-        >
-          <Edit3 size={16} />
-        </button>
+        {__FEATURE_PROFILE_EDIT__ && (
+          <button
+            type="button"
+            className="absolute -bottom-2 -right-2 w-10 h-10 bg-foreground text-background rounded-r4 flex items-center justify-center hover:bg-primary transition border-2 border-background cursor-pointer"
+          >
+            <Edit3 size={16} />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 text-center md:text-left">
