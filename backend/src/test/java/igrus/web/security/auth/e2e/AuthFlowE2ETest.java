@@ -13,6 +13,8 @@ import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.Interest;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
@@ -141,7 +143,9 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Step 1: POST /signup → 201 Created, 인증 코드 발송 ===
             PasswordSignupRequest signupRequest = new PasswordSignupRequest(
                     TEST_STUDENT_ID, TEST_NAME, TEST_EMAIL, TEST_PASSWORD,
-                    TEST_PHONE, TEST_DEPARTMENT, TEST_MOTIVATION, List.of(), Gender.MALE, 1, true
+                    TEST_PHONE, TEST_DEPARTMENT, TEST_MOTIVATION, List.of(),
+                    List.of(Interest.WEB_FRONTEND), null, JoinRoute.EVERYTIME, null,
+                    Gender.MALE, 1, true
             );
 
             mockMvc.perform(post(API_BASE_PATH + "/signup")
@@ -452,7 +456,9 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Setup: 회원가입만 하고 인증 안 함 ===
             PasswordSignupRequest signupRequest = new PasswordSignupRequest(
                     TEST_STUDENT_ID, TEST_NAME, TEST_EMAIL, TEST_PASSWORD,
-                    TEST_PHONE, TEST_DEPARTMENT, TEST_MOTIVATION, List.of(), Gender.MALE, 1, true
+                    TEST_PHONE, TEST_DEPARTMENT, TEST_MOTIVATION, List.of(),
+                    List.of(Interest.WEB_FRONTEND), null, JoinRoute.EVERYTIME, null,
+                    Gender.MALE, 1, true
             );
 
             mockMvc.perform(post(API_BASE_PATH + "/signup")

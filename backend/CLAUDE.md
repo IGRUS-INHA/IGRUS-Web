@@ -251,6 +251,7 @@ public class UserService {
     - 컨트롤러에는 꼭 Swagger/OpenAPI 관련 어노테이션을 붙여서 문서화 할 것
 - 새로운 기능 구현, 기능 수정 이후에는 Swagger 관련 코드를 업데이트 해서 문서화 상태를 항상 최신으로 유지할 것
 - 인증이 필요한 엔드포인트에는 `@SecurityRequirement` 를 붙일 것
+- 프론트엔드에서 'Orval'을 이용해 API 모델 객체를 만들고 있음. 모든 Swagger 코드는 Orval 연동에 문제가 없도록 작성되어야 함.
 
 ##### @ApiResponse 작성 시 필수 규칙
 

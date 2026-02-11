@@ -155,7 +155,7 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("비로그인 상태 승인 시도 시 거부 - UserNotFoundException 발생 [APR-033]")
         void approveAssociate_WithNonExistentUser_ThrowsUserNotFoundException() {
             // given
-            Long nonExistentUserId = 999L;
+            Long nonExistentUserId = Long.MAX_VALUE;
 
             // when & then
             assertThatThrownBy(() -> approveAssociateService.approveAssociate(associateUser.getId(), nonExistentUserId))
@@ -209,7 +209,7 @@ class ApproveAssociateServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("존재하지 않는 사용자 승인 시도 시 UserNotFoundException 발생")
         void approveAssociate_NonExistentUser_ThrowsException() {
             // given
-            Long nonExistentUserId = 999L;
+            Long nonExistentUserId = Long.MAX_VALUE;
 
             // when & then
             assertThatThrownBy(() -> approveAssociateService.approveAssociate(nonExistentUserId, adminUser.getId()))

@@ -91,11 +91,11 @@ public abstract class Inquiry extends SoftDeletableEntity {
     }
 
     public void startProcessing() {
-        this.status = InquiryStatus.IN_PROGRESS;
+        changeStatus(InquiryStatus.IN_PROGRESS);
     }
 
     public void complete() {
-        this.status = InquiryStatus.COMPLETED;
+        changeStatus(InquiryStatus.COMPLETED);
     }
 
     // === 첨부파일 관리 ===

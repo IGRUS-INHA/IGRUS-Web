@@ -105,7 +105,7 @@ class BulkRejectAssociatesServiceTest extends ServiceIntegrationTestBase {
             // given
             User associate1 = createAndSaveUser("20230010", "a10@inha.edu", UserRole.ASSOCIATE);
 
-            List<Long> userIds = List.of(associate1.getId(), 999L);
+            List<Long> userIds = List.of(associate1.getId(), Long.MAX_VALUE);
 
             // when
             int rejectedCount = bulkRejectAssociatesService.rejectBulk(userIds, adminUser.getId(), "거절 사유");

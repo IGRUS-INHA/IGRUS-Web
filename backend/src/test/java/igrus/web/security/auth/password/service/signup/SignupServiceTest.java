@@ -6,11 +6,14 @@ import igrus.web.security.auth.common.domain.PrivacyConsent;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
+import igrus.web.security.auth.common.exception.signup.InvalidCustomFieldException;
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.Interest;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,6 +67,10 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                 VALID_DEPARTMENT,
                 VALID_MOTIVATION,
                 List.of(),
+                List.of(Interest.WEB_FRONTEND),
+                null,
+                JoinRoute.EVERYTIME,
+                null,
                 Gender.MALE,
                 1,
                 true
@@ -194,7 +201,8 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                     "동기",
                     List.of(),
                     Gender.MALE,
-                    1
+                    1,
+                    List.of(), null, null, null
             );
             userRepository.save(existingUser);
 
@@ -317,6 +325,252 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
             PasswordCredential credential = passwordCredentialRepository.findByUserId(savedUser.getId()).orElseThrow();
             assertThat(credential.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
             assertThat(credential.isPendingVerification()).isTrue();
+        }
+    }
+
+    // === OTHER 교차 검증 테스트 (INT-INV-03, INT-INV-04) ===
+
+    @Nested
+    @DisplayName("회원가입 - OTHER 교차 검증 (관심 분야, INT-INV-03)")
+    class SignupInterestOtherValidationTest {
+
+        @Test
+        @DisplayName("OTHER 포함 + customInterest null → 예외 [SINT-030]")
+        void signup_WithOtherInterestWithoutCustom_ThrowsException() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.AI, Interest.OTHER), null,
+                    JoinRoute.EVERYTIME, null,
+                    Gender.MALE, 1, true
+            );
+
+            // when & then
+            assertThatThrownBy(() -> signupService.signup(request))
+                    .isInstanceOf(InvalidCustomFieldException.class);
+        }
+
+        @Test
+        @DisplayName("OTHER 포함 + customInterest 빈 문자열 → 예외 [SINT-031]")
+        void signup_WithOtherInterestWithBlankCustom_ThrowsException() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.OTHER), "",
+                    JoinRoute.EVERYTIME, null,
+                    Gender.MALE, 1, true
+            );
+
+            // when & then
+            assertThatThrownBy(() -> signupService.signup(request))
+                    .isInstanceOf(InvalidCustomFieldException.class);
+        }
+
+        @Test
+        @DisplayName("OTHER 포함 + customInterest 공백만 → 예외 [SINT-032]")
+        void signup_WithOtherInterestWithWhitespaceCustom_ThrowsException() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.OTHER), "   ",
+                    JoinRoute.EVERYTIME, null,
+                    Gender.MALE, 1, true
+            );
+
+            // when & then
+            assertThatThrownBy(() -> signupService.signup(request))
+                    .isInstanceOf(InvalidCustomFieldException.class);
+        }
+
+        @Test
+        @DisplayName("OTHER 포함 + customInterest 유효 → 성공 [SINT-033]")
+        void signup_WithOtherInterestAndCustom_Succeeds() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.AI, Interest.OTHER), "임베디드 시스템",
+                    JoinRoute.EVERYTIME, null,
+                    Gender.MALE, 1, true
+            );
+
+            // when
+            PasswordSignupResponse response = signupService.signup(request);
+
+            // then
+            assertThat(response).isNotNull();
+            User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            assertThat(savedUser.getInterests()).contains(Interest.AI, Interest.OTHER);
+            assertThat(savedUser.getCustomInterest()).isEqualTo("임베디드 시스템");
+        }
+
+        @Test
+        @DisplayName("OTHER 단독 선택 + customInterest 유효 → 성공 [SINT-034]")
+        void signup_WithOnlyOtherInterestAndCustom_Succeeds() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.OTHER), "로보틱스",
+                    JoinRoute.EVERYTIME, null,
+                    Gender.MALE, 1, true
+            );
+
+            // when
+            PasswordSignupResponse response = signupService.signup(request);
+
+            // then
+            assertThat(response).isNotNull();
+        }
+
+        @Test
+        @DisplayName("OTHER 미포함 + customInterest 있음 → 성공 (무시) [SINT-035]")
+        void signup_WithoutOtherAndWithCustomInterest_Succeeds() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.WEB_FRONTEND), "임의값",
+                    JoinRoute.EVERYTIME, null,
+                    Gender.MALE, 1, true
+            );
+
+            // when
+            PasswordSignupResponse response = signupService.signup(request);
+
+            // then
+            assertThat(response).isNotNull();
+            User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            assertThat(savedUser.getCustomInterest()).isEqualTo("임의값");
+        }
+    }
+
+    @Nested
+    @DisplayName("회원가입 - OTHER 교차 검증 (가입 경로, INT-INV-04)")
+    class SignupJoinRouteOtherValidationTest {
+
+        @Test
+        @DisplayName("OTHER + customJoinRoute null → 예외 [SINT-040]")
+        void signup_WithOtherJoinRouteWithoutCustom_ThrowsException() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.WEB_FRONTEND), null,
+                    JoinRoute.OTHER, null,
+                    Gender.MALE, 1, true
+            );
+
+            // when & then
+            assertThatThrownBy(() -> signupService.signup(request))
+                    .isInstanceOf(InvalidCustomFieldException.class);
+        }
+
+        @Test
+        @DisplayName("OTHER + customJoinRoute 빈 문자열 → 예외 [SINT-041]")
+        void signup_WithOtherJoinRouteWithBlankCustom_ThrowsException() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.WEB_FRONTEND), null,
+                    JoinRoute.OTHER, "",
+                    Gender.MALE, 1, true
+            );
+
+            // when & then
+            assertThatThrownBy(() -> signupService.signup(request))
+                    .isInstanceOf(InvalidCustomFieldException.class);
+        }
+
+        @Test
+        @DisplayName("OTHER + customJoinRoute 공백만 → 예외 [SINT-042]")
+        void signup_WithOtherJoinRouteWithWhitespaceCustom_ThrowsException() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.WEB_FRONTEND), null,
+                    JoinRoute.OTHER, "   ",
+                    Gender.MALE, 1, true
+            );
+
+            // when & then
+            assertThatThrownBy(() -> signupService.signup(request))
+                    .isInstanceOf(InvalidCustomFieldException.class);
+        }
+
+        @Test
+        @DisplayName("OTHER + customJoinRoute 유효 → 성공 [SINT-043]")
+        void signup_WithOtherJoinRouteAndCustom_Succeeds() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.WEB_FRONTEND), null,
+                    JoinRoute.OTHER, "인스타그램 광고",
+                    Gender.MALE, 1, true
+            );
+
+            // when
+            PasswordSignupResponse response = signupService.signup(request);
+
+            // then
+            assertThat(response).isNotNull();
+            User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            assertThat(savedUser.getJoinRoute()).isEqualTo(JoinRoute.OTHER);
+            assertThat(savedUser.getCustomJoinRoute()).isEqualTo("인스타그램 광고");
+        }
+
+        @Test
+        @DisplayName("OTHER 아닌 경우 + customJoinRoute 있음 → 성공 (무시) [SINT-044]")
+        void signup_WithoutOtherAndWithCustomJoinRoute_Succeeds() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.WEB_FRONTEND), null,
+                    JoinRoute.EVERYTIME, "임의값",
+                    Gender.MALE, 1, true
+            );
+
+            // when
+            PasswordSignupResponse response = signupService.signup(request);
+
+            // then
+            assertThat(response).isNotNull();
+            User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            assertThat(savedUser.getCustomJoinRoute()).isEqualTo("임의값");
+        }
+    }
+
+    @Nested
+    @DisplayName("회원가입 - interests/joinRoute 정상 입력 및 저장")
+    class SignupInterestsAndJoinRouteTest {
+
+        @Test
+        @DisplayName("interests/joinRoute 정상 입력 시 회원가입 성공 및 DB 저장 확인")
+        void signup_WithValidInterestsAndJoinRoute_Succeeds() {
+            // given
+            PasswordSignupRequest request = new PasswordSignupRequest(
+                    VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
+                    VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
+                    List.of(Interest.WEB_FRONTEND, Interest.AI, Interest.CLOUD), null,
+                    JoinRoute.EVERYTIME, null,
+                    Gender.MALE, 1, true
+            );
+
+            // when
+            signupService.signup(request);
+
+            // then
+            User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            assertThat(savedUser.getInterests()).containsExactlyInAnyOrder(
+                    Interest.WEB_FRONTEND, Interest.AI, Interest.CLOUD);
+            assertThat(savedUser.getJoinRoute()).isEqualTo(JoinRoute.EVERYTIME);
         }
     }
 }

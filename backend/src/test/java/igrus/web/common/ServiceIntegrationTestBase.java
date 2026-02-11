@@ -177,7 +177,8 @@ public abstract class ServiceIntegrationTestBase {
                 "테스트 동기",
                 List.of(),
                 Gender.MALE,
-                1
+                1,
+                List.of(), null, null, null
         );
         user.changeRole(role);
         user.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE (테스트에서 기본적으로 ACTIVE 상태 사용)
@@ -209,7 +210,8 @@ public abstract class ServiceIntegrationTestBase {
         User user = User.create(
                 studentId, "테스트유저", email,
                 "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4),
-                "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1
+                "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1,
+                List.of(), null, null, null
         );
         user.changeRole(role);
         return userRepository.save(user);

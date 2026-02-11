@@ -208,7 +208,8 @@ class JwtAuthenticationFilterAccountStatusTest extends ServiceIntegrationTestBas
                 "테스트 동기",
                 List.of(),
                 Gender.MALE,
-                1
+                1,
+                List.of(), null, null, null
         );
         user.changeRole(UserRole.ADMIN);  // ADMIN 권한으로 설정
         applyUserStatus(user, status);

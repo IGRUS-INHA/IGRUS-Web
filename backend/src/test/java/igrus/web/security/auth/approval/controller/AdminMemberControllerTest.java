@@ -140,7 +140,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
         @DisplayName("존재하지 않는 사용자 승인 시 404 반환")
         void approveAssociate_UserNotFound_Returns404() throws Exception {
             // given
-            Long nonExistentUserId = 999L;
+            Long nonExistentUserId = Long.MAX_VALUE;
 
             // when & then
             mockMvc.perform(post(BASE_URL + "/" + nonExistentUserId + "/approve")
@@ -211,7 +211,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
         void approveBulk_PartialSuccess_ReturnsPartialResult() throws Exception {
             // given
             User associate2 = createAndSaveUser("20230002", "a2@inha.edu", UserRole.ASSOCIATE);
-            Long nonExistentUserId = 999L;
+            Long nonExistentUserId = Long.MAX_VALUE;
             List<Long> userIds = List.of(associateUser.getId(), associate2.getId(), nonExistentUserId);
             BulkApprovalRequest request = new BulkApprovalRequest(userIds, null);
 
