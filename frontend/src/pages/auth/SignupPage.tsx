@@ -25,9 +25,9 @@ import {
 import { useSignup } from '@/api/model/password-authentication/password-authentication';
 import { majorOptions } from '@/constants/majorOptions';
 import { domainOptions } from '@/constants/domainOptions';
-import { WISH_TITLE, wishOptions } from '@/constants/wishOptions';
-import { INTEREST_TITLE, interestOptions } from '@/constants/interestOptions';
-import { JOIN_ROUTE_TITLE, joinRouteOptions } from '@/constants/joinRouteOptions';
+import { WISH_TITLE, wishOptions, wishToEnum } from '@/constants/wishOptions';
+import { INTEREST_TITLE, interestOptions, interestToEnum } from '@/constants/interestOptions';
+import { JOIN_ROUTE_TITLE, joinRouteOptions, joinRouteToEnum } from '@/constants/joinRouteOptions';
 import { ENROLLMENT_STATUS_TITLE, enrollmentStatusOptions } from '@/constants/enrollmentStatusOptions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -228,10 +228,6 @@ export default function SignupPage() {
         data.emailDomain === 'custom' ? data.customDomain : data.emailDomain;
       const fullEmail = `${data.emailLocal}@${domain}`;
 
-      const wishText = data.wishes?.length
-        ? `[목적: ${data.wishes.join(', ')}]\n`
-        : '';
-
       await signupMutation.mutateAsync({
         data: {
           studentId: data.studentId,
@@ -240,11 +236,18 @@ export default function SignupPage() {
           email: fullEmail,
           phoneNumber: formatPhoneNumber(data.phoneNumber),
           department: data.department,
-          motivation: wishText + data.motivation,
+          motivation: data.motivation || undefined,
           gender: data.gender!,
           grade: data.grade!,
-          // TODO: 백엔드 API 스펙 업데이트 후 주석 해제
-          // enrollmentStatus: data.enrollmentStatus,
+          wishes: data.wishes
+            .map((w) => wishToEnum[w])
+            .filter(Boolean),
+          interests: data.interests
+            .map((i) => interestToEnum[i])
+            .filter(Boolean),
+          customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
+          joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
+          customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,
           privacyConsent: data.privacyConsent,
         },
       });
