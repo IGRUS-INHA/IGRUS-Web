@@ -1,6 +1,6 @@
 # 회원가입 관심 분야/가입 경로 검증 기준서
 
-> **Status**: Draft
+> **Status**: Implemented
 > **Last Updated**: 2026-02-11
 > **Issue**: [#327 - 회원가입 API에 관심 분야/가입 경로 필드 추가](https://github.com/IGRUS-INHA/IGRUS-Web/issues/327)
 > **Scope**: 관심 분야(interests), 기타 관심 분야(customInterest), 가입 경로(joinRoute), 기타 가입 경로(customJoinRoute)
@@ -286,14 +286,14 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 변경에 직접 관련�
 
 ### 4-2. 테스트-검증 항목 매핑
 
-| 불변조건 | 커버 테스트 | 목표 상태 |
+| 불변조건 | 커버 테스트 | 상태 |
 |---------|-----------|----------|
-| INT-INV-01 (interests 최소 1개) | DTO 검증 → `PasswordSignupIntegrationTest` | **DTO 테스트로 커버** |
-| INT-INV-02 (joinRoute 필수) | DTO 검증 → `PasswordSignupIntegrationTest` | **DTO 테스트로 커버** |
-| INT-INV-03 (OTHER → customInterest 필수) | `SignupServiceTest` (3개 케이스) | **서비스 테스트로 커버** |
-| INT-INV-04 (OTHER → customJoinRoute 필수) | `SignupServiceTest` (3개 케이스) | **서비스 테스트로 커버** |
-| INT-INV-05 (기존 데이터 호환) | 마이그레이션 후 기존 데이터 조회 | **수동 검증** |
-| INT-INV-06 (OTHER 아닌 경우 custom 무시) | `SignupServiceTest` (1개 케이스) | **서비스 테스트로 커버** |
+| INT-INV-01 (interests 최소 1개) | DTO `@NotNull @Size(min=1)` + `PasswordSignupIntegrationTest` (SINT-060~063) | ✅ 구현 완료 |
+| INT-INV-02 (joinRoute 필수) | DTO `@NotNull` + `PasswordSignupIntegrationTest` (SINT-060~063) | ✅ 구현 완료 |
+| INT-INV-03 (OTHER → customInterest 필수) | `SignupServiceTest` (SINT-030~035, 6개 케이스) + `PasswordSignupIntegrationTest` (SINT-064~065, SINT-068) | ✅ 구현 완료 |
+| INT-INV-04 (OTHER → customJoinRoute 필수) | `SignupServiceTest` (SINT-040~044, 5개 케이스) + `PasswordSignupIntegrationTest` (SINT-066~068) | ✅ 구현 완료 |
+| INT-INV-05 (기존 데이터 호환) | DB 컬럼 nullable (V34 마이그레이션) | ✅ 설계로 보장 (수동 검증) |
+| INT-INV-06 (OTHER 아닌 경우 custom 무시) | `SignupServiceTest` (SINT-035, SINT-044) + `PasswordSignupIntegrationTest` (SINT-060~062) | ✅ 구현 완료 |
 
 ---
 
