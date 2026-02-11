@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/utils';
 import { getErrorMessage, hasErrorCode } from '@/utils/error';
+import { useSignupDuplicateCheck } from '@/hooks';
 
 // --- Zod Schema ---
 
@@ -122,6 +123,14 @@ export default function SignupPage() {
   const [passwordConfirmTouched, setPasswordConfirmTouched] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const signupMutation = useSignup();
+  const {
+    studentId: studentIdCheck,
+    email: emailCheck,
+    checkStudentId,
+    checkEmail,
+    resetStudentId,
+    resetEmail,
+  } = useSignupDuplicateCheck();
 
   const {
     register,
@@ -201,16 +210,55 @@ export default function SignupPage() {
     }
   };
 
+  const composeEmail = () => {
+    const local = getValues('emailLocal');
+    const domain = getValues('emailDomain');
+    const custom = getValues('customDomain');
+    const fullDomain = domain === 'custom' ? custom : domain;
+    if (local && fullDomain) return `${local}@${fullDomain}`;
+    return '';
+  };
+
   const handleNext = async () => {
     const fields = STEP_FIELDS[step];
     const valid = await trigger(fields);
-    if (valid) {
-      const nextStep = step + 1;
-      if (nextStep < STEP_FIELDS.length) {
-        clearErrors(STEP_FIELDS[nextStep]);
+    if (!valid) return;
+
+    // Step 0: 학번 중복 체크 확인
+    if (step === 0) {
+      const studentIdValue = getValues('studentId');
+      if (/^\d{8}$/.test(studentIdValue)) {
+        if (!studentIdCheck.isChecked) {
+          checkStudentId(studentIdValue);
+          return;
+        }
+        if (studentIdCheck.isDuplicate) {
+          setError('studentId', { message: studentIdCheck.message ?? '이미 가입된 학번입니다.' });
+          return;
+        }
       }
-      setStep((s) => Math.min(s + 1, STEPS.length - 1));
     }
+
+    // Step 1: 이메일 중복 체크 확인
+    if (step === 1) {
+      const fullEmail = composeEmail();
+      if (fullEmail) {
+        if (!emailCheck.isChecked) {
+          checkEmail(fullEmail);
+          return;
+        }
+        if (emailCheck.isDuplicate) {
+          setError('emailLocal', { message: emailCheck.message ?? '이미 존재하는 이메일입니다.' });
+          return;
+        }
+      }
+    }
+
+    const nextStep = step + 1;
+    if (nextStep < STEP_FIELDS.length) {
+      clearErrors(STEP_FIELDS[nextStep]);
+    }
+    setStep((s) => Math.min(s + 1, STEPS.length - 1));
   };
 
   const handlePrev = () => {
@@ -417,18 +465,38 @@ export default function SignupPage() {
           <form onSubmit={(e) => e.preventDefault()}>
             {/* Step 1: 기본 정보 */}
             <div className={cn('space-y-s4', step !== 0 && 'hidden')}>
-              <FormField label="학번" error={errors.studentId?.message}>
+              <FormField
+                label="학번"
+                error={errors.studentId?.message || (studentIdCheck.isDuplicate ? studentIdCheck.message : undefined)}
+                success={studentIdCheck.isAvailable ? studentIdCheck.message : undefined}
+              >
                 <div className="relative">
                   <User
                     size={18}
                     className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
                   />
                   <Input
-                    {...register('studentId')}
+                    {...register('studentId', {
+                      onBlur: () => {
+                        const value = getValues('studentId');
+                        if (/^\d{8}$/.test(value)) {
+                          checkStudentId(value);
+                        }
+                      },
+                      onChange: () => {
+                        resetStudentId();
+                      },
+                    })}
                     placeholder="12345678"
                     maxLength={8}
-                    className="pl-10"
+                    className={cn('pl-10', (studentIdCheck.isChecking || studentIdCheck.isAvailable) && 'pr-10')}
                   />
+                  {studentIdCheck.isChecking && (
+                    <Loader2 size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
+                  )}
+                  {studentIdCheck.isAvailable && !studentIdCheck.isChecking && (
+                    <Check size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 text-green-600" />
+                  )}
                 </div>
               </FormField>
 
@@ -555,7 +623,8 @@ export default function SignupPage() {
             <div className={cn('space-y-s4', step !== 1 && 'hidden')}>
               <FormField
                 label="이메일"
-                error={errors.emailLocal?.message || errors.customDomain?.message}
+                error={errors.emailLocal?.message || errors.customDomain?.message || (emailCheck.isDuplicate ? emailCheck.message : undefined)}
+                success={emailCheck.isAvailable ? emailCheck.message : undefined}
               >
                 <div className="flex items-center gap-s2">
                   <div className="relative flex-1">
@@ -564,7 +633,15 @@ export default function SignupPage() {
                       className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
                     />
                     <Input
-                      {...register('emailLocal')}
+                      {...register('emailLocal', {
+                        onBlur: () => {
+                          const fullEmail = composeEmail();
+                          if (fullEmail) checkEmail(fullEmail);
+                        },
+                        onChange: () => {
+                          resetEmail();
+                        },
+                      })}
                       placeholder="아이디"
                       className="pl-10"
                     />
@@ -572,15 +649,26 @@ export default function SignupPage() {
                   <span className="text-muted-foreground font-bold shrink-0">@</span>
                   <div className="relative flex-1">
                     <select
-                      {...register('emailDomain')}
+                      {...register('emailDomain', {
+                        onChange: () => {
+                          resetEmail();
+                          // 도메인이 커스텀이 아니고 로컬파트가 있으면 즉시 체크
+                          setTimeout(() => {
+                            const fullEmail = composeEmail();
+                            if (fullEmail && getValues('emailDomain') !== 'custom') {
+                              checkEmail(fullEmail);
+                            }
+                          }, 0);
+                        },
+                      })}
                       className={cn(
-                        'w-full h-9 rounded-r2 border border-input bg-transparent px-s3 text-sm',
+                        'w-full h-9 rounded-r2 border border-input bg-background text-foreground px-s3 text-sm',
                         'appearance-none cursor-pointer transition-all outline-none',
                         'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
                       )}
                     >
                       {domainOptions.map((d) => (
-                        <option key={d.value} value={d.value}>
+                        <option key={d.value} value={d.value} className="bg-background text-foreground">
                           {d.label}
                         </option>
                       ))}
@@ -600,10 +688,23 @@ export default function SignupPage() {
                         }
                         return true;
                       },
+                      onBlur: () => {
+                        const fullEmail = composeEmail();
+                        if (fullEmail) checkEmail(fullEmail);
+                      },
+                      onChange: () => {
+                        resetEmail();
+                      },
                     })}
                     placeholder="도메인 입력 (예: example.com)"
                     className="mt-s2"
                   />
+                )}
+                {emailCheck.isChecking && (
+                  <div className="flex items-center gap-s1 mt-s1">
+                    <Loader2 size={14} className="animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">확인 중...</span>
+                  </div>
                 )}
               </FormField>
 
@@ -636,17 +737,17 @@ export default function SignupPage() {
                   <select
                     {...register('department')}
                     className={cn(
-                      'w-full h-9 rounded-r2 border border-input bg-transparent pl-10 pr-10 text-sm',
+                      'w-full h-9 rounded-r2 border border-input bg-background text-foreground pl-10 pr-10 text-sm',
                       'appearance-none cursor-pointer transition-all outline-none',
                       'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
                       !watch('department') && 'text-muted-foreground',
                     )}
                   >
-                    <option value="">학과를 선택하세요</option>
+                    <option value="" className="bg-background text-foreground">학과를 선택하세요</option>
                     {majorOptions.map((college) => (
                       <optgroup key={college.title} label={college.title}>
                         {college.items.map((dept) => (
-                          <option key={dept.key} value={dept.value}>
+                          <option key={dept.key} value={dept.value} className="bg-background text-foreground">
                             {dept.value}
                           </option>
                         ))}

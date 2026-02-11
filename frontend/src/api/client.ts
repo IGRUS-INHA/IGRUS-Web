@@ -219,12 +219,14 @@ export async function customFetch<T>(
   // 일반 에러 처리
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => ({}))) as ErrorResponseDto;
+    const { status: _s, code, message, timestamp, ...extraData } = errorBody;
 
     throw new ApiError(
       response.status,
-      errorBody.code ?? `HTTP_${response.status}`,
-      errorBody.message ?? `HTTP ${response.status}`,
-      errorBody.timestamp
+      (code as string | undefined) ?? `HTTP_${response.status}`,
+      (message as string | undefined) ?? `HTTP ${response.status}`,
+      timestamp as string | undefined,
+      Object.keys(extraData).length > 0 ? (extraData as Record<string, unknown>) : undefined
     );
   }
 

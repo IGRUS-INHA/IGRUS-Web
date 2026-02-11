@@ -44,7 +44,7 @@ public class ApproveAssociateService {
         }
 
         if (user.isPendingVerification()) {
-            throw new EmailNotVerifiedException();
+            throw new EmailNotVerifiedException(user.getEmail());
         }
 
         approvalExecutor.execute(user, approverId, "관리자 승인에 의한 정회원 전환");

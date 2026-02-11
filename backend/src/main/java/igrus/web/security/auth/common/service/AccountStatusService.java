@@ -56,7 +56,7 @@ public class AccountStatusService {
             }
             case PENDING_VERIFICATION -> {
                 log.warn("이메일 미인증 계정으로 접근 시도: userId={}", userId);
-                throw new EmailNotVerifiedException();
+                throw new EmailNotVerifiedException(user.getEmail());
             }
         }
     }

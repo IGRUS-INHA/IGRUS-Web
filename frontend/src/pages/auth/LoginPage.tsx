@@ -4,7 +4,6 @@ import Swal from 'sweetalert2';
 import { useAuth } from '@/hooks';
 import {
   useLogin,
-  useResendVerification,
   checkRecoveryEligibility,
   recoverAccount,
 } from '@/api/model/password-authentication/password-authentication';
@@ -16,10 +15,10 @@ import type {
 import LoginForm from '@/components/feature/auth/LoginForm';
 import {
   isEmailNotVerified,
+  getEmailFromVerificationError,
   isAccountWithdrawn,
   isAccountSuspended,
   isAccountLocked,
-  isRateLimitError,
   getErrorMessage,
 } from '@/utils/error';
 
@@ -28,72 +27,6 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const loginMutation = useLogin();
-  const resendVerificationMutation = useResendVerification();
-
-  // 이메일 인증 필요 시 처리
-  const handleEmailVerificationRequired = async () => {
-    const { value: email, isConfirmed } = await Swal.fire({
-      icon: 'warning',
-      title: '이메일 인증 필요',
-      html: '이메일 인증이 완료되지 않았습니다.<br><br>회원가입 시 사용한 이메일 주소를 입력하면<br>인증 코드가 재발송됩니다.',
-      input: 'email',
-      inputPlaceholder: '이메일 주소 입력',
-      inputAttributes: {
-        autocomplete: 'email',
-      },
-      showCancelButton: true,
-      confirmButtonText: '인증 코드 재발송',
-      cancelButtonText: '취소',
-      confirmButtonColor: '#FFC107',
-      cancelButtonColor: '#6C757D',
-      showClass: { popup: '', backdrop: '' },
-      hideClass: { popup: '', backdrop: '' },
-      inputValidator: (value) => {
-        if (!value) {
-          return '이메일 주소를 입력해주세요.';
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) {
-          return '올바른 이메일 형식이 아닙니다.';
-        }
-        return null;
-      },
-    });
-
-    if (isConfirmed && email) {
-      try {
-        await resendVerificationMutation.mutateAsync({
-          data: { email },
-        });
-
-        await Swal.fire({
-          icon: 'success',
-          title: '인증 코드 발송 완료',
-          html: `<strong>${email}</strong>로<br>인증 코드가 발송되었습니다.<br><br>이메일을 확인해주세요.`,
-          confirmButtonText: '인증하기',
-          confirmButtonColor: '#28A745',
-          showClass: { popup: '', backdrop: '' },
-          hideClass: { popup: '', backdrop: '' },
-        });
-
-        navigate('/verify-email', { state: { email } });
-      } catch (resendError: unknown) {
-        const errorText = isRateLimitError(resendError)
-          ? '재발송 요청 횟수를 초과했습니다.<br><br>5분 후에 다시 시도해주세요.'
-          : '인증 코드 재발송에 실패했습니다.<br><br>다시 시도해주세요.';
-
-        await Swal.fire({
-          icon: 'error',
-          title: '재발송 실패',
-          html: errorText,
-          confirmButtonText: '확인',
-          confirmButtonColor: '#DC3545',
-          showClass: { popup: '', backdrop: '' },
-          hideClass: { popup: '', backdrop: '' },
-        });
-      }
-    }
-  };
 
   // 탈퇴 계정 복구 처리
   const handleAccountRecovery = async (studentId: string) => {
@@ -247,7 +180,21 @@ export default function LoginPage() {
       }
     } catch (error: unknown) {
       if (isEmailNotVerified(error)) {
-        await handleEmailVerificationRequired();
+        const email = getEmailFromVerificationError(error);
+        await Swal.fire({
+          icon: 'info',
+          title: '이메일 인증 필요',
+          html: '이메일 인증이 완료되지 않았습니다.<br><br>인증 코드가 이메일로 발송되었습니다.<br>이메일을 확인해주세요.',
+          confirmButtonText: '인증하기',
+          confirmButtonColor: '#FFC107',
+          showClass: { popup: '', backdrop: '' },
+          hideClass: { popup: '', backdrop: '' },
+        });
+        if (email) {
+          navigate('/verify-email', { state: { email } });
+        } else {
+          navigate('/verify-email');
+        }
       } else if (isAccountWithdrawn(error)) {
         await handleAccountRecovery(data.studentId);
       } else if (isAccountSuspended(error)) {

@@ -47,7 +47,7 @@ public class RejectAssociateService {
         }
 
         if (user.isPendingVerification()) {
-            throw new EmailNotVerifiedException();
+            throw new EmailNotVerifiedException(user.getEmail());
         }
 
         associateDecisionRepository.findByUserIdAndActiveTrue(userId)
