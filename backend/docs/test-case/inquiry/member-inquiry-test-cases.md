@@ -1,7 +1,7 @@
 # 회원 문의 (Member Inquiry) 테스트 케이스
 
 **작성일**: 2026-02-11
-**버전**: 1.0
+**버전**: 1.1
 **관련 스펙**: [inquiry-verification-criteria.md](../../../../docs/criteria/inquiry-verification-criteria.md)
 **우선순위**: P1
 
@@ -30,11 +30,11 @@
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
 | INQ-M-001 | 유효한 정보로 회원 문의 생성 | ASSOCIATE 사용자 존재 | type=JOIN, title="가입 문의", content="내용" 전송 (JWT 인증) | 201 Created, 문의번호 발급, 상태=PENDING, user FK 연결 | ✅ |
-| INQ-M-002 | 첨부파일 포함 회원 문의 생성 | ASSOCIATE 사용자 존재 | 유효한 요청 + 첨부파일 2개 (JWT 인증) | 201 Created, 문의 + 첨부파일 2개 저장 | ⬜ |
-| INQ-M-003 | 첨부파일 3개(최대) 포함 생성 | 사용자 존재 | 유효한 요청 + 첨부파일 3개 | 201 Created (INQ-INV-02 경계값) | ⬜ |
-| INQ-M-004 | 첨부파일 없이 생성 | 사용자 존재 | 유효한 요청, attachments=[] | 201 Created, 첨부파일 0개 | ⬜ |
-| INQ-M-005 | 각 문의 유형별 생성 (5종) | 사용자 존재 | type을 JOIN, EVENT, REPORT, ACCOUNT, OTHER로 각각 생성 | 각 유형으로 정상 생성 | ⬜ |
-| INQ-M-006 | 작성자 정보 자동 설정 확인 | User(email="user@inha.edu", name="김철수") | 문의 생성 | getAuthorEmail()="user@inha.edu", getAuthorName()="김철수" 확인 (INQ-INV-06) | ⬜ |
+| INQ-M-002 | 첨부파일 포함 회원 문의 생성 | ASSOCIATE 사용자 존재 | 유효한 요청 + 첨부파일 2개 (JWT 인증) | 201 Created, 문의 + 첨부파일 2개 저장 | ✅ |
+| INQ-M-003 | 첨부파일 3개(최대) 포함 생성 | 사용자 존재 | 유효한 요청 + 첨부파일 3개 | 201 Created (INQ-INV-02 경계값) | ✅ |
+| INQ-M-004 | 첨부파일 없이 생성 | 사용자 존재 | 유효한 요청, attachments=[] | 201 Created, 첨부파일 0개 | ✅ |
+| INQ-M-005 | 각 문의 유형별 생성 (5종) | 사용자 존재 | type을 JOIN, EVENT, REPORT, ACCOUNT, OTHER로 각각 생성 | 각 유형으로 정상 생성 | ✅ |
+| INQ-M-006 | 작성자 정보 자동 설정 확인 | User(email="user@inha.edu", name="김철수") | 문의 생성 | getAuthorEmail()="user@inha.edu", getAuthorName()="김철수" 확인 (INQ-INV-06) | ✅ |
 
 ### 2.2 회원 문의 생성 - 실패
 
@@ -61,8 +61,8 @@
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
 | INQ-M-030 | 내 문의 목록 페이징 조회 | 사용자A의 문의 3건 존재 | GET /my?page=0&size=20 (사용자A JWT) | 200 OK, 3건 반환, totalElements=3 | ✅ |
-| INQ-M-031 | 문의 없는 회원의 빈 목록 조회 | 사용자B의 문의 0건 | GET /my?page=0&size=20 (사용자B JWT) | 200 OK, 빈 리스트, totalElements=0 | ⬜ |
-| INQ-M-032 | 다른 사용자의 문의는 미포함 | 사용자A 문의 2건, 사용자B 문의 1건 | GET /my (사용자A JWT) | 200 OK, 사용자A의 2건만 반환 | ⬜ |
+| INQ-M-031 | 문의 없는 회원의 빈 목록 조회 | 사용자B의 문의 0건 | GET /my?page=0&size=20 (사용자B JWT) | 200 OK, 빈 리스트, totalElements=0 | ✅ |
+| INQ-M-032 | 다른 사용자의 문의는 미포함 | 사용자A 문의 2건, 사용자B 문의 1건 | GET /my (사용자A JWT) | 200 OK, 사용자A의 2건만 반환 | ✅ |
 | INQ-M-033 | 페이징 경계값 확인 | 사용자A의 문의 25건 | GET /my?page=0&size=20 | 200 OK, 20건 반환, totalPages=2, hasNext=true | ⬜ |
 
 ### 2.5 내 문의 상세 조회 - 성공
@@ -79,7 +79,7 @@
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
 | INQ-M-050 | 다른 사용자의 문의 상세 조회 | 사용자A 문의 (id=1) 존재 | GET /my/1 (사용자B JWT) | 404 Not Found, InquiryAccessDeniedException (SEC-INQ-01) | ✅ |
-| INQ-M-051 | 존재하지 않는 문의 ID 조회 | - | GET /my/99999 (사용자A JWT) | 404 Not Found, InquiryNotFoundException | ⬜ |
+| INQ-M-051 | 존재하지 않는 문의 ID 조회 | - | GET /my/99999 (사용자A JWT) | 404 Not Found, InquiryNotFoundException | ✅ |
 | INQ-M-052 | soft delete된 문의 조회 | 사용자A의 삭제된 문의 | GET /my/{deletedId} (사용자A JWT) | 404 Not Found (INQ-INV-04) | ⬜ |
 | INQ-M-053 | 비인증 상태에서 상세 조회 | JWT 토큰 없음 | GET /my/1 | 401 Unauthorized | ⬜ |
 
@@ -109,24 +109,23 @@
 
 ### 4.1 서비스 통합 테스트 - 생성
 - **파일**: `backend/src/test/java/igrus/web/inquiry/service/create/CreateMemberInquiryServiceTest.java`
-- **테스트 범위**: INQ-M-001, INQ-M-010 (생성 성공, 존재하지 않는 사용자)
-- **테스트 수**: 2개
+- **테스트 범위**: INQ-M-001~006, INQ-M-010 (생성 성공, 첨부파일, 유형별, 작성자 정보, 존재하지 않는 사용자)
+- **테스트 수**: 7개
 
 ### 4.2 서비스 통합 테스트 - 목록 조회
 - **파일**: `backend/src/test/java/igrus/web/inquiry/service/read/GetMyInquiriesServiceTest.java`
-- **테스트 범위**: INQ-M-030 (목록 조회 성공)
-- **테스트 수**: 1개
+- **테스트 범위**: INQ-M-030~032 (목록 조회 성공, 빈 목록, 다른 사용자 미포함)
+- **테스트 수**: 3개
 
 ### 4.3 서비스 통합 테스트 - 상세 조회
 - **파일**: `backend/src/test/java/igrus/web/inquiry/service/read/GetMyInquiryServiceTest.java`
-- **테스트 범위**: INQ-M-040, INQ-M-050 (상세 조회 성공, 접근 거부)
-- **테스트 수**: 2개
+- **테스트 범위**: INQ-M-040, INQ-M-050~051 (상세 조회 성공, 접근 거부, 존재하지 않는 문의)
+- **테스트 수**: 3개
 
 ### 4.4 미구현 테스트
-- 입력 검증 실패 (INQ-M-011~016): 컨트롤러 레벨 테스트 필요
+- 입력 검증 실패 (INQ-M-011~016): 컨트롤러 레벨 @Valid 검증 테스트 필요
 - 문의번호 충돌 재시도 (INQ-M-020~022): Mock 기반 통합 테스트 필요
-- 페이징/필터링 상세 (INQ-M-031~033): 서비스 통합 테스트 필요
-- 내부 메모 미노출 (INQ-M-043): 응답 구조 검증 테스트 필요
+- 페이징 경계값 (INQ-M-033): 대량 데이터 서비스 테스트 필요
 - 이메일 알림 (INQ-M-060~062): 알림 서비스 검증 테스트 필요
 
 ---
@@ -136,3 +135,4 @@
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 1.0 | 2026-02-11 | - | 검증 기준서 기반 최초 작성 |
+| 1.1 | 2026-02-11 | - | INQ-M-002~006, 031~032, 051 테스트 구현 완료 |
