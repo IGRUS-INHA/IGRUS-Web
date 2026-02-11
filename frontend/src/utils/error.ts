@@ -53,7 +53,6 @@ const HTTP_ERROR_MESSAGES: Record<number, string> = {
   404: '요청한 정보를 찾을 수 없습니다.',
   409: '이미 처리된 요청입니다.',
   410: '삭제된 리소스입니다.',
-  422: '입력값을 확인해주세요.',
   423: '계정이 잠겼습니다.',
   429: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
   500: '서버 오류가 발생했습니다.',
@@ -64,7 +63,6 @@ const HTTP_ERROR_MESSAGES: Record<number, string> = {
 // 백엔드 에러 코드별 메시지 (148개 전체 매핑)
 const API_ERROR_MESSAGES: Record<string, string> = {
   // Common (5개)
-  INVALID_INPUT_VALUE: '입력값이 올바르지 않습니다.',
   METHOD_NOT_ALLOWED: '허용되지 않은 요청 방식입니다.',
   INTERNAL_SERVER_ERROR: '서버 내부 오류가 발생했습니다.',
   INVALID_TYPE_VALUE: '유효하지 않은 타입입니다.',
@@ -250,9 +248,9 @@ export function getErrorMessage(error: unknown): string {
     if (mappedMessage) {
       return mappedMessage;
     }
-    // 백엔드에서 보낸 메시지가 있으면 사용
+    // 백엔드에서 보낸 메시지가 있으면 사용 (필드명 접두사 제거)
     if (error.message) {
-      return error.message;
+      return error.message.replace(/^\w+:\s*/, '');
     }
     // HTTP 상태 코드 기반 기본 메시지
     const httpMessage = HTTP_ERROR_MESSAGES[error.status];
