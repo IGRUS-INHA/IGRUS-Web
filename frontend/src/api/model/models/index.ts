@@ -68,6 +68,7 @@ export * from './changeUserStatusRequestAction';
 export * from './checkConsentedToVersionParams';
 export * from './checkEmailDuplicateParams';
 export * from './checkNeedsReConsentParams';
+export * from './checkPhoneNumberDuplicateParams';
 export * from './checkRecoveryEligibilityParams';
 export * from './checkReRegistrationEligibilityParams';
 export * from './checkStudentIdDuplicateParams';

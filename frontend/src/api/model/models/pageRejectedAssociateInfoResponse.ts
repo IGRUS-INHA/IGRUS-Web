@@ -40,12 +40,12 @@ import type { SortObject } from './sortObject';
 export interface PageRejectedAssociateInfoResponse {
   totalElements?: number;
   totalPages?: number;
-  first?: boolean;
-  last?: boolean;
   size?: number;
   content?: RejectedAssociateInfoResponse[];
   number?: number;
   sort?: SortObject;
+  first?: boolean;
+  last?: boolean;
   numberOfElements?: number;
   pageable?: PageableObject;
   empty?: boolean;

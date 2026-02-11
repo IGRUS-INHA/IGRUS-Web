@@ -33,20 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
-import type { AccountStatusChangeHistoryResponse } from './accountStatusChangeHistoryResponse';
-import type { PageableObject } from './pageableObject';
-import type { SortObject } from './sortObject';
 
-export interface PageAccountStatusChangeHistoryResponse {
-  totalElements?: number;
-  totalPages?: number;
-  size?: number;
-  content?: AccountStatusChangeHistoryResponse[];
-  number?: number;
-  sort?: SortObject;
-  first?: boolean;
-  last?: boolean;
-  numberOfElements?: number;
-  pageable?: PageableObject;
-  empty?: boolean;
-}
+export type CheckPhoneNumberDuplicateParams = {
+/**
+ * 확인할 전화번호 (XXX-XXXX-XXXX)
+ */
+phoneNumber: string;
+};
