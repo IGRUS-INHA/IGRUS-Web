@@ -1,6 +1,8 @@
 package igrus.web.security.auth.common.service;
 
 import igrus.web.security.auth.common.exception.email.EmailSendFailedException;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -67,13 +70,23 @@ public class SmtpAuthEmailService implements AuthEmailService {
     public void sendPasswordResetEmail(String to, String resetLink) {
         log.debug("비밀번호 재설정 이메일 발송 시도: to={}", to);
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(to);
-        message.setSubject("[IGRUS] 비밀번호 재설정");
-        message.setText(buildPasswordResetEmailContent(resetLink));
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(to);
+            helper.setSubject("[IGRUS] 비밀번호 재설정");
+            helper.setText(buildPasswordResetEmailContent(resetLink), true);
 
-        sendEmail(message);
+            mailSender.send(mimeMessage);
+        } catch (MailException e) {
+            log.error("이메일 발송 실패: to={}, error={}", to, e.getMessage());
+            throw new EmailSendFailedException();
+        } catch (MessagingException e) {
+            log.error("이메일 작성 실패: to={}, error={}", to, e.getMessage());
+            throw new EmailSendFailedException();
+        }
+
         log.info("비밀번호 재설정 이메일 발송 완료: to={}", to);
     }
 
@@ -152,18 +165,15 @@ public class SmtpAuthEmailService implements AuthEmailService {
 
     private String buildPasswordResetEmailContent(String resetLink) {
         return """
-            안녕하세요, IGRUS입니다.
-
-            비밀번호 재설정을 요청하셨습니다.
-            아래 링크를 클릭하여 비밀번호를 재설정해 주세요.
-
-            재설정 링크: %s
-
-            링크는 30분간 유효합니다.
-            본인이 요청하지 않은 경우 이 이메일을 무시해 주세요.
-
-            감사합니다.
-            IGRUS 드림
+            <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6;">
+                <p>안녕하세요, IGRUS입니다.</p>
+                <p>비밀번호 재설정을 요청하셨습니다.<br>
+                아래 링크를 클릭하여 비밀번호를 재설정해 주세요.</p>
+                <p><a href="%s" style="color: #1a73e8;">비밀번호 재설정하기</a></p>
+                <p>링크는 30분간 유효합니다.<br>
+                본인이 요청하지 않은 경우 이 이메일을 무시해 주세요.</p>
+                <p>감사합니다.<br>IGRUS 드림</p>
+            </div>
             """.formatted(resetLink);
     }
 
