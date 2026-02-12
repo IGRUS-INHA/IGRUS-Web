@@ -44,7 +44,7 @@ public class SecurityConfigUtil {
                                     configuration.setMaxAge(3600L);
 
                                     configuration.setExposedHeaders(
-                                            Arrays.asList("Set-Cookie", "Authorization", "X-Token-Expired", "X-Access-Token"));
+                                            Arrays.asList("Set-Cookie", "Authorization", "X-Token-Expired", "X-Access-Token", "X-Trace-ID"));
 
                                     return configuration;
                                 }));

@@ -1,6 +1,7 @@
 package igrus.web.security.auth.common.service;
 
 import igrus.web.security.auth.common.exception.email.EmailSendFailedException;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -79,13 +80,15 @@ class SmtpAuthEmailServiceRetryTest {
         void sendPasswordResetEmail_success() {
             // given
             ReflectionTestUtils.setField(smtpAuthEmailService, "fromAddress", FROM_ADDRESS);
-            doNothing().when(mailSender).send(any(SimpleMailMessage.class));
+            MimeMessage mimeMessage = mock(MimeMessage.class);
+            when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+            doNothing().when(mailSender).send(any(MimeMessage.class));
 
             // when
             smtpAuthEmailService.sendPasswordResetEmail(TEST_EMAIL, TEST_RESET_LINK);
 
             // then
-            verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+            verify(mailSender, times(1)).send(any(MimeMessage.class));
         }
 
         @Test
@@ -93,8 +96,10 @@ class SmtpAuthEmailServiceRetryTest {
         void sendPasswordResetEmail_failure_throwsException() {
             // given
             ReflectionTestUtils.setField(smtpAuthEmailService, "fromAddress", FROM_ADDRESS);
+            MimeMessage mimeMessage = mock(MimeMessage.class);
+            when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
             doThrow(new MailException("SMTP 연결 실패") {
-            }).when(mailSender).send(any(SimpleMailMessage.class));
+            }).when(mailSender).send(any(MimeMessage.class));
 
             // when & then
             assertThatThrownBy(() -> smtpAuthEmailService.sendPasswordResetEmail(TEST_EMAIL, TEST_RESET_LINK))

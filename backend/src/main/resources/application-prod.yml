@@ -40,3 +40,4 @@ app:
     secure: true
     same-site: Lax
     domain: igrus.co.kr
+  frontend-url: https://www.igrus.co.kr
