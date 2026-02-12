@@ -11,6 +11,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(500, "서버 내부 오류가 발생했습니다"),
     INVALID_TYPE_VALUE(400, "잘못된 타입입니다"),
     ACCESS_DENIED(403, "접근이 거부되었습니다"),
+    RESOURCE_NOT_FOUND(404, "요청한 리소스를 찾을 수 없습니다"),
 
     // User
     USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다"),

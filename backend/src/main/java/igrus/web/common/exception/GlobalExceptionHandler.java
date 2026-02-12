@@ -23,6 +23,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -240,6 +241,13 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
         ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.warn("NoResourceFoundException: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.of(ErrorCode.RESOURCE_NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
