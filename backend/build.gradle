@@ -37,6 +37,9 @@ dependencies {
 	implementation 'org.springframework.retry:spring-retry:2.0.11'
 	implementation 'org.springframework:spring-aspects'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
+
+	// JSON structured logging (production)
+	implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
 	// Jackson 2.x - Spring Boot가 버전을 관리함 (JSR-310 지원을 위해 JavaTimeModule 등록 필요)
