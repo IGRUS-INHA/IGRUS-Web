@@ -18,9 +18,12 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ROLE_LABELS } from "@/constants";
 import { formatPhoneNumber } from "@/utils";
 import { cn } from "@/lib/utils";
+import { customFetch } from "@/api/client";
+import { getErrorMessage, hasErrorCode } from "@/utils/error";
 import type { User as UserType } from "@/types/entities";
 import type { MyProfileResponse } from "@/api/model/models/myProfileResponse";
 import type { UpdateProfileRequest } from "@/api/model/models/updateProfileRequest";
@@ -32,6 +35,7 @@ interface ProfileHeaderProps {
   onLogout?: () => void;
   onWithdraw?: () => void;
   onUpdateProfile?: (data: UpdateProfileRequest) => Promise<void>;
+  onStudentIdUpdated?: () => void;
   isUpdating?: boolean;
 }
 
@@ -44,12 +48,81 @@ export default function ProfileHeader({
   onLogout,
   onWithdraw,
   onUpdateProfile,
+  onStudentIdUpdated,
   isUpdating,
 }: ProfileHeaderProps) {
   const { theme } = useUIStore();
   const isDark = theme === "dark";
   const [editingField, setEditingField] = useState<EditingField>();
   const [editValue, setEditValue] = useState("");
+
+  // 학번 변경 상태
+  const [isEditingStudentId, setIsEditingStudentId] = useState(false);
+  const [newStudentId, setNewStudentId] = useState("");
+  const [studentIdPassword, setStudentIdPassword] = useState("");
+  const [studentIdError, setStudentIdError] = useState("");
+  const [isUpdatingStudentId, setIsUpdatingStudentId] = useState(false);
+
+  const hasTemporaryStudentId = profile?.hasTemporaryStudentId === true;
+
+  const startEditingStudentId = () => {
+    setNewStudentId("");
+    setStudentIdPassword("");
+    setStudentIdError("");
+    setIsEditingStudentId(true);
+  };
+
+  const cancelEditingStudentId = () => {
+    setIsEditingStudentId(false);
+    setNewStudentId("");
+    setStudentIdPassword("");
+    setStudentIdError("");
+  };
+
+  const handleSaveStudentId = async () => {
+    setStudentIdError("");
+
+    if (!newStudentId.trim()) {
+      setStudentIdError("학번을 입력해주세요.");
+      return;
+    }
+    if (!/^\d{8}$/.test(newStudentId.trim())) {
+      setStudentIdError("학번은 8자리 숫자여야 합니다.");
+      return;
+    }
+    if (!studentIdPassword) {
+      setStudentIdError("비밀번호를 입력해주세요.");
+      return;
+    }
+
+    setIsUpdatingStudentId(true);
+    try {
+      await customFetch("/api/v1/mypage/student-id", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password: studentIdPassword,
+          newStudentId: newStudentId.trim(),
+        }),
+      });
+      cancelEditingStudentId();
+      onStudentIdUpdated?.();
+    } catch (error: unknown) {
+      if (hasErrorCode(error, "INVALID_CREDENTIALS")) {
+        setStudentIdError("비밀번호가 일치하지 않습니다.");
+      } else if (hasErrorCode(error, "DUPLICATE_STUDENT_ID")) {
+        setStudentIdError("이미 사용 중인 학번입니다.");
+      } else if (hasErrorCode(error, "INVALID_STUDENT_ID")) {
+        setStudentIdError("유효하지 않은 학번 형식입니다.");
+      } else if (hasErrorCode(error, "STUDENT_ID_NOT_TEMPORARY")) {
+        setStudentIdError("임시 학번이 아닌 경우 학번을 변경할 수 없습니다.");
+      } else {
+        setStudentIdError(getErrorMessage(error));
+      }
+    } finally {
+      setIsUpdatingStudentId(false);
+    }
+  };
 
   const startEditing = (field: "email" | "phone") => {
     if (field === "email") {
@@ -140,6 +213,20 @@ export default function ProfileHeader({
           <div className="flex items-center gap-2">
             <Shield size={16} className="text-primary" />
             {profile?.studentId ?? user.studentId}
+            {hasTemporaryStudentId && (
+              <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 rounded border border-amber-200 dark:border-amber-700">
+                임시
+              </span>
+            )}
+            {hasTemporaryStudentId && !isEditingStudentId && (
+              <button
+                type="button"
+                onClick={startEditingStudentId}
+                className="cursor-pointer ml-1 p-1 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <Pencil size={14} />
+              </button>
+            )}
           </div>
           {profile?.department && (
             <div className="flex items-center gap-2">
@@ -155,6 +242,67 @@ export default function ProfileHeader({
               : user.joinedDate}
           </div>
         </div>
+
+        {/* 학번 변경 인라인 편집 */}
+        {isEditingStudentId && (
+          <div className="mt-s3 p-s3 rounded-r2 border border-border bg-muted/50 space-y-s2">
+            <p className="text-sm font-medium text-foreground">학번 변경</p>
+            <Input
+              value={newStudentId}
+              onChange={(e) => {
+                setNewStudentId(e.target.value);
+                setStudentIdError("");
+              }}
+              placeholder="새 학번 (8자리 숫자)"
+              maxLength={8}
+              disabled={isUpdatingStudentId}
+            />
+            <Input
+              type="password"
+              value={studentIdPassword}
+              onChange={(e) => {
+                setStudentIdPassword(e.target.value);
+                setStudentIdError("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void handleSaveStudentId();
+                if (e.key === "Escape") cancelEditingStudentId();
+              }}
+              placeholder="현재 비밀번호"
+              disabled={isUpdatingStudentId}
+            />
+            {studentIdError && (
+              <p className="text-destructive typo-c2">{studentIdError}</p>
+            )}
+            <div className="flex gap-s2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void handleSaveStudentId()}
+                disabled={isUpdatingStudentId}
+                className="cursor-pointer"
+              >
+                {isUpdatingStudentId ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Check size={14} />
+                )}
+                저장
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={cancelEditingStudentId}
+                disabled={isUpdatingStudentId}
+                className="cursor-pointer"
+              >
+                <X size={14} />
+                취소
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* 이메일 / 전화번호 (인라인 수정) */}
         <div className="mt-s2 space-y-s2 text-muted-foreground typo-b2">

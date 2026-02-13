@@ -178,6 +178,35 @@ public final class UserTestFixture {
         return withId(createWithdrawnMember(), DEFAULT_MEMBER_ID);
     }
 
+    // ==================== 이메일 인증 대기 사용자 생성 ====================
+
+    /**
+     * 이메일 인증 대기(PENDING_VERIFICATION) 상태의 User를 생성합니다.
+     * User.create()는 기본적으로 PENDING_VERIFICATION 상태이므로 verifyEmail()을 호출하지 않습니다.
+     *
+     * @return 이메일 인증 대기 상태 User
+     */
+    public static User createPendingVerificationUser() {
+        String email = MEMBER_STUDENT_ID + DEFAULT_EMAIL_DOMAIN;
+        return User.create(
+                MEMBER_STUDENT_ID, DEFAULT_NAME, email,
+                DEFAULT_PHONE, DEFAULT_DEPARTMENT, DEFAULT_MOTIVATION,
+                List.of(), DEFAULT_GENDER, DEFAULT_GRADE,
+                EnrollmentStatus.ENROLLED,
+                List.of(), null, null, null
+        );
+    }
+
+    /**
+     * 지정된 ID가 설정된 이메일 인증 대기(PENDING_VERIFICATION) 상태의 User를 생성합니다.
+     *
+     * @param id 설정할 ID
+     * @return ID가 설정된 이메일 인증 대기 상태 User
+     */
+    public static User createPendingVerificationUserWithId(Long id) {
+        return withId(createPendingVerificationUser(), id);
+    }
+
     // ==================== AuthenticatedUser 생성 ====================
 
     /**

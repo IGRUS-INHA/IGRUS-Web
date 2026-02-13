@@ -36,4 +36,13 @@ public class LoggingAuthEmailService implements AuthEmailService {
         log.info("이름: {}", name);
         log.info("============================");
     }
+
+    @Override
+    public void sendTemporaryStudentIdEmail(String to, String name, String temporaryStudentId) {
+        log.info("===== [로컬] 임시 학번 안내 이메일 =====");
+        log.info("수신자: {}", to);
+        log.info("이름: {}", name);
+        log.info("임시 학번: {}", temporaryStudentId);
+        log.info("=======================================");
+    }
 }

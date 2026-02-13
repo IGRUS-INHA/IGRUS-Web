@@ -34,20 +34,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: v1.0.0
  */
 
-/**
- * 변경 유형
- */
-export type AccountStatusChangeHistoryResponseChangeType = typeof AccountStatusChangeHistoryResponseChangeType[keyof typeof AccountStatusChangeHistoryResponseChangeType];
+export type AdminEditUserInfoRequestInterestsItem = typeof AdminEditUserInfoRequestInterestsItem[keyof typeof AdminEditUserInfoRequestInterestsItem];
 
 
-export const AccountStatusChangeHistoryResponseChangeType = {
-  ROLE_CHANGE: 'ROLE_CHANGE',
-  SUSPENSION: 'SUSPENSION',
-  SUSPENSION_LIFT: 'SUSPENSION_LIFT',
-  WITHDRAWAL: 'WITHDRAWAL',
-  FORCE_WITHDRAWAL: 'FORCE_WITHDRAWAL',
-  APPROVAL: 'APPROVAL',
-  FORCE_ACTIVATION: 'FORCE_ACTIVATION',
-  ADMIN_INFO_EDIT: 'ADMIN_INFO_EDIT',
-  STUDENT_ID_UPDATE: 'STUDENT_ID_UPDATE',
+export const AdminEditUserInfoRequestInterestsItem = {
+  WEB_FRONTEND: 'WEB_FRONTEND',
+  WEB_BACKEND: 'WEB_BACKEND',
+  APP: 'APP',
+  SECURITY: 'SECURITY',
+  UI_UX_DESIGN: 'UI_UX_DESIGN',
+  OTHER_DESIGN: 'OTHER_DESIGN',
+  AI: 'AI',
+  CLOUD: 'CLOUD',
+  GAME: 'GAME',
+  OTHER: 'OTHER',
 } as const;

@@ -35,19 +35,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 /**
- * 변경 유형
+ * 학번 변경 요청
  */
-export type AccountStatusChangeHistoryResponseChangeType = typeof AccountStatusChangeHistoryResponseChangeType[keyof typeof AccountStatusChangeHistoryResponseChangeType];
-
-
-export const AccountStatusChangeHistoryResponseChangeType = {
-  ROLE_CHANGE: 'ROLE_CHANGE',
-  SUSPENSION: 'SUSPENSION',
-  SUSPENSION_LIFT: 'SUSPENSION_LIFT',
-  WITHDRAWAL: 'WITHDRAWAL',
-  FORCE_WITHDRAWAL: 'FORCE_WITHDRAWAL',
-  APPROVAL: 'APPROVAL',
-  FORCE_ACTIVATION: 'FORCE_ACTIVATION',
-  ADMIN_INFO_EDIT: 'ADMIN_INFO_EDIT',
-  STUDENT_ID_UPDATE: 'STUDENT_ID_UPDATE',
-} as const;
+export interface UpdateStudentIdRequest {
+  /**
+   * 현재 비밀번호
+   * @minLength 1
+   */
+  password: string;
+  /**
+   * 새 학번 (8자리 숫자)
+   * @minLength 1
+   * @pattern ^\d{8}$
+   */
+  newStudentId: string;
+}

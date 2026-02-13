@@ -35,19 +35,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 /**
- * 변경 유형
+ * 성별
  */
-export type AccountStatusChangeHistoryResponseChangeType = typeof AccountStatusChangeHistoryResponseChangeType[keyof typeof AccountStatusChangeHistoryResponseChangeType];
+export type TemporaryStudentIdSignupRequestGender = typeof TemporaryStudentIdSignupRequestGender[keyof typeof TemporaryStudentIdSignupRequestGender];
 
 
-export const AccountStatusChangeHistoryResponseChangeType = {
-  ROLE_CHANGE: 'ROLE_CHANGE',
-  SUSPENSION: 'SUSPENSION',
-  SUSPENSION_LIFT: 'SUSPENSION_LIFT',
-  WITHDRAWAL: 'WITHDRAWAL',
-  FORCE_WITHDRAWAL: 'FORCE_WITHDRAWAL',
-  APPROVAL: 'APPROVAL',
-  FORCE_ACTIVATION: 'FORCE_ACTIVATION',
-  ADMIN_INFO_EDIT: 'ADMIN_INFO_EDIT',
-  STUDENT_ID_UPDATE: 'STUDENT_ID_UPDATE',
+export const TemporaryStudentIdSignupRequestGender = {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
 } as const;

@@ -138,6 +138,48 @@ public class SmtpAuthEmailService implements AuthEmailService {
         log.error("환영 이메일 발송 최종 실패 (재시도 소진): to={}, name={}", to, name);
     }
 
+    @Async("emailTaskExecutor")
+    @Retryable(
+            retryFor = EmailSendFailedException.class,
+            maxAttempts = 4,
+            backoff = @Backoff(
+                    delay = 60000,
+                    multiplier = 3,
+                    maxDelay = 900000
+            )
+    )
+    @Override
+    public void sendTemporaryStudentIdEmail(String to, String name, String temporaryStudentId) {
+        log.debug("임시 학번 안내 이메일 발송 시도: to={}", to);
+
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(to);
+            helper.setSubject("[IGRUS] 임시 학번 안내");
+            helper.setText(buildTemporaryStudentIdEmailContent(name, temporaryStudentId), true);
+
+            mailSender.send(mimeMessage);
+        } catch (MailException e) {
+            log.error("이메일 발송 실패: to={}, error={}", to, e.getMessage());
+            throw new EmailSendFailedException();
+        } catch (MessagingException e) {
+            log.error("이메일 작성 실패: to={}, error={}", to, e.getMessage());
+            throw new EmailSendFailedException();
+        }
+
+        log.info("임시 학번 안내 이메일 발송 완료: to={}", to);
+    }
+
+    /**
+     * 임시 학번 안내 이메일 재시도 소진 시 복구 메서드
+     */
+    @Recover
+    public void recoverTemporaryStudentIdEmail(EmailSendFailedException e, String to, String name, String temporaryStudentId) {
+        log.error("임시 학번 안내 이메일 발송 최종 실패 (재시도 소진): to={}, name={}, tempStudentId={}", to, name, temporaryStudentId);
+    }
+
     private void sendEmail(SimpleMailMessage message) {
         try {
             mailSender.send(message);
@@ -192,5 +234,21 @@ public class SmtpAuthEmailService implements AuthEmailService {
             감사합니다.
             IGRUS 드림
             """.formatted(name);
+    }
+
+    private String buildTemporaryStudentIdEmailContent(String name, String temporaryStudentId) {
+        return """
+            <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6;">
+                <p>안녕하세요, %s님!</p>
+                <p>IGRUS 회원가입이 요청되었습니다.<br>
+                학번이 아직 부여되지 않아 임시 학번이 발급되었습니다.</p>
+                <p style="font-size: 1.2em; font-weight: bold; color: #1a73e8;">
+                    임시 학번: %s
+                </p>
+                <p>위 임시 학번으로 로그인하실 수 있습니다.<br>
+                학번이 발급되면 <strong>마이페이지</strong>에서 실제 학번으로 변경해 주세요.</p>
+                <p>감사합니다.<br>IGRUS 드림</p>
+            </div>
+            """.formatted(name, temporaryStudentId);
     }
 }

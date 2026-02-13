@@ -87,7 +87,18 @@
 | WD-005 | 탈퇴 로그 사유 저장 확인 | 정회원 존재, 비밀번호 일치 | 탈퇴 사유와 함께 탈퇴 요청 | WithdrawalLog에 user, reason 정확히 저장됨 | ✅ |
 | WD-006 | 정지 상태 사용자 탈퇴 차단 | 사용자 SUSPENDED 상태 | 탈퇴 요청 | AccountSuspendedException 발생, 비밀번호 검증/탈퇴 처리 수행 안 됨 | ✅ |
 
-### 2.10 프로필 수정 (UpdateMyProfileService)
+### 2.10 학번 변경 (UpdateStudentIdService)
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| MP-030 | 임시 학번 → 실제 학번 변경 성공 | hasTemporaryStudentId=true, 비밀번호 일치 | 새 학번 + 현재 비밀번호로 변경 요청 | studentId 변경, hasTemporaryStudentId=false, AccountStatusChangeHistory(STUDENT_ID_UPDATE) 기록 | ✅ |
+| MP-031 | 변경 후 임시 플래그 해제 확인 | hasTemporaryStudentId=true | 학번 변경 성공 후 | user.hasTemporaryStudentId == false | ✅ |
+| MP-032 | 임시 학번 아닌 사용자 학번 변경 시도 | hasTemporaryStudentId=false | 학번 변경 요청 | StudentIdNotTemporaryException (400) | ✅ |
+| MP-033 | 99로 시작하는 학번으로 변경 시도 | hasTemporaryStudentId=true | newStudentId="99260001"로 변경 요청 | InvalidStudentIdException (400) | ✅ |
+| MP-034 | 중복 학번으로 변경 시도 | hasTemporaryStudentId=true, 다른 사용자가 해당 학번 사용 중 | 중복 학번으로 변경 요청 | DuplicateStudentIdException (409) | ✅ |
+| MP-035 | 비밀번호 불일치로 학번 변경 시도 | hasTemporaryStudentId=true, 비밀번호 불일치 | 틀린 비밀번호로 변경 요청 | InvalidCredentialsException (401) | ✅ |
+
+### 2.11 프로필 수정 (UpdateMyProfileService)
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
@@ -107,6 +118,7 @@
 |----|---------|------------------|
 | FR-MP-001 | 학번, 이름, 이메일, 학과, 역할, 가입일 조회 | MP-001, MP-003 |
 | FR-MP-002 | 이메일, 전화번호 수정 | MP-014 ~ MP-020 |
+| FR-MP-011 | 임시 학번 → 실제 학번 변경 (비밀번호 확인, 99 접두사 금지, 중복 검증) | MP-030 ~ MP-035 |
 | FR-MP-003 | 비밀번호 변경 (현재 비밀번호 확인 후) | MP-010 ~ MP-013 |
 | FR-MP-004 | 내 게시글 목록 조회 | MP-004, MP-005 |
 | FR-MP-005 | 내 댓글 목록 조회 | MP-006, MP-007 |
@@ -126,6 +138,7 @@
 - **GetMyPostsServiceTest** (`user/mypage`) - MP-004, MP-005
 - **GetMyCommentsServiceTest** (`user/mypage`) - MP-006, MP-007
 - **ChangeMyPasswordServiceTest** (`user/mypage`) - MP-010 ~ MP-013, MP-021
+- **UpdateStudentIdServiceTest** (`user/mypage/service/write`) - MP-030 ~ MP-035
 - **UpdateMyProfileServiceTest** (`user/mypage`) - MP-014 ~ MP-020
 
 ### 4.2 도메인 패키지 Service 테스트 (마이페이지에서 직접 사용)
@@ -145,3 +158,4 @@
 | 1.0 | 2026-02-05 | - | 최초 작성 |
 | 1.1 | 2026-02-05 | - | 회원 탈퇴(WD-001~WD-006) 추가, 비밀번호 변경 시 리프레시 토큰 무효화 반영 |
 | 1.2 | 2026-02-05 | - | 좋아요/북마크/문의/행사 신청을 기존 도메인 서비스 직접 사용으로 변경 (방법 B→A), mypage wrapper 서비스 삭제, 테스트 클래스를 mypage/도메인 패키지로 구분 |
+| 1.3 | 2026-02-13 | Claude | 학번 변경(MP-030~035) 추가, FR-MP-011 추가, UpdateStudentIdServiceTest 구현 정보 추가 |

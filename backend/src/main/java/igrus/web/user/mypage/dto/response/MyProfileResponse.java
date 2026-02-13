@@ -30,7 +30,10 @@ public record MyProfileResponse(
         UserRole role,
 
         @Schema(description = "가입일")
-        Instant createdAt
+        Instant createdAt,
+
+        @Schema(description = "임시 학번 사용 여부", example = "false")
+        boolean hasTemporaryStudentId
 ) {
     public static MyProfileResponse from(User user) {
         return new MyProfileResponse(
@@ -40,7 +43,8 @@ public record MyProfileResponse(
                 user.getPhoneNumber(),
                 user.getDepartment(),
                 user.getRole(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.isHasTemporaryStudentId()
         );
     }
 }

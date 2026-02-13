@@ -153,6 +153,7 @@ public abstract class ServiceIntegrationTestBase {
             // Phase 4: 독립 테이블
             entityManager.createNativeQuery("DELETE FROM email_verifications").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM login_attempts").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM temp_student_id_sequences").executeUpdate();
 
             entityManager.flush();
             entityManager.clear();
