@@ -21,6 +21,7 @@ import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
 import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
 import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
@@ -82,6 +83,9 @@ class PasswordAuthControllerLoginTest {
 
     @MockitoBean
     private SignupService signupService;
+
+    @MockitoBean
+    private TempStudentIdSignupService tempStudentIdSignupService;
 
     @MockitoBean
     private CheckDuplicateService checkDuplicateService;

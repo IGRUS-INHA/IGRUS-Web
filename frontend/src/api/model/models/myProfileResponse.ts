@@ -53,4 +53,6 @@ export interface MyProfileResponse {
   role?: MyProfileResponseRole;
   /** 가입일 */
   createdAt?: string;
+  /** 임시 학번 사용 여부 */
+  hasTemporaryStudentId?: boolean;
 }

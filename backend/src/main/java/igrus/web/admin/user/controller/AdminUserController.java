@@ -1,5 +1,6 @@
 package igrus.web.admin.user.controller;
 
+import igrus.web.admin.user.dto.AdminEditUserInfoRequest;
 import igrus.web.admin.user.dto.ChangeUserRoleRequest;
 import igrus.web.admin.user.dto.ChangeUserStatusRequest;
 import igrus.web.admin.user.dto.ForceWithdrawRequest;
@@ -7,8 +8,10 @@ import igrus.web.admin.user.dto.UserDetailResponse;
 import igrus.web.admin.user.dto.UserListPageResponse;
 import igrus.web.admin.user.dto.UserListResponse;
 import igrus.web.admin.user.dto.UserRoleHistoryResponse;
+import igrus.web.admin.user.service.AdminEditUserInfoService;
 import igrus.web.admin.user.service.ChangeUserRoleService;
 import igrus.web.admin.user.service.ChangeUserStatusService;
+import igrus.web.admin.user.service.ForceActivateService;
 import igrus.web.admin.user.service.ForceWithdrawService;
 import igrus.web.admin.user.service.GetUserDetailService;
 import igrus.web.admin.user.service.GetUserListService;
@@ -38,7 +41,9 @@ import java.time.Instant;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,6 +63,8 @@ public class AdminUserController {
     private final ChangeUserRoleService changeUserRoleService;
     private final ChangeUserStatusService changeUserStatusService;
     private final ForceWithdrawService forceWithdrawService;
+    private final ForceActivateService forceActivateService;
+    private final AdminEditUserInfoService adminEditUserInfoService;
     private final GetUserRoleHistoryService getUserRoleHistoryService;
 
     @Operation(
@@ -190,6 +197,50 @@ public class AdminUserController {
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
         forceWithdrawService.forceWithdraw(userId, request.reason(), authenticatedUser.userId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "회원 강제 활성화 (이메일 인증 우회)",
+            description = "이메일 인증 대기(PENDING_VERIFICATION) 상태의 회원을 강제로 활성화합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "강제 활성화 성공"),
+            @ApiResponse(responseCode = "400", description = "이메일 인증 대기 상태가 아님"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{userId}/force-activate")
+    public ResponseEntity<Void> forceActivateUser(
+            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        forceActivateService.forceActivate(userId, authenticatedUser.userId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "회원 정보 수정",
+            description = "관리자가 회원의 프로필 정보를 수정합니다. null 필드는 기존 값을 유지합니다. 학번, 역할, 상태, 비밀번호는 별도 API를 사용하세요."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "정보 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 입력값"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "이메일 또는 전화번호 중복")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{userId}/info")
+    public ResponseEntity<Void> editUserInfo(
+            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
+            @Valid @RequestBody AdminEditUserInfoRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        adminEditUserInfoService.editUserInfo(userId, request, authenticatedUser.userId());
         return ResponseEntity.noContent().build();
     }
 }

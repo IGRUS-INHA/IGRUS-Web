@@ -69,7 +69,22 @@
 | REG-044 | 인증 코드 재발송 시 1분 대기 | 인증 코드 발송 직후 | 즉시 재발송 요청 | "1분 후에 다시 시도해주세요" 메시지 표시 | ✅ |
 | REG-045 | 1분 경과 후 인증 코드 재발송 성공 | 인증 코드 발송 후 1분 경과 | 재발송 요청 | 새로운 인증 코드 발송 성공 | ✅ |
 
-### 2.6 Edge Cases
+### 2.6 임시 학번 회원가입
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| REG-060 | 임시 학번 회원가입 성공 (1월, 1학년) | 비회원, 현재 1월 | grade=1, 필수 정보 입력 후 임시 학번 회원가입 | 임시 학번(99YYXXXX) 자동 발급, hasTemporaryStudentId=true, 인증 이메일 + 임시 학번 안내 이메일 발송 | ✅ |
+| REG-061 | 임시 학번 응답에 포함 확인 | 비회원, 현재 2월 | 임시 학번 회원가입 완료 | 응답에 temporaryStudentId 필드 포함 (99YYXXXX 형식) | ✅ |
+| REG-062 | 3월에 임시 학번 회원가입 시도 시 거부 | 비회원, 현재 3월 | 임시 학번 회원가입 API 호출 | 400 Bad Request (TEMP_STUDENT_ID_NOT_AVAILABLE) | ✅ |
+| REG-063 | 12월에 임시 학번 회원가입 시도 시 거부 | 비회원, 현재 12월 | 임시 학번 회원가입 API 호출 | 400 Bad Request (TEMP_STUDENT_ID_NOT_AVAILABLE) | ✅ |
+| REG-064 | grade != 1으로 임시 학번 회원가입 시도 시 거부 | 비회원, 현재 1월 | grade=2로 임시 학번 회원가입 시도 | 400 Bad Request (DTO 검증 실패) | ✅ |
+| REG-065 | 이메일 중복 시 임시 학번 회원가입 거부 | 동일 이메일 사용자 존재, 현재 1월 | 중복 이메일로 임시 학번 회원가입 | 409 Conflict (DUPLICATE_EMAIL) | ✅ |
+| REG-066 | 전화번호 중복 시 임시 학번 회원가입 거부 | 동일 전화번호 사용자 존재, 현재 1월 | 중복 전화번호로 임시 학번 회원가입 | 409 Conflict (DUPLICATE_PHONE_NUMBER) | ✅ |
+| REG-067 | hasTemporaryStudentId 플래그 설정 확인 | 비회원, 현재 1월 | 임시 학번 회원가입 완료 | user.hasTemporaryStudentId == true, 학번이 "99"로 시작 | ✅ |
+| REG-068 | 임시 학번 안내 이메일 발송 확인 | 비회원, 현재 1월 | 임시 학번 회원가입 완료 | sendTemporaryStudentIdEmail 호출됨 | ✅ |
+| REG-069 | 임시 학번 시퀀스 순차 증가 | 비회원 2명, 현재 1월 | 연속 임시 학번 회원가입 | 첫 번째: 99YY0001, 두 번째: 99YY0002 | ✅ |
+
+### 2.7 Edge Cases
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
@@ -93,6 +108,10 @@
 | FR-008 | 인증 시도 횟수 5회 제한 | REG-043 |
 | FR-009 | 인증 완료 시 준회원 등록 | REG-041 |
 | FR-010 | 인증 미완료 24시간 후 삭제 | REG-051 |
+| FR-011 | 임시 학번 자동 발급 (1~2월, 1학년) | REG-060, REG-061, REG-067, REG-069 |
+| FR-012 | 임시 학번 기간 외 발급 차단 | REG-062, REG-063 |
+| FR-013 | 임시 학번 학년 제한 (1학년만) | REG-064 |
+| FR-014 | 임시 학번 안내 이메일 발송 | REG-068 |
 | FR-029 | 개인정보 처리방침 링크 제공 | REG-003 |
 | FR-030 | 동의 정책 버전 기록 | REG-004 |
 | FR-031 | BCrypt 해시 저장 | REG-026 |
@@ -105,7 +124,11 @@
 - **파일**: `backend/src/test/java/igrus/web/security/auth/password/service/signup/SignupServiceTest.java`, `VerifyEmailServiceTest.java`, `ResendVerificationServiceTest.java`
 - **테스트 범위**: REG-001 ~ REG-052 (비즈니스 로직)
 
-### 4.2 Controller 테스트
+### 4.2 임시 학번 Service 테스트
+- **TempStudentIdGeneratorServiceTest** (`user/service`) - 시퀀스 생성, 순차 증가, 연도 전환, 소진 예외 (4 tests)
+- **TempStudentIdSignupServiceTest** (`security/auth/password/service/signup`) - REG-060 ~ REG-068 (9 tests)
+
+### 4.3 Controller 테스트
 - **회원가입**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerSignupTest.java`
 - **이메일 인증**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerVerificationTest.java`
 
@@ -138,7 +161,7 @@ class PasswordAuthControllerVerificationTest {
 }
 ```
 
-### 4.3 통합 테스트
+### 4.4 통합 테스트
 - **파일**: `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordSignupIntegrationTest.java`
 - **테스트 범위**: REG-004, REG-010, REG-020, REG-026, REG-030 ~ REG-045 (서비스 통합 테스트)
 - **테스트 수**: 42개
@@ -164,3 +187,4 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
 | 1.0 | 2026-01-23 | - | 최초 작성 |
 | 1.1 | 2026-01-24 | - | 컨트롤러 레벨 테스트 구현 정보 추가 |
 | 1.2 | 2026-01-25 | - | 통합 테스트(PasswordSignupIntegrationTest) 구현 정보 추가 |
+| 1.3 | 2026-02-13 | Claude | 임시 학번 회원가입 테스트 케이스(REG-060~069) 추가, FR-011~014 추가, TempStudentIdGeneratorServiceTest/TempStudentIdSignupServiceTest 구현 정보 추가 |

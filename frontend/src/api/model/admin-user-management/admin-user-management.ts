@@ -53,6 +53,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminEditUserInfoRequest,
   ChangeUserRoleRequest,
   ChangeUserStatusRequest,
   ForceWithdrawRequest,
@@ -281,6 +282,221 @@ export const useChangeUserRole = <TError = void,
         TContext
       > => {
       return useMutation(getChangeUserRoleMutationOptions(options), queryClient);
+    }
+    /**
+ * 이메일 인증 대기(PENDING_VERIFICATION) 상태의 회원을 강제로 활성화합니다.
+ * @summary 회원 강제 활성화 (이메일 인증 우회)
+ */
+export type forceActivateUserResponse204 = {
+  data: void
+  status: 204
+}
+
+export type forceActivateUserResponse400 = {
+  data: void
+  status: 400
+}
+
+export type forceActivateUserResponse401 = {
+  data: void
+  status: 401
+}
+
+export type forceActivateUserResponse403 = {
+  data: void
+  status: 403
+}
+
+export type forceActivateUserResponse404 = {
+  data: void
+  status: 404
+}
+    
+export type forceActivateUserResponseSuccess = (forceActivateUserResponse204) & {
+  headers: Headers;
+};
+export type forceActivateUserResponseError = (forceActivateUserResponse400 | forceActivateUserResponse401 | forceActivateUserResponse403 | forceActivateUserResponse404) & {
+  headers: Headers;
+};
+
+export type forceActivateUserResponse = (forceActivateUserResponseSuccess | forceActivateUserResponseError)
+
+export const getForceActivateUserUrl = (userId: number,) => {
+
+
+  
+
+  return `/api/v1/admin/users/${userId}/force-activate`
+}
+
+export const forceActivateUser = async (userId: number, options?: RequestInit): Promise<forceActivateUserResponse> => {
+  
+  return customFetch<forceActivateUserResponse>(getForceActivateUserUrl(userId),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getForceActivateUserMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forceActivateUser>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof forceActivateUser>>, TError,{userId: number}, TContext> => {
+
+const mutationKey = ['forceActivateUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof forceActivateUser>>, {userId: number}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  forceActivateUser(userId,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ForceActivateUserMutationResult = NonNullable<Awaited<ReturnType<typeof forceActivateUser>>>
+    
+    export type ForceActivateUserMutationError = void
+
+    /**
+ * @summary 회원 강제 활성화 (이메일 인증 우회)
+ */
+export const useForceActivateUser = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forceActivateUser>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof forceActivateUser>>,
+        TError,
+        {userId: number},
+        TContext
+      > => {
+      return useMutation(getForceActivateUserMutationOptions(options), queryClient);
+    }
+    /**
+ * 관리자가 회원의 프로필 정보를 수정합니다. null 필드는 기존 값을 유지합니다. 학번, 역할, 상태, 비밀번호는 별도 API를 사용하세요.
+ * @summary 회원 정보 수정
+ */
+export type editUserInfoResponse204 = {
+  data: void
+  status: 204
+}
+
+export type editUserInfoResponse400 = {
+  data: void
+  status: 400
+}
+
+export type editUserInfoResponse401 = {
+  data: void
+  status: 401
+}
+
+export type editUserInfoResponse403 = {
+  data: void
+  status: 403
+}
+
+export type editUserInfoResponse404 = {
+  data: void
+  status: 404
+}
+
+export type editUserInfoResponse409 = {
+  data: void
+  status: 409
+}
+    
+export type editUserInfoResponseSuccess = (editUserInfoResponse204) & {
+  headers: Headers;
+};
+export type editUserInfoResponseError = (editUserInfoResponse400 | editUserInfoResponse401 | editUserInfoResponse403 | editUserInfoResponse404 | editUserInfoResponse409) & {
+  headers: Headers;
+};
+
+export type editUserInfoResponse = (editUserInfoResponseSuccess | editUserInfoResponseError)
+
+export const getEditUserInfoUrl = (userId: number,) => {
+
+
+  
+
+  return `/api/v1/admin/users/${userId}/info`
+}
+
+export const editUserInfo = async (userId: number,
+    adminEditUserInfoRequest: AdminEditUserInfoRequest, options?: RequestInit): Promise<editUserInfoResponse> => {
+  
+  return customFetch<editUserInfoResponse>(getEditUserInfoUrl(userId),
+  {      
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      adminEditUserInfoRequest,)
+  }
+);}
+
+
+
+
+export const getEditUserInfoMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editUserInfo>>, TError,{userId: number;data: AdminEditUserInfoRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof editUserInfo>>, TError,{userId: number;data: AdminEditUserInfoRequest}, TContext> => {
+
+const mutationKey = ['editUserInfo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof editUserInfo>>, {userId: number;data: AdminEditUserInfoRequest}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  editUserInfo(userId,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EditUserInfoMutationResult = NonNullable<Awaited<ReturnType<typeof editUserInfo>>>
+    export type EditUserInfoMutationBody = AdminEditUserInfoRequest
+    export type EditUserInfoMutationError = void
+
+    /**
+ * @summary 회원 정보 수정
+ */
+export const useEditUserInfo = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editUserInfo>>, TError,{userId: number;data: AdminEditUserInfoRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof editUserInfo>>,
+        TError,
+        {userId: number;data: AdminEditUserInfoRequest},
+        TContext
+      > => {
+      return useMutation(getEditUserInfoMutationOptions(options), queryClient);
     }
     /**
  * 회원 목록을 조회합니다. 검색어, 역할, 상태로 필터링 가능합니다.

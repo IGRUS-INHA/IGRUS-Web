@@ -11,13 +11,26 @@ public record PasswordSignupResponse(
     String email,
 
     @Schema(description = "이메일 인증 필요 여부", example = "true")
-    boolean requiresVerification
+    boolean requiresVerification,
+
+    @Schema(description = "임시 학번 (임시 학번 가입 시에만 포함)", example = "99260001")
+    String temporaryStudentId
 ) {
     public static PasswordSignupResponse pendingVerification(String email) {
         return new PasswordSignupResponse(
             "회원가입 요청이 완료되었습니다. 이메일로 발송된 인증 코드를 입력해주세요.",
             email,
-            true
+            true,
+            null
+        );
+    }
+
+    public static PasswordSignupResponse pendingVerificationWithTempId(String email, String tempStudentId) {
+        return new PasswordSignupResponse(
+            "회원가입 요청이 완료되었습니다. 이메일로 발송된 인증 코드를 입력해주세요.",
+            email,
+            true,
+            tempStudentId
         );
     }
 
@@ -25,7 +38,8 @@ public record PasswordSignupResponse(
         return new PasswordSignupResponse(
             "이메일 인증이 완료되었습니다. 관리자 승인 후 로그인 가능합니다.",
             email,
-            false
+            false,
+            null
         );
     }
 }

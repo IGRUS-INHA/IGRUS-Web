@@ -67,6 +67,7 @@ import type {
   MyPostPageResponse,
   MyProfileResponse,
   MyRegistrationResponse,
+  UpdateStudentIdRequest,
   WithdrawRequest
 } from '.././models';
 
@@ -281,6 +282,106 @@ export const useRequestEmailChange = <TError = void,
         TContext
       > => {
       return useMutation(getRequestEmailChangeMutationOptions(options), queryClient);
+    }
+    /**
+ * 임시 학번을 실제 학번으로 변경합니다. 임시 학번 사용자만 가능합니다.
+ * @summary 학번 변경
+ */
+export type updateStudentIdResponse200 = {
+  data: void
+  status: 200
+}
+
+export type updateStudentIdResponse400 = {
+  data: void
+  status: 400
+}
+
+export type updateStudentIdResponse401 = {
+  data: void
+  status: 401
+}
+
+export type updateStudentIdResponse409 = {
+  data: void
+  status: 409
+}
+    
+export type updateStudentIdResponseSuccess = (updateStudentIdResponse200) & {
+  headers: Headers;
+};
+export type updateStudentIdResponseError = (updateStudentIdResponse400 | updateStudentIdResponse401 | updateStudentIdResponse409) & {
+  headers: Headers;
+};
+
+export type updateStudentIdResponse = (updateStudentIdResponseSuccess | updateStudentIdResponseError)
+
+export const getUpdateStudentIdUrl = () => {
+
+
+  
+
+  return `/api/v1/mypage/student-id`
+}
+
+export const updateStudentId = async (updateStudentIdRequest: UpdateStudentIdRequest, options?: RequestInit): Promise<updateStudentIdResponse> => {
+  
+  return customFetch<updateStudentIdResponse>(getUpdateStudentIdUrl(),
+  {      
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateStudentIdRequest,)
+  }
+);}
+
+
+
+
+export const getUpdateStudentIdMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStudentId>>, TError,{data: UpdateStudentIdRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateStudentId>>, TError,{data: UpdateStudentIdRequest}, TContext> => {
+
+const mutationKey = ['updateStudentId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateStudentId>>, {data: UpdateStudentIdRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateStudentId(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateStudentIdMutationResult = NonNullable<Awaited<ReturnType<typeof updateStudentId>>>
+    export type UpdateStudentIdMutationBody = UpdateStudentIdRequest
+    export type UpdateStudentIdMutationError = void
+
+    /**
+ * @summary 학번 변경
+ */
+export const useUpdateStudentId = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStudentId>>, TError,{data: UpdateStudentIdRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateStudentId>>,
+        TError,
+        {data: UpdateStudentIdRequest},
+        TContext
+      > => {
+      return useMutation(getUpdateStudentIdMutationOptions(options), queryClient);
     }
     /**
  * 비밀번호 확인 후 전화번호를 변경합니다
