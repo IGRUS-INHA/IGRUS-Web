@@ -3,10 +3,8 @@ import { FullPageSpinner } from '@/components/ui';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, Save, Image as ImageIcon } from 'lucide-react';
-import MDEditor from '@uiw/react-md-editor';
-import remarkBreaks from 'remark-breaks';
-import '@uiw/react-md-editor/markdown-editor.css';
+import { ArrowLeft, Calendar, MapPin, Users, Clock, Save, Image as ImageIcon, ListChecks } from 'lucide-react';
+import { WysiwygEditor } from '@/components/feature/editor';
 import { useEvent, useUpdateEvent } from '@/hooks/queries/useEvents';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores';
@@ -203,36 +201,22 @@ export default function EventEditPage() {
               )}
             </div>
 
-            {/* Markdown Editor (with formatting toolbar) */}
-            <div className="flex-1 px-s4 py-s4 compact-md-editor">
+            {/* WYSIWYG Editor */}
+            <div className="flex-1">
               <Controller
                 name="description"
                 control={control}
                 render={({ field }) => (
-                  <MDEditor
-                    value={field.value}
+                  <WysiwygEditor
+                    value={field.value ?? ''}
                     onChange={field.onChange}
-                    preview="edit"
-                    visibleDragbar={false}
-                    data-color-mode={isDark ? 'dark' : 'light'}
-                    commandsFilter={(command) => {
-                      if (command.name === 'title' || command.name === 'image' || command.name === 'checked-list') {
-                        return false;
-                      }
-                      return command;
-                    }}
-                    extraCommands={[]}
-                    previewOptions={{
-                      remarkPlugins: [remarkBreaks],
-                    }}
-                    className={cn(
-                      errors.description && 'border-2 border-destructive rounded-r2'
-                    )}
+                    hasError={!!errors.description}
+                    className="border-0 rounded-none"
                   />
                 )}
               />
               {errors.description && (
-                <p className="typo-c1 text-destructive mt-s2">{errors.description.message}</p>
+                <p className="typo-c1 text-destructive px-s6 pb-s2">{errors.description.message}</p>
               )}
             </div>
 
@@ -326,6 +310,58 @@ export default function EventEditPage() {
               {errors.capacity && (
                 <p className="typo-c1 text-destructive mt-s1">{errors.capacity.message}</p>
               )}
+            </div>
+
+            {/* 신청 방식 (읽기 전용) */}
+            <div className="px-s5 py-s5 border-b border-border">
+              <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
+                <ListChecks size={14} /> 신청 방식
+              </label>
+              <div className="space-y-s2 pointer-events-none opacity-60">
+                <div className={cn(
+                  'w-full rounded-r3 px-s4 py-s3 border text-sm',
+                  event.registrationType === 'AUTO_APPROVE'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-muted/50'
+                )}>
+                  <div className="flex items-center gap-s3">
+                    <div className={cn(
+                      'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0',
+                      event.registrationType === 'AUTO_APPROVE' ? 'border-primary' : 'border-muted-foreground/40'
+                    )}>
+                      {event.registrationType === 'AUTO_APPROVE' && (
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">선착순 (자동 승인)</p>
+                      <p className="typo-c1 text-muted-foreground">신청 즉시 승인됩니다</p>
+                    </div>
+                  </div>
+                </div>
+                <div className={cn(
+                  'w-full rounded-r3 px-s4 py-s3 border text-sm',
+                  event.registrationType === 'MANUAL_APPROVE'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-muted/50'
+                )}>
+                  <div className="flex items-center gap-s3">
+                    <div className={cn(
+                      'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0',
+                      event.registrationType === 'MANUAL_APPROVE' ? 'border-primary' : 'border-muted-foreground/40'
+                    )}>
+                      {event.registrationType === 'MANUAL_APPROVE' && (
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">선발제 (수동 승인)</p>
+                      <p className="typo-c1 text-muted-foreground">관리자가 승인해야 합니다</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p className="typo-c1 text-muted-foreground mt-s2">생성 후 변경할 수 없습니다</p>
             </div>
 
             {/* 신청 시작 */}

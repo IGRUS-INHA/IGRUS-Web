@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -246,52 +247,6 @@
 }
 
 /* ============================================
-   Compact MDEditor Toolbar
-   ============================================ */
-
-.compact-md-editor .w-md-editor-toolbar {
-  padding: 2px 4px !important;
-  min-height: unset !important;
-}
-
-.compact-md-editor .w-md-editor-toolbar li {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.compact-md-editor .w-md-editor-toolbar li > button {
-  height: 22px !important;
-  width: 22px !important;
-  margin: 0 !important;
-  padding: 2px !important;
-}
-
-.compact-md-editor .w-md-editor-toolbar li > button svg {
-  height: 13px !important;
-  width: 13px !important;
-}
-
-.compact-md-editor .w-md-editor-toolbar ul {
-  gap: 0;
-}
-
-.compact-md-editor .w-md-editor-toolbar .w-md-editor-toolbar-divider {
-  height: 14px !important;
-  margin: 0 4px !important;
-}
-
-.compact-md-editor {
-  display: flex;
-  flex-direction: column;
-}
-
-.compact-md-editor .w-md-editor {
-  border-radius: 8px !important;
-  flex: 1 1 0;
-  height: auto !important;
-}
-
-/* ============================================
    Scrollbar Styling
    ============================================ */
 
@@ -397,59 +352,10 @@
 }
 
 /* ============================================
-   Markdown Editor Styling
+   Markdown Preview Styling (for read-only pages)
    ============================================ */
 
-/* 마크다운 에디터 툴바 전체 정렬 */
-.w-md-editor-toolbar {
-  display: flex !important;
-  align-items: center !important;
-}
-
-.w-md-editor-toolbar ul {
-  display: flex !important;
-  align-items: center !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* 마크다운 에디터 툴바 아이콘 크기 */
-.w-md-editor-toolbar svg {
-  width: 18px !important;
-  height: 18px !important;
-}
-
-/* 마크다운 에디터 툴바 버튼 여백 통일 */
-.w-md-editor-toolbar button {
-  padding: 8px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* 마크다운 에디터 툴바 구분선 높이 조정 */
-.w-md-editor-toolbar-divider {
-  height: 34px !important; /* 버튼 높이와 동일 (padding 8px * 2 + icon 18px) */
-  align-self: center !important;
-}
-
-/* pre 오버레이 숨기고 textarea 직접 표시 */
-.w-md-editor-text-pre {
-  display: none !important;
-}
-
-.w-md-editor-text-input {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-  font-size: 18px !important;
-  line-height: 1.6 !important;
-  padding: 18px !important;
-  opacity: 1 !important;
-  color: inherit !important;
-  -webkit-text-fill-color: inherit !important;
-  caret-color: currentColor !important;
-}
-
-/* 에디터-프리뷰 폰트 통일 */
+/* 프리뷰 폰트 */
 .wmde-markdown,
 .wmde-markdown p,
 .wmde-markdown span {
@@ -573,51 +479,26 @@
 }
 
 /* ============================================
-   Markdown Editor Mobile Responsive
+   Novel WYSIWYG Editor Styling
    ============================================ */
 
+.novel-editor .ProseMirror {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  outline: none;
+}
+
+.novel-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+}
+
 @media (max-width: 767px) {
-  /* 모바일에서 MDEditor 내장 편집/미리보기 토글 숨김 (커스텀 토글 사용) */
-  .w-md-editor-toolbar li[data-name="edit"],
-  .w-md-editor-toolbar li[data-name="live"],
-  .w-md-editor-toolbar li[data-name="preview"] {
-    display: none !important;
-  }
-
-  /* 모바일 툴바 아이콘 크기 축소 */
-  .w-md-editor-toolbar svg {
-    width: 16px !important;
-    height: 16px !important;
-  }
-
-  /* 모바일 툴바 버튼 패딩 축소 */
-  .w-md-editor-toolbar button {
-    padding: 6px !important;
-  }
-
-  /* 모바일 툴바 구분선 높이 조정 */
-  .w-md-editor-toolbar-divider {
-    height: 28px !important;
-  }
-
-  /* 모바일 에디터 폰트 크기 (16px: iOS 자동 줌 방지) */
-  .w-md-editor-text-pre,
-  .w-md-editor-text-input,
-  .w-md-editor-text {
+  .novel-editor .ProseMirror {
     font-size: 16px !important;
-  }
-
-  .wmde-markdown {
-    font-size: 16px !important;
-  }
-
-  /* 모바일 툴바 줄바꿈 허용 */
-  .w-md-editor-toolbar {
-    flex-wrap: wrap !important;
-  }
-
-  .w-md-editor-toolbar ul {
-    flex-wrap: wrap !important;
+    min-height: 300px !important;
   }
 }
 

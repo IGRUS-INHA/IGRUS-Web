@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { FullPageSpinner } from '@/components/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Clock, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2, Lock } from 'lucide-react';
 import MarkdownPreview from '@uiw/react-markdown-preview';
-import { useEvent, useApplyEvent, useCancelEventApplication, useDeleteEvent } from '@/hooks/queries/useEvents';
+import { useEvent, useApplyEvent, useCancelEventApplication, useDeleteEvent, useCloseEvent } from '@/hooks/queries/useEvents';
 import { useAuth } from '@/hooks';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -28,6 +28,7 @@ export default function EventDetailPage() {
   const { mutate: applyEvent, isPending: isApplying } = useApplyEvent();
   const { mutate: cancelEvent, isPending: isCanceling } = useCancelEventApplication();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
+  const { mutate: closeEvent, isPending: isClosing } = useCloseEvent();
   const { user } = useAuth();
 
   // API 응답 데이터 추출
@@ -100,6 +101,27 @@ export default function EventDetailPage() {
             alert('이미 취소된 신청입니다.');
           } else if (hasErrorCode(error, 'CANCEL_DEADLINE_PASSED')) {
             alert('취소 가능 기간이 지났습니다.');
+          } else {
+            alert(getErrorMessage(error));
+          }
+        },
+      }
+    );
+  };
+
+  const handleCloseEvent = () => {
+    if (!eventId) return;
+    if (!window.confirm('행사 신청을 마감하시겠습니까?\n마감 후에는 새로운 신청을 받을 수 없습니다.')) {
+      return;
+    }
+
+    setIsMoreMenuOpen(false);
+    closeEvent(
+      { eventId: Number(eventId) },
+      {
+        onError: (error: unknown) => {
+          if (isForbiddenError(error) || isEventOperatorRequired(error)) {
+            alert('행사 마감 권한이 없습니다.');
           } else {
             alert(getErrorMessage(error));
           }
@@ -225,6 +247,16 @@ export default function EventDetailPage() {
                 >
                   <Edit size={16} /> 수정하기
                 </button>
+                {event.status === 'OPEN' && (
+                  <button
+                    onClick={handleCloseEvent}
+                    type="button"
+                    disabled={isClosing}
+                    className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Lock size={16} /> {isClosing ? '마감 중...' : '신청 마감'}
+                  </button>
+                )}
                 <button
                   onClick={handleDelete}
                   type="button"

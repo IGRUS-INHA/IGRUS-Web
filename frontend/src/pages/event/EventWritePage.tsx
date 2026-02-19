@@ -2,10 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, Save, Image as ImageIcon } from 'lucide-react';
-import MDEditor from '@uiw/react-md-editor';
-import remarkBreaks from 'remark-breaks';
-import '@uiw/react-md-editor/markdown-editor.css';
+import { ArrowLeft, Calendar, MapPin, Users, Clock, Save, Image as ImageIcon, ListChecks } from 'lucide-react';
+import { WysiwygEditor } from '@/components/feature/editor';
 import { useCreateEvent } from '@/hooks/queries/useEvents';
 import { CreateEventRequestRegistrationType } from '@/api/model/models';
 import { cn } from '@/lib/utils';
@@ -19,6 +17,7 @@ const eventSchema = z.object({
   time: z.string().min(1, '행사 시간을 선택하세요'),
   location: z.string().min(1, '장소를 입력하세요'),
   capacity: z.number().min(1, '최대 인원은 1명 이상이어야 합니다'),
+  registrationType: z.enum(['AUTO_APPROVE', 'MANUAL_APPROVE']),
   registrationStartDate: z.string().min(1, '신청 시작일을 선택하세요'),
   registrationStartTime: z.string().min(1, '신청 시작 시간을 선택하세요'),
   registrationDeadlineDate: z.string().min(1, '신청 마감일을 선택하세요'),
@@ -37,13 +36,18 @@ export default function EventWritePage() {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<EventForm>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       capacity: 30,
+      registrationType: 'AUTO_APPROVE',
     },
   });
+
+  const registrationType = watch('registrationType');
 
   const onSubmit = (data: EventForm) => {
     const eventStartAt = new Date(`${data.date}T${data.time}:00`).toISOString();
@@ -61,7 +65,7 @@ export default function EventWritePage() {
           registrationStartAt,
           registrationEndAt,
           capacity: data.capacity,
-          registrationType: CreateEventRequestRegistrationType.AUTO_APPROVE,
+          registrationType: data.registrationType as CreateEventRequestRegistrationType,
         },
       },
       {
@@ -124,36 +128,22 @@ export default function EventWritePage() {
               )}
             </div>
 
-            {/* Markdown Editor (with formatting toolbar) */}
-            <div className="flex-1 px-s4 py-s4 compact-md-editor">
+            {/* WYSIWYG Editor */}
+            <div className="flex-1">
               <Controller
                 name="description"
                 control={control}
                 render={({ field }) => (
-                  <MDEditor
-                    value={field.value}
+                  <WysiwygEditor
+                    value={field.value ?? ''}
                     onChange={field.onChange}
-                    preview="edit"
-                    visibleDragbar={false}
-                    data-color-mode={isDark ? 'dark' : 'light'}
-                    commandsFilter={(command) => {
-                      if (command.name === 'title' || command.name === 'image' || command.name === 'checked-list') {
-                        return false;
-                      }
-                      return command;
-                    }}
-                    extraCommands={[]}
-                    previewOptions={{
-                      remarkPlugins: [remarkBreaks],
-                    }}
-                    className={cn(
-                      errors.description && 'border-2 border-destructive rounded-r2'
-                    )}
+                    hasError={!!errors.description}
+                    className="border-0 rounded-none"
                   />
                 )}
               />
               {errors.description && (
-                <p className="typo-c1 text-destructive mt-s2">{errors.description.message}</p>
+                <p className="typo-c1 text-destructive px-s6 pb-s2">{errors.description.message}</p>
               )}
             </div>
 
@@ -247,6 +237,65 @@ export default function EventWritePage() {
               {errors.capacity && (
                 <p className="typo-c1 text-destructive mt-s1">{errors.capacity.message}</p>
               )}
+            </div>
+
+            {/* 신청 방식 */}
+            <div className="px-s5 py-s5 border-b border-border">
+              <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
+                <ListChecks size={14} /> 신청 방식
+              </label>
+              <div className="space-y-s2">
+                <button
+                  type="button"
+                  onClick={() => setValue('registrationType', 'AUTO_APPROVE')}
+                  className={cn(
+                    'w-full rounded-r3 px-s4 py-s3 border text-left text-sm transition-colors cursor-pointer',
+                    registrationType === 'AUTO_APPROVE'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border bg-muted/50'
+                  )}
+                >
+                  <div className="flex items-center gap-s3">
+                    <div className={cn(
+                      'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0',
+                      registrationType === 'AUTO_APPROVE' ? 'border-primary' : 'border-muted-foreground/40'
+                    )}>
+                      {registrationType === 'AUTO_APPROVE' && (
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">선착순 (자동 승인)</p>
+                      <p className="typo-c1 text-muted-foreground">신청 즉시 승인됩니다</p>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue('registrationType', 'MANUAL_APPROVE')}
+                  className={cn(
+                    'w-full rounded-r3 px-s4 py-s3 border text-left text-sm transition-colors cursor-pointer',
+                    registrationType === 'MANUAL_APPROVE'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border bg-muted/50'
+                  )}
+                >
+                  <div className="flex items-center gap-s3">
+                    <div className={cn(
+                      'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0',
+                      registrationType === 'MANUAL_APPROVE' ? 'border-primary' : 'border-muted-foreground/40'
+                    )}>
+                      {registrationType === 'MANUAL_APPROVE' && (
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">선발제 (수동 승인)</p>
+                      <p className="typo-c1 text-muted-foreground">관리자가 승인해야 합니다</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* 신청 시작 */}

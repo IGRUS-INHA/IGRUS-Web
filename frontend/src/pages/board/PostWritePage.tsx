@@ -1,11 +1,8 @@
-import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import MDEditor from '@uiw/react-md-editor';
-import remarkBreaks from 'remark-breaks';
-import '@uiw/react-md-editor/markdown-editor.css';
+import { WysiwygEditor } from '@/components/feature/editor';
 import { useCreatePost } from '@/api/model/post/post';
 import { useUIStore } from '@/stores';
 import { BOARDS, BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type PostFormData } from '@/constants/board';
@@ -20,7 +17,6 @@ export default function PostWritePage() {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
   const isMobile = useIsMobile();
-  const [mobilePreview, setMobilePreview] = useState<'edit' | 'preview'>('edit');
 
   const validBoardType = boardType as BoardType;
 
@@ -224,63 +220,16 @@ export default function PostWritePage() {
             )}
           </div>
 
-          {/* Content Markdown Editor */}
+          {/* Content WYSIWYG Editor */}
           <div className="flex-1 relative mb-s8">
-            {/* 모바일 편집/미리보기 토글 */}
-            {isMobile && (
-              <div className={cn(
-                'flex mb-s3 rounded-lg p-1',
-                isDark ? 'bg-white/5' : 'bg-gray-100'
-              )}>
-                <button
-                  type="button"
-                  onClick={() => setMobilePreview('edit')}
-                  className={cn(
-                    'flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer',
-                    mobilePreview === 'edit'
-                      ? isDark ? 'bg-gray-700 text-foreground shadow-sm' : 'bg-white text-foreground shadow-sm'
-                      : 'text-gray-500'
-                  )}
-                >
-                  편집
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobilePreview('preview')}
-                  className={cn(
-                    'flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer',
-                    mobilePreview === 'preview'
-                      ? isDark ? 'bg-gray-700 text-foreground shadow-sm' : 'bg-white text-foreground shadow-sm'
-                      : 'text-gray-500'
-                  )}
-                >
-                  미리보기
-                </button>
-              </div>
-            )}
             <Controller
               name="content"
               control={control}
               render={({ field }) => (
-                <MDEditor
-                  value={field.value}
+                <WysiwygEditor
+                  value={field.value ?? ''}
                   onChange={field.onChange}
-                  preview={isMobile ? mobilePreview : 'live'}
-                  height={isMobile ? 300 : 500}
-                  data-color-mode={isDark ? 'dark' : 'light'}
-                  commandsFilter={(command) => {
-                    // 드롭다운 버튼(title), 이미지, 체크리스트 제거
-                    if (command.name === 'title' || command.name === 'image' || command.name === 'checked-list') {
-                      return false;
-                    }
-                    return command;
-                  }}
-                  previewOptions={{
-                    remarkPlugins: [remarkBreaks],
-                  }}
-                  className={cn(
-                    errors.content && 'border-2 border-destructive rounded-r2'
-                  )}
+                  hasError={!!errors.content}
                 />
               )}
             />
