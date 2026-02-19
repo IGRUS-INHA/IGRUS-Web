@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react';
-import { Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useGetUserList, useChangeUserRole, useGetUserDetail } from '@/api/model/admin-user-management/admin-user-management';
 import type { GetUserListRole } from '@/api/model/models/getUserListRole';
 import type { GetUserListStatus } from '@/api/model/models/getUserListStatus';
@@ -126,6 +126,7 @@ export default function UsersTab() {
   const data = response?.status === 200 ? response.data : undefined;
   const users = data?.users ?? [];
   const totalPages = data?.totalPages ?? 0;
+  const totalElements = data?.totalElements ?? 0;
   const isAdmin = currentUser?.role === 'ADMIN';
 
   const handleSearch = (e: React.FormEvent) => {
@@ -183,23 +184,27 @@ export default function UsersTab() {
         </div>
       </Card>
 
+      <p className="text-sm text-muted-foreground">
+        총 <span className="font-semibold text-foreground">{totalElements.toLocaleString()}</span>명
+      </p>
+
       {/* Table */}
       <Card className="p-s5 overflow-x-auto">
-        <table className="w-full text-left">
+        <table className="w-full text-center">
           <thead>
             <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
-              <th className="pb-s4 font-bold w-8"></th>
+              <th className="pb-s4 font-bold w-12">번호</th>
               <th className="pb-s4 font-bold">학번</th>
               <th className="pb-s4 font-bold">이름</th>
               <th className="pb-s4 font-bold hidden lg:table-cell">이메일</th>
               <th className="pb-s4 font-bold">역할</th>
               <th className="pb-s4 font-bold">상태</th>
               <th className="pb-s4 font-bold hidden lg:table-cell">가입일</th>
-              {isAdmin && <th className="pb-s4 font-bold text-right">작업</th>}
+              {isAdmin && <th className="pb-s4 font-bold">작업</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {users.map((u) => {
+            {users.map((u, index) => {
               const isExpanded = expandedUserIds.has(u.userId!);
               const colSpan = isAdmin ? 8 : 7;
               return (
@@ -212,8 +217,8 @@ export default function UsersTab() {
                       return next;
                     })}
                   >
-                    <td className="py-s4 text-muted-foreground">
-                      {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <td className="py-s4 typo-b2 text-muted-foreground">
+                      {(page - 1) * 20 + index + 1}
                     </td>
                     <td className="py-s4 typo-b2 font-medium">{u.studentId}</td>
                     <td className="py-s4 typo-b2 font-bold">{u.name}</td>
@@ -228,7 +233,7 @@ export default function UsersTab() {
                       {u.createdAt ? new Date(u.createdAt).toLocaleDateString('ko-KR') : '-'}
                     </td>
                     {isAdmin && (
-                      <td className="py-s4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-s4" onClick={(e) => e.stopPropagation()}>
                         {editingUserId === u.userId ? (
                           <div className="flex items-center gap-s2 justify-end">
                             <select
