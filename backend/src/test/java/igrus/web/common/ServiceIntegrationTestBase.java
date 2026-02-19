@@ -1,5 +1,6 @@
 package igrus.web.common;
 
+import igrus.web.common.config.TestPasswordEncoderConfig;
 import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.security.auth.common.repository.LoginAttemptRepository;
@@ -18,6 +19,7 @@ import java.util.List;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -40,6 +42,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestPasswordEncoderConfig.class)
 public abstract class ServiceIntegrationTestBase {
 
     @Autowired
