@@ -246,6 +246,52 @@
 }
 
 /* ============================================
+   Compact MDEditor Toolbar
+   ============================================ */
+
+.compact-md-editor .w-md-editor-toolbar {
+  padding: 2px 4px !important;
+  min-height: unset !important;
+}
+
+.compact-md-editor .w-md-editor-toolbar li {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.compact-md-editor .w-md-editor-toolbar li > button {
+  height: 22px !important;
+  width: 22px !important;
+  margin: 0 !important;
+  padding: 2px !important;
+}
+
+.compact-md-editor .w-md-editor-toolbar li > button svg {
+  height: 13px !important;
+  width: 13px !important;
+}
+
+.compact-md-editor .w-md-editor-toolbar ul {
+  gap: 0;
+}
+
+.compact-md-editor .w-md-editor-toolbar .w-md-editor-toolbar-divider {
+  height: 14px !important;
+  margin: 0 4px !important;
+}
+
+.compact-md-editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.compact-md-editor .w-md-editor {
+  border-radius: 8px !important;
+  flex: 1 1 0;
+  height: auto !important;
+}
+
+/* ============================================
    Scrollbar Styling
    ============================================ */
 
