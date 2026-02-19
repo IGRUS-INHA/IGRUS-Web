@@ -1,5 +1,6 @@
 import { Calendar, MapPin, Users, ArrowUpRight } from 'lucide-react';
 import type { Event, EventStatus } from '@/types/entities';
+import { formatDate } from '@/utils/date';
 
 const STATUS_STYLES: Record<string, string> = {
   Open: 'bg-primary text-primary-foreground',
@@ -54,7 +55,7 @@ export default function EventCard({ event }: EventCardProps) {
         <div className="space-y-s3 mb-s6">
           <div className="flex items-center gap-s3 text-muted-foreground">
             <Calendar size={18} className="text-primary" />
-            <span className="text-sm">{event.date}</span>
+            <span className="text-sm">{formatDate(event.date)}</span>
           </div>
           <div className="flex items-center gap-s3 text-muted-foreground">
             <MapPin size={18} className="text-primary" />

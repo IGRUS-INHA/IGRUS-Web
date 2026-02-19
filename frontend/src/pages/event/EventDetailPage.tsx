@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { FullPageSpinner } from '@/components/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Clock, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useEvent, useApplyEvent, useCancelEventApplication, useDeleteEvent } from '@/hooks/queries/useEvents';
 import { useAuth } from '@/hooks';
 import { useEffect, useRef, useState } from 'react';
@@ -17,6 +18,7 @@ import {
   hasErrorCode,
 } from '@/utils/error';
 import { myPageKeys } from '@/hooks/queries/useMyPage';
+import { formatDateTime } from '@/utils/date';
 
 export default function EventDetailPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -30,6 +32,9 @@ export default function EventDetailPage() {
 
   // API 응답 데이터 추출
   const event = eventResponse?.data;
+
+  // 이미지 캐러셀 상태 (추후 다중 이미지 지원용)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // More Menu 상태
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -58,7 +63,6 @@ export default function EventDetailPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/events/${eventId}`],
           });
-          // 마이페이지 행사 신청 목록 새로고침
           void queryClient.invalidateQueries({ queryKey: myPageKeys.registrations() });
         },
         onError: (error: unknown) => {
@@ -79,42 +83,29 @@ export default function EventDetailPage() {
   };
 
   const handleCancel = () => {
-    console.log('[handleCancel] eventId:', eventId);
     if (!eventId) return;
     if (!confirm('행사 신청을 취소하시겠습니까?')) return;
-    console.log('[handleCancel] calling cancelEvent');
 
-    try {
-      cancelEvent(
-        { eventId: Number(eventId) },
-        {
-          onSuccess: () => {
-            console.log('[cancelEvent] onSuccess');
-            void queryClient.invalidateQueries({
-              queryKey: [`/api/v1/events/${eventId}`],
-            });
-            // 마이페이지 행사 신청 목록 새로고침
-            void queryClient.invalidateQueries({ queryKey: myPageKeys.registrations() });
-          },
-          onError: (error: unknown) => {
-            console.log('[cancelEvent] onError:', error);
-            if (hasErrorCode(error, 'EVENT_ALREADY_CANCELED')) {
-              alert('이미 취소된 신청입니다.');
-            } else if (hasErrorCode(error, 'CANCEL_DEADLINE_PASSED')) {
-              alert('취소 가능 기간이 지났습니다.');
-            } else {
-              alert(getErrorMessage(error));
-            }
-          },
-          onSettled: () => {
-            console.log('[cancelEvent] onSettled');
-          },
+    cancelEvent(
+      { eventId: Number(eventId) },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({
+            queryKey: [`/api/v1/events/${eventId}`],
+          });
+          void queryClient.invalidateQueries({ queryKey: myPageKeys.registrations() });
+        },
+        onError: (error: unknown) => {
+          if (hasErrorCode(error, 'EVENT_ALREADY_CANCELED')) {
+            alert('이미 취소된 신청입니다.');
+          } else if (hasErrorCode(error, 'CANCEL_DEADLINE_PASSED')) {
+            alert('취소 가능 기간이 지났습니다.');
+          } else {
+            alert(getErrorMessage(error));
+          }
+        },
       }
     );
-    console.log('[handleCancel] cancelEvent() returned');
-    } catch (e) {
-      console.error('[handleCancel] cancelEvent threw:', e);
-    }
   };
 
   const handleEdit = () => {
@@ -150,7 +141,6 @@ export default function EventDetailPage() {
     return <FullPageSpinner />;
   }
 
-  // 403 에러 체크 (권한 없음)
   const isForbidden = isForbiddenError(error) || isEventAccessDenied(error);
 
   if (isForbidden) {
@@ -183,170 +173,214 @@ export default function EventDetailPage() {
   const canCancel = user && hasApplied;
   const canManage = event.canEdit || event.isAuthor;
 
-  // 날짜 포맷팅 (ISO 8601 형식에서 파싱)
-  const formatDateTime = (isoString?: string) => {
-    if (!isoString) return { date: 'TBD', time: 'TBD' };
-
-    try {
-      const date = new Date(isoString);
-      const dateStr = date.toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-      const timeStr = date.toLocaleTimeString('ko-KR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      return { date: dateStr, time: timeStr };
-    } catch {
-      return { date: 'TBD', time: 'TBD' };
-    }
+  // 상태 라벨
+  const STATUS_LABELS: Record<string, string> = {
+    OPEN: '신청 가능',
+    UPCOMING: '예정',
+    CLOSED: '신청 불가',
+    COMPLETED: '신청 불가',
+    ONGOING: '진행중',
   };
+  const statusLabel = event.status ? (STATUS_LABELS[event.status] ?? '마감') : (isOpen ? '신청 가능' : '마감');
+  const isActiveStatus = event.status === 'OPEN' || event.status === 'UPCOMING' || event.status === 'ONGOING';
 
   const { date: dateStr, time: timeStr } = formatDateTime(event.eventStartAt);
 
-  return (
-    <div className="animate-in slide-in-from-right-8 duration-300">
-      <button
-        type="button"
-        onClick={() => navigate('/events')}
-        className="mb-s6 flex items-center gap-s2 text-sm font-bold transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
-      >
-        <ArrowLeft size={18} /> Back to Events
-      </button>
+  // 이미지 목록 (추후 다중 이미지 API 지원 시 교체)
+  // TODO: API에서 이미지 배열을 받으면 아래 데모 데이터 교체
+  const images = [
+    '/igruslogo2.png',
+    'https://placehold.co/400x400/1a1a2e/e0e0e0?text=Event+Photo+1',
+    'https://placehold.co/400x400/16213e/e0e0e0?text=Event+Photo+2',
+  ];
+  const hasPrev = currentImageIndex > 0;
+  const hasNext = currentImageIndex < images.length - 1;
 
+  return (
+    <div className="animate-in slide-in-from-right-8 duration-300 max-w-4xl mx-auto">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between mb-s6">
+        <button
+          type="button"
+          onClick={() => navigate('/events')}
+          className="flex items-center gap-s2 text-sm font-medium transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+        >
+          <ArrowLeft size={18} /> 행사 목록
+        </button>
+        {canManage && (
+          <div className="relative" ref={moreMenuRef}>
+            <button
+              onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+              type="button"
+              className="p-s2 rounded-full transition cursor-pointer hover:bg-muted text-muted-foreground hover:text-foreground"
+            >
+              <MoreHorizontal size={20} />
+            </button>
+            {isMoreMenuOpen && (
+              <div className="absolute right-0 top-full mt-s2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200 bg-popover border-border">
+                <button
+                  onClick={handleEdit}
+                  type="button"
+                  className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted"
+                >
+                  <Edit size={16} /> 수정하기
+                </button>
+                <button
+                  onClick={handleDelete}
+                  type="button"
+                  disabled={isDeleting}
+                  className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 size={16} /> {isDeleting ? '삭제 중...' : '삭제하기'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 상단: 이미지 + 정보 */}
       <div className="rounded-r4 overflow-hidden border bg-card border-border shadow-sm">
-        <div className="h-64 md:h-80 relative bg-gradient-to-br from-primary/20 to-primary/5">
-          <div className="absolute bottom-s6 left-s6 right-s6">
+        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr]">
+          {/* 이미지 캐러셀 */}
+          <div className="relative bg-muted/30 flex items-center justify-center aspect-square">
+            <img
+              src={images[currentImageIndex]}
+              alt={event.title}
+              className="w-[200px] h-[200px] object-contain"
+            />
+            {/* 상태 뱃지 */}
             <span
-              className={`px-s3 py-s1 rounded-full text-xs font-bold uppercase tracking-widest mb-s4 inline-block ${
-                isOpen ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+              className={`absolute top-s4 left-s4 px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${
+                isActiveStatus ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
               }`}
             >
-              {isOpen ? '신청 가능' : '마감'}
+              {statusLabel}
             </span>
-            <h1 className="text-3xl md:text-4xl font-bold">{event.title}</h1>
+            {/* 캐러셀 화살표 */}
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCurrentImageIndex((i) => i - 1)}
+                  disabled={!hasPrev}
+                  className="absolute left-s3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center transition hover:bg-background cursor-pointer disabled:opacity-0 disabled:cursor-default"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentImageIndex((i) => i + 1)}
+                  disabled={!hasNext}
+                  className="absolute right-s3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center transition hover:bg-background cursor-pointer disabled:opacity-0 disabled:cursor-default"
+                >
+                  <ChevronRight size={20} />
+                </button>
+                {/* 인디케이터 */}
+                <div className="absolute bottom-s3 left-1/2 -translate-x-1/2 flex gap-s2">
+                  {images.map((_, idx) => (
+                    <span
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full transition ${
+                        idx === currentImageIndex ? 'bg-primary' : 'bg-muted-foreground/30'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* 오른쪽: 정보 + 버튼 */}
+          <div className="p-s6 flex flex-col justify-between gap-s6">
+            <div className="space-y-s6">
+              {/* 제목 */}
+              <h1 className="text-2xl font-bold">{event.title}</h1>
+
+              {/* 행사 정보 */}
+              <div className="space-y-s4">
+                <div className="space-y-s1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-s1">
+                    <Calendar size={12} /> 날짜
+                  </p>
+                  <p className="text-sm font-bold">{dateStr}</p>
+                </div>
+                <div className="space-y-s1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-s1">
+                    <Clock size={12} /> 시간
+                  </p>
+                  <p className="text-sm font-bold">{timeStr}</p>
+                </div>
+                <div className="space-y-s1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-s1">
+                    <MapPin size={12} /> 장소
+                  </p>
+                  <p className="text-sm font-bold">{event.location || 'TBD'}</p>
+                </div>
+                <div className="space-y-s1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-s1">
+                    <Users size={12} /> 정원
+                  </p>
+                  <p className="text-sm font-bold">{event.currentCount ?? 0} / {event.capacity ?? 0}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className="space-y-s3">
+              {canApply && (
+                <button
+                  type="button"
+                  onClick={handleApply}
+                  disabled={isApplying}
+                  className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isApplying ? '신청 중...' : '행사 신청'}
+                </button>
+              )}
+
+              {canCancel && (
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={isCanceling}
+                  className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCanceling ? '취소 중...' : '신청 취소'}
+                </button>
+              )}
+
+              {!canApply && !canCancel && (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-muted text-muted-foreground cursor-not-allowed"
+                >
+                  {hasApplied ? '신청 완료' : '신청 불가'}
+                </button>
+              )}
+
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/events/${eventId}/registrations`)}
+                  className="w-full py-s3 rounded-r4 font-medium flex items-center justify-center gap-s2 transition-all border border-border text-foreground hover:bg-muted cursor-pointer"
+                >
+                  <Users size={16} /> 신청자 관리
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="p-s6 md:p-s7 grid grid-cols-1 md:grid-cols-3 gap-s7">
-          <div className="md:col-span-2 space-y-s8">
-            <div>
-              <div className="flex items-center justify-between mb-s4">
-                <h3 className="text-xl font-bold">About Event</h3>
-                {canManage && (
-                  <div className="relative" ref={moreMenuRef}>
-                    <button
-                      onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                      type="button"
-                      className="p-s2 rounded-full transition cursor-pointer hover:bg-muted text-muted-foreground hover:text-foreground"
-                    >
-                      <MoreHorizontal size={20} />
-                    </button>
-
-                    {isMoreMenuOpen && (
-                      <div className="absolute right-0 top-full mt-s2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200 bg-popover border-border">
-                        <button
-                          onClick={handleEdit}
-                          type="button"
-                          className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted"
-                        >
-                          <Edit size={16} /> 수정하기
-                        </button>
-                        <button
-                          onClick={handleDelete}
-                          type="button"
-                          disabled={isDeleting}
-                          className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Trash2 size={16} /> {isDeleting ? '삭제 중...' : '삭제하기'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">
-                {event.description || '상세 설명이 없습니다.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-s6">
-            <div className="p-s6 rounded-r4 space-y-s4 bg-muted/50">
-              <div className="flex items-center gap-s4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <Calendar size={20} />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase font-bold">Date</p>
-                  <p className="font-bold">{dateStr}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-s4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <Clock size={20} />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase font-bold">Time</p>
-                  <p className="font-bold">{timeStr}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-s4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <MapPin size={20} />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase font-bold">Location</p>
-                  <p className="font-bold">{event.location || 'TBD'}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-s4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <Users size={20} />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase font-bold">Capacity</p>
-                  <p className="font-bold">
-                    {event.currentCount ?? 0} / {event.capacity ?? 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {canApply && (
-              <button
-                type="button"
-                onClick={handleApply}
-                disabled={isApplying}
-                className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isApplying ? '신청 중...' : 'Apply Now'}
-              </button>
-            )}
-
-            {canCancel && (
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={isCanceling}
-                className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all shadow-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isCanceling ? '취소 중...' : 'Cancel Application'}
-              </button>
-            )}
-
-            {!canApply && !canCancel && (
-              <button
-                type="button"
-                disabled
-                className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all shadow-lg bg-muted text-muted-foreground cursor-not-allowed"
-              >
-                {hasApplied ? 'Already Applied' : 'Application Closed'}
-              </button>
-            )}
-          </div>
+        {/* 하단: 상세 설명 */}
+        <div className="border-t border-border p-s6">
+          <h3 className="text-sm font-bold text-muted-foreground mb-s4">상세 설명</h3>
+          {event.description ? (
+            <MarkdownPreview source={event.description.replace(/\n/g, "  \n")} className="!leading-relaxed" />
+          ) : (
+            <p className="text-sm text-muted-foreground">상세 설명이 없습니다.</p>
+          )}
         </div>
       </div>
     </div>
