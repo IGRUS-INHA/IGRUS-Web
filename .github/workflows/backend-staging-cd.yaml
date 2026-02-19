@@ -1,13 +1,12 @@
-name: Backend Production CD Pipeline
+name: Backend Staging CD Pipeline
 on:
   push:
-    tags:
-      - 'v*'
-  workflow_call:
-    inputs:
-      version:
-        required: true
-        type: string
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-staging-cd.yaml'
+      - '!backend/docs/**'
 
 permissions:
   contents: read
@@ -15,9 +14,9 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy to Production
+    name: Deploy to Staging
     runs-on: ubuntu-latest
-    environment: production
+    environment: staging
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
       ECR_REPOSITORY_SPRING: ${{ vars.ECR_REPOSITORY_SPRING }}
@@ -70,11 +69,8 @@ jobs:
         id: build-image-spring
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ inputs.version || github.ref_name }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Build a docker container and
-          # push it to ECR so that it can
-          # be deployed to ECS.
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG" >> $GITHUB_OUTPUT
