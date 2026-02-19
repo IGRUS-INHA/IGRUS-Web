@@ -40,7 +40,6 @@ import type { SortObject } from './sortObject';
 export interface PageAccountStatusChangeHistoryResponse {
   totalElements?: number;
   totalPages?: number;
-  pageable?: PageableObject;
   size?: number;
   content?: AccountStatusChangeHistoryResponse[];
   number?: number;
@@ -48,5 +47,6 @@ export interface PageAccountStatusChangeHistoryResponse {
   first?: boolean;
   last?: boolean;
   numberOfElements?: number;
+  pageable?: PageableObject;
   empty?: boolean;
 }

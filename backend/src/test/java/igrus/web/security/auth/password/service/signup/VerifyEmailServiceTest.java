@@ -7,9 +7,11 @@ import igrus.web.security.auth.common.exception.verification.VerificationAttempt
 import igrus.web.security.auth.common.exception.verification.VerificationCodeExpiredException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeInvalidException;
 import igrus.web.security.auth.common.service.AuthEmailService;
+import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
@@ -27,6 +29,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @DisplayName("VerifyEmailService 통합 테스트")
 class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
@@ -39,6 +44,9 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
 
     @MockitoBean
     private AuthEmailService authEmailService;
+
+    @MockitoBean
+    private BaebdungiWebhookService baebdungiWebhookService;
 
     private static final String VALID_STUDENT_ID = "20231234";
     private static final String VALID_NAME = "홍길동";
@@ -71,6 +79,7 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -164,6 +173,22 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
             assertThatThrownBy(() -> verifyEmailService.verifyEmail(request))
                     .isInstanceOf(VerificationCodeInvalidException.class);
         }
+
+        @Test
+        @DisplayName("잘못된 인증 코드 입력 시 뱁둥이봇 웹훅이 호출되지 않는다")
+        void verifyEmail_WithWrongCode_DoesNotCallBaebdungiWebhook() {
+            // given
+            EmailVerification verification = EmailVerification.create(VALID_EMAIL, "123456", 600000L);
+            emailVerificationRepository.save(verification);
+
+            EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, "000000");
+
+            // when & then
+            assertThatThrownBy(() -> verifyEmailService.verifyEmail(request))
+                    .isInstanceOf(VerificationCodeInvalidException.class);
+
+            verify(baebdungiWebhookService, never()).sendSubmission(any(User.class));
+        }
     }
 
     @Nested
@@ -188,6 +213,23 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
             assertThat(savedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
             assertThat(savedUser.isActive()).isTrue();
+        }
+
+        @Test
+        @DisplayName("이메일 인증 완료 시 뱁둥이봇 웹훅이 호출된다")
+        void verifyEmail_Success_CallsBaebdungiWebhook() {
+            // given
+            PasswordSignupRequest signupRequest = createValidSignupRequest();
+            signupService.signup(signupRequest);
+
+            EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL).orElseThrow();
+            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(VALID_EMAIL, verification.getCode());
+
+            // when
+            verifyEmailService.verifyEmail(verifyRequest);
+
+            // then
+            verify(baebdungiWebhookService).sendSubmission(any(User.class));
         }
 
         @Test

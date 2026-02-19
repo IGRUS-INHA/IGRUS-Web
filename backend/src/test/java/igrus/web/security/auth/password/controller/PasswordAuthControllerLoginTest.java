@@ -21,6 +21,7 @@ import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
 import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
 import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
@@ -84,6 +85,9 @@ class PasswordAuthControllerLoginTest {
     private SignupService signupService;
 
     @MockitoBean
+    private TempStudentIdSignupService tempStudentIdSignupService;
+
+    @MockitoBean
     private CheckDuplicateService checkDuplicateService;
 
     @MockitoBean
@@ -121,6 +125,9 @@ class PasswordAuthControllerLoginTest {
 
     @MockitoBean
     private AccountStatusService accountStatusService;
+
+    @MockitoBean
+    private igrus.web.security.auth.password.service.signup.AutoResendVerificationService autoResendVerificationService;
 
     @MockitoBean
     private CookieUtil cookieUtil;
@@ -307,9 +314,10 @@ class PasswordAuthControllerLoginTest {
             void login_withUnverifiedEmail_returns401() throws Exception {
                 // given
                 PasswordLoginRequest request = PasswordAuthTestFixture.validLoginRequest();
+                String expectedEmail = PasswordAuthTestFixture.VALID_EMAIL;
 
                 given(loginService.login(any(PasswordLoginRequest.class), anyString(), any()))
-                        .willThrow(new EmailNotVerifiedException());
+                        .willThrow(new EmailNotVerifiedException(expectedEmail));
 
                 // when & then
                 mockMvc.perform(post(LOGIN_URL)
@@ -318,7 +326,8 @@ class PasswordAuthControllerLoginTest {
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
                         .andExpect(jsonPath("$.code").value(ErrorCode.EMAIL_NOT_VERIFIED.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.EMAIL_NOT_VERIFIED.getMessage()));
+                        .andExpect(jsonPath("$.message").value(ErrorCode.EMAIL_NOT_VERIFIED.getMessage()))
+                        .andExpect(jsonPath("$.email").value(expectedEmail));
             }
         }
 

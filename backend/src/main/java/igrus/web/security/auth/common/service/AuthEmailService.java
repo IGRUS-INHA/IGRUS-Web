@@ -32,4 +32,14 @@ public interface AuthEmailService {
      * @param name 회원 이름
      */
     void sendWelcomeEmail(String to, String name);
+
+    /**
+     * 임시 학번 안내 이메일 발송 (비동기, 재시도 포함)
+     * 지수 백오프 재시도: 1분 → 3분 → 9분 (최대 4회 시도)
+     *
+     * @param to                 수신자 이메일 주소
+     * @param name               회원 이름
+     * @param temporaryStudentId 발급된 임시 학번
+     */
+    void sendTemporaryStudentIdEmail(String to, String name, String temporaryStudentId);
 }

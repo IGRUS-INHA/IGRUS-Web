@@ -73,6 +73,7 @@ public class SignupService {
             request.wishes(),
             request.gender(),
             request.grade(),
+            request.enrollmentStatus(),
             request.interests(),
             request.customInterest(),
             request.joinRoute(),

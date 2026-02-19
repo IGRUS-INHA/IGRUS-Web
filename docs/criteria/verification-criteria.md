@@ -241,6 +241,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 |------|----------|----------|--------|
 | 인증 코드 시도 횟수 | 1 ~ `maxAttempts` | `maxAttempts`회 (마지막 유효), `maxAttempts + 1`회 (초과) | 기본 5회 (`app.mail.verification-max-attempts`) |
 | 인증 코드 유효 시간 | 생성 ~ 만료 전 | 만료 직전 (유효), 만료 시점 (만료) | 기본 10분 (`app.mail.verification-code-expiry`) |
+| 인증 코드 재발송 이메일 | `PENDING_VERIFICATION` 상태 사용자의 이메일 | 가입 요청되지 않은 이메일 (거부), 이미 인증 완료된 이메일 (거부) | `VerificationEmailNotFoundException` |
 
 **특이 동작**:
 - 인증 코드 불일치 시, 시도 횟수 증가는 **별도 트랜잭션**(`EmailVerificationAttemptService.incrementAttempts()`)으로 처리
@@ -328,6 +329,7 @@ AI 생성 코드의 신뢰성은 **"문제 발생 시 원인을 추적할 수 �
 | `ChangeUserRoleService` | `회원 권한 변경 요청` | `회원 권한 변경 완료` | 토큰 만료 로그 별도 |
 | `SignupService` | `회원가입 요청: email` | `회원가입 완료, 이메일 인증 대기` | - |
 | `VerifyEmailService` | `이메일 인증 요청: email` | `이메일 인증 완료: email` | - |
+| `ResendVerificationService` | `인증 코드 재발송 요청: email` | `인증 코드 재발송 완료: email` | `가입 요청되지 않은 이메일로 재발송 시도`, `인증 코드 재발송 Rate Limit 초과` |
 
 ### 5-4. 토큰 무효화 추적
 

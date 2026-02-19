@@ -1,6 +1,8 @@
 package igrus.web.security.auth.common.service;
 
 import igrus.web.security.auth.common.exception.email.EmailSendFailedException;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -67,13 +70,23 @@ public class SmtpAuthEmailService implements AuthEmailService {
     public void sendPasswordResetEmail(String to, String resetLink) {
         log.debug("비밀번호 재설정 이메일 발송 시도: to={}", to);
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(to);
-        message.setSubject("[IGRUS] 비밀번호 재설정");
-        message.setText(buildPasswordResetEmailContent(resetLink));
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(to);
+            helper.setSubject("[IGRUS] 비밀번호 재설정");
+            helper.setText(buildPasswordResetEmailContent(resetLink), true);
 
-        sendEmail(message);
+            mailSender.send(mimeMessage);
+        } catch (MailException e) {
+            log.error("이메일 발송 실패: to={}, error={}", to, e.getMessage());
+            throw new EmailSendFailedException();
+        } catch (MessagingException e) {
+            log.error("이메일 작성 실패: to={}, error={}", to, e.getMessage());
+            throw new EmailSendFailedException();
+        }
+
         log.info("비밀번호 재설정 이메일 발송 완료: to={}", to);
     }
 
@@ -125,6 +138,48 @@ public class SmtpAuthEmailService implements AuthEmailService {
         log.error("환영 이메일 발송 최종 실패 (재시도 소진): to={}, name={}", to, name);
     }
 
+    @Async("emailTaskExecutor")
+    @Retryable(
+            retryFor = EmailSendFailedException.class,
+            maxAttempts = 4,
+            backoff = @Backoff(
+                    delay = 60000,
+                    multiplier = 3,
+                    maxDelay = 900000
+            )
+    )
+    @Override
+    public void sendTemporaryStudentIdEmail(String to, String name, String temporaryStudentId) {
+        log.debug("임시 학번 안내 이메일 발송 시도: to={}", to);
+
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(to);
+            helper.setSubject("[IGRUS] 임시 학번 안내");
+            helper.setText(buildTemporaryStudentIdEmailContent(name, temporaryStudentId), true);
+
+            mailSender.send(mimeMessage);
+        } catch (MailException e) {
+            log.error("이메일 발송 실패: to={}, error={}", to, e.getMessage());
+            throw new EmailSendFailedException();
+        } catch (MessagingException e) {
+            log.error("이메일 작성 실패: to={}, error={}", to, e.getMessage());
+            throw new EmailSendFailedException();
+        }
+
+        log.info("임시 학번 안내 이메일 발송 완료: to={}", to);
+    }
+
+    /**
+     * 임시 학번 안내 이메일 재시도 소진 시 복구 메서드
+     */
+    @Recover
+    public void recoverTemporaryStudentIdEmail(EmailSendFailedException e, String to, String name, String temporaryStudentId) {
+        log.error("임시 학번 안내 이메일 발송 최종 실패 (재시도 소진): to={}, name={}, tempStudentId={}", to, name, temporaryStudentId);
+    }
+
     private void sendEmail(SimpleMailMessage message) {
         try {
             mailSender.send(message);
@@ -152,18 +207,15 @@ public class SmtpAuthEmailService implements AuthEmailService {
 
     private String buildPasswordResetEmailContent(String resetLink) {
         return """
-            안녕하세요, IGRUS입니다.
-
-            비밀번호 재설정을 요청하셨습니다.
-            아래 링크를 클릭하여 비밀번호를 재설정해 주세요.
-
-            재설정 링크: %s
-
-            링크는 30분간 유효합니다.
-            본인이 요청하지 않은 경우 이 이메일을 무시해 주세요.
-
-            감사합니다.
-            IGRUS 드림
+            <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6;">
+                <p>안녕하세요, IGRUS입니다.</p>
+                <p>비밀번호 재설정을 요청하셨습니다.<br>
+                아래 링크를 클릭하여 비밀번호를 재설정해 주세요.</p>
+                <p><a href="%s" style="color: #1a73e8;">비밀번호 재설정하기</a></p>
+                <p>링크는 30분간 유효합니다.<br>
+                본인이 요청하지 않은 경우 이 이메일을 무시해 주세요.</p>
+                <p>감사합니다.<br>IGRUS 드림</p>
+            </div>
             """.formatted(resetLink);
     }
 
@@ -182,5 +234,21 @@ public class SmtpAuthEmailService implements AuthEmailService {
             감사합니다.
             IGRUS 드림
             """.formatted(name);
+    }
+
+    private String buildTemporaryStudentIdEmailContent(String name, String temporaryStudentId) {
+        return """
+            <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6;">
+                <p>안녕하세요, %s님!</p>
+                <p>IGRUS 회원가입이 요청되었습니다.<br>
+                학번이 아직 부여되지 않아 임시 학번이 발급되었습니다.</p>
+                <p style="font-size: 1.2em; font-weight: bold; color: #1a73e8;">
+                    임시 학번: %s
+                </p>
+                <p>위 임시 학번으로 로그인하실 수 있습니다.<br>
+                학번이 발급되면 <strong>마이페이지</strong>에서 실제 학번으로 변경해 주세요.</p>
+                <p>감사합니다.<br>IGRUS 드림</p>
+            </div>
+            """.formatted(name, temporaryStudentId);
     }
 }

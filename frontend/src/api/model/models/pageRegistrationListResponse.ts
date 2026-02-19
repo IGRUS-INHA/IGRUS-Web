@@ -40,7 +40,6 @@ import type { SortObject } from './sortObject';
 export interface PageRegistrationListResponse {
   totalElements?: number;
   totalPages?: number;
-  pageable?: PageableObject;
   size?: number;
   content?: RegistrationListResponse[];
   number?: number;
@@ -48,5 +47,6 @@ export interface PageRegistrationListResponse {
   first?: boolean;
   last?: boolean;
   numberOfElements?: number;
+  pageable?: PageableObject;
   empty?: boolean;
 }

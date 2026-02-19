@@ -12,6 +12,7 @@ import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.service.AccountStatusService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
@@ -22,6 +23,7 @@ import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
 import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
 import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
@@ -70,6 +72,9 @@ class PasswordAuthControllerSignupTest {
 
     @MockitoBean
     private SignupService signupService;
+
+    @MockitoBean
+    private TempStudentIdSignupService tempStudentIdSignupService;
 
     @MockitoBean
     private CheckDuplicateService checkDuplicateService;
@@ -134,6 +139,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -154,6 +160,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -174,6 +181,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -194,6 +202,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -214,6 +223,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -234,6 +244,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -254,6 +265,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -274,6 +286,7 @@ class PasswordAuthControllerSignupTest {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 privacyConsent
         );
     }

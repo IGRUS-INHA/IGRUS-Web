@@ -97,6 +97,11 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_grade", nullable = false)
     private Integer grade;
 
+    /** 재학 상태 (ENROLLED, GENERAL_LEAVE, MILITARY_LEAVE) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "users_enrollment_status", length = 30)
+    private EnrollmentStatus enrollmentStatus;
+
     /** 사용자 역할 (ASSOCIATE, MEMBER, OPERATOR, ADMIN). 기본값: ASSOCIATE */
     @Enumerated(EnumType.STRING)
     @Column(name = "users_role", nullable = false)
@@ -107,6 +112,10 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_status", nullable = false)
     private UserStatus status = UserStatus.PENDING_VERIFICATION;
 
+    /** 임시 학번 사용 여부 */
+    @Column(name = "users_has_temporary_student_id", nullable = false)
+    private boolean hasTemporaryStudentId = false;
+
     /** 사용자 직책 목록 (다대다 관계: 한 사용자가 여러 직책 보유 가능) */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserPosition> userPositions = new ArrayList<>();
@@ -116,6 +125,7 @@ public class User extends SoftDeletableEntity {
     public static User create(String studentId, String name, String email,
                               String phoneNumber, String department, String motivation,
                               List<Wish> wishes, Gender gender, int grade,
+                              EnrollmentStatus enrollmentStatus,
                               List<Interest> interests, String customInterest,
                               JoinRoute joinRoute, String customJoinRoute) {
         validateStudentId(studentId);
@@ -133,11 +143,28 @@ public class User extends SoftDeletableEntity {
         user.wishes = wishes != null ? new ArrayList<>(wishes) : new ArrayList<Wish>();
         user.gender = gender;
         user.grade = grade;
+        user.enrollmentStatus = enrollmentStatus;
         user.interests = interests != null ? new ArrayList<>(interests) : new ArrayList<Interest>();
         user.customInterest = customInterest;
         user.joinRoute = joinRoute;
         user.customJoinRoute = customJoinRoute;
         user.role = UserRole.ASSOCIATE;
+        return user;
+    }
+
+    /**
+     * 임시 학번으로 사용자를 생성합니다.
+     * 일반 create()와 동일하지만 hasTemporaryStudentId 플래그가 true로 설정됩니다.
+     */
+    public static User createWithTemporaryStudentId(String temporaryStudentId, String name, String email,
+                                                     String phoneNumber, String department, String motivation,
+                                                     List<Wish> wishes, Gender gender, int grade,
+                                                     EnrollmentStatus enrollmentStatus,
+                                                     List<Interest> interests, String customInterest,
+                                                     JoinRoute joinRoute, String customJoinRoute) {
+        User user = create(temporaryStudentId, name, email, phoneNumber, department, motivation,
+                wishes, gender, grade, enrollmentStatus, interests, customInterest, joinRoute, customJoinRoute);
+        user.hasTemporaryStudentId = true;
         return user;
     }
 
@@ -337,7 +364,7 @@ public class User extends SoftDeletableEntity {
     // === 프로필 수정 ===
 
     public void updateProfile(String name, String phoneNumber, String department,
-                              Gender gender, int grade) {
+                              Gender gender, int grade, EnrollmentStatus enrollmentStatus) {
         validateGrade(grade);
         this.name = name;
         validatePhoneNumber(phoneNumber);
@@ -345,6 +372,7 @@ public class User extends SoftDeletableEntity {
         this.department = department;
         this.gender = gender;
         this.grade = grade;
+        this.enrollmentStatus = enrollmentStatus;
     }
 
     public void updateMotivation(String motivation) {
@@ -359,6 +387,32 @@ public class User extends SoftDeletableEntity {
     public void updatePhoneNumber(String phoneNumber) {
         validatePhoneNumber(phoneNumber);
         this.phoneNumber = phoneNumber;
+    }
+
+    public void updateSurveyInfo(List<Wish> wishes, List<Interest> interests,
+                                  String customInterest, JoinRoute joinRoute, String customJoinRoute) {
+        this.wishes = wishes != null ? new ArrayList<>(wishes) : new ArrayList<>();
+        this.interests = interests != null ? new ArrayList<>(interests) : new ArrayList<>();
+        this.customInterest = customInterest;
+        this.joinRoute = joinRoute;
+        this.customJoinRoute = customJoinRoute;
+    }
+
+    // === 학번 변경 (임시 학번 → 실제 학번) ===
+
+    /**
+     * 임시 학번을 실제 학번으로 변경합니다.
+     * 새 학번은 99로 시작할 수 없습니다 (임시 학번 전용 대역).
+     *
+     * @param newStudentId 새 학번 (8자리 숫자, 99로 시작 불가)
+     */
+    public void updateStudentId(String newStudentId) {
+        validateStudentId(newStudentId);
+        if (newStudentId.startsWith("99")) {
+            throw new InvalidStudentIdException(newStudentId);
+        }
+        this.studentId = newStudentId;
+        this.hasTemporaryStudentId = false;
     }
 
 }

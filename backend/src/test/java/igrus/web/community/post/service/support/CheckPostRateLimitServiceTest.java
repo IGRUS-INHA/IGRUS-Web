@@ -2,6 +2,7 @@ package igrus.web.community.post.service.support;
 
 import igrus.web.community.post.exception.PostRateLimitExceededException;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +44,7 @@ class CheckPostRateLimitServiceTest {
 
     @BeforeEach
     void setUp() {
-        testUser = User.create("20200001", "테스트유저", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, List.of(), null, null, null);
+        testUser = User.create("20200001", "테스트유저", "test@inha.edu", "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, null, null);
         testUser.changeRole(UserRole.MEMBER);
         testUser.verifyEmail();
         ReflectionTestUtils.setField(testUser, "id", 1L);

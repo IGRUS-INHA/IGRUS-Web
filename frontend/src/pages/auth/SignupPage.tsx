@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +21,7 @@ import {
   ExternalLink,
   Wallet,
   AlertTriangle,
+  Info,
 } from 'lucide-react';
 import { useSignup } from '@/api/model/password-authentication/password-authentication';
 import { majorOptions } from '@/constants/majorOptions';
@@ -28,12 +29,21 @@ import { domainOptions } from '@/constants/domainOptions';
 import { WISH_TITLE, wishOptions, wishToEnum } from '@/constants/wishOptions';
 import { INTEREST_TITLE, interestOptions, interestToEnum } from '@/constants/interestOptions';
 import { JOIN_ROUTE_TITLE, joinRouteOptions, joinRouteToEnum } from '@/constants/joinRouteOptions';
-import { ENROLLMENT_STATUS_TITLE, enrollmentStatusOptions } from '@/constants/enrollmentStatusOptions';
+import { ENROLLMENT_STATUS_TITLE, enrollmentStatusOptions, enrollmentStatusToEnum } from '@/constants/enrollmentStatusOptions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/utils';
 import { getErrorMessage, hasErrorCode } from '@/utils/error';
+import { useSignupDuplicateCheck } from '@/hooks';
+import { customFetch } from '@/api/client';
+
+// --- 임시 학번 기간 체크 ---
+
+const isTempStudentIdPeriod = (() => {
+  const month = new Date().getMonth() + 1;
+  return month === 1 || month === 2;
+})();
 
 // --- Zod Schema ---
 
@@ -66,7 +76,7 @@ const signupSchema = z
     phoneNumber: z
       .string()
       .min(1, '전화번호를 입력해주세요.')
-      .regex(/^\d{10,11}$/, '올바른 전화번호를 입력해주세요.'),
+      .regex(/^\d{3}-\d{4}-\d{4}$/, '올바른 전화번호를 입력해주세요.'),
     department: z.string().min(1, '학과를 선택해주세요.'),
     password: z
       .string()
@@ -89,6 +99,10 @@ const signupSchema = z
     termsConsent: z.literal(true, {
       message: '이용약관에 동의해주세요.',
     }),
+  })
+  .refine((data) => data.password === data.passwordConfirm, {
+    message: '비밀번호가 일치하지 않습니다.',
+    path: ['passwordConfirm'],
   });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -121,7 +135,19 @@ export default function SignupPage() {
   const [serverError, setServerError] = useState<string>();
   const [passwordConfirmTouched, setPasswordConfirmTouched] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [useTempStudentId, setUseTempStudentId] = useState(false);
   const signupMutation = useSignup();
+  const {
+    studentId: studentIdCheck,
+    email: emailCheck,
+    phoneNumber: phoneNumberCheck,
+    checkStudentId,
+    checkEmail,
+    checkPhoneNumber,
+    resetStudentId,
+    resetEmail,
+    resetPhoneNumber,
+  } = useSignupDuplicateCheck();
 
   const {
     register,
@@ -160,10 +186,26 @@ export default function SignupPage() {
     mode: 'onTouched',
   });
 
+  const watchedPassword = watch('password');
   const selectedWishes = watch('wishes') ?? [];
   const selectedInterests = watch('interests') ?? [];
   const selectedJoinRoute = watch('joinRoute') ?? '';
   const emailDomain = watch('emailDomain');
+  const watchedGrade = watch('grade');
+
+  // 학년 변경 시 임시 학번 체크 해제
+  useEffect(() => {
+    if (watchedGrade !== 1) {
+      setUseTempStudentId(false);
+    }
+  }, [watchedGrade]);
+
+  // 비밀번호 변경 시 비밀번호 확인 필드 재검증
+  useEffect(() => {
+    if (passwordConfirmTouched) {
+      trigger('passwordConfirm');
+    }
+  }, [watchedPassword, passwordConfirmTouched, trigger]);
 
   const handleWishToggle = (wish: string) => {
     const current = getValues('wishes') ?? [];
@@ -201,16 +243,71 @@ export default function SignupPage() {
     }
   };
 
+  const composeEmail = () => {
+    const local = getValues('emailLocal');
+    const domain = getValues('emailDomain');
+    const custom = getValues('customDomain');
+    const fullDomain = domain === 'custom' ? custom : domain;
+    if (local && fullDomain) return `${local}@${fullDomain}`;
+    return '';
+  };
+
   const handleNext = async () => {
-    const fields = STEP_FIELDS[step];
-    const valid = await trigger(fields);
-    if (valid) {
-      const nextStep = step + 1;
-      if (nextStep < STEP_FIELDS.length) {
-        clearErrors(STEP_FIELDS[nextStep]);
+    const fields = STEP_FIELDS[step] ?? [];
+    // 임시 학번 사용 시 studentId 검증 건너뜀
+    const fieldsToValidate = (step === 0 && useTempStudentId)
+      ? fields.filter((f) => f !== 'studentId')
+      : fields;
+    const valid = await trigger(fieldsToValidate);
+    if (!valid) return;
+
+    // Step 0: 학번 중복 체크 확인 (임시 학번 사용 시 건너뜀)
+    if (step === 0 && !useTempStudentId) {
+      const studentIdValue = getValues('studentId');
+      if (/^\d{8}$/.test(studentIdValue)) {
+        if (!studentIdCheck.isChecked) {
+          checkStudentId(studentIdValue);
+          return;
+        }
+        if (studentIdCheck.isDuplicate) {
+          setError('studentId', { message: studentIdCheck.message ?? '이미 가입된 학번입니다.' });
+          return;
+        }
       }
-      setStep((s) => Math.min(s + 1, STEPS.length - 1));
     }
+
+    // Step 1: 이메일, 전화번호 중복 체크 확인
+    if (step === 1) {
+      const fullEmail = composeEmail();
+      if (fullEmail) {
+        if (!emailCheck.isChecked) {
+          checkEmail(fullEmail);
+          return;
+        }
+        if (emailCheck.isDuplicate) {
+          setError('emailLocal', { message: emailCheck.message ?? '이미 존재하는 이메일입니다.' });
+          return;
+        }
+      }
+
+      const phoneValue = getValues('phoneNumber');
+      if (/^\d{3}-\d{4}-\d{4}$/.test(phoneValue)) {
+        if (!phoneNumberCheck.isChecked) {
+          checkPhoneNumber(phoneValue);
+          return;
+        }
+        if (phoneNumberCheck.isDuplicate) {
+          setError('phoneNumber', { message: phoneNumberCheck.message ?? '이미 등록된 전화번호입니다.' });
+          return;
+        }
+      }
+    }
+
+    const nextStep = step + 1;
+    if (nextStep < STEP_FIELDS.length) {
+      clearErrors(STEP_FIELDS[nextStep]);
+    }
+    setStep((s) => Math.min(s + 1, STEPS.length - 1));
   };
 
   const handlePrev = () => {
@@ -228,34 +325,70 @@ export default function SignupPage() {
         data.emailDomain === 'custom' ? data.customDomain : data.emailDomain;
       const fullEmail = `${data.emailLocal}@${domain}`;
 
-      await signupMutation.mutateAsync({
-        data: {
-          studentId: data.studentId,
-          password: data.password,
-          name: data.name,
-          email: fullEmail,
-          phoneNumber: formatPhoneNumber(data.phoneNumber),
-          department: data.department,
-          motivation: data.motivation || undefined,
-          gender: data.gender!,
-          grade: data.grade!,
-          wishes: data.wishes
-            .map((w) => wishToEnum[w])
-            .filter(Boolean),
-          interests: data.interests
-            .map((i) => interestToEnum[i])
-            .filter(Boolean),
-          customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
-          joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
-          customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,
-          privacyConsent: data.privacyConsent,
-        },
-      });
+      if (useTempStudentId) {
+        // 임시 학번 회원가입
+        const result = await customFetch<{ data: { temporaryStudentId?: string; email?: string } }>(
+          '/api/v1/auth/password/signup/temporary',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              password: data.password,
+              name: data.name,
+              email: fullEmail,
+              phoneNumber: formatPhoneNumber(data.phoneNumber),
+              department: data.department,
+              motivation: data.motivation || undefined,
+              gender: data.gender!,
+              grade: data.grade!,
+              enrollmentStatus: enrollmentStatusToEnum[data.enrollmentStatus],
+              wishes: data.wishes.map((w) => wishToEnum[w]).filter(Boolean),
+              interests: data.interests.map((i) => interestToEnum[i]).filter(Boolean),
+              customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
+              joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
+              customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,
+              privacyConsent: data.privacyConsent,
+            }),
+          },
+        );
 
-      alert(
-        '회원가입이 완료되었습니다!\n\n입력하신 이메일로 인증 메일이 발송되었습니다.\n이메일 인증 페이지로 이동합니다.',
-      );
-      navigate('/verify-email', { state: { email: fullEmail } });
+        const tempId = result.data.temporaryStudentId;
+        alert(
+          `회원가입이 완료되었습니다!\n\n임시 학번 [${tempId}]이 발급되었습니다.\n입력하신 이메일로 인증 메일과 임시 학번 안내가 발송되었습니다.\n이메일 인증 페이지로 이동합니다.`,
+        );
+        navigate('/verify-email', { state: { email: fullEmail } });
+      } else {
+        // 일반 회원가입
+        await signupMutation.mutateAsync({
+          data: {
+            studentId: data.studentId,
+            password: data.password,
+            name: data.name,
+            email: fullEmail,
+            phoneNumber: formatPhoneNumber(data.phoneNumber),
+            department: data.department,
+            motivation: data.motivation || undefined,
+            gender: data.gender!,
+            grade: data.grade!,
+            enrollmentStatus: enrollmentStatusToEnum[data.enrollmentStatus],
+            wishes: data.wishes
+              .map((w) => wishToEnum[w])
+              .filter(Boolean),
+            interests: data.interests
+              .map((i) => interestToEnum[i])
+              .filter(Boolean),
+            customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
+            joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
+            customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,
+            privacyConsent: data.privacyConsent,
+          },
+        });
+
+        alert(
+          '회원가입이 완료되었습니다!\n\n입력하신 이메일로 인증 메일이 발송되었습니다.\n이메일 인증 페이지로 이동합니다.',
+        );
+        navigate('/verify-email', { state: { email: fullEmail } });
+      }
     } catch (error: unknown) {
       if (hasErrorCode(error, 'DUPLICATE_STUDENT_ID')) {
         setStep(0);
@@ -266,6 +399,8 @@ export default function SignupPage() {
       } else if (hasErrorCode(error, 'DUPLICATE_PHONE_NUMBER')) {
         setStep(1);
         setError('phoneNumber', { message: '이미 등록된 전화번호입니다.' });
+      } else if (hasErrorCode(error, 'TEMP_STUDENT_ID_NOT_AVAILABLE')) {
+        setServerError('임시 학번 발급은 1월~2월에만 가능합니다.');
       } else {
         setServerError(getErrorMessage(error));
       }
@@ -310,10 +445,19 @@ export default function SignupPage() {
 
             <div className="flex items-start gap-s2 mb-s5 rounded-r2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-s3">
               <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-700 dark:text-amber-400">
+              <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
                 입금자명 양식을 지키지 않으실 경우, 회비 납부 명단에서 누락될 수 있습니다.
                 <br />
                 정확한 형식으로 입금해 주시기 바랍니다.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-s2 mb-s5 rounded-r2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-s3">
+              <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                입금 후 반드시 회원가입과 이메일 인증까지 완료해 주세요.
+                <br />
+                회원가입 또는 이메일 인증이 완료되지 않으면 가입이 정상 처리되지 않습니다.
               </p>
             </div>
 
@@ -416,20 +560,75 @@ export default function SignupPage() {
           <form onSubmit={(e) => e.preventDefault()}>
             {/* Step 1: 기본 정보 */}
             <div className={cn('space-y-s4', step !== 0 && 'hidden')}>
-              <FormField label="학번" error={errors.studentId?.message}>
-                <div className="relative">
-                  <User
-                    size={18}
-                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              {!useTempStudentId && (
+                <FormField
+                  label="학번"
+                  error={errors.studentId?.message || (studentIdCheck.isDuplicate ? studentIdCheck.message : undefined)}
+                  success={studentIdCheck.isAvailable ? studentIdCheck.message : undefined}
+                >
+                  <div className="relative">
+                    <User
+                      size={18}
+                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      {...register('studentId', {
+                        onBlur: () => {
+                          const value = getValues('studentId');
+                          if (/^\d{8}$/.test(value)) {
+                            checkStudentId(value);
+                          }
+                        },
+                        onChange: () => {
+                          resetStudentId();
+                        },
+                      })}
+                      placeholder="12345678"
+                      maxLength={8}
+                      className={cn('pl-10', (studentIdCheck.isChecking || studentIdCheck.isAvailable) && 'pr-10')}
+                    />
+                    {studentIdCheck.isChecking && (
+                      <Loader2 size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
+                    )}
+                    {studentIdCheck.isAvailable && !studentIdCheck.isChecking && (
+                      <Check size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 text-green-600" />
+                    )}
+                  </div>
+                </FormField>
+              )}
+
+              {isTempStudentIdPeriod && (
+                <label className="flex items-center gap-s3 cursor-pointer group rounded-r2 border border-border p-s3">
+                  <input
+                    type="checkbox"
+                    checked={useTempStudentId}
+                    onChange={(e) => {
+                      setUseTempStudentId(e.target.checked);
+                      if (e.target.checked) {
+                        setValue('studentId', '');
+                        clearErrors('studentId');
+                        resetStudentId();
+                        setValue('grade', 1, { shouldValidate: true });
+                      }
+                    }}
+                    className="cursor-pointer accent-primary"
                   />
-                  <Input
-                    {...register('studentId')}
-                    placeholder="12345678"
-                    maxLength={8}
-                    className="pl-10"
-                  />
+                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                    신입생이라서 아직 학번이 나오지 않았어요
+                  </span>
+                </label>
+              )}
+
+              {useTempStudentId && (
+                <div className="flex items-start gap-s2 rounded-r2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-s3">
+                  <Info size={16} className="text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-blue-700 dark:text-blue-400">
+                    임시 학번이 자동으로 발급되어 이메일로 전송됩니다.
+                    <br />
+                    학번이 나오면 <strong>마이페이지</strong>에서 실제 학번으로 변경해주세요.
+                  </p>
                 </div>
-              </FormField>
+              )}
 
               <FormField label="이름" error={errors.name?.message}>
                 <div className="relative">
@@ -554,7 +753,8 @@ export default function SignupPage() {
             <div className={cn('space-y-s4', step !== 1 && 'hidden')}>
               <FormField
                 label="이메일"
-                error={errors.emailLocal?.message || errors.customDomain?.message}
+                error={errors.emailLocal?.message || errors.customDomain?.message || (emailCheck.isDuplicate ? emailCheck.message : undefined)}
+                success={emailCheck.isAvailable ? emailCheck.message : undefined}
               >
                 <div className="flex items-center gap-s2">
                   <div className="relative flex-1">
@@ -563,7 +763,15 @@ export default function SignupPage() {
                       className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
                     />
                     <Input
-                      {...register('emailLocal')}
+                      {...register('emailLocal', {
+                        onBlur: () => {
+                          const fullEmail = composeEmail();
+                          if (fullEmail) checkEmail(fullEmail);
+                        },
+                        onChange: () => {
+                          resetEmail();
+                        },
+                      })}
                       placeholder="아이디"
                       className="pl-10"
                     />
@@ -571,15 +779,26 @@ export default function SignupPage() {
                   <span className="text-muted-foreground font-bold shrink-0">@</span>
                   <div className="relative flex-1">
                     <select
-                      {...register('emailDomain')}
+                      {...register('emailDomain', {
+                        onChange: () => {
+                          resetEmail();
+                          // 도메인이 커스텀이 아니고 로컬파트가 있으면 즉시 체크
+                          setTimeout(() => {
+                            const fullEmail = composeEmail();
+                            if (fullEmail && getValues('emailDomain') !== 'custom') {
+                              checkEmail(fullEmail);
+                            }
+                          }, 0);
+                        },
+                      })}
                       className={cn(
-                        'w-full h-9 rounded-r2 border border-input bg-transparent px-s3 text-sm',
+                        'w-full h-9 rounded-r2 border border-input bg-background text-foreground px-s3 text-sm',
                         'appearance-none cursor-pointer transition-all outline-none',
                         'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
                       )}
                     >
                       {domainOptions.map((d) => (
-                        <option key={d.value} value={d.value}>
+                        <option key={d.value} value={d.value} className="bg-background text-foreground">
                           {d.label}
                         </option>
                       ))}
@@ -599,14 +818,31 @@ export default function SignupPage() {
                         }
                         return true;
                       },
+                      onBlur: () => {
+                        const fullEmail = composeEmail();
+                        if (fullEmail) checkEmail(fullEmail);
+                      },
+                      onChange: () => {
+                        resetEmail();
+                      },
                     })}
                     placeholder="도메인 입력 (예: example.com)"
                     className="mt-s2"
                   />
                 )}
+                {emailCheck.isChecking && (
+                  <div className="flex items-center gap-s1 mt-s1">
+                    <Loader2 size={14} className="animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">확인 중...</span>
+                  </div>
+                )}
               </FormField>
 
-              <FormField label="전화번호" error={errors.phoneNumber?.message}>
+              <FormField
+                label="전화번호"
+                error={errors.phoneNumber?.message || (phoneNumberCheck.isDuplicate ? phoneNumberCheck.message : undefined)}
+                success={phoneNumberCheck.isAvailable ? phoneNumberCheck.message : undefined}
+              >
                 <div className="relative">
                   <Phone
                     size={18}
@@ -614,15 +850,28 @@ export default function SignupPage() {
                   />
                   <Input
                     {...register('phoneNumber', {
+                      onBlur: () => {
+                        const value = getValues('phoneNumber');
+                        if (/^\d{3}-\d{4}-\d{4}$/.test(value)) {
+                          checkPhoneNumber(value);
+                        }
+                      },
                       onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                         const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-                        setValue('phoneNumber', digits);
+                        setValue('phoneNumber', formatPhoneNumber(digits));
+                        resetPhoneNumber();
                       },
                     })}
-                    placeholder="01012345678"
-                    maxLength={11}
-                    className="pl-10"
+                    placeholder="010-1234-5678"
+                    maxLength={13}
+                    className={cn('pl-10', (phoneNumberCheck.isChecking || phoneNumberCheck.isAvailable) && 'pr-10')}
                   />
+                  {phoneNumberCheck.isChecking && (
+                    <Loader2 size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
+                  )}
+                  {phoneNumberCheck.isAvailable && !phoneNumberCheck.isChecking && (
+                    <Check size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 text-green-600" />
+                  )}
                 </div>
               </FormField>
 
@@ -635,17 +884,17 @@ export default function SignupPage() {
                   <select
                     {...register('department')}
                     className={cn(
-                      'w-full h-9 rounded-r2 border border-input bg-transparent pl-10 pr-10 text-sm',
+                      'w-full h-9 rounded-r2 border border-input bg-background text-foreground pl-10 pr-10 text-sm',
                       'appearance-none cursor-pointer transition-all outline-none',
                       'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
                       !watch('department') && 'text-muted-foreground',
                     )}
                   >
-                    <option value="">학과를 선택하세요</option>
+                    <option value="" className="bg-background text-foreground">학과를 선택하세요</option>
                     {majorOptions.map((college) => (
                       <optgroup key={college.title} label={college.title}>
                         {college.items.map((dept) => (
-                          <option key={dept.key} value={dept.value}>
+                          <option key={dept.key} value={dept.value} className="bg-background text-foreground">
                             {dept.value}
                           </option>
                         ))}
@@ -710,12 +959,6 @@ export default function SignupPage() {
                       onBlur: () => {
                         setPasswordConfirmTouched(true);
                         trigger('passwordConfirm');
-                      },
-                      validate: (value) => {
-                        if (value && value !== getValues('password')) {
-                          return '비밀번호가 일치하지 않습니다.';
-                        }
-                        return true;
                       },
                     })}
                     type={showPasswordConfirm ? 'text' : 'password'}
@@ -886,7 +1129,13 @@ export default function SignupPage() {
                 <Button
                   type="button"
                   disabled={isSubmitting}
-                  onClick={() => { setSubmitted(true); handleSubmit(onSubmit)(); }}
+                  onClick={() => {
+                    setSubmitted(true);
+                    if (useTempStudentId) {
+                      setValue('studentId', '00000000');
+                    }
+                    handleSubmit(onSubmit)();
+                  }}
                   className="flex-1 cursor-pointer"
                 >
                   {isSubmitting ? (

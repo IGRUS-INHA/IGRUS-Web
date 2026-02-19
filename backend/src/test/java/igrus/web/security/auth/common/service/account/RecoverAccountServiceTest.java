@@ -6,6 +6,7 @@ import igrus.web.security.auth.common.exception.account.AccountNotRecoverableExc
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -52,6 +53,7 @@ class RecoverAccountServiceTest extends ServiceIntegrationTestBase {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(role);
@@ -76,6 +78,7 @@ class RecoverAccountServiceTest extends ServiceIntegrationTestBase {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(role);
@@ -265,6 +268,7 @@ class RecoverAccountServiceTest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.OPERATOR);
@@ -305,6 +309,7 @@ class RecoverAccountServiceTest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.ADMIN);

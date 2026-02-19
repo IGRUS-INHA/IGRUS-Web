@@ -33,6 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: v1.0.0
  */
+import type { PasswordSignupRequestEnrollmentStatus } from './passwordSignupRequestEnrollmentStatus';
 import type { PasswordSignupRequestGender } from './passwordSignupRequestGender';
 import type { PasswordSignupRequestInterestsItem } from './passwordSignupRequestInterestsItem';
 import type { PasswordSignupRequestJoinRoute } from './passwordSignupRequestJoinRoute';
@@ -113,6 +114,8 @@ export interface PasswordSignupRequest {
    * @minimum 1
    */
   grade: number;
+  /** 재학 상태 */
+  enrollmentStatus: PasswordSignupRequestEnrollmentStatus;
   /** 개인정보 처리방침 동의 여부 */
   privacyConsent: boolean;
 }

@@ -56,6 +56,7 @@ import type {
   AccountRecoveryRequest,
   AccountRecoveryResponse,
   CheckEmailDuplicateParams,
+  CheckPhoneNumberDuplicateParams,
   CheckReRegistrationEligibilityParams,
   CheckRecoveryEligibilityParams,
   CheckStudentIdDuplicateParams,
@@ -70,6 +71,7 @@ import type {
   ReRegistrationCheckResult,
   RecoveryEligibilityResponse,
   ResendVerificationRequest,
+  TemporaryStudentIdSignupRequest,
   TokenRefreshResponse,
   ValidateResetTokenParams,
   VerificationResendResponse
@@ -271,6 +273,101 @@ export const useSignup = <TError = PasswordSignupResponse,
         TContext
       > => {
       return useMutation(getSignupMutationOptions(options), queryClient);
+    }
+    /**
+ * 1~2월에 1학년 신입생이 임시 학번으로 회원가입합니다. 임시 학번이 자동 발급되어 이메일로 전송됩니다.
+ * @summary 임시 학번 회원가입
+ */
+export type signupWithTemporaryStudentIdResponse201 = {
+  data: PasswordSignupResponse
+  status: 201
+}
+
+export type signupWithTemporaryStudentIdResponse400 = {
+  data: PasswordSignupResponse
+  status: 400
+}
+
+export type signupWithTemporaryStudentIdResponse409 = {
+  data: PasswordSignupResponse
+  status: 409
+}
+    
+export type signupWithTemporaryStudentIdResponseSuccess = (signupWithTemporaryStudentIdResponse201) & {
+  headers: Headers;
+};
+export type signupWithTemporaryStudentIdResponseError = (signupWithTemporaryStudentIdResponse400 | signupWithTemporaryStudentIdResponse409) & {
+  headers: Headers;
+};
+
+export type signupWithTemporaryStudentIdResponse = (signupWithTemporaryStudentIdResponseSuccess | signupWithTemporaryStudentIdResponseError)
+
+export const getSignupWithTemporaryStudentIdUrl = () => {
+
+
+  
+
+  return `/api/v1/auth/password/signup/temporary`
+}
+
+export const signupWithTemporaryStudentId = async (temporaryStudentIdSignupRequest: TemporaryStudentIdSignupRequest, options?: RequestInit): Promise<signupWithTemporaryStudentIdResponse> => {
+  
+  return customFetch<signupWithTemporaryStudentIdResponse>(getSignupWithTemporaryStudentIdUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      temporaryStudentIdSignupRequest,)
+  }
+);}
+
+
+
+
+export const getSignupWithTemporaryStudentIdMutationOptions = <TError = PasswordSignupResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: TemporaryStudentIdSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: TemporaryStudentIdSignupRequest}, TContext> => {
+
+const mutationKey = ['signupWithTemporaryStudentId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, {data: TemporaryStudentIdSignupRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  signupWithTemporaryStudentId(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SignupWithTemporaryStudentIdMutationResult = NonNullable<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>>
+    export type SignupWithTemporaryStudentIdMutationBody = TemporaryStudentIdSignupRequest
+    export type SignupWithTemporaryStudentIdMutationError = PasswordSignupResponse
+
+    /**
+ * @summary 임시 학번 회원가입
+ */
+export const useSignupWithTemporaryStudentId = <TError = PasswordSignupResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: TemporaryStudentIdSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof signupWithTemporaryStudentId>>,
+        TError,
+        {data: TemporaryStudentIdSignupRequest},
+        TContext
+      > => {
+      return useMutation(getSignupWithTemporaryStudentIdMutationOptions(options), queryClient);
     }
     /**
  * 학번을 입력하여 비밀번호 재설정 링크를 이메일로 발송합니다. 보안상 존재하지 않는 학번도 동일한 응답을 반환합니다.
@@ -1176,6 +1273,136 @@ export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof che
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCheckStudentIdDuplicateQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
+ * 전화번호의 유효성 검사 및 중복 여부를 확인합니다.
+ * @summary 전화번호 중복 체크
+ */
+export type checkPhoneNumberDuplicateResponse200 = {
+  data: DuplicateCheckResponse
+  status: 200
+}
+
+export type checkPhoneNumberDuplicateResponse400 = {
+  data: DuplicateCheckResponse
+  status: 400
+}
+
+export type checkPhoneNumberDuplicateResponse409 = {
+  data: DuplicateCheckResponse
+  status: 409
+}
+    
+export type checkPhoneNumberDuplicateResponseSuccess = (checkPhoneNumberDuplicateResponse200) & {
+  headers: Headers;
+};
+export type checkPhoneNumberDuplicateResponseError = (checkPhoneNumberDuplicateResponse400 | checkPhoneNumberDuplicateResponse409) & {
+  headers: Headers;
+};
+
+export type checkPhoneNumberDuplicateResponse = (checkPhoneNumberDuplicateResponseSuccess | checkPhoneNumberDuplicateResponseError)
+
+export const getCheckPhoneNumberDuplicateUrl = (params: CheckPhoneNumberDuplicateParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/auth/password/check-phone-number?${stringifiedParams}` : `/api/v1/auth/password/check-phone-number`
+}
+
+export const checkPhoneNumberDuplicate = async (params: CheckPhoneNumberDuplicateParams, options?: RequestInit): Promise<checkPhoneNumberDuplicateResponse> => {
+  
+  return customFetch<checkPhoneNumberDuplicateResponse>(getCheckPhoneNumberDuplicateUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getCheckPhoneNumberDuplicateQueryKey = (params?: CheckPhoneNumberDuplicateParams,) => {
+    return [
+    `/api/v1/auth/password/check-phone-number`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getCheckPhoneNumberDuplicateQueryOptions = <TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(params: CheckPhoneNumberDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckPhoneNumberDuplicateQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>> = ({ signal }) => checkPhoneNumberDuplicate(params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckPhoneNumberDuplicateQueryResult = NonNullable<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>>
+export type CheckPhoneNumberDuplicateQueryError = DuplicateCheckResponse
+
+
+export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckPhoneNumberDuplicateParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>,
+          TError,
+          Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckPhoneNumberDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>,
+          TError,
+          Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckPhoneNumberDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary 전화번호 중복 체크
+ */
+
+export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(
+ params: CheckPhoneNumberDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCheckPhoneNumberDuplicateQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -2,6 +2,7 @@ package igrus.web.security.auth.common.service.account;
 
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,7 @@ class CheckReRegistrationEligibilityServiceTest extends ServiceIntegrationTestBa
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(role);
@@ -68,6 +70,7 @@ class CheckReRegistrationEligibilityServiceTest extends ServiceIntegrationTestBa
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(role);

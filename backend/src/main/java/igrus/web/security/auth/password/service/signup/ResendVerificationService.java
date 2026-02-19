@@ -4,9 +4,12 @@ import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.security.auth.common.service.AuthEmailService;
+import igrus.web.security.auth.common.exception.verification.VerificationEmailNotFoundException;
 import igrus.web.security.auth.common.exception.verification.VerificationResendRateLimitedException;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.security.auth.password.service.support.VerificationCodeGenerator;
+import igrus.web.user.domain.UserStatus;
+import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +25,7 @@ import java.time.Instant;
 public class ResendVerificationService {
 
     private final EmailVerificationRepository emailVerificationRepository;
+    private final UserRepository userRepository;
     private final AuthEmailService authEmailService;
     private final VerificationCodeGenerator verificationCodeGenerator;
 
@@ -40,6 +44,12 @@ public class ResendVerificationService {
      */
     public VerificationResendResponse resendVerification(ResendVerificationRequest request) {
         log.info("인증 코드 재발송 요청: email={}", request.email());
+
+        // 가입 요청 이메일 일치 여부 검증: PENDING_VERIFICATION 상태 사용자 존재 확인
+        if (!userRepository.existsByEmailAndStatus(request.email(), UserStatus.PENDING_VERIFICATION)) {
+            log.warn("가입 요청되지 않은 이메일로 재발송 시도: email={}", request.email());
+            throw new VerificationEmailNotFoundException();
+        }
 
         // Rate Limiting 체크: 1분 내 재발송 기록 확인
         Instant cutoffTime = Instant.now().minusSeconds(resendRateLimitSeconds);

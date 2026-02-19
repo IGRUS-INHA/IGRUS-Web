@@ -2,6 +2,7 @@ package igrus.web.security.auth.common.repository;
 
 import igrus.web.security.auth.common.domain.PrivacyConsent;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -74,7 +75,7 @@ class PrivacyConsentRepositoryTest {
 
     private User createAndSaveUser(String studentId, String email) {
         return transactionTemplate.execute(status -> {
-            User user = User.create(studentId, "홍길동", email, "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, List.of(), null, null, null);
+            User user = User.create(studentId, "홍길동", email, "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, null, null);
             return userRepository.save(user);
         });
     }

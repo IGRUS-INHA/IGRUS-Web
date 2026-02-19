@@ -5,6 +5,7 @@ import igrus.web.security.auth.common.exception.account.AccountSuspendedExceptio
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.exception.UserNotFoundException;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -80,7 +82,8 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
 
             // when & then
             assertThatThrownBy(() -> accountStatusService.validateAccountStatus(userId))
-                    .isInstanceOf(EmailNotVerifiedException.class);
+                    .isInstanceOf(EmailNotVerifiedException.class)
+                    .satisfies(ex -> assertThat(((EmailNotVerifiedException) ex).getEmail()).isEqualTo("pending@inha.edu"));
         }
 
         @Test
@@ -132,6 +135,7 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(UserRole.ASSOCIATE);
@@ -153,6 +157,7 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 List.of(),
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
         user.changeRole(UserRole.ASSOCIATE);

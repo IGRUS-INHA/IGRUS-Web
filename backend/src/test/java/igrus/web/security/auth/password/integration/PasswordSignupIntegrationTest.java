@@ -22,6 +22,7 @@ import igrus.web.security.auth.password.service.signup.ResendVerificationService
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
@@ -110,6 +111,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -130,6 +132,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -150,6 +153,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -170,6 +174,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                 null,
                 Gender.MALE,
                 1,
+                EnrollmentStatus.ENROLLED,
                 true
         );
     }
@@ -422,6 +427,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             userRepository.save(existingUser);
@@ -476,6 +482,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     List.of(),
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     List.of(), null, null, null
             );
             userRepository.save(existingUser);
@@ -644,6 +651,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[REG-044] 인증 코드 재발송 시 1분 대기")
         void resendVerification_withinRateLimit_throwsException() {
             // given
+            createAndSaveUnverifiedUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
             EmailVerification recentVerification = EmailVerification.create(VALID_EMAIL, "111111", 600000L);
             emailVerificationRepository.save(recentVerification);
 
@@ -659,7 +667,8 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         @Test
         @DisplayName("[REG-045] 1분 경과 후 인증 코드 재발송 성공")
         void resendVerification_afterRateLimit_succeeds() {
-            // given - 레코드 없이 테스트 (이전 인증 요청이 없는 경우)
+            // given
+            createAndSaveUnverifiedUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             // when
@@ -680,6 +689,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[REG-045] 재발송 시 기존 미인증 레코드 삭제 후 새 레코드 생성")
         void resendVerification_deletesOldRecord_createsNew() {
             // given
+            createAndSaveUnverifiedUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
             EmailVerification oldVerification = EmailVerification.create(VALID_EMAIL, "111111", 600000L);
             emailVerificationRepository.save(oldVerification);
 
@@ -715,6 +725,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[REG-045] 재발송 시 새로운 6자리 인증 코드 생성")
         void resendVerification_generatesNewCode() {
             // given
+            createAndSaveUnverifiedUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
             ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -732,6 +743,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[REG-045] 인증 코드 재발송 시도 횟수가 초기화됨")
         void resendVerification_resetsAttemptCount() {
             // given - 시도 횟수가 누적된 상태로 재발송
+            createAndSaveUnverifiedUser(VALID_STUDENT_ID, VALID_EMAIL, UserRole.ASSOCIATE);
             EmailVerification oldVerification = EmailVerification.create(VALID_EMAIL, "111111", 600000L);
             oldVerification.incrementAttempts();
             oldVerification.incrementAttempts();
@@ -890,6 +902,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     null,
                     Gender.MALE,
                     1,
+                    EnrollmentStatus.ENROLLED,
                     true
             );
 
@@ -913,7 +926,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     interests, customInterest,
                     joinRoute, customJoinRoute,
-                    Gender.MALE, 1, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
             );
         }
 

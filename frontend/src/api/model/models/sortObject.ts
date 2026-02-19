@@ -35,7 +35,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export interface SortObject {
-  sorted?: boolean;
   empty?: boolean;
+  sorted?: boolean;
   unsorted?: boolean;
 }

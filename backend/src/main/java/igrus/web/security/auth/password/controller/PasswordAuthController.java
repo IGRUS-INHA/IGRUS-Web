@@ -19,6 +19,7 @@ import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordResetConfirmRequest;
 import igrus.web.security.auth.password.dto.request.PasswordResetRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
+import igrus.web.security.auth.password.dto.request.TemporaryStudentIdSignupRequest;
 import igrus.web.security.auth.password.dto.response.DuplicateCheckResponse;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
@@ -34,6 +35,7 @@ import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
 import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
+import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -81,6 +83,7 @@ public class PasswordAuthController {
     private final CheckReRegistrationEligibilityService checkReRegistrationEligibilityService;
     private final CheckRecoveryEligibilityService checkRecoveryEligibilityService;
     private final RecoverAccountService recoverAccountService;
+    private final TempStudentIdSignupService tempStudentIdSignupService;
     private final CookieUtil cookieUtil;
 
     @Operation(summary = "로그인", description = "학번과 비밀번호로 로그인합니다.")
@@ -241,6 +244,28 @@ public class PasswordAuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "임시 학번 회원가입", description = "1~2월에 1학년 신입생이 임시 학번으로 회원가입합니다. 임시 학번이 자동 발급되어 이메일로 전송됩니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "회원가입 요청 성공 (이메일 인증 대기, 임시 학번 발급)"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (유효성 검증 실패, 1~2월이 아닌 경우, 1학년이 아닌 경우)"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "중복된 이메일 또는 전화번호"
+            )
+    })
+    @PostMapping("/signup/temporary")
+    public ResponseEntity<PasswordSignupResponse> signupWithTemporaryStudentId(
+            @Valid @RequestBody TemporaryStudentIdSignupRequest request) {
+        PasswordSignupResponse response = tempStudentIdSignupService.signup(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     @Operation(
             summary = "학번 중복 체크",
             description = "학번의 유효성 검사 및 중복 여부를 확인합니다."
@@ -293,6 +318,32 @@ public class PasswordAuthController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "전화번호 중복 체크",
+            description = "전화번호의 유효성 검사 및 중복 여부를 확인합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "사용 가능한 전화번호"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "전화번호 형식 오류 (XXX-XXXX-XXXX 형식이 아님)"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 등록된 전화번호"
+            )
+    })
+    @GetMapping("/check-phone-number")
+    public ResponseEntity<DuplicateCheckResponse> checkPhoneNumberDuplicate(
+            @Parameter(description = "확인할 전화번호 (XXX-XXXX-XXXX)", example = "010-1234-5678", required = true)
+            @RequestParam String phoneNumber) {
+        DuplicateCheckResponse response = checkDuplicateService.checkPhoneNumber(phoneNumber);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "이메일 인증", description = "이메일로 발송된 인증 코드를 확인합니다.")
     @ApiResponses(value = {
             @ApiResponse(
@@ -322,7 +373,7 @@ public class PasswordAuthController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)"
+                    description = "잘못된 요청 (유효성 검증 실패 또는 해당 이메일로 가입 요청된 계정 없음)"
             ),
             @ApiResponse(
                     responseCode = "429",

@@ -14,6 +14,7 @@ import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.user.mypage.dto.request.ChangeEmailRequest;
 import igrus.web.user.mypage.dto.request.ChangePasswordRequest;
 import igrus.web.user.mypage.dto.request.ChangePhoneNumberRequest;
+import igrus.web.user.mypage.dto.request.UpdateStudentIdRequest;
 import igrus.web.user.mypage.dto.response.MyCommentPageResponse;
 import igrus.web.user.mypage.dto.response.MyCommentResponse;
 import igrus.web.user.mypage.dto.response.MyPostPageResponse;
@@ -25,6 +26,7 @@ import igrus.web.user.mypage.service.read.GetMyProfileService;
 import igrus.web.user.mypage.service.write.ChangeEmailService;
 import igrus.web.user.mypage.service.write.ChangeMyPasswordService;
 import igrus.web.user.mypage.service.write.ChangePhoneNumberService;
+import igrus.web.user.mypage.service.write.UpdateStudentIdService;
 import igrus.web.user.mypage.service.write.VerifyEmailChangeService;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.service.WithdrawService;
@@ -71,6 +73,7 @@ public class MyPageController {
     private final VerifyEmailChangeService verifyEmailChangeService;
     private final ChangePhoneNumberService changePhoneNumberService;
     private final ChangeMyPasswordService changeMyPasswordService;
+    private final UpdateStudentIdService updateStudentIdService;
     private final WithdrawService withdrawService;
 
     // === 프로필 ===
@@ -155,6 +158,30 @@ public class MyPageController {
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
         changePhoneNumberService.changePhoneNumber(user.userId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    // === 학번 변경 (임시 학번 → 실제 학번) ===
+
+    @Operation(summary = "학번 변경", description = "임시 학번을 실제 학번으로 변경합니다. 임시 학번 사용자만 가능합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "학번 변경 성공"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "임시 학번이 아닌 경우, 학번 형식 오류, 또는 99로 시작하는 학번"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "비밀번호 불일치 또는 인증 필요"
+            ),
+            @ApiResponse(responseCode = "409", description = "학번 중복")
+    })
+    @PatchMapping("/student-id")
+    public ResponseEntity<Void> updateStudentId(
+            @Valid @RequestBody UpdateStudentIdRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        updateStudentIdService.updateStudentId(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 

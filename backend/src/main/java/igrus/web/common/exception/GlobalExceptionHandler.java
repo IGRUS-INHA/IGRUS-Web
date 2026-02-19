@@ -14,6 +14,7 @@ import igrus.web.community.post.exception.PostNotFoundException;
 import igrus.web.community.post.exception.PostRateLimitExceededException;
 import igrus.web.community.post.exception.PostTitleTooLongException;
 import igrus.web.security.auth.common.exception.account.AccountRecoverableException;
+import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,6 +35,21 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 이메일 미인증 상태에서의 접근 시도 예외 처리.
+     * 클라이언트가 인증 플로우로 이동할 수 있도록 이메일 정보를 포함합니다.
+     */
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<EmailNotVerifiedErrorResponse> handleEmailNotVerifiedException(
+            EmailNotVerifiedException e) {
+        log.info("EmailNotVerifiedException: email={}", e.getEmail());
+        ErrorCode errorCode = e.getErrorCode();
+        EmailNotVerifiedErrorResponse response = EmailNotVerifiedErrorResponse.of(
+                errorCode, e.getEmail()
+        );
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
 
     /**
      * 복구 가능한 탈퇴 계정 예외 처리.
@@ -224,6 +241,13 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
         ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.warn("NoResourceFoundException: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.of(ErrorCode.RESOURCE_NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

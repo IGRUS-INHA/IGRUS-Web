@@ -1,5 +1,6 @@
 package igrus.web.security.config;
 
+import igrus.web.common.filter.MdcLoggingFilter;
 import igrus.web.security.jwt.JwtAuthenticationEntryPoint;
 import igrus.web.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class ApiSecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final MdcLoggingFilter mdcLoggingFilter;
     private final SecurityConfigUtil securityConfigUtil;
 
     @Bean
@@ -75,6 +77,9 @@ public class ApiSecurityConfig {
 
         // JWT 필터 등록
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // MDC 로깅 필터 등록 (JWT 인증 이후 실행)
+        http.addFilterAfter(mdcLoggingFilter, JwtAuthenticationFilter.class);
 
         // 인증되지 않은 요청에 대해 401 반환
         http.exceptionHandling(ex -> ex

@@ -44,7 +44,7 @@ export interface CommentWithRepliesResponse {
   likeCount?: number;
   createdAt?: string;
   replies?: CommentResponse[];
-  anonymous?: boolean;
   deleted?: boolean;
   likedByMe?: boolean;
+  anonymous?: boolean;
 }

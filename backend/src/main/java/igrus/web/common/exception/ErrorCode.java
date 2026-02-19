@@ -11,6 +11,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(500, "서버 내부 오류가 발생했습니다"),
     INVALID_TYPE_VALUE(400, "잘못된 타입입니다"),
     ACCESS_DENIED(403, "접근이 거부되었습니다"),
+    RESOURCE_NOT_FOUND(404, "요청한 리소스를 찾을 수 없습니다"),
 
     // User
     USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다"),
@@ -78,6 +79,7 @@ public enum ErrorCode {
     EMAIL_SEND_FAILED(500, "이메일 발송에 실패했습니다"),
     RECENT_WITHDRAWAL_EXISTS(400, "최근 탈퇴 이력이 있어 재가입이 불가합니다"),
     VERIFICATION_RESEND_RATE_LIMITED(429, "인증 코드 재발송은 5분에 1회만 가능합니다"),
+    VERIFICATION_EMAIL_NOT_FOUND(400, "해당 이메일로 가입 요청된 계정을 찾을 수 없습니다"),
     ACCOUNT_LOCKED(423, "로그인 시도 횟수 초과로 계정이 잠겼습니다"),
 
     // Member Approval
@@ -90,6 +92,7 @@ public enum ErrorCode {
     BULK_REJECTION_EMPTY(400, "거절할 사용자를 선택해주세요"),
     ASSOCIATE_ALREADY_DECIDED(400, "이미 처리된 준회원입니다"),
     INVALID_DATE_RANGE(400, "종료 일시는 시작 일시 이후여야 합니다"),
+    USER_NOT_PENDING_VERIFICATION(400, "해당 사용자는 이메일 인증 대기 상태가 아닙니다"),
 
     // Board
     BOARD_NOT_FOUND(404, "게시판을 찾을 수 없습니다"),
@@ -168,7 +171,12 @@ public enum ErrorCode {
     INVALID_DISPLAY_ORDER(400, "표시 순서는 1 이상이어야 합니다"),
 
     // Signup - Custom Field Validation
-    INVALID_CUSTOM_FIELD(400, "기타 선택 시 직접 입력 값은 필수입니다");
+    INVALID_CUSTOM_FIELD(400, "기타 선택 시 직접 입력 값은 필수입니다"),
+
+    // Temporary Student ID
+    TEMP_STUDENT_ID_NOT_AVAILABLE(400, "임시 학번 발급은 1월~2월에만 가능합니다"),
+    TEMP_STUDENT_ID_EXHAUSTED(500, "임시 학번이 모두 소진되었습니다"),
+    STUDENT_ID_NOT_TEMPORARY(400, "임시 학번이 아닌 경우 학번을 변경할 수 없습니다");
 
     private final int status;
     private final String message;

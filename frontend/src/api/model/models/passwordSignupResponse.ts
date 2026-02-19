@@ -44,4 +44,6 @@ export interface PasswordSignupResponse {
   email?: string;
   /** 이메일 인증 필요 여부 */
   requiresVerification?: boolean;
+  /** 임시 학번 (임시 학번 가입 시에만 포함) */
+  temporaryStudentId?: string;
 }

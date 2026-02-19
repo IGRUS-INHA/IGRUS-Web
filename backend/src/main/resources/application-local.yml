@@ -25,15 +25,12 @@ spring:
 springdoc:
   server-url: http://localhost:8080
 
-logging:
-  level:
-    org.springframework.security.oauth2: DEBUG
-    org.springframework.security.web: DEBUG
-
-
 app:
   jwt:
     secret: local-dev-secret-key-do-not-use-in-production
   cookie:
     secure: false
     same-site: Lax
+  webhook:
+    baebdung-i:
+      enabled: false
