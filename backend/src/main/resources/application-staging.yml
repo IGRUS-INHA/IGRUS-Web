@@ -38,7 +38,7 @@ app:
   cookie:
     secure: true
     same-site: Lax
-    domain: staging.igrus.co.kr
+    domain: igrus.co.kr
   frontend-url: https://staging.igrus.co.kr
   webhook:
     baebdung-i:
