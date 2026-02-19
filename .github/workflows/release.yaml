@@ -65,6 +65,14 @@ jobs:
           git tag ${{ steps.bump.outputs.version }}
           git push origin ${{ steps.bump.outputs.version }}
 
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ${{ steps.bump.outputs.version }} \
+            --title "${{ steps.bump.outputs.version }}" \
+            --generate-notes
+
   deploy-backend:
     name: Deploy Backend
     needs: create-tag
