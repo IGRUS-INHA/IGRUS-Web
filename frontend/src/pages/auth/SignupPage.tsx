@@ -22,6 +22,7 @@ import {
   Wallet,
   AlertTriangle,
   Info,
+  Copy,
 } from 'lucide-react';
 import { useSignup } from '@/api/model/password-authentication/password-authentication';
 import { majorOptions } from '@/constants/majorOptions';
@@ -35,7 +36,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/utils';
 import { getErrorMessage, hasErrorCode } from '@/utils/error';
-import { useSignupDuplicateCheck } from '@/hooks';
+import { useSignupDuplicateCheck, useToast } from '@/hooks';
 import { customFetch } from '@/api/client';
 
 // --- 임시 학번 기간 체크 ---
@@ -127,6 +128,8 @@ const STEP_FIELDS: (keyof SignupFormData)[][] = [
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const toast = useToast();
+  const [copied, setCopied] = useState(false);
   const [feeConfirmed, setFeeConfirmed] = useState(false);
   const [feeChecked, setFeeChecked] = useState(false);
   const [step, setStep] = useState(0);
@@ -241,6 +244,13 @@ export default function SignupPage() {
     if (route !== '기타') {
       setValue('customJoinRoute', '');
     }
+  };
+
+  const handleCopyAccount = async () => {
+    await navigator.clipboard.writeText('토스뱅크 1002-3803-2581');
+    setCopied(true);
+    toast.success('클립보드에 복사되었습니다.');
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const composeEmail = () => {
@@ -439,7 +449,17 @@ export default function SignupPage() {
               </div>
               <div className="relative flex flex-col sm:block gap-s1">
                 <span className="text-sm text-muted-foreground shrink-0">입금계좌</span>
-                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-baseline sm:justify-center">토스뱅크 1002-3803-2581</span>
+                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-center sm:justify-center">
+                  토스뱅크 1002-3803-2581
+                  <button
+                    type="button"
+                    onClick={handleCopyAccount}
+                    className="inline-flex items-center ml-s2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                    title="계좌번호 복사"
+                  >
+                    {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                  </button>
+                </span>
               </div>
             </div>
 
