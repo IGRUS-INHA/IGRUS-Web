@@ -23,6 +23,7 @@ import EventListPage from '@/pages/event/EventListPage';
 import EventDetailPage from '@/pages/event/EventDetailPage';
 import EventWritePage from '@/pages/event/EventWritePage';
 import EventEditPage from '@/pages/event/EventEditPage';
+import EventRegistrationsPage from '@/pages/event/EventRegistrationsPage';
 
 // 문의
 import InquiryPage from '@/pages/inquiry/InquiryPage';
@@ -98,6 +99,14 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute minRole="OPERATOR">
             <EventEditPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'events/:eventId/registrations',
+        element: (
+          <ProtectedRoute minRole="OPERATOR">
+            <EventRegistrationsPage />
           </ProtectedRoute>
         ),
       },
