@@ -117,17 +117,45 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
   - 목표: eventStatus 축에서 COMPLETED가 종단 상태임을 보장
 - **주의사항**: CANCELED는 종단 상태가 **아님** (재활성화 가능, EVT-INV-06 적용 안 됨)
 
-### EVT-INV-07: ONGOING/COMPLETED/CANCELED 상태에서 행사 수정 불가
+### EVT-INV-07: 상태별 행사 수정 정책
 
-> `eventStatus`가 `ONGOING`, `COMPLETED`, `CANCELED`인 행사는 정보를 수정할 수 없다.
+> 행사 수정 가능 범위는 `eventStatus`에 따라 달라진다. COMPLETED에서는 수정 불가, ONGOING에서는 이미 경과한 시각 필드만 차단, UPCOMING/CANCELED에서는 전체 수정 가능.
 
-- **사전조건**: `eventStatus.isEditable() == true` (UPCOMING만 해당)
-- **위반 시 예외**: `EventNotEditableException`
+**상태별 수정 범위**:
+
+| eventStatus | 수정 범위 | 근거 |
+|:---:|---------|------|
+| UPCOMING | 전체 필드 수정 가능 | 행사 시작 전이므로 제한 없음 |
+| ONGOING | **부분 수정** 가능 (아래 표 참조) | 이미 경과한 시각 필드는 변경 무의미 |
+| CANCELED | 전체 필드 수정 가능 | 재활성화 전 일정 재조정 허용 |
+| COMPLETED | **수정 불가** | 종단 상태 (EVT-INV-06) |
+
+**ONGOING 상태 필드별 수정 가능 여부**:
+
+| 필드 | 수정 | 근거 |
+|------|:---:|------|
+| `title` | O | 정보성 필드 |
+| `description` | O | 안내사항 업데이트 |
+| `location` | O | 장소 변경 대응 |
+| `eventStartAt` | **X** | 이미 시작된 행사의 시작 시각 변경 무의미 |
+| `eventEndAt` | O | 행사 연장/단축 |
+| `registrationStartAt` | **X** | 이미 경과한 등록 시작일 변경 무의미 |
+| `registrationEndAt` | O | 등록 기간 연장 (2축 모델 핵심) |
+| `capacity` | O | 단, `capacity >= currentCount` 필수 (EVT-INV-01 보장) |
+
+- **위반 시 예외**:
+  - COMPLETED 수정 시도: `EventNotEditableException`
+  - ONGOING에서 금지 필드 변경 시도: `EventNotEditableException`
 - **관련 코드** `(리팩토링 필요)`:
   - 현재 구현: `EventStatus:80-82` - `isEditable()`: UPCOMING, OPEN, CLOSED만 true
   - 현재 구현: `Event:355-357` - `update()`: editable 아니면 예외
-  - 목표: `eventStatus == UPCOMING`일 때만 수정 가능. registrationStatus에 관계없이 `eventStatus`가 ONGOING/COMPLETED/CANCELED이면 수정 불가.
-- **주의사항**: 행사 수정 시 `registrationEndAt` 연장이 가능하여 수동 재오픈의 전제 조건을 만족시킬 수 있음
+  - 목표: 상태별 분기 — UPCOMING/CANCELED는 전체 수정, ONGOING은 부분 수정(`eventStartAt`/`registrationStartAt` 변경 감지 후 거부), COMPLETED는 수정 불가
+- **설계 근거**:
+  - **ONGOING 부분 수정**: 2축 모델에서 `OPEN + ONGOING`(행사 진행 중 등록 접수)을 지원하려면 `registrationEndAt` 연장이 가능해야 하며, EVT-INV-13(수동 재오픈)에서 "기한 만료 시 `registrationEndAt`을 먼저 연장하라"는 흐름이 ONGOING에서도 동작해야 함
+  - **CANCELED 전체 수정**: 재활성화 전 날짜 수정이 불가하면 데드락 발생 (CANCELED 수정 불가 → 재활성화 → Lazy Evaluation으로 ONGOING 전이 → ONGOING에서도 `eventStartAt` 수정 불가)
+- **주의사항**:
+  - ONGOING에서 `capacity` 감소 시 `capacity >= currentCount`를 반드시 검증 (EVT-INV-01 위반 방지)
+  - CANCELED에서 수정 후에도 `eventStatus`는 CANCELED를 유지 (별도 재활성화 필요)
 
 ### EVT-INV-08: closeReason과 registrationStatus=CLOSED의 정합성
 
@@ -258,6 +286,7 @@ NOT_STARTED ──→ OPEN ──→ CLOSED
 | OPEN → CLOSED | Manual | 운영자 수동 마감 | `registrationStatus = CLOSED` | MANUAL_CLOSE |
 | CLOSED → OPEN | Auto | `closeReason == CAPACITY_FULL && !isFull() && now < regEnd && eventStatus != CANCELED` | `registrationStatus = OPEN`, `closeReason = null` | - |
 | CLOSED → OPEN | Manual | 운영자 수동 재오픈 (EVT-INV-13 조건 전부 충족) | `registrationStatus = OPEN`, `closeReason = null` | - |
+| NOT_STARTED → CLOSED | Forced | `eventStatus` → CANCELED 전이 (EVT-INV-11) | `registrationStatus = CLOSED` | MANUAL_CLOSE |
 
 **관련 코드** `(리팩토링 필요)`:
 - 현재: 단일 `EventStatus`의 UPCOMING → OPEN → CLOSED 부분이 이 축에 해당
@@ -371,7 +400,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 
 | 시도 | 예상 결과 | 이유 |
 |------|----------|------|
-| NOT_STARTED → CLOSED | 거부 | OPEN 단계를 거쳐야 함 |
+| NOT_STARTED → CLOSED (단독) | 거부 | OPEN 단계를 거쳐야 함. 단, 행사 취소(EVT-INV-11)에 의한 강제 전환은 예외 |
 | OPEN → NOT_STARTED | 거부 | 역방향 전이 불가 |
 | CLOSED → NOT_STARTED | 거부 | 역방향 전이 불가 |
 
@@ -407,7 +436,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 `CreateEventRequest`와 동일하되, 다음 차이점:
 - `registrationType` 필드 **없음** (생성 시 결정, 수정 불가)
 - `registrationStartAt`에 대한 미래 제약 **없음** (기존 값 보존 가능)
-- 수정은 `eventStatus == UPCOMING`일 때만 가능 (EVT-INV-07)
+- 수정 범위는 `eventStatus`에 따라 다름 (EVT-INV-07). COMPLETED에서는 수정 불가, ONGOING에서는 `eventStartAt`/`registrationStartAt` 변경 불가
 
 ### 3-3. 날짜 경계값 분석
 
@@ -569,7 +598,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | EVT-INV-04 (정원 최소값) | `EventTest:EVT-003~005` (0, 음수, null) | **커버됨** |
 | EVT-INV-05 (초기 상태) | `EventTest:EVT-001` (UPCOMING, currentCount=0 assertion) | **부분 커버** (2축 모델 반영 필요) |
 | EVT-INV-06 (COMPLETED 종단) | `EventTest:EVT-015` (COMPLETED→OPEN 거부) | **부분 커버** (COMPLETED→CLOSED, →ONGOING 미검증) |
-| EVT-INV-07 (수정 불가 상태) | `EventTest:EVT-052,053` | **부분 커버** (CANCELED 상태 수정 불가 미검증) |
+| EVT-INV-07 (상태별 수정 정책) | `EventTest:EVT-052,053` | **부분 커버** (ONGOING 부분 수정, CANCELED 수정 허용, COMPLETED 수정 불가 미검증) |
 | EVT-INV-08 (closeReason 정합성) | `EventTest:EVT-012,013,014,016` (각 마감 사유 + 재오픈 시 null) | **커버됨** (registrationStatus 축으로 재해석 필요) |
 | EVT-INV-09 (soft delete 필터링) | `EventServiceTest:getEvent_DeletedEvent_ThrowsException` | **커버됨** |
 | EVT-INV-10 (교차 축 불변조건) | - | **누락** `(리팩토링 필요)` |
@@ -641,6 +670,12 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | GAP-EVT-15 | `regStart < eventStart` 경계값 검증 테스트 | **중간** | 미해결 |
 | GAP-EVT-16 | 수동 재오픈 조건 검증 (정원 초과 시 거부, `regEnd` 경과 시 거부, 사유 필수) | **높음** | 미해결 |
 | GAP-EVT-17 | 수동 재오픈 감사 이력 기록 테스트 | **중간** | 미해결 |
+| GAP-EVT-18 | ONGOING에서 허용 필드(`title`, `description`, `location`, `eventEndAt`, `registrationEndAt`, `capacity`) 수정 성공 테스트 | **높음** | 미해결 |
+| GAP-EVT-19 | ONGOING에서 금지 필드(`eventStartAt`, `registrationStartAt`) 변경 시도 거부 테스트 | **높음** | 미해결 |
+| GAP-EVT-20 | ONGOING에서 `capacity` 감소 시 `capacity >= currentCount` 검증 테스트 | **중간** | 미해결 |
+| GAP-EVT-21 | CANCELED에서 전체 필드 수정 성공 테스트 | **중간** | 미해결 |
+| GAP-EVT-22 | CANCELED에서 수정 → 재활성화 E2E 흐름 테스트 | **중간** | 미해결 |
+| GAP-EVT-23 | COMPLETED에서 수정 시도 시 `EventNotEditableException` 발생 테스트 | **낮음** | 미해결 |
 
 ---
 
