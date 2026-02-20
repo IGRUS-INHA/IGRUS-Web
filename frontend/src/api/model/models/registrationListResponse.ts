@@ -41,6 +41,9 @@ export interface RegistrationListResponse {
   userName?: string;
   userEmail?: string;
   studentId?: string;
+  userGender?: string;
+  userGrade?: number;
+  userDepartment?: string;
   status?: RegistrationListResponseStatus;
   registeredAt?: string;
 }

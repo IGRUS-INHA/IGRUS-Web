@@ -25,6 +25,7 @@
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.71.1",
     "react-router-dom": "^7.13.0",
+    "recharts": "^3.7.0",
     "remark-breaks": "^4.0.0",
     "sweetalert2": "^11.26.18",
     "tailwind-merge": "^3.4.0",
