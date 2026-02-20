@@ -228,6 +228,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | REJECTED → WAITING | `registration.revertToWaiting()` | OPERATOR+ 권한, 선발제, `eventStatus == UPCOMING` `(리팩토링 필요)` | `status = WAITING` (카운트 변경 없음) | `EventRegistration:104-108`, `EventRegistrationService:390-400` |
 | WAITING → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED` (카운트 변경 없음, WAITING은 isActive=false) | `EventRegistration:95-97` |
 | APPROVED → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED`, 행사 `currentCount--` | `EventRegistration:95-97`, `EventRegistrationService:168-181` |
+| REJECTED → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED` (카운트 변경 없음, REJECTED는 isActive=false) | `EventRegistration:95-97` |
 | CANCELED → WAITING | `registration.reRegister()` | `registrationStatus == OPEN`, 기간 내, 정원 여유 | `status = WAITING`, `registeredAt` 갱신 | `EventRegistration:125-133` |
 
 **금지된 전이 (Invalid Transition)**:
@@ -241,6 +242,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | WAITING → WAITING (reRegister) | `InvalidRegistrationStatusException` | `reRegister()`: CANCELED에서만 가능 |
 | APPROVED → APPROVED (reRegister) | `InvalidRegistrationStatusException` | `reRegister()`: CANCELED에서만 가능 |
 | REJECTED → REJECTED (reRegister) | `InvalidRegistrationStatusException` | `reRegister()`: CANCELED에서만 가능 |
+| CANCELED → CANCELED (cancel) | `InvalidRegistrationStatusException` | `cancel()`: CANCELED에서 불가 (이미 취소됨) |
 
 ### 2-3. 신청자 수(currentCount) 변경 매트릭스
 

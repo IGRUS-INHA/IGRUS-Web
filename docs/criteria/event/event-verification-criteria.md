@@ -379,6 +379,7 @@ updateStatusIfNeeded(now):
 | `closeReason == MANUAL_CLOSE` | CLOSED 유지 (자동 재오픈 불가) |
 
 - **관련 코드** `(현재 구현 일치)`: `Event:266-272` - `reopenIfCapacityAvailable()`
+- **경계값 주의**: 자동 재오픈 조건은 `now < regEnd` (exclusive)이나, 등록 기간은 `now <= regEnd` (inclusive). `now == regEnd` 시점에 정원 마감 취소로 자리가 발생해도 자동 재오픈이 되지 않는다. 이는 마감 직전 재오픈 후 즉시 기한 만료로 재마감되는 것을 방지하기 위한 의도적 설계이다.
 
 #### (b) 수동 재오픈 (운영자 판단)
 
