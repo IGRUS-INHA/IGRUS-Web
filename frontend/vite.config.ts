@@ -10,6 +10,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
+  const apiTarget = env.VITE_API_TARGET || 'https://staging-api.igrus.co.kr:8080';
+
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -21,6 +23,15 @@ export default defineConfig(({ mode }) => {
       __FEATURE_COMMUNITY__: env.FEATURE_COMMUNITY !== 'false',
       __FEATURE_SEARCH__: env.FEATURE_SEARCH !== 'false',
       __FEATURE_PROFILE_EDIT__: env.FEATURE_PROFILE_EDIT !== 'false',
+    },
+    server: {
+      proxy: {
+        '/api': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+      },
     },
   };
 });
