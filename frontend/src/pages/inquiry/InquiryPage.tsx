@@ -50,7 +50,7 @@ export default function InquiryPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl py-s6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="mx-auto flex h-full max-w-2xl flex-col py-s6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="mb-s7">
         <div className="flex items-center justify-between gap-s4">
@@ -86,7 +86,7 @@ export default function InquiryPage() {
       </div>
 
       {/* Form Card */}
-      <div className="rounded-r4 border border-border bg-card p-s6 shadow-sm">
+      <div className="my-auto rounded-r4 border border-border bg-card p-s6 shadow-sm">
         {isAuthenticated ? (
           <InquiryForm
             variant="member"
@@ -101,7 +101,6 @@ export default function InquiryPage() {
           />
         )}
       </div>
-
     </div>
   );
 }
