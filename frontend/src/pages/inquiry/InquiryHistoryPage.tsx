@@ -17,7 +17,7 @@ export default function InquiryHistoryPage() {
   const inquiries = pageData?.inquiries ?? [];
 
   return (
-    <div className="mx-auto max-w-2xl py-s6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="mx-auto flex h-full max-w-2xl flex-col justify-center py-s6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="mb-s7">
         <div className="flex items-center justify-between gap-s4">
@@ -47,7 +47,7 @@ export default function InquiryHistoryPage() {
           <p className="typo-b2 text-muted-foreground">로딩 중...</p>
         </div>
       ) : inquiries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-s8 text-center">
+        <div className="flex min-h-[30rem] flex-col items-center justify-center py-s8 text-center">
           <Inbox size={48} className="mb-s4 text-muted-foreground/40" />
           <p className="typo-b1 font-semibold text-muted-foreground">
             문의 내역이 없습니다
