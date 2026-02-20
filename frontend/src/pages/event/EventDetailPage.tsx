@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, MapPin, Users, Clock, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2, Lock } from 'lucide-react';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useEvent, useApplyEvent, useCancelEventApplication, useDeleteEvent, useCloseEvent } from '@/hooks/queries/useEvents';
+import { registrationKeys } from '@/hooks/queries/useEventRegistrations';
 import { useAuth } from '@/hooks';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -395,7 +396,10 @@ export default function EventDetailPage() {
               {canManage && (
                 <button
                   type="button"
-                  onClick={() => navigate(`/events/${eventId}/registrations`)}
+                  onClick={() => {
+                    void queryClient.invalidateQueries({ queryKey: registrationKeys.all(Number(eventId)) });
+                    navigate(`/events/${eventId}/registrations`);
+                  }}
                   className="w-full py-s3 rounded-r4 font-medium flex items-center justify-center gap-s2 transition-all border border-border text-foreground hover:bg-muted cursor-pointer"
                 >
                   <Users size={16} /> 신청자 관리
