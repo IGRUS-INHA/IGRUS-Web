@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.service.AuthEmailService;
-import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.VerifyEmailService;
@@ -12,8 +11,6 @@ import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.jwt.JwtTokenProvider;
-import igrus.web.user.domain.Gender;
-import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -24,9 +21,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-
-import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
@@ -58,7 +52,7 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
 
     protected static final String TEST_STUDENT_ID = "12345678";
     protected static final String TEST_PASSWORD = "TestPass1!@";
-    protected static final String TEST_NAME = "홍길동";
+    protected static final String TEST_NAME = "테스트유저";
     protected static final String TEST_EMAIL = "test@inha.edu";
     protected static final String TEST_PHONE = "010-1234-5678";
     protected static final String TEST_DEPARTMENT = "컴퓨터공학과";
@@ -166,33 +160,11 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
     // ==================== Test Data Creation Helper Methods ====================
 
     /**
-     * 테스트용 사용자를 생성하고 저장합니다 (특정 상태로).
-     */
-    protected User createAndSaveTestUser(String studentId, String email, UserRole role, UserStatus status) {
-        User user = User.create(
-                studentId,
-                TEST_NAME,
-                email,
-                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4),
-                TEST_DEPARTMENT,
-                TEST_MOTIVATION,
-                List.of(),
-                Gender.MALE,
-                1,
-                EnrollmentStatus.ENROLLED,
-                List.of(), null, null, null
-        );
-        user.changeRole(role);
-        applyUserStatus(user, status);
-        return userRepository.save(user);
-    }
-
-    /**
      * 테스트용 사용자와 비밀번호 자격증명을 생성하고 저장합니다.
      */
     protected User createAndSaveUserWithCredential(String studentId, String email, String password,
                                                     UserRole role, UserStatus status) {
-        User user = createAndSaveTestUser(studentId, email, role, status);
+        User user = createAndSaveUser(studentId, email, role, status);
         createAndSaveCredential(user, password, status);
         return user;
     }
@@ -205,56 +177,6 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
                 TEST_STUDENT_ID, TEST_EMAIL, TEST_PASSWORD,
                 UserRole.ASSOCIATE, UserStatus.ACTIVE
         );
-    }
-
-    /**
-     * 비밀번호 자격증명을 생성하고 저장합니다.
-     */
-    protected PasswordCredential createAndSaveCredential(User user, String password, UserStatus status) {
-        String encodedPassword = passwordEncoder.encode(password);
-        PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        applyCredentialStatus(credential, status);
-        return passwordCredentialRepository.save(credential);
-    }
-
-    /**
-     * 사용자 상태를 적용합니다.
-     */
-    private void applyUserStatus(User user, UserStatus status) {
-        switch (status) {
-            case ACTIVE -> user.verifyEmail();
-            case SUSPENDED -> {
-                user.verifyEmail();
-                user.suspend();
-            }
-            case WITHDRAWN -> {
-                user.verifyEmail();
-                user.withdraw();
-            }
-            case PENDING_VERIFICATION -> {
-                // 기본 상태로 유지
-            }
-        }
-    }
-
-    /**
-     * 자격증명 상태를 적용합니다.
-     */
-    private void applyCredentialStatus(PasswordCredential credential, UserStatus status) {
-        switch (status) {
-            case ACTIVE -> credential.verifyEmail();
-            case SUSPENDED -> {
-                credential.verifyEmail();
-                credential.suspend();
-            }
-            case WITHDRAWN -> {
-                credential.verifyEmail();
-                credential.withdraw();
-            }
-            case PENDING_VERIFICATION -> {
-                // 기본 상태로 유지
-            }
-        }
     }
 
     /**

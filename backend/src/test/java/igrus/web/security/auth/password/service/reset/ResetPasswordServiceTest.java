@@ -8,8 +8,6 @@ import igrus.web.security.auth.password.domain.PasswordResetToken;
 import igrus.web.security.auth.password.exception.InvalidPasswordFormatException;
 import igrus.web.security.auth.password.exception.PasswordResetTokenExpiredException;
 import igrus.web.security.auth.password.exception.PasswordResetTokenInvalidException;
-import igrus.web.user.domain.Gender;
-import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +19,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,30 +40,6 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         setUpBase();
     }
 
-    private User createAndSaveTestUser(String studentId, String email) {
-        User user = User.create(
-                studentId,
-                "홍길동",
-                email,
-                "010-1234-5678",
-                "컴퓨터공학과",
-                "테스트 동기",
-                List.of(),
-                Gender.MALE,
-                1,
-                EnrollmentStatus.ENROLLED,
-                List.of(), null, null, null
-        );
-        user.changeRole(UserRole.MEMBER);
-        return userRepository.save(user);
-    }
-
-    private PasswordCredential createAndSaveCredential(User user) {
-        String encodedPassword = passwordEncoder.encode("oldpass12");
-        PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        return passwordCredentialRepository.save(credential);
-    }
-
     @Nested
     @DisplayName("비밀번호 재설정 성공 (resetPassword)")
     class ResetSuccessTest {
@@ -76,8 +49,8 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         void resetPassword_WithValidToken_ChangesPassword() {
             // given
             String newPassword = "newpass12";
-            User user = createAndSaveTestUser("20231234", "test@inha.edu");
-            createAndSaveCredential(user);
+            User user = createAndSaveUser("20231234", "test@inha.edu", UserRole.MEMBER);
+            createAndSaveCredential(user, "oldpass12");
 
             String token = UUID.randomUUID().toString();
             PasswordResetToken resetToken = PasswordResetToken.create(user, token, PASSWORD_RESET_EXPIRY);
@@ -100,8 +73,8 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         void resetPassword_InvalidatesAllPasswordResetTokens() {
             // given
             String newPassword = "newpass12";
-            User user = createAndSaveTestUser("20231234", "test@inha.edu");
-            createAndSaveCredential(user);
+            User user = createAndSaveUser("20231234", "test@inha.edu", UserRole.MEMBER);
+            createAndSaveCredential(user, "oldpass12");
 
             // 여러 개의 토큰 생성
             String token1 = UUID.randomUUID().toString();
@@ -124,8 +97,8 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         void resetPassword_RevokesAllRefreshTokens() {
             // given
             String newPassword = "newpass12";
-            User user = createAndSaveTestUser("20231234", "test@inha.edu");
-            createAndSaveCredential(user);
+            User user = createAndSaveUser("20231234", "test@inha.edu", UserRole.MEMBER);
+            createAndSaveCredential(user, "oldpass12");
 
             // 리프레시 토큰 생성
             RefreshToken refreshToken1 = RefreshToken.createInitial(user, "refresh-token-1", 604800000L);
@@ -155,8 +128,8 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         void resetPassword_WithExpiredToken_ThrowsException() {
             // given
             String newPassword = "newpass12";
-            User user = createAndSaveTestUser("20231234", "test@inha.edu");
-            createAndSaveCredential(user);
+            User user = createAndSaveUser("20231234", "test@inha.edu", UserRole.MEMBER);
+            createAndSaveCredential(user, "oldpass12");
 
             String token = UUID.randomUUID().toString();
             PasswordResetToken resetToken = PasswordResetToken.create(user, token, 1L);
@@ -174,8 +147,8 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         void resetPassword_WithUsedToken_ThrowsException() {
             // given
             String newPassword = "newpass12";
-            User user = createAndSaveTestUser("20231234", "test@inha.edu");
-            createAndSaveCredential(user);
+            User user = createAndSaveUser("20231234", "test@inha.edu", UserRole.MEMBER);
+            createAndSaveCredential(user, "oldpass12");
 
             String token = UUID.randomUUID().toString();
             PasswordResetToken resetToken = PasswordResetToken.create(user, token, PASSWORD_RESET_EXPIRY);
@@ -203,8 +176,8 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("비밀번호 형식 오류 시 resetPassword 실패")
         void resetPassword_WithInvalidPasswordFormat_ThrowsException() {
             // given
-            User user = createAndSaveTestUser("20231234", "test@inha.edu");
-            createAndSaveCredential(user);
+            User user = createAndSaveUser("20231234", "test@inha.edu", UserRole.MEMBER);
+            createAndSaveCredential(user, "oldpass12");
 
             String token = UUID.randomUUID().toString();
             PasswordResetToken resetToken = PasswordResetToken.create(user, token, PASSWORD_RESET_EXPIRY);

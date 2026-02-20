@@ -11,8 +11,6 @@ import igrus.web.security.auth.password.exception.PasswordResetTokenInvalidExcep
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
 import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
-import igrus.web.user.domain.Gender;
-import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +23,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -76,32 +73,6 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         ReflectionTestUtils.setField(requestPasswordResetService, "frontendUrl", "http://localhost:5173");
     }
 
-    private User createAndSaveTestUser() {
-        User user = User.create(
-                TEST_STUDENT_ID,
-                "홍길동",
-                TEST_EMAIL,
-                "010-1234-5678",
-                "컴퓨터공학과",
-                "테스트 동기",
-                List.of(),
-                Gender.MALE,
-                1,
-                EnrollmentStatus.ENROLLED,
-                List.of(), null, null, null
-        );
-        user.changeRole(UserRole.MEMBER);
-        user.verifyEmail();
-        return userRepository.save(user);
-    }
-
-    private PasswordCredential createAndSaveCredential(User user) {
-        String encodedPassword = passwordEncoder.encode(TEST_PASSWORD);
-        PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        credential.verifyEmail();
-        return passwordCredentialRepository.save(credential);
-    }
-
     private PasswordResetToken createAndSaveValidResetToken(User user, String token) {
         PasswordResetToken resetToken = PasswordResetToken.create(user, token, PASSWORD_RESET_EXPIRY);
         return passwordResetTokenRepository.save(resetToken);
@@ -129,8 +100,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-001] 유효한 학번으로 재설정 링크 발송 - 이메일 발송됨")
         void requestPasswordReset_withValidStudentId_sendsEmail() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
             ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -160,8 +131,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-003] 재설정 토큰 30분 유효 - 토큰 생성 확인")
         void requestPasswordReset_createsTokenWithCorrectExpiry() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             Instant beforeRequest = Instant.now();
             ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -187,8 +158,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-001] 재요청 시 기존 미사용 토큰 무효화")
         void requestPasswordReset_invalidatesPreviousTokens() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
 
             // 첫 번째 요청
             requestPasswordResetService.requestPasswordReset(TEST_STUDENT_ID);
@@ -211,8 +182,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-003] 토큰 검증 성공")
         void validateResetToken_withValidToken_returnsTrue() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
 
@@ -238,8 +209,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-005] 만료된 토큰으로 검증 실패")
         void validateResetToken_withExpiredToken_throwsException() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveExpiredResetToken(user, tokenString);
 
@@ -259,8 +230,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-006] 비밀번호 변경 성공")
         void resetPassword_withValidTokenAndPassword_succeeds() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
 
@@ -277,8 +248,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-006] 비밀번호 변경 후 토큰 사용됨으로 표시")
         void resetPassword_marksTokenAsUsed() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             PasswordResetToken resetToken = createAndSaveValidResetToken(user, tokenString);
 
@@ -294,8 +265,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-008] 비밀번호 변경 시 기존 세션(Refresh Token) 무효화 확인")
         void resetPassword_revokesAllRefreshTokens() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
 
@@ -315,8 +286,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-006] 비밀번호 BCrypt 해시로 저장")
         void resetPassword_storesPasswordAsBcryptHash() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
 
@@ -340,8 +311,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-020] 만료된 토큰으로 비밀번호 변경 시도 - 예외 발생")
         void resetPassword_withExpiredToken_throwsException() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveExpiredResetToken(user, tokenString);
 
@@ -354,8 +325,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-021] 이미 사용된 토큰으로 비밀번호 변경 시도 - 예외 발생")
         void resetPassword_withUsedToken_throwsException() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             PasswordResetToken resetToken = createAndSaveValidResetToken(user, tokenString);
             resetToken.markAsUsed();
@@ -388,8 +359,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-007] 비밀번호 정책 위반으로 변경 실패 - 8자 미만")
         void resetPassword_withShortPassword_throwsException() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
             String shortPassword = "pass1";
@@ -403,8 +374,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-007] 비밀번호 정책 위반으로 변경 실패 - 영문 미포함")
         void resetPassword_withoutLetter_throwsException() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
             String noLetterPassword = "12345678";
@@ -418,8 +389,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-007] 비밀번호 정책 위반으로 변경 실패 - 숫자 미포함")
         void resetPassword_withoutNumber_throwsException() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
             String noNumberPassword = "password";
@@ -433,8 +404,8 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         @DisplayName("[PWD-030] 유효한 형식의 새 비밀번호 - 변경 성공")
         void resetPassword_withValidPassword_succeeds() {
             // given
-            User user = createAndSaveTestUser();
-            createAndSaveCredential(user);
+            User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
+            createAndSaveCredential(user, TEST_PASSWORD);
             String tokenString = UUID.randomUUID().toString();
             createAndSaveValidResetToken(user, tokenString);
             String validPassword = "validpass1";
