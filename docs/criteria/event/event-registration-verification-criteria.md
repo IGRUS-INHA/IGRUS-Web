@@ -132,7 +132,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **위반 시 예외**: `EventNotEditableException`
 - **관련 코드** `(리팩토링 필요)`:
   - 현재 구현: `EventRegistrationService:372-374` - `event.getStatus().isEditable()` (단일 축: UPCOMING, OPEN, CLOSED에서 true)
-  - 목표: `event.getEventStatus() == UPCOMING` (eventStatus 축에서 UPCOMING만 편집 가능, EVT-INV-07 참조)
+  - 목표: `event.getEventStatus() == UPCOMING` (되돌리기는 행사 시작 전에만 허용. EVT-INV-07의 행사 수정 정책과는 별개의 제약)
 - **기존 대비 변경점**:
   - CANCELED 상태를 새로운 차단 조건으로 추가 (기존에는 CANCELED 상태 자체가 없었음)
   - 단일 축의 UPCOMING/OPEN/CLOSED(editable) → 2축에서는 모두 `eventStatus == UPCOMING`에 해당
@@ -177,7 +177,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **주의사항**:
   - 선발제 승인은 `registrationStatus == CLOSED` 후에도 가능 (Section 3-1 설계 이유 참조)하나, `eventStatus`가 COMPLETED/CANCELED이면 불가
   - 되돌리기는 REG-INV-10에서 이미 차단됨 (`eventStatus == UPCOMING`만 허용)
-- **교차 참조**: EVT-INV-06 (COMPLETED 종단), EVT-INV-07 (수정 불가 상태)
+  - `eventStatus == CANCELED`에서 행사 필드 수정은 가능(EVT-INV-07)하나, 신청 관리(승인/거절)는 불가 — 취소된 행사에서 신청을 관리할 실익이 없으며, 재활성화 후 관리해야 함
+- **교차 참조**: EVT-INV-06 (COMPLETED 종단), EVT-INV-07 (상태별 행사 수정 정책)
 
 ---
 
