@@ -1,10 +1,10 @@
 package igrus.web.security.auth.common.exception.account;
 
 import igrus.web.common.exception.CustomBaseException;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
 
 public class AccountNotRecoverableException extends CustomBaseException {
     public AccountNotRecoverableException() {
-        super(ErrorCode.ACCOUNT_NOT_RECOVERABLE);
+        super(AuthErrorCode.ACCOUNT_NOT_RECOVERABLE);
     }
 }

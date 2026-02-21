@@ -1,6 +1,8 @@
 package igrus.web.security.auth.password.controller;
 
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.common.exception.CommonErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
+import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.account.AccountSuspendedException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
@@ -189,8 +191,8 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_CREDENTIALS.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.INVALID_CREDENTIALS.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.INVALID_CREDENTIALS.getMessage()));
             }
 
             @Test
@@ -208,8 +210,8 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_CREDENTIALS.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.INVALID_CREDENTIALS.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.INVALID_CREDENTIALS.getMessage()));
             }
 
             @Test
@@ -228,8 +230,8 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.EMAIL_NOT_VERIFIED.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.EMAIL_NOT_VERIFIED.getMessage()))
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.EMAIL_NOT_VERIFIED.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.EMAIL_NOT_VERIFIED.getMessage()))
                         .andExpect(jsonPath("$.email").value(expectedEmail));
             }
         }
@@ -250,7 +252,7 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -265,7 +267,7 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -280,7 +282,7 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -295,7 +297,7 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
         }
 
@@ -318,8 +320,8 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isForbidden())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.ACCOUNT_SUSPENDED.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.ACCOUNT_SUSPENDED.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.ACCOUNT_SUSPENDED.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.ACCOUNT_SUSPENDED.getMessage()));
             }
 
             @Test
@@ -337,8 +339,8 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isForbidden())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.ACCOUNT_WITHDRAWN.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.ACCOUNT_WITHDRAWN.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.ACCOUNT_WITHDRAWN.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.ACCOUNT_WITHDRAWN.getMessage()));
             }
         }
     }
@@ -381,8 +383,8 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                                 .cookie(new Cookie("refreshToken", PasswordAuthTestFixture.INVALID_REFRESH_TOKEN)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.REFRESH_TOKEN_INVALID.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getMessage()));
             }
 
             @Test
@@ -396,7 +398,7 @@ class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
                 mockMvc.perform(post(LOGOUT_URL))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getCode()));
             }
         }
     }

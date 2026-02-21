@@ -23,6 +23,9 @@ public class SwaggerConfig {
     @Value("${springdoc.server-url}")
     private String serverUrl;
 
+    @Value("${app.version.commit}")
+    private String commitHash;
+
     @Bean
     public OpenAPI openAPI() {
         Server server = new Server()
@@ -101,7 +104,7 @@ public class SwaggerConfig {
                         - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
                         - Refresh Token도 만료되면 다시 로그인해야 합니다.
                         """)
-                .version("v1.0.0");
+                .version(commitHash.length() > 7 ? commitHash.substring(0, 7) : commitHash);
     }
 
     @Bean

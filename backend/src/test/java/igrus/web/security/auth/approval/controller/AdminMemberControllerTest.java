@@ -1,7 +1,9 @@
 package igrus.web.security.auth.approval.controller;
 
 import igrus.web.common.ServiceIntegrationTestBase;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.common.exception.CommonErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
+import igrus.web.user.exception.UserErrorCode;
 import igrus.web.security.auth.approval.domain.AssociateDecision;
 import igrus.web.security.auth.approval.dto.request.BulkApprovalRequest;
 import igrus.web.security.auth.approval.dto.request.BulkRejectionRequest;
@@ -148,7 +150,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.USER_NOT_FOUND.getCode()));
         }
 
         @Test
@@ -160,7 +162,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_ASSOCIATE.getCode()));
+                    .andExpect(jsonPath("$.code").value(AuthErrorCode.USER_NOT_ASSOCIATE.getCode()));
         }
 
         @Test
@@ -242,7 +244,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .content(requestBody))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
 
         @Test
@@ -259,7 +261,7 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .content(requestBody))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
 
         @Test

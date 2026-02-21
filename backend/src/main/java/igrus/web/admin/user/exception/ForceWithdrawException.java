@@ -10,6 +10,6 @@ public class ForceWithdrawException extends CustomBaseException {
     }
 
     public static ForceWithdrawException lastAdminCannotWithdraw() {
-        return new ForceWithdrawException(ErrorCode.LAST_ADMIN_CANNOT_WITHDRAW);
+        return new ForceWithdrawException(AdminErrorCode.LAST_ADMIN_CANNOT_WITHDRAW);
     }
 }
