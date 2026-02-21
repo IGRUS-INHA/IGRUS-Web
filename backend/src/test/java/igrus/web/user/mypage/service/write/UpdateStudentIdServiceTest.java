@@ -2,7 +2,6 @@ package igrus.web.user.mypage.service.write;
 
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
-import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.user.domain.*;
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 
@@ -26,9 +24,6 @@ class UpdateStudentIdServiceTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private UpdateStudentIdService updateStudentIdService;
-
-    @MockitoBean
-    private AuthEmailService authEmailService;
 
     private static final String TEMP_STUDENT_ID = "99260001";
     private static final String NEW_STUDENT_ID = "12345678";

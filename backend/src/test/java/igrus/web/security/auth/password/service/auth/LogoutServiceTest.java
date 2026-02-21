@@ -3,11 +3,8 @@ package igrus.web.security.auth.password.service.auth;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.RefreshToken;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
-import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.user.domain.Gender;
-import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -18,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,40 +43,6 @@ class LogoutServiceTest extends ServiceIntegrationTestBase {
         ReflectionTestUtils.setField(loginService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
     }
 
-    private User createAndSaveTestUser(UserRole role, UserStatus status) {
-        User user = User.create(
-                TEST_STUDENT_ID,
-                "홍길동",
-                "test@inha.edu",
-                "010-1234-5678",
-                "컴퓨터공학과",
-                "테스트 동기",
-                List.of(),
-                Gender.MALE,
-                1,
-                EnrollmentStatus.ENROLLED,
-                List.of(), null, null, null
-        );
-        user.changeRole(role);
-        if (status == UserStatus.SUSPENDED) {
-            user.suspend();
-        } else if (status == UserStatus.WITHDRAWN) {
-            user.withdraw();
-        }
-        return userRepository.save(user);
-    }
-
-    private PasswordCredential createAndSaveCredential(User user, UserStatus status) {
-        String encodedPassword = passwordEncoder.encode(TEST_PASSWORD);
-        PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        if (status == UserStatus.SUSPENDED) {
-            credential.suspend();
-        } else if (status == UserStatus.WITHDRAWN) {
-            credential.withdraw();
-        }
-        return passwordCredentialRepository.save(credential);
-    }
-
     @Nested
     @DisplayName("로그아웃 테스트")
     class LogoutTest {
@@ -89,8 +51,8 @@ class LogoutServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("로그아웃 요청 시 토큰 무효화 [LOG-030]")
         void logout_revokesRefreshToken() {
             // given
-            User user = createAndSaveTestUser(UserRole.MEMBER, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.MEMBER, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             // 먼저 로그인하여 토큰 획득
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
@@ -110,8 +72,8 @@ class LogoutServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("로그아웃 후 이전 토큰 사용 불가 [LOG-031]")
         void logout_previousTokenInvalid() {
             // given
-            User user = createAndSaveTestUser(UserRole.MEMBER, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.MEMBER, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             // 먼저 로그인하여 토큰 획득
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
@@ -146,8 +108,8 @@ class LogoutServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("한 기기 로그아웃 시 다른 기기 유지 [LOG-041]")
         void logout_oneDevice_otherDeviceRemainsValid() {
             // given
-            User user = createAndSaveTestUser(UserRole.MEMBER, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.MEMBER, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 

@@ -4,12 +4,9 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.exception.account.AccountSuspendedException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
-import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
-import igrus.web.user.domain.Gender;
-import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
@@ -19,8 +16,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,48 +40,6 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         ReflectionTestUtils.setField(loginService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
     }
 
-    private User createAndSaveTestUser(UserRole role, UserStatus status) {
-        User user = User.create(
-                TEST_STUDENT_ID,
-                "홍길동",
-                "test@inha.edu",
-                "010-1234-5678",
-                "컴퓨터공학과",
-                "테스트 동기",
-                List.of(),
-                Gender.MALE,
-                1,
-                EnrollmentStatus.ENROLLED,
-                List.of(), null, null, null
-        );
-        user.changeRole(role);
-        if (status == UserStatus.SUSPENDED) {
-            user.suspend();
-        } else if (status == UserStatus.WITHDRAWN) {
-            user.withdraw();
-        } else if (status == UserStatus.PENDING_VERIFICATION) {
-            ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
-        }
-        return userRepository.save(user);
-    }
-
-    private PasswordCredential createAndSaveCredential(User user) {
-        return createAndSaveCredential(user, UserStatus.ACTIVE);
-    }
-
-    private PasswordCredential createAndSaveCredential(User user, UserStatus status) {
-        String encodedPassword = passwordEncoder.encode(TEST_PASSWORD);
-        PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        if (status == UserStatus.SUSPENDED) {
-            credential.suspend();
-        } else if (status == UserStatus.WITHDRAWN) {
-            credential.withdraw();
-        } else if (status == UserStatus.PENDING_VERIFICATION) {
-            ReflectionTestUtils.setField(credential, "status", UserStatus.PENDING_VERIFICATION);
-        }
-        return passwordCredentialRepository.save(credential);
-    }
-
     @Nested
     @DisplayName("로그인 성공 테스트")
     class LoginSuccessTest {
@@ -95,8 +48,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("준회원 로그인 성공 - Access Token과 Refresh Token 발급 [LOG-001]")
         void login_withAssociateRole_success() {
             // given
-            User user = createAndSaveTestUser(UserRole.ASSOCIATE, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.ASSOCIATE, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
@@ -119,8 +72,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("정회원 로그인 성공 - 역할 정보 MEMBER 반환 [LOG-002]")
         void login_withMemberRole_returnsMemberRole() {
             // given
-            User user = createAndSaveTestUser(UserRole.MEMBER, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.MEMBER, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
@@ -135,8 +88,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("운영진 로그인 성공 - 역할 정보 OPERATOR 반환 [LOG-003]")
         void login_withOperatorRole_returnsOperatorRole() {
             // given
-            User user = createAndSaveTestUser(UserRole.OPERATOR, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.OPERATOR, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
@@ -151,8 +104,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("관리자 로그인 성공 - 역할 정보 ADMIN 반환 [LOG-004]")
         void login_withAdminRole_returnsAdminRole() {
             // given
-            User user = createAndSaveTestUser(UserRole.ADMIN, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.ADMIN, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
@@ -167,8 +120,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("Access Token 1시간 유효 - expiresIn 값 확인 [LOG-005]")
         void login_accessTokenValidity_isOneHour() {
             // given
-            User user = createAndSaveTestUser(UserRole.ASSOCIATE, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.ASSOCIATE, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
@@ -183,8 +136,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("로그인 시 사용자 이름 반환 [LOG-007]")
         void login_returnsUserName() {
             // given
-            User user = createAndSaveTestUser(UserRole.MEMBER, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.MEMBER, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
@@ -192,7 +145,7 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
             LoginResult response = loginService.login(request, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
             // then
-            assertThat(response.name()).isEqualTo("홍길동");
+            assertThat(response.name()).isEqualTo("테스트유저");
         }
     }
 
@@ -215,8 +168,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("잘못된 비밀번호로 로그인 시도 - InvalidCredentialsException 발생 [LOG-011]")
         void login_withInvalidPassword_throwsInvalidCredentialsException() {
             // given
-            User user = createAndSaveTestUser(UserRole.ASSOCIATE, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.ASSOCIATE, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, "wrongPassword");
 
@@ -229,8 +182,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("이메일 미인증 사용자 로그인 시도 - EmailNotVerifiedException 발생 [LOG-012]")
         void login_withUnverifiedEmail_throwsEmailNotVerifiedException() {
             // given - User 상태가 PENDING_VERIFICATION인 경우 (이메일 미인증)
-            User user = createAndSaveTestUser(UserRole.ASSOCIATE, UserStatus.PENDING_VERIFICATION);
-            createAndSaveCredential(user, UserStatus.PENDING_VERIFICATION);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.ASSOCIATE, UserStatus.PENDING_VERIFICATION);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.PENDING_VERIFICATION);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
@@ -244,7 +197,7 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("비밀번호 정보가 없는 사용자 로그인 시도 - InvalidCredentialsException 발생 [LOG-013 관련]")
         void login_withNoPasswordCredential_throwsInvalidCredentialsException() {
             // given
-            User user = createAndSaveTestUser(UserRole.ASSOCIATE, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.ASSOCIATE, UserStatus.ACTIVE);
             // PasswordCredential을 저장하지 않음
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
@@ -263,8 +216,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("정지된 계정 로그인 시도 - AccountSuspendedException 발생 [LOG-020]")
         void login_withSuspendedAccount_throwsAccountSuspendedException() {
             // given
-            User user = createAndSaveTestUser(UserRole.MEMBER, UserStatus.SUSPENDED);
-            createAndSaveCredential(user, UserStatus.SUSPENDED);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.MEMBER, UserStatus.SUSPENDED);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.SUSPENDED);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
@@ -277,8 +230,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("탈퇴한 계정 로그인 시도 - AccountWithdrawnException 발생 [LOG-021]")
         void login_withWithdrawnAccount_throwsAccountWithdrawnException() {
             // given
-            User user = createAndSaveTestUser(UserRole.MEMBER, UserStatus.WITHDRAWN);
-            createAndSaveCredential(user, UserStatus.WITHDRAWN);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.MEMBER, UserStatus.WITHDRAWN);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.WITHDRAWN);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
@@ -296,8 +249,8 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("여러 기기 동시 로그인 - 각각 독립된 토큰 발급 [LOG-040]")
         void login_multipleDevices_issuesSeparateTokens() {
             // given
-            User user = createAndSaveTestUser(UserRole.MEMBER, UserStatus.ACTIVE);
-            createAndSaveCredential(user, UserStatus.ACTIVE);
+            User user = createAndSaveUser(TEST_STUDENT_ID, "test@inha.edu",UserRole.MEMBER, UserStatus.ACTIVE);
+            createAndSaveCredential(user, TEST_PASSWORD, UserStatus.ACTIVE);
 
             PasswordLoginRequest request = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 

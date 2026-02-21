@@ -12,6 +12,8 @@ import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
+import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
 import igrus.web.user.domain.Gender;
@@ -25,8 +27,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -44,6 +47,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *     <li>REG-010 ~ REG-018: 필수 정보 입력 및 검증</li>
  *     <li>REG-020 ~ REG-026: 비밀번호 검증</li>
  *     <li>REG-030 ~ REG-032: 중복 검사</li>
+ *     <li>REG-040 ~ REG-045: 이메일 인증</li>
  *     <li>REG-050 ~ REG-052: Edge Cases</li>
  * </ul>
  *
@@ -56,10 +60,16 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
     @Autowired
     private SignupService signupService;
 
-    @MockitoBean
+    @Autowired
+    private PreSignupVerifyCodeService preSignupVerifyCodeService;
+
+    @Autowired
+    private PreSignupSendCodeService preSignupSendCodeService;
+
+    @Autowired
     private AuthEmailService authEmailService;
 
-    @MockitoBean
+    @Autowired
     private BaebdungiWebhookService baebdungiWebhookService;
 
     private static final String VALID_STUDENT_ID = "20231234";
@@ -75,6 +85,10 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService, baebdungiWebhookService);
+        ReflectionTestUtils.setField(preSignupVerifyCodeService, "maxAttempts", 5);
+        ReflectionTestUtils.setField(preSignupSendCodeService, "verificationCodeExpiry", 600000L);
+        ReflectionTestUtils.setField(preSignupSendCodeService, "resendRateLimitSeconds", 60L);
     }
 
     /**
@@ -263,6 +277,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
             // then
             assertThat(response).isNotNull();
             assertThat(response.email()).isEqualTo(VALID_EMAIL);
+
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
             assertThat(savedUser.getStudentId()).isEqualTo(VALID_STUDENT_ID);
             assertThat(savedUser.getName()).isEqualTo(VALID_NAME);
@@ -522,7 +537,7 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
         }
     }
 
-    // ===== 2.6 Edge Cases =====
+    // ===== 2.5 Edge Cases =====
 
     @Nested
     @DisplayName("Edge Cases 테스트")

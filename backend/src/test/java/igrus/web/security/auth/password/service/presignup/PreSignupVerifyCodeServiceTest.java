@@ -6,14 +6,12 @@ import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.exception.verification.VerificationAttemptsExceededException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeExpiredException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeInvalidException;
-import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.dto.response.PreSignupVerificationResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,9 +22,6 @@ class PreSignupVerifyCodeServiceTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private PreSignupVerifyCodeService preSignupVerifyCodeService;
-
-    @MockitoBean
-    private AuthEmailService authEmailService;
 
     private static final String VALID_EMAIL = "test@inha.edu";
     private static final String VALID_CODE = "123456";

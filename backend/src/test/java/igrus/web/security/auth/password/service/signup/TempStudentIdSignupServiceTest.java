@@ -14,8 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -35,13 +35,13 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private TempStudentIdSignupService tempStudentIdSignupService;
 
-    @MockitoBean
+    @Autowired
     private AuthEmailService authEmailService;
 
-    @MockitoBean
+    @Autowired
     private BaebdungiWebhookService baebdungiWebhookService;
 
-    @MockitoBean
+    @Autowired
     private Clock clock;
 
     private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
@@ -56,6 +56,7 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService, baebdungiWebhookService, clock);
         setClock(2026, 1, 15); // 1월로 설정
     }
 
@@ -100,6 +101,7 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
             // then
             assertThat(response).isNotNull();
             assertThat(response.email()).isEqualTo(VALID_EMAIL);
+
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
             assertThat(savedUser.getStudentId()).startsWith("9926");
             assertThat(savedUser.getStudentId()).hasSize(8);
@@ -143,7 +145,7 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
             // when
             tempStudentIdSignupService.signup(createValidRequest());
 
-            // then
+            // then - 이메일 사전 인증 완료 후 가입이므로 인증 이메일은 발송하지 않고, 임시 학번 안내 이메일만 발송
             verify(authEmailService).sendTemporaryStudentIdEmail(eq(VALID_EMAIL), eq(VALID_NAME), anyString());
         }
 

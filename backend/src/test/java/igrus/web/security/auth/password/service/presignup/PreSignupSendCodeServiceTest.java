@@ -12,8 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
@@ -30,7 +30,7 @@ class PreSignupSendCodeServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private PreSignupSendCodeService preSignupSendCodeService;
 
-    @MockitoBean
+    @Autowired
     private AuthEmailService authEmailService;
 
     private static final String VALID_EMAIL = "test@inha.edu";
@@ -38,6 +38,7 @@ class PreSignupSendCodeServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService);
         ReflectionTestUtils.setField(preSignupSendCodeService, "verificationCodeExpiry", 600000L);
         ReflectionTestUtils.setField(preSignupSendCodeService, "resendRateLimitSeconds", 60L);
     }

@@ -1,28 +1,28 @@
 package igrus.web.security.auth.common.repository;
 
+import igrus.web.common.config.JpaAuditingConfig;
 import igrus.web.security.auth.common.domain.PrivacyConsent;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@DataJpaTest
 @ActiveProfiles("test")
+@Import(JpaAuditingConfig.class)
 @DisplayName("PrivacyConsentRepository 통합 테스트")
 class PrivacyConsentRepositoryTest {
 
@@ -35,49 +35,20 @@ class PrivacyConsentRepositoryTest {
     @Autowired
     private EntityManager entityManager;
 
-    @Autowired
-    private TransactionTemplate transactionTemplate;
-
-    @BeforeEach
-    void setUp() {
-        cleanupData();
-    }
-
-    @AfterEach
-    void tearDown() {
-        cleanupData();
-    }
-
-    private void cleanupData() {
-        transactionTemplate.execute(status -> {
-            // 테스트 데이터 정리 (FK 순서 고려)
-            entityManager.createNativeQuery("DELETE FROM privacy_consents").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM login_histories").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM login_attempts").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM refresh_tokens").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM password_reset_tokens").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_positions").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_role_histories").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_suspensions").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiry_memos").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiry_replies").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiry_attachments").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM guest_inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM member_inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
-            entityManager.flush();
-            entityManager.clear();
-            return null;
-        });
-    }
-
     private User createAndSaveUser(String studentId, String email) {
-        return transactionTemplate.execute(status -> {
-            User user = User.create(studentId, "홍길동", email, "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, null, null);
-            return userRepository.save(user);
-        });
+        User user = User.create(studentId, "홍길동", email, "010-1234-5678", "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, null, null);
+        userRepository.save(user);
+        entityManager.flush();
+        entityManager.clear();
+        return user;
+    }
+
+    private void saveConsent(User user, String policyVersion) {
+        User attachedUser = entityManager.find(User.class, user.getId());
+        PrivacyConsent consent = PrivacyConsent.create(attachedUser, policyVersion);
+        privacyConsentRepository.save(consent);
+        entityManager.flush();
+        entityManager.clear();
     }
 
     @Nested
@@ -89,15 +60,8 @@ class PrivacyConsentRepositoryTest {
         void save_SameUser_MultipleConsents() {
             // given
             User user = createAndSaveUser("20231001", "test1@inha.edu");
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent1 = PrivacyConsent.create(attachedUser, "v1.0");
-                PrivacyConsent consent2 = PrivacyConsent.create(attachedUser, "v2.0");
-                privacyConsentRepository.save(consent1);
-                privacyConsentRepository.save(consent2);
-                return null;
-            });
+            saveConsent(user, "v1.0");
+            saveConsent(user, "v2.0");
 
             // when
             List<PrivacyConsent> consents = privacyConsentRepository.findByUserIdOrderByConsentDateDesc(user.getId());
@@ -116,22 +80,9 @@ class PrivacyConsentRepositoryTest {
         void findByUserIdOrderByConsentDateDesc_ReturnsInOrder() throws InterruptedException {
             // given
             User user = createAndSaveUser("20231002", "test2@inha.edu");
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent1 = PrivacyConsent.create(attachedUser, "v1.0");
-                privacyConsentRepository.save(consent1);
-                return null;
-            });
-
+            saveConsent(user, "v1.0");
             Thread.sleep(10); // 동의 시간 차이를 위한 짧은 대기
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent2 = PrivacyConsent.create(attachedUser, "v2.0");
-                privacyConsentRepository.save(consent2);
-                return null;
-            });
+            saveConsent(user, "v2.0");
 
             // when
             List<PrivacyConsent> consents = privacyConsentRepository.findByUserIdOrderByConsentDateDesc(user.getId());
@@ -165,22 +116,9 @@ class PrivacyConsentRepositoryTest {
         void findFirstByUserIdOrderByConsentDateDesc_ReturnsLatest() throws InterruptedException {
             // given
             User user = createAndSaveUser("20231004", "test4@inha.edu");
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent1 = PrivacyConsent.create(attachedUser, "v1.0");
-                privacyConsentRepository.save(consent1);
-                return null;
-            });
-
+            saveConsent(user, "v1.0");
             Thread.sleep(10);
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent2 = PrivacyConsent.create(attachedUser, "v2.0");
-                privacyConsentRepository.save(consent2);
-                return null;
-            });
+            saveConsent(user, "v2.0");
 
             // when
             Optional<PrivacyConsent> latestConsent = privacyConsentRepository
@@ -215,13 +153,7 @@ class PrivacyConsentRepositoryTest {
         void existsByUserIdAndPolicyVersion_WhenExists_ReturnsTrue() {
             // given
             User user = createAndSaveUser("20231006", "test6@inha.edu");
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent = PrivacyConsent.create(attachedUser, "v1.0");
-                privacyConsentRepository.save(consent);
-                return null;
-            });
+            saveConsent(user, "v1.0");
 
             // when
             boolean exists = privacyConsentRepository.existsByUserIdAndPolicyVersion(user.getId(), "v1.0");
@@ -235,13 +167,7 @@ class PrivacyConsentRepositoryTest {
         void existsByUserIdAndPolicyVersion_WhenNotExists_ReturnsFalse() {
             // given
             User user = createAndSaveUser("20231007", "test7@inha.edu");
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent = PrivacyConsent.create(attachedUser, "v1.0");
-                privacyConsentRepository.save(consent);
-                return null;
-            });
+            saveConsent(user, "v1.0");
 
             // when
             boolean exists = privacyConsentRepository.existsByUserIdAndPolicyVersion(user.getId(), "v2.0");
@@ -260,13 +186,7 @@ class PrivacyConsentRepositoryTest {
         void findByUserIdAndPolicyVersion_WhenExists_ReturnsConsent() {
             // given
             User user = createAndSaveUser("20231008", "test8@inha.edu");
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent = PrivacyConsent.create(attachedUser, "v1.0");
-                privacyConsentRepository.save(consent);
-                return null;
-            });
+            saveConsent(user, "v1.0");
 
             // when
             Optional<PrivacyConsent> foundConsent = privacyConsentRepository
@@ -282,13 +202,7 @@ class PrivacyConsentRepositoryTest {
         void findByUserIdAndPolicyVersion_WhenNotExists_ReturnsEmpty() {
             // given
             User user = createAndSaveUser("20231009", "test9@inha.edu");
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent = PrivacyConsent.create(attachedUser, "v1.0");
-                privacyConsentRepository.save(consent);
-                return null;
-            });
+            saveConsent(user, "v1.0");
 
             // when
             Optional<PrivacyConsent> foundConsent = privacyConsentRepository
@@ -308,13 +222,7 @@ class PrivacyConsentRepositoryTest {
         void existsByUserIdAndConsentGivenTrue_WhenExists_ReturnsTrue() {
             // given
             User user = createAndSaveUser("20231010", "test10@inha.edu");
-
-            transactionTemplate.execute(status -> {
-                User attachedUser = entityManager.find(User.class, user.getId());
-                PrivacyConsent consent = PrivacyConsent.create(attachedUser, "v1.0");
-                privacyConsentRepository.save(consent);
-                return null;
-            });
+            saveConsent(user, "v1.0");
 
             // when
             boolean exists = privacyConsentRepository.existsByUserIdAndConsentGivenTrue(user.getId());

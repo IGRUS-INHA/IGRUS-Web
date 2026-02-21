@@ -8,7 +8,6 @@ import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberExcep
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
 import igrus.web.security.auth.common.exception.signup.VerificationTokenInvalidException;
 import igrus.web.security.auth.common.exception.signup.InvalidCustomFieldException;
-import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
@@ -17,17 +16,16 @@ import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
+import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
 import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,10 +37,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private SignupService signupService;
 
-    @MockitoBean
-    private AuthEmailService authEmailService;
-
-    @MockitoBean
+    @Autowired
     private BaebdungiWebhookService baebdungiWebhookService;
 
     private static final String VALID_STUDENT_ID = "20231234";
@@ -58,6 +53,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(baebdungiWebhookService);
     }
 
     private PasswordSignupRequest createValidSignupRequest() {
@@ -141,6 +137,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
             // then
             assertThat(response).isNotNull();
             assertThat(response.email()).isEqualTo(VALID_EMAIL);
+
             // 상태 검증 - DB에서 조회
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
             assertThat(savedUser.getStudentId()).isEqualTo(VALID_STUDENT_ID);
@@ -173,8 +170,11 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
             PasswordCredential credential = passwordCredentialRepository.findByUserId(savedUser.getId()).orElseThrow();
 
+            // BCrypt 해시 패턴 확인 ($2a$ 또는 $2b$ 로 시작)
             assertThat(credential.getPasswordHash()).startsWith("$2");
+            // 원본 비밀번호와 다름
             assertThat(credential.getPasswordHash()).isNotEqualTo(VALID_PASSWORD);
+            // 비밀번호가 매칭되는지 확인
             assertThat(passwordEncoder.matches(VALID_PASSWORD, credential.getPasswordHash())).isTrue();
         }
     }
@@ -187,7 +187,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("이미 가입된 학번으로 가입 시도 시 오류 [REG-030]")
         void signup_WithDuplicateStudentId_ThrowsException() {
             // given
-            createAndSaveUser(VALID_STUDENT_ID, "other@inha.edu", igrus.web.user.domain.UserRole.ASSOCIATE);
+            createAndSaveUser(VALID_STUDENT_ID, "other@inha.edu", UserRole.ASSOCIATE);
             createVerifiedEmailRecord(VALID_EMAIL);
 
             PasswordSignupRequest request = createValidSignupRequest();
@@ -196,6 +196,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
             assertThatThrownBy(() -> signupService.signup(request))
                     .isInstanceOf(DuplicateStudentIdException.class);
 
+            // 새 사용자가 저장되지 않았는지 확인
             assertThat(userRepository.findByEmail(VALID_EMAIL)).isEmpty();
         }
 
@@ -203,7 +204,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("이미 등록된 이메일로 가입 시도 시 오류 [REG-031]")
         void signup_WithDuplicateEmail_ThrowsException() {
             // given
-            createAndSaveUser("99999999", VALID_EMAIL, igrus.web.user.domain.UserRole.ASSOCIATE);
+            createAndSaveUser("99999999", VALID_EMAIL, UserRole.ASSOCIATE);
             createVerifiedEmailRecord(VALID_EMAIL);
 
             PasswordSignupRequest request = createValidSignupRequest();
@@ -212,6 +213,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
             assertThatThrownBy(() -> signupService.signup(request))
                     .isInstanceOf(DuplicateEmailException.class);
 
+            // 새 사용자가 저장되지 않았는지 확인
             assertThat(userRepository.findByStudentId(VALID_STUDENT_ID)).isEmpty();
         }
 
@@ -233,6 +235,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
             assertThatThrownBy(() -> signupService.signup(request))
                     .isInstanceOf(DuplicatePhoneNumberException.class);
 
+            // 새 사용자가 저장되지 않았는지 확인
             assertThat(userRepository.findByStudentId(VALID_STUDENT_ID)).isEmpty();
         }
     }
