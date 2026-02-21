@@ -3,6 +3,7 @@ package igrus.web.security.jwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.exception.ErrorCode;
 import igrus.web.common.exception.ErrorResponse;
+import igrus.web.security.jwt.exception.JwtErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             HttpServletResponse response,
             AuthenticationException authException
     ) throws IOException {
-        ErrorCode errorCode = ErrorCode.ACCESS_TOKEN_INVALID;
+        ErrorCode errorCode = JwtErrorCode.ACCESS_TOKEN_INVALID;
         response.setStatus(errorCode.getStatus());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");

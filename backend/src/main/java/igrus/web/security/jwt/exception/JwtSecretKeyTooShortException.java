@@ -1,7 +1,6 @@
 package igrus.web.security.jwt.exception;
 
 import igrus.web.common.exception.CustomBaseException;
-import igrus.web.common.exception.ErrorCode;
 
 /**
  * JWT 비밀키 길이가 최소 요구사항을 충족하지 않을 때 발생하는 예외.
@@ -9,11 +8,11 @@ import igrus.web.common.exception.ErrorCode;
 public class JwtSecretKeyTooShortException extends CustomBaseException {
 
     public JwtSecretKeyTooShortException() {
-        super(ErrorCode.JWT_SECRET_KEY_TOO_SHORT);
+        super(JwtErrorCode.JWT_SECRET_KEY_TOO_SHORT);
     }
 
     public JwtSecretKeyTooShortException(int minimumLength) {
-        super(ErrorCode.JWT_SECRET_KEY_TOO_SHORT,
+        super(JwtErrorCode.JWT_SECRET_KEY_TOO_SHORT,
                 "JWT 비밀키는 최소 " + minimumLength + "바이트 필요합니다");
     }
 }

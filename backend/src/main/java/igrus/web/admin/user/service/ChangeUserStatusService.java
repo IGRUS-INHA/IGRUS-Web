@@ -2,7 +2,8 @@ package igrus.web.admin.user.service;
 
 import igrus.web.admin.user.dto.ChangeUserStatusRequest;
 import igrus.web.admin.user.exception.SelfStatusChangeException;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
+import igrus.web.user.exception.UserErrorCode;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserSuspension;
@@ -51,7 +52,7 @@ public class ChangeUserStatusService {
             throw InvalidSuspensionException.reasonRequired();
         }
         if (request.suspendedUntil() == null) {
-            throw new InvalidSuspensionException(ErrorCode.SUSPENSION_INVALID_PERIOD);
+            throw new InvalidSuspensionException(UserErrorCode.SUSPENSION_INVALID_PERIOD);
         }
 
         // 2. 정지 종료일이 현재 시간 이후인지 검증
@@ -73,7 +74,7 @@ public class ChangeUserStatusService {
 
         // 5. 이미 정지된 사용자인지 확인
         if (targetUser.isSuspended()) {
-            throw new InvalidSuspensionException(ErrorCode.ACCOUNT_SUSPENDED);
+            throw new InvalidSuspensionException(AuthErrorCode.ACCOUNT_SUSPENDED);
         }
 
         // 6. 사용자 상태를 SUSPENDED로 변경

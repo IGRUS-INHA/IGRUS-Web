@@ -1,6 +1,8 @@
 package igrus.web.security.auth.password.controller;
 
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
+import igrus.web.user.exception.UserErrorCode;
+import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
 import igrus.web.security.auth.password.dto.response.DuplicateCheckResponse;
@@ -54,7 +56,7 @@ class PasswordAuthControllerDuplicateCheckTest extends PasswordAuthControllerTes
                             .param("studentId", "1234"))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_STUDENT_ID.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.INVALID_STUDENT_ID.getCode()));
         }
 
         @Test
@@ -69,7 +71,7 @@ class PasswordAuthControllerDuplicateCheckTest extends PasswordAuthControllerTes
                             .param("studentId", "12345678"))
                     .andDo(print())
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_STUDENT_ID.getCode()));
+                    .andExpect(jsonPath("$.code").value(AuthErrorCode.DUPLICATE_STUDENT_ID.getCode()));
         }
 
         @Test
@@ -113,7 +115,7 @@ class PasswordAuthControllerDuplicateCheckTest extends PasswordAuthControllerTes
                             .param("email", "invalid-email"))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_EMAIL_FORMAT.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.INVALID_EMAIL_FORMAT.getCode()));
         }
 
         @Test
@@ -128,7 +130,7 @@ class PasswordAuthControllerDuplicateCheckTest extends PasswordAuthControllerTes
                             .param("email", "user@example.com"))
                     .andDo(print())
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_EMAIL.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.DUPLICATE_EMAIL.getCode()));
         }
 
         @Test

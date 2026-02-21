@@ -1,6 +1,10 @@
 package igrus.web.security.auth.password.controller;
 
-import igrus.web.common.exception.ErrorCode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import igrus.web.common.exception.CommonErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
+import igrus.web.user.exception.UserErrorCode;
+import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
@@ -255,7 +259,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
 
         @Test
@@ -270,7 +274,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
 
         @Test
@@ -285,7 +289,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
     }
 
@@ -305,7 +309,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
 
         @Test
@@ -320,7 +324,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
     }
 
@@ -340,7 +344,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
     }
 
@@ -360,7 +364,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
     }
 
@@ -380,7 +384,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
     }
 
@@ -401,7 +405,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
 
         @Test
@@ -416,7 +420,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
 
         @Test
@@ -431,7 +435,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
     }
 
@@ -451,7 +455,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
 
         @Test
@@ -466,7 +470,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
     }
 
@@ -489,7 +493,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_STUDENT_ID.getCode()));
+                    .andExpect(jsonPath("$.code").value(AuthErrorCode.DUPLICATE_STUDENT_ID.getCode()));
         }
 
         @Test
@@ -507,7 +511,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_EMAIL.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.DUPLICATE_EMAIL.getCode()));
         }
 
         @Test
@@ -525,7 +529,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_PHONE_NUMBER.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.DUPLICATE_PHONE_NUMBER.getCode()));
         }
     }
 }
