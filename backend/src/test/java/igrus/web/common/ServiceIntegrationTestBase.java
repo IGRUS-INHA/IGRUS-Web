@@ -12,6 +12,7 @@ import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.UserStatus;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.repository.UserRoleHistoryRepository;
 import java.util.List;
@@ -184,7 +185,6 @@ public abstract class ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(role);
-        user.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE (테스트에서 기본적으로 ACTIVE 상태 사용)
         return user;
     }
 
@@ -218,6 +218,7 @@ public abstract class ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(role);
+        ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
         return userRepository.save(user);
     }
 

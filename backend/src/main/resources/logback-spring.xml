@@ -20,8 +20,8 @@
         <logger name="org.springframework.security.web" level="DEBUG"/>
     </springProfile>
 
-    <!-- Prod Profile: JSON 구조화 포맷 -->
-    <springProfile name="prod">
+    <!-- Prod & Staging Profile: JSON 구조화 포맷 -->
+    <springProfile name="prod | staging">
         <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <includeCallerData>false</includeCallerData>

@@ -86,14 +86,12 @@ class PasswordLoginIntegrationTest extends ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(role);
-        if (status == UserStatus.ACTIVE) {
-            user.verifyEmail();
-        } else if (status == UserStatus.SUSPENDED) {
-            user.verifyEmail();
+        if (status == UserStatus.SUSPENDED) {
             user.suspend();
         } else if (status == UserStatus.WITHDRAWN) {
-            user.verifyEmail();
             user.withdraw();
+        } else if (status == UserStatus.PENDING_VERIFICATION) {
+            ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
         }
         return userRepository.save(user);
     }
@@ -101,14 +99,12 @@ class PasswordLoginIntegrationTest extends ServiceIntegrationTestBase {
     private PasswordCredential createAndSaveCredential(User user, UserStatus status) {
         String encodedPassword = passwordEncoder.encode(TEST_PASSWORD);
         PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        if (status == UserStatus.ACTIVE) {
-            credential.verifyEmail();
-        } else if (status == UserStatus.SUSPENDED) {
-            credential.verifyEmail();
+        if (status == UserStatus.SUSPENDED) {
             credential.suspend();
         } else if (status == UserStatus.WITHDRAWN) {
-            credential.verifyEmail();
             credential.withdraw();
+        } else if (status == UserStatus.PENDING_VERIFICATION) {
+            ReflectionTestUtils.setField(credential, "status", UserStatus.PENDING_VERIFICATION);
         }
         return passwordCredentialRepository.save(credential);
     }

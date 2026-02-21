@@ -23,6 +23,7 @@ import igrus.web.security.auth.password.dto.request.TemporaryStudentIdSignupRequ
 import igrus.web.security.auth.password.dto.response.DuplicateCheckResponse;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.security.auth.password.dto.response.PreSignupVerificationResponse;
 import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
@@ -32,11 +33,11 @@ import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
+import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
+import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
 import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -75,8 +76,8 @@ public class PasswordAuthController {
     private final RefreshTokenService refreshTokenService;
     private final SignupService signupService;
     private final CheckDuplicateService checkDuplicateService;
-    private final VerifyEmailService verifyEmailService;
-    private final ResendVerificationService resendVerificationService;
+    private final PreSignupSendCodeService preSignupSendCodeService;
+    private final PreSignupVerifyCodeService preSignupVerifyCodeService;
     private final RequestPasswordResetService requestPasswordResetService;
     private final ResetPasswordService resetPasswordService;
     private final ValidateResetTokenService validateResetTokenService;
@@ -223,11 +224,11 @@ public class PasswordAuthController {
         return ResponseEntity.ok(result.toResponse());
     }
 
-    @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다. 등록 후 이메일 인증이 필요합니다.")
+    @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다. 사전 이메일 인증이 완료되어야 합니다.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
-                    description = "회원가입 요청 성공 (이메일 인증 대기)"
+                    description = "회원가입 성공"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -244,11 +245,11 @@ public class PasswordAuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "임시 학번 회원가입", description = "1~2월에 1학년 신입생이 임시 학번으로 회원가입합니다. 임시 학번이 자동 발급되어 이메일로 전송됩니다.")
+    @Operation(summary = "임시 학번 회원가입", description = "1~2월에 1학년 신입생이 임시 학번으로 회원가입합니다. 사전 이메일 인증이 완료되어야 하며, 임시 학번이 자동 발급되어 이메일로 전송됩니다.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
-                    description = "회원가입 요청 성공 (이메일 인증 대기, 임시 학번 발급)"
+                    description = "회원가입 성공 (임시 학번 발급)"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -344,7 +345,28 @@ public class PasswordAuthController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "이메일 인증", description = "이메일로 발송된 인증 코드를 확인합니다.")
+    @Operation(summary = "사전 이메일 인증 코드 발송", description = "회원가입 전 이메일 인증 코드를 발송합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "인증 코드 발송 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 가입된 이메일"
+            ),
+            @ApiResponse(
+                    responseCode = "429",
+                    description = "재발송 요청 횟수 초과 (1분 내 재요청 불가)"
+            )
+    })
+    @PostMapping("/pre-signup/send-code")
+    public ResponseEntity<VerificationResendResponse> sendPreSignupCode(
+            @Valid @RequestBody ResendVerificationRequest request) {
+        return ResponseEntity.ok(preSignupSendCodeService.sendCode(request));
+    }
+
+    @Operation(summary = "사전 이메일 인증 코드 확인", description = "회원가입 전 이메일 인증 코드를 확인합니다.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
@@ -359,31 +381,10 @@ public class PasswordAuthController {
                     description = "인증 시도 횟수 초과"
             )
     })
-    @PostMapping("/verify-email")
-    public ResponseEntity<PasswordSignupResponse> verifyEmail(@Valid @RequestBody EmailVerificationRequest request) {
-        PasswordSignupResponse response = verifyEmailService.verifyEmail(request);
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "인증 코드 재발송", description = "이메일 인증 코드를 다시 발송합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "인증 코드 재발송 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패 또는 해당 이메일로 가입 요청된 계정 없음)"
-            ),
-            @ApiResponse(
-                    responseCode = "429",
-                    description = "재발송 요청 횟수 초과 (5분 내 재요청 불가)"
-            )
-    })
-    @PostMapping("/resend-verification")
-    public ResponseEntity<VerificationResendResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
-        VerificationResendResponse response = resendVerificationService.resendVerification(request);
-        return ResponseEntity.ok(response);
+    @PostMapping("/pre-signup/verify-code")
+    public ResponseEntity<PreSignupVerificationResponse> verifyPreSignupCode(
+            @Valid @RequestBody EmailVerificationRequest request) {
+        return ResponseEntity.ok(preSignupVerifyCodeService.verifyCode(request));
     }
 
     @Operation(

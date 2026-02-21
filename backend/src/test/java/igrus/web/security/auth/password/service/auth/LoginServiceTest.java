@@ -60,16 +60,13 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(role);
-        if (status == UserStatus.ACTIVE) {
-            user.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
-        } else if (status == UserStatus.SUSPENDED) {
-            user.verifyEmail(); // 먼저 ACTIVE로 변경 후
+        if (status == UserStatus.SUSPENDED) {
             user.suspend();
         } else if (status == UserStatus.WITHDRAWN) {
-            user.verifyEmail(); // 먼저 ACTIVE로 변경 후
             user.withdraw();
+        } else if (status == UserStatus.PENDING_VERIFICATION) {
+            ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
         }
-        // PENDING_VERIFICATION은 기본 상태이므로 별도 처리 불필요
         return userRepository.save(user);
     }
 
@@ -80,16 +77,13 @@ class LoginServiceTest extends ServiceIntegrationTestBase {
     private PasswordCredential createAndSaveCredential(User user, UserStatus status) {
         String encodedPassword = passwordEncoder.encode(TEST_PASSWORD);
         PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        if (status == UserStatus.ACTIVE) {
-            credential.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
-        } else if (status == UserStatus.SUSPENDED) {
-            credential.verifyEmail();
+        if (status == UserStatus.SUSPENDED) {
             credential.suspend();
         } else if (status == UserStatus.WITHDRAWN) {
-            credential.verifyEmail();
             credential.withdraw();
+        } else if (status == UserStatus.PENDING_VERIFICATION) {
+            ReflectionTestUtils.setField(credential, "status", UserStatus.PENDING_VERIFICATION);
         }
-        // PENDING_VERIFICATION은 기본 상태이므로 별도 처리 불필요
         return passwordCredentialRepository.save(credential);
     }
 

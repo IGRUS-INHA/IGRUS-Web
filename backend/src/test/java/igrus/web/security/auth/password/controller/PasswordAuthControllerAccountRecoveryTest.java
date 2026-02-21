@@ -16,11 +16,11 @@ import igrus.web.security.auth.password.exception.InvalidCredentialsException;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
 import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
+import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
 import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
@@ -84,10 +84,10 @@ class PasswordAuthControllerAccountRecoveryTest {
     private CheckDuplicateService checkDuplicateService;
 
     @MockitoBean
-    private VerifyEmailService verifyEmailService;
+    private PreSignupSendCodeService preSignupSendCodeService;
 
     @MockitoBean
-    private ResendVerificationService resendVerificationService;
+    private PreSignupVerifyCodeService preSignupVerifyCodeService;
 
     @MockitoBean
     private RequestPasswordResetService requestPasswordResetService;

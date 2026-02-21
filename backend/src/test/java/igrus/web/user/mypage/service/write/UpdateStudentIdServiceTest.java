@@ -45,7 +45,6 @@ class UpdateStudentIdServiceTest extends ServiceIntegrationTestBase {
                 "컴퓨터공학과", "동기", List.of(), Gender.MALE, 1,
                 EnrollmentStatus.ENROLLED, List.of(), null, null, null
         );
-        user.verifyEmail();
         return userRepository.save(user);
     }
 

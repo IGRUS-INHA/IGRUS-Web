@@ -51,7 +51,7 @@ public class PasswordCredential extends SoftDeletableEntity {
         PasswordCredential credential = new PasswordCredential();
         credential.user = user;
         credential.passwordHash = passwordHash;
-        credential.status = UserStatus.PENDING_VERIFICATION;
+        credential.status = UserStatus.ACTIVE;
         return credential;
     }
 

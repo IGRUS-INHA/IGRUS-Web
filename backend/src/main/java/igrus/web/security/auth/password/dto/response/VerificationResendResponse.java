@@ -16,4 +16,11 @@ public record VerificationResendResponse(
             email
         );
     }
+
+    public static VerificationResendResponse sent(String email) {
+        return new VerificationResendResponse(
+            "인증 코드가 발송되었습니다.",
+            email
+        );
+    }
 }

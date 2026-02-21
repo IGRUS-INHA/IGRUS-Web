@@ -20,11 +20,11 @@ import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
 import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
+import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
 import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
@@ -80,10 +80,10 @@ class PasswordAuthControllerSignupTest {
     private CheckDuplicateService checkDuplicateService;
 
     @MockitoBean
-    private VerifyEmailService verifyEmailService;
+    private PreSignupSendCodeService preSignupSendCodeService;
 
     @MockitoBean
-    private ResendVerificationService resendVerificationService;
+    private PreSignupVerifyCodeService preSignupVerifyCodeService;
 
     @MockitoBean
     private RequestPasswordResetService requestPasswordResetService;
@@ -122,6 +122,7 @@ class PasswordAuthControllerSignupTest {
     private static final String VALID_PHONE = "010-1234-5678";
     private static final String VALID_DEPARTMENT = "컴퓨터공학과";
     private static final String VALID_MOTIVATION = "프로그래밍을 배우고 싶습니다.";
+    private static final String VALID_VERIFICATION_TOKEN = "test-verification-token";
 
     private PasswordSignupRequest createValidRequest() {
         return new PasswordSignupRequest(
@@ -140,7 +141,8 @@ class PasswordAuthControllerSignupTest {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -161,7 +163,8 @@ class PasswordAuthControllerSignupTest {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -182,7 +185,8 @@ class PasswordAuthControllerSignupTest {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -203,7 +207,8 @@ class PasswordAuthControllerSignupTest {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -224,7 +229,8 @@ class PasswordAuthControllerSignupTest {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -245,7 +251,8 @@ class PasswordAuthControllerSignupTest {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -266,7 +273,8 @@ class PasswordAuthControllerSignupTest {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -287,7 +295,8 @@ class PasswordAuthControllerSignupTest {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                privacyConsent
+                privacyConsent,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -300,7 +309,7 @@ class PasswordAuthControllerSignupTest {
         void signup_WithValidRequest_Returns201() throws Exception {
             // given
             PasswordSignupRequest request = createValidRequest();
-            PasswordSignupResponse response = PasswordSignupResponse.pendingVerification(VALID_EMAIL);
+            PasswordSignupResponse response = PasswordSignupResponse.signupCompleted(VALID_EMAIL);
 
             given(signupService.signup(any(PasswordSignupRequest.class))).willReturn(response);
 
@@ -311,7 +320,7 @@ class PasswordAuthControllerSignupTest {
                     .andDo(print())
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.email").value(VALID_EMAIL))
-                    .andExpect(jsonPath("$.requiresVerification").value(true));
+                    .andExpect(jsonPath("$.requiresVerification").doesNotExist());
         }
     }
 

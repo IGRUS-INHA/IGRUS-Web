@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
+import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
@@ -12,13 +13,12 @@ import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
+import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
+import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
 import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
-import igrus.web.security.auth.password.service.signup.SignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -52,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * <p>테스트 시나리오:</p>
  * <ul>
- *     <li>시나리오 1: 완전한 회원가입 → 이메일 인증 → 로그인 플로우</li>
+ *     <li>시나리오 1: 사전 이메일 인증 → 회원가입 → 로그인 플로우</li>
  *     <li>시나리오 2: 토큰 갱신 플로우</li>
  *     <li>시나리오 3: 로그아웃 플로우</li>
  *     <li>시나리오 4: 다중 디바이스 세션 관리</li>
@@ -92,13 +92,10 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
     private RefreshTokenService refreshTokenService;
 
     @Autowired
-    private SignupService signupService;
+    private PreSignupSendCodeService preSignupSendCodeService;
 
     @Autowired
-    private VerifyEmailService verifyEmailService;
-
-    @Autowired
-    private ResendVerificationService resendVerificationService;
+    private PreSignupVerifyCodeService preSignupVerifyCodeService;
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -114,10 +111,9 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
         ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "gracePeriodMillis", REFRESH_TOKEN_GRACE_PERIOD);
-        ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", 5);
-        ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", 0L); // 테스트용으로 비활성화
+        ReflectionTestUtils.setField(preSignupSendCodeService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(preSignupSendCodeService, "resendRateLimitSeconds", 0L); // 테스트용으로 비활성화
+        ReflectionTestUtils.setField(preSignupVerifyCodeService, "maxAttempts", 5);
     }
 
     /**
@@ -132,21 +128,47 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
         return null;
     }
 
-    // ===== 시나리오 1: 완전한 회원가입 → 이메일 인증 → 로그인 플로우 =====
+    // ===== 시나리오 1: 사전 이메일 인증 → 회원가입 → 로그인 플로우 =====
 
     @Nested
-    @DisplayName("[시나리오 1] 완전한 회원가입 → 이메일 인증 → 로그인 플로우")
+    @DisplayName("[시나리오 1] 사전 이메일 인증 → 회원가입 → 로그인 플로우")
     class CompleteSignupFlowTest {
 
         @Test
-        @DisplayName("E2E-HTTP-001: 회원가입부터 로그인까지 전체 HTTP 플로우")
+        @DisplayName("E2E-HTTP-001: 사전 이메일 인증 → 회원가입 → 로그인 전체 HTTP 플로우")
         void fullSignupToLoginFlow_viaHttp() throws Exception {
-            // === Step 1: POST /signup → 201 Created, 인증 코드 발송 ===
+            // === Step 1: POST /pre-signup/send-code → 200 OK, 인증 코드 발송 ===
+            ResendVerificationRequest sendCodeRequest = new ResendVerificationRequest(TEST_EMAIL);
+
+            mockMvc.perform(post(API_BASE_PATH + "/pre-signup/send-code")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(sendCodeRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.email").value(TEST_EMAIL));
+
+            verify(authEmailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
+
+            // === Step 2: POST /pre-signup/verify-code → 200 OK, 이메일 인증 완료 ===
+            EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(TEST_EMAIL).orElseThrow();
+            EmailVerificationRequest verifyCodeRequest = new EmailVerificationRequest(TEST_EMAIL, verification.getCode());
+
+            MvcResult verifyResult = mockMvc.perform(post(API_BASE_PATH + "/pre-signup/verify-code")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(verifyCodeRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.verified").value(true))
+                    .andReturn();
+
+            String verificationToken = objectMapper.readTree(verifyResult.getResponse().getContentAsString())
+                    .get("verificationToken").asText();
+
+            // === Step 3: POST /signup → 201 Created, 준회원 등록 완료 ===
             PasswordSignupRequest signupRequest = new PasswordSignupRequest(
                     TEST_STUDENT_ID, TEST_NAME, TEST_EMAIL, TEST_PASSWORD,
                     TEST_PHONE, TEST_DEPARTMENT, TEST_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null, JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             mockMvc.perform(post(API_BASE_PATH + "/signup")
@@ -154,31 +176,14 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(signupRequest)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.email").value(TEST_EMAIL))
-                    .andExpect(jsonPath("$.requiresVerification").value(true));
-
-            // 이메일 발송 확인
-            verify(authEmailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
-
-            // 사용자 상태 확인 (PENDING_VERIFICATION)
-            User pendingUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();
-            assertThat(pendingUser.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
-
-            // === Step 2: POST /verify-email → 200 OK, 준회원 등록 완료 ===
-            EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(TEST_EMAIL).orElseThrow();
-            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, verification.getCode());
-
-            mockMvc.perform(post(API_BASE_PATH + "/verify-email")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(verifyRequest)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.requiresVerification").value(false));
+                    .andExpect(jsonPath("$.requiresVerification").doesNotExist());
 
             // 사용자 상태 확인 (ACTIVE)
             User activeUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();
             assertThat(activeUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
             assertThat(activeUser.getRole()).isEqualTo(UserRole.ASSOCIATE);
 
-            // === Step 3: POST /login → 200 OK, 토큰 발급 (refreshToken은 쿠키로) ===
+            // === Step 4: POST /login → 200 OK, 토큰 발급 (refreshToken은 쿠키로) ===
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
 
             MvcResult loginResult = mockMvc.perform(post(API_BASE_PATH + "/login")
@@ -193,7 +198,7 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
                     .andExpect(cookie().exists("refreshToken"))
                     .andReturn();
 
-            // === Step 4: Access Token 검증 ===
+            // === Step 5: Access Token 검증 ===
             JsonNode responseJson = objectMapper.readTree(loginResult.getResponse().getContentAsString());
             String accessToken = responseJson.get("accessToken").asText();
 
@@ -215,7 +220,6 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Setup: 인증된 사용자 생성 ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             // === Step 1: POST /login → 토큰 발급 ===
@@ -262,7 +266,6 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Setup ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             // === Login ===
@@ -310,7 +313,6 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Setup ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             // === Step 1: POST /login → 토큰 발급 ===
@@ -354,7 +356,6 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Setup ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
@@ -408,7 +409,6 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Setup ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.OPERATOR);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
@@ -452,28 +452,25 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
     class ErrorHandlingFlowTest {
 
         @Test
-        @DisplayName("E2E-HTTP-007: 이메일 미인증 상태에서 로그인 시도 → 401 Unauthorized")
-        void loginWithoutEmailVerification_viaHttp() throws Exception {
-            // === Setup: 회원가입만 하고 인증 안 함 ===
+        @DisplayName("E2E-HTTP-007: 이메일 사전 인증 없이 회원가입 시도 → 400 Bad Request")
+        void signupWithoutEmailVerification_viaHttp() throws Exception {
+            // === 이메일 사전 인증 없이 바로 회원가입 시도 ===
             PasswordSignupRequest signupRequest = new PasswordSignupRequest(
                     TEST_STUDENT_ID, TEST_NAME, TEST_EMAIL, TEST_PASSWORD,
                     TEST_PHONE, TEST_DEPARTMENT, TEST_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null, JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    "invalid-token"
             );
 
+            // === 400 Bad Request (이메일 인증 필요) ===
             mockMvc.perform(post(API_BASE_PATH + "/signup")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(signupRequest)))
-                    .andExpect(status().isCreated());
+                    .andExpect(status().isBadRequest());
 
-            // === 로그인 시도 → 401 Unauthorized (이메일 미인증) ===
-            PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
-
-            mockMvc.perform(post(API_BASE_PATH + "/login")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(loginRequest)))
-                    .andExpect(status().isUnauthorized());
+            // 사용자가 생성되지 않았는지 확인
+            assertThat(userRepository.findByEmail(TEST_EMAIL)).isEmpty();
         }
 
         @Test
@@ -482,7 +479,6 @@ class AuthFlowE2ETest extends ServiceIntegrationTestBase {
             // === Setup ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             // === 잘못된 비밀번호로 로그인 ===

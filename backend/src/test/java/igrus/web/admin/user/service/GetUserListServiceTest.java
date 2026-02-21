@@ -97,7 +97,6 @@ class GetUserListServiceTest {
             // given
             Pageable pageable = PageRequest.of(0, 20);
             User user = createTestUser();
-            user.verifyEmail();
             user.changeRole(UserRole.ADMIN);
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
             given(userRepository.findByFilters(null, null, null, pageable)).willReturn(userPage);

@@ -91,14 +91,12 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(UserRole.MEMBER);
-        user.verifyEmail();
         return userRepository.save(user);
     }
 
     private PasswordCredential createAndSaveCredential(User user) {
         String encodedPassword = passwordEncoder.encode(TEST_PASSWORD);
         PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        credential.verifyEmail();
         return passwordCredentialRepository.save(credential);
     }
 

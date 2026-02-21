@@ -1,11 +1,13 @@
 package igrus.web.security.auth.password.service.signup;
 
 import igrus.web.common.ServiceIntegrationTestBase;
+import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.dto.request.TemporaryStudentIdSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
 import igrus.web.user.domain.*;
 import igrus.web.user.exception.TempStudentIdNotAvailableException;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +16,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -38,6 +39,9 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
     private AuthEmailService authEmailService;
 
     @MockitoBean
+    private BaebdungiWebhookService baebdungiWebhookService;
+
+    @MockitoBean
     private Clock clock;
 
     private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
@@ -47,11 +51,12 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
     private static final String VALID_PHONE = "010-9876-5432";
     private static final String VALID_DEPARTMENT = "컴퓨터공학과";
 
+    private String verificationToken;
+
     @BeforeEach
     void setUp() {
         setUpBase();
         setClock(2026, 1, 15); // 1월로 설정
-        ReflectionTestUtils.setField(tempStudentIdSignupService, "verificationCodeExpiry", 600000L);
     }
 
     private void setClock(int year, int month, int day) {
@@ -67,8 +72,15 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
                 VALID_DEPARTMENT, "프로그래밍을 배우고 싶습니다.",
                 List.of(), List.of(Interest.WEB_FRONTEND), null,
                 JoinRoute.EVERYTIME, null, Gender.MALE, 1,
-                EnrollmentStatus.ENROLLED, true
+                EnrollmentStatus.ENROLLED, true,
+                verificationToken
         );
+    }
+
+    private void createVerifiedEmailRecord(String email) {
+        EmailVerification verification = EmailVerification.create(email, "123456", 600000L);
+        this.verificationToken = verification.verify();
+        emailVerificationRepository.save(verification);
     }
 
     @Nested
@@ -79,6 +91,7 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("1월, 1학년 정상 가입 시 임시 학번 발급 [TEMP-INV-01~05, 09]")
         void signup_ValidRequest_CreatesUserWithTempId() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             TemporaryStudentIdSignupRequest request = createValidRequest();
 
             // when
@@ -87,8 +100,6 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
             // then
             assertThat(response).isNotNull();
             assertThat(response.email()).isEqualTo(VALID_EMAIL);
-            assertThat(response.requiresVerification()).isTrue();
-
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
             assertThat(savedUser.getStudentId()).startsWith("9926");
             assertThat(savedUser.getStudentId()).hasSize(8);
@@ -97,6 +108,9 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
         @Test
         @DisplayName("응답에 임시 학번 포함 [TEMP-INV-01]")
         void signup_ValidRequest_ResponseContainsTempId() {
+            // given
+            createVerifiedEmailRecord(VALID_EMAIL);
+
             // when
             PasswordSignupResponse response = tempStudentIdSignupService.signup(createValidRequest());
 
@@ -109,6 +123,9 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
         @Test
         @DisplayName("hasTemporaryStudentId 플래그 true 설정 확인 [TEMP-INV-05]")
         void signup_ValidRequest_SetsTemporaryFlag() {
+            // given
+            createVerifiedEmailRecord(VALID_EMAIL);
+
             // when
             tempStudentIdSignupService.signup(createValidRequest());
 
@@ -118,13 +135,15 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("인증 이메일 + 임시 학번 이메일 발송 확인 [TEMP-INV-09]")
+        @DisplayName("임시 학번 안내 이메일 발송 확인 [TEMP-INV-09]")
         void signup_ValidRequest_SendsTempIdEmail() {
+            // given
+            createVerifiedEmailRecord(VALID_EMAIL);
+
             // when
             tempStudentIdSignupService.signup(createValidRequest());
 
             // then
-            verify(authEmailService).sendVerificationEmail(eq(VALID_EMAIL), anyString());
             verify(authEmailService).sendTemporaryStudentIdEmail(eq(VALID_EMAIL), eq(VALID_NAME), anyString());
         }
 
@@ -133,6 +152,7 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
         void signup_InFebruary_Succeeds() {
             // given
             setClock(2026, 2, 28);
+            createVerifiedEmailRecord(VALID_EMAIL);
 
             // when
             PasswordSignupResponse response = tempStudentIdSignupService.signup(createValidRequest());
