@@ -1,14 +1,12 @@
-name: Frontend Production CD Pipeline
+name: Frontend Staging CD Pipeline
 
 on:
   push:
-    tags:
-      - 'v*'
-  workflow_call:
-    inputs:
-      version:
-        required: true
-        type: string
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-staging-cd.yaml'
 
 permissions:
   contents: read
@@ -17,7 +15,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
+    environment: staging
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
       AWS_FRONTEND_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_FRONTEND_GITHUB_ACTIONS_ROLE_ARN }}
@@ -51,7 +49,6 @@ jobs:
         run: pnpm build
         env:
           VITE_API_URL: ${{ env.VITE_API_URL }}
-          VITE_APP_VERSION: ${{ inputs.version || github.ref_name }}
           FEATURE_COMMUNITY: 'false'
           FEATURE_SEARCH: 'false'
           FEATURE_PROFILE_EDIT: 'false'
