@@ -1,43 +1,19 @@
 package igrus.web.security.auth.password.controller;
 
 import igrus.web.common.exception.ErrorCode;
-import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenTheftException;
-import igrus.web.security.auth.common.service.account.CheckReRegistrationEligibilityService;
-import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
-import igrus.web.security.auth.common.service.account.RecoverAccountService;
-import igrus.web.security.auth.common.service.AccountStatusService;
-import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
-import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
-import igrus.web.security.auth.password.service.reset.ResetPasswordService;
-import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
-import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
-import igrus.web.security.auth.password.service.signup.SignupService;
-import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
-import igrus.web.security.auth.password.service.auth.LoginService;
-import igrus.web.security.auth.password.service.auth.LogoutService;
-import igrus.web.security.auth.password.service.auth.RefreshTokenService;
-import igrus.web.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseCookie;
 
 import java.time.Duration;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.ResponseCookie;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -49,65 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(PasswordAuthController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@Import(GlobalExceptionHandler.class)
 @DisplayName("PasswordAuthController 토큰 갱신 테스트")
-class PasswordAuthControllerTokenTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private LoginService loginService;
-
-    @MockitoBean
-    private LogoutService logoutService;
-
-    @MockitoBean
-    private RefreshTokenService refreshTokenService;
-
-    @MockitoBean
-    private SignupService signupService;
-
-    @MockitoBean
-    private TempStudentIdSignupService tempStudentIdSignupService;
-
-    @MockitoBean
-    private CheckDuplicateService checkDuplicateService;
-
-    @MockitoBean
-    private VerifyEmailService verifyEmailService;
-
-    @MockitoBean
-    private ResendVerificationService resendVerificationService;
-
-    @MockitoBean
-    private RequestPasswordResetService requestPasswordResetService;
-
-    @MockitoBean
-    private ResetPasswordService resetPasswordService;
-
-    @MockitoBean
-    private ValidateResetTokenService validateResetTokenService;
-
-    @MockitoBean
-    private JwtTokenProvider jwtTokenProvider;
-
-    @MockitoBean
-    private CheckReRegistrationEligibilityService checkReRegistrationEligibilityService;
-
-    @MockitoBean
-    private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
-
-    @MockitoBean
-    private RecoverAccountService recoverAccountService;
-
-    @MockitoBean
-    private AccountStatusService accountStatusService;
-
-    @MockitoBean
-    private CookieUtil cookieUtil;
+class PasswordAuthControllerTokenTest extends PasswordAuthControllerTestBase {
 
     private static final String VALID_REFRESH_TOKEN = "valid.refresh.token";
 
