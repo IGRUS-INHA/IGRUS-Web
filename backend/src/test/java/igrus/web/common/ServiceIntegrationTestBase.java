@@ -1,5 +1,6 @@
 package igrus.web.common;
 
+import igrus.web.common.config.TestExternalServiceConfig;
 import igrus.web.common.config.TestPasswordEncoderConfig;
 import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
@@ -44,7 +45,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @SpringBootTest
 @ActiveProfiles("test")
-@Import(TestPasswordEncoderConfig.class)
+@Import({TestPasswordEncoderConfig.class, TestExternalServiceConfig.class})
 public abstract class ServiceIntegrationTestBase {
 
     @Autowired
