@@ -11,6 +11,8 @@ import igrus.web.security.auth.password.exception.PasswordResetTokenInvalidExcep
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
 import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
+import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,9 +22,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -72,6 +76,30 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
         Mockito.reset(authEmailService);
         ReflectionTestUtils.setField(requestPasswordResetService, "passwordResetExpiry", PASSWORD_RESET_EXPIRY);
         ReflectionTestUtils.setField(requestPasswordResetService, "frontendUrl", "http://localhost:5173");
+    }
+
+    private User createAndSaveTestUser() {
+        User user = User.create(
+                TEST_STUDENT_ID,
+                "홍길동",
+                TEST_EMAIL,
+                "010-1234-5678",
+                "컴퓨터공학과",
+                "테스트 동기",
+                List.of(),
+                Gender.MALE,
+                1,
+                EnrollmentStatus.ENROLLED,
+                List.of(), null, null, null
+        );
+        user.changeRole(UserRole.MEMBER);
+        return userRepository.save(user);
+    }
+
+    private PasswordCredential createAndSaveCredential(User user) {
+        String encodedPassword = passwordEncoder.encode(TEST_PASSWORD);
+        PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
+        return passwordCredentialRepository.save(credential);
     }
 
     private PasswordResetToken createAndSaveValidResetToken(User user, String token) {

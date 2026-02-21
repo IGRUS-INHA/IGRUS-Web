@@ -13,12 +13,11 @@ import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
 import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
-import igrus.web.security.auth.password.service.signup.AutoResendVerificationService;
+import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
+import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
 import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.config.ApiSecurityConfig;
 import igrus.web.security.config.SecurityConfigUtil;
 import igrus.web.security.jwt.JwtAuthenticationEntryPoint;
@@ -74,13 +73,10 @@ abstract class PasswordAuthControllerTestBase {
     protected CheckDuplicateService checkDuplicateService;
 
     @MockitoBean
-    protected VerifyEmailService verifyEmailService;
+    protected PreSignupSendCodeService preSignupSendCodeService;
 
     @MockitoBean
-    protected ResendVerificationService resendVerificationService;
-
-    @MockitoBean
-    protected AutoResendVerificationService autoResendVerificationService;
+    protected PreSignupVerifyCodeService preSignupVerifyCodeService;
 
     // === Password Reset Services ===
     @MockitoBean

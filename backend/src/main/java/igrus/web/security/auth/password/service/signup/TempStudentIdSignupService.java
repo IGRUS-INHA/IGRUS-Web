@@ -1,10 +1,10 @@
 package igrus.web.security.auth.password.service.signup;
 
-import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.domain.PrivacyConsent;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.InvalidCustomFieldException;
+import igrus.web.security.auth.common.exception.signup.VerificationTokenInvalidException;
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.security.auth.common.repository.PrivacyConsentRepository;
 import igrus.web.security.auth.common.service.AuthEmailService;
@@ -12,23 +12,21 @@ import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.TemporaryStudentIdSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
-import igrus.web.security.auth.password.service.support.VerificationCodeGenerator;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.TempStudentIdNotAvailableException;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.service.TempStudentIdGeneratorService;
+import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZoneId;
 
 /**
  * 임시 학번 회원가입 서비스.
@@ -40,7 +38,6 @@ import java.time.ZoneId;
 @Transactional
 public class TempStudentIdSignupService {
 
-    private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
     private static final String PRIVACY_POLICY_VERSION = "1.0";
 
     private final UserRepository userRepository;
@@ -49,12 +46,9 @@ public class TempStudentIdSignupService {
     private final PrivacyConsentRepository privacyConsentRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthEmailService authEmailService;
-    private final VerificationCodeGenerator verificationCodeGenerator;
     private final TempStudentIdGeneratorService tempStudentIdGeneratorService;
+    private final BaebdungiWebhookService baebdungiWebhookService;
     private final Clock clock;
-
-    @Value("${app.mail.verification-code-expiry}")
-    private long verificationCodeExpiry;
 
     /**
      * 임시 학번으로 회원가입을 처리합니다.
@@ -73,6 +67,11 @@ public class TempStudentIdSignupService {
 
         // OTHER 교차 검증
         validateOtherFields(request);
+
+        // 이메일 사전 인증 및 소유권 토큰 확인
+        emailVerificationRepository
+                .findByEmailAndVerificationTokenAndVerifiedTrue(request.email(), request.verificationToken())
+                .orElseThrow(VerificationTokenInvalidException::new);
 
         // 임시 학번 생성
         String tempStudentId = tempStudentIdGeneratorService.generateTempStudentId();
@@ -107,28 +106,18 @@ public class TempStudentIdSignupService {
         PrivacyConsent privacyConsent = PrivacyConsent.create(user, PRIVACY_POLICY_VERSION);
         privacyConsentRepository.save(privacyConsent);
 
-        // 기존 미인증 이메일 인증 레코드 삭제
-        emailVerificationRepository.findByEmailAndVerifiedFalse(request.email())
-                .ifPresent(emailVerificationRepository::delete);
+        // 인증 레코드 정리
+        emailVerificationRepository.deleteByEmail(request.email());
 
-        // 인증 코드 생성 및 저장
-        String verificationCode = verificationCodeGenerator.generateVerificationCode();
-        EmailVerification emailVerification = EmailVerification.create(
-                request.email(),
-                verificationCode,
-                verificationCodeExpiry
-        );
-        emailVerificationRepository.save(emailVerification);
-
-        // 인증 이메일 발송
-        authEmailService.sendVerificationEmail(request.email(), verificationCode);
+        // 뱁둥이봇 웹훅 호출 (비동기, 실패해도 가입 프로세스에 영향 없음)
+        baebdungiWebhookService.sendSubmission(user);
 
         // 임시 학번 안내 이메일 발송
         authEmailService.sendTemporaryStudentIdEmail(request.email(), request.name(), tempStudentId);
 
         log.info("임시 학번 회원가입 완료: email={}, tempStudentId={}", request.email(), tempStudentId);
 
-        return PasswordSignupResponse.pendingVerificationWithTempId(request.email(), tempStudentId);
+        return PasswordSignupResponse.signupCompletedWithTempId(request.email(), tempStudentId);
     }
 
     private void validateEnrollmentPeriod() {

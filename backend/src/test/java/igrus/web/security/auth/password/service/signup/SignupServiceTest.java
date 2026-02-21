@@ -6,8 +6,8 @@ import igrus.web.security.auth.common.domain.PrivacyConsent;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicatePhoneNumberException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
+import igrus.web.security.auth.common.exception.signup.VerificationTokenInvalidException;
 import igrus.web.security.auth.common.exception.signup.InvalidCustomFieldException;
-import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
@@ -16,23 +16,19 @@ import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
+import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
+import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import java.util.List;
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
 @DisplayName("SignupService 통합 테스트")
@@ -42,7 +38,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
     private SignupService signupService;
 
     @Autowired
-    private AuthEmailService authEmailService;
+    private BaebdungiWebhookService baebdungiWebhookService;
 
     private static final String VALID_STUDENT_ID = "20231234";
     private static final String VALID_NAME = "홍길동";
@@ -52,11 +48,12 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
     private static final String VALID_DEPARTMENT = "컴퓨터공학과";
     private static final String VALID_MOTIVATION = "프로그래밍을 배우고 싶습니다.";
 
+    private String verificationToken;
+
     @BeforeEach
     void setUp() {
         setUpBase();
-        Mockito.reset(authEmailService);
-        ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", 600000L);
+        Mockito.reset(baebdungiWebhookService);
     }
 
     private PasswordSignupRequest createValidSignupRequest() {
@@ -76,8 +73,51 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                verificationToken
         );
+    }
+
+    /**
+     * 사전 이메일 인증 완료 레코드를 생성합니다.
+     */
+    private void createVerifiedEmailRecord(String email) {
+        EmailVerification verification = EmailVerification.create(email, "123456", 600000L);
+        this.verificationToken = verification.verify();
+        emailVerificationRepository.save(verification);
+    }
+
+    @Nested
+    @DisplayName("회원가입 - 이메일 사전 인증 필수")
+    class SignupEmailVerificationRequiredTest {
+
+        @Test
+        @DisplayName("이메일 사전 인증 없이 가입 시도 시 EmailVerificationRequiredException")
+        void signup_WithoutEmailVerification_ThrowsException() {
+            // given
+            PasswordSignupRequest request = createValidSignupRequest();
+
+            // when & then
+            assertThatThrownBy(() -> signupService.signup(request))
+                    .isInstanceOf(VerificationTokenInvalidException.class);
+
+            // 사용자가 생성되지 않음
+            assertThat(userRepository.findByEmail(VALID_EMAIL)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("미인증(verified=false) 레코드만 있는 경우 가입 거부")
+        void signup_WithUnverifiedEmailRecord_ThrowsException() {
+            // given
+            EmailVerification unverified = EmailVerification.create(VALID_EMAIL, "123456", 600000L);
+            emailVerificationRepository.save(unverified);
+
+            PasswordSignupRequest request = createValidSignupRequest();
+
+            // when & then
+            assertThatThrownBy(() -> signupService.signup(request))
+                    .isInstanceOf(VerificationTokenInvalidException.class);
+        }
     }
 
     @Nested
@@ -85,9 +125,10 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
     class SignupRequiredFieldsTest {
 
         @Test
-        @DisplayName("모든 필수 정보 입력 시 회원가입 성공 및 인증 코드 발송 [REG-010]")
+        @DisplayName("모든 필수 정보 입력 시 회원가입 성공 [REG-010]")
         void signup_WithAllRequiredFields_ReturnsSuccess() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
@@ -96,47 +137,30 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
             // then
             assertThat(response).isNotNull();
             assertThat(response.email()).isEqualTo(VALID_EMAIL);
-            assertThat(response.requiresVerification()).isTrue();
 
             // 상태 검증 - DB에서 조회
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
             assertThat(savedUser.getStudentId()).isEqualTo(VALID_STUDENT_ID);
+            assertThat(savedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
 
-            Optional<PasswordCredential> credential = passwordCredentialRepository.findByUserId(savedUser.getId());
-            assertThat(credential).isPresent();
+            PasswordCredential credential = passwordCredentialRepository.findByUserId(savedUser.getId()).orElseThrow();
+            assertThat(credential.getStatus()).isEqualTo(UserStatus.ACTIVE);
 
             List<PrivacyConsent> consents = privacyConsentRepository.findByUserIdOrderByConsentDateDesc(savedUser.getId());
             assertThat(consents).hasSize(1);
 
-            Optional<EmailVerification> verification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL);
-            assertThat(verification).isPresent();
+            // 인증 레코드 정리 확인
+            assertThat(emailVerificationRepository.existsByEmailAndVerifiedTrue(VALID_EMAIL)).isFalse();
 
-            // 외부 의존성만 상호작용 검증
-            verify(authEmailService).sendVerificationEmail(eq(VALID_EMAIL), anyString());
-        }
-
-        @Test
-        @DisplayName("회원가입 시 6자리 인증 코드가 생성됨 [REG-040]")
-        void signup_GeneratesSixDigitCode() {
-            // given
-            PasswordSignupRequest request = createValidSignupRequest();
-
-            ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
-
-            // when
-            signupService.signup(request);
-
-            // then
-            verify(authEmailService).sendVerificationEmail(anyString(), codeCaptor.capture());
-            String code = codeCaptor.getValue();
-            assertThat(code).hasSize(6);
-            assertThat(code).matches("^\\d{6}$");
+            // 웹훅 호출 확인
+            verify(baebdungiWebhookService).sendSubmission(any(User.class));
         }
 
         @Test
         @DisplayName("회원가입 시 비밀번호가 BCrypt로 해시됨 [REG-026]")
         void signup_PasswordIsHashed() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
@@ -163,7 +187,8 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("이미 가입된 학번으로 가입 시도 시 오류 [REG-030]")
         void signup_WithDuplicateStudentId_ThrowsException() {
             // given
-            createAndSaveUser(VALID_STUDENT_ID, "other@inha.edu", igrus.web.user.domain.UserRole.ASSOCIATE);
+            createAndSaveUser(VALID_STUDENT_ID, "other@inha.edu", UserRole.ASSOCIATE);
+            createVerifiedEmailRecord(VALID_EMAIL);
 
             PasswordSignupRequest request = createValidSignupRequest();
 
@@ -179,7 +204,8 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("이미 등록된 이메일로 가입 시도 시 오류 [REG-031]")
         void signup_WithDuplicateEmail_ThrowsException() {
             // given
-            createAndSaveUser("99999999", VALID_EMAIL, igrus.web.user.domain.UserRole.ASSOCIATE);
+            createAndSaveUser("99999999", VALID_EMAIL, UserRole.ASSOCIATE);
+            createVerifiedEmailRecord(VALID_EMAIL);
 
             PasswordSignupRequest request = createValidSignupRequest();
 
@@ -196,19 +222,12 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         void signup_WithDuplicatePhoneNumber_ThrowsException() {
             // given
             User existingUser = User.create(
-                    "99999999",
-                    "기존사용자",
-                    "other@inha.edu",
-                    VALID_PHONE,
-                    "기타학과",
-                    "동기",
-                    List.of(),
-                    Gender.MALE,
-                    1,
-                    EnrollmentStatus.ENROLLED,
-                    List.of(), null, null, null
+                    "99999999", "기존사용자", "other@inha.edu", VALID_PHONE,
+                    "기타학과", "동기", List.of(), Gender.MALE, 1,
+                    EnrollmentStatus.ENROLLED, List.of(), null, null, null
             );
             userRepository.save(existingUser);
+            createVerifiedEmailRecord(VALID_EMAIL);
 
             PasswordSignupRequest request = createValidSignupRequest();
 
@@ -222,29 +241,38 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
     }
 
     @Nested
-    @DisplayName("회원가입 - 기존 인증 레코드 처리")
-    class SignupExistingVerificationTest {
+    @DisplayName("회원가입 - 사용자 상태 관리")
+    class SignupUserStatusTest {
 
         @Test
-        @DisplayName("회원가입 시 기존 미인증 이메일 인증 레코드 삭제")
-        void signup_DeletesExistingUnverifiedRecord() {
+        @DisplayName("회원가입 시 User 상태가 ACTIVE")
+        void signup_UserStatus_IsActive() {
             // given
-            EmailVerification existingVerification = EmailVerification.create(VALID_EMAIL, "111111", 600000L);
-            emailVerificationRepository.save(existingVerification);
-            Long existingId = existingVerification.getId();
-
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
             signupService.signup(request);
 
-            // then - 기존 레코드는 삭제됨
-            assertThat(emailVerificationRepository.findById(existingId)).isEmpty();
+            // then
+            User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            assertThat(savedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        }
 
-            // 새 레코드가 생성됨
-            Optional<EmailVerification> newVerification = emailVerificationRepository.findByEmailAndVerifiedFalse(VALID_EMAIL);
-            assertThat(newVerification).isPresent();
-            assertThat(newVerification.get().getId()).isNotEqualTo(existingId);
+        @Test
+        @DisplayName("회원가입 시 PasswordCredential 상태가 ACTIVE")
+        void signup_CredentialStatus_IsActive() {
+            // given
+            createVerifiedEmailRecord(VALID_EMAIL);
+            PasswordSignupRequest request = createValidSignupRequest();
+
+            // when
+            signupService.signup(request);
+
+            // then
+            User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            PasswordCredential credential = passwordCredentialRepository.findByUserId(savedUser.getId()).orElseThrow();
+            assertThat(credential.getStatus()).isEqualTo(UserStatus.ACTIVE);
         }
     }
 
@@ -256,12 +284,13 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("회원가입 시 개인정보 동의 기록이 저장됨 [REG-004]")
         void signup_SavesPrivacyConsent() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
             signupService.signup(request);
 
-            // then - DB에서 조회하여 검증
+            // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
             List<PrivacyConsent> consents = privacyConsentRepository.findByUserIdOrderByConsentDateDesc(savedUser.getId());
 
@@ -280,12 +309,13 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("회원가입 시 User 엔티티가 올바르게 생성됨")
         void signup_CreatesUserWithCorrectInfo() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when
             signupService.signup(request);
 
-            // then - DB에서 조회하여 검증
+            // then
             User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
             assertThat(savedUser.getStudentId()).isEqualTo(VALID_STUDENT_ID);
             assertThat(savedUser.getName()).isEqualTo(VALID_NAME);
@@ -293,42 +323,6 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
             assertThat(savedUser.getPhoneNumber()).isEqualTo(VALID_PHONE);
             assertThat(savedUser.getDepartment()).isEqualTo(VALID_DEPARTMENT);
             assertThat(savedUser.getMotivation()).isEqualTo(VALID_MOTIVATION);
-        }
-    }
-
-    @Nested
-    @DisplayName("회원가입 - 사용자 상태 관리")
-    class SignupUserStatusTest {
-
-        @Test
-        @DisplayName("회원가입 시 User 상태가 PENDING_VERIFICATION")
-        void signup_UserStatus_IsPendingVerification() {
-            // given
-            PasswordSignupRequest request = createValidSignupRequest();
-
-            // when
-            signupService.signup(request);
-
-            // then
-            User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
-            assertThat(savedUser.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
-            assertThat(savedUser.isPendingVerification()).isTrue();
-        }
-
-        @Test
-        @DisplayName("회원가입 시 PasswordCredential 상태가 PENDING_VERIFICATION")
-        void signup_CredentialStatus_IsPendingVerification() {
-            // given
-            PasswordSignupRequest request = createValidSignupRequest();
-
-            // when
-            signupService.signup(request);
-
-            // then
-            User savedUser = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
-            PasswordCredential credential = passwordCredentialRepository.findByUserId(savedUser.getId()).orElseThrow();
-            assertThat(credential.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
-            assertThat(credential.isPendingVerification()).isTrue();
         }
     }
 
@@ -342,12 +336,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER 포함 + customInterest null → 예외 [SINT-030]")
         void signup_WithOtherInterestWithoutCustom_ThrowsException() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.AI, Interest.OTHER), null,
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when & then
@@ -359,12 +355,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER 포함 + customInterest 빈 문자열 → 예외 [SINT-031]")
         void signup_WithOtherInterestWithBlankCustom_ThrowsException() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.OTHER), "",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when & then
@@ -376,12 +374,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER 포함 + customInterest 공백만 → 예외 [SINT-032]")
         void signup_WithOtherInterestWithWhitespaceCustom_ThrowsException() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.OTHER), "   ",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when & then
@@ -393,12 +393,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER 포함 + customInterest 유효 → 성공 [SINT-033]")
         void signup_WithOtherInterestAndCustom_Succeeds() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.AI, Interest.OTHER), "임베디드 시스템",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when
@@ -415,12 +417,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER 단독 선택 + customInterest 유효 → 성공 [SINT-034]")
         void signup_WithOnlyOtherInterestAndCustom_Succeeds() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.OTHER), "로보틱스",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when
@@ -434,12 +438,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER 미포함 + customInterest 있음 → 성공 (무시) [SINT-035]")
         void signup_WithoutOtherAndWithCustomInterest_Succeeds() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), "임의값",
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when
@@ -460,12 +466,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER + customJoinRoute null → 예외 [SINT-040]")
         void signup_WithOtherJoinRouteWithoutCustom_ThrowsException() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.OTHER, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when & then
@@ -477,12 +485,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER + customJoinRoute 빈 문자열 → 예외 [SINT-041]")
         void signup_WithOtherJoinRouteWithBlankCustom_ThrowsException() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.OTHER, "",
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when & then
@@ -494,12 +504,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER + customJoinRoute 공백만 → 예외 [SINT-042]")
         void signup_WithOtherJoinRouteWithWhitespaceCustom_ThrowsException() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.OTHER, "   ",
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when & then
@@ -511,12 +523,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER + customJoinRoute 유효 → 성공 [SINT-043]")
         void signup_WithOtherJoinRouteAndCustom_Succeeds() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.OTHER, "인스타그램 광고",
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when
@@ -533,12 +547,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("OTHER 아닌 경우 + customJoinRoute 있음 → 성공 (무시) [SINT-044]")
         void signup_WithoutOtherAndWithCustomJoinRoute_Succeeds() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND), null,
                     JoinRoute.EVERYTIME, "임의값",
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when
@@ -559,12 +575,14 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
         @DisplayName("interests/joinRoute 정상 입력 시 회원가입 성공 및 DB 저장 확인")
         void signup_WithValidInterestsAndJoinRoute_Succeeds() {
             // given
+            createVerifiedEmailRecord(VALID_EMAIL);
             PasswordSignupRequest request = new PasswordSignupRequest(
                     VALID_STUDENT_ID, VALID_NAME, VALID_EMAIL, VALID_PASSWORD,
                     VALID_PHONE, VALID_DEPARTMENT, VALID_MOTIVATION, List.of(),
                     List.of(Interest.WEB_FRONTEND, Interest.AI, Interest.CLOUD), null,
                     JoinRoute.EVERYTIME, null,
-                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true
+                    Gender.MALE, 1, EnrollmentStatus.ENROLLED, true,
+                    verificationToken
             );
 
             // when

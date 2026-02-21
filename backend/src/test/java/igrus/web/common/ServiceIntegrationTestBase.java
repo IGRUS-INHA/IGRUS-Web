@@ -285,16 +285,11 @@ public abstract class ServiceIntegrationTestBase {
      */
     private void applyUserStatus(User user, UserStatus status) {
         switch (status) {
-            case ACTIVE -> user.verifyEmail();
-            case SUSPENDED -> {
-                user.verifyEmail();
-                user.suspend();
-            }
-            case WITHDRAWN -> {
-                user.verifyEmail();
-                user.withdraw();
-            }
-            case PENDING_VERIFICATION -> { }
+            case ACTIVE -> { } // User.create() 기본 상태가 ACTIVE
+            case SUSPENDED -> user.suspend();
+            case WITHDRAWN -> user.withdraw();
+            case PENDING_VERIFICATION ->
+                    ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
         }
     }
 
@@ -303,16 +298,11 @@ public abstract class ServiceIntegrationTestBase {
      */
     private void applyCredentialStatus(PasswordCredential credential, UserStatus status) {
         switch (status) {
-            case ACTIVE -> credential.verifyEmail();
-            case SUSPENDED -> {
-                credential.verifyEmail();
-                credential.suspend();
-            }
-            case WITHDRAWN -> {
-                credential.verifyEmail();
-                credential.withdraw();
-            }
-            case PENDING_VERIFICATION -> { }
+            case ACTIVE -> { } // PasswordCredential.create() 기본 상태가 ACTIVE
+            case SUSPENDED -> credential.suspend();
+            case WITHDRAWN -> credential.withdraw();
+            case PENDING_VERIFICATION ->
+                    ReflectionTestUtils.setField(credential, "status", UserStatus.PENDING_VERIFICATION);
         }
     }
 

@@ -37,6 +37,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
     private static final String VALID_PHONE = "010-1234-5678";
     private static final String VALID_DEPARTMENT = "컴퓨터공학과";
     private static final String VALID_MOTIVATION = "프로그래밍을 배우고 싶습니다.";
+    private static final String VALID_VERIFICATION_TOKEN = "test-verification-token";
 
     private PasswordSignupRequest createValidRequest() {
         return new PasswordSignupRequest(
@@ -55,7 +56,8 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -76,7 +78,8 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -97,7 +100,8 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -118,7 +122,8 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -139,7 +144,8 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -160,7 +166,8 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -181,7 +188,8 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -202,7 +210,8 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                privacyConsent
+                privacyConsent,
+                VALID_VERIFICATION_TOKEN
         );
     }
 
@@ -215,7 +224,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
         void signup_WithValidRequest_Returns201() throws Exception {
             // given
             PasswordSignupRequest request = createValidRequest();
-            PasswordSignupResponse response = PasswordSignupResponse.pendingVerification(VALID_EMAIL);
+            PasswordSignupResponse response = PasswordSignupResponse.signupCompleted(VALID_EMAIL);
 
             given(signupService.signup(any(PasswordSignupRequest.class))).willReturn(response);
 
@@ -226,7 +235,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
                     .andDo(print())
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.email").value(VALID_EMAIL))
-                    .andExpect(jsonPath("$.requiresVerification").value(true));
+                    .andExpect(jsonPath("$.requiresVerification").doesNotExist());
         }
     }
 

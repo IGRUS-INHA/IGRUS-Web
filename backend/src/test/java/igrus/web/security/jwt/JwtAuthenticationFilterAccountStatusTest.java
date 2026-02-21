@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -230,41 +231,33 @@ class JwtAuthenticationFilterAccountStatusTest extends ServiceIntegrationTestBas
 
     /**
      * 사용자 상태를 적용합니다.
+     * User.create()의 기본 상태가 ACTIVE이므로, ACTIVE는 no-op입니다.
      */
     private void applyUserStatus(User user, UserStatus status) {
         switch (status) {
-            case ACTIVE -> user.verifyEmail();
-            case SUSPENDED -> {
-                user.verifyEmail();
-                user.suspend();
-            }
-            case WITHDRAWN -> {
-                user.verifyEmail();
-                user.withdraw();
-            }
-            case PENDING_VERIFICATION -> {
+            case ACTIVE -> {
                 // 기본 상태로 유지
             }
+            case SUSPENDED -> user.suspend();
+            case WITHDRAWN -> user.withdraw();
+            case PENDING_VERIFICATION ->
+                    ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
         }
     }
 
     /**
      * 자격증명 상태를 적용합니다.
+     * PasswordCredential.create()의 기본 상태가 ACTIVE이므로, ACTIVE는 no-op입니다.
      */
     private void applyCredentialStatus(PasswordCredential credential, UserStatus status) {
         switch (status) {
-            case ACTIVE -> credential.verifyEmail();
-            case SUSPENDED -> {
-                credential.verifyEmail();
-                credential.suspend();
-            }
-            case WITHDRAWN -> {
-                credential.verifyEmail();
-                credential.withdraw();
-            }
-            case PENDING_VERIFICATION -> {
+            case ACTIVE -> {
                 // 기본 상태로 유지
             }
+            case SUSPENDED -> credential.suspend();
+            case WITHDRAWN -> credential.withdraw();
+            case PENDING_VERIFICATION ->
+                    ReflectionTestUtils.setField(credential, "status", UserStatus.PENDING_VERIFICATION);
         }
     }
 }

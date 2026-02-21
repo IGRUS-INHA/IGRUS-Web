@@ -78,8 +78,9 @@ public enum ErrorCode {
     PASSWORD_RESET_TOKEN_EXPIRED(400, "비밀번호 재설정 토큰이 만료되었습니다"),
     EMAIL_SEND_FAILED(500, "이메일 발송에 실패했습니다"),
     RECENT_WITHDRAWAL_EXISTS(400, "최근 탈퇴 이력이 있어 재가입이 불가합니다"),
-    VERIFICATION_RESEND_RATE_LIMITED(429, "인증 코드 재발송은 5분에 1회만 가능합니다"),
-    VERIFICATION_EMAIL_NOT_FOUND(400, "해당 이메일로 가입 요청된 계정을 찾을 수 없습니다"),
+    VERIFICATION_RESEND_RATE_LIMITED(429, "인증 코드 재발송은 1분에 1회만 가능합니다"),
+    EMAIL_VERIFICATION_REQUIRED(400, "이메일 인증이 필요합니다"),
+    VERIFICATION_TOKEN_INVALID(400, "유효하지 않은 인증 토큰입니다"),
     ACCOUNT_LOCKED(423, "로그인 시도 횟수 초과로 계정이 잠겼습니다"),
 
     // Member Approval

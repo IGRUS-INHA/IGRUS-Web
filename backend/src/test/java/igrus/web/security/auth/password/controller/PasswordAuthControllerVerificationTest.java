@@ -7,7 +7,7 @@ import igrus.web.security.auth.common.exception.verification.VerificationAttempt
 import igrus.web.security.auth.common.exception.verification.VerificationCodeExpiredException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeInvalidException;
 import igrus.web.security.auth.common.exception.verification.VerificationResendRateLimitedException;
-import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
+import igrus.web.security.auth.password.dto.response.PreSignupVerificationResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,8 +26,8 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
 
     private static final String VALID_EMAIL = "test@inha.edu";
     private static final String VALID_CODE = "123456";
-    private static final String VERIFY_EMAIL_URL = "/api/v1/auth/password/verify-email";
-    private static final String RESEND_VERIFICATION_URL = "/api/v1/auth/password/resend-verification";
+    private static final String VERIFY_CODE_URL = "/api/v1/auth/password/pre-signup/verify-code";
+    private static final String SEND_CODE_URL = "/api/v1/auth/password/pre-signup/send-code";
 
     @Nested
     @DisplayName("이메일 인증 테스트")
@@ -42,19 +42,20 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
             void verifyEmail_WithValidCode_Returns200() throws Exception {
                 // given
                 EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, VALID_CODE);
-                PasswordSignupResponse response = PasswordSignupResponse.verified(VALID_EMAIL);
+                PreSignupVerificationResponse response = PreSignupVerificationResponse.success(VALID_EMAIL, "test-token");
 
-                given(verifyEmailService.verifyEmail(any(EmailVerificationRequest.class)))
+                given(preSignupVerifyCodeService.verifyCode(any(EmailVerificationRequest.class)))
                         .willReturn(response);
 
                 // when & then
-                mockMvc.perform(post(VERIFY_EMAIL_URL)
+                mockMvc.perform(post(VERIFY_CODE_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 )
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.email").value(VALID_EMAIL))
-                        .andExpect(jsonPath("$.requiresVerification").value(false));
+                        .andExpect(jsonPath("$.verified").value(true))
+                        .andExpect(jsonPath("$.verificationToken").exists());
             }
         }
 
@@ -69,10 +70,10 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                 EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, VALID_CODE);
 
                 willThrow(new VerificationCodeExpiredException())
-                        .given(verifyEmailService).verifyEmail(any(EmailVerificationRequest.class));
+                        .given(preSignupVerifyCodeService).verifyCode(any(EmailVerificationRequest.class));
 
                 // when & then
-                mockMvc.perform(post(VERIFY_EMAIL_URL)
+                mockMvc.perform(post(VERIFY_CODE_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 )
@@ -87,10 +88,10 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                 EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, VALID_CODE);
 
                 willThrow(new VerificationAttemptsExceededException())
-                        .given(verifyEmailService).verifyEmail(any(EmailVerificationRequest.class));
+                        .given(preSignupVerifyCodeService).verifyCode(any(EmailVerificationRequest.class));
 
                 // when & then
-                mockMvc.perform(post(VERIFY_EMAIL_URL)
+                mockMvc.perform(post(VERIFY_CODE_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 )
@@ -105,10 +106,10 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                 EmailVerificationRequest request = new EmailVerificationRequest(VALID_EMAIL, "000000");
 
                 willThrow(new VerificationCodeInvalidException())
-                        .given(verifyEmailService).verifyEmail(any(EmailVerificationRequest.class));
+                        .given(preSignupVerifyCodeService).verifyCode(any(EmailVerificationRequest.class));
 
                 // when & then
-                mockMvc.perform(post(VERIFY_EMAIL_URL)
+                mockMvc.perform(post(VERIFY_CODE_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 )
@@ -128,7 +129,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                         """;
 
                 // when & then
-                mockMvc.perform(post(VERIFY_EMAIL_URL)
+                mockMvc.perform(post(VERIFY_CODE_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(invalidRequest)
                                 )
@@ -148,7 +149,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                         """;
 
                 // when & then
-                mockMvc.perform(post(VERIFY_EMAIL_URL)
+                mockMvc.perform(post(VERIFY_CODE_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(invalidRequest)
                                 )
@@ -168,7 +169,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                         """;
 
                 // when & then
-                mockMvc.perform(post(VERIFY_EMAIL_URL)
+                mockMvc.perform(post(VERIFY_CODE_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(invalidRequest)
                                 )
@@ -188,7 +189,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                         """;
 
                 // when & then
-                mockMvc.perform(post(VERIFY_EMAIL_URL)
+                mockMvc.perform(post(VERIFY_CODE_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(invalidRequest)
                                 )
@@ -208,7 +209,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                         """;
 
                 // when & then
-                mockMvc.perform(post(VERIFY_EMAIL_URL)
+                mockMvc.perform(post(VERIFY_CODE_URL)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(invalidRequest)
                                 )
@@ -227,19 +228,19 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
         void resendVerification_Success_Returns200() throws Exception {
             // given
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
-            VerificationResendResponse response = VerificationResendResponse.success(VALID_EMAIL);
+            VerificationResendResponse response = VerificationResendResponse.sent(VALID_EMAIL);
 
-            given(resendVerificationService.resendVerification(any(ResendVerificationRequest.class)))
+            given(preSignupSendCodeService.sendCode(any(ResendVerificationRequest.class)))
                     .willReturn(response);
 
             // when & then
-            mockMvc.perform(post(RESEND_VERIFICATION_URL)
+            mockMvc.perform(post(SEND_CODE_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request))
                             )
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.email").value(VALID_EMAIL))
-                    .andExpect(jsonPath("$.message").value("인증 코드가 재발송되었습니다."));
+                    .andExpect(jsonPath("$.message").value("인증 코드가 발송되었습니다."));
         }
 
         @Test
@@ -249,10 +250,10 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
             ResendVerificationRequest request = new ResendVerificationRequest(VALID_EMAIL);
 
             willThrow(new VerificationResendRateLimitedException())
-                    .given(resendVerificationService).resendVerification(any(ResendVerificationRequest.class));
+                    .given(preSignupSendCodeService).sendCode(any(ResendVerificationRequest.class));
 
             // when & then
-            mockMvc.perform(post(RESEND_VERIFICATION_URL)
+            mockMvc.perform(post(SEND_CODE_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request))
                             )
@@ -271,7 +272,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                     """;
 
             // when & then
-            mockMvc.perform(post(RESEND_VERIFICATION_URL)
+            mockMvc.perform(post(SEND_CODE_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidRequest)
                             )
@@ -290,7 +291,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                     """;
 
             // when & then
-            mockMvc.perform(post(RESEND_VERIFICATION_URL)
+            mockMvc.perform(post(SEND_CODE_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidRequest)
                             )

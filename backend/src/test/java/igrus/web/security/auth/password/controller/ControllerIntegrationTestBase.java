@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.service.AuthEmailService;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
+import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
 import igrus.web.security.auth.password.service.signup.SignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
@@ -21,6 +21,7 @@ import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
@@ -78,10 +79,10 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
     protected SignupService signupService;
 
     @Autowired
-    protected VerifyEmailService verifyEmailService;
+    protected PreSignupSendCodeService preSignupSendCodeService;
 
     @Autowired
-    protected ResendVerificationService resendVerificationService;
+    protected PreSignupVerifyCodeService preSignupVerifyCodeService;
 
     @Autowired
     protected JwtTokenProvider jwtTokenProvider;
@@ -108,10 +109,9 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
         ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "gracePeriodMillis", REFRESH_TOKEN_GRACE_PERIOD);
-        ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", MAX_VERIFICATION_ATTEMPTS);
-        ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", RESEND_RATE_LIMIT_SECONDS);
+        ReflectionTestUtils.setField(preSignupSendCodeService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(preSignupSendCodeService, "resendRateLimitSeconds", RESEND_RATE_LIMIT_SECONDS);
+        ReflectionTestUtils.setField(preSignupVerifyCodeService, "maxAttempts", MAX_VERIFICATION_ATTEMPTS);
     }
 
     // ==================== HTTP Request Helper Methods ====================

@@ -8,6 +8,7 @@ import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.UserStatus;
 import igrus.web.user.exception.UserNotFoundException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -139,7 +141,6 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(UserRole.ASSOCIATE);
-        user.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
         return user;
     }
 
@@ -161,7 +162,7 @@ class AccountStatusServiceTest extends ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(UserRole.ASSOCIATE);
-        // verifyEmail() 호출하지 않아 PENDING_VERIFICATION 상태 유지
+        ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
         return user;
     }
 }
