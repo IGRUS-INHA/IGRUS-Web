@@ -22,8 +22,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -41,7 +41,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private SignupService signupService;
 
-    @MockitoBean
+    @Autowired
     private AuthEmailService authEmailService;
 
     private static final String VALID_STUDENT_ID = "20231234";
@@ -55,6 +55,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService);
         ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", 600000L);
     }
 

@@ -1,7 +1,6 @@
 package igrus.web.security.auth.password.service.reset;
 
 import igrus.web.common.ServiceIntegrationTestBase;
-import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordResetToken;
 import igrus.web.security.auth.password.exception.PasswordResetTokenExpiredException;
 import igrus.web.security.auth.password.exception.PasswordResetTokenInvalidException;
@@ -11,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -25,9 +23,6 @@ class ValidateResetTokenServiceTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private ValidateResetTokenService validateResetTokenService;
-
-    @MockitoBean
-    private AuthEmailService authEmailService;
 
     private static final long PASSWORD_RESET_EXPIRY = 1800000L; // 30분
 

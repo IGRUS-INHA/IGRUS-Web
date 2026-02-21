@@ -18,8 +18,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -57,7 +57,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
     @Autowired
     private ValidateResetTokenService validateResetTokenService;
 
-    @MockitoBean
+    @Autowired
     private AuthEmailService authEmailService;
 
     private static final long PASSWORD_RESET_EXPIRY = 1800000L; // 30분
@@ -69,6 +69,7 @@ class PasswordResetIntegrationTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService);
         ReflectionTestUtils.setField(requestPasswordResetService, "passwordResetExpiry", PASSWORD_RESET_EXPIRY);
         ReflectionTestUtils.setField(requestPasswordResetService, "frontendUrl", "http://localhost:5173");
     }

@@ -21,8 +21,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -42,10 +42,10 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private VerifyEmailService verifyEmailService;
 
-    @MockitoBean
+    @Autowired
     private AuthEmailService authEmailService;
 
-    @MockitoBean
+    @Autowired
     private BaebdungiWebhookService baebdungiWebhookService;
 
     private static final String VALID_STUDENT_ID = "20231234";
@@ -59,6 +59,7 @@ class VerifyEmailServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService, baebdungiWebhookService);
         ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", 600000L);
         ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", 5);
     }

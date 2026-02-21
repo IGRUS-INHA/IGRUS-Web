@@ -12,8 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Clock;
@@ -34,10 +34,10 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private TempStudentIdSignupService tempStudentIdSignupService;
 
-    @MockitoBean
+    @Autowired
     private AuthEmailService authEmailService;
 
-    @MockitoBean
+    @Autowired
     private Clock clock;
 
     private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
@@ -50,6 +50,7 @@ class TempStudentIdSignupServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService, clock);
         setClock(2026, 1, 15); // 1월로 설정
         ReflectionTestUtils.setField(tempStudentIdSignupService, "verificationCodeExpiry", 600000L);
     }

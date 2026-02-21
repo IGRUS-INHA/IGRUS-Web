@@ -36,8 +36,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -99,7 +99,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    @MockitoBean
+    @Autowired
     private AuthEmailService authEmailService;
 
     private static final long ACCESS_TOKEN_VALIDITY = 3600000L; // 1시간
@@ -121,6 +121,7 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService);
         ReflectionTestUtils.setField(loginService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(loginService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);

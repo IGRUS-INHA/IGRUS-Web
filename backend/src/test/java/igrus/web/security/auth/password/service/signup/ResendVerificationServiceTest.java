@@ -13,8 +13,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -33,7 +33,7 @@ class ResendVerificationServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private ResendVerificationService resendVerificationService;
 
-    @MockitoBean
+    @Autowired
     private AuthEmailService authEmailService;
 
     private static final String VALID_EMAIL = "test@inha.edu";
@@ -42,6 +42,7 @@ class ResendVerificationServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService);
         ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", 600000L);
         ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", 300L);
     }

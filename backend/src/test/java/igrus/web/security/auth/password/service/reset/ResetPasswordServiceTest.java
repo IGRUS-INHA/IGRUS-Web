@@ -2,7 +2,6 @@ package igrus.web.security.auth.password.service.reset;
 
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.RefreshToken;
-import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.security.auth.password.domain.PasswordResetToken;
 import igrus.web.security.auth.password.exception.InvalidPasswordFormatException;
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -29,9 +27,6 @@ class ResetPasswordServiceTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private ResetPasswordService resetPasswordService;
-
-    @MockitoBean
-    private AuthEmailService authEmailService;
 
     private static final long PASSWORD_RESET_EXPIRY = 1800000L; // 30분
 
