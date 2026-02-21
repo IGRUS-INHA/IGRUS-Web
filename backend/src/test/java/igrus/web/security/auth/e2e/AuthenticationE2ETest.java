@@ -4,6 +4,7 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
+import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.exception.account.AccountRecoverableException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
@@ -17,9 +18,9 @@ import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
 import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
 import igrus.web.security.auth.password.service.reset.ResetPasswordService;
 import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
+import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
 import igrus.web.security.auth.password.service.signup.SignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
@@ -56,7 +57,7 @@ import static org.mockito.Mockito.verify;
  *
  * <p>테스트 시나리오:</p>
  * <ul>
- *     <li>E2E-001: 회원가입 → 이메일 인증 → 로그인 전체 플로우</li>
+ *     <li>E2E-001: 사전 이메일 인증 → 회원가입 → 로그인 전체 플로우</li>
  *     <li>E2E-002: 로그인 → API 접근 → 로그아웃 → 토큰 무효화 확인</li>
  *     <li>E2E-003: 토큰 갱신 플로우 (Access Token 만료 시뮬레이션)</li>
  *     <li>E2E-004: 비밀번호 재설정 플로우 (요청 → 토큰 → 변경 → 재로그인)</li>
@@ -70,10 +71,10 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
     private SignupService signupService;
 
     @Autowired
-    private VerifyEmailService verifyEmailService;
+    private PreSignupSendCodeService preSignupSendCodeService;
 
     @Autowired
-    private ResendVerificationService resendVerificationService;
+    private PreSignupVerifyCodeService preSignupVerifyCodeService;
 
     @Autowired
     private LoginService loginService;
@@ -118,6 +119,8 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
     private static final String TEST_IP_ADDRESS = "192.168.1.100";
     private static final String TEST_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
 
+    private String verificationToken;
+
     @BeforeEach
     void setUp() {
         setUpBase();
@@ -126,10 +129,9 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
         ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "gracePeriodMillis", REFRESH_TOKEN_GRACE_PERIOD);
-        ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", 5);
-        ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", 60L);
+        ReflectionTestUtils.setField(preSignupSendCodeService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(preSignupSendCodeService, "resendRateLimitSeconds", 60L);
+        ReflectionTestUtils.setField(preSignupVerifyCodeService, "maxAttempts", 5);
         ReflectionTestUtils.setField(requestPasswordResetService, "passwordResetExpiry", PASSWORD_RESET_EXPIRY);
         ReflectionTestUtils.setField(requestPasswordResetService, "frontendUrl", "http://localhost:5173");
         ReflectionTestUtils.setField(recoverAccountService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
@@ -153,49 +155,47 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                verificationToken
         );
     }
 
-    // ===== E2E-001: 회원가입 → 이메일 인증 → 로그인 전체 플로우 =====
+    // ===== E2E-001: 사전 이메일 인증 → 회원가입 → 로그인 전체 플로우 =====
 
     @Nested
-    @DisplayName("[E2E-001] 회원가입 → 이메일 인증 → 로그인 전체 플로우")
+    @DisplayName("[E2E-001] 사전 이메일 인증 → 회원가입 → 로그인 전체 플로우")
     class SignupVerificationLoginFlowTest {
 
         @Test
-        @DisplayName("회원가입부터 로그인까지 전체 플로우 성공")
+        @DisplayName("사전 이메일 인증 → 회원가입 → 로그인 전체 플로우 성공")
         void fullSignupToLoginFlow_succeeds() {
-            // === Step 1: 회원가입 ===
+            // === Step 1: 사전 이메일 인증 - 코드 발송 ===
+            ResendVerificationRequest sendCodeRequest = new ResendVerificationRequest(TEST_EMAIL);
+            preSignupSendCodeService.sendCode(sendCodeRequest);
+
+            verify(authEmailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
+
+            // === Step 2: 사전 이메일 인증 - 코드 확인 ===
+            EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(TEST_EMAIL).orElseThrow();
+            EmailVerificationRequest verifyCodeRequest = new EmailVerificationRequest(TEST_EMAIL, verification.getCode());
+            var verifyResponse = preSignupVerifyCodeService.verifyCode(verifyCodeRequest);
+            verificationToken = verifyResponse.verificationToken();
+
+            // === Step 3: 회원가입 (이메일 인증 완료 상태) ===
             PasswordSignupRequest signupRequest = createSignupRequest();
             PasswordSignupResponse signupResponse = signupService.signup(signupRequest);
 
             assertThat(signupResponse).isNotNull();
             assertThat(signupResponse.email()).isEqualTo(TEST_EMAIL);
-            assertThat(signupResponse.requiresVerification()).isTrue();
-
-            // 이메일 발송 확인
-            verify(authEmailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
-
-            // 사용자 상태 확인 (PENDING_VERIFICATION)
-            User pendingUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();
-            assertThat(pendingUser.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
-
-            // === Step 2: 이메일 인증 ===
-            EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(TEST_EMAIL).orElseThrow();
-            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, verification.getCode());
-
-            PasswordSignupResponse verifyResponse = verifyEmailService.verifyEmail(verifyRequest);
-
-            assertThat(verifyResponse).isNotNull();
-            assertThat(verifyResponse.requiresVerification()).isFalse();
-
             // 사용자 상태 확인 (ACTIVE)
             User activeUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();
             assertThat(activeUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
             assertThat(activeUser.getRole()).isEqualTo(UserRole.ASSOCIATE);
 
-            // === Step 3: 로그인 ===
+            // 인증 레코드 정리 확인
+            assertThat(emailVerificationRepository.findByEmailAndVerifiedFalse(TEST_EMAIL)).isEmpty();
+
+            // === Step 4: 로그인 ===
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
             LoginResult loginResult = loginService.login(loginRequest, TEST_IP_ADDRESS, TEST_USER_AGENT);
 
@@ -225,7 +225,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             // === Setup: 인증된 사용자 생성 ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             // === Step 1: 로그인 ===
@@ -256,7 +255,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             // === Setup: 인증된 사용자 생성 ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             // === Step 1: 여러 기기에서 로그인 ===
@@ -288,7 +286,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             // === Setup: 인증된 사용자 생성 및 로그인 ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
@@ -318,7 +315,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             // === Setup ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);
@@ -349,7 +345,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             // === Setup: 인증된 사용자 생성 및 로그인 ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             // 기존 세션 생성
@@ -391,7 +386,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             // === Setup ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             // === 비밀번호 재설정 ===
@@ -436,7 +430,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.MEMBER);
-            user.verifyEmail();
             user.withdraw(); // 탈퇴 처리
             // soft delete 처리 - deleted와 deletedAt 설정
             ReflectionTestUtils.setField(user, "deleted", true);
@@ -444,7 +437,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             userRepository.save(user);
 
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             credential.withdraw(); // 탈퇴 처리
             ReflectionTestUtils.setField(credential, "deleted", true);
             ReflectionTestUtils.setField(credential, "deletedAt", Instant.now());
@@ -474,14 +466,12 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.MEMBER);
-            user.verifyEmail();
             user.withdraw();
             ReflectionTestUtils.setField(user, "deleted", true);
             ReflectionTestUtils.setField(user, "deletedAt", Instant.now());
             userRepository.save(user);
 
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             credential.withdraw();
             ReflectionTestUtils.setField(credential, "deleted", true);
             ReflectionTestUtils.setField(credential, "deletedAt", Instant.now());
@@ -527,14 +517,12 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.OPERATOR);
-            user.verifyEmail();
             user.withdraw();
             ReflectionTestUtils.setField(user, "deleted", true);
             ReflectionTestUtils.setField(user, "deletedAt", Instant.now());
             userRepository.save(user);
 
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             credential.withdraw();
             ReflectionTestUtils.setField(credential, "deleted", true);
             ReflectionTestUtils.setField(credential, "deletedAt", Instant.now());
@@ -565,7 +553,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
                     List.of(), null, null, null
             );
             user.changeRole(UserRole.MEMBER);
-            user.verifyEmail();
             user.withdraw();
             // 6일 전으로 설정
             ReflectionTestUtils.setField(user, "deleted", true);
@@ -573,7 +560,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             userRepository.save(user);
 
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             credential.withdraw();
             ReflectionTestUtils.setField(credential, "deleted", true);
             ReflectionTestUtils.setField(credential, "deletedAt", Instant.now().minusSeconds(6 * 24 * 60 * 60));
@@ -591,7 +577,6 @@ class AuthenticationE2ETest extends ServiceIntegrationTestBase {
             // === Setup: 인증된 사용자 생성 및 로그인 ===
             User user = createAndSaveUser(TEST_STUDENT_ID, TEST_EMAIL, UserRole.MEMBER);
             PasswordCredential credential = PasswordCredential.create(user, passwordEncoder.encode(TEST_PASSWORD));
-            credential.verifyEmail();
             passwordCredentialRepository.save(credential);
 
             PasswordLoginRequest loginRequest = new PasswordLoginRequest(TEST_STUDENT_ID, TEST_PASSWORD);

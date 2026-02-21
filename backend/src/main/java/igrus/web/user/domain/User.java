@@ -107,10 +107,10 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_role", nullable = false)
     private UserRole role = UserRole.ASSOCIATE;
 
-    /** 사용자 상태 (PENDING_VERIFICATION, ACTIVE, SUSPENDED, WITHDRAWN). 기본값: PENDING_VERIFICATION */
+    /** 사용자 상태 (PENDING_VERIFICATION, ACTIVE, SUSPENDED, WITHDRAWN). 기본값: ACTIVE (이메일 사전 인증 완료 후 가입) */
     @Enumerated(EnumType.STRING)
     @Column(name = "users_status", nullable = false)
-    private UserStatus status = UserStatus.PENDING_VERIFICATION;
+    private UserStatus status = UserStatus.ACTIVE;
 
     /** 임시 학번 사용 여부 */
     @Column(name = "users_has_temporary_student_id", nullable = false)

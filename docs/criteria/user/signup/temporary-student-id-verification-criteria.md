@@ -1,7 +1,7 @@
 # 임시 학번 발급 및 학번 변경 검증 기준서
 
 > **Status**: Implemented
-> **Last Updated**: 2026-02-13
+> **Last Updated**: 2026-02-20
 > **Scope**: 임시 학번 발급(Temporary Student ID), 임시 학번 회원가입, 학번 변경(Student ID Update), 임시 학번 이메일 전송
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 
@@ -105,7 +105,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 변경에 직접 관련�
 
 > 임시 학번으로 회원가입 시, 사용자의 이메일로 임시 학번 안내 메일이 발송된다.
 
-- **발송 시점**: 회원가입 요청 처리 완료 후 (인증 이메일과 별도)
+- **발송 시점**: 회원가입 요청 처리 완료 후 (이메일 인증은 사전 인증 단계에서 이미 완료; 임시 학번 안내 이메일만 별도 발송)
 - **발송 방식**: 비동기 (`@Async`) + 재시도 (`@Retryable`, 최대 4회, 지수 백오프)
 - **이메일 내용 필수 포함 항목**: 사용자 이름, 임시 학번, 로그인에 사용하라는 안내, 학번 발급 후 마이페이지에서 변경하라는 안내
 - **실패 시**: 로그 기록 (`@Recover`), 사용자 가입 자체는 롤백되지 않음 (비동기이므로 독립)
@@ -351,7 +351,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 변경에 직접 관련�
 | 이메일 중복 시 거부 | 기존 INV-06 | `signup_DuplicateEmail_ThrowsDuplicateException` |
 | 전화번호 중복 시 거부 | 기존 INV-06 | `signup_DuplicatePhone_ThrowsDuplicateException` |
 | hasTemporaryStudentId 플래그 설정 확인 | TEMP-INV-05 | `signup_ValidRequest_SetsTemporaryFlag` |
-| 이메일 발송 호출 확인 | TEMP-INV-09 | `signup_ValidRequest_SendsTempIdEmail` |
+| 임시 학번 안내 이메일 발송 확인 | TEMP-INV-09 | `signup_ValidRequest_SendsTempIdEmail` (sendTemporaryStudentIdEmail만 검증, sendVerificationEmail은 사전 인증 단계에서 발송되므로 제외) |
 
 #### 서비스 통합 테스트 (UpdateStudentIdServiceTest)
 

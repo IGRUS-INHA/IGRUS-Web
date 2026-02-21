@@ -72,7 +72,6 @@ class ChangeUserRoleServiceTest {
             Long targetUserId = 1L;
             Long currentUserId = 2L;
             User targetUser = createTestUser();
-            targetUser.verifyEmail();
             targetUser.changeRole(UserRole.MEMBER);
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
 
@@ -94,7 +93,6 @@ class ChangeUserRoleServiceTest {
             Long targetUserId = 1L;
             Long currentUserId = 2L;
             User targetUser = createTestUser();
-            targetUser.verifyEmail();
             targetUser.changeRole(UserRole.MEMBER);
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
             given(associateDecisionRepository.findByUserIdAndActiveTrue(targetUserId)).willReturn(Optional.empty());
@@ -114,7 +112,6 @@ class ChangeUserRoleServiceTest {
             Long targetUserId = 1L;
             Long currentUserId = 2L;
             User targetUser = createTestUser();
-            targetUser.verifyEmail();
             targetUser.changeRole(UserRole.MEMBER);
             AssociateDecision existingDecision = AssociateDecision.approve(targetUser, currentUserId);
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
@@ -135,7 +132,6 @@ class ChangeUserRoleServiceTest {
             Long targetUserId = 1L;
             Long currentUserId = 2L;
             User targetUser = createTestUser();
-            targetUser.verifyEmail();
             targetUser.changeRole(UserRole.OPERATOR);
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
             given(associateDecisionRepository.findByUserIdAndActiveTrue(targetUserId)).willReturn(Optional.empty());
@@ -218,7 +214,6 @@ class ChangeUserRoleServiceTest {
             Long targetUserId = 1L;
             Long currentUserId = 2L;
             User targetUser = createTestUser();
-            targetUser.verifyEmail();
             targetUser.changeRole(UserRole.MEMBER);
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
 

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * 이메일 인증 정보를 저장하는 엔티티.
@@ -65,6 +66,12 @@ public class EmailVerification extends BaseEntity {
      */
     @Column(name = "email_verifications_expires_at", nullable = false)
     private Instant expiresAt;
+
+    /**
+     * 인증 완료 시 발급되는 일회용 토큰. 회원가입 요청 시 소유권 검증에 사용.
+     */
+    @Column(name = "email_verifications_verification_token", length = 36)
+    private String verificationToken;
 
     /**
      * 인증 요청 사용자 ID. 회원가입 시에는 null.
@@ -130,9 +137,13 @@ public class EmailVerification extends BaseEntity {
     }
 
     /**
-     * 이메일 인증을 완료 상태로 변경합니다.
+     * 이메일 인증을 완료 상태로 변경하고 소유권 검증용 토큰을 발급합니다.
+     *
+     * @return 발급된 인증 토큰 (회원가입 시 제출 필요)
      */
-    public void verify() {
+    public String verify() {
         this.verified = true;
+        this.verificationToken = UUID.randomUUID().toString();
+        return this.verificationToken;
     }
 }

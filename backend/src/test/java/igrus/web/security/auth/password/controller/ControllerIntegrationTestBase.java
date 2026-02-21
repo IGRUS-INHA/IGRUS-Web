@@ -5,9 +5,9 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.EmailVerification;
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordCredential;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
+import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
+import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
 import igrus.web.security.auth.password.service.signup.SignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
@@ -84,10 +84,10 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
     protected SignupService signupService;
 
     @Autowired
-    protected VerifyEmailService verifyEmailService;
+    protected PreSignupSendCodeService preSignupSendCodeService;
 
     @Autowired
-    protected ResendVerificationService resendVerificationService;
+    protected PreSignupVerifyCodeService preSignupVerifyCodeService;
 
     @Autowired
     protected JwtTokenProvider jwtTokenProvider;
@@ -113,10 +113,9 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
         ReflectionTestUtils.setField(refreshTokenService, "accessTokenValidity", ACCESS_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "refreshTokenValidity", REFRESH_TOKEN_VALIDITY);
         ReflectionTestUtils.setField(refreshTokenService, "gracePeriodMillis", REFRESH_TOKEN_GRACE_PERIOD);
-        ReflectionTestUtils.setField(signupService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(verifyEmailService, "maxAttempts", MAX_VERIFICATION_ATTEMPTS);
-        ReflectionTestUtils.setField(resendVerificationService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
-        ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", RESEND_RATE_LIMIT_SECONDS);
+        ReflectionTestUtils.setField(preSignupSendCodeService, "verificationCodeExpiry", VERIFICATION_CODE_EXPIRY);
+        ReflectionTestUtils.setField(preSignupSendCodeService, "resendRateLimitSeconds", RESEND_RATE_LIMIT_SECONDS);
+        ReflectionTestUtils.setField(preSignupVerifyCodeService, "maxAttempts", MAX_VERIFICATION_ATTEMPTS);
     }
 
     // ==================== HTTP Request Helper Methods ====================
@@ -219,41 +218,33 @@ public abstract class ControllerIntegrationTestBase extends ServiceIntegrationTe
 
     /**
      * 사용자 상태를 적용합니다.
+     * User.create()의 기본 상태가 ACTIVE이므로, ACTIVE는 no-op입니다.
      */
     private void applyUserStatus(User user, UserStatus status) {
         switch (status) {
-            case ACTIVE -> user.verifyEmail();
-            case SUSPENDED -> {
-                user.verifyEmail();
-                user.suspend();
-            }
-            case WITHDRAWN -> {
-                user.verifyEmail();
-                user.withdraw();
-            }
-            case PENDING_VERIFICATION -> {
+            case ACTIVE -> {
                 // 기본 상태로 유지
             }
+            case SUSPENDED -> user.suspend();
+            case WITHDRAWN -> user.withdraw();
+            case PENDING_VERIFICATION ->
+                    ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
         }
     }
 
     /**
      * 자격증명 상태를 적용합니다.
+     * PasswordCredential.create()의 기본 상태가 ACTIVE이므로, ACTIVE는 no-op입니다.
      */
     private void applyCredentialStatus(PasswordCredential credential, UserStatus status) {
         switch (status) {
-            case ACTIVE -> credential.verifyEmail();
-            case SUSPENDED -> {
-                credential.verifyEmail();
-                credential.suspend();
-            }
-            case WITHDRAWN -> {
-                credential.verifyEmail();
-                credential.withdraw();
-            }
-            case PENDING_VERIFICATION -> {
+            case ACTIVE -> {
                 // 기본 상태로 유지
             }
+            case SUSPENDED -> credential.suspend();
+            case WITHDRAWN -> credential.withdraw();
+            case PENDING_VERIFICATION ->
+                    ReflectionTestUtils.setField(credential, "status", UserStatus.PENDING_VERIFICATION);
         }
     }
 

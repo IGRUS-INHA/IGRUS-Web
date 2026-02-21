@@ -87,7 +87,6 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(role);
-        user.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
         User savedUser = userRepository.save(user);
 
         // Withdraw the user
@@ -102,7 +101,6 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
     private PasswordCredential createAndSaveWithdrawnCredential(User user, Instant deletedAt) {
         String encodedPassword = passwordEncoder.encode(TEST_PASSWORD);
         PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        credential.verifyEmail();
         credential.withdraw();
         ReflectionTestUtils.setField(credential, "deleted", true);
         ReflectionTestUtils.setField(credential, "deletedAt", deletedAt);
@@ -126,14 +124,12 @@ class AccountRecoveryIntegrationTest extends ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(role);
-        user.verifyEmail();
         return userRepository.save(user);
     }
 
     private PasswordCredential createAndSaveActiveCredential(User user) {
         String encodedPassword = passwordEncoder.encode(TEST_PASSWORD);
         PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
-        credential.verifyEmail();
         return passwordCredentialRepository.save(credential);
     }
 

@@ -43,7 +43,6 @@ class GetUserDetailServiceTest {
             // given
             Long userId = 1L;
             User user = createTestUser();
-            user.verifyEmail();
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
 
             // when
