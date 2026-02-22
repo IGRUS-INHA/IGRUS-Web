@@ -37,21 +37,19 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **검증 계층**: DB unique constraint + 서비스 레벨 중복 검사
 - **관련 코드**: `SurveyResponse` 엔티티 `@UniqueConstraint(columnNames = {"survey_responses_survey_id", "survey_responses_user_id"})`
 
-### INV-02: DRAFT 상태에서만 질문 구조 수정 가능
+### INV-02: 질문 구조는 모든 상태에서 수정 가능
 
-> PUBLISHED 또는 CLOSED 상태의 설문은 질문(추가/수정/삭제), 선택지, 그리드 행을 변경할 수 없다.
+> 질문(추가/수정/삭제), 선택지, 그리드 행은 DRAFT, PUBLISHED, CLOSED 어떤 상태에서든 수정할 수 있다. (구글폼 방식)
 
-- **사전조건**: `survey.status == DRAFT`
-- **위반 시**: 이미 수집된 응답과 질문 구조가 불일치하여 데이터 무결성 훼손
-- **관련 코드**: `Survey.updateDraft()` — DRAFT 상태 검증 후 전체 수정 허용
+- **주의사항**: 수정 전에 수집된 응답은 수정 전 질문 구조 기준으로 유지됨. 수정 후 응답만 새 구조 적용
+- **위험**: 선택지 삭제 시, 해당 선택지를 참조하는 기존 `SurveyAnswer`의 `selectedOption` FK가 깨질 수 있음 → 선택지 삭제는 soft delete 또는 참조 검증 필요
 
-### INV-03: DRAFT 상태에서만 삭제 가능
+### INV-03: 설문 삭제는 모든 상태에서 가능
 
-> PUBLISHED 또는 CLOSED 상태의 설문은 삭제할 수 없다.
+> 설문은 DRAFT, PUBLISHED, CLOSED 어떤 상태에서든 삭제(soft delete)할 수 있다.
 
-- **사전조건**: `survey.isDraft() == true`
-- **위반 시**: 응답 데이터 유실, 참조 무결성 훼손
-- **관련 코드**: `Survey.isDraft()`, `SoftDeletableEntity.delete()`
+- **근거**: soft delete이므로 데이터 보존 및 참조 무결성이 유지됨
+- **관련 코드**: `SoftDeletableEntity.delete()`
 
 ### INV-04: 설문 질문 수 제한
 
@@ -61,12 +59,12 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **경계값**: 0개 (발행 거부), 1개 (최소 유효), 50개 (최대 유효), 51개 (발행 거부)
 - **위반 시**: 질문 없는 설문이 발행되거나, 과도한 질문 수로 응답 품질 저하
 
-### INV-05: PUBLISHED 설문의 응답 권한 변경 불가
+### INV-05: PUBLISHED 설문의 응답 권한 변경 허용
 
-> PUBLISHED 상태에서는 `accessLevel`을 변경할 수 없다.
+> PUBLISHED 상태에서도 `accessLevel`을 변경할 수 있다.
 
-- **사전조건**: `survey.status == PUBLISHED`일 때 `updatePublished()`는 `accessLevel` 파라미터를 받지 않음
-- **위반 시**: 이미 응답한 사용자와 새로운 권한 정책 간 불일치
+- **주의사항**: PUBLIC → MEMBER 등으로 변경 시, 변경 전에 수집된 익명 응답과 변경 후 회원 응답이 혼재할 수 있음
+- **관련 코드**: `Survey.updatePublished()` — accessLevel 파라미터 포함
 
 ### INV-06: 그리드 질문의 최소 구성
 
@@ -90,12 +88,71 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **사후조건**: `survey.status == CLOSED`
 - **구현 방식**: 스케줄러 또는 응답 시점 검증 (TBD)
 
-### INV-09: CLOSED 설문은 응답 불가
+### INV-09: PUBLISHED 상태에서만 응답 가능
 
-> CLOSED 상태의 설문에는 새로운 응답을 제출할 수 없다.
+
+> PUBLISHED 상태의 설문에만 응답을 제출할 수 있다. DRAFT와 CLOSED 상태에서는 응답 불가.
 
 - **사전조건**: 응답 제출 시 `survey.isPublished() == true` 검증
-- **위반 시**: 마감된 설문에 응답이 추가되어 통계 오염
+- **DRAFT 거부 이유**: 아직 작성 중인 설문이 응답자에게 노출되면 안 됨
+- **CLOSED 거부 이유**: 마감된 설문에 응답이 추가되면 통계 오염
+
+### INV-10: 선택지/행 삭제 시 기존 응답 보호
+
+> 응답이 참조하고 있는 선택지(`SurveyQuestionOption`)나 그리드 행(`SurveyQuestionRow`)을 삭제하면 기존 `SurveyAnswer`의 FK가 깨진다.
+
+- **해결 방안**: 응답이 참조 중인 선택지/행은 삭제를 거부하거나, soft delete 처리
+- **위반 시**: `SurveyAnswer.selectedOption` 또는 `SurveyAnswer.selectedRow`가 존재하지 않는 레코드를 참조
+
+### INV-11: 재발행 시 마감일 검증
+
+> CLOSED → PUBLISHED 재발행 시, 마감일이 설정되어 있다면 반드시 미래 시점이어야 한다.
+
+- **사전조건**: `survey.deadline == null || survey.deadline > now`
+- **위반 시**: 재발행 즉시 마감일 경과로 다시 CLOSED 전환
+
+### INV-12: 필수 질문 응답 누락 방지
+
+> `required = true`인 질문에 대해 응답이 누락되면 응답 제출을 거부한다.
+
+- **검증 시점**: 응답 제출 시 서비스 레이어에서 검증
+- **위반 시**: 필수 질문에 대한 데이터 수집 실패
+
+### INV-13: 질문 유형별 필수 구성요소 검증
+
+> 질문 유형에 따라 필수 구성요소가 있어야 발행 가능하다.
+
+| 질문 유형 | 필수 구성요소 |
+|----------|-------------|
+| MULTIPLE_CHOICE, CHECKBOX, DROPDOWN | 선택지(Option) 1개 이상 |
+| MULTIPLE_CHOICE_GRID, CHECKBOX_GRID | 선택지(Option) 1개 이상 + 행(Row) 1개 이상 |
+| LINEAR_SCALE | scaleMin, scaleMax 설정 (min < max) |
+| SHORT_ANSWER, PARAGRAPH, DATE, TIME, FILE_UPLOAD | 없음 |
+
+- **적용 시점**: 설문 발행 시 검증
+- **위반 시**: 응답 불가능한 질문이 응답자에게 노출
+
+### INV-14: 비회원 중복 응답 제약 한계
+
+> 비회원 응답(`user_id = null`)은 DB unique constraint 대상이 아니다. (NULL은 unique 비교에서 제외됨)
+
+- **결과**: 같은 비회원이 여러 번 응답 가능
+- **완화 방안**: 브라우저 세션 또는 fingerprint 기반 제한 (완벽하지 않음을 인정)
+
+### INV-15: 질문 삭제 시 기존 응답 처리
+
+> PUBLISHED/CLOSED 상태에서 질문을 삭제하면, 해당 질문에 대한 기존 `SurveyAnswer` 레코드가 고아(orphan)가 된다.
+
+- **해결 방안**: 질문 삭제 시 연관된 `SurveyAnswer` 레코드도 함께 삭제하거나, 질문을 soft delete 처리
+- **위반 시**: 결과 조회 시 삭제된 질문의 답변이 표시되거나 오류 발생
+
+### INV-16: 응답 제출 중 설문 마감 경합
+
+> 응답자가 설문을 작성하는 도중 설문이 CLOSED로 전환될 수 있다.
+
+- **시나리오**: 응답자가 폼을 열었을 때 PUBLISHED → 작성 중 마감일 경과 → 제출 시 CLOSED
+- **해결 방안**: 응답 제출 시점에 `survey.isPublished()` 재검증
+- **위반 시**: 마감된 설문에 응답이 저장됨
 
 ---
 
@@ -108,11 +165,11 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 ┌─────────┐ ────────────────> ┌───────────┐
 │  DRAFT  │                   │ PUBLISHED │
 └─────────┘                   └─────┬─────┘
-                                    │ 수동 마감 또는
-                                    │ 마감일 경과
-                                    ▼
+                                 ▲  │ 수동 마감 또는
+                           재발행 │  │ 마감일 경과
+                                 │  ▼
                               ┌──────────┐
-                              │  CLOSED  │  (종단 상태)
+                              │  CLOSED  │
                               └──────────┘
 ```
 
@@ -123,6 +180,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | DRAFT → PUBLISHED | 운영진이 발행 | OPERATOR 이상 권한, 질문 1개 이상 | `status = PUBLISHED`, 응답 대상자에게 노출 | `Survey.publish()` |
 | PUBLISHED → CLOSED | 수동 마감 | OPERATOR 이상 권한 | `status = CLOSED`, 응답 불가 | `Survey.close()` |
 | PUBLISHED → CLOSED | 마감일 경과 | `deadline != null && now > deadline` | `status = CLOSED`, 자동 전환 | 스케줄러 (TBD) |
+| CLOSED → PUBLISHED | 재발행 | OPERATOR 이상 권한, 마감일 미설정이거나 마감일이 미래 (CLOSED 상태에서 마감일 수정 가능) | `status = PUBLISHED`, 응답 재개 | `Survey.rePublish()` |
 
 **금지된 전이 (Invalid Transition)**:
 
@@ -130,18 +188,18 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 |------|----------|------|
 | DRAFT → CLOSED | `IllegalStateException` | 발행을 거치지 않고 마감 불가 |
 | PUBLISHED → DRAFT | `IllegalStateException` | 이미 응답이 수집되었을 수 있으므로 초안으로 되돌릴 수 없음 |
-| CLOSED → DRAFT | `IllegalStateException` | 종단 상태에서 되돌릴 수 없음 |
-| CLOSED → PUBLISHED | `IllegalStateException` | 종단 상태에서 재발행 불가 |
+| CLOSED → DRAFT | `IllegalStateException` | 초안으로 되돌리면 질문 구조 변경이 가능해져 기존 응답과 불일치 |
+| CLOSED → PUBLISHED (마감일 경과) | `IllegalStateException` | 마감일이 이미 지났으면 재발행해도 즉시 다시 CLOSED됨 |
 
 ### 2-2. 설문 수정 가능 범위 (상태별)
 
 | 필드 | DRAFT | PUBLISHED | CLOSED |
 |------|:---:|:---:|:---:|
-| 제목 (title) | O | O | X |
-| 설명 (description) | O | O | X |
-| 응답 권한 (accessLevel) | O | X | X |
-| 마감일 (deadline) | O | O | X |
-| 질문 구조 (추가/수정/삭제) | O | X | X |
+| 제목 (title) | O | O | O |
+| 설명 (description) | O | O | O |
+| 응답 권한 (accessLevel) | O | O | O |
+| 마감일 (deadline) | O | O | O |
+| 질문 구조 (추가/수정/삭제) | O | O | O |
 
 ---
 
@@ -207,11 +265,11 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 작업 | 비인증 | ASSOCIATE | MEMBER | OPERATOR | ADMIN |
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | 설문 생성 | 401 | 403 | 403 | **O** | **O** |
-| 설문 수정 (DRAFT) | 401 | 403 | 403 | **O** | **O** |
-| 설문 수정 (PUBLISHED) | 401 | 403 | 403 | **O** | **O** |
+| 설문 수정 (모든 상태) | 401 | 403 | 403 | **O** | **O** |
 | 설문 발행 | 401 | 403 | 403 | **O** | **O** |
+| 설문 재발행 (CLOSED→PUBLISHED) | 401 | 403 | 403 | **O** | **O** |
 | 설문 마감 | 401 | 403 | 403 | **O** | **O** |
-| 설문 삭제 (DRAFT) | 401 | 403 | 403 | **O** | **O** |
+| 설문 삭제 (모든 상태) | 401 | 403 | 403 | **O** | **O** |
 | 설문 목록 조회 | 본인 권한에 해당하는 PUBLISHED만 | O | O | **O** (전체) | **O** (전체) |
 | 설문 응답 (PUBLIC) | **O** | O | O | O | O |
 | 설문 응답 (ASSOCIATE) | 401 | **O** | O | O | O |
@@ -279,14 +337,21 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 불변조건 | 커버 테스트 | 상태 |
 |---------|-----------|------|
 | INV-01 (중복 응답 방지) | - | 미작성 |
-| INV-02 (DRAFT에서만 질문 수정) | - | 미작성 |
-| INV-03 (DRAFT에서만 삭제) | - | 미작성 |
+| INV-02 (모든 상태 질문 수정 가능) | - | 미작성 |
+| INV-03 (모든 상태 삭제 가능) | - | 미작성 |
 | INV-04 (질문 수 1~50) | - | 미작성 |
-| INV-05 (PUBLISHED accessLevel 변경 불가) | - | 미작성 |
+| INV-05 (모든 상태 accessLevel 변경 가능) | - | 미작성 |
 | INV-06 (그리드 최소 구성) | - | 미작성 |
 | INV-07 (선형 배율 min < max) | - | 미작성 |
 | INV-08 (마감일 자동 CLOSED) | - | 미작성 |
-| INV-09 (CLOSED 응답 불가) | - | 미작성 |
+| INV-09 (PUBLISHED에서만 응답 가능) | - | 미작성 |
+| INV-10 (선택지 삭제 시 기존 응답 보호) | - | 미작성 |
+| INV-11 (재발행 시 마감일 검증) | - | 미작성 |
+| INV-12 (필수 질문 응답 누락 방지) | - | 미작성 |
+| INV-13 (질문 유형별 필수 구성요소) | - | 미작성 |
+| INV-14 (비회원 unique constraint 비적용) | - | 미작성 |
+| INV-15 (질문 삭제 시 기존 응답 처리) | - | 미작성 |
+| INV-16 (응답 제출 중 설문 마감 경합) | - | 미작성 |
 
 ### 6-3. 상태 전이 커버리지 (테스트 작성 후 업데이트)
 
@@ -297,8 +362,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | PUBLISHED → CLOSED (자동) | - | 미작성 |
 | DRAFT → CLOSED (금지) | - | 미작성 |
 | PUBLISHED → DRAFT (금지) | - | 미작성 |
+| CLOSED → PUBLISHED (재발행) | - | 미작성 |
+| CLOSED → PUBLISHED (마감일 경과, 금지) | - | 미작성 |
 | CLOSED → DRAFT (금지) | - | 미작성 |
-| CLOSED → PUBLISHED (금지) | - | 미작성 |
 
 ### 6-4. 권한 검증 커버리지 (테스트 작성 후 업데이트)
 
@@ -318,3 +384,15 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - [#406 설문 기능 Epic](https://github.com/IGRUS-INHA/IGRUS-Web/issues/406) - 기능 스펙
 - [#427 설문 도메인 모델 설계](https://github.com/IGRUS-INHA/IGRUS-Web/issues/427) - 엔티티 설계
 - [QA Testing 관련 용어 정리 (Wiki)](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC) - 용어 및 개념 참조
+
+---
+
+## #406 이슈와 다른 점
+
+| 항목 | 이슈 원문 | 변경 내용 | 이유 |
+|------|----------|----------|------|
+| 설문 삭제 제한 | "DRAFT 상태에서만 삭제 가능" | 모든 상태에서 삭제 허용 | soft delete이므로 데이터 보존 + 참조 무결성 유지됨, 삭제 제한의 기술적 근거 없음 |
+| PUBLISHED 응답 권한 변경 | "PUBLISHED에서는 제목/설명/마감일만 수정 가능" (accessLevel 미언급) | PUBLISHED에서 accessLevel 변경 허용 | 기술적 문제 없음, 운영 유연성 확보 |
+| 질문 구조 수정 | "DRAFT에서만 질문 수정 가능" | 모든 상태에서 질문 구조 수정 허용 (구글폼 방식) | 운영 유연성 확보, 기존 응답은 수정 전 기준 유지 |
+| CLOSED 상태 수정 | CLOSED에서 수정 불가 | CLOSED에서 전체 수정 허용 (질문 구조 포함) | 마감일 연장 후 재발행 등 운영 유연성 확보 |
+| CLOSED → PUBLISHED 재발행 | CLOSED는 종단 상태 (재발행 불가) | 마감일 미설정이거나 마감일이 미래인 경우 재발행 허용 | 수동 마감 후 재개, 마감일 연장 후 재발행 등 운영 유연성 확보 |
