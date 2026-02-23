@@ -1,0 +1,46 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: igrus-mysql-dev
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: igrus-web
+      MYSQL_USER: ${DB_USERNAME:-igrus}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-igrus1234}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: eclipse-temurin:21-jdk
+    container_name: igrus-backend-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+      - gradle-cache:/root/.gradle
+    command: ./gradlew bootRun
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_ACTIVE_PROFILE: local
+      DB_USERNAME: ${DB_USERNAME:-igrus}
+      DB_PASSWORD: ${DB_PASSWORD:-igrus1234}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/igrus-web
+      SPRING_CLOUD_AWS_SECRETSMANAGER_ENABLED: "false"
+      SPRING_CLOUD_AWS_REGION_STATIC: ap-northeast-2
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:
+  gradle-cache:
