@@ -10,21 +10,23 @@ import java.util.List;
  * 생성, 수정, 단건 조회 시 공통으로 사용합니다.
  * 질문·선택지·행을 포함한 전체 설문 구조를 담습니다.
  *
- * @param id          설문 ID
- * @param title       설문 제목
- * @param description 설문 설명
- * @param status      설문 상태
- * @param accessLevel 응답 대상 권한
- * @param deadline    설문 마감일
- * @param createdAt   생성 시각
- * @param updatedAt   수정 시각
- * @param questions   질문 목록 (삭제되지 않은 질문만 포함)
+ * @param id             설문 ID
+ * @param title          설문 제목
+ * @param description    설문 설명
+ * @param visibility     공개 상태 (DRAFT / PUBLISHED)
+ * @param responseStatus 응답 수집 상태 (NOT_STARTED / OPEN / CLOSED)
+ * @param accessLevel    응답 대상 권한
+ * @param deadline       설문 마감일
+ * @param createdAt      생성 시각
+ * @param updatedAt      수정 시각
+ * @param questions      질문 목록 (삭제되지 않은 질문만 포함)
  */
 public record SurveyDetailResponse(
         Long id,
         String title,
         String description,
-        SurveyStatus status,
+        SurveyVisibility visibility,
+        SurveyResponseStatus responseStatus,
         SurveyAccessLevel accessLevel,
         Instant deadline,
         Instant createdAt,
@@ -47,7 +49,8 @@ public record SurveyDetailResponse(
                 survey.getId(),
                 survey.getTitle(),
                 survey.getDescription(),
-                survey.getStatus(),
+                survey.getVisibility(),
+                survey.getResponseStatus(),
                 survey.getAccessLevel(),
                 survey.getDeadline(),
                 survey.getCreatedAt(),

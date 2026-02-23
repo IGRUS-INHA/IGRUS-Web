@@ -1,5 +1,6 @@
 package igrus.web.survey.service;
 
+import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.dto.request.CreateSurveyRequest;
 import igrus.web.survey.dto.request.UpdateSurveyRequest;
@@ -26,7 +27,7 @@ import java.util.List;
  * <ul>
  *   <li>{@link #createSurvey} - 설문 생성 (운영진 이상)</li>
  *   <li>{@link #updateSurvey} - 설문 수정 (운영진 이상, 모든 상태)</li>
- *   <li>{@link #deleteSurvey} - 설문 삭제 (운영진 이상, 모든 상태)</li>
+ *   <li>{@link #trashSurvey} - 설문 휴지통 이동 (운영진 이상, 모든 상태)</li>
  *   <li>{@link #getSurveyDetail} - 설문 단건 조회 (운영진 이상)</li>
  *   <li>{@link #getSurveyList} - 설문 목록 조회 (운영진 이상)</li>
  * </ul>
@@ -43,13 +44,13 @@ public class SurveyService {
     /**
      * 설문을 생성합니다. 초기 상태는 DRAFT입니다.
      *
-     * @param request 설문 생성 요청
-     * @param userId  생성자(운영진) ID
+     * @param request           설문 생성 요청
+     * @param authenticatedUser 인증된 사용자 정보
      * @return 생성된 설문 상세 응답
      */
-    public SurveyDetailResponse createSurvey(CreateSurveyRequest request, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+    public SurveyDetailResponse createSurvey(CreateSurveyRequest request, AuthenticatedUser authenticatedUser) {
+        User user = userRepository.findById(authenticatedUser.userId())
+                .orElseThrow(() -> new UserNotFoundException(authenticatedUser.userId()));
         validateOperatorPermission(user);
 
         Survey survey = Survey.create(
@@ -67,17 +68,17 @@ public class SurveyService {
     /**
      * 설문을 수정합니다. 모든 상태에서 수정 가능합니다. (구글폼 방식)
      *
-     * @param surveyId 설문 ID
-     * @param request  설문 수정 요청
-     * @param userId   수정자(운영진) ID
+     * @param surveyId          설문 ID
+     * @param request           설문 수정 요청
+     * @param authenticatedUser 인증된 사용자 정보
      * @return 수정된 설문 상세 응답
      */
-    public SurveyDetailResponse updateSurvey(Long surveyId, UpdateSurveyRequest request, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+    public SurveyDetailResponse updateSurvey(Long surveyId, UpdateSurveyRequest request, AuthenticatedUser authenticatedUser) {
+        User user = userRepository.findById(authenticatedUser.userId())
+                .orElseThrow(() -> new UserNotFoundException(authenticatedUser.userId()));
         validateOperatorPermission(user);
 
-        Survey survey = surveyRepository.findByIdAndDeletedFalse(surveyId)
+        Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
         survey.update(
@@ -91,35 +92,35 @@ public class SurveyService {
     }
 
     /**
-     * 설문을 삭제(soft delete)합니다. 모든 상태에서 삭제 가능합니다.
+     * 설문을 휴지통으로 이동합니다. 모든 상태에서 가능합니다.
      *
-     * @param surveyId 설문 ID
-     * @param userId   삭제자(운영진) ID
+     * @param surveyId          설문 ID
+     * @param authenticatedUser 인증된 사용자 정보
      */
-    public void deleteSurvey(Long surveyId, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+    public void trashSurvey(Long surveyId, AuthenticatedUser authenticatedUser) {
+        User user = userRepository.findById(authenticatedUser.userId())
+                .orElseThrow(() -> new UserNotFoundException(authenticatedUser.userId()));
         validateOperatorPermission(user);
 
-        Survey survey = surveyRepository.findByIdAndDeletedFalse(surveyId)
+        Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
-        survey.delete(userId);
+        survey.trash();
     }
 
     /**
      * 설문 단건을 조회합니다.
      *
-     * @param surveyId 설문 ID
-     * @param userId   조회자 ID
+     * @param surveyId          설문 ID
+     * @param authenticatedUser 인증된 사용자 정보
      * @return 설문 상세 응답
      */
     @Transactional(readOnly = true)
-    public SurveyDetailResponse getSurveyDetail(Long surveyId, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+    public SurveyDetailResponse getSurveyDetail(Long surveyId, AuthenticatedUser authenticatedUser) {
+        User user = userRepository.findById(authenticatedUser.userId())
+                .orElseThrow(() -> new UserNotFoundException(authenticatedUser.userId()));
         validateOperatorPermission(user);
 
-        Survey survey = surveyRepository.findByIdAndDeletedFalse(surveyId)
+        Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
         return SurveyDetailResponse.from(survey);
     }
@@ -127,22 +128,21 @@ public class SurveyService {
     /**
      * 설문 목록을 조회합니다.
      *
-     * @param userId 조회자(운영진) ID
+     * @param authenticatedUser 인증된 사용자 정보
      * @return 설문 목록 응답
      */
     @Transactional(readOnly = true)
-    public List<SurveyListResponse> getSurveyList(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+    public List<SurveyListResponse> getSurveyList(AuthenticatedUser authenticatedUser) {
+        User user = userRepository.findById(authenticatedUser.userId())
+                .orElseThrow(() -> new UserNotFoundException(authenticatedUser.userId()));
         validateOperatorPermission(user);
 
-        return surveyRepository.findByDeletedFalse().stream()
+        return surveyRepository.findByDeletedFalseAndTrashedAtIsNull().stream()
                 .map(SurveyListResponse::from)
                 .toList();
     }
 
     // === Private helper methods ===
-
 
     private void validateOperatorPermission(User user) {
         if (!user.isOperatorOrAbove()) {
