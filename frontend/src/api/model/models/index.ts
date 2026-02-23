@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: v1.0.0
+ * OpenAPI spec version: 33c8ee9
  */
 
 export * from './accountRecoveryRequest';
@@ -199,6 +199,7 @@ export * from './postUpdateResponse';
 export * from './postViewHistoryPageResponse';
 export * from './postViewHistoryResponse';
 export * from './postViewStatsResponse';
+export * from './preSignupVerificationResponse';
 export * from './privacyConsentHistoryResponse';
 export * from './privacyConsentResponse';
 export * from './recoveryEligibilityResponse';
