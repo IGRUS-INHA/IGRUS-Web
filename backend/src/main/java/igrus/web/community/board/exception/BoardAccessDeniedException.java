@@ -1,7 +1,7 @@
 package igrus.web.community.board.exception;
 
 import igrus.web.common.exception.CustomBaseException;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.community.exception.CommunityErrorCode;
 
 /**
  * 게시판 접근이 거부되었을 때 발생하는 예외.
@@ -9,10 +9,10 @@ import igrus.web.common.exception.ErrorCode;
 public class BoardAccessDeniedException extends CustomBaseException {
 
     public BoardAccessDeniedException() {
-        super(ErrorCode.BOARD_ACCESS_DENIED);
+        super(CommunityErrorCode.BOARD_ACCESS_DENIED);
     }
 
     public BoardAccessDeniedException(String message) {
-        super(ErrorCode.BOARD_ACCESS_DENIED, message);
+        super(CommunityErrorCode.BOARD_ACCESS_DENIED, message);
     }
 }

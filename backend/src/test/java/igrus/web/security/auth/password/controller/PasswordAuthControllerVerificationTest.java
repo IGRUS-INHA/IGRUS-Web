@@ -1,7 +1,8 @@
 package igrus.web.security.auth.password.controller;
 
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.common.exception.CommonErrorCode;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
 import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.exception.verification.VerificationAttemptsExceededException;
 import igrus.web.security.auth.common.exception.verification.VerificationCodeExpiredException;
@@ -78,7 +79,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                                 .content(objectMapper.writeValueAsString(request))
                                 )
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.VERIFICATION_CODE_EXPIRED.getCode()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.VERIFICATION_CODE_EXPIRED.getCode()));
             }
 
             @Test
@@ -96,7 +97,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                                 .content(objectMapper.writeValueAsString(request))
                                 )
                         .andExpect(status().isTooManyRequests())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.VERIFICATION_ATTEMPTS_EXCEEDED.getCode()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.VERIFICATION_ATTEMPTS_EXCEEDED.getCode()));
             }
 
             @Test
@@ -114,7 +115,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                                 .content(objectMapper.writeValueAsString(request))
                                 )
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.VERIFICATION_CODE_INVALID.getCode()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.VERIFICATION_CODE_INVALID.getCode()));
             }
 
             @Test
@@ -134,7 +135,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                                 .content(invalidRequest)
                                 )
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -154,7 +155,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                                 .content(invalidRequest)
                                 )
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -174,7 +175,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                                 .content(invalidRequest)
                                 )
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -194,7 +195,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                                 .content(invalidRequest)
                                 )
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -214,7 +215,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                                 .content(invalidRequest)
                                 )
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
         }
     }
@@ -258,7 +259,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                             .content(objectMapper.writeValueAsString(request))
                             )
                     .andExpect(status().isTooManyRequests())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.VERIFICATION_RESEND_RATE_LIMITED.getCode()));
+                    .andExpect(jsonPath("$.code").value(AuthErrorCode.VERIFICATION_RESEND_RATE_LIMITED.getCode()));
         }
 
         @Test
@@ -277,7 +278,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                             .content(invalidRequest)
                             )
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
 
         @Test
@@ -296,7 +297,7 @@ class PasswordAuthControllerVerificationTest extends PasswordAuthControllerTestB
                             .content(invalidRequest)
                             )
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
         }
     }
 }

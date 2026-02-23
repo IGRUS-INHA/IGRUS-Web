@@ -6,7 +6,7 @@ import igrus.web.community.board.domain.BoardPermission;
 import igrus.web.community.board.repository.BoardPermissionRepository;
 import igrus.web.community.board.repository.BoardRepository;
 import igrus.web.common.ServiceIntegrationTestBase;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.community.exception.CommunityErrorCode;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -338,7 +338,7 @@ class BoardPermissionIntegrationTest extends ServiceIntegrationTestBase {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.BOARD_NOT_FOUND.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommunityErrorCode.BOARD_NOT_FOUND.getCode()));
         }
     }
 }

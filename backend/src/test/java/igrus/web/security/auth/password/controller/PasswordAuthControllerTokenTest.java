@@ -1,6 +1,7 @@
 package igrus.web.security.auth.password.controller;
 
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
+import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenTheftException;
@@ -128,8 +129,8 @@ class PasswordAuthControllerTokenTest extends PasswordAuthControllerTestBase {
             mockMvc.perform(post("/api/v1/auth/password/refresh")
                     .cookie(new Cookie("refreshToken", EXPIRED_REFRESH_TOKEN)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_EXPIRED.getCode()))
-                .andExpect(jsonPath("$.message").value(ErrorCode.REFRESH_TOKEN_EXPIRED.getMessage()));
+                .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_EXPIRED.getCode()))
+                .andExpect(jsonPath("$.message").value(AuthErrorCode.REFRESH_TOKEN_EXPIRED.getMessage()));
         }
 
         @Test
@@ -143,8 +144,8 @@ class PasswordAuthControllerTokenTest extends PasswordAuthControllerTestBase {
             mockMvc.perform(post("/api/v1/auth/password/refresh")
                     .cookie(new Cookie("refreshToken", INVALID_REFRESH_TOKEN)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()))
-                .andExpect(jsonPath("$.message").value(ErrorCode.REFRESH_TOKEN_INVALID.getMessage()));
+                .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getCode()))
+                .andExpect(jsonPath("$.message").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getMessage()));
         }
 
         @Test
@@ -158,8 +159,8 @@ class PasswordAuthControllerTokenTest extends PasswordAuthControllerTestBase {
             mockMvc.perform(post("/api/v1/auth/password/refresh")
                     .cookie(new Cookie("refreshToken", FORGED_REFRESH_TOKEN)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()))
-                .andExpect(jsonPath("$.message").value(ErrorCode.REFRESH_TOKEN_INVALID.getMessage()));
+                .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getCode()))
+                .andExpect(jsonPath("$.message").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getMessage()));
         }
 
         @Test
@@ -172,7 +173,7 @@ class PasswordAuthControllerTokenTest extends PasswordAuthControllerTestBase {
             // when & then
             mockMvc.perform(post("/api/v1/auth/password/refresh"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()));
+                .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getCode()));
         }
 
         @Test
@@ -186,7 +187,7 @@ class PasswordAuthControllerTokenTest extends PasswordAuthControllerTestBase {
             mockMvc.perform(post("/api/v1/auth/password/refresh")
                     .cookie(new Cookie("refreshToken", REVOKED_REFRESH_TOKEN)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_THEFT_DETECTED.getCode()))
+                .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_THEFT_DETECTED.getCode()))
                 .andExpect(header().exists("Set-Cookie"));
 
             verify(cookieUtil).deleteRefreshTokenCookie();
@@ -203,7 +204,7 @@ class PasswordAuthControllerTokenTest extends PasswordAuthControllerTestBase {
             mockMvc.perform(post("/api/v1/auth/password/refresh")
                     .cookie(new Cookie("refreshToken", EXPIRED_REFRESH_TOKEN)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_EXPIRED.getCode()))
+                .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_EXPIRED.getCode()))
                 .andExpect(header().exists("Set-Cookie"));
 
             verify(cookieUtil).deleteRefreshTokenCookie();

@@ -1,6 +1,8 @@
 package igrus.web.security.auth.password.controller;
 
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.common.exception.CommonErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
+import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.dto.internal.RecoveryResult;
 import igrus.web.security.auth.common.dto.request.AccountRecoveryRequest;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
@@ -189,8 +191,8 @@ class PasswordAuthControllerAccountRecoveryTest extends PasswordAuthControllerTe
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_CREDENTIALS.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.INVALID_CREDENTIALS.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.INVALID_CREDENTIALS.getMessage()));
             }
 
             @Test
@@ -213,7 +215,7 @@ class PasswordAuthControllerAccountRecoveryTest extends PasswordAuthControllerTe
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.INVALID_CREDENTIALS.getCode()));
             }
         }
 
@@ -238,8 +240,8 @@ class PasswordAuthControllerAccountRecoveryTest extends PasswordAuthControllerTe
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.ACCOUNT_NOT_RECOVERABLE.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.ACCOUNT_NOT_RECOVERABLE.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.ACCOUNT_NOT_RECOVERABLE.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.ACCOUNT_NOT_RECOVERABLE.getMessage()));
             }
         }
 
@@ -259,7 +261,7 @@ class PasswordAuthControllerAccountRecoveryTest extends PasswordAuthControllerTe
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -274,7 +276,7 @@ class PasswordAuthControllerAccountRecoveryTest extends PasswordAuthControllerTe
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -289,7 +291,7 @@ class PasswordAuthControllerAccountRecoveryTest extends PasswordAuthControllerTe
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
         }
     }

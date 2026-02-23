@@ -120,6 +120,7 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
 
             // Phase 1.5: Event 계층 (자식 먼저)
+            entityManager.createNativeQuery("DELETE FROM event_reopen_histories").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM event_registrations").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM events").executeUpdate();
 

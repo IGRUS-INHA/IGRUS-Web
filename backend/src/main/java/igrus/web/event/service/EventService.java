@@ -2,24 +2,29 @@ package igrus.web.event.service;
 
 import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventRegistrationStatus;
+import igrus.web.event.domain.EventReopenHistory;
+import igrus.web.event.domain.EventStatus;
+import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.UpdateEventRequest;
 import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
-import igrus.web.event.domain.EventStatus;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventAccessDeniedException;
 import igrus.web.event.exception.EventNotFoundException;
+import igrus.web.event.exception.EventRegistrationNotReopenableException;
 import igrus.web.event.exception.InvalidEventDateException;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventRegistrationRepository;
+import igrus.web.event.repository.EventReopenHistoryRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +40,10 @@ import java.util.Set;
  *   <li>{@link #getEventList} - 행사 목록 조회 (상태 필터 가능)</li>
  *   <li>{@link #updateEvent} - 행사 수정 (운영진 이상)</li>
  *   <li>{@link #deleteEvent} - 행사 삭제 (운영진 이상)</li>
- *   <li>{@link #closeEvent} - 행사 수동 마감 (운영진 이상)</li>
+ *   <li>{@link #closeEvent} - 등록 수동 마감 (운영진 이상)</li>
+ *   <li>{@link #cancelEvent} - 행사 취소 (운영진 이상)</li>
+ *   <li>{@link #reactivateEvent} - 행사 재활성화 (운영진 이상)</li>
+ *   <li>{@link #reopenRegistration} - 등록 수동 재오픈 (운영진 이상)</li>
  * </ul>
  *
  * @see EventRegistrationService 행사 신청 관련 기능
@@ -53,6 +61,7 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
+    private final EventReopenHistoryRepository eventReopenHistoryRepository;
     private final UserRepository userRepository;
 
     /**
@@ -124,9 +133,7 @@ public class EventService {
         }
 
         // 권한 정보 계산
-        // 수정 권한이 있는가
-        boolean canEdit = user.isOperatorOrAbove(); // 운영진, 관리자
-        // 신청 vs 신청 취소 버튼 분기용
+        boolean canEdit = user.isOperatorOrAbove();
         boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
                 eventId, userId, ACTIVE_REGISTRATION_STATUSES);
 
@@ -137,17 +144,19 @@ public class EventService {
      * 행사 목록을 조회합니다.
      * 조회 시 현재 시간에 따라 행사 상태가 자동 갱신됩니다. (Lazy Evaluation)
      *
-     * @param status 행사 상태 필터 (null이면 전체 조회)
+     * @param eventStatus        행사 진행 상태 필터 (null이면 필터 안 함)
+     * @param registrationStatus 등록 상태 필터 (null이면 필터 안 함)
      * @return 행사 목록 응답 DTO 리스트
      */
-    public List<EventListResponse> getEventList(EventStatus status) {
+    public List<EventListResponse> getEventList(EventStatus eventStatus, RegistrationStatus registrationStatus) {
         List<Event> events;
 
-        // 상태 필터가 없으면 전체 조회, 있으면 해당 상태만 조회
-        if (status == null) {
-            events = eventRepository.findAllNotDeleted();
+        if (eventStatus != null) {
+            events = eventRepository.findByEventStatus(eventStatus);
+        } else if (registrationStatus != null) {
+            events = eventRepository.findByRegistrationStatus(registrationStatus);
         } else {
-            events = eventRepository.findByStatusAndNotDeleted(status);
+            events = eventRepository.findAllNotDeleted();
         }
 
         // 각 행사의 상태를 시간에 따라 자동 갱신 (Lazy Evaluation)
@@ -155,9 +164,14 @@ public class EventService {
         events.forEach(event -> event.updateStatusIfNeeded(now));
 
         // Lazy 갱신 후 상태가 변경되었을 수 있으므로, 필터가 있으면 다시 적용
-        if (status != null) {
+        if (eventStatus != null) {
             events = events.stream()
-                    .filter(e -> e.getStatus() == status)
+                    .filter(e -> e.getEventStatus() == eventStatus)
+                    .toList();
+        }
+        if (registrationStatus != null) {
+            events = events.stream()
+                    .filter(e -> e.getRegistrationStatus() == registrationStatus)
                     .toList();
         }
 
@@ -188,11 +202,14 @@ public class EventService {
         // 3. 권한 확인 (운영진 이상만 수정 가능)
         validateEditPermission(user);
 
-        // 4. 날짜 유효성 검증
+        // 4. Lazy Evaluation (EVT-INV-07: 상태별 수정 정책 적용 전 상태 갱신)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 5. 날짜 유효성 검증
         validateEventDates(request.eventStartAt(), request.eventEndAt(),
                 request.registrationStartAt(), request.registrationEndAt());
 
-        // 5. 행사 수정 (도메인 메서드 호출)
+        // 6. 행사 수정 (도메인 메서드 호출)
         event.update(
                 request.title(),
                 request.description(),
@@ -204,7 +221,7 @@ public class EventService {
                 request.capacity()
         );
 
-        // 6. 응답 반환 (dirty checking으로 자동 저장)
+        // 7. 응답 반환 (dirty checking으로 자동 저장)
         return EventDetailResponse.from(event);
     }
 
@@ -233,7 +250,7 @@ public class EventService {
     }
 
     /**
-     * 행사를 수동으로 마감합니다.
+     * 등록을 수동으로 마감합니다.
      *
      * @param eventId 행사 ID
      * @param userId  마감 요청자 ID
@@ -253,10 +270,132 @@ public class EventService {
         // 3. 권한 확인 (운영진 이상만 마감 가능)
         validateEditPermission(user);
 
-        // 4. 행사 마감 (도메인 메서드 호출)
-        event.closeManually();
+        // 4. Lazy Evaluation (상태 갱신 후 마감 처리)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 5. 등록 마감 (도메인 메서드 호출)
+        event.closeRegistrationManually();
+
+        // 6. 응답 반환
+        return EventDetailResponse.from(event);
+    }
+
+    /**
+     * 행사를 취소합니다.
+     *
+     * @param eventId 행사 ID
+     * @param userId  취소 요청자 ID
+     * @return 취소된 행사 상세 응답 DTO
+     * @throws EventNotFoundException                행사를 찾을 수 없는 경우
+     * @throws InvalidEventStateTransitionException 취소 불가능한 상태인 경우
+     */
+    public EventDetailResponse cancelEvent(Long eventId, Long userId) {
+        // 1. 행사 조회
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 2. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        // 3. 권한 확인 (운영진 이상만 취소 가능)
+        validateEditPermission(user);
+
+        // 4. Lazy Evaluation (EVT-INV-06: COMPLETED 종단 상태 체크를 위해 상태 갱신)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 5. 행사 취소 (도메인 메서드 호출)
+        event.cancel();
+
+        // 6. 응답 반환
+        return EventDetailResponse.from(event);
+    }
+
+    /**
+     * 취소된 행사를 재활성화합니다.
+     *
+     * @param eventId 행사 ID
+     * @param userId  재활성화 요청자 ID
+     * @return 재활성화된 행사 상세 응답 DTO
+     * @throws EventNotFoundException                행사를 찾을 수 없는 경우
+     * @throws InvalidEventStateTransitionException 재활성화 불가능한 상태인 경우
+     */
+    public EventDetailResponse reactivateEvent(Long eventId, Long userId) {
+        // 1. 행사 조회
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 2. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        // 3. 권한 확인 (운영진 이상만 재활성화 가능)
+        validateEditPermission(user);
+
+        // 4. 행사 재활성화 (도메인 메서드 호출)
+        event.reactivate(Instant.now());
 
         // 5. 응답 반환
+        return EventDetailResponse.from(event);
+    }
+
+    /**
+     * 등록을 수동으로 재오픈합니다. (EVT-INV-13)
+     * 5가지 조건 충족 시에만 재오픈 가능:
+     * 1. registrationStatus == CLOSED
+     * 2. eventStatus ∈ {UPCOMING, ONGOING}
+     * 3. currentCount < capacity
+     * 4. now < registrationEndAt (마감일 미경과)
+     * 5. OPERATOR+ 권한 + 사유 필수
+     *
+     * @param eventId 행사 ID
+     * @param userId  재오픈 요청자 ID
+     * @param reason  재오픈 사유
+     * @return 재오픈된 행사 상세 응답 DTO
+     * @throws EventNotFoundException                  행사를 찾을 수 없는 경우
+     * @throws EventRegistrationNotReopenableException 재오픈 불가능한 경우
+     */
+    public EventDetailResponse reopenRegistration(Long eventId, Long userId, String reason) {
+        // 1. 행사 조회
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 2. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        // 3. 권한 확인 (운영진 이상만 재오픈 가능)
+        validateEditPermission(user);
+
+        // 4. Lazy Evaluation (EVT-INV-13 조건 판단 전 상태 갱신)
+        Instant now = Instant.now();
+        event.updateStatusIfNeeded(now);
+
+        // 5. EVT-INV-13 조건 검증
+        if (event.getRegistrationStatus() != RegistrationStatus.CLOSED) {
+            throw new EventRegistrationNotReopenableException("등록이 마감 상태가 아닙니다.");
+        }
+
+        if (event.getEventStatus() != EventStatus.UPCOMING && event.getEventStatus() != EventStatus.ONGOING) {
+            throw new EventRegistrationNotReopenableException("행사가 취소되었거나 완료된 상태에서는 재오픈할 수 없습니다.");
+        }
+
+        if (event.isFull()) {
+            throw new EventRegistrationNotReopenableException("정원이 가득 찬 상태에서는 재오픈할 수 없습니다.");
+        }
+
+        if (now.isAfter(event.getRegistrationEndAt())) {
+            throw new EventRegistrationNotReopenableException("등록 마감일이 경과하여 재오픈할 수 없습니다.");
+        }
+
+        // 6. 등록 재오픈 (도메인 메서드 호출)
+        event.reopenRegistration();
+
+        // 7. 감사 이력 저장 (EVT-INV-14)
+        EventReopenHistory history = EventReopenHistory.create(event, reason, userId);
+        eventReopenHistoryRepository.save(history);
+
+        // 8. 응답 반환
         return EventDetailResponse.from(event);
     }
 
@@ -288,6 +427,11 @@ public class EventService {
 
     /**
      * 행사 날짜 유효성을 검증합니다. (내부 공통 로직)
+     * 2축 상태 모델 날짜 검증:
+     * - regStart < regEnd
+     * - regStart < eventStart (등록 시작은 행사 시작 전)
+     * - regEnd <= eventEnd (등록 마감은 행사 종료 이전 또는 동일)
+     * - eventStart < eventEnd
      *
      * @param eventStart 행사 시작일
      * @param eventEnd   행사 종료일
@@ -297,21 +441,24 @@ public class EventService {
      */
     private void validateEventDates(Instant eventStart, Instant eventEnd, Instant regStart, Instant regEnd) {
         // 신청 시작일 < 신청 마감일
-        if (regStart.isAfter(regEnd)) {
+        if (!regStart.isBefore(regEnd)) {
             throw new InvalidEventDateException("신청 마감일은 신청 시작일 이후여야 합니다");
         }
 
-        // 신청 마감일 < 행사 시작일 (신청이 끝난 후 행사 시작)
-        if (!regEnd.isBefore(eventStart)) {
-            throw new InvalidEventDateException("신청 마감일은 행사 시작일 이전이어야 합니다");
+        // 신청 시작일 < 행사 시작일 (등록 시작은 행사 시작 전이어야 함)
+        if (!regStart.isBefore(eventStart)) {
+            throw new InvalidEventDateException("신청 시작일은 행사 시작일 이전이어야 합니다");
         }
 
-        // 행사 시작일 <= 행사 종료일
+        // 신청 마감일 <= 행사 종료일
+        if (regEnd.isAfter(eventEnd)) {
+            throw new InvalidEventDateException("신청 마감일은 행사 종료일 이전이거나 같아야 합니다");
+        }
+
+        // 행사 시작일 <= 행사 종료일 (non-strict, EVT-INV-02)
         if (eventStart.isAfter(eventEnd)) {
-            throw new InvalidEventDateException("행사 종료일은 시작일 이후여야 합니다");
+            throw new InvalidEventDateException("행사 종료일은 시작일 이후이거나 같아야 합니다");
         }
-
-
     }
 
 }
