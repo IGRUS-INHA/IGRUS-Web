@@ -76,6 +76,9 @@ public class UpdatePostService {
         // 질문 옵션 변경 (도메인에서 게시판 옵션 검증)
         post.setQuestion(request.isQuestion());
 
+        // 준회원 공개 옵션 변경 (도메인에서 게시판 검증)
+        post.setVisibleToAssociate(request.isVisibleToAssociate());
+
         // 이미지 수정 (기존 이미지 삭제 후 새 이미지 추가)
         post.clearImages();
         if (request.imageUrls() != null && !request.imageUrls().isEmpty()) {
