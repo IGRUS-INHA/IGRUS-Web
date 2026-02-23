@@ -17,30 +17,30 @@ public class InvalidSuspensionException extends CustomBaseException {
     }
 
     public static InvalidSuspensionException invalidPeriod() {
-        return new InvalidSuspensionException(ErrorCode.SUSPENSION_INVALID_PERIOD);
+        return new InvalidSuspensionException(UserErrorCode.SUSPENSION_INVALID_PERIOD);
     }
 
     public static InvalidSuspensionException alreadyLifted() {
-        return new InvalidSuspensionException(ErrorCode.SUSPENSION_ALREADY_LIFTED);
+        return new InvalidSuspensionException(UserErrorCode.SUSPENSION_ALREADY_LIFTED);
     }
 
     public static InvalidSuspensionException reasonRequired() {
-        return new InvalidSuspensionException(ErrorCode.SUSPENSION_REASON_REQUIRED);
+        return new InvalidSuspensionException(UserErrorCode.SUSPENSION_REASON_REQUIRED);
     }
 
     public static InvalidSuspensionException cannotExtend() {
-        return new InvalidSuspensionException(ErrorCode.SUSPENSION_CANNOT_EXTEND);
+        return new InvalidSuspensionException(UserErrorCode.SUSPENSION_CANNOT_EXTEND);
     }
 
     public static InvalidSuspensionException extendInvalidDate() {
-        return new InvalidSuspensionException(ErrorCode.SUSPENSION_EXTEND_INVALID_DATE);
+        return new InvalidSuspensionException(UserErrorCode.SUSPENSION_EXTEND_INVALID_DATE);
     }
 
     public static InvalidSuspensionException endDateMustBeFuture() {
-        return new InvalidSuspensionException(ErrorCode.SUSPENSION_END_DATE_MUST_BE_FUTURE);
+        return new InvalidSuspensionException(UserErrorCode.SUSPENSION_END_DATE_MUST_BE_FUTURE);
     }
 
     public static InvalidSuspensionException lastAdminCannotSuspend() {
-        return new InvalidSuspensionException(ErrorCode.LAST_ADMIN_CANNOT_SUSPEND);
+        return new InvalidSuspensionException(UserErrorCode.LAST_ADMIN_CANNOT_SUSPEND);
     }
 }

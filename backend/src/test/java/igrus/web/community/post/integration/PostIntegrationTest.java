@@ -11,7 +11,7 @@ import igrus.web.community.board.repository.BoardPermissionRepository;
 import igrus.web.community.board.repository.BoardRepository;
 import igrus.web.community.post.repository.PostRepository;
 import igrus.web.common.ServiceIntegrationTestBase;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.community.exception.CommunityErrorCode;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -215,7 +215,7 @@ class PostIntegrationTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.POST_NOT_FOUND.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommunityErrorCode.POST_NOT_FOUND.getCode()));
         }
 
         @DisplayName("BRD-084: 익명 게시글 권한 없는 사용자 수정 시도 시 403 반환")
@@ -239,7 +239,7 @@ class PostIntegrationTest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.POST_ACCESS_DENIED.getCode()));
+                    .andExpect(jsonPath("$.code").value(CommunityErrorCode.POST_ACCESS_DENIED.getCode()));
         }
 
         @DisplayName("삭제된 게시글 수정 시도 시 실패")

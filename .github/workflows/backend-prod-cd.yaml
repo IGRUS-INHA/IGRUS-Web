@@ -1,22 +1,13 @@
 name: Backend Production CD Pipeline
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-prod-cd.yaml'
-      - '!backend/docs/**'
-
-env:
-  AWS_REGION: ${{ vars.AWS_REGION }}
-  ECR_REPOSITORY_SPRING: ${{ vars.ECR_REPOSITORY_SPRING }}
-  CONTAINER_NAME_SPRING: ${{ vars.CONTAINER_NAME_SPRING }}
-  ECS_SERVICE_SPRING: ${{ vars.ECS_SERVICE_SPRING }}
-  ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
-  ECS_TASK_DEFINITION_NAME_SPRING: ${{ vars.ECS_TASK_DEFINITION_NAME_SPRING }}
-  SPRING_ACTIVE_PROFILE: ${{ vars.SPRING_ACTIVE_PROFILE }}
-  AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN }}
+    tags:
+      - 'v*'
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -24,9 +15,18 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy
+    name: Deploy to Production
     runs-on: ubuntu-latest
     environment: production
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY_SPRING: ${{ vars.ECR_REPOSITORY_SPRING }}
+      CONTAINER_NAME_SPRING: ${{ vars.CONTAINER_NAME_SPRING }}
+      ECS_SERVICE_SPRING: ${{ vars.ECS_SERVICE_SPRING }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_TASK_DEFINITION_NAME_SPRING: ${{ vars.ECS_TASK_DEFINITION_NAME_SPRING }}
+      SPRING_ACTIVE_PROFILE: ${{ vars.SPRING_ACTIVE_PROFILE }}
+      AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN }}
     defaults:
       run:
         working-directory: backend
@@ -70,12 +70,12 @@ jobs:
         id: build-image-spring
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${{ inputs.version || github.ref_name }}
         run: |
           # Build a docker container and
           # push it to ECR so that it can
           # be deployed to ECS.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG .
+          docker build --build-arg SPRING_ACTIVE_PROFILE=$SPRING_ACTIVE_PROFILE --build-arg GIT_COMMIT_HASH=${{ github.sha }} -t $ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG" >> $GITHUB_OUTPUT
 

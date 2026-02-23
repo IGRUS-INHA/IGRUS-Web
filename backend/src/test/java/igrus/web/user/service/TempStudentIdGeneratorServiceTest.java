@@ -8,8 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -28,7 +28,7 @@ class TempStudentIdGeneratorServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private TempStudentIdSequenceRepository sequenceRepository;
 
-    @MockitoBean
+    @Autowired
     private Clock clock;
 
     private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
@@ -36,6 +36,7 @@ class TempStudentIdGeneratorServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(clock);
         // 2026년 2월로 고정
         setClock(2026, 2, 1);
     }

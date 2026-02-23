@@ -1,5 +1,7 @@
 package igrus.web.common;
 
+import igrus.web.common.config.TestExternalServiceConfig;
+import igrus.web.common.config.TestPasswordEncoderConfig;
 import igrus.web.security.auth.approval.repository.AssociateDecisionRepository;
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.security.auth.common.repository.LoginAttemptRepository;
@@ -8,16 +10,19 @@ import igrus.web.security.auth.common.repository.PrivacyConsentRepository;
 import igrus.web.security.auth.common.repository.RefreshTokenRepository;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.security.auth.password.repository.PasswordResetTokenRepository;
+import igrus.web.security.auth.password.domain.PasswordCredential;
 import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.UserStatus;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.repository.UserRoleHistoryRepository;
 import java.util.List;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -40,6 +45,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@Import({TestPasswordEncoderConfig.class, TestExternalServiceConfig.class})
 public abstract class ServiceIntegrationTestBase {
 
     @Autowired
@@ -162,14 +168,27 @@ public abstract class ServiceIntegrationTestBase {
     }
 
     /**
-     * 테스트용 사용자를 생성합니다.
+     * 테스트용 사용자를 생성합니다 (저장하지 않음).
      *
      * @param studentId 학번
      * @param email 이메일
      * @param role 역할
-     * @return 생성된 사용자
+     * @return 생성된 사용자 (기본 ACTIVE 상태)
      */
     protected User createUser(String studentId, String email, UserRole role) {
+        return createUser(studentId, email, role, UserStatus.ACTIVE);
+    }
+
+    /**
+     * 특정 상태의 테스트용 사용자를 생성합니다 (저장하지 않음).
+     *
+     * @param studentId 학번
+     * @param email 이메일
+     * @param role 역할
+     * @param status 사용자 상태
+     * @return 생성된 사용자
+     */
+    protected User createUser(String studentId, String email, UserRole role, UserStatus status) {
         User user = User.create(
                 studentId,
                 "테스트유저",
@@ -184,12 +203,12 @@ public abstract class ServiceIntegrationTestBase {
                 List.of(), null, null, null
         );
         user.changeRole(role);
-        user.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE (테스트에서 기본적으로 ACTIVE 상태 사용)
+        applyUserStatus(user, status);
         return user;
     }
 
     /**
-     * 테스트용 사용자를 생성하고 저장합니다.
+     * 테스트용 사용자를 생성하고 저장합니다 (기본 ACTIVE 상태).
      *
      * @param studentId 학번
      * @param email 이메일
@@ -197,7 +216,20 @@ public abstract class ServiceIntegrationTestBase {
      * @return 저장된 사용자
      */
     protected User createAndSaveUser(String studentId, String email, UserRole role) {
-        User user = createUser(studentId, email, role);
+        return createAndSaveUser(studentId, email, role, UserStatus.ACTIVE);
+    }
+
+    /**
+     * 특정 상태의 테스트용 사용자를 생성하고 저장합니다.
+     *
+     * @param studentId 학번
+     * @param email 이메일
+     * @param role 역할
+     * @param status 사용자 상태
+     * @return 저장된 사용자
+     */
+    protected User createAndSaveUser(String studentId, String email, UserRole role, UserStatus status) {
+        User user = createUser(studentId, email, role, status);
         return userRepository.save(user);
     }
 
@@ -210,15 +242,7 @@ public abstract class ServiceIntegrationTestBase {
      * @return 저장된 사용자 (status = PENDING_VERIFICATION)
      */
     protected User createAndSaveUnverifiedUser(String studentId, String email, UserRole role) {
-        User user = User.create(
-                studentId, "테스트유저", email,
-                "010-" + studentId.substring(0, 4) + "-" + studentId.substring(4),
-                "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1,
-                EnrollmentStatus.ENROLLED,
-                List.of(), null, null, null
-        );
-        user.changeRole(role);
-        return userRepository.save(user);
+        return createAndSaveUser(studentId, email, role, UserStatus.PENDING_VERIFICATION);
     }
 
     /**
@@ -228,6 +252,58 @@ public abstract class ServiceIntegrationTestBase {
      */
     protected User createAndSaveDefaultUser() {
         return createAndSaveUser("20231234", "test@inha.edu", UserRole.ASSOCIATE);
+    }
+
+    /**
+     * 비밀번호 자격증명을 생성하고 저장합니다 (기본 ACTIVE 상태).
+     *
+     * @param user 사용자
+     * @param password 평문 비밀번호
+     * @return 저장된 자격증명
+     */
+    protected PasswordCredential createAndSaveCredential(User user, String password) {
+        return createAndSaveCredential(user, password, UserStatus.ACTIVE);
+    }
+
+    /**
+     * 특정 상태의 비밀번호 자격증명을 생성하고 저장합니다.
+     *
+     * @param user 사용자
+     * @param password 평문 비밀번호
+     * @param status 자격증명 상태
+     * @return 저장된 자격증명
+     */
+    protected PasswordCredential createAndSaveCredential(User user, String password, UserStatus status) {
+        String encodedPassword = passwordEncoder.encode(password);
+        PasswordCredential credential = PasswordCredential.create(user, encodedPassword);
+        applyCredentialStatus(credential, status);
+        return passwordCredentialRepository.save(credential);
+    }
+
+    /**
+     * 사용자 상태를 적용합니다.
+     */
+    private void applyUserStatus(User user, UserStatus status) {
+        switch (status) {
+            case ACTIVE -> { } // User.create() 기본 상태가 ACTIVE
+            case SUSPENDED -> user.suspend();
+            case WITHDRAWN -> user.withdraw();
+            case PENDING_VERIFICATION ->
+                    ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
+        }
+    }
+
+    /**
+     * 자격증명 상태를 적용합니다.
+     */
+    private void applyCredentialStatus(PasswordCredential credential, UserStatus status) {
+        switch (status) {
+            case ACTIVE -> { } // PasswordCredential.create() 기본 상태가 ACTIVE
+            case SUSPENDED -> credential.suspend();
+            case WITHDRAWN -> credential.withdraw();
+            case PENDING_VERIFICATION ->
+                    ReflectionTestUtils.setField(credential, "status", UserStatus.PENDING_VERIFICATION);
+        }
     }
 
     /**

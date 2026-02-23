@@ -28,7 +28,7 @@
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| REG-010 | 모든 필수 정보 입력 시 가입 성공 | 개인정보 동의 완료 | 학번(8자리), 본명, 비밀번호, 이메일, 전화번호, 학과, 가입 동기 입력 후 제출 | 인증 코드가 이메일로 발송됨 | ✅ |
+| REG-010 | 모든 필수 정보 입력 시 가입 성공 | 개인정보 동의 완료, **이메일 사전 인증 완료** | 학번(8자리), 본명, 비밀번호, 이메일, 전화번호, 학과, 가입 동기 입력 후 제출 | 회원가입 완료, 준회원(ASSOCIATE)으로 즉시 등록됨 (requiresVerification=false) | ✅ |
 | REG-011 | 학번 8자리 미만 입력 시 오류 | 개인정보 동의 완료 | 7자리 학번 입력 후 제출 | 학번 형식 오류 메시지 표시 | ✅ |
 | REG-012 | 학번 8자리 초과 입력 시 오류 | 개인정보 동의 완료 | 9자리 학번 입력 후 제출 | 학번 형식 오류 메시지 표시 | ✅ |
 | REG-013 | 학번 숫자 외 문자 입력 시 오류 | 개인정보 동의 완료 | 문자 포함 학번 입력 후 제출 | 학번 형식 오류 메시지 표시 | ✅ |
@@ -58,16 +58,22 @@
 | REG-031 | 이미 등록된 이메일로 가입 시도 | test@inha.edu로 이미 가입된 사용자 존재 | 동일 이메일로 가입 시도 | "이미 사용 중인 이메일입니다" 메시지 표시 | ✅ |
 | REG-032 | 이미 등록된 전화번호로 가입 시도 | 010-1234-5678로 이미 가입된 사용자 존재 | 동일 전화번호로 가입 시도 | "이미 사용 중인 전화번호입니다" 메시지 표시 | ✅ |
 
-### 2.5 이메일 인증
+### 2.5 이메일 사전 인증 (Pre-Signup Email Verification)
+
+> 이메일 인증은 회원가입 *전* 단계에서 수행된다. (`POST /api/v1/auth/password/pre-signup/send-code` → `POST /api/v1/auth/password/pre-signup/verify-code`)
 
 | ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
 |----|-------------|----------|-----------|----------|------|
-| REG-040 | 6자리 인증 코드 발송 | 유효한 회원정보 입력 완료 | 가입 정보 제출 | 입력한 이메일로 6자리 숫자 인증 코드 발송 | ✅ |
-| REG-041 | 10분 이내 올바른 인증 코드 입력 시 가입 완료 | 인증 코드 수신 | 10분 이내에 올바른 인증 코드 입력 | 준회원(ASSOCIATE)으로 등록, 로그인 가능 | ✅ |
+| REG-040 | 새 이메일로 사전 인증 코드 발송 성공 | 비회원 (ACTIVE 사용자의 이메일이 아닌 경우) | pre-signup/send-code 호출 | 6자리 숫자 인증 코드 이메일 발송, DB에 email_verifications 레코드 생성 | ✅ |
+| REG-041 | 10분 이내 올바른 인증 코드로 사전 인증 완료 | 인증 코드 수신 | 10분 이내에 올바른 인증 코드 입력 (pre-signup/verify-code) | 인증 완료 (verified=true), 일회용 verificationToken(UUID) 반환, 이후 가입 요청 시 해당 토큰 필수 | ✅ |
 | REG-042 | 10분 경과 후 인증 코드 입력 시 만료 | 인증 코드 수신 후 10분 경과 | 인증 코드 입력 | "인증 코드가 만료되었습니다. 재발송해주세요" 메시지 표시 | ✅ |
 | REG-043 | 5회 이상 잘못된 인증 코드 입력 시 차단 | 인증 코드 수신 | 5회 잘못된 인증 코드 입력 후 재시도 | "인증 시도 횟수를 초과했습니다. 새 코드를 발급받아주세요" 메시지 표시 | ✅ |
-| REG-044 | 인증 코드 재발송 시 1분 대기 | 인증 코드 발송 직후 | 즉시 재발송 요청 | "1분 후에 다시 시도해주세요" 메시지 표시 | ✅ |
-| REG-045 | 1분 경과 후 인증 코드 재발송 성공 | 인증 코드 발송 후 1분 경과 | 재발송 요청 | 새로운 인증 코드 발송 성공 | ✅ |
+| REG-044 | 인증 코드 재발송 시 1분 대기 | 인증 코드 발송 직후 | 즉시 재발송 요청 (pre-signup/send-code) | "1분 후에 다시 시도해주세요" 메시지 표시 | ✅ |
+| REG-045 | 1분 경과 후 인증 코드 재발송 성공 | 인증 코드 발송 후 1분 경과 | 재발송 요청 | 새로운 인증 코드 발송 성공, 기존 미인증 레코드 삭제 | ✅ |
+| REG-046 | 사전 인증 완료 후 가입 시 즉시 ACTIVE | 이메일 사전 인증 완료 | 가입 정보 제출 (signup) | 준회원(ASSOCIATE)으로 즉시 등록, requiresVerification=false | ✅ |
+| REG-047 | 사전 인증 없이 가입 시도 시 거부 | 사전 인증 미완료 또는 verificationToken 없음 | 가입 정보 제출 (signup) | 400 Bad Request (VERIFICATION_TOKEN_INVALID) | ✅ |
+| REG-048 | ACTIVE 사용자 이메일로 사전 인증 코드 발송 시 거부 | ACTIVE 상태의 이메일 존재 | pre-signup/send-code 호출 | 409 Conflict (DUPLICATE_EMAIL) | ✅ |
+| REG-049 | 잘못된 verificationToken으로 가입 시도 시 거부 | 이메일 사전 인증 완료 | 올바른 이메일에 잘못된 verificationToken으로 가입 요청 (signup) | 400 Bad Request (VERIFICATION_TOKEN_INVALID) | ✅ |
 
 ### 2.6 임시 학번 회원가입
 
@@ -102,12 +108,13 @@
 | FR-002 | 필수 입력 항목 검증 | REG-010 ~ REG-018 |
 | FR-003 | 비밀번호 복잡도 검증 | REG-020 ~ REG-026 |
 | FR-004 | 중복 가입 방지 | REG-030 ~ REG-032 |
-| FR-005 | 6자리 인증 코드 발송 | REG-040 |
+| FR-005 | 사전 인증 단계에서 6자리 인증 코드 발송 | REG-040 |
 | FR-006 | 인증 코드 10분 유효 | REG-041, REG-042 |
 | FR-007 | 인증 코드 재발송 1분 대기 | REG-044, REG-045 |
 | FR-008 | 인증 시도 횟수 5회 제한 | REG-043 |
-| FR-009 | 인증 완료 시 준회원 등록 | REG-041 |
-| FR-010 | 인증 미완료 24시간 후 삭제 | REG-051 |
+| FR-009 | 사전 인증 완료 후 가입 시 준회원 즉시 등록 | REG-046 |
+| FR-015 | 인증 코드 확인 성공 시 일회용 verificationToken(UUID) 반환 및 회원가입 시 email+token 소유권 검증 | REG-041, REG-047, REG-049 |
+| FR-010 | 인증 미완료 email_verifications 레코드 24시간 후 삭제 | REG-051 |
 | FR-011 | 임시 학번 자동 발급 (1~2월, 1학년) | REG-060, REG-061, REG-067, REG-069 |
 | FR-012 | 임시 학번 기간 외 발급 차단 | REG-062, REG-063 |
 | FR-013 | 임시 학번 학년 제한 (1학년만) | REG-064 |
@@ -121,7 +128,8 @@
 ## 4. 구현된 테스트 클래스
 
 ### 4.1 Service 테스트
-- **파일**: `backend/src/test/java/igrus/web/security/auth/password/service/signup/SignupServiceTest.java`, `VerifyEmailServiceTest.java`, `ResendVerificationServiceTest.java`
+- **파일**: `backend/src/test/java/igrus/web/security/auth/password/service/signup/SignupServiceTest.java`
+- **신규 파일**: `backend/src/test/java/igrus/web/security/auth/password/service/presignup/PreSignupSendCodeServiceTest.java`, `PreSignupVerifyCodeServiceTest.java`
 - **테스트 범위**: REG-001 ~ REG-052 (비즈니스 로직)
 
 ### 4.2 임시 학번 Service 테스트
@@ -130,7 +138,7 @@
 
 ### 4.3 Controller 테스트
 - **회원가입**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerSignupTest.java`
-- **이메일 인증**: `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerVerificationTest.java`
+- **사전 이메일 인증**: `PasswordAuthControllerSignupIntegrationTest.java` 내 `PreSignupEmailVerificationTest` 클래스 (REG-040~048)
 
 ```java
 // 회원가입 컨트롤러 테스트
@@ -139,44 +147,35 @@
 @Import(GlobalExceptionHandler.class)
 @DisplayName("PasswordAuthController 회원가입 테스트")
 class PasswordAuthControllerSignupTest {
-    @Nested class SignupSuccessTest { /* REG-010 */ }
+    @Nested class SignupSuccessTest { /* REG-010 (사전 인증 완료 후 가입) */ }
     @Nested class StudentIdValidationTest { /* REG-011 ~ REG-013 */ }
     @Nested class RequiredFieldValidationTest { /* REG-014 ~ REG-018 */ }
     @Nested class PasswordValidationTest { /* REG-021 ~ REG-025 */ }
     @Nested class DuplicateCheckTest { /* REG-030 ~ REG-032 */ }
     @Nested class PrivacyConsentValidationTest { /* 개인정보 동의 검증 */ }
 }
-
-// 이메일 인증 컨트롤러 테스트
-@WebMvcTest(PasswordAuthController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@Import(GlobalExceptionHandler.class)
-@DisplayName("PasswordAuthController 이메일 인증 테스트")
-class PasswordAuthControllerVerificationTest {
-    @Nested class VerifyEmailTest {
-        @Nested class VerifySuccessTest { /* REG-041 */ }
-        @Nested class VerifyFailureTest { /* REG-042 ~ REG-043 */ }
-    }
-    @Nested class ResendVerificationTest { /* REG-044 ~ REG-045 */ }
-}
 ```
+
+> **삭제됨**: `PasswordAuthControllerVerificationTest.java` — `POST /verify-email`, `POST /resend-verification` 엔드포인트 삭제로 함께 제거
 
 ### 4.4 통합 테스트
 - **파일**: `backend/src/test/java/igrus/web/security/auth/password/integration/PasswordSignupIntegrationTest.java`
-- **테스트 범위**: REG-004, REG-010, REG-020, REG-026, REG-030 ~ REG-045 (서비스 통합 테스트)
-- **테스트 수**: 42개
+- **테스트 범위**: REG-004, REG-010, REG-020, REG-026, REG-030~032, REG-046~047 (서비스 통합 테스트)
 
 ```java
 @DisplayName("회원가입 통합 테스트")
 class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
     @Nested class PrivacyConsentTest { /* REG-004 */ }
-    @Nested class RequiredFieldsTest { /* REG-010 */ }
+    @Nested class RequiredFieldsTest { /* REG-010 (사전 인증 완료 후) */ }
     @Nested class PasswordValidationTest { /* REG-020, REG-026 */ }
     @Nested class DuplicationCheckTest { /* REG-030 ~ REG-032 */ }
-    @Nested class EmailVerificationTest { /* REG-040 ~ REG-045 */ }
+    @Nested class EmailVerificationRequiredTest { /* REG-047 (사전 인증 미완료 시 거부) */ }
     @Nested class EdgeCasesTest { /* Edge Cases */ }
 }
 ```
+
+- **신규**: `PreSignupSendCodeServiceTest.java` — REG-040, REG-044, REG-045, REG-048
+- **신규**: `PreSignupVerifyCodeServiceTest.java` — REG-041, REG-042, REG-043
 
 ---
 
@@ -188,3 +187,5 @@ class PasswordSignupIntegrationTest extends ServiceIntegrationTestBase {
 | 1.1 | 2026-01-24 | - | 컨트롤러 레벨 테스트 구현 정보 추가 |
 | 1.2 | 2026-01-25 | - | 통합 테스트(PasswordSignupIntegrationTest) 구현 정보 추가 |
 | 1.3 | 2026-02-13 | Claude | 임시 학번 회원가입 테스트 케이스(REG-060~069) 추가, FR-011~014 추가, TempStudentIdGeneratorServiceTest/TempStudentIdSignupServiceTest 구현 정보 추가 |
+| 1.4 | 2026-02-20 | Claude | 이메일 인증 플로우 변경 반영 (사전 인증): Section 2.5 재작성, REG-046~048 추가, REG-010 사전조건/예상결과 수정, Controller 테스트 삭제/추가 반영, FR-005~009 업데이트 |
+| 1.5 | 2026-02-21 | Claude | verificationToken 소유권 검증 도입 반영: REG-041 예상결과 수정(토큰 반환 명시), REG-047 에러코드 변경(EMAIL_VERIFICATION_REQUIRED → VERIFICATION_TOKEN_INVALID), REG-049 신규 추가(잘못된 토큰 거부), FR-015 신규 추가 |

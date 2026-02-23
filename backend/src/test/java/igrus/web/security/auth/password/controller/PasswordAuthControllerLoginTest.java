@@ -1,52 +1,25 @@
 package igrus.web.security.auth.password.controller;
 
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.common.exception.CommonErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
 import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.account.AccountSuspendedException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
-import igrus.web.security.auth.common.service.account.CheckReRegistrationEligibilityService;
-import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
-import igrus.web.security.auth.common.service.account.RecoverAccountService;
-import igrus.web.security.auth.common.service.AccountStatusService;
-import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.controller.fixture.PasswordAuthTestFixture;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
-import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
-import igrus.web.security.auth.password.service.reset.ResetPasswordService;
-import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
-import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
-import igrus.web.security.auth.password.service.signup.SignupService;
-import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
-import igrus.web.security.auth.password.service.auth.LoginService;
-import igrus.web.security.auth.password.service.auth.LogoutService;
-import igrus.web.security.auth.password.service.auth.RefreshTokenService;
-import igrus.web.security.config.ApiSecurityConfig;
-import igrus.web.security.config.SecurityConfigUtil;
-import igrus.web.security.jwt.JwtAuthenticationFilter;
-import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.UserRole;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.ResponseCookie;
 
 import jakarta.servlet.http.Cookie;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.springframework.http.ResponseCookie;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -61,76 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(PasswordAuthController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@Import({GlobalExceptionHandler.class, ApiSecurityConfig.class, SecurityConfigUtil.class, JwtAuthenticationFilter.class, igrus.web.security.jwt.JwtAuthenticationEntryPoint.class})
 @DisplayName("PasswordAuthController 로그인/로그아웃 테스트")
-class PasswordAuthControllerLoginTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @MockitoBean
-    private LoginService loginService;
-
-    @MockitoBean
-    private LogoutService logoutService;
-
-    @MockitoBean
-    private RefreshTokenService refreshTokenService;
-
-    @MockitoBean
-    private SignupService signupService;
-
-    @MockitoBean
-    private TempStudentIdSignupService tempStudentIdSignupService;
-
-    @MockitoBean
-    private CheckDuplicateService checkDuplicateService;
-
-    @MockitoBean
-    private VerifyEmailService verifyEmailService;
-
-    @MockitoBean
-    private ResendVerificationService resendVerificationService;
-
-    @MockitoBean
-    private RequestPasswordResetService requestPasswordResetService;
-
-    @MockitoBean
-    private ResetPasswordService resetPasswordService;
-
-    @MockitoBean
-    private ValidateResetTokenService validateResetTokenService;
-
-    @MockitoBean
-    private JwtTokenProvider jwtTokenProvider;
-
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockitoBean
-    private SecurityConfigUtil securityConfigUtil;
-
-    @MockitoBean
-    private CheckReRegistrationEligibilityService checkReRegistrationEligibilityService;
-
-    @MockitoBean
-    private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
-
-    @MockitoBean
-    private RecoverAccountService recoverAccountService;
-
-    @MockitoBean
-    private AccountStatusService accountStatusService;
-
-    @MockitoBean
-    private igrus.web.security.auth.password.service.signup.AutoResendVerificationService autoResendVerificationService;
-
-    @MockitoBean
-    private CookieUtil cookieUtil;
+class PasswordAuthControllerLoginTest extends PasswordAuthControllerTestBase {
 
     private static final String LOGIN_URL = "/api/v1/auth/password/login";
     private static final String LOGOUT_URL = "/api/v1/auth/password/logout";
@@ -286,8 +191,8 @@ class PasswordAuthControllerLoginTest {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_CREDENTIALS.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.INVALID_CREDENTIALS.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.INVALID_CREDENTIALS.getMessage()));
             }
 
             @Test
@@ -305,8 +210,8 @@ class PasswordAuthControllerLoginTest {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_CREDENTIALS.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.INVALID_CREDENTIALS.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.INVALID_CREDENTIALS.getMessage()));
             }
 
             @Test
@@ -325,8 +230,8 @@ class PasswordAuthControllerLoginTest {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.EMAIL_NOT_VERIFIED.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.EMAIL_NOT_VERIFIED.getMessage()))
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.EMAIL_NOT_VERIFIED.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.EMAIL_NOT_VERIFIED.getMessage()))
                         .andExpect(jsonPath("$.email").value(expectedEmail));
             }
         }
@@ -347,7 +252,7 @@ class PasswordAuthControllerLoginTest {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -362,7 +267,7 @@ class PasswordAuthControllerLoginTest {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -377,7 +282,7 @@ class PasswordAuthControllerLoginTest {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
 
             @Test
@@ -392,7 +297,7 @@ class PasswordAuthControllerLoginTest {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isBadRequest())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_INPUT_VALUE.getCode()));
+                        .andExpect(jsonPath("$.code").value(CommonErrorCode.INVALID_INPUT_VALUE.getCode()));
             }
         }
 
@@ -415,8 +320,8 @@ class PasswordAuthControllerLoginTest {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isForbidden())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.ACCOUNT_SUSPENDED.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.ACCOUNT_SUSPENDED.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.ACCOUNT_SUSPENDED.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.ACCOUNT_SUSPENDED.getMessage()));
             }
 
             @Test
@@ -434,8 +339,8 @@ class PasswordAuthControllerLoginTest {
                                 .content(objectMapper.writeValueAsString(request)))
                         .andDo(print())
                         .andExpect(status().isForbidden())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.ACCOUNT_WITHDRAWN.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.ACCOUNT_WITHDRAWN.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.ACCOUNT_WITHDRAWN.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.ACCOUNT_WITHDRAWN.getMessage()));
             }
         }
     }
@@ -478,8 +383,8 @@ class PasswordAuthControllerLoginTest {
                                 .cookie(new Cookie("refreshToken", PasswordAuthTestFixture.INVALID_REFRESH_TOKEN)))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()))
-                        .andExpect(jsonPath("$.message").value(ErrorCode.REFRESH_TOKEN_INVALID.getMessage()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getCode()))
+                        .andExpect(jsonPath("$.message").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getMessage()));
             }
 
             @Test
@@ -493,7 +398,7 @@ class PasswordAuthControllerLoginTest {
                 mockMvc.perform(post(LOGOUT_URL))
                         .andDo(print())
                         .andExpect(status().isUnauthorized())
-                        .andExpect(jsonPath("$.code").value(ErrorCode.REFRESH_TOKEN_INVALID.getCode()));
+                        .andExpect(jsonPath("$.code").value(AuthErrorCode.REFRESH_TOKEN_INVALID.getCode()));
             }
         }
     }
