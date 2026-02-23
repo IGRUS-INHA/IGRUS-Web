@@ -91,8 +91,13 @@ public class EventRegistration extends BaseEntity {
 
     /**
      * 신청을 취소합니다.
+     *
+     * @throws InvalidRegistrationStatusException 이미 취소된 상태인 경우
      */
     public void cancel() {
+        if (this.isCanceled()) {
+            throw new InvalidRegistrationStatusException();
+        }
         this.status = EventRegistrationStatus.CANCELED;
     }
 

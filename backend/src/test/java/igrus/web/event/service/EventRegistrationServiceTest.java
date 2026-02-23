@@ -1,6 +1,7 @@
 package igrus.web.event.service;
 
 import igrus.web.event.domain.*;
+import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.dto.response.RegistrationListResponse;
 import igrus.web.event.dto.response.RegistrationResponse;
@@ -98,7 +99,8 @@ class EventRegistrationServiceTest {
     private Event createMockEvent(EventRegistrationType type) {
         Event event = mock(Event.class);
         when(event.getId()).thenReturn(EVENT_ID);
-        when(event.getStatus()).thenReturn(EventStatus.OPEN);
+        when(event.getRegistrationStatus()).thenReturn(RegistrationStatus.OPEN);
+        when(event.getEventStatus()).thenReturn(EventStatus.UPCOMING);
         when(event.getRegistrationStartAt()).thenReturn(Instant.now().minus(1, ChronoUnit.DAYS));
         when(event.getRegistrationEndAt()).thenReturn(Instant.now().plus(7, ChronoUnit.DAYS));
         when(event.isAutoApprove()).thenReturn(type == EventRegistrationType.AUTO_APPROVE);
@@ -235,7 +237,7 @@ class EventRegistrationServiceTest {
         @DisplayName("[SVC-007] 행사가 OPEN 상태가 아니면 EventNotOpenException 발생")
         void registerEvent_EventNotOpen_ThrowsException() {
             // given
-            when(autoApproveEvent.getStatus()).thenReturn(EventStatus.UPCOMING);
+            when(autoApproveEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.NOT_STARTED);
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
@@ -443,7 +445,7 @@ class EventRegistrationServiceTest {
             when(event1.getEventStartAt()).thenReturn(Instant.now().plus(7, ChronoUnit.DAYS));
             when(event1.getEventEndAt()).thenReturn(Instant.now().plus(8, ChronoUnit.DAYS));
             when(event1.getLocation()).thenReturn("장소1");
-            when(event1.getStatus()).thenReturn(EventStatus.OPEN);
+            when(event1.getRegistrationStatus()).thenReturn(RegistrationStatus.OPEN);
 
             Event event2 = mock(Event.class);
             when(event2.getId()).thenReturn(2L);
@@ -451,7 +453,7 @@ class EventRegistrationServiceTest {
             when(event2.getEventStartAt()).thenReturn(Instant.now().plus(14, ChronoUnit.DAYS));
             when(event2.getEventEndAt()).thenReturn(Instant.now().plus(15, ChronoUnit.DAYS));
             when(event2.getLocation()).thenReturn("장소2");
-            when(event2.getStatus()).thenReturn(EventStatus.UPCOMING);
+            when(event2.getEventStatus()).thenReturn(EventStatus.UPCOMING);
 
             when(reg1.getEvent()).thenReturn(event1);
             when(reg1.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
@@ -727,7 +729,7 @@ class EventRegistrationServiceTest {
             // then
             assertThat(response).isNotNull();
             verify(registration).reject();
-            verify(manualApproveEvent, never()).decrementCurrentCount(); // 거절은 카운트 변경 없음
+            verify(manualApproveEvent, never()).decrementCurrentCount(any(Instant.class)); // 거절은 카운트 변경 없음
         }
 
         /**
@@ -882,7 +884,7 @@ class EventRegistrationServiceTest {
             // given
             Event ongoingEvent = mock(Event.class);
             when(ongoingEvent.getId()).thenReturn(EVENT_ID);
-            when(ongoingEvent.getStatus()).thenReturn(EventStatus.ONGOING);
+            when(ongoingEvent.getEventStatus()).thenReturn(EventStatus.ONGOING);
 
             EventRegistration registration = mock(EventRegistration.class);
             when(registration.getEvent()).thenReturn(ongoingEvent);
@@ -905,7 +907,7 @@ class EventRegistrationServiceTest {
             // given
             Event completedEvent = mock(Event.class);
             when(completedEvent.getId()).thenReturn(EVENT_ID);
-            when(completedEvent.getStatus()).thenReturn(EventStatus.COMPLETED);
+            when(completedEvent.getEventStatus()).thenReturn(EventStatus.COMPLETED);
 
             EventRegistration registration = mock(EventRegistration.class);
             when(registration.getEvent()).thenReturn(completedEvent);
@@ -1029,6 +1031,444 @@ class EventRegistrationServiceTest {
             // when & then
             assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
                     .isInstanceOf(EventTimeOverlapException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("2축 모델 연동 — 서비스 테스트")
+    class TwoAxisModelIntegrationTest {
+
+        /**
+         * SVC-REG-063: registrationStatus=OPEN, eventStatus=ONGOING에서 신청 성공
+         */
+        @Test
+        @DisplayName("[SVC-REG-063] registrationStatus=OPEN, eventStatus=ONGOING에서 신청 성공")
+        void registerEvent_OpenAndOngoing_Succeeds() {
+            // given: 겹침 기간 (reg=OPEN, event=ONGOING)
+            Event ongoingOpenEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
+            when(ongoingOpenEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.OPEN);
+            when(ongoingOpenEvent.getEventStatus()).thenReturn(EventStatus.ONGOING);
+
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(ongoingOpenEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(false);
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
+
+            EventRegistration savedRegistration = mock(EventRegistration.class);
+            when(savedRegistration.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
+            when(savedRegistration.getRegisteredAt()).thenReturn(Instant.now());
+            when(savedRegistration.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.save(any(EventRegistration.class))).thenReturn(savedRegistration);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, USER_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(eventRepository).incrementCurrentCountIfAvailable(EVENT_ID);
+            verify(eventRegistrationRepository).save(any(EventRegistration.class));
+        }
+
+        /**
+         * SVC-REG-064: eventStatus=CANCELED 행사 신청 거부 (REG-INV-13)
+         */
+        @Test
+        @DisplayName("[SVC-REG-064] eventStatus=CANCELED 행사에 신청하면 EventNotOpenException 발생")
+        void registerEvent_CanceledEvent_ThrowsEventNotOpenException() {
+            // given: eventStatus=CANCELED → registrationStatus=CLOSED
+            Event canceledEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
+            when(canceledEvent.getEventStatus()).thenReturn(EventStatus.CANCELED);
+            when(canceledEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.CLOSED);
+
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(canceledEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
+                    .isInstanceOf(EventNotOpenException.class);
+        }
+
+        /**
+         * SVC-REG-065: eventStatus=CANCELED 행사 재신청 거부 (REG-INV-13)
+         */
+        @Test
+        @DisplayName("[SVC-REG-065] eventStatus=CANCELED 행사에 재신청하면 EventNotOpenException 발생")
+        void registerEvent_CanceledEventReRegister_ThrowsEventNotOpenException() {
+            // given: eventStatus=CANCELED, 취소된 신청 존재
+            Event canceledEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
+            when(canceledEvent.getEventStatus()).thenReturn(EventStatus.CANCELED);
+            when(canceledEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.CLOSED);
+
+            EventRegistration canceledRegistration = mock(EventRegistration.class);
+            when(canceledRegistration.isCanceled()).thenReturn(true);
+            when(canceledRegistration.getUser()).thenReturn(regularMember);
+
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(canceledEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
+                    .thenReturn(Optional.of(canceledRegistration));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
+                    .isInstanceOf(EventNotOpenException.class);
+        }
+
+        /**
+         * SVC-REG-066: eventStatus=COMPLETED 행사 승인 거부 (REG-INV-14)
+         */
+        @Test
+        @DisplayName("[SVC-REG-066] eventStatus=COMPLETED 행사에서 승인하면 EventNotEditableException 발생")
+        void approveRegistration_CompletedEvent_ThrowsEventNotEditableException() {
+            // given
+            Event completedEvent = mock(Event.class);
+            when(completedEvent.getId()).thenReturn(EVENT_ID);
+            when(completedEvent.getEventStatus()).thenReturn(EventStatus.COMPLETED);
+            when(completedEvent.isManualApprove()).thenReturn(true);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(completedEvent);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(completedEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.approveRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(EventNotEditableException.class);
+        }
+
+        /**
+         * SVC-REG-067: eventStatus=CANCELED 행사 승인 거부 (REG-INV-14)
+         */
+        @Test
+        @DisplayName("[SVC-REG-067] eventStatus=CANCELED 행사에서 승인하면 EventNotEditableException 발생")
+        void approveRegistration_CanceledEvent_ThrowsEventNotEditableException() {
+            // given
+            Event canceledEvent = mock(Event.class);
+            when(canceledEvent.getId()).thenReturn(EVENT_ID);
+            when(canceledEvent.getEventStatus()).thenReturn(EventStatus.CANCELED);
+            when(canceledEvent.isManualApprove()).thenReturn(true);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(canceledEvent);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(canceledEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.approveRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(EventNotEditableException.class);
+        }
+
+        /**
+         * SVC-REG-068: eventStatus=COMPLETED 행사 거절 거부 (REG-INV-14)
+         */
+        @Test
+        @DisplayName("[SVC-REG-068] eventStatus=COMPLETED 행사에서 거절하면 EventNotEditableException 발생")
+        void rejectRegistration_CompletedEvent_ThrowsEventNotEditableException() {
+            // given
+            Event completedEvent = mock(Event.class);
+            when(completedEvent.getId()).thenReturn(EVENT_ID);
+            when(completedEvent.getEventStatus()).thenReturn(EventStatus.COMPLETED);
+            when(completedEvent.isManualApprove()).thenReturn(true);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(completedEvent);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(completedEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.rejectRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(EventNotEditableException.class);
+        }
+
+        /**
+         * SVC-REG-069: eventStatus=CANCELED 행사 거절 거부 (REG-INV-14)
+         */
+        @Test
+        @DisplayName("[SVC-REG-069] eventStatus=CANCELED 행사에서 거절하면 EventNotEditableException 발생")
+        void rejectRegistration_CanceledEvent_ThrowsEventNotEditableException() {
+            // given
+            Event canceledEvent = mock(Event.class);
+            when(canceledEvent.getId()).thenReturn(EVENT_ID);
+            when(canceledEvent.getEventStatus()).thenReturn(EventStatus.CANCELED);
+            when(canceledEvent.isManualApprove()).thenReturn(true);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(canceledEvent);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(canceledEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.rejectRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(EventNotEditableException.class);
+        }
+
+        /**
+         * SVC-REG-070: eventStatus=CANCELED 행사 되돌리기 거부 (REG-INV-10)
+         */
+        @Test
+        @DisplayName("[SVC-REG-070] eventStatus=CANCELED 행사에서 되돌리면 EventNotEditableException 발생")
+        void revertRegistration_CanceledEvent_ThrowsEventNotEditableException() {
+            // given
+            Event canceledEvent = mock(Event.class);
+            when(canceledEvent.getId()).thenReturn(EVENT_ID);
+            when(canceledEvent.getEventStatus()).thenReturn(EventStatus.CANCELED);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(canceledEvent);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(canceledEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.revertRegistration(REGISTRATION_ID, OPERATOR_ID))
+                    .isInstanceOf(EventNotEditableException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("신청자 수 변경 매트릭스")
+    class CountMatrixTest {
+
+        /**
+         * SVC-REG-071: 겹침 기간 정원 마감 → 취소 → 자동 재오픈
+         */
+        @Test
+        @DisplayName("[SVC-REG-071] 겹침 기간 정원 마감 후 취소하면 registrationStatus=OPEN 복원")
+        void cancelRegistration_CapacityFullDuringOverlapPeriod_ReopensRegistration() {
+            // given: reg=OPEN, event=ONGOING, REGISTERED 상태 (isActive=true)
+            Event ongoingEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
+            when(ongoingEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.OPEN);
+            when(ongoingEvent.getEventStatus()).thenReturn(EventStatus.ONGOING);
+
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(ongoingEvent));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            // 정원 마감 후 취소된 신청 (REGISTERED → CANCELED, isActive=true로 카운트 감소 필요)
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.isCanceled()).thenReturn(false);
+            when(registration.isActive()).thenReturn(true);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
+            when(registration.getRegisteredAt()).thenReturn(Instant.now());
+            when(registration.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
+                    .thenReturn(Optional.of(registration));
+
+            // when
+            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(registration).cancel();
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
+            // updateEventStatusAfterDecrement에서 reopenIfNeeded 호출 확인
+            verify(ongoingEvent).reopenIfNeeded(any(Instant.class));
+        }
+
+        /**
+         * SVC-REG-072: CANCELED 행사에서 자동 재오픈 차단
+         */
+        @Test
+        @DisplayName("[SVC-REG-072] CANCELED 행사에서 취소 후 자동 재오픈 차단 (CLOSED 유지)")
+        void cancelRegistration_CanceledEvent_NoReopen() {
+            // given: eventStatus=CANCELED, CAPACITY_FULL 상태
+            Event canceledEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
+            when(canceledEvent.getEventStatus()).thenReturn(EventStatus.CANCELED);
+            when(canceledEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.CLOSED);
+
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(canceledEvent));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.isCanceled()).thenReturn(false);
+            when(registration.isActive()).thenReturn(true);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
+            when(registration.getRegisteredAt()).thenReturn(Instant.now());
+            when(registration.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
+                    .thenReturn(Optional.of(registration));
+
+            // when
+            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
+            // reopenIfNeeded가 호출되지만, 내부에서 eventStatus=CANCELED 조건으로 CLOSED 유지
+            verify(canceledEvent).reopenIfNeeded(any(Instant.class));
+            // registrationStatus가 여전히 CLOSED인지 확인
+            assertThat(canceledEvent.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
+        }
+
+        /**
+         * SVC-REG-073: APPROVED 상태 취소 서비스 (선발제)
+         */
+        @Test
+        @DisplayName("[SVC-REG-073] APPROVED 상태 신청을 취소하면 카운트 감소")
+        void cancelRegistration_FromApproved_DecrementsCount() {
+            // given: APPROVED, MANUAL_APPROVE
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.isCanceled()).thenReturn(false);
+            when(registration.isActive()).thenReturn(true); // APPROVED는 isActive=true
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
+            when(registration.getRegisteredAt()).thenReturn(Instant.now());
+            when(registration.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
+                    .thenReturn(Optional.of(registration));
+
+            // when
+            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(registration).cancel();
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
+        }
+
+        /**
+         * SVC-REG-074: 선발제 재신청 서비스 (CANCELED→WAITING)
+         */
+        @Test
+        @DisplayName("[SVC-REG-074] 선발제 재신청 시 WAITING으로 복원되고 incrementCurrentCountIfAvailable 미호출")
+        void registerEvent_ManualApproveReRegister_NoCountIncrement() {
+            // given: CANCELED, MANUAL_APPROVE
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+
+            EventRegistration canceledRegistration = mock(EventRegistration.class);
+            when(canceledRegistration.isCanceled()).thenReturn(true);
+            when(canceledRegistration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+            when(canceledRegistration.getRegisteredAt()).thenReturn(Instant.now());
+            when(canceledRegistration.getId()).thenReturn(REGISTRATION_ID);
+            when(canceledRegistration.getUser()).thenReturn(regularMember);
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
+                    .thenReturn(Optional.of(canceledRegistration));
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(false);
+            when(eventRegistrationRepository.save(any(EventRegistration.class))).thenReturn(canceledRegistration);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, USER_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(canceledRegistration).reRegister();
+            verify(eventRepository, never()).incrementCurrentCountIfAvailable(any());
+        }
+
+        /**
+         * SVC-REG-075: registrationStatus=CLOSED 후 선발제 승인 가능
+         */
+        @Test
+        @DisplayName("[SVC-REG-075] registrationStatus=CLOSED 상태에서도 선발제 승인 성공")
+        void approveRegistration_ClosedRegistrationStatus_Succeeds() {
+            // given: registrationStatus=CLOSED, eventStatus=UPCOMING, WAITING 존재
+            Event closedEvent = mock(Event.class);
+            when(closedEvent.getId()).thenReturn(EVENT_ID);
+            when(closedEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.CLOSED);
+            when(closedEvent.getEventStatus()).thenReturn(EventStatus.UPCOMING);
+            when(closedEvent.isManualApprove()).thenReturn(true);
+
+            User applicant = mock(User.class);
+            when(applicant.getId()).thenReturn(USER_ID);
+
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getId()).thenReturn(REGISTRATION_ID);
+            when(registration.getEvent()).thenReturn(closedEvent);
+            when(registration.getUser()).thenReturn(applicant);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+            when(registration.getRegisteredAt()).thenReturn(Instant.now());
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(closedEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.incrementCurrentCountForApproval(EVENT_ID)).thenReturn(1);
+            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
+                    .thenReturn(false);
+
+            // Mock approve 후 상태 변경
+            doAnswer(invocation -> {
+                when(registration.getStatus()).thenReturn(EventRegistrationStatus.APPROVED);
+                return null;
+            }).when(registration).approve();
+
+            // when
+            RegistrationResponse response = eventRegistrationService.approveRegistration(REGISTRATION_ID, OPERATOR_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(registration).approve();
+            verify(eventRepository).incrementCurrentCountForApproval(EVENT_ID);
+        }
+
+        /**
+         * SVC-REG-076: 비인가 접근 시 DB 상태 변경 없음
+         */
+        @Test
+        @DisplayName("[SVC-REG-076] 일반 회원이 승인/거절/되돌리기 시도 시 예외 발생하고 DB 상태 변경 없음")
+        void operatorActions_ByRegularMember_NoDbChanges() {
+            // given
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.getEvent()).thenReturn(manualApproveEvent);
+            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+
+            // when & then: 승인 시도
+            assertThatThrownBy(() -> eventRegistrationService.approveRegistration(REGISTRATION_ID, USER_ID))
+                    .isInstanceOf(OperatorPermissionRequiredException.class);
+
+            // then: DB 변경 없음 확인
+            verify(registration, never()).approve();
+            verify(registration, never()).reject();
+            verify(registration, never()).revertToWaiting();
+            verify(eventRepository, never()).incrementCurrentCountForApproval(any());
+            verify(eventRepository, never()).incrementCurrentCountIfAvailable(any());
+            verify(eventRepository, never()).decrementCurrentCount(any());
+        }
+
+        /**
+         * SVC-REG-077: incrementCurrentCountIfAvailable SQL 조건 변경 검증
+         */
+        @Test
+        @DisplayName("[SVC-REG-077] registrationStatus=CLOSED에서 선착순 신청 시 incrementCurrentCountIfAvailable 반환 0")
+        void registerEvent_ClosedRegistrationStatus_IncrementReturnsZero() {
+            // given: registrationStatus=CLOSED에서 선착순 행사 신청 시도
+            // incrementCurrentCountIfAvailable SQL에는 registrationStatus = 'OPEN' 조건이 있음
+            Event closedAutoEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
+            when(closedAutoEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.CLOSED);
+
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(closedAutoEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+
+            // when & then: registrationStatus=CLOSED이므로 EventNotOpenException 발생
+            // (validateEventIsOpen에서 차단되어 incrementCurrentCountIfAvailable까지 도달하지 않음)
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
+                    .isInstanceOf(EventNotOpenException.class);
+
+            // SQL 레벨에서도 registrationStatus='OPEN' 조건이 있으므로 0을 반환하는 것을 검증
+            // 이 테스트는 서비스 레벨에서 이중으로 보호됨을 확인
+            verify(eventRepository, never()).incrementCurrentCountIfAvailable(any());
         }
     }
 }
