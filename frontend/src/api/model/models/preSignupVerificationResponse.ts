@@ -33,12 +33,17 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: 33c8ee9
  */
-import type { ChangeUserRoleRequestRole } from './changeUserRoleRequestRole';
 
 /**
- * 회원 권한 변경 요청
+ * 사전 이메일 인증 응답
  */
-export interface ChangeUserRoleRequest {
-  /** 변경할 역할 */
-  role: ChangeUserRoleRequestRole;
+export interface PreSignupVerificationResponse {
+  /** 처리 결과 메시지 */
+  message?: string;
+  /** 인증된 이메일 주소 */
+  email?: string;
+  /** 인증 완료 여부 */
+  verified?: boolean;
+  /** 인증 토큰 (회원가입 시 필수 제출) */
+  verificationToken?: string;
 }

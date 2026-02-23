@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: v1.0.0
+ * OpenAPI spec version: 33c8ee9
  */
 import {
   useMutation,
@@ -68,6 +68,7 @@ import type {
   PasswordResetRequest,
   PasswordSignupRequest,
   PasswordSignupResponse,
+  PreSignupVerificationResponse,
   ReRegistrationCheckResult,
   RecoveryEligibilityResponse,
   ResendVerificationRequest,
@@ -85,102 +86,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * 이메일로 발송된 인증 코드를 확인합니다.
- * @summary 이메일 인증
- */
-export type verifyEmailResponse200 = {
-  data: PasswordSignupResponse
-  status: 200
-}
-
-export type verifyEmailResponse400 = {
-  data: PasswordSignupResponse
-  status: 400
-}
-
-export type verifyEmailResponse429 = {
-  data: PasswordSignupResponse
-  status: 429
-}
-    
-export type verifyEmailResponseSuccess = (verifyEmailResponse200) & {
-  headers: Headers;
-};
-export type verifyEmailResponseError = (verifyEmailResponse400 | verifyEmailResponse429) & {
-  headers: Headers;
-};
-
-export type verifyEmailResponse = (verifyEmailResponseSuccess | verifyEmailResponseError)
-
-export const getVerifyEmailUrl = () => {
-
-
-  
-
-  return `/api/v1/auth/password/verify-email`
-}
-
-export const verifyEmail = async (emailVerificationRequest: EmailVerificationRequest, options?: RequestInit): Promise<verifyEmailResponse> => {
-  
-  return customFetch<verifyEmailResponse>(getVerifyEmailUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      emailVerificationRequest,)
-  }
-);}
-
-
-
-
-export const getVerifyEmailMutationOptions = <TError = PasswordSignupResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyEmail>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof verifyEmail>>, TError,{data: EmailVerificationRequest}, TContext> => {
-
-const mutationKey = ['verifyEmail'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyEmail>>, {data: EmailVerificationRequest}> = (props) => {
-          const {data} = props ?? {};
-
-          return  verifyEmail(data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type VerifyEmailMutationResult = NonNullable<Awaited<ReturnType<typeof verifyEmail>>>
-    export type VerifyEmailMutationBody = EmailVerificationRequest
-    export type VerifyEmailMutationError = PasswordSignupResponse
-
-    /**
- * @summary 이메일 인증
- */
-export const useVerifyEmail = <TError = PasswordSignupResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyEmail>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof verifyEmail>>,
-        TError,
-        {data: EmailVerificationRequest},
-        TContext
-      > => {
-      return useMutation(getVerifyEmailMutationOptions(options), queryClient);
-    }
-    /**
- * 새로운 회원을 등록합니다. 등록 후 이메일 인증이 필요합니다.
+ * 새로운 회원을 등록합니다. 사전 이메일 인증이 완료되어야 합니다.
  * @summary 회원가입
  */
 export type signupResponse201 = {
@@ -275,7 +181,7 @@ export const useSignup = <TError = PasswordSignupResponse,
       return useMutation(getSignupMutationOptions(options), queryClient);
     }
     /**
- * 1~2월에 1학년 신입생이 임시 학번으로 회원가입합니다. 임시 학번이 자동 발급되어 이메일로 전송됩니다.
+ * 1~2월에 1학년 신입생이 임시 학번으로 회원가입합니다. 사전 이메일 인증이 완료되어야 하며, 임시 학번이 자동 발급되어 이메일로 전송됩니다.
  * @summary 임시 학번 회원가입
  */
 export type signupWithTemporaryStudentIdResponse201 = {
@@ -550,101 +456,6 @@ export const useConfirmPasswordReset = <TError = void,
       return useMutation(getConfirmPasswordResetMutationOptions(options), queryClient);
     }
     /**
- * 이메일 인증 코드를 다시 발송합니다.
- * @summary 인증 코드 재발송
- */
-export type resendVerificationResponse200 = {
-  data: VerificationResendResponse
-  status: 200
-}
-
-export type resendVerificationResponse400 = {
-  data: VerificationResendResponse
-  status: 400
-}
-
-export type resendVerificationResponse429 = {
-  data: VerificationResendResponse
-  status: 429
-}
-    
-export type resendVerificationResponseSuccess = (resendVerificationResponse200) & {
-  headers: Headers;
-};
-export type resendVerificationResponseError = (resendVerificationResponse400 | resendVerificationResponse429) & {
-  headers: Headers;
-};
-
-export type resendVerificationResponse = (resendVerificationResponseSuccess | resendVerificationResponseError)
-
-export const getResendVerificationUrl = () => {
-
-
-  
-
-  return `/api/v1/auth/password/resend-verification`
-}
-
-export const resendVerification = async (resendVerificationRequest: ResendVerificationRequest, options?: RequestInit): Promise<resendVerificationResponse> => {
-  
-  return customFetch<resendVerificationResponse>(getResendVerificationUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      resendVerificationRequest,)
-  }
-);}
-
-
-
-
-export const getResendVerificationMutationOptions = <TError = VerificationResendResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendVerification>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof resendVerification>>, TError,{data: ResendVerificationRequest}, TContext> => {
-
-const mutationKey = ['resendVerification'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendVerification>>, {data: ResendVerificationRequest}> = (props) => {
-          const {data} = props ?? {};
-
-          return  resendVerification(data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ResendVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof resendVerification>>>
-    export type ResendVerificationMutationBody = ResendVerificationRequest
-    export type ResendVerificationMutationError = VerificationResendResponse
-
-    /**
- * @summary 인증 코드 재발송
- */
-export const useResendVerification = <TError = VerificationResendResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendVerification>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof resendVerification>>,
-        TError,
-        {data: ResendVerificationRequest},
-        TContext
-      > => {
-      return useMutation(getResendVerificationMutationOptions(options), queryClient);
-    }
-    /**
  * 리프레시 토큰으로 새로운 액세스 토큰을 발급합니다. 토큰 로테이션이 적용되어 매 갱신마다 새 리프레시 토큰이 Set-Cookie로 발급됩니다. Grace Period(10초) 내 중복 요청 시에는 액세스 토큰만 갱신됩니다.
  * @summary 토큰 갱신
  */
@@ -737,6 +548,196 @@ export const useRefreshToken = <TError = TokenRefreshResponse,
         TContext
       > => {
       return useMutation(getRefreshTokenMutationOptions(options), queryClient);
+    }
+    /**
+ * 회원가입 전 이메일 인증 코드를 확인합니다.
+ * @summary 사전 이메일 인증 코드 확인
+ */
+export type verifyPreSignupCodeResponse200 = {
+  data: PreSignupVerificationResponse
+  status: 200
+}
+
+export type verifyPreSignupCodeResponse400 = {
+  data: PreSignupVerificationResponse
+  status: 400
+}
+
+export type verifyPreSignupCodeResponse429 = {
+  data: PreSignupVerificationResponse
+  status: 429
+}
+    
+export type verifyPreSignupCodeResponseSuccess = (verifyPreSignupCodeResponse200) & {
+  headers: Headers;
+};
+export type verifyPreSignupCodeResponseError = (verifyPreSignupCodeResponse400 | verifyPreSignupCodeResponse429) & {
+  headers: Headers;
+};
+
+export type verifyPreSignupCodeResponse = (verifyPreSignupCodeResponseSuccess | verifyPreSignupCodeResponseError)
+
+export const getVerifyPreSignupCodeUrl = () => {
+
+
+  
+
+  return `/api/v1/auth/password/pre-signup/verify-code`
+}
+
+export const verifyPreSignupCode = async (emailVerificationRequest: EmailVerificationRequest, options?: RequestInit): Promise<verifyPreSignupCodeResponse> => {
+  
+  return customFetch<verifyPreSignupCodeResponse>(getVerifyPreSignupCodeUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      emailVerificationRequest,)
+  }
+);}
+
+
+
+
+export const getVerifyPreSignupCodeMutationOptions = <TError = PreSignupVerificationResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: EmailVerificationRequest}, TContext> => {
+
+const mutationKey = ['verifyPreSignupCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyPreSignupCode>>, {data: EmailVerificationRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifyPreSignupCode(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyPreSignupCodeMutationResult = NonNullable<Awaited<ReturnType<typeof verifyPreSignupCode>>>
+    export type VerifyPreSignupCodeMutationBody = EmailVerificationRequest
+    export type VerifyPreSignupCodeMutationError = PreSignupVerificationResponse
+
+    /**
+ * @summary 사전 이메일 인증 코드 확인
+ */
+export const useVerifyPreSignupCode = <TError = PreSignupVerificationResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof verifyPreSignupCode>>,
+        TError,
+        {data: EmailVerificationRequest},
+        TContext
+      > => {
+      return useMutation(getVerifyPreSignupCodeMutationOptions(options), queryClient);
+    }
+    /**
+ * 회원가입 전 이메일 인증 코드를 발송합니다.
+ * @summary 사전 이메일 인증 코드 발송
+ */
+export type sendPreSignupCodeResponse200 = {
+  data: VerificationResendResponse
+  status: 200
+}
+
+export type sendPreSignupCodeResponse409 = {
+  data: VerificationResendResponse
+  status: 409
+}
+
+export type sendPreSignupCodeResponse429 = {
+  data: VerificationResendResponse
+  status: 429
+}
+    
+export type sendPreSignupCodeResponseSuccess = (sendPreSignupCodeResponse200) & {
+  headers: Headers;
+};
+export type sendPreSignupCodeResponseError = (sendPreSignupCodeResponse409 | sendPreSignupCodeResponse429) & {
+  headers: Headers;
+};
+
+export type sendPreSignupCodeResponse = (sendPreSignupCodeResponseSuccess | sendPreSignupCodeResponseError)
+
+export const getSendPreSignupCodeUrl = () => {
+
+
+  
+
+  return `/api/v1/auth/password/pre-signup/send-code`
+}
+
+export const sendPreSignupCode = async (resendVerificationRequest: ResendVerificationRequest, options?: RequestInit): Promise<sendPreSignupCodeResponse> => {
+  
+  return customFetch<sendPreSignupCodeResponse>(getSendPreSignupCodeUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      resendVerificationRequest,)
+  }
+);}
+
+
+
+
+export const getSendPreSignupCodeMutationOptions = <TError = VerificationResendResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: ResendVerificationRequest}, TContext> => {
+
+const mutationKey = ['sendPreSignupCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendPreSignupCode>>, {data: ResendVerificationRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  sendPreSignupCode(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendPreSignupCodeMutationResult = NonNullable<Awaited<ReturnType<typeof sendPreSignupCode>>>
+    export type SendPreSignupCodeMutationBody = ResendVerificationRequest
+    export type SendPreSignupCodeMutationError = VerificationResendResponse
+
+    /**
+ * @summary 사전 이메일 인증 코드 발송
+ */
+export const useSendPreSignupCode = <TError = VerificationResendResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendPreSignupCode>>,
+        TError,
+        {data: ResendVerificationRequest},
+        TContext
+      > => {
+      return useMutation(getSendPreSignupCodeMutationOptions(options), queryClient);
     }
     /**
  * 리프레시 토큰을 무효화하여 로그아웃합니다.
