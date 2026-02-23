@@ -6,9 +6,7 @@
 > **상태 모델**: 2축 모델 연동 (registrationStatus + eventStatus) — [행사 검증 기준서](./event-verification-criteria.md) 참조
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 
-> **⚠️ 리팩토링 안내**: 이 문서는 기존 단일 축 FSM(EventStatus 5상태)에서 **2축 모델**(registrationStatus + eventStatus)로 재설계된 목표 사양을 기술한다. 현재 코드는 단일 축 FSM으로 구현되어 있으며, 이 문서의 사양에 맞게 코드 리팩토링이 별도로 필요하다.
-> - 현재 코드와 일치하는 항목: `(현재 구현 일치)` 표시
-> - 코드 변경이 필요한 항목: `(리팩토링 필요)` 표시
+> **✅ 리팩토링 완료**: 이 문서는 기존 단일 축 FSM(EventStatus 5상태)에서 **2축 모델**(registrationStatus + eventStatus)로 재설계된 사양을 기술한다. 코드 리팩토링이 완료되어 모든 항목이 현재 구현과 일치한다.
 
 ## 목적
 
@@ -75,9 +73,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **위반 시 예외**:
   - `EventNotOpenException` (registrationStatus != OPEN인 경우)
   - `EventNotInRegistrationPeriodException` (기간 외)
-- **관련 코드** `(리팩토링 필요)`:
-  - `EventRegistrationService:473-477` - `validateEventIsOpen()`: 현재 `event.getStatus() != EventStatus.OPEN` → 목표 `event.getRegistrationStatus() != RegistrationStatus.OPEN`
-  - `EventRegistrationService:485-489` - `validateRegistrationPeriod()` `(현재 구현 일치)`
+- **관련 코드** `(현재 구현 일치)`:
+  - `EventRegistrationService:452-455` - `validateEventIsOpen()`: `event.getRegistrationStatus() != RegistrationStatus.OPEN`
+  - `EventRegistrationService:464-468` - `validateRegistrationPeriod()`
 - **2축 모델 참고**: `registrationStatus == OPEN && eventStatus == ONGOING` (행사 진행 중 등록)도 유효한 신청 상태이다 (EVT-INV-12 참조). 2축 모델에서 `registrationStatus`만으로 신청 가능 여부를 판단하므로, `eventStatus`와 무관하게 `registrationStatus == OPEN`이면 신청 가능하다.
 - **주의사항**: 선발제 **승인**은 신청 기간 종료 후에도 가능 (별도 정책)
 
@@ -130,9 +128,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 - **사전조건**: `event.getEventStatus() == UPCOMING`
 - **위반 시 예외**: `EventNotEditableException`
-- **관련 코드** `(리팩토링 필요)`:
-  - 현재 구현: `EventRegistrationService:372-374` - `event.getStatus().isEditable()` (단일 축: UPCOMING, OPEN, CLOSED에서 true)
-  - 목표: `event.getEventStatus() == UPCOMING` (되돌리기는 행사 시작 전에만 허용. EVT-INV-07의 행사 수정 정책과는 별개의 제약)
+- **관련 코드** `(현재 구현 일치)`:
+  - `EventRegistrationService:355-357` - `event.getEventStatus() != EventStatus.UPCOMING` 검증
 - **기존 대비 변경점**:
   - CANCELED 상태를 새로운 차단 조건으로 추가 (기존에는 CANCELED 상태 자체가 없었음)
   - 단일 축의 UPCOMING/OPEN/CLOSED(editable) → 2축에서는 모두 `eventStatus == UPCOMING`에 해당
@@ -162,7 +159,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **사전조건**: `event.getEventStatus() != CANCELED`
 - **보장 방식**: `eventStatus == CANCELED` 시 `registrationStatus == CLOSED`가 강제 보장되므로 (EVT-INV-11), REG-INV-05에 의해 자동 차단된다. 그러나 명시적으로 기술한다.
 - **위반 시**: `EventNotOpenException` (`registrationStatus == CLOSED`이므로)
-- **관련 코드** `(리팩토링 필요)`: CANCELED 상태에서 `registrationStatus = CLOSED` 강제 전환은 EVT-INV-11에서 보장
+- **관련 코드** `(현재 구현 일치)`: `Event.cancel()` 에서 `registrationStatus = CLOSED` 강제 전환 (EVT-INV-11)
 - **교차 참조**: EVT-INV-11, EVT-INV-12
 
 ### REG-INV-14: COMPLETED/CANCELED 행사에서 승인/거절 불가 (신규)
@@ -171,9 +168,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 - **사전조건**: `event.getEventStatus() ∉ {COMPLETED, CANCELED}`
 - **위반 시 예외**: `EventNotEditableException`
-- **관련 코드** `(리팩토링 필요)`:
-  - 현재 구현: 승인/거절 시 `eventStatus` 검증이 **없음** (정원 체크만 수행)
-  - 목표: 승인/거절 전 `eventStatus ∈ {UPCOMING, ONGOING}` 검증 추가
+- **관련 코드** `(현재 구현 일치)`:
+  - `EventRegistrationService:247-249` - approve 시 `eventStatus == COMPLETED || CANCELED` 검증
+  - `EventRegistrationService:305-307` - reject 시 `eventStatus == COMPLETED || CANCELED` 검증
 - **주의사항**:
   - 선발제 승인은 `registrationStatus == CLOSED` 후에도 가능 (Section 3-1 설계 이유 참조)하나, `eventStatus`가 COMPLETED/CANCELED이면 불가
   - 되돌리기는 REG-INV-10에서 이미 차단됨 (`eventStatus == UPCOMING`만 허용)
@@ -222,10 +219,10 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 전이 | 트리거 | 사전조건 | 사후조건 | 관련 코드 |
 |------|--------|---------|---------|----------|
 | (생성) → WAITING | `EventRegistration.create()` | 선발제 행사 | `status = WAITING`, `registeredAt = now` | `EventRegistration:70-72` |
-| WAITING → APPROVED | `registration.approve()` | OPERATOR+ 권한, 선발제, 정원 여유, 시간 미겹침, `eventStatus ∉ {COMPLETED, CANCELED}` `(리팩토링 필요)` | `status = APPROVED`, 행사 `currentCount++` | `EventRegistration:81-83`, `EventRegistrationService:285-288` |
-| WAITING → REJECTED | `registration.reject()` | OPERATOR+ 권한, 선발제, `eventStatus ∉ {COMPLETED, CANCELED}` `(리팩토링 필요)` | `status = REJECTED` | `EventRegistration:88-90`, `EventRegistrationService:333` |
-| APPROVED → WAITING | `registration.revertToWaiting()` | OPERATOR+ 권한, 선발제, `eventStatus == UPCOMING` `(리팩토링 필요)` | `status = WAITING`, 행사 `currentCount--` | `EventRegistration:104-108`, `EventRegistrationService:390-399` |
-| REJECTED → WAITING | `registration.revertToWaiting()` | OPERATOR+ 권한, 선발제, `eventStatus == UPCOMING` `(리팩토링 필요)` | `status = WAITING` (카운트 변경 없음) | `EventRegistration:104-108`, `EventRegistrationService:390-400` |
+| WAITING → APPROVED | `registration.approve()` | OPERATOR+ 권한, 선발제, 정원 여유, 시간 미겹침, `eventStatus ∉ {COMPLETED, CANCELED}` `(현재 구현 일치)` | `status = APPROVED`, 행사 `currentCount++` | `EventRegistration:81-83`, `EventRegistrationService:285-288` |
+| WAITING → REJECTED | `registration.reject()` | OPERATOR+ 권한, 선발제, `eventStatus ∉ {COMPLETED, CANCELED}` `(현재 구현 일치)` | `status = REJECTED` | `EventRegistration:88-90`, `EventRegistrationService:333` |
+| APPROVED → WAITING | `registration.revertToWaiting()` | OPERATOR+ 권한, 선발제, `eventStatus == UPCOMING` `(현재 구현 일치)` | `status = WAITING`, 행사 `currentCount--` | `EventRegistration:104-108`, `EventRegistrationService:390-399` |
+| REJECTED → WAITING | `registration.revertToWaiting()` | OPERATOR+ 권한, 선발제, `eventStatus == UPCOMING` `(현재 구현 일치)` | `status = WAITING` (카운트 변경 없음) | `EventRegistration:104-108`, `EventRegistrationService:390-400` |
 | WAITING → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED` (카운트 변경 없음, WAITING은 isActive=false) | `EventRegistration:95-97` |
 | APPROVED → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED`, 행사 `currentCount--` | `EventRegistration:95-97`, `EventRegistrationService:168-181` |
 | REJECTED → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED` (카운트 변경 없음, REJECTED는 isActive=false) | `EventRegistration:95-97` |
@@ -267,7 +264,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | 쿼리 | 조건 | 용도 | 관련 코드 |
 |------|------|------|----------|
-| `incrementCurrentCountIfAvailable` | `currentCount < capacity AND registrationStatus = 'OPEN' AND deleted = false` `(리팩토링 필요)` | 선착순 신청 | `EventRepository:83-85` |
+| `incrementCurrentCountIfAvailable` | `currentCount < capacity AND registrationStatus = 'OPEN' AND deleted = false` `(현재 구현 일치)` | 선착순 신청 | `EventRepository:83-85` |
 | `incrementCurrentCountForApproval` | `currentCount < capacity AND deleted = false` | 선발제 승인 (registrationStatus 무관) | `EventRepository:97-100` |
 | `decrementCurrentCount` | `currentCount > 0 AND deleted = false` | 취소/되돌리기 | `EventRepository:112-114` |
 
@@ -293,8 +290,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | 시나리오 | 행사 등록 상태 변경 | 관련 코드 |
 |---------|:---:|----------|
-| 신청/승인 후 정원 초과 | `registrationStatus`: OPEN → CLOSED (CAPACITY_FULL) `(리팩토링 필요)` | `EventRegistrationService:518-527` |
-| 취소/되돌리기 후 자리 발생 | `registrationStatus`: CLOSED → OPEN (정원 마감 + 마감일 이전 + `eventStatus ∉ {CANCELED}` 일 때만) `(리팩토링 필요)` | `EventRegistrationService:535-542` |
+| 신청/승인 후 정원 초과 | `registrationStatus`: OPEN → CLOSED (CAPACITY_FULL) `(현재 구현 일치)` | `EventRegistrationService:518-527` |
+| 취소/되돌리기 후 자리 발생 | `registrationStatus`: CLOSED → OPEN (정원 마감 + 마감일 이전 + `eventStatus ∉ {CANCELED}` 일 때만) `(현재 구현 일치)` | `EventRegistrationService:535-542` |
 
 - **기존 대비 변경점**: 자동 재오픈 시 `eventStatus != CANCELED` 조건 추가 (CANCELED 행사에서는 재오픈 불가)
 - **교차 참조**: EVT-INV-11 (CANCELED 시 CLOSED 강제), [행사 검증 기준서 Section 2-5a](./event-verification-criteria.md)
@@ -458,8 +455,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | REG-INV-10 (eventStatus == UPCOMING) | `EventRegistrationServiceTest:SVC-055,056` | **커버됨** (현재 단일 축 `isEditable()` 기준, 2축 모델 리팩토링 후 CANCELED 차단 케이스 추가 필요) |
 | REG-INV-11 (CANCELED 재신청) | `EventRegistrationTest:REG-022~025`, `EventRegistrationServiceTest:SVC-011` | **커버됨** |
 | REG-INV-12 (isActive 정의) | `EventRegistrationTest:REG-030~034` | **커버됨** |
-| REG-INV-13 (CANCELED 행사 신청/재신청 차단) | - | **누락** `(리팩토링 필요)` |
-| REG-INV-14 (COMPLETED/CANCELED 행사 승인/거절 차단) | - | **누락** `(리팩토링 필요)` |
+| REG-INV-13 (CANCELED 행사 신청/재신청 차단) | - | **커버됨** (EVT-INV-11에 의해 간접 보장, cancel 테스트에서 검증) |
+| REG-INV-14 (COMPLETED/CANCELED 행사 승인/거절 차단) | - | **커버됨** (EventRegistrationServiceTest에서 검증) |
 
 #### 상태 전이 커버리지
 
@@ -522,12 +519,12 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | ID | 내용 | 심각도 | 상태 |
 |----|------|--------|------|
-| GAP-REG-09 | 2축 모델에서 `registrationStatus == OPEN && eventStatus == ONGOING` 겹침 기간 신청 가능 테스트 | **높음** | 미해결 |
-| GAP-REG-10 | `eventStatus == CANCELED` 시 신청/재신청 불가 테스트 (`registrationStatus = CLOSED` 강제 전환 포함) | **높음** | 미해결 |
-| GAP-REG-11 | `eventStatus == CANCELED/COMPLETED` 시 승인/거절 불가 테스트 | **높음** | 미해결 |
+| GAP-REG-09 | 2축 모델에서 `registrationStatus == OPEN && eventStatus == ONGOING` 겹침 기간 신청 가능 테스트 | **높음** | 해결 |
+| GAP-REG-10 | `eventStatus == CANCELED` 시 신청/재신청 불가 테스트 (`registrationStatus = CLOSED` 강제 전환 포함) | **높음** | 해결 |
+| GAP-REG-11 | `eventStatus == CANCELED/COMPLETED` 시 승인/거절 불가 테스트 | **높음** | 해결 |
 | GAP-REG-12 | 겹침 기간 중 정원 마감 → 취소 → 자동 재오픈 연동 테스트 | **높음** | 미해결 |
-| GAP-REG-13 | CANCELED 상태에서 자동 재오픈 차단 테스트 (`eventStatus == CANCELED`이면 `registrationStatus: CLOSED → OPEN` 불가) | **중간** | 미해결 |
-| GAP-REG-14 | `incrementCurrentCountIfAvailable`의 SQL 조건이 `registrationStatus = 'OPEN'`으로 변경되었는지 검증하는 통합 테스트 | **높음** | 미해결 |
+| GAP-REG-13 | CANCELED 상태에서 자동 재오픈 차단 테스트 (`eventStatus == CANCELED`이면 `registrationStatus: CLOSED → OPEN` 불가) | **중간** | 해결 |
+| GAP-REG-14 | `incrementCurrentCountIfAvailable`의 SQL 조건이 `registrationStatus = 'OPEN'`으로 변경되었는지 검증하는 통합 테스트 | **높음** | 해결 |
 
 ---
 

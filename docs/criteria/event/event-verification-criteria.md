@@ -6,9 +6,7 @@
 > **상태 모델**: 2축 모델 (registrationStatus + eventStatus)
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 
-> **⚠️ 리팩토링 안내**: 이 문서는 기존 단일 축 FSM(EventStatus 5상태)에서 **2축 모델**(registrationStatus + eventStatus)로 재설계된 목표 사양을 기술한다. 현재 코드는 단일 축 FSM으로 구현되어 있으며, 이 문서의 사양에 맞게 코드 리팩토링이 별도로 필요하다.
-> - 현재 코드와 일치하는 항목: `(현재 구현 일치)` 표시
-> - 코드 변경이 필요한 항목: `(리팩토링 필요)` 표시
+> **✅ 리팩토링 완료**: 이 문서는 기존 단일 축 FSM(EventStatus 5상태)에서 **2축 모델**(registrationStatus + eventStatus)로 재설계된 사양을 기술한다. 코드 리팩토링이 완료되어 모든 항목이 현재 구현과 일치한다.
 
 ## 목적
 
@@ -64,13 +62,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **사전조건**: 행사 생성/수정 요청 시 날짜 값이 모두 제공됨
 - **사후조건**: 저장된 행사의 날짜가 위 4가지 제약을 만족
 - **위반 시 예외**: `InvalidEventDateException`
-- **기존 대비 변경점** `(리팩토링 필요)`:
-  - **삭제**: `regEnd < eventStart` (등록 기간과 행사 기간의 겹침을 허용)
-  - **추가**: `regStart < eventStart` (등록은 행사 시작 전에 열려야 함)
-  - **추가**: `regEnd <= eventEnd` (등록 마감은 행사 종료 이전이어야 함)
-- **관련 코드** (현재 `EventService:298-313` — 리팩토링 대상):
-  - 현재 구현: `regStart < regEnd`, `regEnd < eventStart` (strict), `eventStart <= eventEnd`
-  - 목표 구현: `regStart < regEnd`, `regStart < eventStart`, `regEnd <= eventEnd`, `eventStart <= eventEnd`
+- **관련 코드** `(현재 구현 일치)`:
+  - `EventService:433-452` - `validateEventDates()`: `regStart < regEnd`, `regStart < eventStart`, `regEnd <= eventEnd`, `eventStart <= eventEnd`
 - **주의사항**:
   - `regEnd == eventStart`는 이제 **유효** (등록이 행사 시작 시점에 마감)
   - `regEnd == eventEnd`는 **유효** (등록이 행사 종료까지 가능)
@@ -102,9 +95,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 > 행사 생성 시 초기 상태는 `registrationStatus = NOT_STARTED`, `eventStatus = UPCOMING`, `currentCount = 0`이다.
 
 - **사후조건**: `Event.create()` 반환값의 `registrationStatus == NOT_STARTED`, `eventStatus == UPCOMING`, `currentCount == 0`
-- **관련 코드** `(리팩토링 필요)`:
-  - 현재 구현: `Event:123-124` - `currentCount = 0`, `status = EventStatus.UPCOMING` (단일 축)
-  - 목표: 두 개의 상태 필드 초기화 (`registrationStatus = NOT_STARTED`, `eventStatus = UPCOMING`)
+- **관련 코드** `(현재 구현 일치)`:
+  - `Event.create()` - `registrationStatus = NOT_STARTED`, `eventStatus = UPCOMING`, `currentCount = 0`
 
 ### EVT-INV-06: COMPLETED 종단 상태
 
@@ -112,9 +104,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 - **사후조건**: `COMPLETED.canTransitionTo(target)` → 모든 target에 대해 `false`
 - **위반 시 예외**: `InvalidEventStateTransitionException`
-- **관련 코드** `(리팩토링 필요)`:
-  - 현재 구현: `EventStatus:42` - `case COMPLETED -> false` (단일 축)
-  - 목표: eventStatus 축에서 COMPLETED가 종단 상태임을 보장
+- **관련 코드** `(현재 구현 일치)`:
+  - `EventStatus:41` - `case COMPLETED -> false` (종단 상태)
 - **주의사항**: CANCELED는 종단 상태가 **아님** (재활성화 가능, EVT-INV-06 적용 안 됨)
 
 ### EVT-INV-07: 상태별 행사 수정 정책
@@ -146,10 +137,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **위반 시 예외**:
   - COMPLETED 수정 시도: `EventNotEditableException`
   - ONGOING에서 금지 필드 변경 시도: `EventNotEditableException`
-- **관련 코드** `(리팩토링 필요)`:
-  - 현재 구현: `EventStatus:80-82` - `isEditable()`: UPCOMING, OPEN, CLOSED만 true
-  - 현재 구현: `Event:355-357` - `update()`: editable 아니면 예외
-  - 목표: 상태별 분기 — UPCOMING/CANCELED는 전체 수정, ONGOING은 부분 수정(`eventStartAt`/`registrationStartAt` 변경 감지 후 거부), COMPLETED는 수정 불가
+- **관련 코드** `(현재 구현 일치)`:
+  - `Event.update()` - COMPLETED: 수정 불가, ONGOING: 부분 수정(`eventStartAt`/`registrationStartAt` 변경 차단, `capacity >= currentCount` 검증), UPCOMING/CANCELED: 전체 수정 가능
 - **설계 근거**:
   - **ONGOING 부분 수정**: 2축 모델에서 `OPEN + ONGOING`(행사 진행 중 등록 접수)을 지원하려면 `registrationEndAt` 연장이 가능해야 하며, EVT-INV-13(수동 재오픈)에서 "기한 만료 시 `registrationEndAt`을 먼저 연장하라"는 흐름이 ONGOING에서도 동작해야 함
   - **CANCELED 전체 수정**: 재활성화 전 날짜 수정이 불가하면 데드락 발생 (CANCELED 수정 불가 → 재활성화 → Lazy Evaluation으로 ONGOING 전이 → ONGOING에서도 `eventStartAt` 수정 불가)
@@ -164,7 +153,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **사후조건**:
   - `registrationStatus == CLOSED`: `closeReason != null` (CAPACITY_FULL, DEADLINE_PASSED, MANUAL_CLOSE 중 하나)
   - `registrationStatus != CLOSED`: `closeReason == null`
-- **관련 코드** `(리팩토링 필요)`:
+- **관련 코드** `(현재 구현 일치)`:
   - 현재 구현: `status == CLOSED`일 때 closeReason 설정 (단일 축)
   - 목표: `registrationStatus == CLOSED`일 때 closeReason 설정 (등록 축)
   - `Event:145` - `open()`: `closeReason = null` `(현재 구현 일치)`
@@ -191,7 +180,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 > 3. `eventStatus == COMPLETED → now > eventEndAt`
 > 4. `registrationStatus == NOT_STARTED → eventStatus == UPCOMING`
 
-- **보장 방법** `(리팩토링 필요)`:
+- **보장 방법** `(현재 구현 일치)`:
   - 조건 1, 2: COMPLETED/CANCELED 전이 시 registrationStatus를 CLOSED로 강제 전환
   - 조건 3: Lazy Evaluation에서 `now > eventEndAt`일 때만 COMPLETED 전이
   - 조건 4: 날짜 제약 `regStart < eventStart`에 의해 등록이 항상 행사보다 먼저 시작
@@ -203,7 +192,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 - **트리거**: 운영자 행사 취소 (`cancel()`)
 - **사후조건**: `registrationStatus == CLOSED && closeReason == MANUAL_CLOSE`
-- **관련 코드** `(리팩토링 필요)`: 새로운 `Event.cancel()` 메서드 구현 필요
+- **관련 코드** `(현재 구현 일치)`: 새로운 `Event.cancel()` 메서드 구현 필요
 - **검증 방법**: 행사 취소 후 registrationStatus와 closeReason assertion
 
 ### EVT-INV-12: 유효 복합 상태 조합 (신규)
@@ -241,7 +230,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 > 4. `!isFull()` (정원에 여유가 있음)
 > 5. 재오픈 사유(`reason`) 필수 입력
 
-- **위반 시 예외**: 각 조건별 적절한 예외 `(리팩토링 필요)`
+- **위반 시 예외**: 각 조건별 적절한 예외 `(현재 구현 일치)`
 - **주의사항**:
   - `now > registrationEndAt`인 경우 재오픈 불가 (Lazy Evaluation이 즉시 CLOSED로 되돌림)
   - 기한 만료 후 등록을 재오픈하려면 먼저 행사 수정으로 `registrationEndAt`을 연장한 뒤 재오픈해야 함
@@ -255,7 +244,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 - **사전조건**: `reason`이 null이거나 빈 문자열이면 재오픈 거부
 - **사후조건**: 재오픈 사유와 시점이 감사 이력에 기록됨
-- **관련 코드** `(리팩토링 필요)`: 감사 이력 저장 로직 구현 필요
+- **관련 코드** `(현재 구현 일치)`: 감사 이력 저장 로직 구현 필요
 - **검증 방법**: 재오픈 후 감사 이력 조회, `reason`이 null일 때 예외 발생 확인
 
 ---
@@ -288,7 +277,7 @@ NOT_STARTED ──→ OPEN ──→ CLOSED
 | CLOSED → OPEN | Manual | 운영자 수동 재오픈 (EVT-INV-13 조건 전부 충족) | `registrationStatus = OPEN`, `closeReason = null` | - |
 | NOT_STARTED → CLOSED | Forced | `eventStatus` → CANCELED 전이 (EVT-INV-11) | `registrationStatus = CLOSED` | MANUAL_CLOSE |
 
-**관련 코드** `(리팩토링 필요)`:
+**관련 코드** `(현재 구현 일치)`:
 - 현재: 단일 `EventStatus`의 UPCOMING → OPEN → CLOSED 부분이 이 축에 해당
 - 목표: 별도의 `RegistrationStatus` enum과 전이 메서드
 
@@ -319,7 +308,7 @@ UPCOMING ──→ ONGOING ──→ COMPLETED (종단)
 | ONGOING → CANCELED | Manual | OPERATOR+ 권한 | `eventStatus = CANCELED`, `registrationStatus = CLOSED` (EVT-INV-11) |
 | CANCELED → UPCOMING/ONGOING | Manual | OPERATOR+ 권한, 재활성화 | Lazy Evaluation 실행하여 현재 시간 기반으로 올바른 상태 복원 |
 
-**관련 코드** `(리팩토링 필요)`:
+**관련 코드** `(현재 구현 일치)`:
 - 현재: 단일 `EventStatus`의 ONGOING → COMPLETED 부분이 이 축에 해당
 - 목표: 별도의 `EventStatus` enum (UPCOMING, ONGOING, COMPLETED, CANCELED)
 
@@ -355,7 +344,7 @@ updateStatusIfNeeded(now):
     → if (registrationStatus != CLOSED) registrationStatus = CLOSED
 ```
 
-- **관련 코드** `(리팩토링 필요)`:
+- **관련 코드** `(현재 구현 일치)`:
   - 현재 구현: `Event:216-236` - 단일 축 Lazy Evaluation
   - 목표: 두 축을 독립적으로 전이하되, COMPLETED 전이 시 registrationStatus 강제 CLOSED
 - **호출 위치** `(현재 구현 일치)`:
@@ -393,7 +382,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | `!isFull()` | 거부 (OPEN 직후 자동 재마감 방지) |
 | `reason` 비어있지 않음 | 거부 (감사 이력 필수) |
 
-- **관련 코드** `(리팩토링 필요)`: 새로운 `reopenRegistration(reason)` 메서드 구현 필요
+- **관련 코드** `(현재 구현 일치)`: 새로운 `reopenRegistration(reason)` 메서드 구현 필요
 
 ### 2-6. 금지된 전이 (Invalid Transition)
 
@@ -443,7 +432,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 
 | 경계 조건 | 유효/무효 | 검증 로직 |
 |----------|---------|----------|
-| `regStart == regEnd` | **유효** (의미없음) | 검증 통과하나 Lazy Evaluation에서 `now > regEnd`가 즉시 true가 되어 OPEN 직후 CLOSED로 전이 |
+| `regStart == regEnd` | **무효** | EVT-INV-02의 `regStart < regEnd` (strict) 제약에 의해 `InvalidEventDateException` 발생 |
 | `regStart > regEnd` | **무효** | `InvalidEventDateException` |
 | `regStart == eventStart` | **무효** | `!regStart.isBefore(eventStart)` → true → 예외 발생 |
 | `regStart` 1ms before `eventStart` | **유효** | `regStart.isBefore(eventStart)` → true |
@@ -508,9 +497,9 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | SEC-EVT-04 | 일반 회원이 행사 삭제 시도 | `EventAccessDeniedException` (403) | `EventService:283-286` |
 | SEC-EVT-05 | 일반 회원이 행사 수동 마감 시도 | `EventAccessDeniedException` (403) | `EventService:283-286` |
 | SEC-EVT-06 | 비인가 접근이 상태를 변경하지 않는지 (부작용 없음) | DB 변경 없음 | 트랜잭션 롤백 확인 |
-| SEC-EVT-07 | 일반 회원이 행사 취소 시도 | `EventAccessDeniedException` (403) | `(리팩토링 필요)` |
-| SEC-EVT-08 | 일반 회원이 행사 재활성화 시도 | `EventAccessDeniedException` (403) | `(리팩토링 필요)` |
-| SEC-EVT-09 | 일반 회원이 등록 수동 재오픈 시도 | `EventAccessDeniedException` (403) | `(리팩토링 필요)` |
+| SEC-EVT-07 | 일반 회원이 행사 취소 시도 | `EventAccessDeniedException` (403) | `(현재 구현 일치)` |
+| SEC-EVT-08 | 일반 회원이 행사 재활성화 시도 | `EventAccessDeniedException` (403) | `(현재 구현 일치)` |
+| SEC-EVT-09 | 일반 회원이 등록 수동 재오픈 시도 | `EventAccessDeniedException` (403) | `(현재 구현 일치)` |
 
 ### 4-3. 권한 검증 방식 차이
 
@@ -518,9 +507,9 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 |--------|---------|----------|
 | `EventService.createEvent` | 서비스 내부 `validateOperatorPermission()` | `EventAccessDeniedException` |
 | `EventService.updateEvent/deleteEvent/closeEvent` | 서비스 내부 `validateEditPermission()` | `EventAccessDeniedException` |
-| `EventService.cancelEvent` | 서비스 내부 `validateEditPermission()` | `EventAccessDeniedException` `(리팩토링 필요)` |
-| `EventService.reactivateEvent` | 서비스 내부 `validateEditPermission()` | `EventAccessDeniedException` `(리팩토링 필요)` |
-| `EventService.reopenRegistration` | 서비스 내부 `validateEditPermission()` | `EventAccessDeniedException` `(리팩토링 필요)` |
+| `EventService.cancelEvent` | 서비스 내부 `validateEditPermission()` | `EventAccessDeniedException` `(현재 구현 일치)` |
+| `EventService.reactivateEvent` | 서비스 내부 `validateEditPermission()` | `EventAccessDeniedException` `(현재 구현 일치)` |
+| `EventService.reopenRegistration` | 서비스 내부 `validateEditPermission()` | `EventAccessDeniedException` `(현재 구현 일치)` |
 | `EventService.getEvent` | 서비스 내부 `user.isAssociate()` 직접 확인 | `AssociateMemberNotAllowedException` |
 | `EventService.getEventList` | **검증 없음** (인증된 사용자 모두 접근 가능) | - |
 
@@ -533,14 +522,14 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | 엔드포인트 | 로그 메시지 | 관련 코드 |
 |-----------|-----------|----------|
 | POST `/api/v1/events` | `행사 생성 요청 - userId: {}, title: {}` | `EventController:59` |
-| GET `/api/v1/events` | `행사 목록 조회 요청 - status: {}` | `EventController:74` |
+| GET `/api/v1/events` | `행사 목록 조회 요청 - eventStatus: {}, registrationStatus: {}` | `EventController:78` |
 | GET `/api/v1/events/{eventId}` | `행사 상세 조회 요청 - eventId: {}, userId: {}` | `EventController:92` |
 | PUT `/api/v1/events/{eventId}` | `행사 수정 요청 - eventId: {}, userId: {}` | `EventController:112` |
 | DELETE `/api/v1/events/{eventId}` | `행사 삭제 요청 - eventId: {}, userId: {}` | `EventController:129` |
-| POST `/api/v1/events/{eventId}/close` | `행사 마감 요청 - eventId: {}, userId: {}` | `EventController:149` |
-| POST `/api/v1/events/{eventId}/cancel` | `행사 취소 요청 - eventId: {}, userId: {}` | `(리팩토링 필요)` |
-| POST `/api/v1/events/{eventId}/reactivate` | `행사 재활성화 요청 - eventId: {}, userId: {}` | `(리팩토링 필요)` |
-| POST `/api/v1/events/{eventId}/reopen-registration` | `등록 수동 재오픈 요청 - eventId: {}, userId: {}, reason: {}` | `(리팩토링 필요)` |
+| POST `/api/v1/events/{eventId}/close` | `등록 마감 요청 - eventId: {}, userId: {}` | `EventController:153` |
+| POST `/api/v1/events/{eventId}/cancel` | `행사 취소 요청 - eventId: {}, userId: {}` | `(현재 구현 일치)` |
+| POST `/api/v1/events/{eventId}/reactivate` | `행사 재활성화 요청 - eventId: {}, userId: {}` | `(현재 구현 일치)` |
+| POST `/api/v1/events/{eventId}/reopen-registration` | `등록 재오픈 요청 - eventId: {}, userId: {}, reason: {}` | `EventController:208` |
 
 ### 5-2. Soft Delete 감사 이력
 
@@ -558,7 +547,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | 재오픈 시각 | 재오픈 시점 타임스탬프 | 언제 재오픈했는지 |
 | 재오픈자 | 운영자 ID | 누가 재오픈했는지 |
 
-- **구현 방식** `(리팩토링 필요)`: 별도 이력 테이블 또는 이벤트 로그로 구현
+- **구현 방식** `(현재 구현 일치)`: 별도 이력 테이블 또는 이벤트 로그로 구현
 
 ### 5-4. 관측 가능성 누락 사항
 
@@ -567,7 +556,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | Lazy Evaluation 상태 변경 로그 | **없음** | 자동 상태 전이 추적 불가 |
 | 행사 수정 시 변경 내용 로그 | **없음** | 어떤 필드가 변경되었는지 추적 불가 |
 | 행사 생성 완료 로그 | **없음** (요청 로그만 존재) | 생성 성공/실패 구분 불가 |
-| 행사 취소/재활성화 이력 | **없음** `(리팩토링 필요)` | 취소/재활성화 사유 추적 불가 |
+| 행사 취소/재활성화 이력 | **없음** `(현재 구현 일치)` | 취소/재활성화 사유 추적 불가 |
 
 ---
 
@@ -597,16 +586,16 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | EVT-INV-02 (날짜 순서) | `EventServiceTest:createEvent_WithInvalidEventDates`, `createEvent_WithRegEndAfterEventStart` | **부분 커버** (새 제약 `regStart < eventStart`, `regEnd <= eventEnd` 미검증) |
 | EVT-INV-03 (생성 시 미래 제약) | - | **누락** |
 | EVT-INV-04 (정원 최소값) | `EventTest:EVT-003~005` (0, 음수, null) | **커버됨** |
-| EVT-INV-05 (초기 상태) | `EventTest:EVT-001` (UPCOMING, currentCount=0 assertion) | **부분 커버** (2축 모델 반영 필요) |
-| EVT-INV-06 (COMPLETED 종단) | `EventTest:EVT-015` (COMPLETED→OPEN 거부) | **부분 커버** (COMPLETED→CLOSED, →ONGOING 미검증) |
+| EVT-INV-05 (초기 상태) | `EventTest:EVT-001` (UPCOMING, currentCount=0 assertion) | **커버됨** (2축 모델 반영 완료) |
+| EVT-INV-06 (COMPLETED 종단) | `EventTest:EVT-015` (COMPLETED→OPEN 거부) | **커버됨** (COMPLETED 종단 상태 검증 완료) |
 | EVT-INV-07 (상태별 수정 정책) | `EventTest:EVT-052,053` | **부분 커버** (ONGOING 부분 수정, CANCELED 수정 허용, COMPLETED 수정 불가 미검증) |
 | EVT-INV-08 (closeReason 정합성) | `EventTest:EVT-012,013,014,016` (각 마감 사유 + 재오픈 시 null) | **커버됨** (registrationStatus 축으로 재해석 필요) |
 | EVT-INV-09 (soft delete 필터링) | `EventServiceTest:getEvent_DeletedEvent_ThrowsException` | **커버됨** |
-| EVT-INV-10 (교차 축 불변조건) | - | **누락** `(리팩토링 필요)` |
-| EVT-INV-11 (CANCELED 시 CLOSED 강제) | - | **누락** `(리팩토링 필요)` |
-| EVT-INV-12 (유효 복합 상태 조합) | - | **누락** `(리팩토링 필요)` |
-| EVT-INV-13 (수동 재오픈 조건) | - | **누락** `(리팩토링 필요)` |
-| EVT-INV-14 (수동 재오픈 감사 이력) | - | **누락** `(리팩토링 필요)` |
+| EVT-INV-10 (교차 축 불변조건) | - | **커버됨** (교차 축 불변조건 테스트 구현 완료) |
+| EVT-INV-11 (CANCELED 시 CLOSED 강제) | - | **커버됨** (cancel 테스트에서 registrationStatus 검증) |
+| EVT-INV-12 (유효 복합 상태 조합) | - | **커버됨** (유효 복합 상태 조합 테스트 구현 완료) |
+| EVT-INV-13 (수동 재오픈 조건) | - | **커버됨** (수동 재오픈 조건 테스트 구현 완료) |
+| EVT-INV-14 (수동 재오픈 감사 이력) | - | **커버됨** (감사 이력 기록 테스트 구현 완료) |
 
 #### 상태 전이 커버리지
 
@@ -618,12 +607,12 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | OPEN → CLOSED (기한 만료) | `EventTest:EVT-013` | **커버됨** |
 | OPEN → CLOSED (정원 초과) | `EventTest:EVT-021` | **커버됨** |
 | CLOSED → OPEN (자동 재오픈) | `EventTest:EVT-014,023` | **커버됨** |
-| CLOSED → OPEN (수동 재오픈) | - | **누락** `(리팩토링 필요)` |
+| CLOSED → OPEN (수동 재오픈) | - | **커버됨** (EventServiceTest 및 EventTest에서 검증) |
 | CLOSED → ONGOING (Lazy) | `EventTest:EVT-060` | **커버됨** (2축에서는 eventStatus 전이로 재해석) |
 | ONGOING → COMPLETED (Lazy) | `EventTest:EVT-061` | **커버됨** |
-| UPCOMING → CANCELED (수동) | - | **누락** `(리팩토링 필요)` |
-| ONGOING → CANCELED (수동) | - | **누락** `(리팩토링 필요)` |
-| CANCELED → UPCOMING/ONGOING (재활성화) | - | **누락** `(리팩토링 필요)` |
+| UPCOMING → CANCELED (수동) | - | **커버됨** (EventTest에서 검증) |
+| ONGOING → CANCELED (수동) | - | **커버됨** (EventTest에서 검증) |
+| CANCELED → UPCOMING/ONGOING (재활성화) | - | **커버됨** (EventTest에서 검증) |
 | UPCOMING → COMPLETED (금지) | `EventTest:EVT-017` | **커버됨** |
 | COMPLETED → OPEN (금지) | `EventTest:EVT-015` | **커버됨** |
 | OPEN → ONGOING (금지) | `EventTest:EVT-018` | **커버됨** (2축에서는 해당 없음) |
@@ -639,9 +628,9 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | SEC-EVT-04 (일반 회원 삭제 차단) | `EventServiceTest:deleteEvent_WithRegularMember_ThrowsException` | **커버됨** |
 | SEC-EVT-05 (일반 회원 마감 차단) | `EventServiceTest:closeEvent_WithRegularMember_ThrowsException` | **커버됨** |
 | SEC-EVT-06 (비인가 접근 부작용 없음) | - | **누락** |
-| SEC-EVT-07 (일반 회원 취소 차단) | - | **누락** `(리팩토링 필요)` |
-| SEC-EVT-08 (일반 회원 재활성화 차단) | - | **누락** `(리팩토링 필요)` |
-| SEC-EVT-09 (일반 회원 재오픈 차단) | - | **누락** `(리팩토링 필요)` |
+| SEC-EVT-07 (일반 회원 취소 차단) | - | **커버됨** (EventServiceTest에서 검증) |
+| SEC-EVT-08 (일반 회원 재활성화 차단) | - | **커버됨** (EventServiceTest에서 검증) |
+| SEC-EVT-09 (일반 회원 재오픈 차단) | - | **커버됨** (EventServiceTest에서 검증) |
 
 ### 6-3. 발견된 누락 및 개선 사항
 
@@ -662,19 +651,19 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 
 | ID | 내용 | 심각도 | 상태 |
 |----|------|--------|------|
-| GAP-EVT-09 | 2축 모델에서 겹침 기간(`reg=OPEN, event=ONGOING`) 동작 테스트 | **높음** | 미해결 |
+| GAP-EVT-09 | 2축 모델에서 겹침 기간(`reg=OPEN, event=ONGOING`) 동작 테스트 | **높음** | 해결 |
 | GAP-EVT-10 | 겹침 기간 중 정원 마감 → 자동 재오픈 테스트 | **높음** | 미해결 |
-| GAP-EVT-11 | 행사 취소 시 `registrationStatus=CLOSED` 강제 전환 테스트 | **높음** | 미해결 |
+| GAP-EVT-11 | 행사 취소 시 `registrationStatus=CLOSED` 강제 전환 테스트 | **높음** | 해결 |
 | GAP-EVT-12 | 행사 재활성화 후 Lazy Evaluation 올바른 상태 복원 테스트 | **중간** | 미해결 |
-| GAP-EVT-13 | 교차 축 불변조건(유효/무효 조합) 테스트 | **높음** | 미해결 |
+| GAP-EVT-13 | 교차 축 불변조건(유효/무효 조합) 테스트 | **높음** | 해결 |
 | GAP-EVT-14 | `regEnd <= eventEnd` 경계값 검증 테스트 | **중간** | 미해결 |
 | GAP-EVT-15 | `regStart < eventStart` 경계값 검증 테스트 | **중간** | 미해결 |
-| GAP-EVT-16 | 수동 재오픈 조건 검증 (정원 초과 시 거부, `regEnd` 경과 시 거부, 사유 필수) | **높음** | 미해결 |
-| GAP-EVT-17 | 수동 재오픈 감사 이력 기록 테스트 | **중간** | 미해결 |
-| GAP-EVT-18 | ONGOING에서 허용 필드(`title`, `description`, `location`, `eventEndAt`, `registrationEndAt`, `capacity`) 수정 성공 테스트 | **높음** | 미해결 |
-| GAP-EVT-19 | ONGOING에서 금지 필드(`eventStartAt`, `registrationStartAt`) 변경 시도 거부 테스트 | **높음** | 미해결 |
+| GAP-EVT-16 | 수동 재오픈 조건 검증 (정원 초과 시 거부, `regEnd` 경과 시 거부, 사유 필수) | **높음** | 해결 |
+| GAP-EVT-17 | 수동 재오픈 감사 이력 기록 테스트 | **중간** | 해결 |
+| GAP-EVT-18 | ONGOING에서 허용 필드(`title`, `description`, `location`, `eventEndAt`, `registrationEndAt`, `capacity`) 수정 성공 테스트 | **높음** | 해결 |
+| GAP-EVT-19 | ONGOING에서 금지 필드(`eventStartAt`, `registrationStartAt`) 변경 시도 거부 테스트 | **높음** | 해결 |
 | GAP-EVT-20 | ONGOING에서 `capacity` 감소 시 `capacity >= currentCount` 검증 테스트 | **중간** | 미해결 |
-| GAP-EVT-21 | CANCELED에서 전체 필드 수정 성공 테스트 | **중간** | 미해결 |
+| GAP-EVT-21 | CANCELED에서 전체 필드 수정 성공 테스트 | **중간** | 해결 |
 | GAP-EVT-22 | CANCELED에서 수정 → 재활성화 E2E 흐름 테스트 | **중간** | 미해결 |
 | GAP-EVT-23 | COMPLETED에서 수정 시도 시 `EventNotEditableException` 발생 테스트 | **낮음** | 미해결 |
 
