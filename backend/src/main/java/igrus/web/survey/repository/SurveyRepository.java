@@ -22,6 +22,13 @@ public interface SurveyRepository extends JpaRepository<Survey, Long> {
     Optional<Survey> findByIdAndDeletedFalse(Long id);
 
     /**
+     * 삭제되지 않은 모든 설문을 조회합니다.
+     *
+     * @return 삭제되지 않은 설문 목록
+     */
+    List<Survey> findByDeletedFalse();
+
+    /**
      * 삭제되지 않은 특정 상태의 설문 목록을 조회합니다.
      *
      * @param status 설문 상태
