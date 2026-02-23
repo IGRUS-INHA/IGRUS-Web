@@ -15,11 +15,50 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | # | 영역 | 적용 이유 |
 |---|------|----------|
 | 1 | 도메인 규칙과 불변조건 | 설문 상태 제약, 질문 수 제한, 중복 응답 방지 등 핵심 비즈니스 규칙 |
-| 2 | 상태 모델 | SurveyStatus FSM (DRAFT → PUBLISHED → CLOSED) |
+| 2 | 상태 모델 | 2축 상태 모델: 공개 상태(SurveyVisibility) + 응답 수집 상태(SurveyResponseStatus) |
 | 3 | 입력 도메인 분할과 경계값 | 설문/질문/응답 입력값의 동치류와 경계값 |
 | 4 | 권한/보안 정책 | RBAC (운영진 관리 vs 일반 회원 응답 vs 비회원 응답) |
 | 5 | 관측 가능성 | 설문 라이프사이클 감사 로그 |
 | 6 | 테스트 전략 | 테스트 레벨별 검증 항목 매핑 |
+
+---
+
+## 질문 유형 정의 (SurveyQuestionType)
+
+설문에서 사용할 수 있는 11가지 질문 유형이다. 프론트엔드와 백엔드 모두 이 정의를 기준으로 구현한다.
+
+| enum 값 | 한국어 명칭 | 설명 | 응답 방식 | 필수 구성요소 |
+|---------|-----------|------|----------|-------------|
+| `SHORT_ANSWER` | 단답형 | 한 줄 텍스트 입력 | 자유 텍스트 입력 | 없음 |
+| `PARAGRAPH` | 서술형 | 여러 줄 텍스트 입력 | 자유 텍스트 입력 (긴 글) | 없음 |
+| `MULTIPLE_CHOICE` | 객관식 (단일 선택) | 보기 중 1개 선택 | 라디오 버튼 | 선택지(Option) 1개 이상 |
+| `CHECKBOX` | 체크박스 (복수 선택) | 보기 중 여러 개 선택 가능 | 체크박스 | 선택지(Option) 1개 이상 |
+| `DROPDOWN` | 드롭다운 | 드롭다운 목록에서 1개 선택 | 드롭다운 셀렉트 | 선택지(Option) 1개 이상 |
+| `LINEAR_SCALE` | 선형 배율 | 최솟값~최댓값 범위에서 점수 선택 (예: 1~5점) | 숫자 척도 선택 | scaleMin, scaleMax (min < max) |
+| `MULTIPLE_CHOICE_GRID` | 객관식 그리드 | 행(Row)×열(Option) 표에서 행마다 1개 선택 | 행별 라디오 버튼 | 행(Row) 1개 이상 + 선택지(Option) 1개 이상 |
+| `CHECKBOX_GRID` | 체크박스 그리드 | 행(Row)×열(Option) 표에서 행마다 여러 개 선택 | 행별 체크박스 | 행(Row) 1개 이상 + 선택지(Option) 1개 이상 |
+| `DATE` | 날짜 | 날짜 입력 | 날짜 선택기 (Date Picker) | 없음 |
+| `TIME` | 시간 | 시간 입력 | 시간 선택기 (Time Picker) | 없음 |
+| `FILE_UPLOAD` | 파일 업로드 | 파일 첨부 | 파일 선택 / 드래그 앤 드롭 | 없음 |
+
+### 그리드 유형 상세 설명
+
+그리드 유형(`MULTIPLE_CHOICE_GRID`, `CHECKBOX_GRID`)은 표 형태의 질문이다.
+
+```
+예시: "각 과목의 만족도를 선택하세요"
+
+             │ 매우 불만족 │ 불만족 │ 보통 │ 만족 │ 매우 만족
+─────────────┼───────────┼───────┼─────┼─────┼──────────
+ 수학         │     ○     │   ○   │  ○  │  ○  │    ○
+ 영어         │     ○     │   ○   │  ○  │  ○  │    ○
+ 과학         │     ○     │   ○   │  ○  │  ○  │    ○
+```
+
+- **행(Row)**: 평가 대상 (위 예시에서 수학, 영어, 과학) → `SurveyQuestionRow`
+- **열(Option)**: 선택 항목 (위 예시에서 매우 불만족~매우 만족) → `SurveyQuestionOption`
+- **객관식 그리드**: 행마다 열 중 1개만 선택 (라디오 버튼)
+- **체크박스 그리드**: 행마다 열 중 여러 개 선택 가능 (체크박스)
 
 ---
 
@@ -64,7 +103,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 > 설문에 포함된 질문은 최소 1개, 최대 50개이다.
 
-- **적용 시점**: 설문 발행(DRAFT → PUBLISHED) 시 검증
+- **적용 시점**: 설문 공개(DRAFT → PUBLISHED) 시 검증
 - **경계값**: 0개 (발행 거부), 1개 (최소 유효), 50개 (최대 유효), 51개 (발행 거부)
 - **위반 시**: 질문 없는 설문이 발행되거나, 과도한 질문 수로 응답 품질 저하
 
@@ -98,22 +137,22 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **관련 코드**: `SurveyQuestion.setScaleRange()` — min >= max 시 `IllegalArgumentException`
 - **위반 시**: 응답 불가능한 척도 생성
 
-### INV-08: 마감일 경과 시 자동 CLOSED 전환
+### INV-08: 마감일 경과 시 자동 응답 마감
 
-> 마감일(`deadline`)이 설정된 PUBLISHED 설문은 마감일 경과 후 자동으로 CLOSED 상태가 된다.
+> 마감일(`deadline`)이 설정된 설문은 마감일 경과 후 자동으로 응답 수집이 마감(`CLOSED`)된다.
 
-- **사전조건**: `survey.status == PUBLISHED && survey.deadline != null && now > survey.deadline`
-- **사후조건**: `survey.status == CLOSED`
+- **사전조건**: `survey.responseStatus == OPEN && survey.deadline != null && now > survey.deadline`
+- **사후조건**: `survey.responseStatus == CLOSED` (공개 상태 `visibility`는 변경 없음)
 - **구현 방식**: 스케줄러 또는 응답 시점 검증 (TBD)
 
-### INV-09: PUBLISHED 상태에서만 응답 가능
+### INV-09: PUBLISHED + OPEN 상태에서만 응답 가능
 
+> 공개 상태가 `PUBLISHED`이고 응답 상태가 `OPEN`인 설문에만 응답을 제출할 수 있다.
 
-> PUBLISHED 상태의 설문에만 응답을 제출할 수 있다. DRAFT와 CLOSED 상태에서는 응답 불가.
-
-- **사전조건**: 응답 제출 시 `survey.isPublished() == true` 검증
+- **사전조건**: 응답 제출 시 `survey.visibility == PUBLISHED && survey.responseStatus == OPEN` 검증
 - **DRAFT 거부 이유**: 아직 작성 중인 설문이 응답자에게 노출되면 안 됨
 - **CLOSED 거부 이유**: 마감된 설문에 응답이 추가되면 통계 오염
+- **PUBLISHED + CLOSED 거부 이유**: 설문은 공개되어 있지만 응답 수집이 마감된 상태
 
 ### INV-10: 선택지/행 삭제 시 기존 응답 보호
 
@@ -122,12 +161,12 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **해결 방안**: soft delete 처리 — 삭제 플래그만 설정하고, 설문 폼에서는 숨기되 기존 응답의 FK는 유지
 - **결과**: 결과 조회 시 삭제된 선택지/행의 답변도 확인 가능
 
-### INV-11: 재발행 시 마감일 검증
+### INV-11: 응답 재개 시 마감일 검증
 
-> CLOSED → PUBLISHED 재발행 시, 마감일이 설정되어 있다면 반드시 미래 시점이어야 한다.
+> 응답 상태를 `CLOSED → OPEN`으로 재개할 때, 마감일이 설정되어 있다면 반드시 미래 시점이어야 한다.
 
 - **사전조건**: `survey.deadline == null || survey.deadline > now`
-- **위반 시**: 재발행 즉시 마감일 경과로 다시 CLOSED 전환
+- **위반 시**: 응답 재개 즉시 마감일 경과로 다시 CLOSED 전환
 
 ### INV-12: 필수 질문 응답 누락 방지
 
@@ -159,10 +198,10 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 ### INV-15: 응답 제출 중 설문 마감 경합
 
-> 응답자가 설문을 작성하는 도중 설문이 CLOSED로 전환될 수 있다.
+> 응답자가 설문을 작성하는 도중 응답 상태가 `CLOSED`로 전환될 수 있다.
 
-- **시나리오**: 응답자가 폼을 열었을 때 PUBLISHED → 작성 중 마감일 경과 → 제출 시 CLOSED
-- **해결 방안**: 응답 제출 시점에 `survey.isPublished()` 재검증
+- **시나리오**: 응답자가 폼을 열었을 때 `OPEN` → 작성 중 마감일 경과 → 제출 시 `CLOSED`
+- **해결 방안**: 응답 제출 시점에 `survey.visibility == PUBLISHED && survey.responseStatus == OPEN` 재검증
 - **위반 시**: 마감된 설문에 응답이 저장됨
 
 ### INV-16: 휴지통 설문은 응답 불가
@@ -190,38 +229,92 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 ## 2. 상태 모델 (State Machine & Transitions)
 
-### 2-1. 설문 상태 전이 (SurveyStatus FSM)
+설문은 **2축 상태 모델**을 사용한다. 공개 상태와 응답 수집 상태를 독립적으로 관리하여, 1축 모델에서 표현할 수 없었던 조합(설문은 공개하되 응답은 아직 안 받는 상태 등)을 자연스럽게 지원한다.
+
+### 2-1. 2축 개요
+
+| 축 | enum | 값 | 의미 |
+|----|------|-----|------|
+| 축 1: 공개 상태 | `SurveyVisibility` | `DRAFT` | 비공개 (작성 중) |
+| | | `PUBLISHED` | 공개 (응답자에게 노출) |
+| 축 2: 응답 수집 상태 | `SurveyResponseStatus` | `CLOSED` | 응답 받지 않음 |
+| | | `OPEN` | 응답 수집 중 |
+
+### 2-1-1. 유효한 상태 조합
+
+| 공개 상태 | 응답 상태 | 의미 | 예시 |
+|:---------:|:---------:|------|------|
+| `DRAFT` | - | 작성 중, 비공개. 응답 상태 무의미 | 설문을 처음 만들고 질문을 작성하는 중 |
+| `PUBLISHED` | `CLOSED` | 공개 + 응답 마감 | 설문 미리보기, 응답 마감 후 열람, 응답 일시 중지 |
+| `PUBLISHED` | `OPEN` | 공개 + 응답 수집 중 | 정상적으로 응답을 받고 있는 상태 |
+
+> **참고**: `DRAFT` 상태에서는 응답 상태가 의미 없으므로 기본값 `CLOSED`로 둔다. `DRAFT`인 설문에 대해 응답 상태를 변경하는 것은 허용하지 않는다.
+
+### 2-1-2. 축 1: 공개 상태 전이 (SurveyVisibility)
 
 ```
-                    발행
-┌─────────┐ ────────────────> ┌───────────┐
-│  DRAFT  │                   │ PUBLISHED │
-└─────────┘                   └─────┬─────┘
-                                 ▲  │ 수동 마감 또는
-                           재발행 │  │ 마감일 경과
-                                 │  ▼
-                              ┌──────────┐
-                              │  CLOSED  │
-                              └──────────┘
+          공개(발행)
+┌─────────┐ ──────────> ┌───────────┐
+│  DRAFT  │             │ PUBLISHED │
+└─────────┘             └───────────┘
 ```
 
-**유효 전이**:
+| 전이 | 트리거 | 사전조건 | 사후조건 |
+|------|--------|---------|---------|
+| DRAFT → PUBLISHED | 운영진이 공개 | OPERATOR 이상 권한, 질문 1개 이상 | `visibility = PUBLISHED` |
 
-| 전이 | 트리거 | 사전조건 | 사후조건 | 관련 코드 |
-|------|--------|---------|---------|----------|
-| DRAFT → PUBLISHED | 운영진이 발행 | OPERATOR 이상 권한, 질문 1개 이상 | `status = PUBLISHED`, 응답 대상자에게 노출 | `Survey.publish()` |
-| PUBLISHED → CLOSED | 수동 마감 | OPERATOR 이상 권한 | `status = CLOSED`, 응답 불가 | `Survey.close()` |
-| PUBLISHED → CLOSED | 마감일 경과 | `deadline != null && now > deadline` | `status = CLOSED`, 자동 전환 | 스케줄러 (TBD) |
-| CLOSED → PUBLISHED | 재발행 | OPERATOR 이상 권한, 마감일 미설정이거나 마감일이 미래 (CLOSED 상태에서 마감일 수정 가능) | `status = PUBLISHED`, 응답 재개 | `Survey.rePublish()` |
+**금지된 전이**:
 
-**금지된 전이 (Invalid Transition)**:
+| 시도 | 이유 |
+|------|------|
+| PUBLISHED → DRAFT | 이미 응답이 수집되었을 수 있으므로 초안으로 되돌릴 수 없음 |
 
-| 시도 | 예상 결과 | 이유 |
-|------|----------|------|
-| DRAFT → CLOSED | `IllegalStateException` | 발행을 거치지 않고 마감 불가 |
-| PUBLISHED → DRAFT | `IllegalStateException` | 이미 응답이 수집되었을 수 있으므로 초안으로 되돌릴 수 없음 |
-| CLOSED → DRAFT | `IllegalStateException` | 초안으로 되돌리면 질문 구조 변경이 가능해져 기존 응답과 불일치 |
-| CLOSED → PUBLISHED (마감일 경과) | `IllegalStateException` | 마감일이 이미 지났으면 재발행해도 즉시 다시 CLOSED됨 |
+### 2-1-3. 축 2: 응답 수집 상태 전이 (SurveyResponseStatus)
+
+```
+        응답 마감           응답 재개
+┌────────┐ ──────────> ┌────────┐
+│  OPEN  │             │ CLOSED │
+└────────┘ <────────── └────────┘
+```
+
+| 전이 | 트리거 | 사전조건 | 사후조건 |
+|------|--------|---------|---------|
+| CLOSED → OPEN | 운영진이 응답 시작/재개 | OPERATOR 이상 권한, `visibility == PUBLISHED`, 마감일 미설정이거나 미래 | `responseStatus = OPEN` |
+| OPEN → CLOSED | 수동 마감 | OPERATOR 이상 권한 | `responseStatus = CLOSED` |
+| OPEN → CLOSED | 마감일 경과 | `deadline != null && now > deadline` | 자동 전환 |
+
+**금지된 전이**:
+
+| 시도 | 이유 |
+|------|------|
+| DRAFT 상태에서 OPEN 전환 | 비공개 설문은 응답을 받을 수 없음 |
+| CLOSED → OPEN (마감일 경과) | 마감일이 이미 지났으면 재개해도 즉시 다시 CLOSED됨 |
+
+### 2-1-4. 시나리오별 상태 흐름 예시
+
+**기본 흐름** (만들고 → 공개하고 → 응답 받고 → 마감):
+```
+(DRAFT, -) → (PUBLISHED, CLOSED) → (PUBLISHED, OPEN) → (PUBLISHED, CLOSED)
+  작성 중        공개(미리보기)       응답 수집 시작          응답 마감
+```
+
+**즉시 응답 시작** (공개와 동시에 응답 시작):
+```
+(DRAFT, -) → (PUBLISHED, OPEN) → (PUBLISHED, CLOSED)
+  작성 중      공개 + 응답 시작         응답 마감
+```
+
+**응답 일시 중지 후 재개**:
+```
+(PUBLISHED, OPEN) → (PUBLISHED, CLOSED) → (PUBLISHED, OPEN)
+    응답 수집 중       일시 중지(질문 수정)     응답 재개
+```
+
+**마감 후 설문 열람**:
+```
+(PUBLISHED, CLOSED) → 응답자가 설문 내용 확인 가능 (응답 제출은 불가)
+```
 
 ### 2-2. 설문 휴지통 전이 (SurveyStatus FSM과 직교)
 
@@ -246,7 +339,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 ### 2-3. 설문 수정 가능 범위 (상태별)
 
-| 필드 | DRAFT | PUBLISHED | CLOSED |
+| 필드 | DRAFT | PUBLISHED + CLOSED | PUBLISHED + OPEN |
 |------|:---:|:---:|:---:|
 | 제목 (title) | O | O | O |
 | 설명 (description) | O | O | O |
@@ -368,8 +461,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 설문 휴지통 이동 | `surveys.surveys_trashed_at` | 휴지통 이동 시각 |
 | 설문 휴지통 복원 | `surveys.surveys_trashed_at = NULL` | 복원 시각 (`updatedAt`) |
 | 설문 영구 삭제 | `surveys.surveys_deleted_by` | 삭제자 ID, 삭제 시각 |
-| 설문 발행 | `surveys.surveys_status = PUBLISHED` | 상태 변경 시각 (`updatedAt`) |
-| 설문 마감 | `surveys.surveys_status = CLOSED` | 상태 변경 시각 (`updatedAt`) |
+| 설문 공개 | `surveys.surveys_visibility = PUBLISHED` | 공개 시각 (`updatedAt`) |
+| 응답 시작 | `surveys.surveys_response_status = OPEN` | 응답 시작 시각 (`updatedAt`) |
+| 응답 마감 | `surveys.surveys_response_status = CLOSED` | 응답 마감 시각 (`updatedAt`) |
 | 응답 제출 | `survey_responses.survey_responses_created_by` | 응답자 ID, 제출 시각 |
 
 ### 5-2. 로그 메시지 (구현 시 추가)
@@ -377,8 +471,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 서비스 | 시작 로그 | 완료 로그 | 실패 로그 |
 |--------|---------|---------|---------|
 | 설문 생성 | `설문 생성 요청: title` | `설문 생성 완료: surveyId` | - |
-| 설문 발행 | `설문 발행 요청: surveyId` | `설문 발행 완료: surveyId` | `발행 실패: 질문 없음` |
-| 설문 마감 | `설문 마감 요청: surveyId` | `설문 마감 완료: surveyId` | `마감 실패: 상태 불일치` |
+| 설문 공개 | `설문 공개 요청: surveyId` | `설문 공개 완료: surveyId` | `공개 실패: 질문 없음` |
+| 응답 시작 | `응답 시작 요청: surveyId` | `응답 시작 완료: surveyId` | `응답 시작 실패: 비공개 설문` |
+| 응답 마감 | `응답 마감 요청: surveyId` | `응답 마감 완료: surveyId` | `마감 실패: 상태 불일치` |
 | 휴지통 이동 | `설문 휴지통 이동 요청: surveyId` | `설문 휴지통 이동 완료: surveyId` | - |
 | 휴지통 복원 | `설문 복원 요청: surveyId` | `설문 복원 완료: surveyId` | - |
 | 영구 삭제 | `설문 영구 삭제 요청: surveyId` | `설문 영구 삭제 완료: surveyId` | `영구 삭제 실패: 휴지통 상태 아님` |
@@ -407,10 +502,10 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | INV-05 (모든 상태 accessLevel 변경 가능) | - | 미작성 |
 | INV-06 (그리드 최소 구성) | - | 미작성 |
 | INV-07 (선형 배율 min < max) | - | 미작성 |
-| INV-08 (마감일 자동 CLOSED) | - | 미작성 |
-| INV-09 (PUBLISHED에서만 응답 가능) | - | 미작성 |
+| INV-08 (마감일 자동 응답 마감) | - | 미작성 |
+| INV-09 (PUBLISHED + OPEN에서만 응답 가능) | - | 미작성 |
 | INV-10 (선택지/행 삭제 시 soft delete) | - | 미작성 |
-| INV-11 (재발행 시 마감일 검증) | - | 미작성 |
+| INV-11 (응답 재개 시 마감일 검증) | - | 미작성 |
 | INV-12 (필수 질문 응답 누락 방지) | - | 미작성 |
 | INV-13 (질문 유형별 필수 구성요소) | - | 미작성 |
 | INV-14 (질문 삭제 시 soft delete) | - | 미작성 |
@@ -422,16 +517,22 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 ### 6-3. 상태 전이 커버리지 (테스트 작성 후 업데이트)
 
+**축 1: 공개 상태 (SurveyVisibility)**
+
 | 전이 | 커버 테스트 | 상태 |
 |------|-----------|------|
 | DRAFT → PUBLISHED | - | 미작성 |
-| PUBLISHED → CLOSED (수동) | - | 미작성 |
-| PUBLISHED → CLOSED (자동) | - | 미작성 |
-| DRAFT → CLOSED (금지) | - | 미작성 |
 | PUBLISHED → DRAFT (금지) | - | 미작성 |
-| CLOSED → PUBLISHED (재발행) | - | 미작성 |
-| CLOSED → PUBLISHED (마감일 경과, 금지) | - | 미작성 |
-| CLOSED → DRAFT (금지) | - | 미작성 |
+
+**축 2: 응답 수집 상태 (SurveyResponseStatus)**
+
+| 전이 | 커버 테스트 | 상태 |
+|------|-----------|------|
+| CLOSED → OPEN (응답 시작/재개) | - | 미작성 |
+| OPEN → CLOSED (수동 마감) | - | 미작성 |
+| OPEN → CLOSED (마감일 경과 자동) | - | 미작성 |
+| DRAFT에서 OPEN 전환 (금지) | - | 미작성 |
+| CLOSED → OPEN (마감일 경과, 금지) | - | 미작성 |
 
 ### 6-4. 권한 검증 커버리지 (테스트 작성 후 업데이트)
 
