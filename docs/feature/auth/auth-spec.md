@@ -1,7 +1,7 @@
 # Feature Specification: 로그인/회원가입
 
 **Created**: 2026-01-23
-**Updated**: 2026-02-21
+**Updated**: 2026-02-23
 **Status**: In Progress
 **Input**: PRD V2 기반 로그인/회원가입 기능 명세
 
@@ -29,6 +29,7 @@
 6. **Given** 인증 코드를 5회 이상 틀리게 입력한 사용자가, **When** 다시 인증을 시도하면, **Then** "인증 시도 횟수를 초과했습니다. 새 코드를 발급받아주세요" 메시지가 표시된다
 7. **Given** 이미 가입된 학번으로, **When** 회원가입을 시도하면, **Then** "이미 가입된 계정입니다" 메시지가 표시된다
 8. **Given** 이메일 사전 인증을 완료하지 않은 상태에서, **When** 회원가입을 시도하면, **Then** "이메일 인증이 필요합니다" 메시지가 표시된다
+9. **Given** 회원가입이 성공적으로 완료된 상태에서, **When** 완료 화면이 표시되면, **Then** 슬랙 채널 참여 안내와 참여 링크 버튼(새 탭)이 표시되고, "로그인하러 가기" 버튼으로 로그인 페이지로 이동할 수 있다
 
 ---
 
@@ -273,6 +274,10 @@
 - Q: 동시 탭에서 동시에 갱신 요청이 오면? → A: **Grace Period (10초)** 내에 폐기된 토큰이 사용되면 동시 요청으로 간주하고, 현재 활성 토큰 기반으로 Access Token만 발급한다.
 - Q: Access Token/Refresh Token 유효기간은? → A: Access Token 1시간 → **5분**, Refresh Token 7일 → **3일**로 변경. 짧은 Access Token 유효기간은 로테이션과 함께 보안 강화 효과를 높인다.
 - Q: `@Transactional` 롤백과 탈취 감지의 관계는? → A: 탈취 감지 시 Token Family 전체를 무효화한 후 예외를 던지는데, 일반 `@Transactional`에서는 RuntimeException으로 인해 무효화가 롤백된다. `@Transactional(noRollbackFor = RefreshTokenTheftException.class)` 적용으로 해결.
+
+### Session 2026-02-23
+
+- Q: 회원가입 완료 시 사용자에게 어떤 안내를 제공해야 하는가? → A: 기존 `alert()` + 즉시 로그인 리다이렉트를 **완료 화면**으로 대체. 가입 완료 메시지, 임시 학번(해당 시), 슬랙 채널 참여 안내(VITE_SLACK_INVITE_URL 환경변수), 로그인 이동 버튼을 표시한다. 슬랙 링크가 미설정이면 슬랙 섹션을 숨긴다.
 
 ### Session 2026-02-21
 

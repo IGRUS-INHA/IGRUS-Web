@@ -25,8 +25,10 @@ import {
   Key,
   Clock,
   Copy,
+  CircleCheck,
+  LogIn,
 } from 'lucide-react';
-import { useSignup, useVerifyEmail, useResendVerification } from '@/api/model/password-authentication/password-authentication';
+import { useSignup, useSignupWithTemporaryStudentId, useVerifyPreSignupCode, useSendPreSignupCode } from '@/api/model/password-authentication/password-authentication';
 import { majorOptions } from '@/constants/majorOptions';
 import { domainOptions } from '@/constants/domainOptions';
 import { WISH_TITLE, wishOptions, wishToEnum } from '@/constants/wishOptions';
@@ -39,7 +41,6 @@ import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/utils';
 import { getErrorMessage, hasErrorCode } from '@/utils/error';
 import { useSignupDuplicateCheck, useCountdown, useToast } from '@/hooks';
-import { customFetch } from '@/api/client';
 
 // --- 임시 학번 기간 체크 ---
 
@@ -141,22 +142,26 @@ export default function SignupPage() {
   const [passwordConfirmTouched, setPasswordConfirmTouched] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [useTempStudentId, setUseTempStudentId] = useState(false);
+  const [signupCompleted, setSignupCompleted] = useState(false);
+  const [completedTempStudentId, setCompletedTempStudentId] = useState<string | null>(null);
   const signupMutation = useSignup();
-  const verifyEmailMutation = useVerifyEmail();
-  const resendVerificationMutation = useResendVerification();
+  const signupTempMutation = useSignupWithTemporaryStudentId();
+  const verifyEmailMutation = useVerifyPreSignupCode();
+  const resendVerificationMutation = useSendPreSignupCode();
 
   // 이메일 인증 상태
   const [emailVerified, setEmailVerified] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [verifiedEmail, setVerifiedEmail] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [verificationError, setVerificationError] = useState<string>();
 
   // 인증 코드 유효시간 타이머 (10분) / 재발송 쿨다운 (60초)
-  const codeTimer = useCountdown({ initialSeconds: 600, persistKey: 'signup-email-code-timer' });
-  const resendCooldown = useCountdown({ initialSeconds: 60, persistKey: 'signup-email-resend-cooldown' });
+  const codeTimer = useCountdown({ initialSeconds: 600 });
+  const resendCooldown = useCountdown({ initialSeconds: 60 });
   const {
     studentId: studentIdCheck,
     email: emailCheck,
@@ -232,6 +237,7 @@ export default function SignupPage() {
     if (verifiedEmail && currentFullEmail !== verifiedEmail) {
       setEmailVerified(false);
       setVerificationCode('');
+      setVerificationToken('');
       setCodeSent(false);
       setVerificationError(undefined);
       codeTimer.stop();
@@ -317,9 +323,11 @@ export default function SignupPage() {
     setVerifyingCode(true);
     setVerificationError(undefined);
     try {
-      await verifyEmailMutation.mutateAsync({
+      const response = await verifyEmailMutation.mutateAsync({
         data: { email: currentFullEmail, code: verificationCode },
       });
+      const responseData = response.data as unknown as { verificationToken?: string };
+      setVerificationToken(responseData.verificationToken ?? '');
       setEmailVerified(true);
       setVerifiedEmail(currentFullEmail);
       codeTimer.stop();
@@ -452,67 +460,44 @@ export default function SignupPage() {
         data.emailDomain === 'custom' ? data.customDomain : data.emailDomain;
       const fullEmail = `${data.emailLocal}@${domain}`;
 
+      const commonFields = {
+        password: data.password,
+        name: data.name,
+        email: fullEmail,
+        phoneNumber: formatPhoneNumber(data.phoneNumber),
+        department: data.department,
+        motivation: data.motivation || undefined,
+        gender: data.gender!,
+        grade: data.grade!,
+        enrollmentStatus: enrollmentStatusToEnum[data.enrollmentStatus],
+        wishes: data.wishes.map((w) => wishToEnum[w]).filter(Boolean),
+        interests: data.interests.map((i) => interestToEnum[i]).filter(Boolean),
+        customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
+        joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
+        customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,
+        privacyConsent: data.privacyConsent,
+        verificationToken,
+      };
+
       if (useTempStudentId) {
         // 임시 학번 회원가입
-        const result = await customFetch<{ data: { temporaryStudentId?: string; email?: string } }>(
-          '/api/v1/auth/password/signup/temporary',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              password: data.password,
-              name: data.name,
-              email: fullEmail,
-              phoneNumber: formatPhoneNumber(data.phoneNumber),
-              department: data.department,
-              motivation: data.motivation || undefined,
-              gender: data.gender!,
-              grade: data.grade!,
-              enrollmentStatus: enrollmentStatusToEnum[data.enrollmentStatus],
-              wishes: data.wishes.map((w) => wishToEnum[w]).filter(Boolean),
-              interests: data.interests.map((i) => interestToEnum[i]).filter(Boolean),
-              customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
-              joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
-              customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,
-              privacyConsent: data.privacyConsent,
-            }),
-          },
-        );
+        const result = await signupTempMutation.mutateAsync({
+          data: commonFields,
+        });
 
-        const tempId = result.data.temporaryStudentId;
-        alert(
-          `회원가입이 완료되었습니다!\n\n임시 학번 [${tempId}]이 발급되었습니다.\n로그인 페이지로 이동합니다.`,
-        );
-        navigate('/login');
+        const responseData = result.data as unknown as { temporaryStudentId?: string };
+        setCompletedTempStudentId(responseData.temporaryStudentId ?? null);
+        setSignupCompleted(true);
       } else {
         // 일반 회원가입
         await signupMutation.mutateAsync({
           data: {
             studentId: data.studentId,
-            password: data.password,
-            name: data.name,
-            email: fullEmail,
-            phoneNumber: formatPhoneNumber(data.phoneNumber),
-            department: data.department,
-            motivation: data.motivation || undefined,
-            gender: data.gender!,
-            grade: data.grade!,
-            enrollmentStatus: enrollmentStatusToEnum[data.enrollmentStatus],
-            wishes: data.wishes
-              .map((w) => wishToEnum[w])
-              .filter(Boolean),
-            interests: data.interests
-              .map((i) => interestToEnum[i])
-              .filter(Boolean),
-            customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
-            joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
-            customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,
-            privacyConsent: data.privacyConsent,
+            ...commonFields,
           },
         });
 
-        alert('회원가입이 완료되었습니다!\n\n로그인 페이지로 이동합니다.');
-        navigate('/login');
+        setSignupCompleted(true);
       }
     } catch (error: unknown) {
       if (hasErrorCode(error, 'DUPLICATE_STUDENT_ID')) {
@@ -526,6 +511,8 @@ export default function SignupPage() {
         setError('phoneNumber', { message: '이미 등록된 전화번호입니다.' });
       } else if (hasErrorCode(error, 'TEMP_STUDENT_ID_NOT_AVAILABLE')) {
         setServerError('임시 학번 발급은 1월~2월에만 가능합니다.');
+      } else if (hasErrorCode(error, 'RE_REGISTRATION_NOT_ALLOWED')) {
+        setServerError('탈퇴 후 재가입 제한 기간(5일)이 지나지 않았습니다.');
       } else {
         setServerError(getErrorMessage(error));
       }
@@ -533,6 +520,69 @@ export default function SignupPage() {
   };
 
   const isLastStep = step === STEPS.length - 1;
+
+  const slackInviteUrl = import.meta.env.VITE_SLACK_INVITE_URL;
+
+  if (signupCompleted) {
+    return (
+      <div className="flex items-center justify-center min-h-full py-s6 px-s4">
+        <div className="w-full max-w-lg animate-in slide-in-from-bottom-6 duration-500">
+          {/* 완료 아이콘 및 메시지 */}
+          <div className="text-center mb-s7">
+            <div className="mx-auto w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-s5">
+              <CircleCheck size={36} className="text-green-600 dark:text-green-400" />
+            </div>
+            <h1 className="typo-h2 text-foreground">회원가입 완료!</h1>
+            <p className="typo-b2 text-muted-foreground mt-s2">
+              IGRUS 회원가입이 성공적으로 완료되었습니다.
+            </p>
+            {completedTempStudentId && (
+              <div className="mt-s4 inline-flex items-center gap-s2 bg-primary/10 text-primary rounded-r2 px-s4 py-s2">
+                <Key size={16} />
+                <span className="typo-b2 font-medium">
+                  임시 학번: {completedTempStudentId}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* 슬랙 안내 섹션 */}
+          {slackInviteUrl && (
+            <div className="rounded-r4 border bg-card p-s6 shadow-sm mb-s5">
+              <h2 className="typo-h4 text-foreground mb-s4">슬랙 채널에 참여하세요</h2>
+              <p className="typo-b2 text-muted-foreground mb-s5">
+                IGRUS의 주요 소통은 슬랙에서 이루어집니다.
+                <br />
+                아래 버튼을 눌러 슬랙 워크스페이스에 참여해 주세요.
+              </p>
+              <a
+                href={slackInviteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Button type="button" className="w-full cursor-pointer">
+                  IGRUS 슬랙 참여하기
+                  <ExternalLink size={16} />
+                </Button>
+              </a>
+            </div>
+          )}
+
+          {/* 로그인 이동 버튼 */}
+          <Button
+            type="button"
+            variant={slackInviteUrl ? 'outline' : 'default'}
+            className="w-full cursor-pointer"
+            onClick={() => navigate('/login')}
+          >
+            <LogIn size={16} />
+            로그인하러 가기
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-full py-s6 px-s4">
