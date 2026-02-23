@@ -1,7 +1,7 @@
 # 설문 기능 검증 기준서
 
 > **Status**: Draft
-> **Last Updated**: 2026-02-22
+> **Last Updated**: 2026-02-23
 > **Scope**: 설문 생성(Survey CRUD), 질문 관리(Question Management), 응답 제출(Response Submission), 결과 조회(Result View), 설문 상태 관리(Lifecycle)
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 > **Epic**: [#406 설문 기능](https://github.com/IGRUS-INHA/IGRUS-Web/issues/406)
@@ -44,12 +44,21 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **주의사항**: 수정 전에 수집된 응답은 수정 전 질문 구조 기준으로 유지됨. 수정 후 응답만 새 구조 적용
 - **위험**: 선택지/질문 삭제 시, 기존 `SurveyAnswer`의 FK가 깨질 수 있음 → soft delete 처리 (INV-10, INV-14 참조)
 
-### INV-03: 설문 삭제는 모든 상태에서 가능
+### INV-03: 설문 삭제는 휴지통을 거치는 2단계 삭제
 
-> 설문은 DRAFT, PUBLISHED, CLOSED 어떤 상태에서든 삭제(soft delete)할 수 있다.
+> 설문 삭제는 **휴지통 이동 → 영구 삭제** 2단계로 진행된다. 모든 상태(DRAFT, PUBLISHED, CLOSED)에서 휴지통 이동이 가능하다.
 
-- **근거**: soft delete이므로 데이터 보존 및 참조 무결성이 유지됨
-- **관련 코드**: `SoftDeletableEntity.delete()`
+| 상태 | `trashedAt` | `deleted` | 의미 | 자식 엔티티 |
+|------|:-----------:|:---------:|------|:----------:|
+| 활성 | `null` | `false` | 일반 설문 | 유효 |
+| 휴지통 | `Instant` | `false` | 보류 중, 복원 가능 | 유효 (FK 보존) |
+| 영구 삭제 | `Instant` | `true` | 스케줄러가 물리 삭제할 대상 | soft delete 처리 |
+
+- **1단계 (휴지통 이동)**: `trashedAt = Instant.now()` 설정. `deleted`는 `false` 유지. 자식 엔티티(응답, 답변 등)의 FK가 유효한 상태로 보존됨.
+- **2단계 (영구 삭제)**: 휴지통에서 관리자가 영구 삭제 시 `SoftDeletableEntity.delete()` 호출. 스케줄러가 `deleted = true`인 레코드를 물리 삭제할 수 있음.
+- **복원**: 휴지통 상태에서 `trashedAt = null`로 복원 가능. 자식 엔티티는 변경 없음.
+- **관련 필드**: `Survey.trashedAt` (Instant, nullable) — Survey 엔티티 전용 필드
+- **`trashedAt`이 Instant인 이유**: 휴지통 이동 시점을 기록하여 "N일 경과 시 자동 영구 삭제" 같은 스케줄러 정책에 활용 가능
 
 ### INV-04: 설문 질문 수 제한
 
@@ -65,6 +74,15 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 - **주의사항**: PUBLIC → MEMBER 등으로 변경 시, 변경 전에 수집된 익명 응답과 변경 후 회원 응답이 혼재할 수 있음
 - **관련 코드**: `Survey.updatePublished()` — accessLevel 파라미터 포함
+
+### INV-19: 본인 응답 조회는 accessLevel과 무관
+
+> 설문의 `accessLevel`이 변경되어 현재 권한으로는 설문에 접근할 수 없더라도, 본인이 제출한 응답은 항상 조회할 수 있다.
+
+- **시나리오**: MEMBER가 `accessLevel = MEMBER` 설문에 응답 → 운영진이 `accessLevel = OPERATOR`로 변경 → 해당 MEMBER는 설문에 새로 응답할 수 없지만, 기존 본인 응답은 조회 가능
+- **조회 조건**: `SurveyResponse.user == 요청자` (accessLevel 검증 생략)
+- **설문 응답 제출**: 현재 `accessLevel` 기준으로 차단 (기존 로직 유지)
+- **프론트엔드 연동**: 본인 응답 조회 API 응답에 사용자 ID와 역할(Role) 정보를 포함하여 프론트엔드에서 권한 기반 UI 분기에 활용
 
 ### INV-06: 그리드 질문의 최소 구성
 
@@ -147,6 +165,27 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **해결 방안**: 응답 제출 시점에 `survey.isPublished()` 재검증
 - **위반 시**: 마감된 설문에 응답이 저장됨
 
+### INV-16: 휴지통 설문은 응답 불가
+
+> `trashedAt`이 설정된 설문은 상태(PUBLISHED 등)와 무관하게 응답을 받을 수 없다.
+
+- **사전조건**: 응답 제출 시 `survey.trashedAt == null` 검증
+- **위반 시**: 휴지통에 있는 설문에 응답이 저장됨
+
+### INV-17: 휴지통 설문은 목록에서 제외
+
+> `trashedAt`이 설정된 설문은 일반 설문 목록에서 노출되지 않는다. 관리자 휴지통 목록에서만 조회 가능하다.
+
+- **일반 목록 조건**: `trashedAt IS NULL AND deleted = false`
+- **휴지통 목록 조건**: `trashedAt IS NOT NULL AND deleted = false`
+
+### INV-18: 영구 삭제는 휴지통 상태에서만 가능
+
+> 영구 삭제(`SoftDeletableEntity.delete()`)는 `trashedAt`이 설정된 설문에 대해서만 수행할 수 있다. 활성 설문을 바로 영구 삭제할 수 없다.
+
+- **사전조건**: `survey.trashedAt != null`
+- **위반 시**: 실수로 활성 설문이 영구 삭제됨
+
 ---
 
 ## 2. 상태 모델 (State Machine & Transitions)
@@ -184,7 +223,28 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | CLOSED → DRAFT | `IllegalStateException` | 초안으로 되돌리면 질문 구조 변경이 가능해져 기존 응답과 불일치 |
 | CLOSED → PUBLISHED (마감일 경과) | `IllegalStateException` | 마감일이 이미 지났으면 재발행해도 즉시 다시 CLOSED됨 |
 
-### 2-2. 설문 수정 가능 범위 (상태별)
+### 2-2. 설문 휴지통 전이 (SurveyStatus FSM과 직교)
+
+설문의 휴지통 상태는 `SurveyStatus`(DRAFT/PUBLISHED/CLOSED)와 **독립적**이다. 어떤 상태의 설문이든 휴지통에 넣고 복원할 수 있으며, 복원 시 원래 상태가 그대로 유지된다.
+
+```
+                  휴지통 이동              영구 삭제
+┌────────────┐ ──────────────> ┌────────────┐ ──────────────> ┌────────────┐
+│   활성     │                 │  휴지통    │                 │  영구 삭제  │
+│ trashedAt  │  <──────────── │ trashedAt  │                 │ deleted    │
+│  = null    │     복원        │  = Instant │                 │  = true    │
+│ deleted    │                 │ deleted    │                 │            │
+│  = false   │                 │  = false   │                 │            │
+└────────────┘                 └────────────┘                 └────────────┘
+```
+
+| 전이 | 트리거 | 사전조건 | 사후조건 |
+|------|--------|---------|---------|
+| 활성 → 휴지통 | 운영진이 삭제 | OPERATOR 이상 권한 | `trashedAt = Instant.now()` |
+| 휴지통 → 활성 | 운영진이 복원 | OPERATOR 이상 권한 | `trashedAt = null` |
+| 휴지통 → 영구 삭제 | 운영진이 영구 삭제 | OPERATOR 이상 권한, `trashedAt != null` | `delete()` 호출 |
+
+### 2-3. 설문 수정 가능 범위 (상태별)
 
 | 필드 | DRAFT | PUBLISHED | CLOSED |
 |------|:---:|:---:|:---:|
@@ -262,12 +322,16 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 설문 발행 | 401 | 403 | 403 | **O** | **O** |
 | 설문 재발행 (CLOSED→PUBLISHED) | 401 | 403 | 403 | **O** | **O** |
 | 설문 마감 | 401 | 403 | 403 | **O** | **O** |
-| 설문 삭제 (모든 상태) | 401 | 403 | 403 | **O** | **O** |
+| 설문 휴지통 이동 (모든 상태) | 401 | 403 | 403 | **O** | **O** |
+| 설문 휴지통 복원 | 401 | 403 | 403 | **O** | **O** |
+| 설문 영구 삭제 (휴지통에서) | 401 | 403 | 403 | **O** | **O** |
+| 휴지통 목록 조회 | 401 | 403 | 403 | **O** | **O** |
 | 설문 목록 조회 | 본인 권한에 해당하는 PUBLISHED만 | O | O | **O** (전체) | **O** (전체) |
 | 설문 응답 (PUBLIC) | **O** | O | O | O | O |
 | 설문 응답 (ASSOCIATE) | 401 | **O** | O | O | O |
 | 설문 응답 (MEMBER) | 401 | 403 | **O** | O | O |
-| 결과 조회 | 401 | 403 | 403 | **O** | **O** |
+| 본인 응답 조회 | 401 | **본인 것만** | **본인 것만** | **본인 것만** | **본인 것만** |
+| 결과 조회 (전체 통계) | 401 | 403 | 403 | **O** | **O** |
 
 ### 4-2. 권한 검증 체크리스트
 
@@ -279,6 +343,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | SEC-04 | ASSOCIATE가 MEMBER 설문에 응답 시도 | 403 Forbidden |
 | SEC-05 | MEMBER가 결과 조회 시도 | 403 Forbidden |
 | SEC-06 | 비인가 접근이 상태를 변경하지 않는지 (부작용 없음) | DB 변경 없음 |
+| SEC-07 | accessLevel 축소 후 기존 응답자가 본인 응답 조회 | 200 OK (본인 응답 반환) |
+| SEC-08 | accessLevel 축소 후 기존 응답자가 타인 응답 조회 시도 | 403 Forbidden |
 
 ### 4-3. 비회원 응답 정책
 
@@ -299,7 +365,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 |--------|--------|---------|
 | 설문 생성 | `surveys.surveys_created_by` | 생성자 ID, 생성 시각 |
 | 설문 수정 | `surveys.surveys_updated_by` | 수정자 ID, 수정 시각 |
-| 설문 삭제 | `surveys.surveys_deleted_by` | 삭제자 ID, 삭제 시각 |
+| 설문 휴지통 이동 | `surveys.surveys_trashed_at` | 휴지통 이동 시각 |
+| 설문 휴지통 복원 | `surveys.surveys_trashed_at = NULL` | 복원 시각 (`updatedAt`) |
+| 설문 영구 삭제 | `surveys.surveys_deleted_by` | 삭제자 ID, 삭제 시각 |
 | 설문 발행 | `surveys.surveys_status = PUBLISHED` | 상태 변경 시각 (`updatedAt`) |
 | 설문 마감 | `surveys.surveys_status = CLOSED` | 상태 변경 시각 (`updatedAt`) |
 | 응답 제출 | `survey_responses.survey_responses_created_by` | 응답자 ID, 제출 시각 |
@@ -311,6 +379,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 설문 생성 | `설문 생성 요청: title` | `설문 생성 완료: surveyId` | - |
 | 설문 발행 | `설문 발행 요청: surveyId` | `설문 발행 완료: surveyId` | `발행 실패: 질문 없음` |
 | 설문 마감 | `설문 마감 요청: surveyId` | `설문 마감 완료: surveyId` | `마감 실패: 상태 불일치` |
+| 휴지통 이동 | `설문 휴지통 이동 요청: surveyId` | `설문 휴지통 이동 완료: surveyId` | - |
+| 휴지통 복원 | `설문 복원 요청: surveyId` | `설문 복원 완료: surveyId` | - |
+| 영구 삭제 | `설문 영구 삭제 요청: surveyId` | `설문 영구 삭제 완료: surveyId` | `영구 삭제 실패: 휴지통 상태 아님` |
 | 응답 제출 | `응답 제출 요청: surveyId, userId` | `응답 제출 완료: responseId` | `제출 실패: 중복 응답` |
 
 ---
@@ -331,7 +402,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 |---------|-----------|------|
 | INV-01 (중복 응답 방지) | - | 미작성 |
 | INV-02 (모든 상태 질문 수정 가능) | - | 미작성 |
-| INV-03 (모든 상태 삭제 가능) | - | 미작성 |
+| INV-03 (휴지통 2단계 삭제) | - | 미작성 |
 | INV-04 (질문 수 1~50) | - | 미작성 |
 | INV-05 (모든 상태 accessLevel 변경 가능) | - | 미작성 |
 | INV-06 (그리드 최소 구성) | - | 미작성 |
@@ -344,6 +415,10 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | INV-13 (질문 유형별 필수 구성요소) | - | 미작성 |
 | INV-14 (질문 삭제 시 soft delete) | - | 미작성 |
 | INV-15 (응답 제출 중 설문 마감 경합) | - | 미작성 |
+| INV-16 (휴지통 설문 응답 불가) | - | 미작성 |
+| INV-17 (휴지통 설문 목록 제외) | - | 미작성 |
+| INV-18 (영구 삭제는 휴지통에서만) | - | 미작성 |
+| INV-19 (본인 응답 조회는 accessLevel 무관) | - | 미작성 |
 
 ### 6-3. 상태 전이 커버리지 (테스트 작성 후 업데이트)
 
@@ -368,6 +443,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | SEC-04 (ASSOCIATE MEMBER 설문 응답) | - | 미작성 |
 | SEC-05 (비운영진 결과 조회) | - | 미작성 |
 | SEC-06 (비인가 부작용 없음) | - | 미작성 |
+| SEC-07 (accessLevel 축소 후 본인 응답 조회) | - | 미작성 |
+| SEC-08 (accessLevel 축소 후 타인 응답 조회 차단) | - | 미작성 |
 
 ---
 
