@@ -8,7 +8,6 @@ import NotFoundPage from '@/pages/NotFoundPage';
 // 인증
 import LoginPage from '@/pages/auth/LoginPage';
 import SignupPage from '@/pages/auth/SignupPage';
-import VerifyEmailPage from '@/pages/auth/VerifyEmailPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 
@@ -51,7 +50,6 @@ const routes: RouteObject[] = [
       { index: true, element: <HomePage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'signup', element: <SignupPage /> },
-      { path: 'verify-email', element: <VerifyEmailPage /> },
       { path: 'forgot-password', element: <ForgotPasswordPage /> },
       { path: 'reset-password', element: <ResetPasswordPage /> },
       { path: 'inquiry', element: <InquiryPage /> },
