@@ -2,7 +2,6 @@ export const PAGE_TITLES: Record<string, string> = {
   '/': 'Home',
   '/login': ' ',
   '/signup': ' ',
-  '/verify-email': ' ',
   '/forgot-password': 'Forgot Password',
   '/reset-password': 'Reset Password',
   '/board/notices': 'Notices',

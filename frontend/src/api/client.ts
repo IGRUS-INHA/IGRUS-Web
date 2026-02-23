@@ -128,8 +128,8 @@ export async function customFetch<T>(
     url.includes('/auth/password/login') ||
     url.includes('/auth/password/signup') ||
     url.includes('/auth/password/refresh') ||
-    url.includes('/auth/password/verify-email') ||
-    url.includes('/auth/password/resend-verification');
+    url.includes('/auth/password/pre-signup/verify-code') ||
+    url.includes('/auth/password/pre-signup/send-code');
 
   // 403은 권한 부족이므로 토큰 갱신 없이 바로 에러 처리
   if (response.status === 403 && !isPublicEndpoint) {
