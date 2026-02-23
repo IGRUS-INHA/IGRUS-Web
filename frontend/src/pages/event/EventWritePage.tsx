@@ -1,11 +1,19 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, Save, Image as ImageIcon, ListChecks } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Save, Image as ImageIcon, ListChecks } from 'lucide-react';
 import { WysiwygEditor } from '@/components/feature/editor';
+import { LocationSelector, DIRECT_INPUT_VALUE } from '@/components/feature/event/LocationSelector';
+import { RegistrationPeriodSelector } from '@/components/feature/event/RegistrationPeriodSelector';
 import { useCreateEvent } from '@/hooks/queries/useEvents';
 import { CreateEventRequestRegistrationType } from '@/api/model/models';
+import { EventDateTimePicker } from '@/components/feature/event/EventDateTimePicker';
+import { EventCalendarPreview } from '@/components/feature/event/EventCalendarPreview';
+import { REGISTRATION_PERIOD_PRESETS } from '@/constants/event';
+
+import { combineLocation, formatDateLocal } from '@/utils/event';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores';
 import { isForbiddenError, isEventOperatorRequired, getErrorMessage } from '@/utils/error';
@@ -13,16 +21,35 @@ import { isForbiddenError, isEventOperatorRequired, getErrorMessage } from '@/ut
 const eventSchema = z.object({
   title: z.string().min(1, '행사 제목을 입력하세요'),
   description: z.string().min(1, '행사 설명을 입력하세요'),
-  date: z.string().min(1, '행사 날짜를 선택하세요'),
-  time: z.string().min(1, '행사 시간을 선택하세요'),
-  location: z.string().min(1, '장소를 입력하세요'),
+  date: z.string().min(1, '행사 시작 날짜를 선택하세요'),
+  time: z.string().min(1, '행사 시작 시간을 선택하세요'),
+  endDate: z.string().min(1, '행사 종료 날짜를 선택하세요'),
+  endTime: z.string().min(1, '행사 종료 시간을 선택하세요'),
+  locationPreset: z.string(),
+  locationDetail: z.string().optional(),
   capacity: z.number().min(1, '최대 인원은 1명 이상이어야 합니다'),
   registrationType: z.enum(['AUTO_APPROVE', 'MANUAL_APPROVE']),
+  registrationPreset: z.enum(['default', 'short', 'custom']),
   registrationStartDate: z.string().min(1, '신청 시작일을 선택하세요'),
   registrationStartTime: z.string().min(1, '신청 시작 시간을 선택하세요'),
   registrationDeadlineDate: z.string().min(1, '신청 마감일을 선택하세요'),
   registrationDeadlineTime: z.string().min(1, '신청 마감 시간을 선택하세요'),
-});
+}).refine(
+  (data) => {
+    if (data.locationPreset && data.locationPreset !== DIRECT_INPUT_VALUE) return true;
+    if (data.locationPreset === DIRECT_INPUT_VALUE && data.locationDetail && data.locationDetail.trim().length > 0) return true;
+    return false;
+  },
+  { message: '장소를 입력하세요', path: ['locationPreset'] },
+).refine(
+  (data) => {
+    if (!data.registrationDeadlineDate || !data.registrationDeadlineTime || !data.date || !data.time) return true;
+    const regEnd = new Date(`${data.registrationDeadlineDate}T${data.registrationDeadlineTime}:00`);
+    const eventStart = new Date(`${data.date}T${data.time}:00`);
+    return regEnd <= eventStart;
+  },
+  { message: '신청 마감은 행사 시작 이전이어야 합니다', path: ['registrationDeadlineDate'] },
+);
 
 type EventForm = z.infer<typeof eventSchema>;
 
@@ -44,13 +71,62 @@ export default function EventWritePage() {
     defaultValues: {
       capacity: 30,
       registrationType: 'AUTO_APPROVE',
+      registrationPreset: 'default',
+      locationPreset: '',
+      locationDetail: '',
     },
   });
 
   const registrationType = watch('registrationType');
+  const eventDate = watch('date');
+  const eventTime = watch('time');
+  const endDate = watch('endDate');
+  const endTime = watch('endTime');
+  const registrationPreset = watch('registrationPreset');
+  const locationPreset = watch('locationPreset');
+  const locationDetail = watch('locationDetail') ?? '';
+  const registrationStartDate = watch('registrationStartDate');
+  const registrationStartTime = watch('registrationStartTime');
+  const registrationDeadlineDate = watch('registrationDeadlineDate');
+  const registrationDeadlineTime = watch('registrationDeadlineTime');
+
+  // 신청 기간 자동 계산
+  useEffect(() => {
+    if (!eventDate || registrationPreset === 'custom') return;
+    const preset = REGISTRATION_PERIOD_PRESETS.find((p) => p.value === registrationPreset);
+    if (!preset || preset.value === 'custom') return;
+
+    const dateParts = eventDate.split('-').map(Number);
+    const year = dateParts[0] ?? 0;
+    const month = dateParts[1] ?? 1;
+    const day = dateParts[2] ?? 1;
+    const startDate = new Date(year, month - 1, day - preset.startDaysBefore);
+    const endDate = new Date(year, month - 1, day - preset.endDaysBefore);
+
+    setValue('registrationStartDate', formatDateLocal(startDate));
+    setValue('registrationStartTime', preset.startTime);
+    setValue('registrationDeadlineDate', formatDateLocal(endDate));
+
+    // 동적 마감 시간: endTimeOffsetHours가 있고 행사 시간이 설정된 경우
+    if ('endTimeOffsetHours' in preset && eventTime) {
+      const tp = eventTime.split(':').map(Number);
+      const totalMinutes = Math.max(0, Math.min(23 * 60 + 59, (tp[0] ?? 0) * 60 + (tp[1] ?? 0) + preset.endTimeOffsetHours * 60));
+      const endH = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+      const endM = String(totalMinutes % 60).padStart(2, '0');
+      setValue('registrationDeadlineTime', `${endH}:${endM}`);
+    } else {
+      setValue('registrationDeadlineTime', preset.endTime);
+    }
+  }, [eventDate, eventTime, registrationPreset, setValue]);
 
   const onSubmit = (data: EventForm) => {
+    const location = combineLocation(
+      data.locationPreset === DIRECT_INPUT_VALUE ? '' : data.locationPreset,
+      data.locationDetail ?? '',
+    );
+
     const eventStartAt = new Date(`${data.date}T${data.time}:00`).toISOString();
+    const eventEndAt = new Date(`${data.endDate}T${data.endTime}:00`).toISOString();
     const registrationStartAt = new Date(`${data.registrationStartDate}T${data.registrationStartTime}:00`).toISOString();
     const registrationEndAt = new Date(`${data.registrationDeadlineDate}T${data.registrationDeadlineTime}:00`).toISOString();
 
@@ -59,9 +135,9 @@ export default function EventWritePage() {
         data: {
           title: data.title,
           description: data.description,
-          location: data.location,
+          location,
           eventStartAt,
-          eventEndAt: eventStartAt,
+          eventEndAt,
           registrationStartAt,
           registrationEndAt,
           capacity: data.capacity,
@@ -161,63 +237,20 @@ export default function EventWritePage() {
             </div>
           </div>
 
-          {/* Right Column - Date / Location / Capacity / Registration Period */}
+          {/* Right Column - Location / Capacity / Registration Type / Registration Period / Event Period / Calendar */}
           <div className="rounded-r4 border bg-card border-border shadow-sm">
-            {/* 행사 일시 */}
-            <div className="px-s5 py-s5 border-b border-border">
-              <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
-                <Calendar size={14} /> 행사 일시
-              </label>
-              <div className="space-y-s3">
-                <div>
-                  <input
-                    type="date"
-                    {...register('date')}
-                    className={cn(
-                      'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-                      'focus:outline-none focus:border-primary',
-                      errors.date && 'border-destructive'
-                    )}
-                  />
-                  {errors.date && (
-                    <p className="typo-c1 text-destructive mt-s1">{errors.date.message}</p>
-                  )}
-                </div>
-                <div>
-                  <input
-                    type="time"
-                    {...register('time')}
-                    className={cn(
-                      'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-                      'focus:outline-none focus:border-primary',
-                      errors.time && 'border-destructive'
-                    )}
-                  />
-                  {errors.time && (
-                    <p className="typo-c1 text-destructive mt-s1">{errors.time.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
             {/* 장소 */}
             <div className="px-s5 py-s5 border-b border-border">
               <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
                 <MapPin size={14} /> 장소
               </label>
-              <input
-                type="text"
-                {...register('location')}
-                placeholder="강의실, Zoom 링크 등"
-                className={cn(
-                  'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-                  'focus:outline-none focus:border-primary',
-                  errors.location && 'border-destructive'
-                )}
+              <LocationSelector
+                selectedPreset={locationPreset}
+                detail={locationDetail}
+                onPresetChange={(v) => setValue('locationPreset', v)}
+                onDetailChange={(v) => setValue('locationDetail', v)}
+                error={errors.locationPreset?.message}
               />
-              {errors.location && (
-                <p className="typo-c1 text-destructive mt-s1">{errors.location.message}</p>
-              )}
             </div>
 
             {/* 최대 인원 */}
@@ -298,79 +331,63 @@ export default function EventWritePage() {
               </div>
             </div>
 
-            {/* 신청 시작 */}
-            <div className="px-s5 py-s5 border-b border-border">
-              <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
-                <Clock size={14} /> 신청 시작
-              </label>
-              <div className="space-y-s3">
-                <div>
-                  <input
-                    type="date"
-                    {...register('registrationStartDate')}
-                    className={cn(
-                      'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-                      'focus:outline-none focus:border-primary',
-                      errors.registrationStartDate && 'border-destructive'
-                    )}
-                  />
-                  {errors.registrationStartDate && (
-                    <p className="typo-c1 text-destructive mt-s1">{errors.registrationStartDate.message}</p>
-                  )}
-                </div>
-                <div>
-                  <input
-                    type="time"
-                    {...register('registrationStartTime')}
-                    className={cn(
-                      'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-                      'focus:outline-none focus:border-primary',
-                      errors.registrationStartTime && 'border-destructive'
-                    )}
-                  />
-                  {errors.registrationStartTime && (
-                    <p className="typo-c1 text-destructive mt-s1">{errors.registrationStartTime.message}</p>
-                  )}
-                </div>
-              </div>
+            {/* 신청 기간 */}
+            <div className="border-b border-border">
+              <RegistrationPeriodSelector
+                preset={registrationPreset}
+                registrationStartDate={registrationStartDate}
+                registrationStartTime={registrationStartTime}
+                registrationDeadlineDate={registrationDeadlineDate}
+                registrationDeadlineTime={registrationDeadlineTime}
+                onPresetChange={(v) => setValue('registrationPreset', v)}
+                onFieldChange={(field, value) => setValue(field as keyof EventForm, value)}
+                errors={errors}
+              />
             </div>
 
-            {/* 신청 마감 */}
-            <div className="px-s5 py-s5">
+            {/* 행사 기간 */}
+            <div className="px-s5 py-s5 border-b border-border">
               <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
-                <Clock size={14} /> 신청 마감
+                <Calendar size={14} /> 행사 기간
               </label>
-              <div className="space-y-s3">
-                <div>
-                  <input
-                    type="date"
-                    {...register('registrationDeadlineDate')}
-                    className={cn(
-                      'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-                      'focus:outline-none focus:border-primary',
-                      errors.registrationDeadlineDate && 'border-destructive'
-                    )}
-                  />
-                  {errors.registrationDeadlineDate && (
-                    <p className="typo-c1 text-destructive mt-s1">{errors.registrationDeadlineDate.message}</p>
-                  )}
-                </div>
-                <div>
-                  <input
-                    type="time"
-                    {...register('registrationDeadlineTime')}
-                    className={cn(
-                      'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-                      'focus:outline-none focus:border-primary',
-                      errors.registrationDeadlineTime && 'border-destructive'
-                    )}
-                  />
-                  {errors.registrationDeadlineTime && (
-                    <p className="typo-c1 text-destructive mt-s1">{errors.registrationDeadlineTime.message}</p>
-                  )}
-                </div>
-              </div>
+              <EventDateTimePicker
+                date={eventDate}
+                time={eventTime}
+                endDate={endDate}
+                endTime={endTime}
+                onDateChange={(v) => {
+                  setValue('date', v);
+                  if (endDate && v > endDate) setValue('endDate', v);
+                }}
+                onTimeChange={(v) => setValue('time', v)}
+                onEndDateChange={(v) => {
+                  setValue('endDate', v);
+                  if (eventDate && v < eventDate) setValue('date', v);
+                }}
+                onEndTimeChange={(v) => setValue('endTime', v)}
+                dateError={errors.date?.message}
+                timeError={errors.time?.message}
+                endDateError={errors.endDate?.message}
+                endTimeError={errors.endTime?.message}
+              />
             </div>
+
+            {/* 캘린더 */}
+            <EventCalendarPreview
+              eventStartDate={eventDate}
+              eventEndDate={endDate}
+              registrationStartDate={registrationStartDate}
+              registrationEndDate={registrationDeadlineDate}
+              onEventDateChange={(start, end) => {
+                setValue('date', start);
+                setValue('endDate', end);
+              }}
+              onRegistrationDateChange={(start, end) => {
+                setValue('registrationStartDate', start);
+                setValue('registrationDeadlineDate', end);
+              }}
+              onRegistrationPresetChange={() => setValue('registrationPreset', 'custom')}
+            />
           </div>
         </div>
       </form>
