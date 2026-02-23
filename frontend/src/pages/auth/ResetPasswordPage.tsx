@@ -193,6 +193,9 @@ export default function ResetPasswordPage() {
                   ? `학번 ${studentIdFromState}의 비밀번호를 재설정합니다.`
                   : '이메일로 받은 토큰과 새 비밀번호를 입력해주세요.'}
               </p>
+              <p className="text-sm text-muted-foreground mt-s1">
+                이메일이 오지 않으면 스팸 메일함을 확인해주세요.
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-s4">

@@ -1068,34 +1068,40 @@ export default function SignupPage() {
                       </Button>
                     </div>
 
-                    {codeTimer.isRunning && (
-                      <div className={cn(
-                        'flex items-center gap-s1 text-sm transition-colors',
-                        codeTimer.remaining <= 60 ? 'text-destructive' : codeTimer.remaining <= 180 ? 'text-amber-500' : 'text-primary',
-                      )}>
-                        <Clock size={14} />
-                        <span>남은 시간 {codeTimer.formatted}</span>
-                      </div>
-                    )}
-                    {codeTimer.isExpired && (
-                      <p className="text-sm text-destructive">인증 코드가 만료되었습니다. 재발송해주세요.</p>
-                    )}
+                    <p className="text-sm text-muted-foreground">
+                      이메일이 오지 않으면 스팸 메일함을 확인해주세요.
+                    </p>
+
+                    <div className="flex items-center gap-s5">
+                      {codeTimer.isRunning && (
+                        <div className={cn(
+                          'flex items-center gap-s1 text-sm transition-colors',
+                          codeTimer.remaining <= 60 ? 'text-destructive' : codeTimer.remaining <= 180 ? 'text-amber-500' : 'text-primary',
+                        )}>
+                          <Clock size={14} />
+                          <span>남은 시간 {codeTimer.formatted}</span>
+                        </div>
+                      )}
+                      {codeTimer.isExpired && (
+                        <p className="text-sm text-destructive">인증 코드가 만료되었습니다.</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleResendCode}
+                        disabled={sendingCode || !resendCooldown.isExpired}
+                        className="text-sm text-muted-foreground hover:text-primary transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {sendingCode
+                          ? '재발송 중...'
+                          : !resendCooldown.isExpired
+                            ? `재발송 (${resendCooldown.remaining}초)`
+                            : '인증 코드 재발송'}
+                      </button>
+                    </div>
+
                     {verificationError && (
                       <p className="text-sm text-destructive">{verificationError}</p>
                     )}
-
-                    <button
-                      type="button"
-                      onClick={handleResendCode}
-                      disabled={sendingCode || !resendCooldown.isExpired}
-                      className="text-sm text-muted-foreground hover:text-primary transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {sendingCode
-                        ? '재발송 중...'
-                        : !resendCooldown.isExpired
-                          ? `인증 코드 재발송 (${resendCooldown.remaining}초)`
-                          : '인증 코드 재발송'}
-                    </button>
                   </div>
                 )}
 
@@ -1464,8 +1470,8 @@ function FormField({
         </label>
       )}
       {children}
-      {error && <p className={cn('mt-s1 text-sm', mutedError ? 'text-muted-foreground' : 'text-destructive')}>{error}</p>}
-      {!error && success && <p className="mt-s1 text-sm text-green-600">{success}</p>}
+      {error && <p className={cn('mt-s3 text-sm', mutedError ? 'text-muted-foreground' : 'text-destructive')}>{error}</p>}
+      {!error && success && <p className="mt-s3 text-sm text-green-600">{success}</p>}
     </div>
   );
 }
