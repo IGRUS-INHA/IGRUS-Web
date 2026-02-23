@@ -177,7 +177,11 @@ public enum ErrorCode {
     // Temporary Student ID
     TEMP_STUDENT_ID_NOT_AVAILABLE(400, "임시 학번 발급은 1월~2월에만 가능합니다"),
     TEMP_STUDENT_ID_EXHAUSTED(500, "임시 학번이 모두 소진되었습니다"),
-    STUDENT_ID_NOT_TEMPORARY(400, "임시 학번이 아닌 경우 학번을 변경할 수 없습니다");
+    STUDENT_ID_NOT_TEMPORARY(400, "임시 학번이 아닌 경우 학번을 변경할 수 없습니다"),
+
+    // Survey
+    SURVEY_NOT_FOUND(404, "설문을 찾을 수 없습니다"),
+    SURVEY_ACCESS_DENIED(403, "설문에 대한 접근 권한이 없습니다");
 
     private final int status;
     private final String message;
