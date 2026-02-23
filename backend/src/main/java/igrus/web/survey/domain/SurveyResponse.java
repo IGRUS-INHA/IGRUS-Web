@@ -1,6 +1,6 @@
 package igrus.web.survey.domain;
 
-import igrus.web.common.domain.BaseEntity;
+import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -26,11 +26,14 @@ import java.util.List;
         @AttributeOverride(name = "createdAt", column = @Column(name = "survey_responses_created_at", nullable = false, updatable = false)),
         @AttributeOverride(name = "updatedAt", column = @Column(name = "survey_responses_updated_at", nullable = false)),
         @AttributeOverride(name = "createdBy", column = @Column(name = "survey_responses_created_by", updatable = false)),
-        @AttributeOverride(name = "updatedBy", column = @Column(name = "survey_responses_updated_by"))
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "survey_responses_updated_by")),
+        @AttributeOverride(name = "deleted", column = @Column(name = "survey_responses_deleted", nullable = false)),
+        @AttributeOverride(name = "deletedAt", column = @Column(name = "survey_responses_deleted_at")),
+        @AttributeOverride(name = "deletedBy", column = @Column(name = "survey_responses_deleted_by"))
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SurveyResponse extends BaseEntity {
+public class SurveyResponse extends SoftDeletableEntity {
 
     /** 응답 고유 식별자 */
     @Id
