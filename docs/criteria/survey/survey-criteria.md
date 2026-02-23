@@ -377,14 +377,3 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - [#427 설문 도메인 모델 설계](https://github.com/IGRUS-INHA/IGRUS-Web/issues/427) - 엔티티 설계
 - [QA Testing 관련 용어 정리 (Wiki)](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC) - 용어 및 개념 참조
 
----
-
-## #406 이슈와 다른 점
-
-| 항목 | 이슈 원문 | 변경 내용 | 이유 |
-|------|----------|----------|------|
-| 설문 삭제 제한 | "DRAFT 상태에서만 삭제 가능" | 모든 상태에서 삭제 허용 | soft delete이므로 데이터 보존 + 참조 무결성 유지됨, 삭제 제한의 기술적 근거 없음 |
-| PUBLISHED 응답 권한 변경 | "PUBLISHED에서는 제목/설명/마감일만 수정 가능" (accessLevel 미언급) | PUBLISHED에서 accessLevel 변경 허용 | 기술적 문제 없음, 운영 유연성 확보 |
-| 질문 구조 수정 | "DRAFT에서만 질문 수정 가능" | 모든 상태에서 질문 구조 수정 허용 (구글폼 방식) | 운영 유연성 확보, 기존 응답은 수정 전 기준 유지 |
-| CLOSED 상태 수정 | CLOSED에서 수정 불가 | CLOSED에서 전체 수정 허용 (질문 구조 포함) | 마감일 연장 후 재발행 등 운영 유연성 확보 |
-| CLOSED → PUBLISHED 재발행 | CLOSED는 종단 상태 (재발행 불가) | 마감일 미설정이거나 마감일이 미래인 경우 재발행 허용 | 수동 마감 후 재개, 마감일 연장 후 재발행 등 운영 유연성 확보 |
