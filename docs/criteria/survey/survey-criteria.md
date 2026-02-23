@@ -151,7 +151,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 - **사전조건**: 응답 제출 시 `survey.visibility == PUBLISHED && survey.responseStatus == OPEN` 검증
 - **DRAFT 거부 이유**: 아직 작성 중인 설문이 응답자에게 노출되면 안 됨
+- **NOT_STARTED 거부 이유**: 아직 응답 수집이 시작되지 않았으므로 응답 불가
 - **CLOSED 거부 이유**: 마감된 설문에 응답이 추가되면 통계 오염
+- **PUBLISHED + NOT_STARTED 거부 이유**: 설문은 공개되어 있지만 응답 수집이 아직 시작되지 않은 상태
 - **PUBLISHED + CLOSED 거부 이유**: 설문은 공개되어 있지만 응답 수집이 마감된 상태
 
 ### INV-10: 선택지/행 삭제 시 기존 응답 보호
@@ -237,18 +239,52 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 |----|------|-----|------|
 | 축 1: 공개 상태 | `SurveyVisibility` | `DRAFT` | 비공개 (작성 중) |
 | | | `PUBLISHED` | 공개 (응답자에게 노출) |
-| 축 2: 응답 수집 상태 | `SurveyResponseStatus` | `CLOSED` | 응답 받지 않음 |
+| 축 2: 응답 수집 상태 | `SurveyResponseStatus` | `NOT_STARTED` | 아직 응답 수집을 시작하지 않음 |
 | | | `OPEN` | 응답 수집 중 |
+| | | `CLOSED` | 응답 마감 (한번 열렸다가 닫힘) |
 
-### 2-1-1. 유효한 상태 조합
+### 2-1-1. 전체 상태 조합 (6가지)
 
-| 공개 상태 | 응답 상태 | 의미 | 예시 |
-|:---------:|:---------:|------|------|
-| `DRAFT` | - | 작성 중, 비공개. 응답 상태 무의미 | 설문을 처음 만들고 질문을 작성하는 중 |
-| `PUBLISHED` | `CLOSED` | 공개 + 응답 마감 | 설문 미리보기, 응답 마감 후 열람, 응답 일시 중지 |
-| `PUBLISHED` | `OPEN` | 공개 + 응답 수집 중 | 정상적으로 응답을 받고 있는 상태 |
+| 공개 상태 | 응답 상태 | 유효? | 의미 | 불가능 사유 |
+|:---------:|:---------:|:---:|------|:-----------|
+| `DRAFT` | `NOT_STARTED` | ✅ | 작성 중, 비공개, 응답 시작 전 | - |
+| `DRAFT` | `OPEN` | ❌ | - | 비공개 설문은 응답을 받을 수 없음 (DRAFT에서 openResponse 차단) |
+| `DRAFT` | `CLOSED` | ❌ | - | 열지도 않았는데 마감할 수 없음 (NOT_STARTED→CLOSED 전이 불가) |
+| `PUBLISHED` | `NOT_STARTED` | ✅ | 공개했지만 아직 응답 수집 시작 전 (미리보기) | - |
+| `PUBLISHED` | `OPEN` | ✅ | 공개 + 응답 수집 중 | - |
+| `PUBLISHED` | `CLOSED` | ✅ | 공개 + 응답 마감 (한번 열렸다가 닫힘) | - |
 
-> **참고**: `DRAFT` 상태에서는 응답 상태가 의미 없으므로 기본값 `CLOSED`로 둔다. `DRAFT`인 설문에 대해 응답 상태를 변경하는 것은 허용하지 않는다.
+> **참고**: `DRAFT` 상태에서는 응답 상태가 `NOT_STARTED`로 고정된다. `DRAFT`인 설문에 대해 응답 상태를 변경하는 것은 허용하지 않는다.
+
+#### NOT_STARTED vs CLOSED 구분 근거 — 설계 대안 비교
+
+응답 수집 상태를 설계할 때 3가지 대안을 검토했다.
+
+| 대안 | 값 | 특징 |
+|:---:|:--|:----|
+| A | `CLOSED`, `OPEN` | 단순. "안 열림"과 "열렸다 닫힘" 구분 불가 |
+| **B (채택)** | `NOT_STARTED`, `OPEN`, `CLOSED` | 의미 정확. Event 도메인 `RegistrationStatus`와 동일 패턴 |
+| C | `null`, `OPEN`, `CLOSED` | null이 "시작 전"을 의미. DB NOT NULL 제약 깨짐, null 체크 부담 |
+
+**시나리오별 대안 비교:**
+
+| # | 시나리오 | 대안 A (`CLOSED/OPEN`) | **대안 B (`NS/OPEN/CLOSED`)** | 대안 C (`null/OPEN/CLOSED`) |
+|:-:|:--------|:----------------------|:----------------------------|:---------------------------|
+| 1 | 설문 생성 직후 | (D, **CLOSED**) — 한 번도 안 열었는데 "마감"? | (D, **NOT_STARTED**) — 의미 정확 | (D, **null**) — 의미는 맞지만 null 체크 |
+| 2 | 설문 공개, 응답 대기 | (P, **CLOSED**) — 응답자에게 "마감됨"으로 보임 | (P, **NOT_STARTED**) — "곧 시작" 표시 가능 | (P, **null**) — null 체크 |
+| 3 | 응답 수집 중 | (P, OPEN) — 동일 | (P, OPEN) — 동일 | (P, OPEN) — 동일 |
+| 4 | 응답 마감 | (P, CLOSED) — "시작 전"과 구분 불가 | (P, CLOSED) — NOT_STARTED와 명확히 구분 | (P, CLOSED) — null과 구분 가능 |
+| 5 | 프론트 안내 문구 분기 | 불가능 ("마감"만 표시) | "곧 시작됩니다" vs "마감되었습니다" 분기 가능 | 가능하지만 null 처리 |
+| 6 | DB 직접 조회 시 | `CLOSED`만 보고 히스토리 유추 불가 | `NOT_STARTED`/`CLOSED` 구분으로 히스토리 유추 가능 | null이 의미 모호 |
+| 7 | Event 도메인 일관성 | `RegistrationStatus`와 불일치 (2개 vs 3개) | `RegistrationStatus`와 동일 패턴 | 패턴 불일치 |
+| 8 | 자동 마감 스케줄러 | OPEN만 대상 — 문제없음 | OPEN만 대상 — 문제없음 | OPEN만 대상 — 문제없음 |
+
+**대안 B 채택 이유 요약:**
+
+1. **의미 정확성**: "한 번도 안 열림"(NOT_STARTED)과 "열렸다 닫힘"(CLOSED)은 본질적으로 다른 상태
+2. **프론트엔드 UI**: 응답자에게 "곧 시작" vs "마감" 안내를 자연스럽게 분기 가능
+3. **DB 가독성**: 데이터만 봐도 설문의 운영 히스토리를 유추 가능
+4. **Event 도메인 일관성**: `RegistrationStatus(NOT_STARTED/OPEN/CLOSED)`와 동일 패턴으로 학습 비용 감소
 
 ### 2-1-2. 축 1: 공개 상태 전이 (SurveyVisibility)
 
@@ -272,53 +308,113 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 ### 2-1-3. 축 2: 응답 수집 상태 전이 (SurveyResponseStatus)
 
 ```
-        응답 마감           응답 재개
-┌────────┐ ──────────> ┌────────┐
-│  OPEN  │             │ CLOSED │
-└────────┘ <────────── └────────┘
+                 응답 시작           응답 마감
+┌─────────────┐ ──────────> ┌────────┐ ──────────> ┌────────┐
+│ NOT_STARTED │             │  OPEN  │             │ CLOSED │
+└─────────────┘             └────────┘ <────────── └────────┘
+                                         응답 재개
 ```
 
 | 전이 | 트리거 | 사전조건 | 사후조건 |
 |------|--------|---------|---------|
-| CLOSED → OPEN | 운영진이 응답 시작/재개 | OPERATOR 이상 권한, `visibility == PUBLISHED`, 마감일 미설정이거나 미래 | `responseStatus = OPEN` |
+| NOT_STARTED → OPEN | 운영진이 최초 응답 시작 | OPERATOR 이상 권한, `visibility == PUBLISHED`, 마감일 미설정이거나 미래 | `responseStatus = OPEN` |
 | OPEN → CLOSED | 수동 마감 | OPERATOR 이상 권한 | `responseStatus = CLOSED` |
 | OPEN → CLOSED | 마감일 경과 | `deadline != null && now > deadline` | 자동 전환 |
+| CLOSED → OPEN | 운영진이 응답 재개 | OPERATOR 이상 권한, `visibility == PUBLISHED`, 마감일 미설정이거나 미래 | `responseStatus = OPEN` |
 
 **금지된 전이**:
 
 | 시도 | 이유 |
 |------|------|
 | DRAFT 상태에서 OPEN 전환 | 비공개 설문은 응답을 받을 수 없음 |
+| NOT_STARTED → CLOSED | 열지도 않았는데 마감할 수 없음 |
+| CLOSED → NOT_STARTED | 한번 열리면 "시작 전" 상태로 되돌릴 수 없음 |
+| OPEN → NOT_STARTED | 한번 열리면 "시작 전" 상태로 되돌릴 수 없음 |
 | CLOSED → OPEN (마감일 경과) | 마감일이 이미 지났으면 재개해도 즉시 다시 CLOSED됨 |
 
-### 2-1-4. 시나리오별 상태 흐름 예시
+### 2-1-4. 상태-행동 매트릭스 (전체 경우의 수)
 
-**기본 흐름** (만들고 → 공개하고 → 응답 받고 → 마감):
-```
-(DRAFT, -) → (PUBLISHED, CLOSED) → (PUBLISHED, OPEN) → (PUBLISHED, CLOSED)
-  작성 중        공개(미리보기)       응답 수집 시작          응답 마감
-```
+아래 표는 설문의 **모든 유효 상태 조합 × 모든 행동**에 대한 결과를 정의한다. 구현과 테스트는 이 표를 기준으로 한다.
 
-**즉시 응답 시작** (공개와 동시에 응답 시작):
-```
-(DRAFT, -) → (PUBLISHED, OPEN) → (PUBLISHED, CLOSED)
-  작성 중      공개 + 응답 시작         응답 마감
-```
+**표기법:**
+- ✅ → 결과 상태: 성공 (전이 후 상태)
+- ❌ 사유: 실패 (예외 발생)
+- 상태 표기: `(visibility, responseStatus, trashed여부)` — 예: `(P, O, active)` = PUBLISHED + OPEN + 활성
 
-**응답 일시 중지 후 재개**:
-```
-(PUBLISHED, OPEN) → (PUBLISHED, CLOSED) → (PUBLISHED, OPEN)
-    응답 수집 중       일시 중지(질문 수정)     응답 재개
-```
+#### 표 1: 상태 전이 행동
 
-**마감 후 설문 열람**:
-```
-(PUBLISHED, CLOSED) → 응답자가 설문 내용 확인 가능 (응답 제출은 불가)
-```
+| # | 현재 상태 | `publish()` | `openResponse()` | `closeResponse()` | `publishAndOpen()` |
+|:-:|:---------|:-----------|:-----------------|:------------------|:-------------------|
+| S1 | (D, NS, active) | ✅ → (P, NS, active) | ❌ DRAFT에서 불가 | ❌ NS→C 전이 불가 | ✅ → (P, O, active) |
+| S2 | (P, NS, active) | ❌ 이미 PUBLISHED | ✅ → (P, O, active) | ❌ NS→C 전이 불가 | ❌ 이미 PUBLISHED |
+| S3 | (P, O, active) | ❌ 이미 PUBLISHED | ❌ 이미 OPEN | ✅ → (P, C, active) | ❌ 이미 PUBLISHED |
+| S4 | (P, C, active) | ❌ 이미 PUBLISHED | ✅ → (P, O, active) | ❌ 이미 CLOSED | ❌ 이미 PUBLISHED |
+| S5 | (D, NS, trashed) | ✅ → (P, NS, trashed) | ❌ DRAFT에서 불가 | ❌ NS→C 전이 불가 | ✅ → (P, O, trashed) |
+| S6 | (P, NS, trashed) | ❌ 이미 PUBLISHED | ✅ → (P, O, trashed) | ❌ NS→C 전이 불가 | ❌ 이미 PUBLISHED |
+| S7 | (P, O, trashed) | ❌ 이미 PUBLISHED | ❌ 이미 OPEN | ✅ → (P, C, trashed) | ❌ 이미 PUBLISHED |
+| S8 | (P, C, trashed) | ❌ 이미 PUBLISHED | ✅ → (P, O, trashed) | ❌ 이미 CLOSED | ❌ 이미 PUBLISHED |
+
+> **참고**: 현재 구현에서 `publish()`, `openResponse()` 등 상태 전이 메서드는 `trashedAt`을 검사하지 않는다. 휴지통 상태에서의 상태 전이 차단은 Service 레이어에서 담당한다. (S5~S8에서 엔티티 레벨에서는 전이가 성공하지만, Service에서 휴지통 여부를 먼저 검증하여 차단해야 함)
+
+#### 표 2: `openResponse()` 마감일 조건
+
+| # | 현재 상태 | 마감일 | 결과 |
+|:-:|:---------|:------|:----|
+| D1 | (P, NS, active) | null (미설정) | ✅ → (P, O, active) |
+| D2 | (P, NS, active) | 미래 시점 | ✅ → (P, O, active) |
+| D3 | (P, NS, active) | 과거 시점 | ❌ 마감일 경과 |
+| D4 | (P, C, active) | null (미설정) | ✅ → (P, O, active) |
+| D5 | (P, C, active) | 미래 시점 | ✅ → (P, O, active) |
+| D6 | (P, C, active) | 과거 시점 | ❌ 마감일 경과 |
+
+#### 표 3: 휴지통 행동
+
+| # | 현재 상태 | `trash()` | `restoreFromTrash()` | `permanentDelete()` |
+|:-:|:---------|:---------|:--------------------|:-------------------|
+| T1 | (D, NS, active) | ✅ → (D, NS, trashed) | ❌ 휴지통 아님 | ❌ 휴지통 아님 |
+| T2 | (P, NS, active) | ✅ → (P, NS, trashed) | ❌ 휴지통 아님 | ❌ 휴지통 아님 |
+| T3 | (P, O, active) | ✅ → (P, O, trashed) | ❌ 휴지통 아님 | ❌ 휴지통 아님 |
+| T4 | (P, C, active) | ✅ → (P, C, trashed) | ❌ 휴지통 아님 | ❌ 휴지통 아님 |
+| T5 | (D, NS, trashed) | ❌ 이미 휴지통 | ✅ → (D, NS, active) | ✅ → deleted=true |
+| T6 | (P, NS, trashed) | ❌ 이미 휴지통 | ✅ → (P, NS, active) | ✅ → deleted=true |
+| T7 | (P, O, trashed) | ❌ 이미 휴지통 | ✅ → (P, O, active) | ✅ → deleted=true |
+| T8 | (P, C, trashed) | ❌ 이미 휴지통 | ✅ → (P, C, active) | ✅ → deleted=true |
+
+> **핵심**: 복원 시 `(visibility, responseStatus)`는 변경 없이 원래 상태 그대로 유지된다.
+
+#### 표 4: 설문 수정 및 응답 제출
+
+| # | 현재 상태 | `update()` | 응답 제출 | 설문 목록 노출 |
+|:-:|:---------|:----------|:---------|:------------|
+| A1 | (D, NS, active) | ✅ | ❌ DRAFT + NS | ✅ 관리자 목록 |
+| A2 | (P, NS, active) | ✅ | ❌ NOT_STARTED | ✅ 전체 목록 (응답 불가 표시) |
+| A3 | (P, O, active) | ✅ | ✅ 응답 가능 | ✅ 전체 목록 (응답 가능 표시) |
+| A4 | (P, C, active) | ✅ | ❌ CLOSED | ✅ 전체 목록 (마감 표시) |
+| A5 | (D, NS, trashed) | ✅ | ❌ 휴지통 | ❌ 일반 목록 제외, 휴지통 목록 노출 |
+| A6 | (P, NS, trashed) | ✅ | ❌ 휴지통 | ❌ 일반 목록 제외, 휴지통 목록 노출 |
+| A7 | (P, O, trashed) | ✅ | ❌ 휴지통 (INV-16) | ❌ 일반 목록 제외, 휴지통 목록 노출 |
+| A8 | (P, C, trashed) | ✅ | ❌ 휴지통 | ❌ 일반 목록 제외, 휴지통 목록 노출 |
+
+> **응답 제출 조건** (`isAcceptingResponses()`): `visibility == PUBLISHED && responseStatus == OPEN && trashedAt == null` — 이 3가지가 모두 참일 때만 A3 케이스.
+
+#### 표 5: 대표 시나리오 흐름
+
+| # | 시나리오 | 흐름 |
+|:-:|:--------|:----|
+| F1 | 기본 흐름 | `(D,NS)` → publish → `(P,NS)` → openResponse → `(P,O)` → closeResponse → `(P,C)` |
+| F2 | 즉시 응답 시작 | `(D,NS)` → publishAndOpen → `(P,O)` → closeResponse → `(P,C)` |
+| F3 | 응답 일시 중지 후 재개 | `(P,O)` → closeResponse → `(P,C)` → openResponse → `(P,O)` |
+| F4 | 공개 후 대기 | `(D,NS)` → publish → `(P,NS)` — 응답자 미리보기만 가능 |
+| F5 | 마감일 자동 마감 | `(P,O)` → [deadline 경과] → `(P,C)` |
+| F6 | 휴지통 이동 후 복원 | `(P,O)` → trash → `(P,O,trashed)` → restore → `(P,O,active)` |
+| F7 | 휴지통 → 영구 삭제 | `(P,C)` → trash → `(P,C,trashed)` → permanentDelete → deleted |
+| F8 | DRAFT에서 바로 휴지통 | `(D,NS)` → trash → `(D,NS,trashed)` → restore → `(D,NS,active)` |
+| F9 | 마감 후 마감일 수정 후 재개 | `(P,C)` → update(deadline=미래) → openResponse → `(P,O)` |
+| F10 | 마감일 경과 후 재개 시도 실패 | `(P,C, deadline=과거)` → openResponse → ❌ 마감일 경과 |
 
 ### 2-2. 설문 휴지통 전이 (SurveyStatus FSM과 직교)
 
-설문의 휴지통 상태는 `SurveyStatus`(DRAFT/PUBLISHED/CLOSED)와 **독립적**이다. 어떤 상태의 설문이든 휴지통에 넣고 복원할 수 있으며, 복원 시 원래 상태가 그대로 유지된다.
+설문의 휴지통 상태는 2축 상태(`visibility`, `responseStatus`)와 **독립적**이다. 어떤 상태의 설문이든 휴지통에 넣고 복원할 수 있으며, 복원 시 원래 상태가 그대로 유지된다. (상세 경우의 수는 표 3 참조)
 
 ```
                   휴지통 이동              영구 삭제
@@ -339,13 +435,13 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 ### 2-3. 설문 수정 가능 범위 (상태별)
 
-| 필드 | DRAFT | PUBLISHED + CLOSED | PUBLISHED + OPEN |
-|------|:---:|:---:|:---:|
-| 제목 (title) | O | O | O |
-| 설명 (description) | O | O | O |
-| 응답 권한 (accessLevel) | O | O | O |
-| 마감일 (deadline) | O | O | O |
-| 질문 구조 (추가/수정/삭제) | O | O | O |
+| 필드 | DRAFT + NOT_STARTED | PUBLISHED + NOT_STARTED | PUBLISHED + OPEN | PUBLISHED + CLOSED |
+|------|:---:|:---:|:---:|:---:|
+| 제목 (title) | O | O | O | O |
+| 설명 (description) | O | O | O | O |
+| 응답 권한 (accessLevel) | O | O | O | O |
+| 마감일 (deadline) | O | O | O | O |
+| 질문 구조 (추가/수정/삭제) | O | O | O | O |
 
 ---
 
@@ -413,7 +509,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 설문 생성 | 401 | 403 | 403 | **O** | **O** |
 | 설문 수정 (모든 상태) | 401 | 403 | 403 | **O** | **O** |
 | 설문 발행 | 401 | 403 | 403 | **O** | **O** |
-| 설문 재발행 (CLOSED→PUBLISHED) | 401 | 403 | 403 | **O** | **O** |
+| 설문 응답 재개 (CLOSED→OPEN) | 401 | 403 | 403 | **O** | **O** |
 | 설문 마감 | 401 | 403 | 403 | **O** | **O** |
 | 설문 휴지통 이동 (모든 상태) | 401 | 403 | 403 | **O** | **O** |
 | 설문 휴지통 복원 | 401 | 403 | 403 | **O** | **O** |
@@ -462,7 +558,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 설문 휴지통 복원 | `surveys.surveys_trashed_at = NULL` | 복원 시각 (`updatedAt`) |
 | 설문 영구 삭제 | `surveys.surveys_deleted_by` | 삭제자 ID, 삭제 시각 |
 | 설문 공개 | `surveys.surveys_visibility = PUBLISHED` | 공개 시각 (`updatedAt`) |
-| 응답 시작 | `surveys.surveys_response_status = OPEN` | 응답 시작 시각 (`updatedAt`) |
+| 응답 시작 | `surveys.surveys_response_status = OPEN` (NOT_STARTED → OPEN) | 최초 응답 시작 시각 (`updatedAt`) |
+| 응답 재개 | `surveys.surveys_response_status = OPEN` (CLOSED → OPEN) | 응답 재개 시각 (`updatedAt`) |
 | 응답 마감 | `surveys.surveys_response_status = CLOSED` | 응답 마감 시각 (`updatedAt`) |
 | 응답 제출 | `survey_responses.survey_responses_created_by` | 응답자 ID, 제출 시각 |
 
@@ -528,10 +625,14 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | 전이 | 커버 테스트 | 상태 |
 |------|-----------|------|
-| CLOSED → OPEN (응답 시작/재개) | - | 미작성 |
+| NOT_STARTED → OPEN (최초 응답 시작) | - | 미작성 |
 | OPEN → CLOSED (수동 마감) | - | 미작성 |
 | OPEN → CLOSED (마감일 경과 자동) | - | 미작성 |
+| CLOSED → OPEN (응답 재개) | - | 미작성 |
 | DRAFT에서 OPEN 전환 (금지) | - | 미작성 |
+| NOT_STARTED → CLOSED (금지) | - | 미작성 |
+| CLOSED → NOT_STARTED (금지) | - | 미작성 |
+| OPEN → NOT_STARTED (금지) | - | 미작성 |
 | CLOSED → OPEN (마감일 경과, 금지) | - | 미작성 |
 
 ### 6-4. 권한 검증 커버리지 (테스트 작성 후 업데이트)
