@@ -4,6 +4,7 @@ import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.dto.response.RegistrationListResponse;
 import igrus.web.event.dto.response.RegistrationResponse;
@@ -13,7 +14,6 @@ import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventCapacityFullException;
 import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.EventNotFoundException;
-import igrus.web.event.exception.EventRegistrationClosedException;
 import igrus.web.event.exception.EventNotInRegistrationPeriodException;
 import igrus.web.event.exception.EventNotOpenException;
 import igrus.web.event.exception.EventRegistrationNotFoundException;
@@ -50,6 +50,7 @@ import java.util.Set;
  *   <li>{@link #getRegistrationList} - 신청자 목록 조회 (운영진 이상)</li>
  *   <li>{@link #approveRegistration} - 신청 승인 - 선발제 (운영진 이상)</li>
  *   <li>{@link #rejectRegistration} - 신청 거절 - 선발제 (운영진 이상)</li>
+ *   <li>{@link #revertRegistration} - 승인/거절 되돌리기 - 선발제 (운영진 이상)</li>
  * </ul>
  *
  * @see EventService 행사 CRUD 관련 기능
@@ -71,7 +72,7 @@ public class EventRegistrationService {
      * <ul>
      *   <li>정회원 이상만 신청 가능</li>
      *   <li>중복 신청 불가</li>
-     *   <li>행사가 OPEN 상태여야 함</li>
+     *   <li>등록 상태가 OPEN이어야 함</li>
      *   <li>신청 기간 내여야 함</li>
      *   <li>정원이 남아있어야 함 (선착순의 경우)</li>
      * </ul>
@@ -86,9 +87,9 @@ public class EventRegistrationService {
      * @throws AssociateMemberNotAllowedException   준회원인 경우
      * @throws AlreadyRegisteredException           이미 신청한 경우
      * @throws EventTimeOverlapException            다른 행사와 시간이 겹치는 경우
-     * @throws EventNotOpenException                행사가 OPEN 상태가 아닌 경우
+     * @throws EventNotOpenException                등록 상태가 OPEN이 아닌 경우
      * @throws EventNotInRegistrationPeriodException 신청 기간이 아닌 경우
-     * @throws EventCapacityFullException           정원이 초과된 경우 (자동 승인)
+     * @throws EventCapacityFullException           정원이 초과된 경우 (선착순)
      */
     public RegistrationResponse registerEvent(Long eventId, Long userId) {
         // 1. 행사 조회 (락 없이)
@@ -104,22 +105,25 @@ public class EventRegistrationService {
             throw new AssociateMemberNotAllowedException();
         }
 
-        // 4. 기존 신청 기록 확인 (재신청 여부 판단)
+        // 4. Lazy Evaluation (registrationStatus 갱신 후 신청 가능 여부 판단)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 5. 기존 신청 기록 확인 (재신청 여부 판단)
         var existingRegistration = eventRegistrationRepository.findByEventIdAndUserId(eventId, userId);
         if (existingRegistration.isPresent()) {
             return handleReRegistration(existingRegistration.get(), event, eventId);
         }
 
-        // 5. 행사 상태 확인 (OPEN 상태인지)
+        // 6. 등록 상태 확인 (OPEN 상태인지)
         validateEventIsOpen(event);
 
-        // 6. 신청 기간 확인
+        // 7. 신청 기간 확인
         validateRegistrationPeriod(event);
 
-        // 7. 다른 행사와 시간 겹침 확인
+        // 8. 다른 행사와 시간 겹침 확인
         validateNoTimeOverlap(userId, event);
 
-        // 8. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
+        // 9. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
         if (event.isAutoApprove()) {
             int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
             if (updated == 0) {
@@ -129,11 +133,11 @@ public class EventRegistrationService {
             updateEventStatusAfterIncrement(eventId);
         }
 
-        // 9. 신청 생성 및 저장
+        // 10. 신청 생성 및 저장
         EventRegistration registration = EventRegistration.create(event, user);
         EventRegistration savedRegistration = eventRegistrationRepository.save(registration);
 
-        // 10. 응답 반환
+        // 11. 응답 반환
         return RegistrationResponse.from(savedRegistration);
     }
 
@@ -230,6 +234,7 @@ public class EventRegistrationService {
 
     /**
      * 신청을 승인합니다. (선발제 전용)
+     * REG-INV-14: COMPLETED 또는 CANCELED 상태에서는 승인/거절 불가.
      *
      * <p>동시성 제어: 원자적 UPDATE 방식 사용</p>
      *
@@ -239,6 +244,7 @@ public class EventRegistrationService {
      * @throws EventRegistrationNotFoundException   신청을 찾을 수 없는 경우
      * @throws UserNotFoundException               사용자를 찾을 수 없는 경우
      * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
+     * @throws EventNotEditableException           COMPLETED/CANCELED 상태인 경우
      * @throws NotManualApproveEventException      수동 승인 행사가 아닌 경우
      * @throws InvalidRegistrationStatusException  대기 상태가 아닌 경우
      * @throws EventCapacityFullException          정원이 초과된 경우
@@ -261,38 +267,50 @@ public class EventRegistrationService {
         // 4. 권한 확인 (운영진 이상)
         validateOperatorPermission(user);
 
-        // 5. 선발제 행사인지 확인
+        // 5. Lazy Evaluation (REG-INV-14: eventStatus 갱신 후 승인 가능 여부 판단)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 6. REG-INV-14: COMPLETED 또는 CANCELED 상태에서는 승인 불가
+        if (event.getEventStatus() == EventStatus.COMPLETED || event.getEventStatus() == EventStatus.CANCELED) {
+            throw new EventNotEditableException(event.getEventStatus());
+        }
+
+        // 7. 선발제 행사인지 확인
         if (!event.isManualApprove()) {
             throw new NotManualApproveEventException();
         }
 
-        // 6. WAITING 상태인지 확인
+        // 8. WAITING 상태인지 확인
         if (registration.getStatus() != EventRegistrationStatus.WAITING) {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 7. 시간 겹침 검증 (승인 대상 사용자의 기존 확정 신청과 겹치는지 확인)
+        // 9. 시간 겹침 검증 (승인 대상 사용자의 기존 확정 신청과 겹치는지 확인)
         validateNoTimeOverlap(registration.getUser().getId(), event);
 
-        // 8. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
+        // 10. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
         // 선발제 승인은 신청 기간 종료 후에도 가능해야 하므로 상태와 관계없이 정원만 체크
         int updated = eventRepository.incrementCurrentCountForApproval(eventId);
         if (updated == 0) {
             throw new EventCapacityFullException();
         }
 
-        // 9. 승인 처리
+        // 11. 승인 처리 (clearAutomatically로 인한 엔티티 분리 대비 — 명시적 save 필요)
         registration.approve();
+        eventRegistrationRepository.save(registration);
 
-        // 10. 정원이 찼으면 상태 변경
+        // 12. 정원이 찼으면 상태 변경
         updateEventStatusAfterIncrement(eventId);
 
-        // 11. 응답 반환
-        return RegistrationResponse.from(registration);
+        // 13. 응답 반환 (영속성 컨텍스트 초기화 후이므로 다시 조회)
+        EventRegistration updatedRegistration = eventRegistrationRepository.findById(registrationId)
+                .orElseThrow(EventRegistrationNotFoundException::new);
+        return RegistrationResponse.from(updatedRegistration);
     }
 
     /**
      * 신청을 거절합니다. (선발제 전용)
+     * REG-INV-14: COMPLETED 또는 CANCELED 상태에서는 승인/거절 불가.
      *
      * @param registrationId 신청 ID
      * @param userId         요청자 ID (작성자/관리자)
@@ -300,6 +318,7 @@ public class EventRegistrationService {
      * @throws EventRegistrationNotFoundException   신청을 찾을 수 없는 경우
      * @throws UserNotFoundException               사용자를 찾을 수 없는 경우
      * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
+     * @throws EventNotEditableException           COMPLETED/CANCELED 상태인 경우
      * @throws NotManualApproveEventException      수동 승인 행사가 아닌 경우
      * @throws InvalidRegistrationStatusException  대기 상태가 아닌 경우
      */
@@ -319,25 +338,34 @@ public class EventRegistrationService {
         // 4. 권한 확인 (운영진 이상)
         validateOperatorPermission(user);
 
-        // 5. 선발제 행사인지 확인
+        // 5. Lazy Evaluation (REG-INV-14: eventStatus 갱신 후 거절 가능 여부 판단)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 6. REG-INV-14: COMPLETED 또는 CANCELED 상태에서는 거절 불가
+        if (event.getEventStatus() == EventStatus.COMPLETED || event.getEventStatus() == EventStatus.CANCELED) {
+            throw new EventNotEditableException(event.getEventStatus());
+        }
+
+        // 7. 선발제 행사인지 확인
         if (!event.isManualApprove()) {
             throw new NotManualApproveEventException();
         }
 
-        // 6. WAITING 상태인지 확인
+        // 8. WAITING 상태인지 확인
         if (registration.getStatus() != EventRegistrationStatus.WAITING) {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 7. 거절 처리
+        // 9. 거절 처리
         registration.reject();
 
-        // 8. 응답 반환
+        // 10. 응답 반환
         return RegistrationResponse.from(registration);
     }
 
     /**
      * 승인 또는 거절을 되돌려 대기 상태로 복원합니다. (선발제 전용)
+     * REG-INV-10: 행사가 UPCOMING 상태일 때만 되돌리기 가능.
      *
      * <p>승인 상태에서 되돌릴 경우 신청자 수를 감소시킵니다.</p>
      *
@@ -347,6 +375,7 @@ public class EventRegistrationService {
      * @throws EventRegistrationNotFoundException   신청을 찾을 수 없는 경우
      * @throws UserNotFoundException               사용자를 찾을 수 없는 경우
      * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
+     * @throws EventNotEditableException           UPCOMING 상태가 아닌 경우
      * @throws NotManualApproveEventException      수동 승인 행사가 아닌 경우
      * @throws InvalidRegistrationStatusException  승인/거절 상태가 아닌 경우
      */
@@ -368,29 +397,32 @@ public class EventRegistrationService {
         // 4. 권한 확인 (운영진 이상)
         validateOperatorPermission(user);
 
-        // 5. 행사 상태 확인 (진행 중 또는 완료된 행사는 되돌리기 불가)
-        if (!event.getStatus().isEditable()) {
-            throw new EventNotEditableException(event.getStatus());
+        // 5. Lazy Evaluation (REG-INV-10: eventStatus 갱신 후 되돌리기 가능 여부 판단)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 6. REG-INV-10: 행사가 UPCOMING 상태일 때만 되돌리기 가능
+        if (event.getEventStatus() != EventStatus.UPCOMING) {
+            throw new EventNotEditableException(event.getEventStatus());
         }
 
-        // 6. 선발제 행사인지 확인
+        // 7. 선발제 행사인지 확인
         if (!event.isManualApprove()) {
             throw new NotManualApproveEventException();
         }
 
-        // 7. APPROVED 또는 REJECTED 상태인지 확인
+        // 8. APPROVED 또는 REJECTED 상태인지 확인
         if (!registration.isApproved() && !registration.isRejected()) {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 8. 승인 상태였는지 미리 기록 (clearAutomatically로 인한 엔티티 분리 대비)
+        // 9. 승인 상태였는지 미리 기록 (clearAutomatically로 인한 엔티티 분리 대비)
         boolean wasApproved = registration.isApproved();
 
-        // 9. WAITING 상태로 되돌리기 (카운트 감소 전에 상태 변경)
+        // 10. WAITING 상태로 되돌리기 (카운트 감소 전에 상태 변경)
         registration.revertToWaiting();
         eventRegistrationRepository.saveAndFlush(registration);
 
-        // 10. 승인 상태였으면 카운트 감소 (clearAutomatically=true로 영속성 컨텍스트 초기화됨)
+        // 11. 승인 상태였으면 카운트 감소 (clearAutomatically=true로 영속성 컨텍스트 초기화됨)
         if (wasApproved) {
             int decremented = eventRepository.decrementCurrentCount(eventId);
             if (decremented == 0) {
@@ -399,7 +431,7 @@ public class EventRegistrationService {
             updateEventStatusAfterDecrement(eventId);
         }
 
-        // 11. 응답 반환 (영속성 컨텍스트 초기화 후이므로 다시 조회)
+        // 12. 응답 반환 (영속성 컨텍스트 초기화 후이므로 다시 조회)
         EventRegistration updatedRegistration = eventRegistrationRepository.findById(registrationId)
                 .orElseThrow(EventRegistrationNotFoundException::new);
         return RegistrationResponse.from(updatedRegistration);
@@ -429,7 +461,7 @@ public class EventRegistrationService {
      * @param eventId      행사 ID (원자적 UPDATE용)
      * @return 재신청 결과 응답 DTO
      * @throws AlreadyRegisteredException       취소 상태가 아닌 경우
-     * @throws EventRegistrationClosedException 신청 불가 상태인 경우
+     * @throws EventNotOpenException            등록 상태가 OPEN이 아닌 경우
      * @throws EventCapacityFullException       정원 초과인 경우
      */
     private RegistrationResponse handleReRegistration(EventRegistration registration, Event event, Long eventId) {
@@ -438,7 +470,7 @@ public class EventRegistrationService {
             throw new AlreadyRegisteredException();
         }
 
-        // 행사 상태 확인
+        // 등록 상태 확인
         validateEventIsOpen(event);
 
         // 신청 기간 확인
@@ -465,13 +497,13 @@ public class EventRegistrationService {
     }
 
     /**
-     * 행사가 신청 가능한 상태인지 검증합니다.
+     * 등록 상태가 OPEN인지 검증합니다.
      *
      * @param event 행사
      * @throws EventNotOpenException OPEN 상태가 아닌 경우
      */
     private void validateEventIsOpen(Event event) {
-        if (event.getStatus() != EventStatus.OPEN) {
+        if (event.getRegistrationStatus() != RegistrationStatus.OPEN) {
             throw new EventNotOpenException();
         }
     }
@@ -510,7 +542,7 @@ public class EventRegistrationService {
     }
 
     /**
-     * 신청자 수 증가 후 행사 상태를 업데이트합니다.
+     * 신청자 수 증가 후 등록 상태를 업데이트합니다.
      * 정원이 찼으면 CLOSED 상태로 변경합니다.
      *
      * @param eventId 행사 ID
@@ -522,12 +554,12 @@ public class EventRegistrationService {
             return;
         }
         if (event.isFull()) {
-            event.closeByCapacity();
+            event.closeRegistrationByCapacity();
         }
     }
 
     /**
-     * 신청자 수 감소 후 행사 상태를 업데이트합니다.
+     * 신청자 수 감소 후 등록 상태를 업데이트합니다.
      * 정원 마감 상태에서 자리가 생기면 OPEN 상태로 변경합니다.
      *
      * @param eventId 행사 ID
@@ -538,7 +570,7 @@ public class EventRegistrationService {
             log.warn("행사 상태 갱신 실패: 원자적 UPDATE 이후 행사를 찾을 수 없음. eventId={}", eventId);
             return;
         }
-        event.reopenIfNeeded();
+        event.reopenIfNeeded(Instant.now());
     }
 
 }

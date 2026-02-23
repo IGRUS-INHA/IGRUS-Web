@@ -2,7 +2,9 @@ package igrus.web.event.controller;
 
 import igrus.web.common.config.SwaggerConfig;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.CreateEventRequest;
+import igrus.web.event.dto.request.ReopenRegistrationRequest;
 import igrus.web.event.dto.request.UpdateEventRequest;
 import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
@@ -61,18 +63,20 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "행사 목록 조회", description = "행사 목록을 조회합니다. 상태별 필터링이 가능합니다.")
+    @Operation(summary = "행사 목록 조회", description = "행사 목록을 조회합니다. 행사 진행 상태 및 등록 상태별 필터링이 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "행사 목록 조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요")
     })
     @GetMapping
     public ResponseEntity<List<EventListResponse>> getEventList(
-            @Parameter(description = "행사 상태 필터 (UPCOMING, OPEN, CLOSED, ONGOING, COMPLETED)")
-            @RequestParam(required = false) EventStatus status
+            @Parameter(description = "행사 진행 상태 필터 (UPCOMING, ONGOING, COMPLETED, CANCELED)")
+            @RequestParam(required = false) EventStatus eventStatus,
+            @Parameter(description = "등록 상태 필터 (NOT_STARTED, OPEN, CLOSED)")
+            @RequestParam(required = false) RegistrationStatus registrationStatus
     ) {
-        log.info("행사 목록 조회 요청 - status: {}", status);
-        List<EventListResponse> response = eventService.getEventList(status);
+        log.info("행사 목록 조회 요청 - eventStatus: {}, registrationStatus: {}", eventStatus, registrationStatus);
+        List<EventListResponse> response = eventService.getEventList(eventStatus, registrationStatus);
         return ResponseEntity.ok(response);
     }
 
@@ -94,7 +98,7 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "행사 수정", description = "행사 정보를 수정합니다. 작성자 또는 관리자만 가능합니다.")
+    @Operation(summary = "행사 수정", description = "행사 정보를 수정합니다. 운영진 이상만 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "행사 수정 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventDetailResponse.class))),
@@ -114,7 +118,7 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "행사 삭제", description = "행사를 삭제합니다. 작성자 또는 관리자만 가능합니다.")
+    @Operation(summary = "행사 삭제", description = "행사를 삭제합니다. 운영진 이상만 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "행사 삭제 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요"),
@@ -133,9 +137,9 @@ public class EventController {
 
     // ===== 행사 상태 관리 =====
 
-    @Operation(summary = "행사 수동 마감", description = "행사를 수동으로 마감합니다. 작성자 또는 관리자만 가능합니다.")
+    @Operation(summary = "등록 수동 마감", description = "행사 등록을 수동으로 마감합니다. 운영진 이상만 가능합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "행사 마감 성공",
+            @ApiResponse(responseCode = "200", description = "등록 마감 성공",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventDetailResponse.class))),
             @ApiResponse(responseCode = "400", description = "마감 불가능한 상태"),
             @ApiResponse(responseCode = "401", description = "인증 필요"),
@@ -146,8 +150,63 @@ public class EventController {
             @Parameter(description = "행사 ID") @PathVariable Long eventId,
             @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        log.info("행사 마감 요청 - eventId: {}, userId: {}", eventId, user.userId());
+        log.info("등록 마감 요청 - eventId: {}, userId: {}", eventId, user.userId());
         EventDetailResponse response = eventService.closeEvent(eventId, user.userId());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "행사 취소", description = "행사를 취소합니다. 운영진 이상만 가능합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "행사 취소 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventDetailResponse.class))),
+            @ApiResponse(responseCode = "400", description = "취소 불가능한 상태"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @PostMapping("/{eventId}/cancel")
+    public ResponseEntity<EventDetailResponse> cancelEvent(
+            @Parameter(description = "행사 ID") @PathVariable Long eventId,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        log.info("행사 취소 요청 - eventId: {}, userId: {}", eventId, user.userId());
+        EventDetailResponse response = eventService.cancelEvent(eventId, user.userId());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "행사 재활성화", description = "취소된 행사를 재활성화합니다. 운영진 이상만 가능합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "행사 재활성화 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventDetailResponse.class))),
+            @ApiResponse(responseCode = "400", description = "재활성화 불가능한 상태"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @PostMapping("/{eventId}/reactivate")
+    public ResponseEntity<EventDetailResponse> reactivateEvent(
+            @Parameter(description = "행사 ID") @PathVariable Long eventId,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        log.info("행사 재활성화 요청 - eventId: {}, userId: {}", eventId, user.userId());
+        EventDetailResponse response = eventService.reactivateEvent(eventId, user.userId());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "등록 수동 재오픈", description = "마감된 행사 등록을 수동으로 재오픈합니다. 운영진 이상만 가능합니다. 사유 필수.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "등록 재오픈 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventDetailResponse.class))),
+            @ApiResponse(responseCode = "400", description = "재오픈 불가능한 상태 또는 사유 누락"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    @PostMapping("/{eventId}/reopen-registration")
+    public ResponseEntity<EventDetailResponse> reopenRegistration(
+            @Parameter(description = "행사 ID") @PathVariable Long eventId,
+            @Valid @RequestBody ReopenRegistrationRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        log.info("등록 재오픈 요청 - eventId: {}, userId: {}, reason: {}", eventId, user.userId(), request.reason());
+        EventDetailResponse response = eventService.reopenRegistration(eventId, user.userId(), request.reason());
         return ResponseEntity.ok(response);
     }
 

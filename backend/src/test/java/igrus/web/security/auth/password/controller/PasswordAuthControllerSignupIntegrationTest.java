@@ -14,9 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,13 +29,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * <p>테스트 범위:</p>
  * <ul>
- *     <li>REG-001 ~ REG-003: 회원가입 성공 케이스</li>
+ *     <li>REG-001 ~ REG-003: 회원가입 성공 케이스 (사전 이메일 인증 → 가입)</li>
  *     <li>REG-010 ~ REG-017: 회원가입 실패 케이스 (유효성 검증)</li>
- *     <li>VER-001 ~ VER-005: 이메일 인증 케이스</li>
+ *     <li>PRE-001 ~ PRE-005: 사전 이메일 인증 케이스</li>
  * </ul>
  */
 @DisplayName("회원가입 HTTP 컨트롤러 통합 테스트")
 class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationTestBase {
+
+    private String verificationToken;
 
     @BeforeEach
     void setUp() {
@@ -62,7 +61,8 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
                 Gender.MALE,
                 1,
                 EnrollmentStatus.ENROLLED,
-                true
+                true,
+                verificationToken
         );
     }
 
@@ -72,8 +72,18 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
         return new PasswordSignupRequest(
                 studentId, name, email, password, phone, department, motivation, List.of(),
                 List.of(Interest.WEB_FRONTEND), null, JoinRoute.EVERYTIME, null,
-                Gender.MALE, 1, EnrollmentStatus.ENROLLED, privacyConsent
+                Gender.MALE, 1, EnrollmentStatus.ENROLLED, privacyConsent,
+                verificationToken
         );
+    }
+
+    /**
+     * 사전 인증된 이메일 레코드를 생성합니다.
+     */
+    private void createVerifiedEmailRecord(String email) {
+        EmailVerification verification = EmailVerification.create(email, "123456", 600000L);
+        this.verificationToken = verification.verify();
+        emailVerificationRepository.save(verification);
     }
 
     // ===== 회원가입 성공 테스트 =====
@@ -83,73 +93,36 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
     class SignupSuccessTest {
 
         @Test
-        @DisplayName("[REG-001] 회원가입 요청 성공 - 201 응답 및 이메일 인증 코드 발송")
-        void signup_withValidRequest_returns201AndSendsVerificationEmail() throws Exception {
-            // given
+        @DisplayName("[REG-001] 사전 인증 후 회원가입 요청 성공 - 201 응답")
+        void signup_withPreVerifiedEmail_returns201() throws Exception {
+            // given - 이메일 사전 인증
+            createVerifiedEmailRecord(TEST_EMAIL);
             PasswordSignupRequest request = createValidSignupRequest();
 
             // when & then
             performPost("/signup", request)
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.email").value(TEST_EMAIL))
-                    .andExpect(jsonPath("$.requiresVerification").value(true));
-
-            // 이메일 발송 확인
-            verify(authEmailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
+                    .andExpect(jsonPath("$.requiresVerification").doesNotExist());
 
             // DB 상태 확인
             User savedUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();
-            assertThat(savedUser.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
+            assertThat(savedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
             assertThat(savedUser.getStudentId()).isEqualTo(TEST_STUDENT_ID);
         }
 
         @Test
-        @DisplayName("[REG-002] 이메일 인증 코드 검증 성공 - 준회원 등록 완료")
-        void verifyEmail_withValidCode_completesRegistration() throws Exception {
-            // given - 회원가입 수행
-            PasswordSignupRequest signupRequest = createValidSignupRequest();
-            performPost("/signup", signupRequest)
-                    .andExpect(status().isCreated());
-
-            // 인증 코드 조회
-            String verificationCode = getVerificationCode(TEST_EMAIL);
-            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, verificationCode);
+        @DisplayName("[REG-002] 이메일 미인증 상태에서 가입 시도 - 400 응답")
+        void signup_withoutPreVerifiedEmail_returns400() throws Exception {
+            // given - 이메일 사전 인증 없이 가입 시도
+            PasswordSignupRequest request = createValidSignupRequest();
 
             // when & then
-            performPost("/verify-email", verifyRequest)
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.requiresVerification").value(false));
+            performPost("/signup", request)
+                    .andExpect(status().isBadRequest());
 
-            // DB 상태 확인
-            User verifiedUser = userRepository.findByEmail(TEST_EMAIL).orElseThrow();
-            assertThat(verifiedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        }
-
-        @Test
-        @DisplayName("[REG-003] 인증 코드 재발송 성공 - 새 코드 생성")
-        void resendVerification_withValidEmail_sendsNewCode() throws Exception {
-            // given - 회원가입 수행
-            PasswordSignupRequest signupRequest = createValidSignupRequest();
-            performPost("/signup", signupRequest)
-                    .andExpect(status().isCreated());
-
-            // 기존 코드 저장
-            String originalCode = getVerificationCode(TEST_EMAIL);
-
-            // 재발송 rate limit 비활성화
-            ReflectionTestUtils.setField(resendVerificationService, "resendRateLimitSeconds", 0L);
-
-            ResendVerificationRequest resendRequest = new ResendVerificationRequest(TEST_EMAIL);
-
-            // when & then
-            performPost("/resend-verification", resendRequest)
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.email").value(TEST_EMAIL))
-                    .andExpect(jsonPath("$.message").exists());
-
-            // 새 코드가 발급되었는지 확인
-            String newCode = getVerificationCode(TEST_EMAIL);
-            assertThat(newCode).isNotEqualTo(originalCode);
+            // 사용자가 생성되지 않았는지 확인
+            assertThat(userRepository.findByEmail(TEST_EMAIL)).isEmpty();
         }
     }
 
@@ -164,6 +137,7 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
         void signup_withDuplicateStudentId_returns409() throws Exception {
             // given - 기존 사용자 생성
             createAndSaveDefaultUserWithCredential();
+            createVerifiedEmailRecord("other@inha.edu");
 
             // 동일 학번으로 가입 시도
             PasswordSignupRequest request = createSignupRequest(
@@ -182,6 +156,7 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
         void signup_withDuplicateEmail_returns409() throws Exception {
             // given - 기존 사용자 생성
             createAndSaveDefaultUserWithCredential();
+            createVerifiedEmailRecord(TEST_EMAIL);
 
             // 동일 이메일로 가입 시도
             PasswordSignupRequest request = createSignupRequest(
@@ -289,131 +264,107 @@ class PasswordAuthControllerSignupIntegrationTest extends ControllerIntegrationT
         }
     }
 
-    // ===== 이메일 인증 테스트 =====
+    // ===== 사전 이메일 인증 테스트 =====
 
     @Nested
-    @DisplayName("이메일 인증 테스트")
-    class EmailVerificationTest {
+    @DisplayName("사전 이메일 인증 테스트")
+    class PreSignupVerificationTest {
 
         @Test
-        @DisplayName("[VER-001] 만료된 인증 코드 사용 - 400 Bad Request 응답")
-        void verifyEmail_withExpiredCode_returns400() throws Exception {
-            // given - 회원가입 수행
-            PasswordSignupRequest signupRequest = createValidSignupRequest();
-            performPost("/signup", signupRequest)
-                    .andExpect(status().isCreated());
+        @DisplayName("[PRE-001] 인증 코드 발송 성공 - 200 OK")
+        void sendCode_withValidEmail_returns200() throws Exception {
+            // given
+            ResendVerificationRequest request = new ResendVerificationRequest(TEST_EMAIL);
 
-            // 인증 코드 만료 시뮬레이션
-            EmailVerification verification = emailVerificationRepository.findByEmailAndVerifiedFalse(TEST_EMAIL).orElseThrow();
-            ReflectionTestUtils.setField(verification, "expiresAt", Instant.now().minusSeconds(60));
+            // when & then
+            performPost("/pre-signup/send-code", request)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.email").value(TEST_EMAIL))
+                    .andExpect(jsonPath("$.message").exists());
+
+            verify(authEmailService).sendVerificationEmail(eq(TEST_EMAIL), anyString());
+        }
+
+        @Test
+        @DisplayName("[PRE-002] 인증 코드 확인 성공 - 200 OK")
+        void verifyCode_withValidCode_returns200() throws Exception {
+            // given - 코드 발송
+            ResendVerificationRequest sendRequest = new ResendVerificationRequest(TEST_EMAIL);
+            performPost("/pre-signup/send-code", sendRequest)
+                    .andExpect(status().isOk());
+
+            // 코드 조회
+            String code = getVerificationCode(TEST_EMAIL);
+            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, code);
+
+            // when & then
+            performPost("/pre-signup/verify-code", verifyRequest)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.verified").value(true))
+                    .andExpect(jsonPath("$.email").value(TEST_EMAIL));
+        }
+
+        @Test
+        @DisplayName("[PRE-003] 잘못된 인증 코드 - 400 Bad Request")
+        void verifyCode_withInvalidCode_returns400() throws Exception {
+            // given - 코드 발송
+            ResendVerificationRequest sendRequest = new ResendVerificationRequest(TEST_EMAIL);
+            performPost("/pre-signup/send-code", sendRequest)
+                    .andExpect(status().isOk());
+
+            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, "WRONG1");
+
+            // when & then
+            performPost("/pre-signup/verify-code", verifyRequest)
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("[PRE-004] 만료된 인증 코드 - 400 Bad Request")
+        void verifyCode_withExpiredCode_returns400() throws Exception {
+            // given - 만료된 코드 생성
+            EmailVerification verification = EmailVerification.create(TEST_EMAIL, "123456", 0);
             emailVerificationRepository.save(verification);
 
-            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, verification.getCode());
+            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, "123456");
 
             // when & then
-            performPost("/verify-email", verifyRequest)
+            performPost("/pre-signup/verify-code", verifyRequest)
                     .andExpect(status().isBadRequest());
         }
 
         @Test
-        @DisplayName("[VER-002] 잘못된 인증 코드 사용 - 400 Bad Request 응답")
-        void verifyEmail_withInvalidCode_returns400() throws Exception {
-            // given - 회원가입 수행
-            PasswordSignupRequest signupRequest = createValidSignupRequest();
-            performPost("/signup", signupRequest)
-                    .andExpect(status().isCreated());
+        @DisplayName("[PRE-005] 5회 초과 인증 시도 - 429 Too Many Requests")
+        void verifyCode_afterMaxAttempts_returns429() throws Exception {
+            // given - 코드 발송
+            ResendVerificationRequest sendRequest = new ResendVerificationRequest(TEST_EMAIL);
+            performPost("/pre-signup/send-code", sendRequest)
+                    .andExpect(status().isOk());
 
-            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, "WRONG_CODE");
-
-            // when & then
-            performPost("/verify-email", verifyRequest)
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @DisplayName("[VER-003] 5회 초과 인증 시도 - 429 Too Many Requests 응답")
-        void verifyEmail_afterMaxAttempts_returns429() throws Exception {
-            // given - 회원가입 수행
-            PasswordSignupRequest signupRequest = createValidSignupRequest();
-            performPost("/signup", signupRequest)
-                    .andExpect(status().isCreated());
-
-            // 실패 시도 횟수만큼 잘못된 인증 코드로 시도 (5회)
             EmailVerificationRequest wrongRequest = new EmailVerificationRequest(TEST_EMAIL, "WRONG1");
             for (int i = 0; i < MAX_VERIFICATION_ATTEMPTS; i++) {
-                performPost("/verify-email", wrongRequest)
-                        .andExpect(status().isBadRequest()); // 각 시도는 400 Bad Request (잘못된 코드)
+                performPost("/pre-signup/verify-code", wrongRequest)
+                        .andExpect(status().isBadRequest());
             }
 
             // when - 6번째 시도
             // then - 429 Too Many Requests
-            performPost("/verify-email", wrongRequest)
+            performPost("/pre-signup/verify-code", wrongRequest)
                     .andExpect(status().isTooManyRequests());
         }
 
         @Test
-        @DisplayName("[VER-004] 존재하지 않는 이메일로 인증 시도 - 400 Bad Request 응답")
-        void verifyEmail_withNonExistentEmail_returns400() throws Exception {
-            // given
-            EmailVerificationRequest verifyRequest = new EmailVerificationRequest("nonexistent@inha.edu", "123456");
-
-            // when & then
-            performPost("/verify-email", verifyRequest)
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @DisplayName("[VER-005] 이미 인증된 이메일로 재인증 시도 - 400 Bad Request 응답")
-        void verifyEmail_withAlreadyVerifiedEmail_returns400() throws Exception {
-            // given - 회원가입 및 인증 완료
-            PasswordSignupRequest signupRequest = createValidSignupRequest();
-            performPost("/signup", signupRequest)
-                    .andExpect(status().isCreated());
-
-            String verificationCode = getVerificationCode(TEST_EMAIL);
-            EmailVerificationRequest verifyRequest = new EmailVerificationRequest(TEST_EMAIL, verificationCode);
-
-            performPost("/verify-email", verifyRequest)
+        @DisplayName("[PRE-006] Rate Limit 적용 - 429 Too Many Requests")
+        void sendCode_beforeRateLimitExpires_returns429() throws Exception {
+            // given - 첫 번째 발송
+            ResendVerificationRequest request = new ResendVerificationRequest(TEST_EMAIL);
+            performPost("/pre-signup/send-code", request)
                     .andExpect(status().isOk());
-
-            // when - 다시 인증 시도
-            performPost("/verify-email", verifyRequest)
-                    .andExpect(status().isBadRequest());
-        }
-    }
-
-    // ===== 인증 코드 재발송 테스트 =====
-
-    @Nested
-    @DisplayName("인증 코드 재발송 테스트")
-    class ResendVerificationTest {
-
-        @Test
-        @DisplayName("[RES-001] 재발송 Rate Limit 적용 - 429 Too Many Requests 응답")
-        void resendVerification_beforeRateLimitExpires_returns429() throws Exception {
-            // given - 회원가입 수행
-            PasswordSignupRequest signupRequest = createValidSignupRequest();
-            performPost("/signup", signupRequest)
-                    .andExpect(status().isCreated());
-
-            ResendVerificationRequest resendRequest = new ResendVerificationRequest(TEST_EMAIL);
 
             // when - 바로 재발송 시도 (rate limit 적용)
             // then
-            performPost("/resend-verification", resendRequest)
+            performPost("/pre-signup/send-code", request)
                     .andExpect(status().isTooManyRequests());
-        }
-
-        @Test
-        @DisplayName("[RES-002] 존재하지 않는 이메일로 재발송 시도 - 400 Bad Request 응답")
-        void resendVerification_withNonExistentEmail_returns400() throws Exception {
-            // given - 가입 요청되지 않은 이메일로 재발송 시도
-            String nonExistentEmail = "nonexistent@inha.edu";
-            ResendVerificationRequest resendRequest = new ResendVerificationRequest(nonExistentEmail);
-
-            // when & then - 해당 이메일로 가입 요청된 계정이 없으므로 400 응답
-            performPost("/resend-verification", resendRequest)
-                    .andExpect(status().isBadRequest());
         }
     }
 }

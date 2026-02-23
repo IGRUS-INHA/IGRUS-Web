@@ -8,6 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,8 +40,8 @@ class PasswordCredentialTest {
         }
 
         @Test
-        @DisplayName("생성 시 기본 상태는 PENDING_VERIFICATION")
-        void create_DefaultStatus_IsPendingVerification() {
+        @DisplayName("생성 시 기본 상태는 ACTIVE (이메일 사전 인증 완료 후 가입)")
+        void create_DefaultStatus_IsActive() {
             // given
             User user = createTestUser();
             String passwordHash = "$2a$10$hashedPassword";
@@ -49,8 +50,8 @@ class PasswordCredentialTest {
             PasswordCredential credential = PasswordCredential.create(user, passwordHash);
 
             // then
-            assertThat(credential.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
-            assertThat(credential.isPendingVerification()).isTrue();
+            assertThat(credential.getStatus()).isEqualTo(UserStatus.ACTIVE);
+            assertThat(credential.isActive()).isTrue();
         }
     }
 
@@ -130,7 +131,6 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
-            credential.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
 
             // then
             assertThat(credential.isActive()).isTrue();
@@ -178,7 +178,6 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
-            credential.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
 
             // then
             assertThat(credential.isSuspended()).isFalse();
@@ -214,7 +213,6 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
-            credential.verifyEmail(); // PENDING_VERIFICATION -> ACTIVE
 
             // then
             assertThat(credential.isWithdrawn()).isFalse();
@@ -226,6 +224,7 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
+            ReflectionTestUtils.setField(credential, "status", UserStatus.PENDING_VERIFICATION);
 
             // then
             assertThat(credential.isPendingVerification()).isTrue();
@@ -237,7 +236,6 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
-            credential.verifyEmail();
 
             // then
             assertThat(credential.isPendingVerification()).isFalse();
@@ -249,6 +247,7 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
+            ReflectionTestUtils.setField(credential, "status", UserStatus.PENDING_VERIFICATION);
             assertThat(credential.getStatus()).isEqualTo(UserStatus.PENDING_VERIFICATION);
 
             // when
@@ -265,7 +264,6 @@ class PasswordCredentialTest {
             // given
             User user = createTestUser();
             PasswordCredential credential = PasswordCredential.create(user, "$2a$10$hashedPassword");
-            credential.verifyEmail(); // ACTIVE 상태로 변경
             assertThat(credential.getStatus()).isEqualTo(UserStatus.ACTIVE);
 
             // when

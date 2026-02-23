@@ -1,7 +1,6 @@
 package igrus.web.inquiry.service.manage;
 
-import igrus.web.inquiry.domain.InquiryType;
-import igrus.web.inquiry.dto.request.CreateGuestInquiryRequest;
+import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.inquiry.dto.request.CreateInquiryMemoRequest;
 import igrus.web.inquiry.dto.response.InquiryCreateResponse;
 import igrus.web.inquiry.dto.response.InquiryDetailResponse;
@@ -9,30 +8,20 @@ import igrus.web.inquiry.dto.response.InquiryMemoResponse;
 import igrus.web.inquiry.exception.InquiryNotFoundException;
 import igrus.web.inquiry.service.create.CreateGuestInquiryService;
 import igrus.web.inquiry.service.read.GetInquiryDetailService;
-import igrus.web.user.domain.Gender;
-import igrus.web.user.domain.EnrollmentStatus;
-import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
-import igrus.web.user.repository.UserRepository;
-import java.util.List;
-import jakarta.persistence.EntityManager;
+import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
+import static igrus.web.inquiry.fixture.InquiryTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
-@ActiveProfiles("test")
 @DisplayName("CreateInquiryMemoService 통합 테스트")
-class CreateInquiryMemoServiceTest {
+class CreateInquiryMemoServiceTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private CreateInquiryMemoService createInquiryMemoService;
@@ -43,55 +32,13 @@ class CreateInquiryMemoServiceTest {
     @Autowired
     private GetInquiryDetailService getInquiryDetailService;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
-    private PlatformTransactionManager transactionManager;
-
     @BeforeEach
     void setUp() {
-        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.execute(status -> {
-            entityManager.createNativeQuery("DELETE FROM inquiry_memos").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiry_replies").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiry_attachments").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM guest_inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM member_inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_positions").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_role_histories").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM post_views").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM event_registrations").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM events").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
-            entityManager.flush();
-            entityManager.clear();
-            return null;
-        });
-    }
-
-    private User createAndSaveUser(String studentId, String email, String phoneNumber) {
-        User user = User.create(studentId, "홍길동", email, phoneNumber, "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, JoinRoute.EVERYTIME, null);
-        return userRepository.save(user);
+        setUpBase();
     }
 
     private InquiryCreateResponse createTestInquiry() {
-        CreateGuestInquiryRequest request = CreateGuestInquiryRequest.builder()
-                .type(InquiryType.JOIN)
-                .title("가입 문의")
-                .content("내용")
-                .email("guest@test.com")
-                .name("홍길동")
-                .password("password123")
-                .build();
-        return createGuestInquiryService.createGuestInquiry(request);
+        return createGuestInquiryService.createGuestInquiry(createGuestInquiryRequest());
     }
 
     @Nested
@@ -102,19 +49,17 @@ class CreateInquiryMemoServiceTest {
         @DisplayName("INQ-A-060: 내부 메모 작성 성공")
         void createMemo_WithValidRequest_Success() {
             // given
-            User operator = createAndSaveUser("20231234", "operator@inha.edu", "010-1234-5678");
+            User operator = createAndSaveUser("20231234", "operator@inha.edu", UserRole.ASSOCIATE);
             InquiryCreateResponse createResponse = createTestInquiry();
 
-            CreateInquiryMemoRequest memoRequest = CreateInquiryMemoRequest.builder()
-                    .content("내부 메모 내용")
-                    .build();
+            CreateInquiryMemoRequest memoRequest = createMemoRequest();
 
             // when
             InquiryMemoResponse response = createInquiryMemoService.createMemo(createResponse.getId(), memoRequest, operator.getId());
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.getContent()).isEqualTo("내부 메모 내용");
+            assertThat(response.getContent()).isEqualTo(DEFAULT_MEMO_CONTENT);
 
             InquiryDetailResponse detail = getInquiryDetailService.getInquiryDetail(createResponse.getId());
             assertThat(detail.getMemos()).hasSize(1);
@@ -124,18 +69,12 @@ class CreateInquiryMemoServiceTest {
         @DisplayName("INQ-A-061: 동일 문의에 여러 메모 작성 성공")
         void createMemo_MultipleMemos_Success() {
             // given
-            User operator = createAndSaveUser("20231234", "operator@inha.edu", "010-1234-5678");
+            User operator = createAndSaveUser("20231234", "operator@inha.edu", UserRole.ASSOCIATE);
             InquiryCreateResponse createResponse = createTestInquiry();
 
-            CreateInquiryMemoRequest memoRequest1 = CreateInquiryMemoRequest.builder()
-                    .content("첫 번째 메모")
-                    .build();
-            CreateInquiryMemoRequest memoRequest2 = CreateInquiryMemoRequest.builder()
-                    .content("두 번째 메모")
-                    .build();
-            CreateInquiryMemoRequest memoRequest3 = CreateInquiryMemoRequest.builder()
-                    .content("세 번째 메모")
-                    .build();
+            CreateInquiryMemoRequest memoRequest1 = createMemoRequest("첫 번째 메모");
+            CreateInquiryMemoRequest memoRequest2 = createMemoRequest("두 번째 메모");
+            CreateInquiryMemoRequest memoRequest3 = createMemoRequest("세 번째 메모");
 
             // when
             createInquiryMemoService.createMemo(createResponse.getId(), memoRequest1, operator.getId());
@@ -156,11 +95,9 @@ class CreateInquiryMemoServiceTest {
         @DisplayName("INQ-A-062: 존재하지 않는 문의에 메모 작성 시 예외 발생")
         void createMemo_WithNonExistentInquiry_ThrowsException() {
             // given
-            User operator = createAndSaveUser("20231234", "operator@inha.edu", "010-1234-5678");
+            User operator = createAndSaveUser("20231234", "operator@inha.edu", UserRole.ASSOCIATE);
 
-            CreateInquiryMemoRequest memoRequest = CreateInquiryMemoRequest.builder()
-                    .content("내부 메모 내용")
-                    .build();
+            CreateInquiryMemoRequest memoRequest = createMemoRequest();
 
             // when & then
             assertThatThrownBy(() -> createInquiryMemoService.createMemo(99999L, memoRequest, operator.getId()))

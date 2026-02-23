@@ -2,6 +2,7 @@ package igrus.web.community.comment.exception;
 
 import igrus.web.common.exception.CustomBaseException;
 import igrus.web.common.exception.ErrorCode;
+import igrus.web.community.exception.CommunityErrorCode;
 
 /**
  * 댓글 신고 관련 예외.
@@ -17,14 +18,14 @@ public class CommentReportException extends CustomBaseException {
     }
 
     public static CommentReportException alreadyReported() {
-        return new CommentReportException(ErrorCode.ALREADY_REPORTED_COMMENT);
+        return new CommentReportException(CommunityErrorCode.ALREADY_REPORTED_COMMENT);
     }
 
     public static CommentReportException invalidReason() {
-        return new CommentReportException(ErrorCode.INVALID_REPORT_REASON);
+        return new CommentReportException(CommunityErrorCode.INVALID_REPORT_REASON);
     }
 
     public static CommentReportException reportNotFound() {
-        return new CommentReportException(ErrorCode.COMMENT_REPORT_NOT_FOUND);
+        return new CommentReportException(CommunityErrorCode.COMMENT_REPORT_NOT_FOUND);
     }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,8 +22,11 @@ import {
   Wallet,
   AlertTriangle,
   Info,
+  Key,
+  Clock,
+  Copy,
 } from 'lucide-react';
-import { useSignup } from '@/api/model/password-authentication/password-authentication';
+import { useSignup, useVerifyEmail, useResendVerification } from '@/api/model/password-authentication/password-authentication';
 import { majorOptions } from '@/constants/majorOptions';
 import { domainOptions } from '@/constants/domainOptions';
 import { WISH_TITLE, wishOptions, wishToEnum } from '@/constants/wishOptions';
@@ -35,7 +38,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/utils';
 import { getErrorMessage, hasErrorCode } from '@/utils/error';
-import { useSignupDuplicateCheck } from '@/hooks';
+import { useSignupDuplicateCheck, useCountdown, useToast } from '@/hooks';
 import { customFetch } from '@/api/client';
 
 // --- 임시 학번 기간 체크 ---
@@ -127,6 +130,8 @@ const STEP_FIELDS: (keyof SignupFormData)[][] = [
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const toast = useToast();
+  const [copied, setCopied] = useState(false);
   const [feeConfirmed, setFeeConfirmed] = useState(false);
   const [feeChecked, setFeeChecked] = useState(false);
   const [step, setStep] = useState(0);
@@ -137,6 +142,21 @@ export default function SignupPage() {
   const [submitted, setSubmitted] = useState(false);
   const [useTempStudentId, setUseTempStudentId] = useState(false);
   const signupMutation = useSignup();
+  const verifyEmailMutation = useVerifyEmail();
+  const resendVerificationMutation = useResendVerification();
+
+  // 이메일 인증 상태
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verifiedEmail, setVerifiedEmail] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [verificationError, setVerificationError] = useState<string>();
+
+  // 인증 코드 유효시간 타이머 (10분) / 재발송 쿨다운 (60초)
+  const codeTimer = useCountdown({ initialSeconds: 600, persistKey: 'signup-email-code-timer' });
+  const resendCooldown = useCountdown({ initialSeconds: 60, persistKey: 'signup-email-resend-cooldown' });
   const {
     studentId: studentIdCheck,
     email: emailCheck,
@@ -191,7 +211,14 @@ export default function SignupPage() {
   const selectedInterests = watch('interests') ?? [];
   const selectedJoinRoute = watch('joinRoute') ?? '';
   const emailDomain = watch('emailDomain');
+  const emailLocalValue = watch('emailLocal');
+  const customDomainValue = watch('customDomain');
   const watchedGrade = watch('grade');
+
+  const currentFullEmail = useMemo(() => {
+    const domain = emailDomain === 'custom' ? customDomainValue : emailDomain;
+    return emailLocalValue && domain ? `${emailLocalValue}@${domain}` : '';
+  }, [emailLocalValue, emailDomain, customDomainValue]);
 
   // 학년 변경 시 임시 학번 체크 해제
   useEffect(() => {
@@ -199,6 +226,19 @@ export default function SignupPage() {
       setUseTempStudentId(false);
     }
   }, [watchedGrade]);
+
+  // 이메일 변경 시 인증 상태 초기화
+  useEffect(() => {
+    if (verifiedEmail && currentFullEmail !== verifiedEmail) {
+      setEmailVerified(false);
+      setVerificationCode('');
+      setCodeSent(false);
+      setVerificationError(undefined);
+      codeTimer.stop();
+      resendCooldown.stop();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFullEmail, verifiedEmail]);
 
   // 비밀번호 변경 시 비밀번호 확인 필드 재검증
   useEffect(() => {
@@ -242,6 +282,88 @@ export default function SignupPage() {
       setValue('customJoinRoute', '');
     }
   };
+
+  // 이메일 중복 체크 통과 시 자동으로 인증 코드 발송
+  useEffect(() => {
+    if (emailCheck.isAvailable && !emailVerified && !codeSent && !sendingCode) {
+      handleSendCode();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emailCheck.isAvailable]);
+
+  const handleSendCode = async () => {
+    const valid = await trigger(['emailLocal', 'emailDomain', 'customDomain']);
+    if (!valid) return;
+    if (emailVerified && currentFullEmail === verifiedEmail) return;
+    if (sendingCode) return;
+
+    setSendingCode(true);
+    setVerificationError(undefined);
+    try {
+      await resendVerificationMutation.mutateAsync({
+        data: { email: currentFullEmail },
+      });
+      setCodeSent(true);
+      codeTimer.restart();
+      resendCooldown.restart();
+    } catch (error) {
+      setVerificationError(getErrorMessage(error));
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    setVerifyingCode(true);
+    setVerificationError(undefined);
+    try {
+      await verifyEmailMutation.mutateAsync({
+        data: { email: currentFullEmail, code: verificationCode },
+      });
+      setEmailVerified(true);
+      setVerifiedEmail(currentFullEmail);
+      codeTimer.stop();
+    } catch (error) {
+      if (hasErrorCode(error, 'VERIFICATION_CODE_EXPIRED')) {
+        setVerificationError('인증 코드가 만료되었습니다. 재발송해주세요.');
+      } else if (hasErrorCode(error, 'VERIFICATION_ATTEMPTS_EXCEEDED')) {
+        setVerificationError('인증 시도 횟수를 초과했습니다. 재발송해주세요.');
+      } else if (hasErrorCode(error, 'VERIFICATION_CODE_INVALID')) {
+        setVerificationError('인증 코드가 일치하지 않습니다.');
+      } else {
+        setVerificationError(getErrorMessage(error));
+      }
+    } finally {
+      setVerifyingCode(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setSendingCode(true);
+    setVerificationError(undefined);
+    try {
+      await resendVerificationMutation.mutateAsync({
+        data: { email: currentFullEmail },
+      });
+      resendCooldown.restart();
+      codeTimer.restart();
+      setVerificationCode('');
+    } catch (error) {
+      setVerificationError(getErrorMessage(error));
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleCopyAccount = async () => {
+    await navigator.clipboard.writeText('토스뱅크 1002-3803-2581');
+    setCopied(true);
+    toast.success('클립보드에 복사되었습니다.');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const findStepForField = (field: keyof SignupFormData) =>
+    STEP_FIELDS.findIndex((fields) => fields.includes(field));
 
   const composeEmail = () => {
     const local = getValues('emailLocal');
@@ -288,6 +410,11 @@ export default function SignupPage() {
           setError('emailLocal', { message: emailCheck.message ?? '이미 존재하는 이메일입니다.' });
           return;
         }
+      }
+
+      if (!emailVerified) {
+        setVerificationError('이메일 인증을 완료해주세요.');
+        return;
       }
 
       const phoneValue = getValues('phoneNumber');
@@ -354,9 +481,9 @@ export default function SignupPage() {
 
         const tempId = result.data.temporaryStudentId;
         alert(
-          `회원가입이 완료되었습니다!\n\n임시 학번 [${tempId}]이 발급되었습니다.\n입력하신 이메일로 인증 메일과 임시 학번 안내가 발송되었습니다.\n이메일 인증 페이지로 이동합니다.`,
+          `회원가입이 완료되었습니다!\n\n임시 학번 [${tempId}]이 발급되었습니다.\n로그인 페이지로 이동합니다.`,
         );
-        navigate('/verify-email', { state: { email: fullEmail } });
+        navigate('/login');
       } else {
         // 일반 회원가입
         await signupMutation.mutateAsync({
@@ -384,20 +511,18 @@ export default function SignupPage() {
           },
         });
 
-        alert(
-          '회원가입이 완료되었습니다!\n\n입력하신 이메일로 인증 메일이 발송되었습니다.\n이메일 인증 페이지로 이동합니다.',
-        );
-        navigate('/verify-email', { state: { email: fullEmail } });
+        alert('회원가입이 완료되었습니다!\n\n로그인 페이지로 이동합니다.');
+        navigate('/login');
       }
     } catch (error: unknown) {
       if (hasErrorCode(error, 'DUPLICATE_STUDENT_ID')) {
-        setStep(0);
+        setStep(findStepForField('studentId'));
         setError('studentId', { message: '이미 가입된 학번입니다.' });
       } else if (hasErrorCode(error, 'DUPLICATE_EMAIL')) {
-        setStep(1);
+        setStep(findStepForField('emailLocal'));
         setError('emailLocal', { message: '이미 존재하는 이메일입니다.' });
       } else if (hasErrorCode(error, 'DUPLICATE_PHONE_NUMBER')) {
-        setStep(1);
+        setStep(findStepForField('phoneNumber'));
         setError('phoneNumber', { message: '이미 등록된 전화번호입니다.' });
       } else if (hasErrorCode(error, 'TEMP_STUDENT_ID_NOT_AVAILABLE')) {
         setServerError('임시 학번 발급은 1월~2월에만 가능합니다.');
@@ -439,7 +564,17 @@ export default function SignupPage() {
               </div>
               <div className="relative flex flex-col sm:block gap-s1">
                 <span className="text-sm text-muted-foreground shrink-0">입금계좌</span>
-                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-baseline sm:justify-center">토스뱅크 1002-3803-2581</span>
+                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-center sm:justify-center">
+                  토스뱅크 1002-3803-2581
+                  <button
+                    type="button"
+                    onClick={handleCopyAccount}
+                    className="inline-flex items-center ml-s2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                    title="계좌번호 복사"
+                  >
+                    {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                  </button>
+                </span>
               </div>
             </div>
 
@@ -773,6 +908,7 @@ export default function SignupPage() {
                         },
                       })}
                       placeholder="아이디"
+                      disabled={emailVerified}
                       className="pl-10"
                     />
                   </div>
@@ -791,6 +927,7 @@ export default function SignupPage() {
                           }, 0);
                         },
                       })}
+                      disabled={emailVerified}
                       className={cn(
                         'w-full h-9 rounded-r2 border border-input bg-background text-foreground px-s3 text-sm',
                         'appearance-none cursor-pointer transition-all outline-none',
@@ -827,6 +964,7 @@ export default function SignupPage() {
                       },
                     })}
                     placeholder="도메인 입력 (예: example.com)"
+                    disabled={emailVerified}
                     className="mt-s2"
                   />
                 )}
@@ -834,6 +972,88 @@ export default function SignupPage() {
                   <div className="flex items-center gap-s1 mt-s1">
                     <Loader2 size={14} className="animate-spin text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">확인 중...</span>
+                  </div>
+                )}
+
+                {/* 인증 코드 발송 중 (최초) */}
+                {sendingCode && !codeSent && (
+                  <div className="flex items-center gap-s1 mt-s3">
+                    <Loader2 size={14} className="animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">인증 코드 발송 중...</span>
+                  </div>
+                )}
+
+                {/* 최초 발송 실패 시 에러 + 재시도 */}
+                {!codeSent && !sendingCode && verificationError && (
+                  <div className="mt-s3 space-y-s2">
+                    <p className="text-sm text-destructive">{verificationError}</p>
+                    <button type="button" onClick={handleSendCode} className="text-sm text-primary hover:underline transition cursor-pointer">
+                      다시 시도
+                    </button>
+                  </div>
+                )}
+
+                {/* 인증 코드 입력 UI */}
+                {codeSent && !emailVerified && (
+                  <div className="mt-s3 space-y-s3">
+                    <div className="flex items-center gap-s2">
+                      <div className="relative flex-1">
+                        <Key size={18} className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="6자리 인증 코드"
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          maxLength={6}
+                          className="pl-10 tracking-widest"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleVerifyCode}
+                        disabled={verifyingCode || verificationCode.length !== 6 || codeTimer.isExpired}
+                        className="shrink-0 cursor-pointer"
+                      >
+                        {verifyingCode ? <Loader2 size={16} className="animate-spin" /> : '인증 확인'}
+                      </Button>
+                    </div>
+
+                    {codeTimer.isRunning && (
+                      <div className={cn(
+                        'flex items-center gap-s1 text-sm transition-colors',
+                        codeTimer.remaining <= 60 ? 'text-destructive' : codeTimer.remaining <= 180 ? 'text-amber-500' : 'text-primary',
+                      )}>
+                        <Clock size={14} />
+                        <span>남은 시간 {codeTimer.formatted}</span>
+                      </div>
+                    )}
+                    {codeTimer.isExpired && (
+                      <p className="text-sm text-destructive">인증 코드가 만료되었습니다. 재발송해주세요.</p>
+                    )}
+                    {verificationError && (
+                      <p className="text-sm text-destructive">{verificationError}</p>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleResendCode}
+                      disabled={sendingCode || !resendCooldown.isExpired}
+                      className="text-sm text-muted-foreground hover:text-primary transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {sendingCode
+                        ? '재발송 중...'
+                        : !resendCooldown.isExpired
+                          ? `인증 코드 재발송 (${resendCooldown.remaining}초)`
+                          : '인증 코드 재발송'}
+                    </button>
+                  </div>
+                )}
+
+                {/* 인증 완료 */}
+                {emailVerified && (
+                  <div className="flex items-center gap-s1 mt-s3 text-green-600">
+                    <Check size={16} />
+                    <span className="text-sm font-medium">이메일 인증이 완료되었습니다</span>
                   </div>
                 )}
               </FormField>

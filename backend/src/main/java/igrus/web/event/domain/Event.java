@@ -17,6 +17,12 @@ import java.util.Optional;
 /**
  * 행사 엔티티.
  * 동아리에서 진행하는 행사 정보를 관리합니다.
+ *
+ * <p>2축 상태 모델:</p>
+ * <ul>
+ *   <li>축 1: {@link #registrationStatus} — 등록(모집) 상태 (NOT_STARTED, OPEN, CLOSED)</li>
+ *   <li>축 2: {@link #eventStatus} — 행사 진행 상태 (UPCOMING, ONGOING, COMPLETED, CANCELED)</li>
+ * </ul>
  */
 @Entity
 @Table(name = "events")
@@ -81,13 +87,17 @@ public class Event extends SoftDeletableEntity {
     @Column(name = "event_current_count", nullable = false)
     private int currentCount = 0;
 
-
-    /** 행사 상태 */
+    /** 축 2: 행사 진행 상태 */
     @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false, length = 20)
-    private EventStatus status = EventStatus.UPCOMING;
+    private EventStatus eventStatus = EventStatus.UPCOMING;
 
-    /** 마감 사유 (CLOSED 상태일 때만 값 존재) */
+    /** 축 1: 등록(모집) 상태 */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "event_registration_status", nullable = false, length = 20)
+    private RegistrationStatus registrationStatus = RegistrationStatus.NOT_STARTED;
+
+    /** 마감 사유 (registrationStatus == CLOSED일 때만 값 존재) */
     @Enumerated(EnumType.STRING)
     @Column(name = "event_close_reason", length = 20)
     private EventCloseReason closeReason;
@@ -101,6 +111,7 @@ public class Event extends SoftDeletableEntity {
 
     /**
      * 행사를 생성합니다.
+     * 초기 상태: registrationStatus=NOT_STARTED, eventStatus=UPCOMING, currentCount=0
      *
      * @throws InvalidEventCapacityException 정원이 1 미만인 경우
      */
@@ -121,7 +132,8 @@ public class Event extends SoftDeletableEntity {
         event.registrationEndAt = registrationEndAt;
         event.capacity = capacity;
         event.currentCount = 0;
-        event.status = EventStatus.UPCOMING;
+        event.registrationStatus = RegistrationStatus.NOT_STARTED;
+        event.eventStatus = EventStatus.UPCOMING;
         event.registrationType = registrationType;
         return event;
     }
@@ -132,105 +144,168 @@ public class Event extends SoftDeletableEntity {
         }
     }
 
-    // === 상태 변경 메서드 ===
+    // === 축 1: 등록 상태 변경 메서드 ===
 
     /**
-     * 행사를 모집 중 상태로 변경합니다.
-     *
-     * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
+     * 등록을 오픈합니다. (NOT_STARTED → OPEN)
      */
-    public void open() {
-        validateStateTransition(EventStatus.OPEN);
-        this.status = EventStatus.OPEN;
+    public void openRegistration() {
+        validateRegistrationTransition(RegistrationStatus.OPEN);
+        this.registrationStatus = RegistrationStatus.OPEN;
         this.closeReason = null;
     }
 
     /**
-     * 정원 초과로 마감합니다.
+     * 정원 초과로 등록을 마감합니다. (OPEN → CLOSED)
      */
-    public void closeByCapacity() {
-        validateStateTransition(EventStatus.CLOSED);
-        this.status = EventStatus.CLOSED;
+    public void closeRegistrationByCapacity() {
+        validateRegistrationTransition(RegistrationStatus.CLOSED);
+        this.registrationStatus = RegistrationStatus.CLOSED;
         this.closeReason = EventCloseReason.CAPACITY_FULL;
     }
 
     /**
-     * 기한 만료로 마감합니다.
-     *
-     * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
+     * 기한 만료로 등록을 마감합니다. (OPEN → CLOSED)
      */
-    public void closeByDeadline() {
-        validateStateTransition(EventStatus.CLOSED);
-        this.status = EventStatus.CLOSED;
+    public void closeRegistrationByDeadline() {
+        validateRegistrationTransition(RegistrationStatus.CLOSED);
+        this.registrationStatus = RegistrationStatus.CLOSED;
         this.closeReason = EventCloseReason.DEADLINE_PASSED;
     }
 
     /**
-     * 운영자가 수동으로 마감합니다.
-     *
-     * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
+     * 운영자가 수동으로 등록을 마감합니다. (OPEN → CLOSED)
      */
-    public void closeManually() {
-        validateStateTransition(EventStatus.CLOSED);
-        this.status = EventStatus.CLOSED;
+    public void closeRegistrationManually() {
+        validateRegistrationTransition(RegistrationStatus.CLOSED);
+        this.registrationStatus = RegistrationStatus.CLOSED;
         this.closeReason = EventCloseReason.MANUAL_CLOSE;
     }
 
     /**
-     * 행사를 진행 중 상태로 변경합니다.
-     * 마감 사유를 초기화합니다.
-     *
-     * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
+     * 등록을 수동으로 재오픈합니다. (CLOSED → OPEN)
+     * EVT-INV-13의 도메인 레벨 검증 (일부)을 수행합니다.
+     * 서비스에서 OPERATOR+ 권한, reason 필수 검증은 별도 수행.
      */
-    public void startOngoing() {
-        validateStateTransition(EventStatus.ONGOING);
-        this.status = EventStatus.ONGOING;
+    public void reopenRegistration() {
+        validateRegistrationTransition(RegistrationStatus.OPEN);
+        this.registrationStatus = RegistrationStatus.OPEN;
         this.closeReason = null;
     }
 
-    /**
-     * 행사를 완료 처리합니다.
-     *
-     * @throws InvalidEventStateTransitionException 전이 불가능한 상태에서 호출 시
-     */
-    public void complete() {
-        validateStateTransition(EventStatus.COMPLETED);
-        this.status = EventStatus.COMPLETED;
+    private void validateRegistrationTransition(RegistrationStatus target) {
+        if (!this.registrationStatus.canTransitionTo(target)) {
+            throw new InvalidEventStateTransitionException(this.registrationStatus, target);
+        }
     }
 
-    private void validateStateTransition(EventStatus target) {
-        if (!this.status.canTransitionTo(target)) {
-            throw new InvalidEventStateTransitionException(this.status, target);
+    // === 축 2: 행사 진행 상태 변경 메서드 ===
+
+    /**
+     * 행사를 진행 중 상태로 변경합니다. (UPCOMING → ONGOING)
+     */
+    public void startOngoing() {
+        validateEventTransition(EventStatus.ONGOING);
+        this.eventStatus = EventStatus.ONGOING;
+    }
+
+    /**
+     * 행사를 완료 처리합니다. (ONGOING → COMPLETED)
+     * 교차 축 불변조건: registrationStatus를 CLOSED로 강제 전환 (EVT-INV-10)
+     */
+    public void complete() {
+        validateEventTransition(EventStatus.COMPLETED);
+        this.eventStatus = EventStatus.COMPLETED;
+        // 교차 축 불변조건: COMPLETED → registrationStatus == CLOSED
+        if (this.registrationStatus != RegistrationStatus.CLOSED) {
+            this.registrationStatus = RegistrationStatus.CLOSED;
+            this.closeReason = EventCloseReason.DEADLINE_PASSED;
         }
     }
 
     /**
-     * 현재 시간에 따라 상태를 자동 갱신합니다. (Lazy Evaluation)
-     * - UPCOMING → OPEN: 신청 시작일이 지났을 때
-     * - OPEN → CLOSED (DEADLINE_PASSED): 신청 마감일이 지났을 때
-     * - CLOSED → ONGOING: 행사 시작일이 지났을 때
-     * - ONGOING → COMPLETED: 행사 종료일이 지났을 때
+     * 행사를 취소합니다. (UPCOMING/ONGOING → CANCELED)
+     * 교차 축 불변조건: registrationStatus를 CLOSED로 강제 전환 (EVT-INV-11)
+     */
+    public void cancel() {
+        validateEventTransition(EventStatus.CANCELED);
+        this.eventStatus = EventStatus.CANCELED;
+        // 교차 축 불변조건: CANCELED → registrationStatus == CLOSED, closeReason = MANUAL_CLOSE
+        this.registrationStatus = RegistrationStatus.CLOSED;
+        this.closeReason = EventCloseReason.MANUAL_CLOSE;
+    }
+
+    /**
+     * 취소된 행사를 재활성화합니다. (CANCELED → UPCOMING/ONGOING)
+     * 현재 시간 기반으로 Lazy Evaluation을 실행하여 올바른 상태를 복원합니다.
+     *
+     * @param now 현재 시간
+     */
+    public void reactivate(Instant now) {
+        if (this.eventStatus != EventStatus.CANCELED) {
+            throw new InvalidEventStateTransitionException(this.eventStatus, EventStatus.UPCOMING);
+        }
+
+        // 현재 시간 기반으로 행사 축 상태 결정
+        if (now.isBefore(this.eventStartAt)) {
+            this.eventStatus = EventStatus.UPCOMING;
+        } else {
+            this.eventStatus = EventStatus.ONGOING;
+        }
+
+        // 등록 축은 NOT_STARTED로 리셋 후 Lazy Evaluation으로 복원
+        this.registrationStatus = RegistrationStatus.NOT_STARTED;
+        this.closeReason = null;
+        updateStatusIfNeeded(now);
+
+        // 정원이 가득 찬 상태에서 재활성화된 경우, 등록 마감 처리 (EVT-INV-08 정합성)
+        if (isFull() && this.registrationStatus == RegistrationStatus.OPEN) {
+            closeRegistrationByCapacity();
+        }
+    }
+
+    private void validateEventTransition(EventStatus target) {
+        if (!this.eventStatus.canTransitionTo(target)) {
+            throw new InvalidEventStateTransitionException(this.eventStatus, target);
+        }
+    }
+
+    // === Lazy Evaluation (2축 통합) ===
+
+    /**
+     * 현재 시간에 따라 2축 상태를 자동 갱신합니다. (Lazy Evaluation)
+     *
+     * <p>축 1 (등록):</p>
+     * - NOT_STARTED → OPEN: 신청 시작일이 도래하고 eventStatus != CANCELED
+     * - OPEN → CLOSED (DEADLINE_PASSED): 신청 마감일이 경과
+     *
+     * <p>축 2 (행사):</p>
+     * - UPCOMING → ONGOING: 행사 시작일이 도래
+     * - ONGOING → COMPLETED: 행사 종료일이 경과 (registrationStatus도 CLOSED 강제)
      *
      * @param now 현재 시간
      */
     public void updateStatusIfNeeded(Instant now) {
-        // UPCOMING 상태에서 신청 시작일이 지났으면 OPEN으로 변경
-        if (this.status == EventStatus.UPCOMING && !now.isBefore(this.registrationStartAt)) {
-            open();
+        // 축 1: 등록 상태 자동 전이
+        if (this.registrationStatus == RegistrationStatus.NOT_STARTED
+                && !now.isBefore(this.registrationStartAt)
+                && this.eventStatus != EventStatus.CANCELED) {
+            openRegistration();
         }
 
-        // OPEN 상태에서 신청 마감일이 지났으면 CLOSED로 변경
-        if (this.status == EventStatus.OPEN && now.isAfter(this.registrationEndAt)) {
-            closeByDeadline();
+        if (this.registrationStatus == RegistrationStatus.OPEN
+                && now.isAfter(this.registrationEndAt)) {
+            closeRegistrationByDeadline();
         }
 
-        // CLOSED 상태에서 행사 시작일이 지났으면 ONGOING으로 변경
-        if (this.status == EventStatus.CLOSED && !now.isBefore(this.eventStartAt)) {
+        // 축 2: 행사 상태 자동 전이 (CANCELED 상태에서는 전이하지 않음)
+        if (this.eventStatus == EventStatus.UPCOMING
+                && !now.isBefore(this.eventStartAt)) {
             startOngoing();
         }
 
-        // ONGOING 상태에서 행사 종료일이 지났으면 COMPLETED로 변경
-        if (this.status == EventStatus.ONGOING && now.isAfter(this.eventEndAt)) {
+        if (this.eventStatus == EventStatus.ONGOING
+                && now.isAfter(this.eventEndAt)) {
             complete();
         }
     }
@@ -239,45 +314,52 @@ public class Event extends SoftDeletableEntity {
 
     /**
      * 신청자 수를 1 증가시킵니다.
-     * 정원이 차면 자동으로 마감 처리됩니다.
+     * 정원이 차면 자동으로 등록 마감 처리됩니다.
      */
     public void incrementCurrentCount() {
         this.currentCount++;
-        if (isFull()) {
-            closeByCapacity();
+        if (isFull() && this.registrationStatus == RegistrationStatus.OPEN) {
+            closeRegistrationByCapacity();
         }
     }
 
     /**
      * 신청자 수를 1 감소시킵니다.
      * 정원 마감 상태였다가 자리가 생기면 다시 OPEN 상태로 변경됩니다.
+     *
+     * @param now 현재 시간
      */
-    public void decrementCurrentCount() {
+    public void decrementCurrentCount(Instant now) {
         if (this.currentCount > 0) {
             this.currentCount--;
         }
-        reopenIfCapacityAvailable();
+        reopenIfCapacityAvailable(now);
     }
 
     /**
      * 정원 마감 상태에서 자리가 생기면 다시 모집 상태로 변경합니다.
-     * 단, 신청 마감일이 지났으면 다시 열지 않습니다.
+     * 단, 신청 마감일이 지났거나 행사가 취소된 경우 다시 열지 않습니다.
+     *
+     * @param now 현재 시간
      */
-    private void reopenIfCapacityAvailable() {
-        if (this.status == EventStatus.CLOSED
+    private void reopenIfCapacityAvailable(Instant now) {
+        if (this.registrationStatus == RegistrationStatus.CLOSED
                 && this.closeReason == EventCloseReason.CAPACITY_FULL
                 && !isFull()
-                && Instant.now().isBefore(this.registrationEndAt)) {
-            open();
+                && now.isBefore(this.registrationEndAt)
+                && this.eventStatus != EventStatus.CANCELED) {
+            openRegistration();
         }
     }
 
     /**
      * 정원 마감 상태에서 자리가 생겼을 때 다시 모집 상태로 변경합니다.
      * 원자적 UPDATE 후 상태 갱신을 위해 사용합니다.
+     *
+     * @param now 현재 시간
      */
-    public void reopenIfNeeded() {
-        reopenIfCapacityAvailable();
+    public void reopenIfNeeded(Instant now) {
+        reopenIfCapacityAvailable(now);
     }
 
     // === 조회 메서드 ===
@@ -286,13 +368,11 @@ public class Event extends SoftDeletableEntity {
      * 신청 가능한 상태인지 확인합니다.
      */
     public boolean isRegistrable() {
-        return this.status.isRegistrable() && !isFull();
+        return this.registrationStatus.isRegistrable() && !isFull();
     }
 
     /**
      * 정원이 찼는지 확인합니다.
-     *
-     * @return 정원 초과 여부
      */
     public boolean isFull() {
         return this.currentCount >= this.capacity;
@@ -307,8 +387,6 @@ public class Event extends SoftDeletableEntity {
 
     /**
      * 남은 자리 수를 반환합니다.
-     *
-     * @return 남은 자리 수
      */
     public int getRemainingCapacity() {
         return Math.max(0, this.capacity - this.currentCount);
@@ -344,19 +422,43 @@ public class Event extends SoftDeletableEntity {
 
     /**
      * 행사 정보를 수정합니다.
+     * EVT-INV-07: 상태별 수정 정책
+     * - UPCOMING: 전체 필드 수정 가능
+     * - ONGOING: 부분 수정 (eventStartAt, registrationStartAt 변경 차단)
+     * - CANCELED: 전체 필드 수정 가능
+     * - COMPLETED: 수정 불가
      *
-     * @throws EventNotEditableException 수정 불가능한 상태인 경우
+     * @throws EventNotEditableException    수정 불가능한 상태인 경우
      * @throws InvalidEventCapacityException 정원이 1 미만인 경우
      */
     public void update(String title, String description, String location,
                        Instant eventStartAt, Instant eventEndAt,
                        Instant registrationStartAt, Instant registrationEndAt,
                        Integer capacity) {
-        if (!this.status.isEditable()) {
-            throw new EventNotEditableException(this.status);
+        // COMPLETED는 수정 불가
+        if (this.eventStatus == EventStatus.COMPLETED) {
+            throw new EventNotEditableException(this.eventStatus);
         }
+
         validateCapacity(capacity);
 
+        // ONGOING: 부분 수정 — eventStartAt, registrationStartAt 변경 차단
+        if (this.eventStatus == EventStatus.ONGOING) {
+            if (!this.eventStartAt.equals(eventStartAt)) {
+                throw new EventNotEditableException(this.eventStatus,
+                        "진행 중인 행사의 시작 시각은 변경할 수 없습니다.");
+            }
+            if (!this.registrationStartAt.equals(registrationStartAt)) {
+                throw new EventNotEditableException(this.eventStatus,
+                        "진행 중인 행사의 등록 시작 시각은 변경할 수 없습니다.");
+            }
+            // ONGOING에서 capacity 감소 시 currentCount 이상이어야 함 (EVT-INV-01 보장)
+            if (capacity < this.currentCount) {
+                throw new InvalidEventCapacityException(capacity);
+            }
+        }
+
+        // UPCOMING, CANCELED: 전체 필드 수정 가능
         this.title = title;
         this.description = description;
         this.location = location;

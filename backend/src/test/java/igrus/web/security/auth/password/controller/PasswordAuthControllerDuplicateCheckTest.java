@@ -1,41 +1,16 @@
 package igrus.web.security.auth.password.controller;
 
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
+import igrus.web.user.exception.UserErrorCode;
 import igrus.web.common.exception.GlobalExceptionHandler;
 import igrus.web.security.auth.common.exception.signup.DuplicateEmailException;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
-import igrus.web.security.auth.common.service.account.CheckReRegistrationEligibilityService;
-import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
-import igrus.web.security.auth.common.service.account.RecoverAccountService;
-import igrus.web.security.auth.common.service.AccountStatusService;
-import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.response.DuplicateCheckResponse;
-import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
-import igrus.web.security.auth.password.service.reset.ResetPasswordService;
-import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
-import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
-import igrus.web.security.auth.password.service.signup.ResendVerificationService;
-import igrus.web.security.auth.password.service.signup.SignupService;
-import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
-import igrus.web.security.auth.password.service.signup.VerifyEmailService;
-import igrus.web.security.auth.password.service.auth.LoginService;
-import igrus.web.security.auth.password.service.auth.LogoutService;
-import igrus.web.security.auth.password.service.auth.RefreshTokenService;
-import igrus.web.security.config.ApiSecurityConfig;
-import igrus.web.security.config.SecurityConfigUtil;
-import igrus.web.security.jwt.JwtAuthenticationEntryPoint;
-import igrus.web.security.jwt.JwtAuthenticationFilter;
-import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.exception.InvalidEmailException;
 import igrus.web.user.exception.InvalidStudentIdException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -43,64 +18,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(PasswordAuthController.class)
-@Import({GlobalExceptionHandler.class, ApiSecurityConfig.class, SecurityConfigUtil.class, JwtAuthenticationFilter.class, JwtAuthenticationEntryPoint.class})
 @DisplayName("PasswordAuthController 중복 체크 테스트")
-class PasswordAuthControllerDuplicateCheckTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private LoginService loginService;
-
-    @MockitoBean
-    private LogoutService logoutService;
-
-    @MockitoBean
-    private RefreshTokenService refreshTokenService;
-
-    @MockitoBean
-    private SignupService signupService;
-
-    @MockitoBean
-    private TempStudentIdSignupService tempStudentIdSignupService;
-
-    @MockitoBean
-    private CheckDuplicateService checkDuplicateService;
-
-    @MockitoBean
-    private VerifyEmailService verifyEmailService;
-
-    @MockitoBean
-    private ResendVerificationService resendVerificationService;
-
-    @MockitoBean
-    private RequestPasswordResetService requestPasswordResetService;
-
-    @MockitoBean
-    private ResetPasswordService resetPasswordService;
-
-    @MockitoBean
-    private ValidateResetTokenService validateResetTokenService;
-
-    @MockitoBean
-    private JwtTokenProvider jwtTokenProvider;
-
-    @MockitoBean
-    private CheckReRegistrationEligibilityService checkReRegistrationEligibilityService;
-
-    @MockitoBean
-    private CheckRecoveryEligibilityService checkRecoveryEligibilityService;
-
-    @MockitoBean
-    private RecoverAccountService recoverAccountService;
-
-    @MockitoBean
-    private AccountStatusService accountStatusService;
-
-    @MockitoBean
-    private CookieUtil cookieUtil;
+class PasswordAuthControllerDuplicateCheckTest extends PasswordAuthControllerTestBase {
 
     private static final String CHECK_STUDENT_ID_URL = "/api/v1/auth/password/check-student-id";
     private static final String CHECK_EMAIL_URL = "/api/v1/auth/password/check-email";
@@ -137,7 +56,7 @@ class PasswordAuthControllerDuplicateCheckTest {
                             .param("studentId", "1234"))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_STUDENT_ID.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.INVALID_STUDENT_ID.getCode()));
         }
 
         @Test
@@ -152,7 +71,7 @@ class PasswordAuthControllerDuplicateCheckTest {
                             .param("studentId", "12345678"))
                     .andDo(print())
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_STUDENT_ID.getCode()));
+                    .andExpect(jsonPath("$.code").value(AuthErrorCode.DUPLICATE_STUDENT_ID.getCode()));
         }
 
         @Test
@@ -196,7 +115,7 @@ class PasswordAuthControllerDuplicateCheckTest {
                             .param("email", "invalid-email"))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_EMAIL_FORMAT.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.INVALID_EMAIL_FORMAT.getCode()));
         }
 
         @Test
@@ -211,7 +130,7 @@ class PasswordAuthControllerDuplicateCheckTest {
                             .param("email", "user@example.com"))
                     .andDo(print())
                     .andExpect(status().isConflict())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.DUPLICATE_EMAIL.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.DUPLICATE_EMAIL.getCode()));
         }
 
         @Test

@@ -1,10 +1,10 @@
 package igrus.web.security.auth.common.exception.signup;
 
 import igrus.web.common.exception.CustomBaseException;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.user.exception.UserErrorCode;
 
 public class DuplicatePhoneNumberException extends CustomBaseException {
     public DuplicatePhoneNumberException() {
-        super(ErrorCode.DUPLICATE_PHONE_NUMBER);
+        super(UserErrorCode.DUPLICATE_PHONE_NUMBER);
     }
 }

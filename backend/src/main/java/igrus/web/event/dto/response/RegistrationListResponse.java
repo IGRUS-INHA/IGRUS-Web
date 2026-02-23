@@ -14,6 +14,9 @@ import java.time.Instant;
  * @param userName       신청자 이름
  * @param userEmail      신청자 이메일
  * @param studentId      학번
+ * @param userGender     성별 ("MALE" 또는 "FEMALE")
+ * @param userGrade      학년
+ * @param userDepartment 학과
  * @param status         신청 상태
  * @param registeredAt   신청일시
  */
@@ -23,6 +26,9 @@ public record RegistrationListResponse(
         String userName,
         String userEmail,
         String studentId,
+        String userGender,
+        Integer userGrade,
+        String userDepartment,
         EventRegistrationStatus status,
         Instant registeredAt
 ) {
@@ -33,12 +39,16 @@ public record RegistrationListResponse(
      * @return RegistrationListResponse
      */
     public static RegistrationListResponse from(EventRegistration registration) {
+        var user = registration.getUser();
         return new RegistrationListResponse(
                 registration.getId(),
-                registration.getUser().getId(),
-                registration.getUser().getName(),
-                registration.getUser().getEmail(),
-                registration.getUser().getStudentId(),
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getStudentId(),
+                user.getGender() != null ? user.getGender().name() : null,
+                user.getGrade(),
+                user.getDepartment(),
                 registration.getStatus(),
                 registration.getRegisteredAt()
         );

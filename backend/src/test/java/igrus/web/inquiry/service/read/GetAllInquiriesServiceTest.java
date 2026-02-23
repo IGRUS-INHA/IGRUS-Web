@@ -1,33 +1,26 @@
 package igrus.web.inquiry.service.read;
 
+import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.inquiry.domain.InquiryStatus;
 import igrus.web.inquiry.domain.InquiryType;
-import igrus.web.inquiry.dto.request.CreateGuestInquiryRequest;
-import igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest;
 import igrus.web.inquiry.dto.response.InquiryCreateResponse;
 import igrus.web.inquiry.dto.response.InquiryListResponse;
 import igrus.web.inquiry.service.create.CreateGuestInquiryService;
 import igrus.web.inquiry.service.manage.UpdateInquiryStatusService;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
+import static igrus.web.inquiry.fixture.InquiryTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
 @DisplayName("GetAllInquiriesService 통합 테스트")
-class GetAllInquiriesServiceTest {
+class GetAllInquiriesServiceTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private GetAllInquiriesService getAllInquiriesService;
@@ -38,47 +31,13 @@ class GetAllInquiriesServiceTest {
     @Autowired
     private UpdateInquiryStatusService updateInquiryStatusService;
 
-    @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
-    private PlatformTransactionManager transactionManager;
-
     @BeforeEach
     void setUp() {
-        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.execute(status -> {
-            entityManager.createNativeQuery("DELETE FROM inquiry_memos").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiry_replies").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiry_attachments").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM guest_inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM member_inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_positions").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_role_histories").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM post_views").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM event_registrations").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM events").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
-            entityManager.flush();
-            entityManager.clear();
-            return null;
-        });
+        setUpBase();
     }
 
     private InquiryCreateResponse createTestInquiry(InquiryType type, String title, String email) {
-        CreateGuestInquiryRequest request = CreateGuestInquiryRequest.builder()
-                .type(type)
-                .title(title)
-                .content("내용")
-                .email(email)
-                .name("홍길동")
-                .password("password123")
-                .build();
-        return createGuestInquiryService.createGuestInquiry(request);
+        return createGuestInquiryService.createGuestInquiry(createGuestInquiryRequest(type, title, email));
     }
 
     @Nested
@@ -126,10 +85,8 @@ class GetAllInquiriesServiceTest {
             createTestInquiry(InquiryType.EVENT, "행사 문의", "guest2@test.com");
 
             // inquiry1을 IN_PROGRESS로 변경
-            UpdateInquiryStatusRequest statusRequest = UpdateInquiryStatusRequest.builder()
-                    .status(InquiryStatus.IN_PROGRESS)
-                    .build();
-            updateInquiryStatusService.updateInquiryStatus(inquiry1.getId(), statusRequest);
+            updateInquiryStatusService.updateInquiryStatus(inquiry1.getId(),
+                    updateStatusRequest(InquiryStatus.IN_PROGRESS));
 
             Pageable pageable = PageRequest.of(0, 10);
 
@@ -151,10 +108,8 @@ class GetAllInquiriesServiceTest {
             createTestInquiry(InquiryType.JOIN, "가입 문의 2", "guest3@test.com");
 
             // joinInquiry를 IN_PROGRESS로 변경
-            UpdateInquiryStatusRequest statusRequest = UpdateInquiryStatusRequest.builder()
-                    .status(InquiryStatus.IN_PROGRESS)
-                    .build();
-            updateInquiryStatusService.updateInquiryStatus(joinInquiry.getId(), statusRequest);
+            updateInquiryStatusService.updateInquiryStatus(joinInquiry.getId(),
+                    updateStatusRequest(InquiryStatus.IN_PROGRESS));
 
             Pageable pageable = PageRequest.of(0, 10);
 

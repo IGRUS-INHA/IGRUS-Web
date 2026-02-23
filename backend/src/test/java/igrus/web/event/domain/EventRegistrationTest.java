@@ -198,6 +198,43 @@ class EventRegistrationTest {
             // then
             assertThat(registration.isCanceled()).isTrue();
         }
+
+        /**
+         * REG-045: REJECTED→CANCELED 취소
+         */
+        @Test
+        @DisplayName("[REG-045] REJECTED 상태에서 cancel 호출 시 CANCELED로 변경")
+        void cancel_FromRejected_ChangesToCanceled() {
+            // given
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
+            User user = createMockUser(2L, "신청자");
+            EventRegistration registration = EventRegistration.create(event, user);
+            registration.reject();
+
+            // when
+            registration.cancel();
+
+            // then
+            assertThat(registration.isCanceled()).isTrue();
+            assertThat(registration.getStatus()).isEqualTo(EventRegistrationStatus.CANCELED);
+        }
+
+        /**
+         * REG-046: CANCELED에서 cancel() 불가
+         */
+        @Test
+        @DisplayName("[REG-046] CANCELED 상태에서 cancel 호출 시 InvalidRegistrationStatusException 발생")
+        void cancel_FromCanceled_ThrowsException() {
+            // given
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
+            User user = createMockUser(2L, "신청자");
+            EventRegistration registration = EventRegistration.create(event, user);
+            registration.cancel();
+
+            // when & then
+            assertThatThrownBy(() -> registration.cancel())
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
+        }
     }
 
     @Nested

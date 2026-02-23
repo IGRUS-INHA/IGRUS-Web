@@ -3,16 +3,14 @@ package igrus.web.security.auth.password.service.reset;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.security.auth.password.domain.PasswordResetToken;
-import igrus.web.user.domain.Gender;
-import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -32,7 +30,7 @@ class RequestPasswordResetServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private RequestPasswordResetService requestPasswordResetService;
 
-    @MockitoBean
+    @Autowired
     private AuthEmailService authEmailService;
 
     private static final long PASSWORD_RESET_EXPIRY = 1800000L; // 30분
@@ -40,26 +38,9 @@ class RequestPasswordResetServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
+        Mockito.reset(authEmailService);
         ReflectionTestUtils.setField(requestPasswordResetService, "passwordResetExpiry", PASSWORD_RESET_EXPIRY);
         ReflectionTestUtils.setField(requestPasswordResetService, "frontendUrl", "http://localhost:5173");
-    }
-
-    private User createAndSaveTestUser(String studentId, String email) {
-        User user = User.create(
-                studentId,
-                "홍길동",
-                email,
-                "010-1234-5678",
-                "컴퓨터공학과",
-                "테스트 동기",
-                List.of(),
-                Gender.MALE,
-                1,
-                EnrollmentStatus.ENROLLED,
-                List.of(), null, null, null
-        );
-        user.changeRole(UserRole.MEMBER);
-        return userRepository.save(user);
     }
 
     @Test
@@ -67,7 +48,7 @@ class RequestPasswordResetServiceTest extends ServiceIntegrationTestBase {
     void requestPasswordReset_WithValidStudentId_SendsEmail() {
         // given
         String studentId = "20231234";
-        User user = createAndSaveTestUser(studentId, "test@inha.edu");
+        User user = createAndSaveUser(studentId, "test@inha.edu", UserRole.MEMBER);
 
         // when
         requestPasswordResetService.requestPasswordReset(studentId);
@@ -103,7 +84,7 @@ class RequestPasswordResetServiceTest extends ServiceIntegrationTestBase {
     void requestPasswordReset_CreatesTokenWith30MinuteExpiry() {
         // given
         String studentId = "20231234";
-        createAndSaveTestUser(studentId, "test@inha.edu");
+        createAndSaveUser(studentId, "test@inha.edu", UserRole.MEMBER);
 
         // when
         requestPasswordResetService.requestPasswordReset(studentId);
@@ -126,7 +107,7 @@ class RequestPasswordResetServiceTest extends ServiceIntegrationTestBase {
     void requestPasswordReset_CallsEmailServiceImmediately() {
         // given
         String studentId = "20231234";
-        User user = createAndSaveTestUser(studentId, "test@inha.edu");
+        User user = createAndSaveUser(studentId, "test@inha.edu", UserRole.MEMBER);
 
         ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -145,7 +126,7 @@ class RequestPasswordResetServiceTest extends ServiceIntegrationTestBase {
     void requestPasswordReset_InvalidatesOldTokensAndCreatesNew() {
         // given
         String studentId = "20231234";
-        User user = createAndSaveTestUser(studentId, "test@inha.edu");
+        User user = createAndSaveUser(studentId, "test@inha.edu", UserRole.MEMBER);
 
         // 기존 토큰 생성
         String oldToken = UUID.randomUUID().toString();

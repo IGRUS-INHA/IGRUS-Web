@@ -3,8 +3,10 @@ package igrus.web.common.fixture;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
+import igrus.web.user.domain.UserStatus;
 import java.util.List;
 import igrus.web.user.domain.EnrollmentStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static igrus.web.common.fixture.TestConstants.*;
 import static igrus.web.common.fixture.TestEntityIdAssigner.withId;
@@ -84,7 +86,6 @@ public final class UserTestFixture {
                 List.of(), null, null, null
         );
         user.changeRole(role);
-        user.verifyEmail();
         return user;
     }
 
@@ -182,19 +183,21 @@ public final class UserTestFixture {
 
     /**
      * 이메일 인증 대기(PENDING_VERIFICATION) 상태의 User를 생성합니다.
-     * User.create()는 기본적으로 PENDING_VERIFICATION 상태이므로 verifyEmail()을 호출하지 않습니다.
+     * User.create()는 기본적으로 ACTIVE 상태이므로 Reflection으로 PENDING_VERIFICATION을 설정합니다.
      *
      * @return 이메일 인증 대기 상태 User
      */
     public static User createPendingVerificationUser() {
         String email = MEMBER_STUDENT_ID + DEFAULT_EMAIL_DOMAIN;
-        return User.create(
+        User user = User.create(
                 MEMBER_STUDENT_ID, DEFAULT_NAME, email,
                 DEFAULT_PHONE, DEFAULT_DEPARTMENT, DEFAULT_MOTIVATION,
                 List.of(), DEFAULT_GENDER, DEFAULT_GRADE,
                 EnrollmentStatus.ENROLLED,
                 List.of(), null, null, null
         );
+        ReflectionTestUtils.setField(user, "status", UserStatus.PENDING_VERIFICATION);
+        return user;
     }
 
     /**
