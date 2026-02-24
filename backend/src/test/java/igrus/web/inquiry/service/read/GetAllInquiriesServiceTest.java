@@ -7,6 +7,8 @@ import igrus.web.inquiry.dto.response.InquiryCreateResponse;
 import igrus.web.inquiry.dto.response.InquiryListResponse;
 import igrus.web.inquiry.service.create.CreateGuestInquiryService;
 import igrus.web.inquiry.service.manage.UpdateInquiryStatusService;
+import igrus.web.user.domain.User;
+import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,9 +33,12 @@ class GetAllInquiriesServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private UpdateInquiryStatusService updateInquiryStatusService;
 
+    private User operator;
+
     @BeforeEach
     void setUp() {
         setUpBase();
+        operator = createAndSaveUser("20230001", "operator@inha.edu", UserRole.OPERATOR);
     }
 
     private InquiryCreateResponse createTestInquiry(InquiryType type, String title, String email) {
@@ -86,7 +91,7 @@ class GetAllInquiriesServiceTest extends ServiceIntegrationTestBase {
 
             // inquiry1을 IN_PROGRESS로 변경
             updateInquiryStatusService.updateInquiryStatus(inquiry1.getId(),
-                    updateStatusRequest(InquiryStatus.IN_PROGRESS));
+                    updateStatusRequest(InquiryStatus.IN_PROGRESS), operator.getId());
 
             Pageable pageable = PageRequest.of(0, 10);
 
@@ -109,7 +114,7 @@ class GetAllInquiriesServiceTest extends ServiceIntegrationTestBase {
 
             // joinInquiry를 IN_PROGRESS로 변경
             updateInquiryStatusService.updateInquiryStatus(joinInquiry.getId(),
-                    updateStatusRequest(InquiryStatus.IN_PROGRESS));
+                    updateStatusRequest(InquiryStatus.IN_PROGRESS), operator.getId());
 
             Pageable pageable = PageRequest.of(0, 10);
 

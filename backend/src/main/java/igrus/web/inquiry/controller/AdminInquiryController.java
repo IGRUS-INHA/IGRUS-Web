@@ -108,9 +108,10 @@ public class AdminInquiryController {
     @PutMapping("/{id}/status")
     public ResponseEntity<Void> updateInquiryStatus(
             @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
-            @Valid @RequestBody UpdateInquiryStatusRequest request
+            @Valid @RequestBody UpdateInquiryStatusRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user
     ) {
-        updateInquiryStatusService.updateInquiryStatus(id, request);
+        updateInquiryStatusService.updateInquiryStatus(id, request, user.userId());
         return ResponseEntity.ok().build();
     }
 

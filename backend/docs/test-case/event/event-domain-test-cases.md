@@ -1,7 +1,7 @@
 # 행사(Event) 도메인 테스트 케이스
 
-**작성일**: 2026-02-21
-**버전**: 2.2
+**작성일**: 2026-02-24
+**버전**: 2.3
 **관련 스펙**: [행사 검증 기준서](../../criteria/event/event-verification-criteria.md)
 **우선순위**: P0
 
@@ -150,7 +150,7 @@
 | EVT-122 | 수동 재오픈 거부: 정원 만석 | isFull() == true | `reopenRegistration(reason)` | 거부 예외 | ⬜ |
 | EVT-123 | 수동 재오픈 거부: reason이 null | reason=null | `reopenRegistration(null)` | 거부 예외 | ⬜ |
 | EVT-124 | 수동 재오픈 거부: reason이 빈 문자열 | reason="" | `reopenRegistration("")` | 거부 예외 | ⬜ |
-| EVT-125 | 수동 재오픈 후 감사 이력 기록 확인 | 성공적 재오픈 | 재오픈 후 감사 이력 조회 | reason, 시각, 운영자 ID 기록됨 | ✅ |
+| EVT-125 | 수동 재오픈 후 감사 이력 기록 확인 | 성공적 재오픈 | 재오픈 후 `EventStatusChangeHistory` 조회 | changeType=REGISTRATION_REOPENED, reason, 운영자 정보 기록됨 | ✅ |
 | EVT-126 | closeReason=CAPACITY_FULL에서 수동 재오픈 | CAPACITY_FULL, !isFull(), now <= regEnd | `reopenRegistration(reason)` | 성공 | ✅ |
 | EVT-127 | closeReason=DEADLINE_PASSED에서 수동 재오픈 | DEADLINE_PASSED, now <= regEnd (기한 연장 후) | `reopenRegistration(reason)` | 성공 | ✅ |
 | EVT-128 | closeReason=MANUAL_CLOSE에서 수동 재오픈 | MANUAL_CLOSE, now <= regEnd | `reopenRegistration(reason)` | 성공 | ✅ |
@@ -276,7 +276,7 @@
 | EVT-INV-11 (CANCELED→CLOSED 강제) | EVT-076, EVT-111,112, SVC-EVT-024 | ✅ |
 | EVT-INV-12 (유효 복합 상태 조합) | EVT-096~099 | ✅ |
 | EVT-INV-13 (수동 재오픈 조건) | EVT-118, 125~129, SVC-EVT-030,031 | ✅ (부분: 119~124 ⬜) |
-| EVT-INV-14 (수동 재오픈 감사) | EVT-125 | ✅ |
+| EVT-INV-14 (행사 상태 변경 감사) | EVT-125, INT-011 | ✅ |
 
 ---
 
