@@ -744,7 +744,7 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
-                                    new UpdatePostRequest("수정 시도", "수정 내용", false, List.of())
+                                    new UpdatePostRequest("수정 시도", "수정 내용", false, false, List.of())
                             )))
                     .andDo(print())
                     .andExpect(status().isForbidden());

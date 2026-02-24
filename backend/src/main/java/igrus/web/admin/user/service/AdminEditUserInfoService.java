@@ -5,6 +5,7 @@ import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.User;
 import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
 import igrus.web.user.exception.DuplicateEmailException;
 import igrus.web.user.exception.DuplicatePhoneNumberException;
 import igrus.web.user.exception.UserNotFoundException;
@@ -31,6 +32,7 @@ public class AdminEditUserInfoService {
         User targetUser = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new UserNotFoundException(targetUserId));
 
+        updateStudentId(targetUser, request);
         boolean emailChanged = updateEmail(targetUser, request);
         updateProfile(targetUser, request);
         updateMotivation(targetUser, request);
@@ -47,6 +49,22 @@ public class AdminEditUserInfoService {
         ));
 
         log.info("관리자 사용자 정보 수정 완료 - targetUserId: {}, performedBy: {}", targetUserId, currentUserId);
+    }
+
+    private void updateStudentId(User targetUser, AdminEditUserInfoRequest request) {
+        if (request.studentId() == null) {
+            return;
+        }
+
+        if (request.studentId().equals(targetUser.getStudentId())) {
+            return;
+        }
+
+        if (userRepository.existsByStudentId(request.studentId())) {
+            throw new DuplicateStudentIdException();
+        }
+
+        targetUser.updateStudentId(request.studentId());
     }
 
     private boolean updateEmail(User targetUser, AdminEditUserInfoRequest request) {

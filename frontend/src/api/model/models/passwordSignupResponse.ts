@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: v1.0.0
+ * OpenAPI spec version: 33c8ee9
  */
 
 /**
@@ -42,8 +42,6 @@ export interface PasswordSignupResponse {
   message?: string;
   /** 가입 요청한 이메일 주소 */
   email?: string;
-  /** 이메일 인증 필요 여부 */
-  requiresVerification?: boolean;
   /** 임시 학번 (임시 학번 가입 시에만 포함) */
   temporaryStudentId?: string;
 }

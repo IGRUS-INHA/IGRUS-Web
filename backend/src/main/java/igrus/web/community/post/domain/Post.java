@@ -240,6 +240,21 @@ public class Post extends SoftDeletableEntity {
     }
 
     /**
+     * 준회원 공개 여부를 설정합니다.
+     * 활성화하는 경우, 공지사항(NOTICES) 게시판이어야 합니다.
+     * 비활성화(false)는 어느 게시판에서든 허용됩니다.
+     *
+     * @param isVisibleToAssociate 준회원 공개 여부
+     * @throws InvalidPostOptionException 공지사항 게시판이 아닌 곳에서 활성화 시도 시
+     */
+    public void setVisibleToAssociate(boolean isVisibleToAssociate) {
+        if (isVisibleToAssociate) {
+            validateVisibilityOption(this.board);
+        }
+        this.isVisibleToAssociate = isVisibleToAssociate;
+    }
+
+    /**
      * 이미지를 추가합니다.
      * 최대 5개까지 추가 가능합니다.
      * PostImage 엔티티 생성 시 이 메서드를 통해 추가하면 양방향 관계가 설정됩니다.

@@ -5,7 +5,10 @@ import {
   EVENT_POLICY,
   REGISTRATION_ERROR,
   CANCEL_ERROR,
+  EVENT_LOCATIONS,
+  REGISTRATION_PERIOD_PRESETS,
 } from '@/constants/event';
+import type { RegistrationPeriodPresetValue } from '@/constants/event';
 import { canRegisterEvent } from '@/constants/permissions';
 
 interface RegistrationCheckResult {
@@ -235,4 +238,119 @@ export function getEventStatusBadge(event: Event): BadgeInfo {
     return { label: '정원 마감', variant: 'secondary' };
   }
   return { label: '신청 가능', variant: 'default' };
+}
+
+/**
+ * API location 문자열을 프리셋 + 상세로 분리
+ * 긴 프리셋부터 매칭하여 "5호관(5동) 208호" → { preset: '5호관(5동)', detail: '208호' }
+ */
+export function parseLocation(location: string): { preset: string; detail: string } {
+  if (!location) return { preset: '', detail: '' };
+
+  // 긴 문자열부터 매칭 (예: "인하드림센터 2·3관"이 "인하드림센터"보다 먼저 매칭되도록)
+  const sorted = [...EVENT_LOCATIONS].sort((a, b) => b.length - a.length);
+  for (const loc of sorted) {
+    if (location === loc) {
+      return { preset: loc, detail: '' };
+    }
+    if (location.startsWith(`${loc} `)) {
+      return { preset: loc, detail: location.slice(loc.length + 1).trim() };
+    }
+  }
+  return { preset: '', detail: location };
+}
+
+/**
+ * 프리셋 + 상세를 API location 문자열로 결합
+ */
+export function combineLocation(preset: string, detail: string): string {
+  const trimmedDetail = detail.trim();
+  if (!preset) return trimmedDetail;
+  if (!trimmedDetail) return preset;
+  return `${preset} ${trimmedDetail}`;
+}
+
+/**
+ * 기존 신청 기간 날짜로부터 프리셋을 역산
+ */
+export function detectRegistrationPreset(
+  eventDate: string,
+  regStartDate: string,
+  regStartTime: string,
+  regEndDate: string,
+  regEndTime: string,
+  eventTime?: string,
+): RegistrationPeriodPresetValue {
+  if (!eventDate || !regStartDate || !regEndDate) return 'custom';
+
+  const [ey, em, ed] = eventDate.split('-').map(Number);
+
+  for (const preset of REGISTRATION_PERIOD_PRESETS) {
+    if (preset.value === 'custom') continue;
+
+    const expectedStart = new Date(ey ?? 0, (em ?? 1) - 1, (ed ?? 1) - preset.startDaysBefore);
+    const expectedEnd = new Date(ey ?? 0, (em ?? 1) - 1, (ed ?? 1) - preset.endDaysBefore);
+
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    // endTimeOffsetHours가 있는 프리셋은 행사 시간 기준 동적 마감 시간
+    let expectedEndTime: string = preset.endTime;
+    if ('endTimeOffsetHours' in preset && eventTime) {
+      const timeParts = eventTime.split(':').map(Number);
+      const totalMinutes = Math.max(0, Math.min(23 * 60 + 59, (timeParts[0] ?? 0) * 60 + (timeParts[1] ?? 0) + preset.endTimeOffsetHours * 60));
+      expectedEndTime = `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+    }
+
+    if (
+      fmt(expectedStart) === regStartDate &&
+      fmt(expectedEnd) === regEndDate &&
+      preset.startTime === regStartTime &&
+      expectedEndTime === regEndTime
+    ) {
+      return preset.value;
+    }
+  }
+
+  return 'custom';
+}
+
+/**
+ * YYYY-MM-DD 날짜 포맷 헬퍼 (timezone 이슈 방지)
+ */
+export function formatDateLocal(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * HH:MM 시간 포맷 헬퍼
+ */
+export function formatTimeLocal(d: Date): string {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/**
+ * YYYY-MM-DD + HH:MM 문자열을 Date로 파싱
+ */
+export function parseDateTimeString(dateStr: string, timeStr: string): Date | null {
+  if (!dateStr) return null;
+  const parts = dateStr.split('-').map(Number);
+  const y = parts[0] ?? 0;
+  const m = parts[1] ?? 1;
+  const d = parts[2] ?? 1;
+  if (timeStr) {
+    const timeParts = timeStr.split(':').map(Number);
+    const h = timeParts[0] ?? 0;
+    const min = timeParts[1] ?? 0;
+    return new Date(y, m - 1, d, h, min);
+  }
+  return new Date(y, m - 1, d);
+}
+
+/**
+ * DatePicker onChange 값에서 단일 Date 추출
+ */
+export function extractDateFromPicker(value: Date | Date[] | null): Date | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }

@@ -11,7 +11,7 @@ interface PostListItemProps {
   linkTo?: string;
 }
 
-export default function PostListItem({ post, boardType, linkTo }: PostListItemProps) {
+export default function PostListItem({ post, linkTo }: PostListItemProps) {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 

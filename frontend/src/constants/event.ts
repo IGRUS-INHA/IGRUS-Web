@@ -98,3 +98,43 @@ export const CANCEL_ERROR_MESSAGES = {
   [CANCEL_ERROR.EVENT_STARTED]: '이미 시작된 행사는 취소할 수 없습니다.',
   [CANCEL_ERROR.ALREADY_CANCELLED]: '이미 취소된 신청입니다.',
 } as const;
+
+// 장소 프리셋
+export const EVENT_LOCATIONS = [
+  '본관 1호관',
+  '60주년기념관',
+  '2호관(2동)',
+  '2호관(2남)',
+  '2호관(2북)',
+  '4호관',
+  '5호관(5동)',
+  '5호관(5서)',
+  '5호관(5남)',
+  '5호관(5북)',
+  '6호관',
+  '7호관(학생회관)',
+  '9호관',
+  '하이테크센터',
+  '하와이교포기념관',
+  '평생교육관/미래융합대학',
+  '제1생활관(웅비재)',
+  '제2, 3생활관(비룡재)',
+  '김현태 인하드림센터',
+  '인하드림센터 2·3관',
+  '서호관',
+  '나빌레관',
+  '정석학술정보관',
+  '대운동장',
+  '농구장',
+  '온라인',
+] as const;
+
+// 신청 기간 프리셋
+// endTimeOffsetHours: 행사 시작 시간 기준 상대 오프셋 (예: -2 → 행사 2시간 전)
+export const REGISTRATION_PERIOD_PRESETS = [
+  { value: 'default', label: '기본', description: '행사 7일 전 ~ 1일 전', startDaysBefore: 7, endDaysBefore: 1, startTime: '09:00', endTime: '23:59' },
+  { value: 'short', label: '단기', description: '행사 3일 전 ~ 당일 2시간 전', startDaysBefore: 3, endDaysBefore: 0, startTime: '09:00', endTime: '18:00', endTimeOffsetHours: -2 },
+  { value: 'custom', label: '직접 설정', description: '날짜와 시간을 직접 입력' },
+] as const;
+
+export type RegistrationPeriodPresetValue = typeof REGISTRATION_PERIOD_PRESETS[number]['value'];

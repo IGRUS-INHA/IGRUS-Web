@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Mail, Phone, Instagram, Pen } from "lucide-react";
+import { MapPin, Phone, Instagram } from "lucide-react";
 import { useUIStore } from "@/stores";
 import { cn } from "@/lib/utils";
 import { CLUB_INFO, SNS_LINKS, FOOTER_LEGAL_LINKS } from "@/constants/contact";
