@@ -1,7 +1,7 @@
 # 행사 (Event) 검증 기준서
 
 > **Status**: Draft
-> **Last Updated**: 2026-02-20
+> **Last Updated**: 2026-02-24
 > **Scope**: 행사 생성(Create), 조회(Read), 수정(Update), 삭제(Delete), 상태 관리(Status), Lazy Evaluation, 행사 취소/재활성화, 등록 수동 재오픈
 > **상태 모델**: 2축 모델 (registrationStatus + eventStatus)
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
@@ -238,14 +238,27 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
   - 정원이 차 있으면 재오픈 불가 (OPEN 직후 자동 재마감 방지)
 - **검증 방법**: 각 조건 위반 시 예외 발생, 모든 조건 충족 시 성공 확인
 
-### EVT-INV-14: 수동 재오픈 감사 이력 (신규)
+### EVT-INV-14: 행사 상태 변경 감사 이력
 
-> 수동 재오픈 시 사유(`reason`)가 반드시 기록되어야 하며, 감사 이력으로 보존된다.
+> 사용자가 직접 수행한 행사 상태 변경(취소, 재활성화, 등록 수동 마감, 등록 수동 재오픈)은 `EventStatusChangeHistory`에 기록된다. 수동 재오픈 시 사유(`reason`)가 반드시 기록된다.
 
-- **사전조건**: `reason`이 null이거나 빈 문자열이면 재오픈 거부
-- **사후조건**: 재오픈 사유와 시점이 감사 이력에 기록됨
-- **관련 코드** `(현재 구현 일치)`: 감사 이력 저장 로직 구현 필요
-- **검증 방법**: 재오픈 후 감사 이력 조회, `reason`이 null일 때 예외 발생 확인
+- **사전조건**: 수동 재오픈 시 `reason`이 null이거나 빈 문자열이면 재오픈 거부
+- **사후조건**: 변경 유형(`EventChangeType`), 이전/이후 값, 변경자 정보, 학번(비정규화)이 감사 이력에 기록됨
+- **기록 대상 변경 유형**:
+  - `EVENT_CANCELED` — 행사 취소
+  - `EVENT_REACTIVATED` — 행사 재활성화
+  - `REGISTRATION_CLOSED_MANUAL` — 등록 수동 마감
+  - `REGISTRATION_REOPENED` — 등록 수동 재오픈 (reason 필수)
+- **기록하지 않는 변경**: Lazy Evaluation에 의한 자동 상태 전이 (시간 기반, 매 조회마다 발생하여 노이즈 생성)
+- **구현 방식**: `@EventListener` + `REQUIRES_NEW` 독립 트랜잭션. 이력 저장 실패가 비즈니스 로직에 영향 없음 (try-catch 격리)
+- **설계 결정**: FK 없이 ID만 저장 (soft-delete/탈퇴 후에도 이력 영구 보존), `changedByStudentId` 비정규화 (유저 탈퇴 후에도 조회 가능)
+- **관련 코드** `(현재 구현 일치)`:
+  - `EventStatusChangeHistory` — 감사 이력 엔티티 (`BaseEntity` 상속)
+  - `EventChangeType` — 변경 유형 enum
+  - `EventStatusChangeEvent` — Spring 이벤트 record
+  - `RecordEventStatusChangeService` — `@EventListener` + `REQUIRES_NEW` TransactionTemplate 리스너
+  - `EventService:closeEvent()`, `cancelEvent()`, `reactivateEvent()`, `reopenRegistration()` — 이벤트 발행
+- **검증 방법**: 재오픈 후 감사 이력 조회, `reason`이 null일 때 예외 발생 확인, 각 상태 변경 후 이력 레코드 존재 확인
 
 ---
 
@@ -539,24 +552,33 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | 삭제 시각 | 삭제 시점 타임스탬프 | `event_deleted_at` |
 | 삭제자 | 운영자 ID | `event_deleted_by` |
 
-### 5-3. 수동 재오픈 감사 이력 (신규)
+### 5-3. 행사 상태 변경 감사 이력 (`event_status_change_histories`)
 
-| 필드 | 저장 내용 | 설명 |
-|------|---------|------|
-| 재오픈 사유 | 운영자 입력 텍스트 | 왜 등록을 재오픈했는지 기록 |
-| 재오픈 시각 | 재오픈 시점 타임스탬프 | 언제 재오픈했는지 |
-| 재오픈자 | 운영자 ID | 누가 재오픈했는지 |
+사용자가 직접 수행한 행사 상태 변경을 `EventStatusChangeHistory` 엔티티에 기록한다.
 
-- **구현 방식** `(현재 구현 일치)`: 별도 이력 테이블 또는 이벤트 로그로 구현
+| 필드 | 저장 내용 | 컬럼명 |
+|------|---------|--------|
+| 행사 ID | 대상 행사 | `event_status_change_histories_event_id` |
+| 변경자 ID | 운영자 ID | `event_status_change_histories_changed_by_id` |
+| 변경자 학번 | 운영자 학번 (비정규화) | `event_status_change_histories_changed_by_student_id` |
+| 변경 유형 | `EventChangeType` enum | `event_status_change_histories_change_type` |
+| 이전 값 | 변경 전 상태명 | `event_status_change_histories_previous_value` |
+| 이후 값 | 변경 후 상태명 | `event_status_change_histories_new_value` |
+| 사유 | 변경 사유 (재오픈 시 필수) | `event_status_change_histories_reason` |
+| 생성 시각 | 이력 기록 시각 | `event_status_change_histories_created_at` |
+
+- **구현 방식** `(현재 구현 일치)`: `@EventListener` + `REQUIRES_NEW` TransactionTemplate (`RecordEventStatusChangeService`)
+- **FK 없음**: soft-delete/탈퇴 후에도 이력 영구 보존
+- **인덱스**: `event_id`, `changed_by_id`, `change_type`, `created_at`
 
 ### 5-4. 관측 가능성 누락 사항
 
 | 항목 | 현황 | 영향 |
 |------|------|------|
-| Lazy Evaluation 상태 변경 로그 | **없음** | 자동 상태 전이 추적 불가 |
+| Lazy Evaluation 상태 변경 로그 | **없음** (의도적 — 자동 전이는 노이즈) | 자동 상태 전이 추적 불가 |
 | 행사 수정 시 변경 내용 로그 | **없음** | 어떤 필드가 변경되었는지 추적 불가 |
 | 행사 생성 완료 로그 | **없음** (요청 로그만 존재) | 생성 성공/실패 구분 불가 |
-| 행사 취소/재활성화 이력 | **없음** `(현재 구현 일치)` | 취소/재활성화 사유 추적 불가 |
+| ~~행사 취소/재활성화 이력~~ | **해결됨** | `EventStatusChangeHistory`에 기록 |
 
 ---
 

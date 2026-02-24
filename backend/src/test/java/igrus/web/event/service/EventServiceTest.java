@@ -7,13 +7,14 @@ import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.exception.*;
+import igrus.web.event.event.EventStatusChangeEvent;
 import igrus.web.event.repository.EventRegistrationRepository;
-import igrus.web.event.repository.EventReopenHistoryRepository;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -54,10 +55,10 @@ class EventServiceTest {
     private EventRegistrationRepository eventRegistrationRepository;
 
     @Mock
-    private EventReopenHistoryRepository eventReopenHistoryRepository;
+    private UserRepository userRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private EventService eventService;
@@ -909,7 +910,7 @@ class EventServiceTest {
 
             assertThat(response).isNotNull();
             verify(mockEvent).reopenRegistration();
-            verify(eventReopenHistoryRepository).save(any(EventReopenHistory.class));
+            verify(eventPublisher).publishEvent(any(EventStatusChangeEvent.class));
         }
 
         /**
@@ -993,7 +994,7 @@ class EventServiceTest {
          * EVT-125: 수동 재오픈 후 감사 이력 기록 확인
          */
         @Test
-        @DisplayName("[EVT-125] 수동 재오픈 성공 시 EventReopenHistory에 사유와 운영자 ID가 기록된다")
+        @DisplayName("[EVT-125] 수동 재오픈 성공 시 EventStatusChangeEvent에 사유와 운영자 ID가 기록된다")
         void reopenRegistration_Success_SavesAuditHistory() {
             when(mockEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.CLOSED);
             when(mockEvent.getEventStatus()).thenReturn(EventStatus.UPCOMING);
@@ -1004,13 +1005,13 @@ class EventServiceTest {
 
             eventService.reopenRegistration(EVENT_ID, OPERATOR_ID, "추가 모집 사유");
 
-            verify(eventReopenHistoryRepository).save(argThat(history -> {
-                assertThat(history.getReason()).isEqualTo("추가 모집 사유");
-                assertThat(history.getReopenedBy()).isEqualTo(OPERATOR_ID);
-                assertThat(history.getEvent()).isEqualTo(mockEvent);
-                assertThat(history.getReopenedAt()).isNotNull();
-                return true;
-            }));
+            var captor = org.mockito.ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            EventStatusChangeEvent captured = captor.getValue();
+            assertThat(captured.reason()).isEqualTo("추가 모집 사유");
+            assertThat(captured.changedByUserId()).isEqualTo(OPERATOR_ID);
+            assertThat(captured.eventId()).isEqualTo(EVENT_ID);
+            assertThat(captured.changeType()).isEqualTo(EventChangeType.REGISTRATION_REOPENED);
         }
 
         /**

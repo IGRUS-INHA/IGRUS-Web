@@ -6,7 +6,8 @@ import igrus.web.event.domain.EventCloseReason;
 import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.EventRegistrationType;
-import igrus.web.event.domain.EventReopenHistory;
+import igrus.web.event.domain.EventChangeType;
+import igrus.web.event.domain.EventStatusChangeHistory;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.UpdateEventRequest;
@@ -14,8 +15,8 @@ import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.EventNotOpenException;
 import igrus.web.event.exception.EventRegistrationNotReopenableException;
 import igrus.web.event.repository.EventRegistrationRepository;
-import igrus.web.event.repository.EventReopenHistoryRepository;
 import igrus.web.event.repository.EventRepository;
+import igrus.web.event.repository.EventStatusChangeHistoryRepository;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.event.service.EventService;
 import igrus.web.user.domain.User;
@@ -77,7 +78,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
     private EventRegistrationRepository eventRegistrationRepository;
 
     @Autowired
-    private EventReopenHistoryRepository eventReopenHistoryRepository;
+    private EventStatusChangeHistoryRepository eventStatusChangeHistoryRepository;
 
     private User member;
     private User member2;
@@ -486,9 +487,11 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             assertThat(afterReopen.getRegistrationStatus()).isEqualTo(RegistrationStatus.OPEN);
             assertThat(afterReopen.getCloseReason()).isNull();
 
-            // then: 감사 이력 확인
-            List<EventReopenHistory> histories = eventReopenHistoryRepository.findByEventId(event.getId());
-            assertThat(histories).hasSize(1);
+            // then: 감사 이력 확인 (closeEvent + reopenRegistration = 2건)
+            List<EventStatusChangeHistory> histories = eventStatusChangeHistoryRepository.findByEventIdOrderByCreatedAtDesc(event.getId());
+            assertThat(histories).hasSize(2);
+            // 최신순 정렬이므로 첫 번째가 재오픈 이력
+            assertThat(histories.get(0).getChangeType()).isEqualTo(EventChangeType.REGISTRATION_REOPENED);
             assertThat(histories.get(0).getReason()).isEqualTo("재오픈 사유");
         }
 
