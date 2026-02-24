@@ -31,11 +31,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: 33c8ee9
+ * OpenAPI spec version: acd4c9c
  */
 import type { EventDetailResponseCloseReason } from './eventDetailResponseCloseReason';
+import type { EventDetailResponseEventStatus } from './eventDetailResponseEventStatus';
+import type { EventDetailResponseRegistrationStatus } from './eventDetailResponseRegistrationStatus';
 import type { EventDetailResponseRegistrationType } from './eventDetailResponseRegistrationType';
-import type { EventDetailResponseStatus } from './eventDetailResponseStatus';
 
 export interface EventDetailResponse {
   id?: number;
@@ -49,7 +50,8 @@ export interface EventDetailResponse {
   registrationEndAt?: string;
   capacity?: number;
   currentCount?: number;
-  status?: EventDetailResponseStatus;
+  registrationStatus?: EventDetailResponseRegistrationStatus;
+  eventStatus?: EventDetailResponseEventStatus;
   closeReason?: EventDetailResponseCloseReason;
   registrationType?: EventDetailResponseRegistrationType;
   isRegistrable?: boolean;

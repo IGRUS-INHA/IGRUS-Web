@@ -156,6 +156,33 @@
     src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
   }
 
+  @font-face {
+    font-family: 'Mulmaru';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2601-4@1.1/Mulmaru.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Moneygraphy';
+    src:
+      url('./assets/fonts/Moneygraphy-Rounded.woff2') format('woff2'),
+      url('./assets/fonts/Moneygraphy-Rounded.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Moneygraphy Pixel';
+    src:
+      url('./assets/fonts/Moneygraphy-Pixel.woff2') format('woff2'),
+      url('./assets/fonts/Moneygraphy-Pixel.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
   /* 브라우저 기본 비밀번호 표시 버튼 숨김 (커스텀 토글 사용) */
   input::-ms-reveal,
   input::-ms-clear {

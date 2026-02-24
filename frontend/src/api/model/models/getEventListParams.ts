@@ -31,13 +31,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: 33c8ee9
+ * OpenAPI spec version: acd4c9c
  */
-import type { GetEventListStatus } from './getEventListStatus';
+import type { GetEventListEventStatus } from './getEventListEventStatus';
+import type { GetEventListRegistrationStatus } from './getEventListRegistrationStatus';
 
 export type GetEventListParams = {
 /**
- * 행사 상태 필터 (UPCOMING, OPEN, CLOSED, ONGOING, COMPLETED)
+ * 행사 진행 상태 필터 (UPCOMING, ONGOING, COMPLETED, CANCELED)
  */
-status?: GetEventListStatus;
+eventStatus?: GetEventListEventStatus;
+/**
+ * 등록 상태 필터 (NOT_STARTED, OPEN, CLOSED)
+ */
+registrationStatus?: GetEventListRegistrationStatus;
 };
