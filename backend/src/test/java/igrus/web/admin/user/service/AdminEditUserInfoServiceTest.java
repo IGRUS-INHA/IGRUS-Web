@@ -59,7 +59,7 @@ class AdminEditUserInfoServiceTest {
             String newEmail = "newemail@inha.edu";
 
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    newEmail, null, null, null, null, null, null, null, null, null, null, null, null
+                    null, newEmail, null, null, null, null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
@@ -85,7 +85,7 @@ class AdminEditUserInfoServiceTest {
             String originalPhone = targetUser.getPhoneNumber();
 
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    null, "새이름", null, "정보통신공학과", null, null, null, null, null, null, null, null, null
+                    null, null, "새이름", null, "정보통신공학과", null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
@@ -110,7 +110,7 @@ class AdminEditUserInfoServiceTest {
             String currentEmail = targetUser.getEmail();
 
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    currentEmail, null, null, null, null, null, null, null, null, null, null, null, null
+                    null, currentEmail, null, null, null, null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
@@ -133,7 +133,7 @@ class AdminEditUserInfoServiceTest {
             String originalName = targetUser.getName();
 
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    null, null, null, null, null, null, null, null, null, null, null, null, null
+                    null, null, null, null, null, null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
@@ -156,7 +156,7 @@ class AdminEditUserInfoServiceTest {
             User targetUser = createMemberWithId(targetUserId);
 
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    null, "변경된이름", null, null, null, null, null, null, null, null, null, null, null
+                    null, null, "변경된이름", null, null, null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
@@ -185,7 +185,7 @@ class AdminEditUserInfoServiceTest {
             String newPhone = "010-9999-8888";
 
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    null, null, newPhone, null, null, null, null, null, null, null, null, null, null
+                    null, null, null, newPhone, null, null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
@@ -210,7 +210,7 @@ class AdminEditUserInfoServiceTest {
             Long targetUserId = 999L;
             Long currentUserId = 2L;
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    "new@inha.edu", null, null, null, null, null, null, null, null, null, null, null, null
+                    null, "new@inha.edu", null, null, null, null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.empty());
@@ -232,7 +232,7 @@ class AdminEditUserInfoServiceTest {
             String duplicateEmail = "existing@inha.edu";
 
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    duplicateEmail, null, null, null, null, null, null, null, null, null, null, null, null
+                    null, duplicateEmail, null, null, null, null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
@@ -255,7 +255,7 @@ class AdminEditUserInfoServiceTest {
             String duplicatePhone = "010-0000-0000";
 
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    null, null, duplicatePhone, null, null, null, null, null, null, null, null, null, null
+                    null, null, null, duplicatePhone, null, null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
@@ -278,7 +278,7 @@ class AdminEditUserInfoServiceTest {
             String currentPhone = targetUser.getPhoneNumber();
 
             AdminEditUserInfoRequest request = new AdminEditUserInfoRequest(
-                    null, null, currentPhone, null, null, null, null, null, null, null, null, null, null
+                    null, null, null, currentPhone, null, null, null, null, null, null, null, null, null, null
             );
 
             given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
