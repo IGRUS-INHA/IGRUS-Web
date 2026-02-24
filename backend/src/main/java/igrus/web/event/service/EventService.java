@@ -13,6 +13,7 @@ import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.event.EventStatusChangeEvent;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventAccessDeniedException;
+import igrus.web.event.exception.EventNotDeletableException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.EventRegistrationNotReopenableException;
 import igrus.web.event.exception.InvalidEventDateException;
@@ -233,6 +234,7 @@ public class EventService {
      * @param userId  삭제자 ID
      * @throws EventNotFoundException       행사를 찾을 수 없는 경우
      * @throws EventAccessDeniedException   권한이 없는 경우
+     * @throws EventNotDeletableException   활성 신청자가 있는 경우
      */
     public void deleteEvent(Long eventId, Long userId) {
         // 1. 행사 조회
@@ -246,7 +248,14 @@ public class EventService {
         // 3. 권한 확인 (운영진 이상만 삭제 가능)
         validateEditPermission(user);
 
-        // 4. Soft Delete 실행
+        // 4. 활성 신청자 존재 여부 확인 (EVT-INV-15)
+        boolean hasActiveRegistrants = eventRegistrationRepository
+                .existsByEventIdAndStatusIn(eventId, ACTIVE_REGISTRATION_STATUSES);
+        if (hasActiveRegistrants) {
+            throw new EventNotDeletableException();
+        }
+
+        // 5. Soft Delete 실행
         event.delete(userId);
     }
 

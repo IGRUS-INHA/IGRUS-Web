@@ -33,7 +33,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -668,6 +668,8 @@ class EventServiceTest {
         void deleteEvent_WithOperator_SoftDeletes() {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRegistrationRepository.existsByEventIdAndStatusIn(eq(EVENT_ID), anyCollection()))
+                    .thenReturn(false);
 
             eventService.deleteEvent(EVENT_ID, OPERATOR_ID);
 
@@ -710,6 +712,39 @@ class EventServiceTest {
 
             assertThatThrownBy(() -> eventService.deleteEvent(EVENT_ID, 999L))
                     .isInstanceOf(UserNotFoundException.class);
+        }
+
+        /**
+         * SVC-EVT-036: 신청자가 있는 행사 삭제 거부 (EVT-INV-15)
+         */
+        @Test
+        @DisplayName("[SVC-EVT-036] 활성 신청자가 있는 행사를 삭제하려고 하면 EventNotDeletableException 발생")
+        void deleteEvent_WithActiveRegistrants_ThrowsException() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRegistrationRepository.existsByEventIdAndStatusIn(eq(EVENT_ID), anyCollection()))
+                    .thenReturn(true);
+
+            assertThatThrownBy(() -> eventService.deleteEvent(EVENT_ID, OPERATOR_ID))
+                    .isInstanceOf(EventNotDeletableException.class);
+
+            verify(mockEvent, never()).delete(anyLong());
+        }
+
+        /**
+         * SVC-EVT-037: 신청자가 없는 행사 정상 삭제 (EVT-INV-15)
+         */
+        @Test
+        @DisplayName("[SVC-EVT-037] 신청자가 없는 행사는 정상적으로 soft delete된다")
+        void deleteEvent_WithoutRegistrants_SoftDeletes() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRegistrationRepository.existsByEventIdAndStatusIn(eq(EVENT_ID), anyCollection()))
+                    .thenReturn(false);
+
+            eventService.deleteEvent(EVENT_ID, OPERATOR_ID);
+
+            verify(mockEvent).delete(OPERATOR_ID);
         }
     }
 
