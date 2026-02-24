@@ -255,11 +255,12 @@ public class EventService {
      *
      * @param eventId 행사 ID
      * @param userId  마감 요청자 ID
+     * @param reason  마감 사유
      * @return 마감된 행사 상세 응답 DTO
      * @throws EventNotFoundException       행사를 찾을 수 없는 경우
      * @throws EventAccessDeniedException   권한이 없는 경우
      */
-    public EventDetailResponse closeEvent(Long eventId, Long userId) {
+    public EventDetailResponse closeEvent(Long eventId, Long userId, String reason) {
         // 1. 행사 조회
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
@@ -281,7 +282,7 @@ public class EventService {
         // 6. 감사 이력 이벤트 발행
         eventPublisher.publishEvent(new EventStatusChangeEvent(
                 eventId, userId, EventChangeType.REGISTRATION_CLOSED_MANUAL,
-                previousRegStatus, event.getRegistrationStatus().name(), null));
+                previousRegStatus, event.getRegistrationStatus().name(), reason));
 
         // 7. 응답 반환
         return EventDetailResponse.from(event);
@@ -292,11 +293,12 @@ public class EventService {
      *
      * @param eventId 행사 ID
      * @param userId  취소 요청자 ID
+     * @param reason  취소 사유
      * @return 취소된 행사 상세 응답 DTO
      * @throws EventNotFoundException                행사를 찾을 수 없는 경우
      * @throws InvalidEventStateTransitionException 취소 불가능한 상태인 경우
      */
-    public EventDetailResponse cancelEvent(Long eventId, Long userId) {
+    public EventDetailResponse cancelEvent(Long eventId, Long userId, String reason) {
         // 1. 행사 조회
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
@@ -318,7 +320,7 @@ public class EventService {
         // 6. 감사 이력 이벤트 발행
         eventPublisher.publishEvent(new EventStatusChangeEvent(
                 eventId, userId, EventChangeType.EVENT_CANCELED,
-                previousEventStatus, event.getEventStatus().name(), null));
+                previousEventStatus, event.getEventStatus().name(), reason));
 
         // 7. 응답 반환
         return EventDetailResponse.from(event);
@@ -329,11 +331,12 @@ public class EventService {
      *
      * @param eventId 행사 ID
      * @param userId  재활성화 요청자 ID
+     * @param reason  재활성화 사유
      * @return 재활성화된 행사 상세 응답 DTO
      * @throws EventNotFoundException                행사를 찾을 수 없는 경우
      * @throws InvalidEventStateTransitionException 재활성화 불가능한 상태인 경우
      */
-    public EventDetailResponse reactivateEvent(Long eventId, Long userId) {
+    public EventDetailResponse reactivateEvent(Long eventId, Long userId, String reason) {
         // 1. 행사 조회
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
@@ -352,7 +355,7 @@ public class EventService {
         // 5. 감사 이력 이벤트 발행
         eventPublisher.publishEvent(new EventStatusChangeEvent(
                 eventId, userId, EventChangeType.EVENT_REACTIVATED,
-                previousEventStatus, event.getEventStatus().name(), null));
+                previousEventStatus, event.getEventStatus().name(), reason));
 
         // 6. 응답 반환
         return EventDetailResponse.from(event);

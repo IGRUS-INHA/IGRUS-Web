@@ -6,7 +6,7 @@ import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventRegistrationType;
 import igrus.web.event.dto.request.CreateEventRequest;
-import igrus.web.event.dto.request.ReopenRegistrationRequest;
+import igrus.web.event.dto.request.EventStatusChangeReasonRequest;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
@@ -223,9 +223,12 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
     void cancelEvent_MemberRole_Returns403() throws Exception {
         Event event = createAndSaveOpenEvent();
         String token = generateToken(member);
+        EventStatusChangeReasonRequest request = new EventStatusChangeReasonRequest("취소 사유");
 
         mockMvc.perform(post("/api/v1/events/" + event.getId() + "/cancel")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
     }
 
@@ -236,9 +239,12 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
     void reactivateEvent_MemberRole_Returns403() throws Exception {
         Event event = createAndSaveCanceledEvent();
         String token = generateToken(member);
+        EventStatusChangeReasonRequest request = new EventStatusChangeReasonRequest("재활성화 사유");
 
         mockMvc.perform(post("/api/v1/events/" + event.getId() + "/reactivate")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
     }
 
@@ -249,7 +255,7 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
     void reopenRegistration_MemberRole_Returns403() throws Exception {
         Event event = createAndSaveClosedEvent();
         String token = generateToken(member);
-        ReopenRegistrationRequest request = new ReopenRegistrationRequest("추가 모집이 필요합니다");
+        EventStatusChangeReasonRequest request = new EventStatusChangeReasonRequest("추가 모집이 필요합니다");
 
         mockMvc.perform(post("/api/v1/events/" + event.getId() + "/reopen-registration")
                         .header("Authorization", "Bearer " + token)
