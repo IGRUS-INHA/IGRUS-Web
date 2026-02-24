@@ -1,7 +1,7 @@
 # 문의 (Inquiry) 검증 기준서
 
 > **Status**: Review Completed
-> **Last Updated**: 2026-02-11
+> **Last Updated**: 2026-02-24
 > **Scope**: 비회원 문의(GuestInquiry), 회원 문의(MemberInquiry), 문의 조회(Lookup), 답변/메모(Reply/Memo), 상태 관리(Status), 삭제(Delete)
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 
@@ -121,6 +121,26 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **관련 코드**:
   - `CreateInquiryReplyService:49-51` - reply 설정 + complete() 호출
 - **검증 방법**: 답변 작성 후 문의 상태가 COMPLETED인지 assertion
+
+### INQ-INV-09: 문의 상태 변경 감사 이력 (신규)
+
+> 문의 상태가 변경될 때 `InquiryStatusChangeHistory`에 변경 이력이 기록된다.
+
+- **기록 대상 변경 유형** (`InquiryChangeType`):
+  - `STATUS_CHANGED` — 관리자가 수동으로 상태 변경 (`UpdateInquiryStatusService`)
+  - `REPLY_COMPLETED` — 답변 작성으로 인한 자동 완료 (`CreateInquiryReplyService`)
+- **기록하지 않는 변경**: 멱등성 전이 (동일 상태 → 동일 상태)는 실제 변경이 아니므로 기록하지 않음
+- **사후조건**: 변경 유형, 이전/이후 상태값, 변경자 정보, 학번(비정규화)이 감사 이력에 기록됨
+- **구현 방식**: `@EventListener` + `REQUIRES_NEW` 독립 트랜잭션. 이력 저장 실패가 비즈니스 로직에 영향 없음 (try-catch 격리)
+- **설계 결정**: FK 없이 ID만 저장 (soft-delete/탈퇴 후에도 이력 영구 보존), `changedByStudentId` 비정규화
+- **관련 코드** `(현재 구현 일치)`:
+  - `InquiryStatusChangeHistory` — 감사 이력 엔티티 (`BaseEntity` 상속)
+  - `InquiryChangeType` — 변경 유형 enum
+  - `InquiryStatusChangeEvent` — Spring 이벤트 record
+  - `RecordInquiryStatusChangeService` — `@EventListener` + `REQUIRES_NEW` TransactionTemplate 리스너
+  - `UpdateInquiryStatusService` — `STATUS_CHANGED` 이벤트 발행
+  - `CreateInquiryReplyService` — `REPLY_COMPLETED` 이벤트 발행
+- **검증 방법**: 상태 변경 후 `inquiry_status_change_histories` 테이블에 이력 레코드 존재 확인
 
 ---
 
@@ -390,6 +410,24 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 삭제 시각 | 삭제 시점 타임스탬프 | `inquiries_deleted_at` |
 | 삭제자 | 운영자 ID | `inquiries_deleted_by` |
 
+### 7-4. 상태 변경 감사 이력 (`inquiry_status_change_histories`)
+
+문의 상태가 변경될 때 `InquiryStatusChangeHistory` 엔티티에 이력을 기록한다 (INQ-INV-09).
+
+| 필드 | 저장 내용 | 컬럼명 |
+|------|---------|--------|
+| 문의 ID | 대상 문의 | `inquiry_status_change_histories_inquiry_id` |
+| 변경자 ID | 운영자 ID | `inquiry_status_change_histories_changed_by_id` |
+| 변경자 학번 | 운영자 학번 (비정규화) | `inquiry_status_change_histories_changed_by_student_id` |
+| 변경 유형 | `InquiryChangeType` enum | `inquiry_status_change_histories_change_type` |
+| 이전 값 | 변경 전 상태명 | `inquiry_status_change_histories_previous_value` |
+| 이후 값 | 변경 후 상태명 | `inquiry_status_change_histories_new_value` |
+| 생성 시각 | 이력 기록 시각 | `inquiry_status_change_histories_created_at` |
+
+- **구현 방식**: `@EventListener` + `REQUIRES_NEW` TransactionTemplate (`RecordInquiryStatusChangeService`)
+- **FK 없음**: soft-delete/탈퇴 후에도 이력 영구 보존
+- **인덱스**: `inquiry_id`, `changed_by_id`, `change_type`, `created_at`
+
 ---
 
 ## 8. 테스트 전략 (Test Strategy)
@@ -413,9 +451,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | `CreateMemberInquiryServiceTest` | 2개 | 회원 문의 생성, 사용자 없음 예외 |
 | `CreateInquiryReplyServiceTest` | 2개 | 답변 작성 성공, 중복 답변 예외 |
 | `CreateInquiryMemoServiceTest` | 1개 | 메모 작성 |
-| `UpdateInquiryStatusServiceTest` | 1개 | 상태 변경 성공 |
+| `UpdateInquiryStatusServiceTest` | 7개 | 유효한 상태 전이(4), 멱등성 전이(2), 금지된 전이(2), 예외(1) |
 | `DeleteInquiryServiceTest` | 1개 | soft delete 후 조회 불가, 삭제 포함 카운트 검증 |
-| `GetAllInquiriesServiceTest` | 2개 | 전체 목록 조회, 타입별 필터링 |
+| `GetAllInquiriesServiceTest` | 5개 | 전체 목록 조회, 유형별 필터링, 상태별 필터링, 복합 필터링, 빈 목록 |
 | `GetMyInquiriesServiceTest` | 2개 | 내 문의 목록 조회, 빈 목록 조회 |
 | `GetMyInquiryServiceTest` | 2개 | 내 문의 상세 조회, 다른 사용자 접근 시 예외 |
 | `LookupGuestInquiryServiceTest` | 3개 | 정상 조회, 비밀번호 불일치, 문의번호 불일치 |
@@ -438,8 +476,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | INQ-INV-04 (soft delete 필터링) | `DeleteInquiryServiceTest:deleteInquiry_WithValidId_SoftDeletes` | **커버됨** (`findById` 빈 결과 + `countByIdIncludingDeleted` = 1 검증) |
 | INQ-INV-05 (비회원 비밀번호 필수) | `InquiryTest:createGuestInquiry_WithValidInfo_ReturnsInquiry` | **간접 커버** (팩토리 메서드 시그니처로 강제) |
 | INQ-INV-06 (회원 사용자 참조 필수) | `CreateMemberInquiryServiceTest:createMemberInquiry_WithInvalidUserId_ThrowsException` | **커버됨** |
-| INQ-INV-07 (COMPLETED 종단 상태) | - | **누락** (COMPLETED → 다른 상태 전이 시 예외 테스트 없음) |
+| INQ-INV-07 (COMPLETED 종단 상태) | `UpdateInquiryStatusServiceTest:INQ-A-025,026` | **커버됨** (COMPLETED → PENDING/IN_PROGRESS 금지 검증) |
 | INQ-INV-08 (답변 시 자동 완료) | `CreateInquiryReplyServiceTest:createReply_WithValidRequest_Success` (line 114) | **커버됨** |
+| INQ-INV-09 (상태 변경 감사 이력) | - | **부분 커버** (이벤트 발행 로직 존재, 전용 통합 테스트 미작성) |
 
 #### 상태 전이 커버리지
 
@@ -447,10 +486,10 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 |------|-----------|------|
 | PENDING → IN_PROGRESS | `UpdateInquiryStatusServiceTest:updateInquiryStatus_WithValidStatus_Success` | **커버됨** |
 | PENDING → COMPLETED | `InquiryTest:complete_ChangesStatusToCompleted` | **커버됨** (도메인 테스트) |
-| IN_PROGRESS → PENDING | - | **누락** |
-| IN_PROGRESS → COMPLETED | - | **누락** |
-| COMPLETED → PENDING (금지) | - | **누락** |
-| COMPLETED → IN_PROGRESS (금지) | - | **누락** |
+| IN_PROGRESS → PENDING | `UpdateInquiryStatusServiceTest:INQ-A-022` | **커버됨** |
+| IN_PROGRESS → COMPLETED | `UpdateInquiryStatusServiceTest:INQ-A-023` | **커버됨** |
+| COMPLETED → PENDING (금지) | `UpdateInquiryStatusServiceTest:INQ-A-025` | **커버됨** |
+| COMPLETED → IN_PROGRESS (금지) | `UpdateInquiryStatusServiceTest:INQ-A-026` | **커버됨** |
 
 #### 소유권/보안 커버리지
 
@@ -466,11 +505,11 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | ID | 내용 | 심각도 | 상태 |
 |----|------|--------|------|
-| GAP-INQ-01 | COMPLETED 상태에서 다른 상태로의 전이 시도에 대한 통합 테스트 부재 | **중간** | 미해결 |
+| GAP-INQ-01 | COMPLETED 상태에서 다른 상태로의 전이 시도에 대한 통합 테스트 부재 | **중간** | **해결됨** (INQ-A-025, INQ-A-026) |
 | GAP-INQ-02 | 비회원 문의 조회 시 이메일 불일치 케이스 테스트 부재 | **낮음** | 미해결 |
 | GAP-INQ-03 | 문의번호 동시 생성 시 충돌 재시도 로직 통합 테스트 부재 | **중간** | 미해결 |
 | GAP-INQ-04 | 컨트롤러 레벨 RBAC 검증 테스트 (MockMvc) 부재 | **중간** | 미해결 |
-| GAP-INQ-05 | IN_PROGRESS → PENDING/COMPLETED 상태 전이 통합 테스트 부재 | **낮음** | 미해결 |
+| GAP-INQ-05 | IN_PROGRESS → PENDING/COMPLETED 상태 전이 통합 테스트 부재 | **낮음** | **해결됨** (INQ-A-022, INQ-A-023) |
 | GAP-INQ-06 | 이메일 알림 발송 실패 시 문의 생성 트랜잭션에 미치는 영향 미검증 | **중간** | **해결됨** (try-catch 격리 적용) |
 
 ---

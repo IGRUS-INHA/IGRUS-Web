@@ -8,6 +8,8 @@ import igrus.web.inquiry.exception.InquiryNotFoundException;
 import igrus.web.inquiry.exception.InvalidStatusTransitionException;
 import igrus.web.inquiry.repository.InquiryRepository;
 import igrus.web.inquiry.service.create.CreateGuestInquiryService;
+import igrus.web.user.domain.User;
+import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,9 +32,12 @@ class UpdateInquiryStatusServiceTest extends ServiceIntegrationTestBase {
     @Autowired
     private InquiryRepository inquiryRepository;
 
+    private User operator;
+
     @BeforeEach
     void setUp() {
         setUpBase();
+        operator = createAndSaveUser("20230001", "operator@inha.edu", UserRole.OPERATOR);
     }
 
     private InquiryCreateResponse createTestInquiry() {
@@ -40,7 +45,7 @@ class UpdateInquiryStatusServiceTest extends ServiceIntegrationTestBase {
     }
 
     private void changeStatus(Long inquiryId, InquiryStatus status) {
-        updateInquiryStatusService.updateInquiryStatus(inquiryId, updateStatusRequest(status));
+        updateInquiryStatusService.updateInquiryStatus(inquiryId, updateStatusRequest(status), operator.getId());
     }
 
     @Nested

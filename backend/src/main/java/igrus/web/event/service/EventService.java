@@ -1,8 +1,8 @@
 package igrus.web.event.service;
 
 import igrus.web.event.domain.Event;
+import igrus.web.event.domain.EventChangeType;
 import igrus.web.event.domain.EventRegistrationStatus;
-import igrus.web.event.domain.EventReopenHistory;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.CreateEventRequest;
@@ -10,6 +10,7 @@ import igrus.web.event.dto.request.UpdateEventRequest;
 import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
+import igrus.web.event.event.EventStatusChangeEvent;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventAccessDeniedException;
 import igrus.web.event.exception.EventNotFoundException;
@@ -17,11 +18,11 @@ import igrus.web.event.exception.EventRegistrationNotReopenableException;
 import igrus.web.event.exception.InvalidEventDateException;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventRegistrationRepository;
-import igrus.web.event.repository.EventReopenHistoryRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,8 +62,8 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
-    private final EventReopenHistoryRepository eventReopenHistoryRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 행사를 생성합니다.
@@ -274,9 +275,15 @@ public class EventService {
         event.updateStatusIfNeeded(Instant.now());
 
         // 5. 등록 마감 (도메인 메서드 호출)
+        String previousRegStatus = event.getRegistrationStatus().name();
         event.closeRegistrationManually();
 
-        // 6. 응답 반환
+        // 6. 감사 이력 이벤트 발행
+        eventPublisher.publishEvent(new EventStatusChangeEvent(
+                eventId, userId, EventChangeType.REGISTRATION_CLOSED_MANUAL,
+                previousRegStatus, event.getRegistrationStatus().name(), null));
+
+        // 7. 응답 반환
         return EventDetailResponse.from(event);
     }
 
@@ -305,9 +312,15 @@ public class EventService {
         event.updateStatusIfNeeded(Instant.now());
 
         // 5. 행사 취소 (도메인 메서드 호출)
+        String previousEventStatus = event.getEventStatus().name();
         event.cancel();
 
-        // 6. 응답 반환
+        // 6. 감사 이력 이벤트 발행
+        eventPublisher.publishEvent(new EventStatusChangeEvent(
+                eventId, userId, EventChangeType.EVENT_CANCELED,
+                previousEventStatus, event.getEventStatus().name(), null));
+
+        // 7. 응답 반환
         return EventDetailResponse.from(event);
     }
 
@@ -333,9 +346,15 @@ public class EventService {
         validateEditPermission(user);
 
         // 4. 행사 재활성화 (도메인 메서드 호출)
+        String previousEventStatus = event.getEventStatus().name();
         event.reactivate(Instant.now());
 
-        // 5. 응답 반환
+        // 5. 감사 이력 이벤트 발행
+        eventPublisher.publishEvent(new EventStatusChangeEvent(
+                eventId, userId, EventChangeType.EVENT_REACTIVATED,
+                previousEventStatus, event.getEventStatus().name(), null));
+
+        // 6. 응답 반환
         return EventDetailResponse.from(event);
     }
 
@@ -389,11 +408,13 @@ public class EventService {
         }
 
         // 6. 등록 재오픈 (도메인 메서드 호출)
+        String previousRegStatus = event.getRegistrationStatus().name();
         event.reopenRegistration();
 
-        // 7. 감사 이력 저장 (EVT-INV-14)
-        EventReopenHistory history = EventReopenHistory.create(event, reason, userId);
-        eventReopenHistoryRepository.save(history);
+        // 7. 감사 이력 이벤트 발행 (EVT-INV-14)
+        eventPublisher.publishEvent(new EventStatusChangeEvent(
+                eventId, userId, EventChangeType.REGISTRATION_REOPENED,
+                previousRegStatus, event.getRegistrationStatus().name(), reason));
 
         // 8. 응답 반환
         return EventDetailResponse.from(event);

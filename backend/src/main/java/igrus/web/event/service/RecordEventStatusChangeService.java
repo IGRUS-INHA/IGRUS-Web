@@ -1,8 +1,8 @@
-package igrus.web.user.service;
+package igrus.web.event.service;
 
-import igrus.web.user.domain.AccountStatusChangeHistory;
-import igrus.web.user.event.AccountStatusChangeEvent;
-import igrus.web.user.repository.AccountStatusChangeHistoryRepository;
+import igrus.web.event.domain.EventStatusChangeHistory;
+import igrus.web.event.event.EventStatusChangeEvent;
+import igrus.web.event.repository.EventStatusChangeHistoryRepository;
 import igrus.web.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -13,46 +13,46 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 @Service
-public class RecordAccountStatusChangeService {
+public class RecordEventStatusChangeService {
 
-    private final AccountStatusChangeHistoryRepository accountStatusChangeHistoryRepository;
+    private final EventStatusChangeHistoryRepository eventStatusChangeHistoryRepository;
     private final UserRepository userRepository;
     private final TransactionTemplate transactionTemplate;
 
-    public RecordAccountStatusChangeService(
-            AccountStatusChangeHistoryRepository accountStatusChangeHistoryRepository,
+    public RecordEventStatusChangeService(
+            EventStatusChangeHistoryRepository eventStatusChangeHistoryRepository,
             UserRepository userRepository,
             PlatformTransactionManager transactionManager) {
-        this.accountStatusChangeHistoryRepository = accountStatusChangeHistoryRepository;
+        this.eventStatusChangeHistoryRepository = eventStatusChangeHistoryRepository;
         this.userRepository = userRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     @EventListener
-    public void handleAccountStatusChange(AccountStatusChangeEvent event) {
-        log.info("계정 상태 변경 이력 저장: userId={}, changeType={}, {} -> {}",
-                event.userId(), event.changeType(), event.previousValue(), event.newValue());
+    public void handleEventStatusChange(EventStatusChangeEvent event) {
+        log.info("행사 상태 변경 이력 저장: eventId={}, changeType={}, {} -> {}",
+                event.eventId(), event.changeType(), event.previousValue(), event.newValue());
 
         try {
             transactionTemplate.executeWithoutResult(status -> {
-                String userStudentId = resolveStudentId(event.userId());
                 String changedByStudentId = resolveStudentId(event.changedByUserId());
 
-                AccountStatusChangeHistory history = AccountStatusChangeHistory.create(
-                        event.userId(), userStudentId,
-                        event.changedByUserId(), changedByStudentId,
+                EventStatusChangeHistory history = EventStatusChangeHistory.create(
+                        event.eventId(),
+                        event.changedByUserId(),
+                        changedByStudentId,
                         event.changeType(),
                         event.previousValue(),
                         event.newValue(),
                         event.reason()
                 );
 
-                accountStatusChangeHistoryRepository.save(history);
+                eventStatusChangeHistoryRepository.save(history);
             });
         } catch (Exception e) {
-            log.error("계정 상태 변경 이력 저장 실패: userId={}, changeType={}",
-                    event.userId(), event.changeType(), e);
+            log.error("행사 상태 변경 이력 저장 실패: eventId={}, changeType={}",
+                    event.eventId(), event.changeType(), e);
         }
     }
 

@@ -1,9 +1,12 @@
 package igrus.web.inquiry.service.manage;
 
 import igrus.web.inquiry.domain.Inquiry;
+import igrus.web.inquiry.domain.InquiryChangeType;
 import igrus.web.inquiry.domain.InquiryReply;
+import igrus.web.inquiry.domain.InquiryStatus;
 import igrus.web.inquiry.dto.request.CreateInquiryReplyRequest;
 import igrus.web.inquiry.dto.response.InquiryReplyResponse;
+import igrus.web.inquiry.event.InquiryStatusChangeEvent;
 import igrus.web.inquiry.exception.InquiryAlreadyRepliedException;
 import igrus.web.inquiry.service.support.InquiryFinder;
 import igrus.web.inquiry.service.support.InquiryNotificationService;
@@ -12,6 +15,7 @@ import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,7 @@ public class CreateInquiryReplyService {
     private final InquiryFinder inquiryFinder;
     private final UserRepository userRepository;
     private final InquiryNotificationService inquiryNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 문의에 답변을 작성합니다.
@@ -48,7 +53,13 @@ public class CreateInquiryReplyService {
 
         InquiryReply reply = InquiryReply.create(request.getContent(), operator);
         inquiry.setReply(reply);
+
+        InquiryStatus previousStatus = inquiry.getStatus();
         inquiry.complete();
+
+        eventPublisher.publishEvent(new InquiryStatusChangeEvent(
+                inquiryId, operatorId, InquiryChangeType.REPLY_COMPLETED,
+                previousStatus.name(), InquiryStatus.COMPLETED.name()));
 
         log.info("문의 답변 작성: inquiryId={}, operatorId={}", inquiryId, operatorId);
 
