@@ -1,7 +1,7 @@
 # 행사(Event) 도메인 테스트 케이스
 
 **작성일**: 2026-02-24
-**버전**: 2.3
+**버전**: 2.4
 **관련 스펙**: [행사 검증 기준서](../../criteria/event/event-verification-criteria.md)
 **우선순위**: P0
 
@@ -239,23 +239,28 @@
 | SVC-EVT-018 | 일반 회원 행사 삭제 거부 | MEMBER | `deleteEvent(...)` | `EventAccessDeniedException` | ✅ |
 | SVC-EVT-019 | 이미 삭제된 행사 삭제 | 삭제된 행사 | `deleteEvent(...)` | `EventNotFoundException` | ✅ |
 | SVC-EVT-020 | 존재하지 않는 사용자 삭제 | 없는 userId | `deleteEvent(...)` | `UserNotFoundException` | ✅ |
-| SVC-EVT-021 | 운영진 행사 수동 마감 | OPERATOR, OPEN | `closeEvent(...)` | 마감 성공, closeManually() 호출 | ✅ |
+| SVC-EVT-021 | 운영진 행사 수동 마감 (사유 포함) | OPERATOR, OPEN | `closeEvent(eventId, operatorId, reason)` | 마감 성공, closeManually() 호출, 감사 이력에 reason 기록 | ✅ |
 | SVC-EVT-022 | 일반 회원 행사 마감 거부 | MEMBER | `closeEvent(...)` | `EventAccessDeniedException` | ✅ |
 | SVC-EVT-023 | 삭제된 행사 마감 거부 | 삭제된 행사 | `closeEvent(...)` | `EventNotFoundException` | ✅ |
-| SVC-EVT-024 | 운영진 행사 취소 성공 | OPERATOR, eventStatus=UPCOMING | `cancelEvent(...)` | eventStatus=CANCELED, registrationStatus=CLOSED | ✅ |
+| SVC-EVT-024 | 운영진 행사 취소 성공 (사유 포함) | OPERATOR, eventStatus=UPCOMING | `cancelEvent(eventId, operatorId, reason)` | eventStatus=CANCELED, registrationStatus=CLOSED, 감사 이력에 reason 기록 | ✅ |
 | SVC-EVT-025 | 일반 회원 행사 취소 거부 | MEMBER | `cancelEvent(...)` | `EventAccessDeniedException` | ✅ |
 | SVC-EVT-026 | COMPLETED 행사 취소 거부 | eventStatus=COMPLETED | `cancelEvent(...)` | `InvalidEventStateTransitionException` | ✅ |
 | SVC-EVT-026-2 | 삭제된 행사 취소 거부 | 삭제된 행사 | `cancelEvent(...)` | `EventNotFoundException` | ✅ |
-| SVC-EVT-027 | 운영진 행사 재활성화 성공 | OPERATOR, CANCELED | `reactivateEvent(...)` | 적절한 상태로 복원 | ✅ |
+| SVC-EVT-027 | 운영진 행사 재활성화 성공 (사유 포함) | OPERATOR, CANCELED | `reactivateEvent(eventId, operatorId, reason)` | 적절한 상태로 복원, 감사 이력에 reason 기록 | ✅ |
 | SVC-EVT-028 | 일반 회원 행사 재활성화 거부 | MEMBER | `reactivateEvent(...)` | `EventAccessDeniedException` | ✅ |
 | SVC-EVT-029 | 이미 활성 상태 재활성화 거부 | eventStatus=UPCOMING | `reactivateEvent(...)` | 거부 예외 | ✅ |
 | SVC-EVT-029-2 | 삭제된 행사 재활성화 거부 | 삭제된 행사 | `reactivateEvent(...)` | `EventNotFoundException` | ✅ |
+| SVC-EVT-038 | 수동 마감 후 감사 이력에 reason 기록 검증 | OPERATOR, OPEN | `closeEvent(eventId, operatorId, reason)` 후 이벤트 캡처 | EventStatusChangeEvent.reason() == 전달한 reason | ✅ |
+| SVC-EVT-039 | 취소 후 감사 이력에 reason 기록 검증 | OPERATOR, UPCOMING | `cancelEvent(eventId, operatorId, reason)` 후 이벤트 캡처 | EventStatusChangeEvent.reason() == 전달한 reason | ✅ |
+| SVC-EVT-040 | 재활성화 후 감사 이력에 reason 기록 검증 | OPERATOR, CANCELED | `reactivateEvent(eventId, operatorId, reason)` 후 이벤트 캡처 | EventStatusChangeEvent.reason() == 전달한 reason | ✅ |
 | SVC-EVT-030 | 운영진 수동 재오픈 성공 | OPERATOR, 5가지 조건 충족 | `reopenRegistration(eventId, operatorId, reason)` | registrationStatus=OPEN | ✅ |
 | SVC-EVT-031 | 일반 회원 수동 재오픈 거부 | MEMBER | `reopenRegistration(...)` | `EventAccessDeniedException` | ✅ |
 | SVC-EVT-032 | 생성 시 registrationStartAt 미래 제약 | regStart < now | `createEvent(...)` | `InvalidEventDateException` | ✅ |
 | SVC-EVT-033 | regStart < eventStart 새 제약 검증 | regStart >= eventStart | `createEvent(...)` | `InvalidEventDateException` | ✅ |
 | SVC-EVT-034 | regEnd <= eventEnd 새 제약 검증 | regEnd > eventEnd | `createEvent(...)` | `InvalidEventDateException` | ✅ |
 | SVC-EVT-035 | 비인가 접근 시 DB 상태 변경 없음 | MEMBER가 생성/수정/삭제 시도 | 예외 발생 후 DB 확인 | DB 변경 없음 | ⬜ |
+| SVC-EVT-036 | 신청자가 있는 행사 삭제 거부 (EVT-INV-15) | OPERATOR, 활성 신청(REGISTERED/WAITING/APPROVED) 존재 | `deleteEvent(...)` | `EventNotDeletableException` | ✅ |
+| SVC-EVT-037 | 신청자가 없는 행사 정상 삭제 (EVT-INV-15) | OPERATOR, 신청자 없음 | `deleteEvent(...)` | soft delete 성공 | ✅ |
 
 ---
 
@@ -272,11 +277,12 @@
 | EVT-INV-07 (상태별 수정 정책) | EVT-050, 052, 054, EVT-100~110 | ✅ |
 | EVT-INV-08 (closeReason 정합성) | EVT-141~143 | ✅ |
 | EVT-INV-09 (soft delete 필터링) | EVT-139,140, SVC-EVT-007 | ✅ |
+| EVT-INV-15 (신청자 있는 행사 삭제 불가) | SVC-EVT-036, SVC-EVT-037 | ✅ |
 | EVT-INV-10 (교차 축 불변조건) | EVT-093~095 | ✅ |
 | EVT-INV-11 (CANCELED→CLOSED 강제) | EVT-076, EVT-111,112, SVC-EVT-024 | ✅ |
 | EVT-INV-12 (유효 복합 상태 조합) | EVT-096~099 | ✅ |
 | EVT-INV-13 (수동 재오픈 조건) | EVT-118, 125~129, SVC-EVT-030,031 | ✅ (부분: 119~124 ⬜) |
-| EVT-INV-14 (행사 상태 변경 감사) | EVT-125, INT-011 | ✅ |
+| EVT-INV-14 (행사 상태 변경 감사, 전 작업 reason 필수) | EVT-125, SVC-EVT-038~040, INT-011 | ✅ |
 
 ---
 
@@ -298,8 +304,8 @@
 | 조회 메서드 | 7 | 7 | 0 |
 | 시간 중복 | 8 | 8 | 0 |
 | Soft Delete/closeReason | 5 | 5 | 0 |
-| EventService | 37 | 36 | 1 |
-| **합계** | **161** | **152** | **9** |
+| EventService | 42 | 41 | 1 |
+| **합계** | **166** | **157** | **9** |
 
 ---
 
@@ -314,8 +320,8 @@
 ### 5.2 EventServiceTest (서비스 단위 테스트)
 - **파일**: `backend/src/test/java/igrus/web/event/service/EventServiceTest.java`
 - **범위**: EventService 비즈니스 로직 (CRUD, 상태 관리, 취소/재활성화, 수동 재오픈)
-- **현재 테스트**: SVC-EVT-001~034 범위에서 약 33개
-- **확장 예정**: SVC-EVT-026, 029, 032, 035 — 총 4개
+- **현재 테스트**: SVC-EVT-001~040 범위에서 약 36개
+- **확장 예정**: SVC-EVT-035~037 — 총 3개
 
 ---
 
@@ -336,3 +342,4 @@
 | 2.0 | 2026-02-21 | - | 2축 모델 기반 전면 재작성. 기존 테스트 매핑 + 신규 테스트 91건 추가. 검증 기준서(EVT-INV-01~14) 전수 커버. GAP-EVT-01~23 전수 커버 |
 | 2.1 | 2026-02-22 | - | 구현 상태 전면 검증. 68개 ⬜→✅ 업데이트. 단일 축(2.2) 대체 완료 표기. SVC-EVT-026/029 ID 재할당(기존→026-2/029-2). 요약 테이블 실제 기준으로 수정. 총 135/161 구현 완료 |
 | 2.2 | 2026-02-23 | - | 신규 구현 반영: EVT-051/092/096/097/127 도메인 테스트, SVC-EVT-026/029/032 서비스 테스트, EVT-125/130~133/135/137/138 날짜 경계값 테스트. approveRegistration 영속성 버그 수정. 총 152/161 구현 완료 |
+| 2.3 | 2026-02-24 | - | 모든 수동 상태 변경(마감/취소/재활성화/재오픈)에 reason 필수 정책 반영. SVC-EVT-021/024/027 reason 파라미터 추가, SVC-EVT-038~040 감사 이력 reason 검증 테스트 신규 추가. 총 155/166 구현 완료 |
