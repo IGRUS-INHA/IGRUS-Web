@@ -121,6 +121,9 @@ export default function ForgotPasswordPage() {
                 학번을 입력하시면 등록된 이메일로 비밀번호 재설정 링크를
                 보내드립니다.
               </p>
+              <p className="text-sm text-muted-foreground mt-s1">
+                이메일이 오지 않으면 스팸 메일함을 확인해주세요.
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-s4">

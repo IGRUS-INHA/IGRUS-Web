@@ -228,6 +228,7 @@ class PostIntegrationTest extends ServiceIntegrationTestBase {
                     "수정된 제목",
                     "수정된 내용",
                     false,
+                    false,
                     List.of()
             );
 
@@ -253,6 +254,7 @@ class PostIntegrationTest extends ServiceIntegrationTestBase {
             UpdatePostRequest request = new UpdatePostRequest(
                     "수정된 제목",
                     "수정된 내용",
+                    false,
                     false,
                     List.of()
             );
@@ -308,6 +310,7 @@ class PostIntegrationTest extends ServiceIntegrationTestBase {
             UpdatePostRequest request = new UpdatePostRequest(
                     "수정된 제목",
                     "수정된 내용",
+                    false,
                     false,
                     List.of()
             );
@@ -455,6 +458,7 @@ class PostIntegrationTest extends ServiceIntegrationTestBase {
                     "수정된 제목",
                     "수정된 내용",
                     false,
+                    false,
                     List.of()
             );
 
@@ -478,6 +482,7 @@ class PostIntegrationTest extends ServiceIntegrationTestBase {
             UpdatePostRequest request = new UpdatePostRequest(
                     "타인 수정 시도",
                     "타인 수정 내용",
+                    false,
                     false,
                     List.of()
             );
@@ -595,6 +600,7 @@ class PostIntegrationTest extends ServiceIntegrationTestBase {
             UpdatePostRequest request = new UpdatePostRequest(
                     "수정 시도",
                     "수정 내용",
+                    false,
                     false,
                     List.of()
             );

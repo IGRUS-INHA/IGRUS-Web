@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   EditorRoot,
   EditorContent,
@@ -42,7 +42,6 @@ export function WysiwygEditor({
   hasError,
 }: WysiwygEditorProps) {
   const editorRef = useRef<EditorInstance | null>(null);
-  const isInternalUpdate = useRef(false);
 
   const handleCreate = useCallback(({ editor }: { editor: EditorInstance }) => {
     editorRef.current = editor;
@@ -52,10 +51,19 @@ export function WysiwygEditor({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpdate = useCallback(({ editor }: { editor: EditorInstance }) => {
-    isInternalUpdate.current = true;
     const md = editor.storage.markdown.getMarkdown();
     onChange(md);
   }, [onChange]);
+
+  // 외부 value 변경 시 에디터 콘텐츠 동기화 (수정 페이지에서 API 데이터 로드 후 반영)
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || !value) return;
+    const currentContent = editor.storage.markdown.getMarkdown();
+    if (currentContent !== value) {
+      editor.commands.setContent(value);
+    }
+  }, [value]);
 
   return (
     <div

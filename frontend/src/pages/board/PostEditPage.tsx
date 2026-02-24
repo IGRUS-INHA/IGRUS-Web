@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -65,6 +65,7 @@ export default function PostEditPage() {
   });
 
   // Initialize form with fetched data
+  const [formReady, setFormReady] = useState(false);
   useEffect(() => {
     if (post) {
       reset({
@@ -73,8 +74,9 @@ export default function PostEditPage() {
         category: categories[0]?.value || 'general',
         isAnonymous: post.isAnonymous || false,
         isQuestion: post.isQuestion || false,
-        isVisibleToAssociate: false,
+        isVisibleToAssociate: post.isVisibleToAssociate || false,
       });
+      setFormReady(true);
     }
   }, [post, reset, categories]);
 
@@ -102,6 +104,7 @@ export default function PostEditPage() {
           title: data.title,
           content: data.content,
           ...(data.isQuestion !== undefined && { isQuestion: data.isQuestion }),
+          ...(allowVisibleToAssociate && { isVisibleToAssociate: data.isVisibleToAssociate ?? false }),
         },
       },
       {
@@ -296,17 +299,19 @@ export default function PostEditPage() {
 
           {/* Content WYSIWYG Editor */}
           <div className="flex-1 relative mb-s8">
-            <Controller
-              name="content"
-              control={control}
-              render={({ field }) => (
-                <WysiwygEditor
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  hasError={!!errors.content}
-                />
-              )}
-            />
+            {formReady && (
+              <Controller
+                name="content"
+                control={control}
+                render={({ field }) => (
+                  <WysiwygEditor
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    hasError={!!errors.content}
+                  />
+                )}
+              />
+            )}
             {errors.content && (
               <span className="text-destructive text-sm mt-s2 block">{errors.content.message}</span>
             )}

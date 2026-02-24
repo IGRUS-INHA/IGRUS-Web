@@ -11,8 +11,9 @@ import java.util.List;
  *
  * @param title      게시글 제목 (필수, 최대 100자)
  * @param content    게시글 내용 (필수)
- * @param isQuestion 질문글 여부
- * @param imageUrls  첨부 이미지 URL 목록 (최대 5개)
+ * @param isQuestion             질문글 여부
+ * @param isVisibleToAssociate   준회원 공개 여부 (공지사항 게시판에서만 사용)
+ * @param imageUrls              첨부 이미지 URL 목록 (최대 5개)
  */
 public record UpdatePostRequest(
     @NotBlank(message = "제목을 입력해 주세요")
@@ -23,6 +24,8 @@ public record UpdatePostRequest(
     String content,
 
     boolean isQuestion,
+
+    boolean isVisibleToAssociate,
 
     @Size(max = 5, message = "이미지는 최대 5개까지 첨부 가능합니다")
     List<String> imageUrls

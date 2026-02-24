@@ -7,13 +7,19 @@ import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.Wish;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
 @Schema(description = "관리자 회원 정보 수정 요청 (부분 업데이트: null 필드는 기존 값 유지)")
 public record AdminEditUserInfoRequest(
+
+        @Schema(description = "학번 (null이면 변경하지 않음)", example = "20231234")
+        @Pattern(regexp = "^\\d{8}$", message = "학번은 8자리 숫자여야 합니다")
+        String studentId,
 
         @Email
         @Schema(description = "이메일 (null이면 변경하지 않음)", example = "user@inha.edu")
@@ -35,6 +41,7 @@ public record AdminEditUserInfoRequest(
 
         @Schema(description = "학년 (null이면 변경하지 않음)", example = "2")
         @Min(value = 1, message = "학년은 1 이상이어야 합니다")
+        @Max(value = 4, message = "학년은 4 이하여야 합니다")
         Integer grade,
 
         @Schema(description = "재학 상태 (null이면 변경하지 않음)")

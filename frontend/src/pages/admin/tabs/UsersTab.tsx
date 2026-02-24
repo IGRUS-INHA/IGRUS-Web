@@ -4,7 +4,6 @@ import { useGetUserList, useChangeUserRole, useGetUserDetail } from '@/api/model
 import type { GetUserListRole } from '@/api/model/models/getUserListRole';
 import type { GetUserListStatus } from '@/api/model/models/getUserListStatus';
 import type { ChangeUserRoleRequestRole } from '@/api/model/models/changeUserRoleRequestRole';
-import type { UserListResponse } from '@/api/model/models/userListResponse';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +12,7 @@ import { useAuth } from '@/hooks';
 import { useUIStore } from '@/stores';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
+import UserEditModal from './UserEditModal';
 
 const ROLE_OPTIONS: { value: GetUserListRole | ''; label: string }[] = [
   { value: '', label: '전체 역할' },
@@ -42,7 +42,7 @@ const STATUS_BADGE: Record<string, string> = {
   WITHDRAWN: 'bg-muted text-muted-foreground',
 };
 
-function UserDetailRow({ userId, colSpan }: { userId: number; colSpan: number }) {
+function UserDetailRow({ userId, colSpan, isAdmin, onEditClick }: { userId: number; colSpan: number; isAdmin: boolean; onEditClick: () => void }) {
   const { data: response, isLoading } = useGetUserDetail(userId);
   const detail = response?.status === 200 ? response.data : undefined;
 
@@ -60,7 +60,7 @@ function UserDetailRow({ userId, colSpan }: { userId: number; colSpan: number })
 
   return (
     <tr>
-      <td colSpan={colSpan} className="py-s3 px-s4 bg-muted/30">
+      <td colSpan={isAdmin ? colSpan - 1 : colSpan} className="py-s3 px-s4 bg-muted/30">
         <div className="flex gap-s6 typo-b2">
           <div>
             <span className="text-muted-foreground">학과: </span>
@@ -80,6 +80,17 @@ function UserDetailRow({ userId, colSpan }: { userId: number; colSpan: number })
           </div>
         </div>
       </td>
+      {isAdmin && (
+        <td className="py-s3 px-s4 bg-muted/30">
+          <button
+            type="button"
+            className="text-primary hover:underline typo-c1 font-bold cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); onEditClick(); }}
+          >
+            정보 수정
+          </button>
+        </td>
+      )}
     </tr>
   );
 }
@@ -97,6 +108,7 @@ export default function UsersTab() {
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [selectedRole, setSelectedRole] = useState<ChangeUserRoleRequestRole | ''>('');
   const [expandedUserIds, setExpandedUserIds] = useState<Set<number>>(new Set());
+  const [editModalUserId, setEditModalUserId] = useState<number | null>(null);
 
   const { data: response, isLoading } = useGetUserList({
     ...(searchKeyword && { keyword: searchKeyword }),
@@ -273,7 +285,7 @@ export default function UsersTab() {
                       </td>
                     )}
                   </tr>
-                  {isExpanded && <UserDetailRow userId={u.userId!} colSpan={colSpan} />}
+                  {isExpanded && <UserDetailRow userId={u.userId!} colSpan={colSpan} isAdmin={isAdmin} onEditClick={() => setEditModalUserId(u.userId!)} />}
                 </Fragment>
               );
             })}
@@ -286,6 +298,13 @@ export default function UsersTab() {
       </Card>
 
       <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+
+      {editModalUserId !== null && (
+        <UserEditModal
+          userId={editModalUserId}
+          onClose={() => setEditModalUserId(null)}
+        />
+      )}
     </div>
   );
 }
