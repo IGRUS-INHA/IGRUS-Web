@@ -33,7 +33,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -668,6 +668,8 @@ class EventServiceTest {
         void deleteEvent_WithOperator_SoftDeletes() {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRegistrationRepository.existsByEventIdAndStatusIn(eq(EVENT_ID), anyCollection()))
+                    .thenReturn(false);
 
             eventService.deleteEvent(EVENT_ID, OPERATOR_ID);
 
@@ -711,6 +713,39 @@ class EventServiceTest {
             assertThatThrownBy(() -> eventService.deleteEvent(EVENT_ID, 999L))
                     .isInstanceOf(UserNotFoundException.class);
         }
+
+        /**
+         * SVC-EVT-036: 신청자가 있는 행사 삭제 거부 (EVT-INV-15)
+         */
+        @Test
+        @DisplayName("[SVC-EVT-036] 활성 신청자가 있는 행사를 삭제하려고 하면 EventNotDeletableException 발생")
+        void deleteEvent_WithActiveRegistrants_ThrowsException() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRegistrationRepository.existsByEventIdAndStatusIn(eq(EVENT_ID), anyCollection()))
+                    .thenReturn(true);
+
+            assertThatThrownBy(() -> eventService.deleteEvent(EVENT_ID, OPERATOR_ID))
+                    .isInstanceOf(EventNotDeletableException.class);
+
+            verify(mockEvent, never()).delete(anyLong());
+        }
+
+        /**
+         * SVC-EVT-037: 신청자가 없는 행사 정상 삭제 (EVT-INV-15)
+         */
+        @Test
+        @DisplayName("[SVC-EVT-037] 신청자가 없는 행사는 정상적으로 soft delete된다")
+        void deleteEvent_WithoutRegistrants_SoftDeletes() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRegistrationRepository.existsByEventIdAndStatusIn(eq(EVENT_ID), anyCollection()))
+                    .thenReturn(false);
+
+            eventService.deleteEvent(EVENT_ID, OPERATOR_ID);
+
+            verify(mockEvent).delete(OPERATOR_ID);
+        }
     }
 
     // ========== closeEvent ==========
@@ -728,7 +763,7 @@ class EventServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
-            EventDetailResponse response = eventService.closeEvent(EVENT_ID, OPERATOR_ID);
+            EventDetailResponse response = eventService.closeEvent(EVENT_ID, OPERATOR_ID, "마감 사유");
 
             assertThat(response).isNotNull();
             verify(mockEvent).closeRegistrationManually();
@@ -743,7 +778,7 @@ class EventServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
 
-            assertThatThrownBy(() -> eventService.closeEvent(EVENT_ID, MEMBER_ID))
+            assertThatThrownBy(() -> eventService.closeEvent(EVENT_ID, MEMBER_ID, "마감 사유"))
                     .isInstanceOf(EventAccessDeniedException.class);
         }
 
@@ -755,8 +790,28 @@ class EventServiceTest {
         void closeEvent_DeletedEvent_ThrowsException() {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> eventService.closeEvent(EVENT_ID, OPERATOR_ID))
+            assertThatThrownBy(() -> eventService.closeEvent(EVENT_ID, OPERATOR_ID, "마감 사유"))
                     .isInstanceOf(EventNotFoundException.class);
+        }
+
+        /**
+         * SVC-EVT-038: 수동 마감 후 감사 이력에 reason 기록 검증
+         */
+        @Test
+        @DisplayName("[SVC-EVT-038] 수동 마감 성공 시 EventStatusChangeEvent에 사유가 기록된다")
+        void closeEvent_Success_ReasonRecordedInAuditEvent() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            eventService.closeEvent(EVENT_ID, OPERATOR_ID, "정원 관리를 위한 수동 마감");
+
+            var captor = org.mockito.ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            EventStatusChangeEvent captured = captor.getValue();
+            assertThat(captured.reason()).isEqualTo("정원 관리를 위한 수동 마감");
+            assertThat(captured.changedByUserId()).isEqualTo(OPERATOR_ID);
+            assertThat(captured.eventId()).isEqualTo(EVENT_ID);
+            assertThat(captured.changeType()).isEqualTo(EventChangeType.REGISTRATION_CLOSED_MANUAL);
         }
     }
 
@@ -775,7 +830,7 @@ class EventServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
-            EventDetailResponse response = eventService.cancelEvent(EVENT_ID, OPERATOR_ID);
+            EventDetailResponse response = eventService.cancelEvent(EVENT_ID, OPERATOR_ID, "취소 사유");
 
             assertThat(response).isNotNull();
             verify(mockEvent).cancel();
@@ -790,7 +845,7 @@ class EventServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
 
-            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, MEMBER_ID))
+            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, MEMBER_ID, "취소 사유"))
                     .isInstanceOf(EventAccessDeniedException.class);
         }
 
@@ -806,7 +861,7 @@ class EventServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
-            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, OPERATOR_ID))
+            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, OPERATOR_ID, "취소 사유"))
                     .isInstanceOf(InvalidEventStateTransitionException.class);
         }
 
@@ -818,8 +873,28 @@ class EventServiceTest {
         void cancelEvent_DeletedEvent_ThrowsException() {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, OPERATOR_ID))
+            assertThatThrownBy(() -> eventService.cancelEvent(EVENT_ID, OPERATOR_ID, "취소 사유"))
                     .isInstanceOf(EventNotFoundException.class);
+        }
+
+        /**
+         * SVC-EVT-039: 취소 후 감사 이력에 reason 기록 검증
+         */
+        @Test
+        @DisplayName("[SVC-EVT-039] 행사 취소 성공 시 EventStatusChangeEvent에 사유가 기록된다")
+        void cancelEvent_Success_ReasonRecordedInAuditEvent() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            eventService.cancelEvent(EVENT_ID, OPERATOR_ID, "일정 변경으로 인한 취소");
+
+            var captor = org.mockito.ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            EventStatusChangeEvent captured = captor.getValue();
+            assertThat(captured.reason()).isEqualTo("일정 변경으로 인한 취소");
+            assertThat(captured.changedByUserId()).isEqualTo(OPERATOR_ID);
+            assertThat(captured.eventId()).isEqualTo(EVENT_ID);
+            assertThat(captured.changeType()).isEqualTo(EventChangeType.EVENT_CANCELED);
         }
     }
 
@@ -839,7 +914,7 @@ class EventServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
-            EventDetailResponse response = eventService.reactivateEvent(EVENT_ID, OPERATOR_ID);
+            EventDetailResponse response = eventService.reactivateEvent(EVENT_ID, OPERATOR_ID, "재활성화 사유");
 
             assertThat(response).isNotNull();
             verify(mockEvent).reactivate(any(Instant.class));
@@ -854,7 +929,7 @@ class EventServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
 
-            assertThatThrownBy(() -> eventService.reactivateEvent(EVENT_ID, MEMBER_ID))
+            assertThatThrownBy(() -> eventService.reactivateEvent(EVENT_ID, MEMBER_ID, "재활성화 사유"))
                     .isInstanceOf(EventAccessDeniedException.class);
         }
 
@@ -870,7 +945,7 @@ class EventServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
-            assertThatThrownBy(() -> eventService.reactivateEvent(EVENT_ID, OPERATOR_ID))
+            assertThatThrownBy(() -> eventService.reactivateEvent(EVENT_ID, OPERATOR_ID, "재활성화 사유"))
                     .isInstanceOf(InvalidEventStateTransitionException.class);
         }
 
@@ -882,8 +957,29 @@ class EventServiceTest {
         void reactivateEvent_DeletedEvent_ThrowsException() {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> eventService.reactivateEvent(EVENT_ID, OPERATOR_ID))
+            assertThatThrownBy(() -> eventService.reactivateEvent(EVENT_ID, OPERATOR_ID, "재활성화 사유"))
                     .isInstanceOf(EventNotFoundException.class);
+        }
+
+        /**
+         * SVC-EVT-040: 재활성화 후 감사 이력에 reason 기록 검증
+         */
+        @Test
+        @DisplayName("[SVC-EVT-040] 행사 재활성화 성공 시 EventStatusChangeEvent에 사유가 기록된다")
+        void reactivateEvent_Success_ReasonRecordedInAuditEvent() {
+            when(mockEvent.getEventStatus()).thenReturn(EventStatus.CANCELED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            eventService.reactivateEvent(EVENT_ID, OPERATOR_ID, "일정 재조정으로 재활성화");
+
+            var captor = org.mockito.ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            EventStatusChangeEvent captured = captor.getValue();
+            assertThat(captured.reason()).isEqualTo("일정 재조정으로 재활성화");
+            assertThat(captured.changedByUserId()).isEqualTo(OPERATOR_ID);
+            assertThat(captured.eventId()).isEqualTo(EVENT_ID);
+            assertThat(captured.changeType()).isEqualTo(EventChangeType.EVENT_REACTIVATED);
         }
     }
 
