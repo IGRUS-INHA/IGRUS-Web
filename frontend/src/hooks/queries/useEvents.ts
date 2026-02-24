@@ -7,6 +7,7 @@ import {
   useCreateEvent as useCreateEventMutation,
   useUpdateEvent as useUpdateEventMutation,
   useDeleteEvent as useDeleteEventMutation,
+  useCloseEvent as useCloseEventMutation,
 } from '@/api/model/event/event';
 import {
   useRegisterEvent,
@@ -106,6 +107,21 @@ export function useDeleteEvent() {
     mutation: {
       onSuccess: () => {
         // 행사 목록 새로고침 (상세는 더 이상 존재하지 않음)
+        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      },
+    },
+  });
+}
+
+// 행사 신청 조기 마감 (실제 API 사용)
+export function useCloseEvent() {
+  const queryClient = useQueryClient();
+
+  return useCloseEventMutation({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        // 행사 상세 및 목록 새로고침
+        void queryClient.invalidateQueries({ queryKey: eventKeys.detail(variables.eventId) });
         void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
       },
     },

@@ -43,11 +43,17 @@ yarn-error.log*
 pnpm-debug.log*
 .npm/
 .yarn/
+.pnpm-store/
 
 # Test
 frontend/*.lcov
+
+# Docker
+docker-data/
 
 # Claude
 .claude/settings.local.json
 
 nul
+
+*.bak

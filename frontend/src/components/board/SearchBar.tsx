@@ -98,7 +98,6 @@ interface SimpleSearchBarProps {
  */
 export function SimpleSearchBar({
   onSearch,
-  onClear,
   initialKeyword = '',
 }: SimpleSearchBarProps) {
   const [keyword, setKeyword] = useState(initialKeyword);

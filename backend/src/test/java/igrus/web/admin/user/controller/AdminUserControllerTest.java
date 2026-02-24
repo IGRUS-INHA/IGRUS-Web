@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.admin.user.dto.ChangeUserRoleRequest;
 import igrus.web.admin.user.dto.ForceWithdrawRequest;
 import igrus.web.common.ServiceIntegrationTestBase;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.admin.user.exception.AdminErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
+import igrus.web.user.exception.UserErrorCode;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
@@ -193,7 +195,7 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.USER_NOT_FOUND.getCode()));
         }
     }
 
@@ -258,7 +260,7 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.SELF_ROLE_CHANGE_NOT_ALLOWED.getCode()));
+                    .andExpect(jsonPath("$.code").value(AdminErrorCode.SELF_ROLE_CHANGE_NOT_ALLOWED.getCode()));
         }
 
         @Test
@@ -273,7 +275,7 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.SAME_ROLE_CHANGE.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.SAME_ROLE_CHANGE.getCode()));
         }
 
         @Test
@@ -300,7 +302,7 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.LAST_ADMIN_CANNOT_CHANGE.getCode()));
+                    .andExpect(jsonPath("$.code").value(AuthErrorCode.LAST_ADMIN_CANNOT_CHANGE.getCode()));
         }
 
         @Test
@@ -315,7 +317,7 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.USER_NOT_FOUND.getCode()));
         }
     }
 
@@ -644,7 +646,7 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.SELF_STATUS_CHANGE_NOT_ALLOWED.getCode()));
+                    .andExpect(jsonPath("$.code").value(AdminErrorCode.SELF_STATUS_CHANGE_NOT_ALLOWED.getCode()));
         }
 
         @Test
@@ -659,7 +661,7 @@ class AdminUserControllerTest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.getCode()));
+                    .andExpect(jsonPath("$.code").value(UserErrorCode.USER_NOT_FOUND.getCode()));
         }
 
         @Test

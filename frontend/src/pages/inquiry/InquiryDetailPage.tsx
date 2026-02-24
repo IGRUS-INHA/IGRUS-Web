@@ -97,7 +97,7 @@ export default function InquiryDetailPage() {
   const StatusIcon = config.icon;
 
   return (
-    <div className="mx-auto max-w-2xl py-s6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="mx-auto flex h-full max-w-2xl flex-col justify-center py-s6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* 뒤로가기 */}
       <button
         onClick={handleBack}

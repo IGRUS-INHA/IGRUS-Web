@@ -1,8 +1,6 @@
 package igrus.web.inquiry.service.read;
 
-import igrus.web.inquiry.domain.InquiryType;
-import igrus.web.inquiry.dto.request.AttachmentInfo;
-import igrus.web.inquiry.dto.request.CreateGuestInquiryRequest;
+import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.inquiry.dto.request.CreateMemberInquiryRequest;
 import igrus.web.inquiry.dto.request.GuestInquiryLookupRequest;
 import igrus.web.inquiry.dto.response.InquiryCreateResponse;
@@ -15,27 +13,20 @@ import igrus.web.user.domain.Gender;
 import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.User;
-import igrus.web.user.repository.UserRepository;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 
+import static igrus.web.inquiry.fixture.InquiryTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
-@ActiveProfiles("test")
 @DisplayName("LookupGuestInquiryService 통합 테스트")
-class LookupGuestInquiryServiceTest {
+class LookupGuestInquiryServiceTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private LookupGuestInquiryService lookupGuestInquiryService;
@@ -46,50 +37,13 @@ class LookupGuestInquiryServiceTest {
     @Autowired
     private CreateMemberInquiryService createMemberInquiryService;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
-    private PlatformTransactionManager transactionManager;
-
     @BeforeEach
     void setUp() {
-        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.execute(status -> {
-            entityManager.createNativeQuery("DELETE FROM inquiry_memos").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiry_replies").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiry_attachments").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM guest_inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM member_inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_positions").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user_role_histories").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM password_credentials").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM post_views").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM event_registrations").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM events").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
-            entityManager.flush();
-            entityManager.clear();
-            return null;
-        });
+        setUpBase();
     }
 
     private InquiryCreateResponse createTestGuestInquiry(String email, String password) {
-        CreateGuestInquiryRequest request = CreateGuestInquiryRequest.builder()
-                .type(InquiryType.JOIN)
-                .title("가입 문의")
-                .content("가입하고 싶습니다.")
-                .email(email)
-                .name("홍길동")
-                .password(password)
-                .build();
-        return createGuestInquiryService.createGuestInquiry(request);
+        return createGuestInquiryService.createGuestInquiry(createGuestInquiryRequest(email, password));
     }
 
     @Nested
@@ -102,11 +56,8 @@ class LookupGuestInquiryServiceTest {
             // given
             InquiryCreateResponse createResponse = createTestGuestInquiry("guest@test.com", "password123");
 
-            GuestInquiryLookupRequest lookupRequest = GuestInquiryLookupRequest.builder()
-                    .inquiryNumber(createResponse.getInquiryNumber())
-                    .email("guest@test.com")
-                    .password("password123")
-                    .build();
+            GuestInquiryLookupRequest lookupRequest = createLookupRequest(
+                    createResponse.getInquiryNumber(), "guest@test.com", "password123");
 
             // when
             InquiryResponse response = lookupGuestInquiryService.lookupGuestInquiry(lookupRequest);
@@ -114,34 +65,18 @@ class LookupGuestInquiryServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getInquiryNumber()).isEqualTo(createResponse.getInquiryNumber());
-            assertThat(response.getTitle()).isEqualTo("가입 문의");
+            assertThat(response.getTitle()).isEqualTo(DEFAULT_INQUIRY_TITLE);
         }
 
         @Test
         @DisplayName("INQ-G-041: 첨부파일 포함 문의 조회 시 첨부파일 정보 반환")
         void lookupGuestInquiry_WithAttachments_ReturnsAttachments() {
             // given
-            CreateGuestInquiryRequest request = CreateGuestInquiryRequest.builder()
-                    .type(InquiryType.JOIN)
-                    .title("가입 문의")
-                    .content("내용")
-                    .email("guest@test.com")
-                    .name("홍길동")
-                    .password("password123")
-                    .attachments(List.of(
-                            AttachmentInfo.builder()
-                                    .fileUrl("https://example.com/f1.pdf").fileName("f1.pdf").fileSize(1024L).build(),
-                            AttachmentInfo.builder()
-                                    .fileUrl("https://example.com/f2.pdf").fileName("f2.pdf").fileSize(2048L).build()
-                    ))
-                    .build();
-            InquiryCreateResponse createResponse = createGuestInquiryService.createGuestInquiry(request);
+            InquiryCreateResponse createResponse = createGuestInquiryService.createGuestInquiry(
+                    createGuestInquiryRequestWithAttachments(2));
 
-            GuestInquiryLookupRequest lookupRequest = GuestInquiryLookupRequest.builder()
-                    .inquiryNumber(createResponse.getInquiryNumber())
-                    .email("guest@test.com")
-                    .password("password123")
-                    .build();
+            GuestInquiryLookupRequest lookupRequest = createLookupRequest(
+                    createResponse.getInquiryNumber(), DEFAULT_GUEST_EMAIL, DEFAULT_GUEST_PASSWORD);
 
             // when
             InquiryResponse response = lookupGuestInquiryService.lookupGuestInquiry(lookupRequest);
@@ -159,11 +94,8 @@ class LookupGuestInquiryServiceTest {
         @DisplayName("INQ-G-050: 존재하지 않는 문의번호로 조회 시 예외")
         void lookupGuestInquiry_WithInvalidInquiryNumber_ThrowsException() {
             // given
-            GuestInquiryLookupRequest lookupRequest = GuestInquiryLookupRequest.builder()
-                    .inquiryNumber("INQ-INVALID")
-                    .email("guest@test.com")
-                    .password("password123")
-                    .build();
+            GuestInquiryLookupRequest lookupRequest = createLookupRequest(
+                    "INQ-INVALID", "guest@test.com", "password123");
 
             // when & then
             assertThatThrownBy(() -> lookupGuestInquiryService.lookupGuestInquiry(lookupRequest))
@@ -176,11 +108,8 @@ class LookupGuestInquiryServiceTest {
             // given
             InquiryCreateResponse createResponse = createTestGuestInquiry("a@test.com", "password123");
 
-            GuestInquiryLookupRequest lookupRequest = GuestInquiryLookupRequest.builder()
-                    .inquiryNumber(createResponse.getInquiryNumber())
-                    .email("b@test.com")
-                    .password("password123")
-                    .build();
+            GuestInquiryLookupRequest lookupRequest = createLookupRequest(
+                    createResponse.getInquiryNumber(), "b@test.com", "password123");
 
             // when & then
             assertThatThrownBy(() -> lookupGuestInquiryService.lookupGuestInquiry(lookupRequest))
@@ -193,11 +122,8 @@ class LookupGuestInquiryServiceTest {
             // given
             InquiryCreateResponse createResponse = createTestGuestInquiry("guest@test.com", "password123");
 
-            GuestInquiryLookupRequest lookupRequest = GuestInquiryLookupRequest.builder()
-                    .inquiryNumber(createResponse.getInquiryNumber())
-                    .email("guest@test.com")
-                    .password("wrongpassword")
-                    .build();
+            GuestInquiryLookupRequest lookupRequest = createLookupRequest(
+                    createResponse.getInquiryNumber(), "guest@test.com", "wrongpassword");
 
             // when & then
             assertThatThrownBy(() -> lookupGuestInquiryService.lookupGuestInquiry(lookupRequest))
@@ -212,18 +138,11 @@ class LookupGuestInquiryServiceTest {
                     "컴퓨터공학과", "테스트 동기", List.of(), Gender.MALE, 1, EnrollmentStatus.ENROLLED, List.of(), null, JoinRoute.EVERYTIME, null);
             user = userRepository.save(user);
 
-            CreateMemberInquiryRequest memberRequest = CreateMemberInquiryRequest.builder()
-                    .type(InquiryType.EVENT)
-                    .title("회원 문의")
-                    .content("내용")
-                    .build();
+            CreateMemberInquiryRequest memberRequest = createMemberInquiryRequest();
             InquiryCreateResponse memberResponse = createMemberInquiryService.createMemberInquiry(memberRequest, user.getId());
 
-            GuestInquiryLookupRequest lookupRequest = GuestInquiryLookupRequest.builder()
-                    .inquiryNumber(memberResponse.getInquiryNumber())
-                    .email("member@inha.edu")
-                    .password("anypassword")
-                    .build();
+            GuestInquiryLookupRequest lookupRequest = createLookupRequest(
+                    memberResponse.getInquiryNumber(), "member@inha.edu", "anypassword");
 
             // when & then
             assertThatThrownBy(() -> lookupGuestInquiryService.lookupGuestInquiry(lookupRequest))

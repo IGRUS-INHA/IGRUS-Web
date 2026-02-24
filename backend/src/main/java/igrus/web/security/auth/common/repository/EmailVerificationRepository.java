@@ -25,6 +25,16 @@ public interface EmailVerificationRepository extends JpaRepository<EmailVerifica
     boolean existsByEmailAndVerifiedTrue(String email);
 
     /**
+     * 이메일과 인증 토큰으로 인증 완료된 레코드를 조회합니다.
+     * 회원가입 시 소유권 검증에 사용됩니다.
+     *
+     * @param email 이메일 주소
+     * @param verificationToken 인증 완료 시 발급된 토큰
+     * @return 일치하는 인증 레코드
+     */
+    Optional<EmailVerification> findByEmailAndVerificationTokenAndVerifiedTrue(String email, String verificationToken);
+
+    /**
      * 특정 이메일에 대해 지정 시간 이후에 생성된 미인증 레코드가 있는지 확인합니다.
      * Rate Limiting 체크에 사용됩니다.
      *

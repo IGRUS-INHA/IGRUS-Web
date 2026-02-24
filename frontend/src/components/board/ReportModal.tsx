@@ -2,8 +2,6 @@ import { useState, FormEvent, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { REPORT, REPORT_REASON_LABELS } from '@/constants/board';
 
-type ReportReason = keyof typeof REPORT.REASONS;
-
 interface ReportData {
   reason: string;
   detail: string;

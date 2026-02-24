@@ -2,14 +2,28 @@ name: Frontend Production CD Pipeline
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'frontend/**'
+    tags:
+      - 'v*'
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_FRONTEND_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_FRONTEND_GITHUB_ACTIONS_ROLE_ARN }}
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+      CF_DISTRIBUTION_ID: ${{ vars.CF_DISTRIBUTION_ID }}
     defaults:
       run:
         working-directory: frontend
@@ -36,7 +50,8 @@ jobs:
       - name: Build project
         run: pnpm build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ env.VITE_API_URL }}
+          VITE_APP_VERSION: ${{ inputs.version || github.ref_name }}
           FEATURE_COMMUNITY: 'false'
           FEATURE_SEARCH: 'false'
           FEATURE_PROFILE_EDIT: 'false'
@@ -44,16 +59,15 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_FRONTEND_GITHUB_ACTIONS_ROLE_ARN }}
 
       - name: Deploy to S3
         run: |
-          aws s3 sync ./dist s3://${{ secrets.S3_BUCKET_NAME }} --delete
+          aws s3 sync ./dist s3://${{ env.S3_BUCKET_NAME }} --delete
 
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} \
+            --distribution-id ${{ env.CF_DISTRIBUTION_ID }} \
             --paths "/index.html"

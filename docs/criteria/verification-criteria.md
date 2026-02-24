@@ -1,7 +1,7 @@
 # 회원가입 / 승인 / 강등 검증 기준서
 
 > **Status**: Draft
-> **Last Updated**: 2026-02-10
+> **Last Updated**: 2026-02-20
 > **Scope**: 회원가입(Signup), 이메일 인증(Email Verification), 준회원 승인/거절(Approval/Rejection), 역할 변경/강등(Role Change/Demotion)
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 
@@ -138,7 +138,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | 전이 | 트리거 | 사전조건 | 사후조건 | 관련 코드 |
 |------|--------|---------|---------|----------|
-| PENDING → ACTIVE | 이메일 인증 성공 | 유효한 인증 코드, 만료 전, 시도 횟수 미초과 | `User.status = ACTIVE`, `PasswordCredential.verified = true` | `VerifyEmailService:71-83` |
+| PENDING → ACTIVE | 회원가입 완료 (사전 이메일 인증 필수) | `email_verifications.verified = true` 레코드 존재 (pre-signup/verify-code 단계에서 생성) | `User.status = ACTIVE`, `PasswordCredential.verified = true` | `SignupService`, `TempStudentIdSignupService` |
 | ACTIVE → SUSPENDED | 관리자 정지 | ADMIN 권한 | `User.status = SUSPENDED`, 토큰 만료 | `User.suspend()` |
 | SUSPENDED → ACTIVE | 정지 해제 | ADMIN 권한 | `User.status = ACTIVE` | `User.activate()` |
 | ACTIVE → WITHDRAWN | 탈퇴 | 본인 요청 또는 ADMIN 강제 | `User.status = WITHDRAWN`, soft delete | `User.withdraw()` |
@@ -149,6 +149,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 |------|----------|------|
 | PENDING_VERIFICATION → SUSPENDED | 거부 | 인증 전 사용자는 정지 대상이 아님 |
 | PENDING_VERIFICATION → WITHDRAWN | 거부 | 인증 전 사용자는 탈퇴 대상이 아님 |
+
+> **참고**: 신규 회원가입은 사전 이메일 인증 후 즉시 ACTIVE로 전환되므로, 신규 사용자는 PENDING_VERIFICATION 상태를 거치지 않는다. PENDING_VERIFICATION은 이전 플로우로 가입한 레거시 사용자를 위한 안전망으로 유지된다.
 | WITHDRAWN → 어떤 상태든 | 거부 | 탈퇴는 종단 상태 |
 | SUSPENDED → WITHDRAWN | 거부 | 정지 해제 후 탈퇴해야 함 |
 
@@ -235,13 +237,21 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 이메일 | DB에 존재하지 않는 이메일 | 이미 등록된 이메일 | `DuplicateEmailException` |
 | 전화번호 | DB에 존재하지 않는 번호 | 이미 등록된 번호 | `DuplicatePhoneNumberException` |
 
-### 3-2. 이메일 인증 경계값
+### 3-2. 사전 이메일 인증 경계값 (Pre-Signup Email Verification)
+
+> 이메일 인증은 회원가입 *전* 단계 (`POST /api/v1/auth/password/pre-signup/send-code`, `POST /api/v1/auth/password/pre-signup/verify-code`)에서 수행된다.
 
 | 항목 | 유효 범위 | 경계 지점 | 설정값 |
 |------|----------|----------|--------|
 | 인증 코드 시도 횟수 | 1 ~ `maxAttempts` | `maxAttempts`회 (마지막 유효), `maxAttempts + 1`회 (초과) | 기본 5회 (`app.mail.verification-max-attempts`) |
 | 인증 코드 유효 시간 | 생성 ~ 만료 전 | 만료 직전 (유효), 만료 시점 (만료) | 기본 10분 (`app.mail.verification-code-expiry`) |
-| 인증 코드 재발송 이메일 | `PENDING_VERIFICATION` 상태 사용자의 이메일 | 가입 요청되지 않은 이메일 (거부), 이미 인증 완료된 이메일 (거부) | `VerificationEmailNotFoundException` |
+| 인증 코드 재발송 이메일 | ACTIVE 상태가 아닌 이메일 | ACTIVE 사용자의 이메일 (거부) | `DuplicateEmailException` |
+| 인증 코드 재발송 rate limit | 마지막 발송 후 60초 경과 | 60초 이내 재요청 (거부) | `VerificationResendRateLimitedException` |
+
+**인증 완료 후 동작**:
+- `email_verifications.verified = true` 마킹 (userId는 null — 가입 전이므로)
+- 이후 회원가입(`POST /signup`)에서 `existsByEmailAndVerifiedTrue()` 확인 → 통과 시 User 생성 후 즉시 ACTIVE 전환
+- 사전 인증 없이 가입 시도 → `EmailVerificationRequiredException` (400, `EMAIL_VERIFICATION_REQUIRED`)
 
 **특이 동작**:
 - 인증 코드 불일치 시, 시도 횟수 증가는 **별도 트랜잭션**(`EmailVerificationAttemptService.incrementAttempts()`)으로 처리
@@ -327,9 +337,9 @@ AI 생성 코드의 신뢰성은 **"문제 발생 시 원인을 추적할 수 �
 | `BulkApproveAssociatesService` | `일괄 승인 요청: userIds, approverId` | `일괄 승인 완료: approvedCount, failedCount` | `일괄 승인 중 개별 사용자 처리 실패` |
 | `BulkRejectAssociatesService` | `일괄 거절 요청: userIds, rejectorId` | `일괄 거절 완료: rejectedCount, failedCount` | `일괄 거절 중 개별 사용자 처리 실패` |
 | `ChangeUserRoleService` | `회원 권한 변경 요청` | `회원 권한 변경 완료` | 토큰 만료 로그 별도 |
-| `SignupService` | `회원가입 요청: email` | `회원가입 완료, 이메일 인증 대기` | - |
-| `VerifyEmailService` | `이메일 인증 요청: email` | `이메일 인증 완료: email` | - |
-| `ResendVerificationService` | `인증 코드 재발송 요청: email` | `인증 코드 재발송 완료: email` | `가입 요청되지 않은 이메일로 재발송 시도`, `인증 코드 재발송 Rate Limit 초과` |
+| `SignupService` | `회원가입 요청: email` | `회원가입 완료: email` | - |
+| `PreSignupSendCodeService` | `사전 이메일 인증 코드 발송 요청: email` | `사전 이메일 인증 코드 발송 완료: email` | `이미 가입된 이메일로 발송 시도`, `인증 코드 재발송 Rate Limit 초과` |
+| `PreSignupVerifyCodeService` | `사전 이메일 인증 확인 요청: email` | `사전 이메일 인증 완료: email` | `인증 코드 불일치`, `인증 코드 만료`, `시도 횟수 초과` |
 
 ### 5-4. 토큰 무효화 추적
 

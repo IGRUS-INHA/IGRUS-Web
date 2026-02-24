@@ -16,7 +16,6 @@ import igrus.web.security.auth.common.service.login.ResetLoginAttemptsService;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.exception.InvalidCredentialsException;
-import igrus.web.security.auth.password.service.signup.AutoResendVerificationService;
 import igrus.web.security.auth.common.exception.account.AccountSuspendedException;
 import igrus.web.security.auth.common.exception.account.AccountWithdrawnException;
 import igrus.web.security.jwt.JwtTokenProvider;
@@ -47,7 +46,6 @@ public class LoginService {
     private final RecordLoginSuccessService recordLoginSuccessService;
     private final ResetLoginAttemptsService resetLoginAttemptsService;
     private final CheckRecoveryEligibilityService checkRecoveryEligibilityService;
-    private final AutoResendVerificationService autoResendVerificationService;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
@@ -108,15 +106,10 @@ public class LoginService {
 
         // 3. 계정 상태 확인
         if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
-            log.warn("로그인 실패 - 이메일 미인증: studentId={}, email={}", request.studentId(), user.getEmail());
+            log.warn("로그인 실패 - 이메일 미인증 (레거시): studentId={}", request.studentId());
             recordFailedAttemptService.recordFailedAttempt(request.studentId());
             recordLoginFailureService.recordFailure(user, request.studentId(), ipAddress, userAgent,
                     LoginFailureReason.EMAIL_NOT_VERIFIED);
-            try {
-                autoResendVerificationService.autoResendIfPossible(user.getEmail());
-            } catch (Exception e) {
-                log.warn("이메일 미인증 로그인 시도 - 자동 재발송 중 예외 발생: email={}", user.getEmail(), e);
-            }
             throw new EmailNotVerifiedException(user.getEmail());
         }
 

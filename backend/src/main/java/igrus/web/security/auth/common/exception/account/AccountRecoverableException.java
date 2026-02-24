@@ -1,7 +1,7 @@
 package igrus.web.security.auth.common.exception.account;
 
 import igrus.web.common.exception.CustomBaseException;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
 import lombok.Getter;
 
 import java.time.Instant;
@@ -19,7 +19,7 @@ public class AccountRecoverableException extends CustomBaseException {
     private final Instant recoveryDeadline;
 
     public AccountRecoverableException(String studentId, Instant recoveryDeadline) {
-        super(ErrorCode.ACCOUNT_RECOVERABLE);
+        super(AuthErrorCode.ACCOUNT_RECOVERABLE);
         this.studentId = studentId;
         this.recoveryDeadline = recoveryDeadline;
     }

@@ -1,10 +1,10 @@
 package igrus.web.security.auth.common.exception.verification;
 
 import igrus.web.common.exception.CustomBaseException;
-import igrus.web.common.exception.ErrorCode;
+import igrus.web.security.auth.common.exception.AuthErrorCode;
 
 public class VerificationCodeInvalidException extends CustomBaseException {
     public VerificationCodeInvalidException() {
-        super(ErrorCode.VERIFICATION_CODE_INVALID);
+        super(AuthErrorCode.VERIFICATION_CODE_INVALID);
     }
 }

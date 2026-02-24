@@ -2,7 +2,6 @@ export const PAGE_TITLES: Record<string, string> = {
   '/': 'Home',
   '/login': ' ',
   '/signup': ' ',
-  '/verify-email': ' ',
   '/forgot-password': 'Forgot Password',
   '/reset-password': 'Reset Password',
   '/board/notices': 'Notices',
@@ -30,6 +29,11 @@ export function getPageTitle(pathname: string): string {
 
   // 동적 라우트 처리
   const segments = pathname.split('/').filter(Boolean);
+
+  // /events/:eventId/registrations (신청자 관리)
+  if (segments[0] === 'events' && segments.length === 3 && segments[2] === 'registrations') {
+    return ' ';
+  }
 
   // /events/:eventId (행사 상세)
   if (segments[0] === 'events' && segments.length === 2) {

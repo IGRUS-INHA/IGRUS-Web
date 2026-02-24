@@ -3,15 +3,9 @@ import { useAuthStore } from '@/stores';
 import { isTokenExpired } from '@/utils/jwt';
 import { queryClient } from '@/lib/queryClient';
 
-// 환경변수가 제대로 로드되지 않으면 에러 발생
-if (!import.meta.env.VITE_API_URL) {
-  console.error('❌ VITE_API_URL 환경변수가 로드되지 않았습니다!');
-  console.error('개발 서버를 재시작하세요: npm run dev');
-}
-
-
-export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:8080';
+// VITE_API_URL이 비어있으면 상대 경로 사용 (Vite 프록시 경유)
+// 프로덕션에서는 VITE_API_URL에 실제 API 도메인을 설정
+export const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // =============================================================================
 // 토큰 관리
@@ -134,8 +128,8 @@ export async function customFetch<T>(
     url.includes('/auth/password/login') ||
     url.includes('/auth/password/signup') ||
     url.includes('/auth/password/refresh') ||
-    url.includes('/auth/password/verify-email') ||
-    url.includes('/auth/password/resend-verification');
+    url.includes('/auth/password/pre-signup/verify-code') ||
+    url.includes('/auth/password/pre-signup/send-code');
 
   // 403은 권한 부족이므로 토큰 갱신 없이 바로 에러 처리
   if (response.status === 403 && !isPublicEndpoint) {

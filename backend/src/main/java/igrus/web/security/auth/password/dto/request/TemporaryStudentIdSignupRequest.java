@@ -82,5 +82,9 @@ public record TemporaryStudentIdSignupRequest(
     @Schema(description = "개인정보 처리방침 동의 여부", example = "true")
     @NotNull(message = "개인정보 동의는 필수입니다")
     @AssertTrue(message = "개인정보 처리방침에 동의해야 합니다")
-    Boolean privacyConsent
+    Boolean privacyConsent,
+
+    @Schema(description = "이메일 인증 토큰 (사전 인증 완료 시 발급)", example = "550e8400-e29b-41d4-a716-446655440000")
+    @NotBlank(message = "인증 토큰은 필수입니다")
+    String verificationToken
 ) {}

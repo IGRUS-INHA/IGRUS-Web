@@ -1,0 +1,58 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: igrus-mysql-fe-dev
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: igrus-web
+      MYSQL_USER: ${DB_USERNAME:-igrus}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-igrus1234}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.dev
+    container_name: igrus-backend-fe-dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_ACTIVE_PROFILE: local
+      DB_USERNAME: ${DB_USERNAME:-igrus}
+      DB_PASSWORD: ${DB_PASSWORD:-igrus1234}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/igrus-web
+      SPRING_CLOUD_AWS_SECRETSMANAGER_ENABLED: "false"
+      SPRING_CLOUD_AWS_REGION_STATIC: ap-northeast-2
+    ports:
+      - "8080:8080"
+
+  frontend:
+    image: node:22-alpine
+    container_name: igrus-frontend-dev
+    working_dir: /app
+    volumes:
+      - ../frontend:/app
+      - frontend-node-modules:/app/node_modules
+    command: sh -c "corepack enable && pnpm install && pnpm dev --host 0.0.0.0"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+
+volumes:
+  mysql-data:
+  frontend-node-modules:

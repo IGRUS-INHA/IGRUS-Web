@@ -15,10 +15,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+    show-sql: false
     database-platform: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: false
@@ -28,6 +25,8 @@ springdoc:
   
 
 app:
+  version:
+    commit: test
   jwt:
     secret: test-secret-key-for-testing-purposes-only-must-be-at-least-256-bits
     access-token-validity: 3600000
