@@ -108,6 +108,24 @@ public class SurveyQuestion extends SoftDeletableEntity {
     // === Business methods ===
 
     /**
+     * 질문 정보를 수정합니다. 모든 상태에서 호출 가능합니다.
+     *
+     * @param questionType 질문 유형
+     * @param title        질문 제목
+     * @param description  질문 설명
+     * @param required     필수 응답 여부
+     * @param displayOrder 표시 순서
+     */
+    public void update(SurveyQuestionType questionType, String title, String description,
+                       boolean required, int displayOrder) {
+        this.questionType = questionType;
+        this.title = title;
+        this.description = description;
+        this.required = required;
+        this.displayOrder = displayOrder;
+    }
+
+    /**
      * 선형 배율 범위를 설정합니다. LINEAR_SCALE 유형에서만 사용합니다.
      *
      * @param min 최솟값

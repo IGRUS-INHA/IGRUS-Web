@@ -62,4 +62,15 @@ public class SurveyQuestionRow extends SoftDeletableEntity {
         row.displayOrder = displayOrder;
         return row;
     }
+
+    /**
+     * 행을 수정합니다. (dirty checking)
+     *
+     * @param label        행 라벨 텍스트
+     * @param displayOrder 표시 순서
+     */
+    public void update(String label, int displayOrder) {
+        this.label = label;
+        this.displayOrder = displayOrder;
+    }
 }

@@ -62,4 +62,15 @@ public class SurveyQuestionOption extends SoftDeletableEntity {
         option.displayOrder = displayOrder;
         return option;
     }
+
+    /**
+     * 선택지를 수정합니다. (dirty checking)
+     *
+     * @param text         선택지 텍스트
+     * @param displayOrder 표시 순서
+     */
+    public void update(String text, int displayOrder) {
+        this.text = text;
+        this.displayOrder = displayOrder;
+    }
 }
