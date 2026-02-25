@@ -10,7 +10,7 @@ import java.time.Instant;
 /**
  * 설문 생성 요청 DTO.
  * 새로운 설문을 생성할 때 필요한 정보를 담습니다.
- * 설문 상태는 DRAFT로 자동 설정됩니다.
+ * 설문 상태는 UNPUBLISHED로 자동 설정됩니다.
  *
  * @param title       설문 제목 (필수, 최대 100자)
  * @param description 설문 설명 (선택, 최대 500자)

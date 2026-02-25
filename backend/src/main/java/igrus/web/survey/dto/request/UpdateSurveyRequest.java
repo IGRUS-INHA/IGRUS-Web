@@ -9,7 +9,7 @@ import java.time.Instant;
 
 /**
  * 설문 수정 요청 DTO.
- * 모든 상태(DRAFT, PUBLISHED, CLOSED)에서 사용 가능합니다.
+ * 모든 상태(UNPUBLISHED, PUBLISHED)에서 사용 가능합니다.
  *
  * @param title       설문 제목 (필수, 최대 100자)
  * @param description 설문 설명 (선택, 최대 500자)

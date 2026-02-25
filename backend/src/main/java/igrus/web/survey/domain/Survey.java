@@ -16,7 +16,7 @@ import java.util.List;
  *
  * <p>2축 상태 모델:</p>
  * <ul>
- *   <li>축 1 (visibility): DRAFT → PUBLISHED (비가역)</li>
+ *   <li>축 1 (visibility): UNPUBLISHED ⇄ PUBLISHED (양방향)</li>
  *   <li>축 2 (responseStatus): NOT_STARTED → OPEN ⇄ CLOSED</li>
  * </ul>
  *
@@ -55,7 +55,7 @@ public class Survey extends SoftDeletableEntity {
     @Column(name = "surveys_description", length = 500)
     private String description;
 
-    /** 축 1: 공개 상태 (DRAFT / PUBLISHED) */
+    /** 축 1: 공개 상태 (UNPUBLISHED / PUBLISHED) */
     @Enumerated(EnumType.STRING)
     @Column(name = "surveys_visibility", nullable = false, length = 20)
     private SurveyVisibility visibility;
@@ -86,7 +86,7 @@ public class Survey extends SoftDeletableEntity {
     // === Static factory method ===
 
     /**
-     * 설문을 생성합니다. 초기 상태: visibility=DRAFT, responseStatus=NOT_STARTED
+     * 설문을 생성합니다. 초기 상태: visibility=UNPUBLISHED, responseStatus=NOT_STARTED
      *
      * @param title       설문 제목
      * @param description 설문 설명 (null 가능)
@@ -98,7 +98,7 @@ public class Survey extends SoftDeletableEntity {
         Survey survey = new Survey();
         survey.title = title;
         survey.description = description;
-        survey.visibility = SurveyVisibility.DRAFT;
+        survey.visibility = SurveyVisibility.UNPUBLISHED;
         survey.responseStatus = SurveyResponseStatus.NOT_STARTED;
         survey.accessLevel = accessLevel;
         survey.deadline = deadline;
@@ -108,16 +108,32 @@ public class Survey extends SoftDeletableEntity {
     // === 상태 전이 메서드 ===
 
     /**
-     * 설문을 공개합니다. DRAFT → PUBLISHED (visibility 변경)
-     * responseStatus는 CLOSED 유지 (별도로 openResponse 호출 필요)
+     * 설문을 공개합니다. UNPUBLISHED → PUBLISHED (visibility 변경)
+     * responseStatus는 변경하지 않음 (별도로 openResponse 호출 필요)
      *
-     * @throws IllegalStateException DRAFT 상태가 아닌 경우
+     * @throws IllegalStateException 비공개 상태가 아닌 경우
      */
     public void publish() {
         if (!this.visibility.canTransitionTo(SurveyVisibility.PUBLISHED)) {
-            throw new IllegalStateException("DRAFT 상태에서만 공개할 수 있습니다.");
+            throw new IllegalStateException("비공개 상태에서만 공개할 수 있습니다.");
         }
         this.visibility = SurveyVisibility.PUBLISHED;
+    }
+
+    /**
+     * 설문을 비공개로 전환합니다. PUBLISHED → UNPUBLISHED (visibility 변경)
+     * OPEN 상태이면 자동으로 응답을 마감합니다. (INV-20)
+     *
+     * @throws IllegalStateException 이미 비공개 상태인 경우
+     */
+    public void unpublish() {
+        if (!this.visibility.canTransitionTo(SurveyVisibility.UNPUBLISHED)) {
+            throw new IllegalStateException("이미 비공개 상태입니다.");
+        }
+        if (this.responseStatus == SurveyResponseStatus.OPEN) {
+            this.responseStatus = SurveyResponseStatus.CLOSED;
+        }
+        this.visibility = SurveyVisibility.UNPUBLISHED;
     }
 
     /**
@@ -156,9 +172,9 @@ public class Survey extends SoftDeletableEntity {
 
     /**
      * 설문을 공개하고 동시에 응답 수집을 시작합니다.
-     * DRAFT 상태에서 한 번에 공개 + 응답 시작 (편의 메서드)
+     * UNPUBLISHED 상태에서 한 번에 공개 + 응답 시작 (편의 메서드)
      *
-     * @throws IllegalStateException DRAFT 상태가 아닌 경우
+     * @throws IllegalStateException 비공개 상태가 아닌 경우
      * @throws IllegalStateException 마감일이 이미 경과한 경우
      */
     public void publishAndOpen() {
@@ -233,8 +249,8 @@ public class Survey extends SoftDeletableEntity {
 
     // === 상태 조회 메서드 ===
 
-    public boolean isDraft() {
-        return this.visibility == SurveyVisibility.DRAFT;
+    public boolean isUnpublished() {
+        return this.visibility == SurveyVisibility.UNPUBLISHED;
     }
 
     public boolean isPublished() {

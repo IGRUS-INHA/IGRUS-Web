@@ -13,7 +13,7 @@ import java.util.List;
  * @param id             설문 ID
  * @param title          설문 제목
  * @param description    설문 설명
- * @param visibility     공개 상태 (DRAFT / PUBLISHED)
+ * @param visibility     공개 상태 (UNPUBLISHED / PUBLISHED)
  * @param responseStatus 응답 수집 상태 (NOT_STARTED / OPEN / CLOSED)
  * @param accessLevel    응답 대상 권한
  * @param deadline       설문 마감일
