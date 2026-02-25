@@ -1,6 +1,6 @@
 # 설문 기능 검증 기준서
 
-> **Version**: v2
+> **Version**: v3
 > **Status**: Draft
 > **Last Updated**: 2026-02-25
 > **Scope**: 설문 생성(Survey CRUD), 질문 관리(Question Management), 응답 제출(Response Submission), 결과 조회(Result View), 설문 상태 관리(Lifecycle)
@@ -14,6 +14,7 @@
 |------|------|----------|
 | v1 | 2026-02-23 | 초안 작성. 2축 상태 모델, 불변조건 19개, 상태 매트릭스 |
 | v2 | 2026-02-25 | `DRAFT` → `UNPUBLISHED` 리네이밍. 공개 상태 양방향 전이(`unpublish()` 추가). 유효 상태 조합 4→5개. 시나리오 F11~F16 추가. INV-20 추가 |
+| v3 | 2026-02-25 | 설문 복사·질문 복사 기능 추가. INV-21~INV-25 추가. 시나리오 F17~F20 추가. 권한 매트릭스·테스트 커버리지 업데이트 |
 
 ### v2 주요 변경 사항
 
@@ -29,6 +30,15 @@ v1에서 `DRAFT → PUBLISHED`는 비가역 전이였다. 하지만 실제 운�
 | UNPUBLISHED | CLOSED | 공개했다가 숨긴 설문 (응답 데이터 보존) |
 
 따라서 `DRAFT`를 `UNPUBLISHED`로 리네이밍하고, `UNPUBLISHED ⇄ PUBLISHED` 양방향 전이를 도입한다.
+
+**`DRAFT`를 3번째 enum 값으로 두지 않는 이유:**
+
+`DRAFT`를 별도로 유지하면 "초안(첫 공개 전)"과 "재비공개(공개 후 숨김)"를 enum 레벨에서 구분할 수 있다. 하지만 이 구분은 `responseStatus`가 이미 제공하고 있다:
+
+- 초안 → `(UNPUBLISHED, NOT_STARTED)` — 응답을 한번도 열지 않았으므로 NOT_STARTED
+- 재비공개 → `(UNPUBLISHED, CLOSED)` — 응답을 열었다가 닫았으므로 CLOSED
+
+즉 `DRAFT`를 추가해도 **새로운 정보가 생기지 않으며**, 오히려 유효 상태 조합과 전이 경로가 늘어나 복잡도만 증가한다. 만약 향후 "최초 공개 시각"이 필요해지면 `firstPublishedAt` 타임스탬프 컬럼 하나로 충분히 해결할 수 있다.
 
 ---
 
@@ -262,6 +272,45 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **근거**: `(UNPUBLISHED, OPEN)` 상태는 모순(비공개인데 응답 수집 중)이므로 자동 마감하여 방지
 - **대안**: 운영진이 수동으로 `closeResponse()` 후 `unpublish()` 호출도 가능 (결과 동일)
 
+### INV-21: 설문 복사 시 상태 초기화
+
+> 설문을 복사하면 새로운 설문이 생성되며, 상태는 항상 `(UNPUBLISHED, NOT_STARTED, active)`로 초기화된다.
+
+- **복사 대상**: 활성 설문만 복사 가능 (`trashedAt == null && deleted == false`)
+- **복사되는 필드**: title (+ " (복사본)" 접미사), description, accessLevel
+- **초기화되는 필드**: `visibility = UNPUBLISHED`, `responseStatus = NOT_STARTED`, `trashedAt = null`, `deadline = null`
+- **deadline 초기화 근거**: 원본의 마감일이 과거일 수 있으므로 복사본에 그대로 적용하면 즉시 마감 대상이 됨. 운영진이 복사 후 직접 설정하도록 null로 초기화
+- **관련 코드**: `Survey.copyFrom(Survey original)`
+
+### INV-22: 복사 시 응답 데이터 제외
+
+> 설문을 복사할 때 `SurveyResponse`, `SurveyAnswer`는 복사 대상에서 제외된다. 복사된 설문은 응답이 0건인 상태로 시작한다.
+
+- **근거**: 응답 데이터는 원본 설문에 종속된 데이터. 복사본은 별개의 설문이므로 응답을 공유할 수 없음
+- **위반 시**: 복사본의 통계에 원본 응답이 포함되어 데이터 오염
+
+### INV-23: 복사 시 soft delete된 요소 제외
+
+> 설문 복사 및 질문 복사 시, `deleted = true`인 질문·선택지·행은 복사 대상에서 제외된다.
+
+- **근거**: soft delete된 요소는 논리적으로 삭제된 상태. 복사본에는 활성 요소만 포함되어야 함
+- **적용 범위**: `SurveyQuestion`, `SurveyQuestionOption`, `SurveyQuestionRow` 모두 해당
+
+### INV-24: 질문 복사 시 질문 수 제한 검증
+
+> 질문을 복사한 결과 대상 설문의 질문 수가 50개를 초과하면 복사를 거부한다. (INV-04 준수)
+
+- **검증 시점**: 복사 실행 전에 `현재 질문 수 + 복사할 질문 수 <= 50` 검증
+- **설문 복사 시**: 원본의 활성 질문 수가 50개를 초과하는 경우는 INV-04에 의해 원본에서도 불가능하므로, 설문 전체 복사 시에는 항상 통과. 단, 대상 설문에 이미 질문이 있는 경우(질문 복사 시) 검증 필요
+- **위반 시**: `SURVEY_QUESTION_LIMIT_EXCEEDED` 에러
+
+### INV-25: 복사된 엔티티는 새로운 ID를 부여받는다
+
+> 복사된 설문·질문·선택지·행은 모두 새로운 ID(`GenerationType.IDENTITY`)를 부여받으며, 원본과 어떠한 ID도 공유하지 않는다.
+
+- **근거**: 복사본은 원본과 완전히 독립된 엔티티. ID를 공유하면 수정/삭제 시 원본에 영향
+- **cascade 활용**: `Survey` → `SurveyQuestion` 관계가 `CascadeType.ALL`이므로, 복사된 Survey를 `save()`하면 하위 질문·선택지·행도 자동 persist
+
 ---
 
 ## 2. 상태 모델 (State Machine & Transitions)
@@ -421,18 +470,18 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 #### 표 4: 설문 수정 및 응답 제출
 
-| # | 현재 상태 | `update()` | 응답 제출 | 설문 목록 노출 |
-|:-:|:---------|:----------|:---------|:------------|
-| A1 | (U, NS, active) | ✅ | ❌ UNPUBLISHED + NS | ✅ 관리자 목록 |
-| A2 | (P, NS, active) | ✅ | ❌ NOT_STARTED | ✅ 전체 목록 (응답 불가 표시) |
-| A3 | (P, O, active) | ✅ | ✅ 응답 가능 | ✅ 전체 목록 (응답 가능 표시) |
-| A4 | (P, C, active) | ✅ | ❌ CLOSED | ✅ 전체 목록 (마감 표시) |
-| A5 | (U, C, active) | ✅ | ❌ UNPUBLISHED | ✅ 관리자 목록 |
-| A6 | (U, NS, trashed) | ✅ | ❌ 휴지통 | ❌ 일반 목록 제외, 휴지통 목록 노출 |
-| A7 | (P, NS, trashed) | ✅ | ❌ 휴지통 | ❌ 일반 목록 제외, 휴지통 목록 노출 |
-| A8 | (P, O, trashed) | ✅ | ❌ 휴지통 (INV-16) | ❌ 일반 목록 제외, 휴지통 목록 노출 |
-| A9 | (P, C, trashed) | ✅ | ❌ 휴지통 | ❌ 일반 목록 제외, 휴지통 목록 노출 |
-| A10 | (U, C, trashed) | ✅ | ❌ 휴지통 | ❌ 일반 목록 제외, 휴지통 목록 노출 |
+| # | 현재 상태 | `update()` | 응답 제출 | 설문 복사 | 설문 목록 노출 |
+|:-:|:---------|:----------|:---------|:---------|:------------|
+| A1 | (U, NS, active) | ✅ | ❌ UNPUBLISHED + NS | ✅ → 새 설문 (U,NS) | ✅ 관리자 목록 |
+| A2 | (P, NS, active) | ✅ | ❌ NOT_STARTED | ✅ → 새 설문 (U,NS) | ✅ 전체 목록 (응답 불가 표시) |
+| A3 | (P, O, active) | ✅ | ✅ 응답 가능 | ✅ → 새 설문 (U,NS) | ✅ 전체 목록 (응답 가능 표시) |
+| A4 | (P, C, active) | ✅ | ❌ CLOSED | ✅ → 새 설문 (U,NS) | ✅ 전체 목록 (마감 표시) |
+| A5 | (U, C, active) | ✅ | ❌ UNPUBLISHED | ✅ → 새 설문 (U,NS) | ✅ 관리자 목록 |
+| A6 | (U, NS, trashed) | ✅ | ❌ 휴지통 | ❌ 휴지통 (INV-21) | ❌ 일반 목록 제외, 휴지통 목록 노출 |
+| A7 | (P, NS, trashed) | ✅ | ❌ 휴지통 | ❌ 휴지통 (INV-21) | ❌ 일반 목록 제외, 휴지통 목록 노출 |
+| A8 | (P, O, trashed) | ✅ | ❌ 휴지통 (INV-16) | ❌ 휴지통 (INV-21) | ❌ 일반 목록 제외, 휴지통 목록 노출 |
+| A9 | (P, C, trashed) | ✅ | ❌ 휴지통 | ❌ 휴지통 (INV-21) | ❌ 일반 목록 제외, 휴지통 목록 노출 |
+| A10 | (U, C, trashed) | ✅ | ❌ 휴지통 | ❌ 휴지통 (INV-21) | ❌ 일반 목록 제외, 휴지통 목록 노출 |
 
 > **응답 제출 조건** (`isAcceptingResponses()`): `visibility == PUBLISHED && responseStatus == OPEN && trashedAt == null` — 이 3가지가 모두 참일 때만 A3 케이스.
 
@@ -456,6 +505,10 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | F14 | 숨긴 설문 공개 + 응답 재개 | `(U,C)` → publishAndOpen → `(P,O)` |
 | F15 | 공개 미리보기 취소 | `(P,NS)` → unpublish → `(U,NS)` |
 | F16 | 전체 라이프사이클 | `(U,NS)` → publish → open → close → unpublish → `(U,C)` → publish → open → close → `(P,C)` |
+| F17 | 설문 복사 (기본) | `(P,O)` 설문 복사 → 새 설문 `(U,NS)` 생성 (응답 0건, deadline null) |
+| F18 | 설문 복사 후 수정 발행 | 설문 복사 → `(U,NS)` → 제목/마감일 수정 → publish → `(P,NS)` → openResponse → `(P,O)` |
+| F19 | 같은 설문 내 질문 복사 | `(U,NS)` 설문의 질문 1개 복사 → 같은 설문에 복사본 추가 (displayOrder 맨 뒤) |
+| F20 | 질문 수 상한 도달 시 복사 실패 | 질문 49개인 설문에 2개 이상 질문 복사 시도 → ❌ `SURVEY_QUESTION_LIMIT_EXCEEDED` |
 
 ### 2-2. 설문 휴지통 전이 (SurveyVisibility FSM과 직교)
 
@@ -553,6 +606,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | 설문 생성 | 401 | 403 | 403 | **O** | **O** |
 | 설문 수정 (모든 상태) | 401 | 403 | 403 | **O** | **O** |
+| 설문 복사 | 401 | 403 | 403 | **O** | **O** |
+| 질문 복사 | 401 | 403 | 403 | **O** | **O** |
 | 설문 발행 (공개) | 401 | 403 | 403 | **O** | **O** |
 | 설문 비공개 전환 | 401 | 403 | 403 | **O** | **O** |
 | 설문 응답 재개 (CLOSED→OPEN) | 401 | 403 | 403 | **O** | **O** |
@@ -581,6 +636,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | SEC-07 | accessLevel 축소 후 기존 응답자가 본인 응답 조회 | 200 OK (본인 응답 반환) |
 | SEC-08 | accessLevel 축소 후 기존 응답자가 타인 응답 조회 시도 | 403 Forbidden |
 | SEC-09 | MEMBER가 비공개 전환 시도 | 403 Forbidden |
+| SEC-10 | MEMBER가 설문 복사 시도 | 403 Forbidden |
+| SEC-11 | MEMBER가 질문 복사 시도 | 403 Forbidden |
 
 ### 4-3. 비회원 응답 정책
 
@@ -624,6 +681,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 휴지통 복원 | `설문 복원 요청: surveyId` | `설문 복원 완료: surveyId` | - |
 | 영구 삭제 | `설문 영구 삭제 요청: surveyId` | `설문 영구 삭제 완료: surveyId` | `영구 삭제 실패: 휴지통 상태 아님` |
 | 응답 제출 | `응답 제출 요청: surveyId, userId` | `응답 제출 완료: responseId` | `제출 실패: 중복 응답` |
+| 설문 복사 | `설문 복사 요청: sourceSurveyId` | `설문 복사 완료: newSurveyId` | `복사 실패: 원본 설문 없음` |
+| 질문 복사 | `질문 복사 요청: surveyId, questionId` | `질문 복사 완료: newQuestionId` | `복사 실패: 질문 수 초과` |
 
 ---
 
@@ -661,6 +720,11 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | INV-18 (영구 삭제는 휴지통에서만) | - | 미작성 |
 | INV-19 (본인 응답 조회는 accessLevel 무관) | - | 미작성 |
 | INV-20 (비공개 전환 시 자동 응답 마감) | - | 미작성 |
+| INV-21 (설문 복사 시 상태 초기화) | - | 미작성 |
+| INV-22 (복사 시 응답 데이터 제외) | - | 미작성 |
+| INV-23 (복사 시 soft delete 요소 제외) | - | 미작성 |
+| INV-24 (질문 복사 시 질문 수 제한 검증) | - | 미작성 |
+| INV-25 (복사된 엔티티 새 ID 부여) | - | 미작성 |
 
 ### 6-3. 상태 전이 커버리지 (테스트 작성 후 업데이트)
 
@@ -702,6 +766,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | SEC-07 (accessLevel 축소 후 본인 응답 조회) | - | 미작성 |
 | SEC-08 (accessLevel 축소 후 타인 응답 조회 차단) | - | 미작성 |
 | SEC-09 (비운영진 비공개 전환) | - | 미작성 |
+| SEC-10 (비운영진 설문 복사) | - | 미작성 |
+| SEC-11 (비운영진 질문 복사) | - | 미작성 |
 
 ---
 
