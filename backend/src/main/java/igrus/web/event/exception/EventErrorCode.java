@@ -27,7 +27,8 @@ public enum EventErrorCode implements ErrorCode {
     EVENT_NOT_CANCELABLE(400, "취소할 수 없는 상태의 행사입니다"),
     EVENT_NOT_REACTIVATABLE(400, "재활성화할 수 없는 상태의 행사입니다"),
     EVENT_REGISTRATION_NOT_REOPENABLE(400, "등록을 재오픈할 수 없습니다"),
-    EVENT_REOPEN_REASON_REQUIRED(400, "재오픈 사유는 필수입니다");
+    EVENT_REOPEN_REASON_REQUIRED(400, "재오픈 사유는 필수입니다"),
+    EVENT_NOT_DELETABLE(400, "신청자가 있는 행사는 삭제할 수 없습니다");
 
     private final int status;
     private final String message;

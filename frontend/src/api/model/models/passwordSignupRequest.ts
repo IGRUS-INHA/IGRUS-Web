@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: v1.0.0
+ * OpenAPI spec version: acd4c9c
  */
 import type { PasswordSignupRequestEnrollmentStatus } from './passwordSignupRequestEnrollmentStatus';
 import type { PasswordSignupRequestGender } from './passwordSignupRequestGender';
@@ -118,4 +118,9 @@ export interface PasswordSignupRequest {
   enrollmentStatus: PasswordSignupRequestEnrollmentStatus;
   /** 개인정보 처리방침 동의 여부 */
   privacyConsent: boolean;
+  /**
+   * 이메일 인증 토큰 (사전 인증 완료 시 발급)
+   * @minLength 1
+   */
+  verificationToken: string;
 }

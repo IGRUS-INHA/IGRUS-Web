@@ -14,8 +14,6 @@ import type {
 } from '@/api/model/models';
 import LoginForm from '@/components/feature/auth/LoginForm';
 import {
-  isEmailNotVerified,
-  getEmailFromVerificationError,
   isAccountWithdrawn,
   isAccountSuspended,
   isAccountLocked,
@@ -179,23 +177,7 @@ export default function LoginPage() {
         throw new Error('Invalid login response');
       }
     } catch (error: unknown) {
-      if (isEmailNotVerified(error)) {
-        const email = getEmailFromVerificationError(error);
-        await Swal.fire({
-          icon: 'info',
-          title: '이메일 인증 필요',
-          html: '이메일 인증이 완료되지 않았습니다.<br><br>인증 코드가 이메일로 발송되었습니다.<br>이메일을 확인해주세요.',
-          confirmButtonText: '인증하기',
-          confirmButtonColor: '#FFC107',
-          showClass: { popup: '', backdrop: '' },
-          hideClass: { popup: '', backdrop: '' },
-        });
-        if (email) {
-          navigate('/verify-email', { state: { email } });
-        } else {
-          navigate('/verify-email');
-        }
-      } else if (isAccountWithdrawn(error)) {
+      if (isAccountWithdrawn(error)) {
         await handleAccountRecovery(data.studentId);
       } else if (isAccountSuspended(error)) {
         Swal.fire({

@@ -381,6 +381,7 @@ public final class PostTestFixture {
                 "수정된 제목",
                 "수정된 내용입니다.",
                 false, // isQuestion
+                false, // isVisibleToAssociate
                 List.of()
         );
     }
@@ -396,6 +397,7 @@ public final class PostTestFixture {
         return new UpdatePostRequest(
                 title,
                 content,
+                false,
                 false,
                 List.of()
         );
@@ -413,6 +415,7 @@ public final class PostTestFixture {
                 title,
                 content,
                 true, // isQuestion
+                false, // isVisibleToAssociate
                 List.of()
         );
     }

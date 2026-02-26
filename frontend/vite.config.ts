@@ -30,6 +30,10 @@ export default defineConfig(({ mode }) => {
           target: apiTarget,
           changeOrigin: true,
           secure: false,
+          cookieDomainRewrite: {
+            'igrus.co.kr': 'localhost',
+            '.igrus.co.kr': 'localhost',
+          },
         },
       },
     },

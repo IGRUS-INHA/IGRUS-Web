@@ -83,7 +83,7 @@ class CreateInquiryReplyServiceTest extends ServiceIntegrationTestBase {
 
             // 상태를 IN_PROGRESS로 변경
             updateInquiryStatusService.updateInquiryStatus(createResponse.getId(),
-                    updateStatusRequest(InquiryStatus.IN_PROGRESS));
+                    updateStatusRequest(InquiryStatus.IN_PROGRESS), operator.getId());
 
             CreateInquiryReplyRequest replyRequest = createReplyRequest();
 

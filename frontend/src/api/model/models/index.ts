@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: v1.0.0
+ * OpenAPI spec version: acd4c9c
  */
 
 export * from './accountRecoveryRequest';
@@ -104,18 +104,21 @@ export * from './errorResponse';
 export * from './eventCreateResponse';
 export * from './eventDetailResponse';
 export * from './eventDetailResponseCloseReason';
+export * from './eventDetailResponseEventStatus';
+export * from './eventDetailResponseRegistrationStatus';
 export * from './eventDetailResponseRegistrationType';
-export * from './eventDetailResponseStatus';
 export * from './eventListResponse';
+export * from './eventListResponseEventStatus';
+export * from './eventListResponseRegistrationStatus';
 export * from './eventListResponseRegistrationType';
-export * from './eventListResponseStatus';
 export * from './forceWithdrawRequest';
 export * from './getAllInquiriesParams';
 export * from './getAllInquiriesStatus';
 export * from './getAllInquiriesType';
 export * from './getDemotedAssociatesParams';
+export * from './getEventListEventStatus';
 export * from './getEventListParams';
-export * from './getEventListStatus';
+export * from './getEventListRegistrationStatus';
 export * from './getHistoriesChangeType';
 export * from './getHistoriesParams';
 export * from './getLoginHistoriesParams';
@@ -199,6 +202,7 @@ export * from './postUpdateResponse';
 export * from './postViewHistoryPageResponse';
 export * from './postViewHistoryResponse';
 export * from './postViewStatsResponse';
+export * from './preSignupVerificationResponse';
 export * from './privacyConsentHistoryResponse';
 export * from './privacyConsentResponse';
 export * from './recoveryEligibilityResponse';
@@ -212,6 +216,7 @@ export * from './rejectAssociateRequest';
 export * from './rejectedAssociateInfoResponse';
 export * from './rejectedAssociateInfoResponseWishesItem';
 export * from './removeSemesterMembersRequest';
+export * from './reopenRegistrationRequest';
 export * from './reRegistrationCheckResult';
 export * from './resendVerificationRequest';
 export * from './semesterMemberListResponse';

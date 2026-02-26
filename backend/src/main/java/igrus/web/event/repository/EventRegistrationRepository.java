@@ -22,6 +22,17 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
 
 
     /**
+     * 특정 행사에 주어진 상태의 신청이 존재하는지 확인합니다.
+     * 행사 삭제 시 활성 신청자 존재 여부 확인용.
+     *
+     * @param eventId  행사 ID
+     * @param statuses 확인 대상 신청 상태 목록
+     * @return 해당 상태의 신청이 있으면 true
+     */
+    boolean existsByEventIdAndStatusIn(Long eventId, Collection<EventRegistrationStatus> statuses);
+
+
+    /**
      * 특정 사용자가 특정 행사에 이미 신청했는지 확인합니다.
      * 중복 신청 방지용.
      *

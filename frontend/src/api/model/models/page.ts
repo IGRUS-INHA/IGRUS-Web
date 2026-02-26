@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: v1.0.0
+ * OpenAPI spec version: acd4c9c
  */
 import type { PageableObject } from './pageableObject';
 import type { SortObject } from './sortObject';
@@ -39,13 +39,13 @@ import type { SortObject } from './sortObject';
 export interface Page {
   totalElements?: number;
   totalPages?: number;
+  pageable?: PageableObject;
   size?: number;
   content?: unknown[];
   number?: number;
   sort?: SortObject;
+  numberOfElements?: number;
   first?: boolean;
   last?: boolean;
-  numberOfElements?: number;
-  pageable?: PageableObject;
   empty?: boolean;
 }

@@ -1,6 +1,6 @@
 import { ChangeEvent } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { SORT_TYPE, SORT_TYPE_LABELS } from '@/constants/board';
+import { SORT_TYPE_LABELS } from '@/constants/board';
 
 interface SortSelectProps {
   value: string;

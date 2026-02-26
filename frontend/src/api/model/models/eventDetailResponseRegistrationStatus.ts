@@ -31,16 +31,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: v1.0.0
+ * OpenAPI spec version: acd4c9c
  */
 
-export type EventDetailResponseStatus = typeof EventDetailResponseStatus[keyof typeof EventDetailResponseStatus];
+export type EventDetailResponseRegistrationStatus = typeof EventDetailResponseRegistrationStatus[keyof typeof EventDetailResponseRegistrationStatus];
 
 
-export const EventDetailResponseStatus = {
-  UPCOMING: 'UPCOMING',
+export const EventDetailResponseRegistrationStatus = {
+  NOT_STARTED: 'NOT_STARTED',
   OPEN: 'OPEN',
   CLOSED: 'CLOSED',
-  ONGOING: 'ONGOING',
-  COMPLETED: 'COMPLETED',
 } as const;

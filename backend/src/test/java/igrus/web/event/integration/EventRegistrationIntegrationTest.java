@@ -6,7 +6,8 @@ import igrus.web.event.domain.EventCloseReason;
 import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.EventRegistrationType;
-import igrus.web.event.domain.EventReopenHistory;
+import igrus.web.event.domain.EventChangeType;
+import igrus.web.event.domain.EventStatusChangeHistory;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.UpdateEventRequest;
@@ -14,8 +15,8 @@ import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.EventNotOpenException;
 import igrus.web.event.exception.EventRegistrationNotReopenableException;
 import igrus.web.event.repository.EventRegistrationRepository;
-import igrus.web.event.repository.EventReopenHistoryRepository;
 import igrus.web.event.repository.EventRepository;
+import igrus.web.event.repository.EventStatusChangeHistoryRepository;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.event.service.EventService;
 import igrus.web.user.domain.User;
@@ -77,7 +78,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
     private EventRegistrationRepository eventRegistrationRepository;
 
     @Autowired
-    private EventReopenHistoryRepository eventReopenHistoryRepository;
+    private EventStatusChangeHistoryRepository eventStatusChangeHistoryRepository;
 
     private User member;
     private User member2;
@@ -367,7 +368,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             eventRegistrationService.registerEvent(event.getId(), member.getId());
 
             // when: 운영자 수동 마감
-            eventService.closeEvent(event.getId(), operator.getId());
+            eventService.closeEvent(event.getId(), operator.getId(), "수동 마감 테스트");
 
             // then: CLOSED(MANUAL_CLOSE), ONGOING
             Event afterClose = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -388,7 +389,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             Event event = createAndSaveAutoApproveEvent();
 
             // when: 취소
-            eventService.cancelEvent(event.getId(), operator.getId());
+            eventService.cancelEvent(event.getId(), operator.getId(), "취소 테스트");
 
             // then: DB에서 CANCELED + CLOSED(MANUAL_CLOSE) 확인
             Event canceled = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -402,10 +403,10 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         void cancelAndReactivate_LazyEvaluationRestores() {
             // given: 행사 생성 후 취소
             Event event = createAndSaveAutoApproveEvent();
-            eventService.cancelEvent(event.getId(), operator.getId());
+            eventService.cancelEvent(event.getId(), operator.getId(), "취소 테스트");
 
             // when: 재활성화
-            eventService.reactivateEvent(event.getId(), operator.getId());
+            eventService.reactivateEvent(event.getId(), operator.getId(), "재활성화 테스트");
 
             // then: eventStatus=UPCOMING, registrationStatus Lazy 복원
             Event reactivated = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -420,7 +421,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         void registerOnCanceledEvent_ThrowsEventNotOpenException() {
             // given: 취소된 행사
             Event event = createAndSaveAutoApproveEvent();
-            eventService.cancelEvent(event.getId(), operator.getId());
+            eventService.cancelEvent(event.getId(), operator.getId(), "취소 테스트");
 
             // when/then: 신청 시도 → registrationStatus=CLOSED이므로 EventNotOpenException
             assertThatThrownBy(() ->
@@ -473,7 +474,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             Event event = createAndSaveAutoApproveEvent();
 
             // when: 수동 마감
-            eventService.closeEvent(event.getId(), operator.getId());
+            eventService.closeEvent(event.getId(), operator.getId(), "수동 마감 테스트");
             Event afterClose = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
             assertThat(afterClose.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
             assertThat(afterClose.getCloseReason()).isEqualTo(EventCloseReason.MANUAL_CLOSE);
@@ -486,9 +487,11 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             assertThat(afterReopen.getRegistrationStatus()).isEqualTo(RegistrationStatus.OPEN);
             assertThat(afterReopen.getCloseReason()).isNull();
 
-            // then: 감사 이력 확인
-            List<EventReopenHistory> histories = eventReopenHistoryRepository.findByEventId(event.getId());
-            assertThat(histories).hasSize(1);
+            // then: 감사 이력 확인 (closeEvent + reopenRegistration = 2건)
+            List<EventStatusChangeHistory> histories = eventStatusChangeHistoryRepository.findByEventIdOrderByCreatedAtDesc(event.getId());
+            assertThat(histories).hasSize(2);
+            // 최신순 정렬이므로 첫 번째가 재오픈 이력
+            assertThat(histories.get(0).getChangeType()).isEqualTo(EventChangeType.REGISTRATION_REOPENED);
             assertThat(histories.get(0).getReason()).isEqualTo("재오픈 사유");
         }
 
@@ -546,7 +549,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             Event event = createAndSaveOverlapEvent();
 
             // when: 수동 마감
-            eventService.closeEvent(event.getId(), operator.getId());
+            eventService.closeEvent(event.getId(), operator.getId(), "수동 마감 테스트");
 
             // then: CLOSED + ONGOING
             Event closed = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -608,7 +611,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         void canceledEvent_Update_ThenReactivate() {
             // given: 행사 취소
             Event event = createAndSaveAutoApproveEvent();
-            eventService.cancelEvent(event.getId(), operator.getId());
+            eventService.cancelEvent(event.getId(), operator.getId(), "취소 테스트");
 
             // when: 취소 상태에서 날짜 수정 (DB 저장 시 나노초 손실 방지를 위해 밀리초로 절삭)
             Event current = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -624,7 +627,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             eventService.updateEvent(event.getId(), request, operator.getId());
 
             // when: 재활성화
-            eventService.reactivateEvent(event.getId(), operator.getId());
+            eventService.reactivateEvent(event.getId(), operator.getId(), "재활성화 테스트");
 
             // then: 수정된 날짜 기반 Lazy Evaluation 정상 동작
             Event reactivated = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -743,7 +746,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             eventRegistrationService.registerEvent(event.getId(), member2.getId());
 
             // when: 수동 마감
-            eventService.closeEvent(event.getId(), operator.getId());
+            eventService.closeEvent(event.getId(), operator.getId(), "수동 마감 테스트");
             Event closed = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
             assertThat(closed.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
 

@@ -1,7 +1,7 @@
 # 행사 (Event) 검증 기준서
 
 > **Status**: Draft
-> **Last Updated**: 2026-02-20
+> **Last Updated**: 2026-02-24
 > **Scope**: 행사 생성(Create), 조회(Read), 수정(Update), 삭제(Delete), 상태 관리(Status), Lazy Evaluation, 행사 취소/재활성화, 등록 수동 재오픈
 > **상태 모델**: 2축 모델 (registrationStatus + eventStatus)
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
@@ -238,14 +238,39 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
   - 정원이 차 있으면 재오픈 불가 (OPEN 직후 자동 재마감 방지)
 - **검증 방법**: 각 조건 위반 시 예외 발생, 모든 조건 충족 시 성공 확인
 
-### EVT-INV-14: 수동 재오픈 감사 이력 (신규)
+### EVT-INV-14: 행사 상태 변경 감사 이력
 
-> 수동 재오픈 시 사유(`reason`)가 반드시 기록되어야 하며, 감사 이력으로 보존된다.
+> 사용자가 직접 수행한 행사 상태 변경(취소, 재활성화, 등록 수동 마감, 등록 수동 재오픈)은 `EventStatusChangeHistory`에 기록된다. **모든 수동 상태 변경 시 사유(`reason`)가 반드시 기록된다.**
 
-- **사전조건**: `reason`이 null이거나 빈 문자열이면 재오픈 거부
-- **사후조건**: 재오픈 사유와 시점이 감사 이력에 기록됨
-- **관련 코드** `(현재 구현 일치)`: 감사 이력 저장 로직 구현 필요
-- **검증 방법**: 재오픈 후 감사 이력 조회, `reason`이 null일 때 예외 발생 확인
+- **사전조건**: 모든 수동 상태 변경 시 `reason`이 null이거나 빈 문자열이면 변경 거부 (DTO `@NotBlank` 검증)
+- **사후조건**: 변경 유형(`EventChangeType`), 이전/이후 값, 변경자 정보, 학번(비정규화), **사유**가 감사 이력에 기록됨
+- **기록 대상 변경 유형**:
+  - `EVENT_CANCELED` — 행사 취소 (reason 필수)
+  - `EVENT_REACTIVATED` — 행사 재활성화 (reason 필수)
+  - `REGISTRATION_CLOSED_MANUAL` — 등록 수동 마감 (reason 필수)
+  - `REGISTRATION_REOPENED` — 등록 수동 재오픈 (reason 필수)
+- **기록하지 않는 변경**: Lazy Evaluation에 의한 자동 상태 전이 (시간 기반, 매 조회마다 발생하여 노이즈 생성)
+- **구현 방식**: `@EventListener` + `REQUIRES_NEW` 독립 트랜잭션. 이력 저장 실패가 비즈니스 로직에 영향 없음 (try-catch 격리)
+- **설계 결정**: FK 없이 ID만 저장 (soft-delete/탈퇴 후에도 이력 영구 보존), `changedByStudentId` 비정규화 (유저 탈퇴 후에도 조회 가능)
+- **관련 코드** `(현재 구현 일치)`:
+  - `EventStatusChangeHistory` — 감사 이력 엔티티 (`BaseEntity` 상속)
+  - `EventChangeType` — 변경 유형 enum
+  - `EventStatusChangeEvent` — Spring 이벤트 record
+  - `EventStatusChangeReasonRequest` — 공유 요청 DTO (`@NotBlank String reason`)
+  - `RecordEventStatusChangeService` — `@EventListener` + `REQUIRES_NEW` TransactionTemplate 리스너
+  - `EventService:closeEvent()`, `cancelEvent()`, `reactivateEvent()`, `reopenRegistration()` — 이벤트 발행 (모두 `reason` 전달)
+- **검증 방법**: 각 수동 상태 변경 후 감사 이력 조회, `reason`이 null/빈 문자열일 때 예외 발생 확인, 이력 레코드의 `reason` 값 검증
+
+### EVT-INV-15: 신청자가 있는 행사 삭제 불가
+
+> 활성 신청(REGISTERED, WAITING, APPROVED)이 존재하는 행사는 삭제(soft delete)할 수 없다. 신청자가 있는 경우 행사 취소(cancel)를 사용해야 한다.
+
+- **사전조건**: `deleteEvent()` 호출
+- **검증**: `existsByEventIdAndStatusIn(eventId, {REGISTERED, WAITING, APPROVED})` → `true`이면 거부
+- **위반 시 예외**: `EventNotDeletableException`
+- **설계 근거**: 신청자가 있는 행사를 삭제하면 신청자 입장에서 신청한 행사가 무통보로 사라지므로, 행사 취소를 통해 명시적으로 상태를 관리해야 한다
+- **관련 코드**: `EventService.deleteEvent()` — 권한 확인 후 활성 신청 존재 여부 확인
+- **검증 방법**: 활성 신청이 있는 행사 삭제 시도 시 예외 발생 확인, 신청자 없는 행사는 정상 삭제 확인
 
 ---
 
@@ -272,7 +297,7 @@ NOT_STARTED ──→ OPEN ──→ CLOSED
 | NOT_STARTED → OPEN | Lazy | `now >= regStart && eventStatus != CANCELED` | `registrationStatus = OPEN` | - |
 | OPEN → CLOSED | Lazy | `now > regEnd` | `registrationStatus = CLOSED` | DEADLINE_PASSED |
 | OPEN → CLOSED | Auto | `currentCount >= capacity` | `registrationStatus = CLOSED` | CAPACITY_FULL |
-| OPEN → CLOSED | Manual | 운영자 수동 마감 | `registrationStatus = CLOSED` | MANUAL_CLOSE |
+| OPEN → CLOSED | Manual | 운영자 수동 마감, **사유 필수** | `registrationStatus = CLOSED` | MANUAL_CLOSE |
 | CLOSED → OPEN | Auto | `closeReason == CAPACITY_FULL && !isFull() && now < regEnd && eventStatus != CANCELED` | `registrationStatus = OPEN`, `closeReason = null` | - |
 | CLOSED → OPEN | Manual | 운영자 수동 재오픈 (EVT-INV-13 조건 전부 충족) | `registrationStatus = OPEN`, `closeReason = null` | - |
 | NOT_STARTED → CLOSED | Forced | `eventStatus` → CANCELED 전이 (EVT-INV-11) | `registrationStatus = CLOSED` | MANUAL_CLOSE |
@@ -304,9 +329,9 @@ UPCOMING ──→ ONGOING ──→ COMPLETED (종단)
 |------|--------|---------|---------|
 | UPCOMING → ONGOING | Lazy | `now >= eventStartAt` | `eventStatus = ONGOING` |
 | ONGOING → COMPLETED | Lazy | `now > eventEndAt` | `eventStatus = COMPLETED`, `registrationStatus = CLOSED` (EVT-INV-10) |
-| UPCOMING → CANCELED | Manual | OPERATOR+ 권한 | `eventStatus = CANCELED`, `registrationStatus = CLOSED` (EVT-INV-11) |
-| ONGOING → CANCELED | Manual | OPERATOR+ 권한 | `eventStatus = CANCELED`, `registrationStatus = CLOSED` (EVT-INV-11) |
-| CANCELED → UPCOMING/ONGOING | Manual | OPERATOR+ 권한, 재활성화 | Lazy Evaluation 실행하여 현재 시간 기반으로 올바른 상태 복원 |
+| UPCOMING → CANCELED | Manual | OPERATOR+ 권한, **사유 필수** | `eventStatus = CANCELED`, `registrationStatus = CLOSED` (EVT-INV-11) |
+| ONGOING → CANCELED | Manual | OPERATOR+ 권한, **사유 필수** | `eventStatus = CANCELED`, `registrationStatus = CLOSED` (EVT-INV-11) |
+| CANCELED → UPCOMING/ONGOING | Manual | OPERATOR+ 권한, **사유 필수**, 재활성화 | Lazy Evaluation 실행하여 현재 시간 기반으로 올바른 상태 복원 |
 
 **관련 코드** `(현재 구현 일치)`:
 - 현재: 단일 `EventStatus`의 ONGOING → COMPLETED 부분이 이 축에 해당
@@ -481,7 +506,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | 행사 상세 조회 | 401 | **403** | O | O | O |
 | 행사 생성 | 401 | 403 | 403 | **O** | **O** |
 | 행사 수정 | 401 | 403 | 403 | **O** | **O** |
-| 행사 삭제 | 401 | 403 | 403 | **O** | **O** |
+| 행사 삭제 | 401 | 403 | 403 | **O** (신청자 없을 때만) | **O** (신청자 없을 때만) |
 | 행사 수동 마감 | 401 | 403 | 403 | **O** | **O** |
 | 행사 취소 | 401 | 403 | 403 | **O** | **O** |
 | 행사 재활성화 | 401 | 403 | 403 | **O** | **O** |
@@ -495,6 +520,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | SEC-EVT-02 | 일반 회원(MEMBER)이 행사 생성 시도 | `EventAccessDeniedException` (403) | `EventService:270-274` |
 | SEC-EVT-03 | 일반 회원이 행사 수정 시도 | `EventAccessDeniedException` (403) | `EventService:283-286` |
 | SEC-EVT-04 | 일반 회원이 행사 삭제 시도 | `EventAccessDeniedException` (403) | `EventService:283-286` |
+| SEC-EVT-10 | 신청자가 있는 행사 삭제 시도 | `EventNotDeletableException` (400) | `EventService.deleteEvent()` |
 | SEC-EVT-05 | 일반 회원이 행사 수동 마감 시도 | `EventAccessDeniedException` (403) | `EventService:283-286` |
 | SEC-EVT-06 | 비인가 접근이 상태를 변경하지 않는지 (부작용 없음) | DB 변경 없음 | 트랜잭션 롤백 확인 |
 | SEC-EVT-07 | 일반 회원이 행사 취소 시도 | `EventAccessDeniedException` (403) | `(현재 구현 일치)` |
@@ -526,9 +552,9 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | GET `/api/v1/events/{eventId}` | `행사 상세 조회 요청 - eventId: {}, userId: {}` | `EventController:92` |
 | PUT `/api/v1/events/{eventId}` | `행사 수정 요청 - eventId: {}, userId: {}` | `EventController:112` |
 | DELETE `/api/v1/events/{eventId}` | `행사 삭제 요청 - eventId: {}, userId: {}` | `EventController:129` |
-| POST `/api/v1/events/{eventId}/close` | `등록 마감 요청 - eventId: {}, userId: {}` | `EventController:153` |
-| POST `/api/v1/events/{eventId}/cancel` | `행사 취소 요청 - eventId: {}, userId: {}` | `(현재 구현 일치)` |
-| POST `/api/v1/events/{eventId}/reactivate` | `행사 재활성화 요청 - eventId: {}, userId: {}` | `(현재 구현 일치)` |
+| POST `/api/v1/events/{eventId}/close` | `등록 마감 요청 - eventId: {}, userId: {}, reason: {}` | `(현재 구현 일치)` |
+| POST `/api/v1/events/{eventId}/cancel` | `행사 취소 요청 - eventId: {}, userId: {}, reason: {}` | `(현재 구현 일치)` |
+| POST `/api/v1/events/{eventId}/reactivate` | `행사 재활성화 요청 - eventId: {}, userId: {}, reason: {}` | `(현재 구현 일치)` |
 | POST `/api/v1/events/{eventId}/reopen-registration` | `등록 재오픈 요청 - eventId: {}, userId: {}, reason: {}` | `EventController:208` |
 
 ### 5-2. Soft Delete 감사 이력
@@ -539,24 +565,33 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | 삭제 시각 | 삭제 시점 타임스탬프 | `event_deleted_at` |
 | 삭제자 | 운영자 ID | `event_deleted_by` |
 
-### 5-3. 수동 재오픈 감사 이력 (신규)
+### 5-3. 행사 상태 변경 감사 이력 (`event_status_change_histories`)
 
-| 필드 | 저장 내용 | 설명 |
-|------|---------|------|
-| 재오픈 사유 | 운영자 입력 텍스트 | 왜 등록을 재오픈했는지 기록 |
-| 재오픈 시각 | 재오픈 시점 타임스탬프 | 언제 재오픈했는지 |
-| 재오픈자 | 운영자 ID | 누가 재오픈했는지 |
+사용자가 직접 수행한 행사 상태 변경을 `EventStatusChangeHistory` 엔티티에 기록한다.
 
-- **구현 방식** `(현재 구현 일치)`: 별도 이력 테이블 또는 이벤트 로그로 구현
+| 필드 | 저장 내용 | 컬럼명 |
+|------|---------|--------|
+| 행사 ID | 대상 행사 | `event_status_change_histories_event_id` |
+| 변경자 ID | 운영자 ID | `event_status_change_histories_changed_by_id` |
+| 변경자 학번 | 운영자 학번 (비정규화) | `event_status_change_histories_changed_by_student_id` |
+| 변경 유형 | `EventChangeType` enum | `event_status_change_histories_change_type` |
+| 이전 값 | 변경 전 상태명 | `event_status_change_histories_previous_value` |
+| 이후 값 | 변경 후 상태명 | `event_status_change_histories_new_value` |
+| 사유 | 변경 사유 (모든 수동 상태 변경 시 필수) | `event_status_change_histories_reason` |
+| 생성 시각 | 이력 기록 시각 | `event_status_change_histories_created_at` |
+
+- **구현 방식** `(현재 구현 일치)`: `@EventListener` + `REQUIRES_NEW` TransactionTemplate (`RecordEventStatusChangeService`)
+- **FK 없음**: soft-delete/탈퇴 후에도 이력 영구 보존
+- **인덱스**: `event_id`, `changed_by_id`, `change_type`, `created_at`
 
 ### 5-4. 관측 가능성 누락 사항
 
 | 항목 | 현황 | 영향 |
 |------|------|------|
-| Lazy Evaluation 상태 변경 로그 | **없음** | 자동 상태 전이 추적 불가 |
+| Lazy Evaluation 상태 변경 로그 | **없음** (의도적 — 자동 전이는 노이즈) | 자동 상태 전이 추적 불가 |
 | 행사 수정 시 변경 내용 로그 | **없음** | 어떤 필드가 변경되었는지 추적 불가 |
 | 행사 생성 완료 로그 | **없음** (요청 로그만 존재) | 생성 성공/실패 구분 불가 |
-| 행사 취소/재활성화 이력 | **없음** `(현재 구현 일치)` | 취소/재활성화 사유 추적 불가 |
+| ~~행사 취소/재활성화 이력~~ | **해결됨** | `EventStatusChangeHistory`에 기록 |
 
 ---
 
@@ -591,6 +626,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | EVT-INV-07 (상태별 수정 정책) | `EventTest:EVT-052,053` | **부분 커버** (ONGOING 부분 수정, CANCELED 수정 허용, COMPLETED 수정 불가 미검증) |
 | EVT-INV-08 (closeReason 정합성) | `EventTest:EVT-012,013,014,016` (각 마감 사유 + 재오픈 시 null) | **커버됨** (registrationStatus 축으로 재해석 필요) |
 | EVT-INV-09 (soft delete 필터링) | `EventServiceTest:getEvent_DeletedEvent_ThrowsException` | **커버됨** |
+| EVT-INV-15 (신청자 있는 행사 삭제 불가) | `EventServiceTest:SVC-EVT-036,037` | **커버됨** |
 | EVT-INV-10 (교차 축 불변조건) | - | **커버됨** (교차 축 불변조건 테스트 구현 완료) |
 | EVT-INV-11 (CANCELED 시 CLOSED 강제) | - | **커버됨** (cancel 테스트에서 registrationStatus 검증) |
 | EVT-INV-12 (유효 복합 상태 조합) | - | **커버됨** (유효 복합 상태 조합 테스트 구현 완료) |
@@ -666,6 +702,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | GAP-EVT-21 | CANCELED에서 전체 필드 수정 성공 테스트 | **중간** | 해결 |
 | GAP-EVT-22 | CANCELED에서 수정 → 재활성화 E2E 흐름 테스트 | **중간** | 미해결 |
 | GAP-EVT-23 | COMPLETED에서 수정 시도 시 `EventNotEditableException` 발생 테스트 | **낮음** | 미해결 |
+| GAP-EVT-24 | 신청자가 있는 행사 삭제 거부 테스트 (EVT-INV-15) | **높음** | 해결 |
 
 ---
 

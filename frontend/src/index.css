@@ -156,6 +156,33 @@
     src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
   }
 
+  @font-face {
+    font-family: 'Mulmaru';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2601-4@1.1/Mulmaru.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Moneygraphy';
+    src:
+      url('./assets/fonts/Moneygraphy-Rounded.woff2') format('woff2'),
+      url('./assets/fonts/Moneygraphy-Rounded.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Moneygraphy Pixel';
+    src:
+      url('./assets/fonts/Moneygraphy-Pixel.woff2') format('woff2'),
+      url('./assets/fonts/Moneygraphy-Pixel.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
   /* 브라우저 기본 비밀번호 표시 버튼 숨김 (커스텀 토글 사용) */
   input::-ms-reveal,
   input::-ms-clear {
@@ -703,4 +730,225 @@
   background-size: 24px 24px;
   mask-image: radial-gradient(ellipse 70% 60% at 70% 30%, black 0%, transparent 70%);
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 70% 30%, black 0%, transparent 70%);
+}
+
+/* ============================================
+   React DatePicker Custom Styling
+   ============================================ */
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker-popper {
+  z-index: 30 !important;
+}
+
+.react-datepicker {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  background-color: var(--card) !important;
+  color: var(--foreground) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
+  overflow: hidden;
+}
+
+.react-datepicker__header {
+  background-color: var(--muted) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding-top: 12px !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header {
+  color: var(--foreground) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+.react-datepicker__day-name {
+  color: var(--muted-foreground) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.react-datepicker__day {
+  color: var(--foreground) !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.react-datepicker__day:hover {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.react-datepicker__day--today {
+  font-weight: 700 !important;
+}
+
+.react-datepicker__day--outside-month {
+  color: var(--muted-foreground) !important;
+  opacity: 0.4;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: var(--muted-foreground) !important;
+}
+
+.react-datepicker__navigation:hover *::before {
+  border-color: var(--foreground) !important;
+}
+
+/* Time select panel */
+.react-datepicker__time-container {
+  border-left: 1px solid var(--border) !important;
+}
+
+.react-datepicker__time {
+  background-color: var(--card) !important;
+}
+
+.react-datepicker__time-box {
+  width: 90px !important;
+}
+
+.react-datepicker__time-list-item {
+  color: var(--foreground) !important;
+  font-size: 13px !important;
+  transition: background-color 0.15s;
+}
+
+.react-datepicker__time-list-item:hover {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+.react-datepicker__time-list-item--selected {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  font-weight: 600 !important;
+}
+
+/* Triangle arrow */
+.react-datepicker__triangle {
+  display: none !important;
+}
+
+/* ============================================
+   Calendar Preview (Event Edit/Write)
+   ============================================ */
+
+.cal-preview-wrapper .react-datepicker {
+  width: 100%;
+  box-shadow: none !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.cal-preview-wrapper .react-datepicker__month-container {
+  width: 100%;
+}
+
+.cal-preview-wrapper .react-datepicker__header {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding-top: 4px !important;
+}
+
+.cal-preview-wrapper .react-datepicker__day-names,
+.cal-preview-wrapper .react-datepicker__week {
+  display: flex;
+  justify-content: space-around;
+}
+
+.cal-preview-wrapper .react-datepicker__day {
+  cursor: default !important;
+  width: 2rem;
+  line-height: 2rem;
+  font-size: 12px !important;
+}
+
+.cal-preview-wrapper .react-datepicker__day:hover {
+  background-color: transparent !important;
+  color: var(--foreground) !important;
+}
+
+/* Registration period highlight (amber) */
+.cal-preview-wrapper .react-datepicker__day.cal-preview-reg {
+  background-color: #f59e0b !important;
+  color: white !important;
+  border-radius: 8px !important;
+}
+
+/* Event period highlight (primary/teal) */
+.cal-preview-wrapper .react-datepicker__day.cal-preview-event {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-radius: 8px !important;
+}
+
+/* Interactive mode: range selection styling */
+.cal-preview-wrapper .react-datepicker__day--in-range {
+  border-radius: 8px !important;
+}
+
+.cal-preview-wrapper .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--in-range) {
+  border-radius: 8px !important;
+}
+
+.cal-preview-wrapper.cal-mode-registration .react-datepicker__day--in-range,
+.cal-preview-wrapper.cal-mode-registration .react-datepicker__day--range-start,
+.cal-preview-wrapper.cal-mode-registration .react-datepicker__day--range-end {
+  background-color: #f59e0b !important;
+  color: white !important;
+}
+
+.cal-preview-wrapper.cal-mode-registration .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--in-range) {
+  background-color: #fcd34d !important;
+  color: #78350f !important;
+}
+
+.cal-preview-wrapper.cal-mode-event .react-datepicker__day--in-range,
+.cal-preview-wrapper.cal-mode-event .react-datepicker__day--range-start,
+.cal-preview-wrapper.cal-mode-event .react-datepicker__day--range-end {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.cal-preview-wrapper.cal-mode-event .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--in-range) {
+  background-color: var(--brand-l2) !important;
+  color: var(--brand-l7) !important;
+}
+
+/* Interactive mode: cursor pointer */
+.cal-preview-wrapper.cal-mode-registration .react-datepicker__day,
+.cal-preview-wrapper.cal-mode-event .react-datepicker__day {
+  cursor: pointer !important;
+}
+
+.cal-preview-wrapper.cal-mode-registration .react-datepicker__day:hover,
+.cal-preview-wrapper.cal-mode-event .react-datepicker__day:hover {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+/* Event highlight always takes priority over registration range */
+.cal-preview-wrapper.cal-mode-registration .react-datepicker__day.cal-preview-event {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+/* Outside month dates: mute highlight */
+.cal-preview-wrapper .react-datepicker__day--outside-month.cal-preview-reg,
+.cal-preview-wrapper .react-datepicker__day--outside-month.cal-preview-event {
+  opacity: 0.35;
 }

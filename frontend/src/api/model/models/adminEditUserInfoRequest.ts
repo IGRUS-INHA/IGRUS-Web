@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: v1.0.0
+ * OpenAPI spec version: acd4c9c
  */
 import type { AdminEditUserInfoRequestEnrollmentStatus } from './adminEditUserInfoRequestEnrollmentStatus';
 import type { AdminEditUserInfoRequestGender } from './adminEditUserInfoRequestGender';
@@ -43,6 +43,8 @@ import type { AdminEditUserInfoRequestWishesItem } from './adminEditUserInfoRequ
  * 관리자 회원 정보 수정 요청 (부분 업데이트: null 필드는 기존 값 유지)
  */
 export interface AdminEditUserInfoRequest {
+  /** 학번 (null이면 변경하지 않음) */
+  studentId?: string;
   /** 이메일 (null이면 변경하지 않음) */
   email?: string;
   /**
