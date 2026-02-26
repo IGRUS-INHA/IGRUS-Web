@@ -13,5 +13,8 @@ public enum SurveyAccessLevel {
     ASSOCIATE,
 
     /** 정회원 이상 - 정회원(MEMBER) 이상만 응답 가능 */
-    MEMBER
+    MEMBER,
+
+    /** 운영진 이상 - 운영진(OPERATOR) 이상만 응답 가능 */
+    OPERATOR
 }
