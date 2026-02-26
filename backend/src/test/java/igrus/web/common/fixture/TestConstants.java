@@ -64,6 +64,12 @@ public final class TestConstants {
 
     public static final Long DEFAULT_POST_ID = 1L;
 
+    // ==================== Survey 관련 상수 ====================
+
+    public static final Long DEFAULT_SURVEY_ID = 10L;
+    public static final String DEFAULT_SURVEY_TITLE = "테스트 설문";
+    public static final String DEFAULT_SURVEY_DESCRIPTION = "테스트 설문 설명";
+
     // ==================== 이미지 URL 상수 ====================
 
     public static final String TEST_IMAGE_URL_PREFIX = "https://example.com/image";
