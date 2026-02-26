@@ -1,0 +1,57 @@
+# Plan Reviewer Memory
+
+## Project Conventions (Verified)
+
+### API Path Convention
+- All API endpoints use `/api/v1/` prefix (e.g., `/api/v1/boards`, `/api/v1/events`, `/api/v1/admin/users`)
+- Plans that omit the version prefix are a CRITICAL issue
+
+### Spring Boot Version
+- Actual version: **3.5.9** (verified from `build.gradle` plugin `org.springframework.boot` version)
+- Root CLAUDE.md incorrectly states "Spring Boot 4.0.1" -- always verify against `build.gradle`
+
+### AWS Dependencies
+- `spring-cloud-aws-starter-secrets-manager:3.4.0` is already in use
+- New `spring-cloud-aws` modules should use the same version (3.4.0) for consistency
+
+### DTO Naming Convention (from backend CLAUDE.md)
+- Request: `{Action}{Domain}Request` (e.g., `CreatePostRequest`)
+- Response: `{Domain}{Action}Response` (e.g., `PostDetailResponse`)
+- Plans often use `{Action}{Domain}Response` instead -- flag as Recommended fix
+
+### Entity Base Classes
+- `BaseEntity`: `createdAt`, `updatedAt`, `createdBy`, `updatedBy` (JPA Auditing)
+- `SoftDeletableEntity extends BaseEntity`: adds `deleted`, `deletedAt`, `deletedBy`
+- Flyway migrations MUST align column names with JPA's naming strategy for these fields
+
+### ErrorCode Pattern
+- Each domain has its own `{Domain}ErrorCode` enum implementing `ErrorCode` interface
+- Located in `igrus.web.{domain}.exception` package
+- Exception classes extend `CustomBaseException`
+
+### Flyway Migration
+- Latest version as of 2026-02-26: V40
+- Version conflict check is essential before committing (backend CLAUDE.md rule 17)
+
+## Common Plan Issues (Patterns to Watch)
+
+### Frequently Missing Items
+1. API version prefix `/api/v1/`
+2. Frontend test tasks (backend tests well-planned, frontend tests often absent)
+3. Concurrency handling for state transitions
+4. URL path encoding for path variables containing slashes
+5. Cross-document API path consistency (plan may be fixed but criteria/test-case docs still use old paths)
+
+### Recurring Ambiguities
+- Transaction boundary design presented with multiple options instead of a single recommendation
+- DTO naming deviations from convention without explicit justification
+- SDK/library choice presented as "A or B" without final decision
+
+## Review History
+
+### Storage: image-presigned-url-task-plan.md
+- Round 1: FAIL (3 Critical: API path missing /api/v1/, Spring Boot version wrong, Flyway column naming missing)
+- Round 2: PASS (All 3 Critical resolved. 5 Recommended: cross-doc API paths, DTO naming, DELETE path slash encoding, transaction design decision, SDK version confirmation)
+
+## Review Checklist Additions
+- [See review-checklist.md for detailed checklist](./review-checklist.md)

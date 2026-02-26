@@ -1,0 +1,36 @@
+# Plan Review Checklist
+
+## Pre-Review Checks
+- [ ] API paths use `/api/v1/` prefix
+- [ ] Spring Boot version matches `build.gradle` (currently 3.5.9, NOT 4.0.1 from root CLAUDE.md)
+- [ ] DTO naming follows `{Action}{Domain}Request` / `{Domain}{Action}Response`
+- [ ] Flyway migration version > current latest (V40 as of 2026-02-26)
+- [ ] Flyway column names use `{table_name}_{column_name}` format
+- [ ] BaseEntity/SoftDeletableEntity fields included in Flyway migrations
+- [ ] ErrorCode follows `{Domain}ErrorCode` pattern in `igrus.web.{domain}.exception`
+- [ ] Time fields use `Instant` (not LocalDateTime, ZonedDateTime, etc.)
+
+## Cross-Document Consistency
+- [ ] API paths consistent across task plan, verification criteria, and test cases
+- [ ] Status codes consistent across all three documents
+- [ ] DTO field names consistent across all three documents
+
+## Architecture Checks
+- [ ] Transaction boundaries explicitly designed (not "A or B")
+- [ ] Concurrency handling for state transitions considered
+- [ ] Path variables with special characters (slashes, etc.) handled
+- [ ] External dependency (S3, etc.) failure/retry policy defined
+- [ ] Spring Security path configuration included
+
+## Test Coverage
+- [ ] Backend unit tests planned
+- [ ] Backend integration tests planned
+- [ ] Controller integration tests planned
+- [ ] Frontend tests planned (often missing)
+- [ ] All verification criteria mapped to at least one test task
+- [ ] All test cases mapped to at least one implementation task
+
+## Documentation
+- [ ] Documentation update task included (root CLAUDE.md requirement)
+- [ ] Swagger/OpenAPI annotations mentioned
+- [ ] Orval compatibility considered
