@@ -154,17 +154,64 @@
 | SEC-10 (비운영진 설문 복사) | INT-SRV-013 |
 | SEC-11 (비운영진 질문 복사) | INT-SRV-014 |
 
+### 2.5 질문/선택지/행 컨트롤러 RBAC 테스트 (MockMvc)
+
+> **테스트 방식**: `ServiceIntegrationTestBase` + `@AutoConfigureMockMvc` 기반 MockMvc 테스트. 질문·선택지·행 CRUD 엔드포인트의 인증/인가를 검증한다.
+> **참조**: 검증 기준서 4-1 역할별 접근 제어 매트릭스
+
+#### 2.5.1 SurveyQuestionController RBAC
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| INT-QST-001 | 비인증 사용자 질문 추가 → 401 | 인증 없음, 설문 존재 | `POST /api/v1/surveys/{surveyId}/questions` 요청 (토큰 없이) | 401 Unauthorized | ⬜ |
+| INT-QST-002 | MEMBER 질문 추가 → 403 | MEMBER 토큰, 설문 존재 | `POST /api/v1/surveys/{surveyId}/questions` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-003 | OPERATOR 질문 추가 → 성공 | OPERATOR 토큰, 설문 존재 | `POST /api/v1/surveys/{surveyId}/questions` 요청 (유효한 데이터) | 201 Created | ⬜ |
+| INT-QST-004 | 비인증 사용자 질문 목록 조회 → 401 | 인증 없음 | `GET /api/v1/surveys/{surveyId}/questions` 요청 (토큰 없이) | 401 Unauthorized | ⬜ |
+| INT-QST-005 | MEMBER 질문 목록 조회 → 403 | MEMBER 토큰 | `GET /api/v1/surveys/{surveyId}/questions` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-006 | OPERATOR 질문 목록 조회 → 성공 | OPERATOR 토큰, 설문+질문 존재 | `GET /api/v1/surveys/{surveyId}/questions` 요청 | 200 OK | ⬜ |
+| INT-QST-007 | MEMBER 질문 수정 → 403 | MEMBER 토큰, 설문+질문 존재 | `PATCH /api/v1/surveys/{surveyId}/questions/{questionId}` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-008 | OPERATOR 질문 수정 → 성공 | OPERATOR 토큰, 설문+질문 존재 | `PATCH /api/v1/surveys/{surveyId}/questions/{questionId}` 요청 (유효한 데이터) | 200 OK | ⬜ |
+| INT-QST-009 | MEMBER 질문 삭제 → 403 | MEMBER 토큰, 설문+질문 존재 | `DELETE /api/v1/surveys/{surveyId}/questions/{questionId}` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-010 | OPERATOR 질문 삭제 → 성공 | OPERATOR 토큰, 설문+질문 존재 | `DELETE /api/v1/surveys/{surveyId}/questions/{questionId}` 요청 | 204 No Content | ⬜ |
+
+#### 2.5.2 SurveyQuestionOptionController RBAC
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| INT-QST-020 | MEMBER 선택지 추가 → 403 | MEMBER 토큰, 설문+질문 존재 | `POST /api/v1/surveys/{surveyId}/questions/{questionId}/options` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-021 | OPERATOR 선택지 추가 → 성공 | OPERATOR 토큰, 설문+질문 존재 | `POST /api/v1/surveys/{surveyId}/questions/{questionId}/options` 요청 (유효한 데이터) | 201 Created | ⬜ |
+| INT-QST-022 | MEMBER 선택지 목록 조회 → 403 | MEMBER 토큰 | `GET /api/v1/surveys/{surveyId}/questions/{questionId}/options` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-023 | OPERATOR 선택지 목록 조회 → 성공 | OPERATOR 토큰, 설문+질문+선택지 존재 | `GET /api/v1/surveys/{surveyId}/questions/{questionId}/options` 요청 | 200 OK | ⬜ |
+| INT-QST-024 | MEMBER 선택지 수정 → 403 | MEMBER 토큰, 설문+질문+선택지 존재 | `PATCH /api/v1/surveys/{surveyId}/questions/{questionId}/options/{optionId}` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-025 | OPERATOR 선택지 수정 → 성공 | OPERATOR 토큰, 설문+질문+선택지 존재 | `PATCH /api/v1/surveys/{surveyId}/questions/{questionId}/options/{optionId}` 요청 (유효한 데이터) | 200 OK | ⬜ |
+| INT-QST-026 | MEMBER 선택지 삭제 → 403 | MEMBER 토큰, 설문+질문+선택지 존재 | `DELETE /api/v1/surveys/{surveyId}/questions/{questionId}/options/{optionId}` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-027 | OPERATOR 선택지 삭제 → 성공 | OPERATOR 토큰, 설문+질문+선택지 존재 | `DELETE /api/v1/surveys/{surveyId}/questions/{questionId}/options/{optionId}` 요청 | 204 No Content | ⬜ |
+
+#### 2.5.3 SurveyQuestionRowController RBAC
+
+| ID | 테스트 케이스 | 사전 조건 | 테스트 단계 | 예상 결과 | 상태 |
+|----|-------------|----------|-----------|----------|------|
+| INT-QST-030 | MEMBER 행 추가 → 403 | MEMBER 토큰, 설문+질문 존재 | `POST /api/v1/surveys/{surveyId}/questions/{questionId}/rows` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-031 | OPERATOR 행 추가 → 성공 | OPERATOR 토큰, 설문+질문(그리드 유형) 존재 | `POST /api/v1/surveys/{surveyId}/questions/{questionId}/rows` 요청 (유효한 데이터) | 201 Created | ⬜ |
+| INT-QST-032 | MEMBER 행 목록 조회 → 403 | MEMBER 토큰 | `GET /api/v1/surveys/{surveyId}/questions/{questionId}/rows` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-033 | OPERATOR 행 목록 조회 → 성공 | OPERATOR 토큰, 설문+질문+행 존재 | `GET /api/v1/surveys/{surveyId}/questions/{questionId}/rows` 요청 | 200 OK | ⬜ |
+| INT-QST-034 | MEMBER 행 수정 → 403 | MEMBER 토큰, 설문+질문+행 존재 | `PATCH /api/v1/surveys/{surveyId}/questions/{questionId}/rows/{rowId}` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-035 | OPERATOR 행 수정 → 성공 | OPERATOR 토큰, 설문+질문+행 존재 | `PATCH /api/v1/surveys/{surveyId}/questions/{questionId}/rows/{rowId}` 요청 (유효한 데이터) | 200 OK | ⬜ |
+| INT-QST-036 | MEMBER 행 삭제 → 403 | MEMBER 토큰, 설문+질문+행 존재 | `DELETE /api/v1/surveys/{surveyId}/questions/{questionId}/rows/{rowId}` 요청 | 403 Forbidden | ⬜ |
+| INT-QST-037 | OPERATOR 행 삭제 → 성공 | OPERATOR 토큰, 설문+질문+행 존재 | `DELETE /api/v1/surveys/{surveyId}/questions/{questionId}/rows/{rowId}` 요청 | 204 No Content | ⬜ |
+
 ---
 
 ## 4. 구현 현황 요약
 
 | 카테고리 | 전체 | ⬜ |
 |---------|:---:|:---:|
-| 컨트롤러 RBAC 테스트 (INT-SRV-001~023) | 23 | 23 |
+| Survey 컨트롤러 RBAC 테스트 (INT-SRV-001~023) | 23 | 23 |
+| Question/Option/Row 컨트롤러 RBAC 테스트 (INT-QST-001~037) | 28 | 28 |
 | E2E 시나리오 흐름 (INT-SRV-030~049) | 20 | 20 |
 | 응답 제출 통합 테스트 (INT-SRV-060~068) | 9 | 9 |
 | 설문 목록 조회 통합 테스트 (INT-SRV-075~079) | 5 | 5 |
-| **합계** | **57** | **57** |
+| **합계** | **85** | **85** |
 
 ---
 
@@ -190,6 +237,21 @@
 - **기반**: `ServiceIntegrationTestBase` (non-transactional)
 - **테스트**: INT-SRV-075~079 (5개)
 
+### 5.5 SurveyQuestionControllerIntegrationTest
+- **파일**: `backend/src/test/java/igrus/web/survey/integration/SurveyQuestionControllerIntegrationTest.java`
+- **기반**: `ServiceIntegrationTestBase` + `@AutoConfigureMockMvc` + MockMvc
+- **테스트**: INT-QST-001~010 (10개)
+
+### 5.6 SurveyQuestionOptionControllerIntegrationTest
+- **파일**: `backend/src/test/java/igrus/web/survey/integration/SurveyQuestionOptionControllerIntegrationTest.java`
+- **기반**: `ServiceIntegrationTestBase` + `@AutoConfigureMockMvc` + MockMvc
+- **테스트**: INT-QST-020~027 (8개)
+
+### 5.7 SurveyQuestionRowControllerIntegrationTest
+- **파일**: `backend/src/test/java/igrus/web/survey/integration/SurveyQuestionRowControllerIntegrationTest.java`
+- **기반**: `ServiceIntegrationTestBase` + `@AutoConfigureMockMvc` + MockMvc
+- **테스트**: INT-QST-030~037 (8개)
+
 ---
 
 ## 6. 테스트 실행 가이드
@@ -204,8 +266,13 @@
 ### 개별 실행
 
 ```bash
-# 컨트롤러 RBAC 테스트 (INT-SRV-001~023)
+# Survey 컨트롤러 RBAC 테스트 (INT-SRV-001~023)
 ./gradlew test --tests "igrus.web.survey.integration.SurveyControllerIntegrationTest"
+
+# Question/Option/Row 컨트롤러 RBAC 테스트 (INT-QST-001~037)
+./gradlew test --tests "igrus.web.survey.integration.SurveyQuestionControllerIntegrationTest"
+./gradlew test --tests "igrus.web.survey.integration.SurveyQuestionOptionControllerIntegrationTest"
+./gradlew test --tests "igrus.web.survey.integration.SurveyQuestionRowControllerIntegrationTest"
 
 # E2E 시나리오 흐름 (INT-SRV-030~049)
 ./gradlew test --tests "igrus.web.survey.integration.SurveyE2EIntegrationTest"
@@ -238,3 +305,4 @@
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
 | 1.0 | 2026-02-25 | 최초 작성. 컨트롤러 RBAC(23), E2E 시나리오(20), 응답 제출(9), 목록 조회(5) 총 57건 |
+| 1.1 | 2026-02-25 | 질문/선택지/행 컨트롤러 RBAC 테스트 케이스 28건 추가 (INT-QST-001~037). 총 85건 |
