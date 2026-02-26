@@ -1,5 +1,8 @@
 package igrus.web.survey.domain;
 
+import igrus.web.survey.exception.SurveyAlreadyTrashedException;
+import igrus.web.survey.exception.SurveyInvalidStateTransitionException;
+import igrus.web.survey.exception.SurveyNotTrashedException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -115,7 +118,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::publish)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
 
         @DisplayName("unpublish: PUBLISHED -> UNPUBLISHED 성공")
@@ -153,7 +156,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::unpublish)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
 
         @DisplayName("SRV-025/042: P+NS -> unpublish -> U+NS (NOT_STARTED 유지)")
@@ -223,7 +226,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::openResponse)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
 
         @DisplayName("openResponse: 이미 OPEN이면 예외")
@@ -234,7 +237,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::openResponse)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
 
         @DisplayName("openResponse: 마감일 경과 시 예외")
@@ -246,7 +249,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::openResponse)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
 
         @DisplayName("closeResponse: OPEN -> CLOSED 성공")
@@ -270,7 +273,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::closeResponse)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
 
         @DisplayName("SRV-038: 이미 CLOSED에서 closeResponse 시도 -> 에러")
@@ -281,7 +284,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::closeResponse)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
 
         @DisplayName("SRV-050: deadline=null -> openResponse 성공")
@@ -333,7 +336,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::openResponse)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
     }
 
@@ -363,7 +366,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::publishAndOpen)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
 
         @DisplayName("SRV-048: P+O -> publishAndOpen -> 에러 (이미 공개)")
@@ -374,7 +377,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::publishAndOpen)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
 
         @DisplayName("SRV-049: P+C -> publishAndOpen -> 에러 (이미 공개)")
@@ -385,7 +388,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::publishAndOpen)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
         }
     }
 
@@ -532,7 +535,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::trash)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyAlreadyTrashedException.class);
         }
 
         @DisplayName("restoreFromTrash: 복원 성공")
@@ -557,7 +560,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(survey::restoreFromTrash)
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyNotTrashedException.class);
         }
 
         @DisplayName("permanentDelete: 휴지통 -> 영구 삭제 성공")
@@ -581,7 +584,7 @@ class SurveyTest {
 
             // when & then
             assertThatThrownBy(() -> survey.permanentDelete(1L))
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyNotTrashedException.class);
         }
 
         @DisplayName("isTrashed: trashedAt 유무에 따라 정상 반환")

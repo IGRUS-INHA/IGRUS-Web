@@ -1,6 +1,9 @@
 package igrus.web.survey.domain;
 
 import igrus.web.common.domain.SoftDeletableEntity;
+import igrus.web.survey.exception.SurveyAlreadyTrashedException;
+import igrus.web.survey.exception.SurveyInvalidStateTransitionException;
+import igrus.web.survey.exception.SurveyNotTrashedException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -111,11 +114,11 @@ public class Survey extends SoftDeletableEntity {
      * 설문을 공개합니다. UNPUBLISHED → PUBLISHED (visibility 변경)
      * responseStatus는 변경하지 않음 (별도로 openResponse 호출 필요)
      *
-     * @throws IllegalStateException 비공개 상태가 아닌 경우
+     * @throws SurveyInvalidStateTransitionException 비공개 상태가 아닌 경우
      */
     public void publish() {
         if (!this.visibility.canTransitionTo(SurveyVisibility.PUBLISHED)) {
-            throw new IllegalStateException("비공개 상태에서만 공개할 수 있습니다.");
+            throw new SurveyInvalidStateTransitionException("비공개 상태에서만 공개할 수 있습니다.");
         }
         this.visibility = SurveyVisibility.PUBLISHED;
     }
@@ -124,11 +127,11 @@ public class Survey extends SoftDeletableEntity {
      * 설문을 비공개로 전환합니다. PUBLISHED → UNPUBLISHED (visibility 변경)
      * OPEN 상태이면 자동으로 응답을 마감합니다. (INV-20)
      *
-     * @throws IllegalStateException 이미 비공개 상태인 경우
+     * @throws SurveyInvalidStateTransitionException 이미 비공개 상태인 경우
      */
     public void unpublish() {
         if (!this.visibility.canTransitionTo(SurveyVisibility.UNPUBLISHED)) {
-            throw new IllegalStateException("이미 비공개 상태입니다.");
+            throw new SurveyInvalidStateTransitionException("이미 비공개 상태입니다.");
         }
         if (this.responseStatus == SurveyResponseStatus.OPEN) {
             this.responseStatus = SurveyResponseStatus.CLOSED;
@@ -140,19 +143,19 @@ public class Survey extends SoftDeletableEntity {
      * 응답 수집을 시작(또는 재개)합니다. responseStatus: NOT_STARTED/CLOSED → OPEN
      * 사전조건: visibility == PUBLISHED, 마감일 미경과
      *
-     * @throws IllegalStateException PUBLISHED 상태가 아닌 경우
-     * @throws IllegalStateException 이미 응답 수집 중인 경우
-     * @throws IllegalStateException 마감일이 이미 경과한 경우
+     * @throws SurveyInvalidStateTransitionException PUBLISHED 상태가 아닌 경우
+     * @throws SurveyInvalidStateTransitionException 이미 응답 수집 중인 경우
+     * @throws SurveyInvalidStateTransitionException 마감일이 이미 경과한 경우
      */
     public void openResponse() {
         if (this.visibility != SurveyVisibility.PUBLISHED) {
-            throw new IllegalStateException("공개된 설문에서만 응답을 시작할 수 있습니다.");
+            throw new SurveyInvalidStateTransitionException("공개된 설문에서만 응답을 시작할 수 있습니다.");
         }
         if (!this.responseStatus.canTransitionTo(SurveyResponseStatus.OPEN)) {
-            throw new IllegalStateException("이미 응답 수집 중입니다.");
+            throw new SurveyInvalidStateTransitionException("이미 응답 수집 중입니다.");
         }
         if (this.deadline != null && this.deadline.isBefore(Instant.now())) {
-            throw new IllegalStateException("마감일이 경과한 설문은 응답을 시작할 수 없습니다. 마감일을 먼저 수정하세요.");
+            throw new SurveyInvalidStateTransitionException("마감일이 경과한 설문은 응답을 시작할 수 없습니다. 마감일을 먼저 수정하세요.");
         }
         this.responseStatus = SurveyResponseStatus.OPEN;
     }
@@ -161,11 +164,11 @@ public class Survey extends SoftDeletableEntity {
      * 응답 수집을 마감합니다. responseStatus: OPEN → CLOSED
      * NOT_STARTED에서는 호출 불가 (열지도 않았는데 마감할 수 없음)
      *
-     * @throws IllegalStateException 응답 수집 중(OPEN)이 아닌 경우
+     * @throws SurveyInvalidStateTransitionException 응답 수집 중(OPEN)이 아닌 경우
      */
     public void closeResponse() {
         if (!this.responseStatus.canTransitionTo(SurveyResponseStatus.CLOSED)) {
-            throw new IllegalStateException("응답 수집 중인 상태에서만 마감할 수 있습니다.");
+            throw new SurveyInvalidStateTransitionException("응답 수집 중인 상태에서만 마감할 수 있습니다.");
         }
         this.responseStatus = SurveyResponseStatus.CLOSED;
     }
@@ -174,8 +177,8 @@ public class Survey extends SoftDeletableEntity {
      * 설문을 공개하고 동시에 응답 수집을 시작합니다.
      * UNPUBLISHED 상태에서 한 번에 공개 + 응답 시작 (편의 메서드)
      *
-     * @throws IllegalStateException 비공개 상태가 아닌 경우
-     * @throws IllegalStateException 마감일이 이미 경과한 경우
+     * @throws SurveyInvalidStateTransitionException 비공개 상태가 아닌 경우
+     * @throws SurveyInvalidStateTransitionException 마감일이 이미 경과한 경우
      */
     public void publishAndOpen() {
         publish();
@@ -204,11 +207,11 @@ public class Survey extends SoftDeletableEntity {
     /**
      * 설문을 휴지통으로 이동합니다. 모든 상태에서 호출 가능합니다.
      *
-     * @throws IllegalStateException 이미 휴지통에 있는 경우
+     * @throws SurveyAlreadyTrashedException 이미 휴지통에 있는 경우
      */
     public void trash() {
         if (isTrashed()) {
-            throw new IllegalStateException("이미 휴지통에 있는 설문입니다.");
+            throw new SurveyAlreadyTrashedException();
         }
         this.trashedAt = Instant.now();
     }
@@ -216,11 +219,11 @@ public class Survey extends SoftDeletableEntity {
     /**
      * 휴지통에서 복원합니다.
      *
-     * @throws IllegalStateException 휴지통에 있지 않은 경우
+     * @throws SurveyNotTrashedException 휴지통에 있지 않은 경우
      */
     public void restoreFromTrash() {
         if (!isTrashed()) {
-            throw new IllegalStateException("휴지통에 있는 설문이 아닙니다.");
+            throw new SurveyNotTrashedException();
         }
         this.trashedAt = null;
     }
@@ -238,11 +241,11 @@ public class Survey extends SoftDeletableEntity {
      * 영구 삭제합니다. 휴지통 상태에서만 가능합니다. (INV-18)
      *
      * @param deletedBy 삭제 수행자 ID
-     * @throws IllegalStateException 휴지통에 있지 않은 경우
+     * @throws SurveyNotTrashedException 휴지통에 있지 않은 경우
      */
     public void permanentDelete(Long deletedBy) {
         if (!isTrashed()) {
-            throw new IllegalStateException("휴지통에 있는 설문만 영구 삭제할 수 있습니다.");
+            throw new SurveyNotTrashedException("휴지통에 있는 설문만 영구 삭제할 수 있습니다.");
         }
         super.delete(deletedBy);
     }
