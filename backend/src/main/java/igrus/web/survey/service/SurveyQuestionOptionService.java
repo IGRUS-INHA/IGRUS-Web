@@ -1,15 +1,14 @@
 package igrus.web.survey.service;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import igrus.web.survey.domain.Survey;
-import igrus.web.survey.domain.SurveyQuestion;
-import igrus.web.survey.domain.SurveyQuestionOption;
+import igrus.web.survey.domain.*;
 import igrus.web.survey.dto.request.SaveQuestionOptionRequest;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.exception.SurveyAccessDeniedException;
 import igrus.web.survey.exception.SurveyNotFoundException;
 import igrus.web.survey.exception.SurveyOptionNotFoundException;
 import igrus.web.survey.exception.SurveyQuestionNotFoundException;
+import igrus.web.survey.exception.SurveyQuestionTypeNotSupportedException;
 import igrus.web.survey.repository.SurveyQuestionOptionRepository;
 import igrus.web.survey.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyRepository;
@@ -76,9 +75,10 @@ public class SurveyQuestionOptionService {
         );
 
         optionRepository.save(option);
-        question.getOptions().add(option);
+        List<SurveyQuestionOption> options = getOptionsFromQuestion(question);
+        options.add(option);
 
-        return question.getOptions().stream()
+        return options.stream()
                 .filter(o -> !o.isDeleted())
                 .map(SurveyDetailResponse.OptionResponse::from)
                 .toList();
@@ -114,7 +114,7 @@ public class SurveyQuestionOptionService {
 
         option.update(request.text(), request.displayOrder());
 
-        return question.getOptions().stream()
+        return getOptionsFromQuestion(question).stream()
                 .filter(o -> !o.isDeleted())
                 .map(SurveyDetailResponse.OptionResponse::from)
                 .toList();
@@ -170,13 +170,22 @@ public class SurveyQuestionOptionService {
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
-        return question.getOptions().stream()
+        return getOptionsFromQuestion(question).stream()
                 .filter(o -> !o.isDeleted())
                 .map(SurveyDetailResponse.OptionResponse::from)
                 .toList();
     }
 
     // === Private helper methods ===
+
+    private List<SurveyQuestionOption> getOptionsFromQuestion(SurveyQuestion question) {
+        if (question instanceof GridSurveyQuestion gridQ) {
+            return gridQ.getOptions();
+        } else if (question instanceof OptionSurveyQuestion optionQ) {
+            return optionQ.getOptions();
+        }
+        throw new SurveyQuestionTypeNotSupportedException("해당 질문 유형은 선택지를 지원하지 않습니다: " + question.getQuestionType());
+    }
 
     private void validateOperatorPermission(User user) {
         if (!user.isOperatorOrAbove()) {

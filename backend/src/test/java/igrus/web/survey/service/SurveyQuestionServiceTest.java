@@ -1,9 +1,7 @@
 package igrus.web.survey.service;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import igrus.web.survey.domain.Survey;
-import igrus.web.survey.domain.SurveyQuestion;
-import igrus.web.survey.domain.SurveyQuestionType;
+import igrus.web.survey.domain.*;
 import igrus.web.survey.dto.request.CreateQuestionRequest;
 import igrus.web.survey.dto.request.UpdateQuestionRequest;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
@@ -178,7 +176,7 @@ class SurveyQuestionServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER, "원본 제목", null, false, 1),
+                    TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER, "원본 제목", null, false, 1),
                     QUESTION_ID);
             survey.getQuestions().add(question);
 
@@ -228,7 +226,7 @@ class SurveyQuestionServiceTest {
             Survey survey = createSurveyWithId();
             Survey otherSurvey = createSurveyWithId(99L);
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(otherSurvey, SurveyQuestionType.SHORT_ANSWER, "다른 설문의 질문", null, false, 1),
+                    TextSurveyQuestion.create(otherSurvey, SurveyQuestionType.SHORT_ANSWER, "다른 설문의 질문", null, false, 1),
                     QUESTION_ID);
 
             UpdateQuestionRequest request = new UpdateQuestionRequest(
@@ -274,7 +272,7 @@ class SurveyQuestionServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER, "질문", null, false, 1),
+                    TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER, "질문", null, false, 1),
                     QUESTION_ID);
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
@@ -297,7 +295,7 @@ class SurveyQuestionServiceTest {
             Survey survey = createSurveyWithId();
             Survey otherSurvey = createSurveyWithId(99L);
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(otherSurvey, SurveyQuestionType.SHORT_ANSWER, "다른 설문의 질문", null, false, 1),
+                    TextSurveyQuestion.create(otherSurvey, SurveyQuestionType.SHORT_ANSWER, "다른 설문의 질문", null, false, 1),
                     QUESTION_ID);
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
@@ -351,9 +349,9 @@ class SurveyQuestionServiceTest {
         void getQuestionList_ByOperator_Success() {
             // given
             Survey survey = createSurveyWithId();
-            SurveyQuestion question1 = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            SurveyQuestion question1 = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "질문 1", null, false, 1);
-            SurveyQuestion question2 = SurveyQuestion.create(survey, SurveyQuestionType.PARAGRAPH,
+            SurveyQuestion question2 = TextSurveyQuestion.create(survey, SurveyQuestionType.PARAGRAPH,
                     "질문 2", null, false, 2);
             survey.getQuestions().add(question1);
             survey.getQuestions().add(question2);
@@ -375,9 +373,9 @@ class SurveyQuestionServiceTest {
         void getQuestionList_ExcludesDeletedQuestions() {
             // given
             Survey survey = createSurveyWithId();
-            SurveyQuestion activeQuestion = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            SurveyQuestion activeQuestion = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "활성 질문", null, false, 1);
-            SurveyQuestion deletedQuestion = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            SurveyQuestion deletedQuestion = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "삭제된 질문", null, false, 2);
             deletedQuestion.delete(operatorAuth.userId());
             survey.getQuestions().add(activeQuestion);

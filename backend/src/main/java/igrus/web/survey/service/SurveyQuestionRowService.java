@@ -1,6 +1,7 @@
 package igrus.web.survey.service;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
+import igrus.web.survey.domain.GridSurveyQuestion;
 import igrus.web.survey.domain.SurveyQuestion;
 import igrus.web.survey.domain.SurveyQuestionRow;
 import igrus.web.survey.dto.request.SaveQuestionRowRequest;
@@ -8,6 +9,7 @@ import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.exception.SurveyAccessDeniedException;
 import igrus.web.survey.exception.SurveyNotFoundException;
 import igrus.web.survey.exception.SurveyQuestionNotFoundException;
+import igrus.web.survey.exception.SurveyQuestionTypeNotSupportedException;
 import igrus.web.survey.exception.SurveyRowNotFoundException;
 import igrus.web.survey.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyQuestionRowRepository;
@@ -75,9 +77,10 @@ public class SurveyQuestionRowService {
         );
 
         rowRepository.save(row);
-        question.getRows().add(row);
+        List<SurveyQuestionRow> rows = getRowsFromQuestion(question);
+        rows.add(row);
 
-        return question.getRows().stream()
+        return rows.stream()
                 .filter(r -> !r.isDeleted())
                 .map(SurveyDetailResponse.RowResponse::from)
                 .toList();
@@ -113,7 +116,7 @@ public class SurveyQuestionRowService {
 
         row.update(request.label(), request.displayOrder());
 
-        return question.getRows().stream()
+        return getRowsFromQuestion(question).stream()
                 .filter(r -> !r.isDeleted())
                 .map(SurveyDetailResponse.RowResponse::from)
                 .toList();
@@ -169,13 +172,20 @@ public class SurveyQuestionRowService {
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
-        return question.getRows().stream()
+        return getRowsFromQuestion(question).stream()
                 .filter(r -> !r.isDeleted())
                 .map(SurveyDetailResponse.RowResponse::from)
                 .toList();
     }
 
     // === Private helper methods ===
+
+    private List<SurveyQuestionRow> getRowsFromQuestion(SurveyQuestion question) {
+        if (question instanceof GridSurveyQuestion gridQ) {
+            return gridQ.getRows();
+        }
+        throw new SurveyQuestionTypeNotSupportedException("해당 질문 유형은 행을 지원하지 않습니다: " + question.getQuestionType());
+    }
 
     private void validateOperatorPermission(User user) {
         if (!user.isOperatorOrAbove()) {

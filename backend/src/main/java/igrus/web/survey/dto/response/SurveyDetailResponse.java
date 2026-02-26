@@ -86,15 +86,30 @@ public record SurveyDetailResponse(
             List<RowResponse> rows
     ) {
         public static QuestionResponse from(SurveyQuestion question) {
-            List<OptionResponse> options = question.getOptions().stream()
-                    .filter(o -> !o.isDeleted())
-                    .map(OptionResponse::from)
-                    .toList();
+            List<OptionResponse> options = List.of();
+            List<RowResponse> rows = List.of();
+            Integer scaleMin = null;
+            Integer scaleMax = null;
 
-            List<RowResponse> rows = question.getRows().stream()
-                    .filter(r -> !r.isDeleted())
-                    .map(RowResponse::from)
-                    .toList();
+            if (question instanceof LinearScaleSurveyQuestion scaleQ) {
+                scaleMin = scaleQ.getScaleMin();
+                scaleMax = scaleQ.getScaleMax();
+            } else if (question instanceof GridSurveyQuestion gridQ) {
+                options = gridQ.getOptions().stream()
+                        .filter(o -> !o.isDeleted())
+                        .map(OptionResponse::from)
+                        .toList();
+                rows = gridQ.getRows().stream()
+                        .filter(r -> !r.isDeleted())
+                        .map(RowResponse::from)
+                        .toList();
+            } else if (question instanceof OptionSurveyQuestion optionQ) {
+                options = optionQ.getOptions().stream()
+                        .filter(o -> !o.isDeleted())
+                        .map(OptionResponse::from)
+                        .toList();
+            }
+            // TextSurveyQuestion: 추가 필드 없음
 
             return new QuestionResponse(
                     question.getId(),
@@ -103,8 +118,8 @@ public record SurveyDetailResponse(
                     question.getDescription(),
                     question.isRequired(),
                     question.getDisplayOrder(),
-                    question.getScaleMin(),
-                    question.getScaleMax(),
+                    scaleMin,
+                    scaleMax,
                     options,
                     rows
             );

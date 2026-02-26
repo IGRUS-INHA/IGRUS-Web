@@ -1,9 +1,7 @@
 package igrus.web.survey.service;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import igrus.web.survey.domain.Survey;
-import igrus.web.survey.domain.SurveyQuestion;
-import igrus.web.survey.domain.SurveyQuestionType;
+import igrus.web.survey.domain.*;
 import igrus.web.survey.dto.request.CreateSurveyRequest;
 import igrus.web.survey.dto.request.UpdateSurveyRequest;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
@@ -346,34 +344,29 @@ public class SurveyService {
      * 질문 유형별 필수 구성요소를 검증합니다. (INV-13)
      */
     private void validateQuestionStructure(SurveyQuestion question) {
-        SurveyQuestionType type = question.getQuestionType();
-        long activeOptionCount = question.getOptions().stream().filter(o -> !o.isDeleted()).count();
-        long activeRowCount = question.getRows().stream().filter(r -> !r.isDeleted()).count();
-
-        switch (type) {
-            case MULTIPLE_CHOICE, CHECKBOX, DROPDOWN -> {
-                if (activeOptionCount == 0) {
-                    throw new SurveyPublishValidationException(
-                            String.format("질문 '%s'에 선택지가 1개 이상 필요합니다.", question.getTitle()));
-                }
+        if (question instanceof LinearScaleSurveyQuestion scaleQ) {
+            if (scaleQ.getScaleMin() == null || scaleQ.getScaleMax() == null) {
+                throw new SurveyPublishValidationException(
+                        String.format("질문 '%s'에 배율 범위(최솟값, 최댓값)가 설정되어야 합니다.", question.getTitle()));
             }
-            case MULTIPLE_CHOICE_GRID, CHECKBOX_GRID -> {
-                if (activeRowCount == 0 || activeOptionCount == 0) {
-                    throw new SurveyPublishValidationException(
-                            String.format("질문 '%s'에 행과 선택지가 각각 1개 이상 필요합니다.", question.getTitle()));
-                }
+            if (scaleQ.getScaleMin() >= scaleQ.getScaleMax()) {
+                throw new SurveyPublishValidationException(
+                        String.format("질문 '%s'의 최솟값은 최댓값보다 작아야 합니다.", question.getTitle()));
             }
-            case LINEAR_SCALE -> {
-                if (question.getScaleMin() == null || question.getScaleMax() == null) {
-                    throw new SurveyPublishValidationException(
-                            String.format("질문 '%s'에 배율 범위(최솟값, 최댓값)가 설정되어야 합니다.", question.getTitle()));
-                }
-                if (question.getScaleMin() >= question.getScaleMax()) {
-                    throw new SurveyPublishValidationException(
-                            String.format("질문 '%s'의 최솟값은 최댓값보다 작아야 합니다.", question.getTitle()));
-                }
+        } else if (question instanceof GridSurveyQuestion gridQ) {
+            long activeOptionCount = gridQ.getOptions().stream().filter(o -> !o.isDeleted()).count();
+            long activeRowCount = gridQ.getRows().stream().filter(r -> !r.isDeleted()).count();
+            if (activeRowCount == 0 || activeOptionCount == 0) {
+                throw new SurveyPublishValidationException(
+                        String.format("질문 '%s'에 행과 선택지가 각각 1개 이상 필요합니다.", question.getTitle()));
             }
-            default -> { /* SHORT_ANSWER, PARAGRAPH, DATE, TIME, FILE_UPLOAD - 필수 구성요소 없음 */ }
+        } else if (question instanceof OptionSurveyQuestion optionQ) {
+            long activeOptionCount = optionQ.getOptions().stream().filter(o -> !o.isDeleted()).count();
+            if (activeOptionCount == 0) {
+                throw new SurveyPublishValidationException(
+                        String.format("질문 '%s'에 선택지가 1개 이상 필요합니다.", question.getTitle()));
+            }
         }
+        // TextSurveyQuestion: 필수 구성요소 없음
     }
 }

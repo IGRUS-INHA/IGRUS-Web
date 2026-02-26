@@ -16,10 +16,21 @@ public enum SurveyErrorCode implements ErrorCode {
     SURVEY_QUESTION_NOT_FOUND(404, "질문을 찾을 수 없습니다"),
     SURVEY_QUESTION_LIMIT_EXCEEDED(400, "질문은 최대 50개까지 가능합니다"),
     SURVEY_QUESTION_NOT_BELONGS(403, "해당 설문의 질문이 아닙니다"),
+    SURVEY_QUESTION_VALIDATION_FAILED(400, "질문 유효성 검증에 실패했습니다"),
+    SURVEY_QUESTION_TYPE_NOT_SUPPORTED(400, "해당 질문 유형에서는 지원하지 않는 작업입니다"),
 
     SURVEY_OPTION_NOT_FOUND(404, "선택지를 찾을 수 없습니다"),
 
-    SURVEY_ROW_NOT_FOUND(404, "행을 찾을 수 없습니다");
+    SURVEY_ROW_NOT_FOUND(404, "행을 찾을 수 없습니다"),
+
+    // === 설문 응답 관련 ===
+
+    SURVEY_NOT_ACCEPTING_RESPONSES(400, "현재 응답을 받지 않는 설문입니다"),
+    SURVEY_RESPONSE_DUPLICATE(409, "이미 응답한 설문입니다"),
+    SURVEY_RESPONSE_NOT_FOUND(404, "응답을 찾을 수 없습니다"),
+    SURVEY_RESPONSE_VALIDATION_FAILED(400, "응답 유효성 검증에 실패했습니다"),
+    SURVEY_RESPONSE_ACCESS_DENIED(403, "설문 응답 권한이 없습니다"),
+    SURVEY_ANONYMOUS_NOT_ALLOWED(403, "비회원 응답이 허용되지 않는 설문입니다");
 
     private final int status;
     private final String message;

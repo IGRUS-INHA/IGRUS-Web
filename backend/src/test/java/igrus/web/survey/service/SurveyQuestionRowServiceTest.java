@@ -1,10 +1,7 @@
 package igrus.web.survey.service;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import igrus.web.survey.domain.Survey;
-import igrus.web.survey.domain.SurveyQuestion;
-import igrus.web.survey.domain.SurveyQuestionRow;
-import igrus.web.survey.domain.SurveyQuestionType;
+import igrus.web.survey.domain.*;
 import igrus.web.survey.dto.request.SaveQuestionRowRequest;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.exception.SurveyAccessDeniedException;
@@ -92,7 +89,7 @@ class SurveyQuestionRowServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
                     QUESTION_ID);
             SaveQuestionRowRequest request = new SaveQuestionRowRequest("행 1", 1);
 
@@ -153,7 +150,7 @@ class SurveyQuestionRowServiceTest {
             Survey survey = createSurveyWithId();
             Survey otherSurvey = createSurveyWithId(99L);
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(otherSurvey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "다른 설문의 질문", null, false, 1),
+                    GridSurveyQuestion.create(otherSurvey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "다른 설문의 질문", null, false, 1),
                     QUESTION_ID);
             SaveQuestionRowRequest request = new SaveQuestionRowRequest("행 1", 1);
 
@@ -206,8 +203,8 @@ class SurveyQuestionRowServiceTest {
         void updateRow_ByOperator_Success() {
             // given
             Survey survey = createSurveyWithId();
-            SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
+            GridSurveyQuestion question = withId(
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionRow row = withId(
                     SurveyQuestionRow.create(question, "원본 행", 1),
@@ -239,7 +236,7 @@ class SurveyQuestionRowServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
                     QUESTION_ID);
             SaveQuestionRowRequest request = new SaveQuestionRowRequest("수정된 행", 1);
 
@@ -263,10 +260,10 @@ class SurveyQuestionRowServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "질문", null, false, 1),
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestion otherQuestion = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "다른 질문", null, false, 2),
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "다른 질문", null, false, 2),
                     999L);
             SurveyQuestionRow row = withId(
                     SurveyQuestionRow.create(otherQuestion, "다른 질문의 행", 1),
@@ -300,7 +297,7 @@ class SurveyQuestionRowServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionRow row = withId(
                     SurveyQuestionRow.create(question, "행", 1),
@@ -327,7 +324,7 @@ class SurveyQuestionRowServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
                     QUESTION_ID);
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
@@ -366,8 +363,8 @@ class SurveyQuestionRowServiceTest {
         void getRowList_ByOperator_Success() {
             // given
             Survey survey = createSurveyWithId();
-            SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
+            GridSurveyQuestion question = withId(
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionRow row1 = SurveyQuestionRow.create(question, "행 1", 1);
             SurveyQuestionRow row2 = SurveyQuestionRow.create(question, "행 2", 2);
@@ -393,8 +390,8 @@ class SurveyQuestionRowServiceTest {
         void getRowList_ExcludesDeletedRows() {
             // given
             Survey survey = createSurveyWithId();
-            SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
+            GridSurveyQuestion question = withId(
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionRow activeRow = SurveyQuestionRow.create(question, "활성 행", 1);
             SurveyQuestionRow deletedRow = SurveyQuestionRow.create(question, "삭제된 행", 2);

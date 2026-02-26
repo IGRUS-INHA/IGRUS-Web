@@ -1,10 +1,7 @@
 package igrus.web.survey.service;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import igrus.web.survey.domain.Survey;
-import igrus.web.survey.domain.SurveyQuestion;
-import igrus.web.survey.domain.SurveyQuestionOption;
-import igrus.web.survey.domain.SurveyQuestionType;
+import igrus.web.survey.domain.*;
 import igrus.web.survey.dto.request.SaveQuestionOptionRequest;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.exception.SurveyAccessDeniedException;
@@ -92,7 +89,7 @@ class SurveyQuestionOptionServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
                     QUESTION_ID);
             SaveQuestionOptionRequest request = new SaveQuestionOptionRequest("선택지 1", 1);
 
@@ -153,7 +150,7 @@ class SurveyQuestionOptionServiceTest {
             Survey survey = createSurveyWithId();
             Survey otherSurvey = createSurveyWithId(99L);
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(otherSurvey, SurveyQuestionType.MULTIPLE_CHOICE, "다른 설문의 질문", null, false, 1),
+                    OptionSurveyQuestion.create(otherSurvey, SurveyQuestionType.MULTIPLE_CHOICE, "다른 설문의 질문", null, false, 1),
                     QUESTION_ID);
             SaveQuestionOptionRequest request = new SaveQuestionOptionRequest("선택지 1", 1);
 
@@ -206,8 +203,8 @@ class SurveyQuestionOptionServiceTest {
         void updateOption_ByOperator_Success() {
             // given
             Survey survey = createSurveyWithId();
-            SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
+            OptionSurveyQuestion question = withId(
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionOption option = withId(
                     SurveyQuestionOption.create(question, "원본 선택지", 1),
@@ -239,7 +236,7 @@ class SurveyQuestionOptionServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
                     QUESTION_ID);
             SaveQuestionOptionRequest request = new SaveQuestionOptionRequest("수정된 선택지", 1);
 
@@ -263,10 +260,10 @@ class SurveyQuestionOptionServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestion otherQuestion = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "다른 질문", null, false, 2),
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "다른 질문", null, false, 2),
                     999L);
             SurveyQuestionOption option = withId(
                     SurveyQuestionOption.create(otherQuestion, "다른 질문의 선택지", 1),
@@ -300,7 +297,7 @@ class SurveyQuestionOptionServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionOption option = withId(
                     SurveyQuestionOption.create(question, "선택지", 1),
@@ -327,7 +324,7 @@ class SurveyQuestionOptionServiceTest {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
                     QUESTION_ID);
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
@@ -368,8 +365,8 @@ class SurveyQuestionOptionServiceTest {
         void getOptionList_ByOperator_Success() {
             // given
             Survey survey = createSurveyWithId();
-            SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
+            OptionSurveyQuestion question = withId(
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionOption option1 = SurveyQuestionOption.create(question, "선택지 1", 1);
             SurveyQuestionOption option2 = SurveyQuestionOption.create(question, "선택지 2", 2);
@@ -395,8 +392,8 @@ class SurveyQuestionOptionServiceTest {
         void getOptionList_ExcludesDeletedOptions() {
             // given
             Survey survey = createSurveyWithId();
-            SurveyQuestion question = withId(
-                    SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
+            OptionSurveyQuestion question = withId(
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionOption activeOption = SurveyQuestionOption.create(question, "활성 선택지", 1);
             SurveyQuestionOption deletedOption = SurveyQuestionOption.create(question, "삭제된 선택지", 2);

@@ -1,5 +1,7 @@
 package igrus.web.survey.domain;
 
+import igrus.web.survey.exception.SurveyInvalidStateTransitionException;
+import igrus.web.survey.exception.SurveyQuestionValidationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,103 +23,114 @@ class SurveyQuestionTest {
         @Test
         void create_ShortAnswer_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "단답형 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.SHORT_ANSWER);
             assertThat(question.getSurvey()).isEqualTo(survey);
+            assertThat(question).isInstanceOf(TextSurveyQuestion.class);
         }
 
         @DisplayName("QST-002: PARAGRAPH 유형 질문 생성 성공")
         @Test
         void create_Paragraph_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.PARAGRAPH,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.PARAGRAPH,
                     "서술형 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.PARAGRAPH);
+            assertThat(question).isInstanceOf(TextSurveyQuestion.class);
         }
 
         @DisplayName("QST-003: MULTIPLE_CHOICE 유형 질문 생성 성공")
         @Test
         void create_MultipleChoice_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "객관식 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.MULTIPLE_CHOICE);
+            assertThat(question).isInstanceOf(OptionSurveyQuestion.class);
         }
 
         @DisplayName("QST-004: CHECKBOX 유형 질문 생성 성공")
         @Test
         void create_Checkbox_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.CHECKBOX,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.CHECKBOX,
                     "체크박스 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.CHECKBOX);
+            assertThat(question).isInstanceOf(OptionSurveyQuestion.class);
         }
 
         @DisplayName("QST-005: DROPDOWN 유형 질문 생성 성공")
         @Test
         void create_Dropdown_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.DROPDOWN,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.DROPDOWN,
                     "드롭다운 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.DROPDOWN);
+            assertThat(question).isInstanceOf(OptionSurveyQuestion.class);
         }
 
         @DisplayName("QST-006: LINEAR_SCALE 유형 질문 생성 성공")
         @Test
         void create_LinearScale_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
+            LinearScaleSurveyQuestion question = LinearScaleSurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
                     "선형 배율 질문", null, false, 1);
             question.setScaleRange(1, 5);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.LINEAR_SCALE);
             assertThat(question.getScaleMin()).isEqualTo(1);
             assertThat(question.getScaleMax()).isEqualTo(5);
+            assertThat(question).isInstanceOf(LinearScaleSurveyQuestion.class);
         }
 
         @DisplayName("QST-007: MULTIPLE_CHOICE_GRID 유형 질문 생성 성공")
         @Test
         void create_MultipleChoiceGrid_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "객관식 그리드 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.MULTIPLE_CHOICE_GRID);
+            assertThat(question).isInstanceOf(GridSurveyQuestion.class);
         }
 
         @DisplayName("QST-008: CHECKBOX_GRID 유형 질문 생성 성공")
         @Test
         void create_CheckboxGrid_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.CHECKBOX_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.CHECKBOX_GRID,
                     "체크박스 그리드 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.CHECKBOX_GRID);
+            assertThat(question).isInstanceOf(GridSurveyQuestion.class);
         }
 
         @DisplayName("QST-009: DATE 유형 질문 생성 성공")
         @Test
         void create_Date_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.DATE,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.DATE,
                     "날짜 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.DATE);
+            assertThat(question).isInstanceOf(TextSurveyQuestion.class);
         }
 
         @DisplayName("QST-010: TIME 유형 질문 생성 성공")
         @Test
         void create_Time_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.TIME,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.TIME,
                     "시간 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.TIME);
+            assertThat(question).isInstanceOf(TextSurveyQuestion.class);
         }
 
         @DisplayName("QST-011: FILE_UPLOAD 유형 질문 생성 성공")
         @Test
         void create_FileUpload_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.FILE_UPLOAD,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.FILE_UPLOAD,
                     "파일 업로드 질문", null, false, 1);
             assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.FILE_UPLOAD);
+            assertThat(question).isInstanceOf(TextSurveyQuestion.class);
         }
     }
 
@@ -131,7 +144,7 @@ class SurveyQuestionTest {
         @Test
         void create_TitleMinLength_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "A", null, false, 0);
             assertThat(question.getTitle()).isEqualTo("A");
         }
@@ -141,7 +154,7 @@ class SurveyQuestionTest {
         void create_TitleMaxLength_Success() {
             Survey survey = createSurvey();
             String title200 = "A".repeat(200);
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     title200, null, false, 0);
             assertThat(question.getTitle()).hasSize(200);
         }
@@ -150,7 +163,7 @@ class SurveyQuestionTest {
         @Test
         void create_DescriptionNull_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "질문", null, false, 0);
             assertThat(question.getDescription()).isNull();
         }
@@ -160,7 +173,7 @@ class SurveyQuestionTest {
         void create_DescriptionMaxLength_Success() {
             Survey survey = createSurvey();
             String desc500 = "B".repeat(500);
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "질문", desc500, false, 0);
             assertThat(question.getDescription()).hasSize(500);
         }
@@ -169,7 +182,7 @@ class SurveyQuestionTest {
         @Test
         void create_RequiredTrue_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "필수 질문", null, true, 0);
             assertThat(question.isRequired()).isTrue();
         }
@@ -178,7 +191,7 @@ class SurveyQuestionTest {
         @Test
         void create_RequiredFalse_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "선택 질문", null, false, 0);
             assertThat(question.isRequired()).isFalse();
         }
@@ -187,7 +200,7 @@ class SurveyQuestionTest {
         @Test
         void create_DisplayOrderZero_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "질문", null, false, 0);
             assertThat(question.getDisplayOrder()).isZero();
         }
@@ -203,7 +216,7 @@ class SurveyQuestionTest {
         @Test
         void publish_MultipleChoiceNoOptions_ThrowsException() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "객관식 질문", null, false, 1);
             survey.getQuestions().add(question);
 
@@ -216,7 +229,7 @@ class SurveyQuestionTest {
         @Test
         void multipleChoice_WithOptions_HasValidStructure() {
             Survey survey = createSurvey();
-            SurveyQuestion question = createMultipleChoiceQuestion(survey, 1);
+            OptionSurveyQuestion question = createMultipleChoiceQuestion(survey, 1);
             assertThat(question.getOptions()).isNotEmpty();
             assertThat(question.getOptions().stream().filter(o -> !o.isDeleted()).count()).isGreaterThanOrEqualTo(1);
         }
@@ -225,7 +238,7 @@ class SurveyQuestionTest {
         @Test
         void multipleChoiceGrid_NoRows_HasNoRows() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "그리드 질문", null, false, 1);
             SurveyQuestionOption option = SurveyQuestionOption.create(question, "열 1", 1);
             question.addOption(option);
@@ -238,7 +251,7 @@ class SurveyQuestionTest {
         @Test
         void multipleChoiceGrid_NoOptions_HasNoOptions() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "그리드 질문", null, false, 1);
             SurveyQuestionRow row = SurveyQuestionRow.create(question, "행 1", 1);
             question.addRow(row);
@@ -251,7 +264,7 @@ class SurveyQuestionTest {
         @Test
         void multipleChoiceGrid_MinimalConfig_IsValid() {
             Survey survey = createSurvey();
-            SurveyQuestion question = createGridQuestion(survey, 1);
+            GridSurveyQuestion question = createGridQuestion(survey, 1);
 
             long activeOptionCount = question.getOptions().stream().filter(o -> !o.isDeleted()).count();
             long activeRowCount = question.getRows().stream().filter(r -> !r.isDeleted()).count();
@@ -264,7 +277,7 @@ class SurveyQuestionTest {
         @Test
         void checkboxGrid_NoRows_HasNoRows() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.CHECKBOX_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.CHECKBOX_GRID,
                     "체크박스 그리드 질문", null, false, 1);
             SurveyQuestionOption option = SurveyQuestionOption.create(question, "열 1", 1);
             question.addOption(option);
@@ -276,7 +289,7 @@ class SurveyQuestionTest {
         @Test
         void checkboxGrid_MinimalConfig_IsValid() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.CHECKBOX_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.CHECKBOX_GRID,
                     "체크박스 그리드 질문", null, false, 1);
             SurveyQuestionOption option = SurveyQuestionOption.create(question, "열 1", 1);
             question.addOption(option);
@@ -301,7 +314,7 @@ class SurveyQuestionTest {
         @Test
         void setScaleRange_ValidRange_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
+            LinearScaleSurveyQuestion question = LinearScaleSurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
                     "배율 질문", null, false, 1);
 
             question.setScaleRange(1, 5);
@@ -314,7 +327,7 @@ class SurveyQuestionTest {
         @Test
         void setScaleRange_MinimalRange_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
+            LinearScaleSurveyQuestion question = LinearScaleSurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
                     "배율 질문", null, false, 1);
 
             question.setScaleRange(1, 2);
@@ -327,33 +340,22 @@ class SurveyQuestionTest {
         @Test
         void setScaleRange_EqualMinMax_ThrowsException() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
+            LinearScaleSurveyQuestion question = LinearScaleSurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
                     "배율 질문", null, false, 1);
 
             assertThatThrownBy(() -> question.setScaleRange(3, 3))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(SurveyQuestionValidationException.class);
         }
 
         @DisplayName("QST-043: scaleMin > scaleMax -> 에러 (INV-07)")
         @Test
         void setScaleRange_MinGreaterThanMax_ThrowsException() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
+            LinearScaleSurveyQuestion question = LinearScaleSurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
                     "배율 질문", null, false, 1);
 
             assertThatThrownBy(() -> question.setScaleRange(5, 1))
-                    .isInstanceOf(IllegalArgumentException.class);
-        }
-
-        @DisplayName("LINEAR_SCALE 유형이 아닌 질문에서 setScaleRange 시 에러")
-        @Test
-        void setScaleRange_NonLinearScale_ThrowsException() {
-            Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
-                    "단답형 질문", null, false, 1);
-
-            assertThatThrownBy(() -> question.setScaleRange(1, 5))
-                    .isInstanceOf(IllegalStateException.class);
+                    .isInstanceOf(SurveyQuestionValidationException.class);
         }
     }
 
@@ -363,11 +365,11 @@ class SurveyQuestionTest {
     @DisplayName("질문 수정")
     class QuestionUpdate {
 
-        @DisplayName("질문 수정 시 모든 필드 반영")
+        @DisplayName("동일 카테고리 내 질문 수정 시 모든 필드 반영")
         @Test
-        void update_AllFields_Updated() {
+        void update_SameCategoryAllFields_Updated() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "원본 제목", "원본 설명", false, 1);
 
             question.update(SurveyQuestionType.PARAGRAPH, "수정 제목", "수정 설명", true, 5);
@@ -377,6 +379,41 @@ class SurveyQuestionTest {
             assertThat(question.getDescription()).isEqualTo("수정 설명");
             assertThat(question.isRequired()).isTrue();
             assertThat(question.getDisplayOrder()).isEqualTo(5);
+        }
+
+        @DisplayName("다른 카테고리로 유형 변경 시 SurveyInvalidStateTransitionException")
+        @Test
+        void update_CrossCategory_ThrowsException() {
+            Survey survey = createSurvey();
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+                    "단답형 질문", null, false, 1);
+
+            assertThatThrownBy(() -> question.update(SurveyQuestionType.MULTIPLE_CHOICE, "수정", null, false, 1))
+                    .isInstanceOf(SurveyInvalidStateTransitionException.class);
+        }
+
+        @DisplayName("OPTION 카테고리 내 유형 변경 (MULTIPLE_CHOICE -> CHECKBOX) 성공")
+        @Test
+        void update_SameOptionCategory_Success() {
+            Survey survey = createSurvey();
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+                    "객관식 질문", null, false, 1);
+
+            question.update(SurveyQuestionType.CHECKBOX, "체크박스 질문", null, false, 1);
+
+            assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.CHECKBOX);
+        }
+
+        @DisplayName("GRID 카테고리 내 유형 변경 (MULTIPLE_CHOICE_GRID -> CHECKBOX_GRID) 성공")
+        @Test
+        void update_SameGridCategory_Success() {
+            Survey survey = createSurvey();
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+                    "객관식 그리드", null, false, 1);
+
+            question.update(SurveyQuestionType.CHECKBOX_GRID, "체크박스 그리드", null, false, 1);
+
+            assertThat(question.getQuestionType()).isEqualTo(SurveyQuestionType.CHECKBOX_GRID);
         }
     }
 
@@ -390,7 +427,7 @@ class SurveyQuestionTest {
         @Test
         void createOption_TextMinLength_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "질문", null, false, 1);
 
             SurveyQuestionOption option = SurveyQuestionOption.create(question, "A", 1);
@@ -403,7 +440,7 @@ class SurveyQuestionTest {
         @Test
         void createOption_TextMaxLength_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "질문", null, false, 1);
             String text200 = "C".repeat(200);
 
@@ -416,7 +453,7 @@ class SurveyQuestionTest {
         @Test
         void updateOption_FieldsUpdated() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "질문", null, false, 1);
             SurveyQuestionOption option = SurveyQuestionOption.create(question, "원본", 1);
 
@@ -435,7 +472,7 @@ class SurveyQuestionTest {
         @Test
         void createRow_LabelMinLength_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "질문", null, false, 1);
 
             SurveyQuestionRow row = SurveyQuestionRow.create(question, "A", 1);
@@ -448,7 +485,7 @@ class SurveyQuestionTest {
         @Test
         void createRow_LabelMaxLength_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "질문", null, false, 1);
             String label200 = "D".repeat(200);
 
@@ -461,7 +498,7 @@ class SurveyQuestionTest {
         @Test
         void updateRow_FieldsUpdated() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "질문", null, false, 1);
             SurveyQuestionRow row = SurveyQuestionRow.create(question, "원본", 1);
 
@@ -482,7 +519,7 @@ class SurveyQuestionTest {
         @Test
         void deleteQuestion_SoftDelete_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "질문", null, false, 1);
 
             question.delete(1L);
@@ -494,7 +531,7 @@ class SurveyQuestionTest {
         @Test
         void deleteOption_SoftDelete_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "질문", null, false, 1);
             SurveyQuestionOption option = SurveyQuestionOption.create(question, "선택지", 1);
 
@@ -507,7 +544,7 @@ class SurveyQuestionTest {
         @Test
         void deleteRow_SoftDelete_Success() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "질문", null, false, 1);
             SurveyQuestionRow row = SurveyQuestionRow.create(question, "행", 1);
 
@@ -520,9 +557,9 @@ class SurveyQuestionTest {
         @Test
         void deletedQuestion_FilteredOut() {
             Survey survey = createSurvey();
-            SurveyQuestion active = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion active = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "활성 질문", null, false, 1);
-            SurveyQuestion deleted = SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+            TextSurveyQuestion deleted = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "삭제 질문", null, false, 2);
             survey.getQuestions().add(active);
             survey.getQuestions().add(deleted);
@@ -537,7 +574,7 @@ class SurveyQuestionTest {
         @Test
         void deletedOption_FilteredOut() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "질문", null, false, 1);
             SurveyQuestionOption active = SurveyQuestionOption.create(question, "활성", 1);
             SurveyQuestionOption deleted = SurveyQuestionOption.create(question, "삭제", 2);
@@ -554,7 +591,7 @@ class SurveyQuestionTest {
         @Test
         void deletedRow_FilteredOut() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "질문", null, false, 1);
             SurveyQuestionRow active = SurveyQuestionRow.create(question, "활성", 1);
             SurveyQuestionRow deleted = SurveyQuestionRow.create(question, "삭제", 2);
@@ -578,7 +615,7 @@ class SurveyQuestionTest {
         @Test
         void addOption_AddsToList() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "질문", null, false, 1);
             SurveyQuestionOption option1 = SurveyQuestionOption.create(question, "선택지 1", 1);
             SurveyQuestionOption option2 = SurveyQuestionOption.create(question, "선택지 2", 2);
@@ -593,7 +630,7 @@ class SurveyQuestionTest {
         @Test
         void addRow_AddsToList() {
             Survey survey = createSurvey();
-            SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+            GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "질문", null, false, 1);
             SurveyQuestionRow row1 = SurveyQuestionRow.create(question, "행 1", 1);
             SurveyQuestionRow row2 = SurveyQuestionRow.create(question, "행 2", 2);
@@ -602,6 +639,44 @@ class SurveyQuestionTest {
             question.addRow(row2);
 
             assertThat(question.getRows()).hasSize(2);
+        }
+    }
+
+    // ==================== SurveyQuestionType 카테고리 검증 ====================
+
+    @Nested
+    @DisplayName("SurveyQuestionType 카테고리")
+    class QuestionTypeCategory {
+
+        @DisplayName("TEXT 카테고리 질문 유형 매핑 검증")
+        @Test
+        void textCategory_MappedCorrectly() {
+            assertThat(SurveyQuestionType.SHORT_ANSWER.getCategory()).isEqualTo("TEXT");
+            assertThat(SurveyQuestionType.PARAGRAPH.getCategory()).isEqualTo("TEXT");
+            assertThat(SurveyQuestionType.DATE.getCategory()).isEqualTo("TEXT");
+            assertThat(SurveyQuestionType.TIME.getCategory()).isEqualTo("TEXT");
+            assertThat(SurveyQuestionType.FILE_UPLOAD.getCategory()).isEqualTo("TEXT");
+        }
+
+        @DisplayName("SCALE 카테고리 질문 유형 매핑 검증")
+        @Test
+        void scaleCategory_MappedCorrectly() {
+            assertThat(SurveyQuestionType.LINEAR_SCALE.getCategory()).isEqualTo("SCALE");
+        }
+
+        @DisplayName("OPTION 카테고리 질문 유형 매핑 검증")
+        @Test
+        void optionCategory_MappedCorrectly() {
+            assertThat(SurveyQuestionType.MULTIPLE_CHOICE.getCategory()).isEqualTo("OPTION");
+            assertThat(SurveyQuestionType.CHECKBOX.getCategory()).isEqualTo("OPTION");
+            assertThat(SurveyQuestionType.DROPDOWN.getCategory()).isEqualTo("OPTION");
+        }
+
+        @DisplayName("GRID 카테고리 질문 유형 매핑 검증")
+        @Test
+        void gridCategory_MappedCorrectly() {
+            assertThat(SurveyQuestionType.MULTIPLE_CHOICE_GRID.getCategory()).isEqualTo("GRID");
+            assertThat(SurveyQuestionType.CHECKBOX_GRID.getCategory()).isEqualTo("GRID");
         }
     }
 }

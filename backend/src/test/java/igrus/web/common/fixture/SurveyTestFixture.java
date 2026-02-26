@@ -118,8 +118,8 @@ public final class SurveyTestFixture {
      * @param order  표시 순서
      * @return 단답형 질문
      */
-    public static SurveyQuestion createShortAnswerQuestion(Survey survey, int order) {
-        return SurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+    public static TextSurveyQuestion createShortAnswerQuestion(Survey survey, int order) {
+        return TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                 "단답형 질문 " + order, null, false, order);
     }
 
@@ -130,8 +130,8 @@ public final class SurveyTestFixture {
      * @param order  표시 순서
      * @return 객관식 질문
      */
-    public static SurveyQuestion createMultipleChoiceQuestion(Survey survey, int order) {
-        SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
+    public static OptionSurveyQuestion createMultipleChoiceQuestion(Survey survey, int order) {
+        OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                 "객관식 질문 " + order, null, false, order);
         SurveyQuestionOption option = SurveyQuestionOption.create(question, "선택지 1", 1);
         question.addOption(option);
@@ -145,8 +145,8 @@ public final class SurveyTestFixture {
      * @param order  표시 순서
      * @return 그리드 질문
      */
-    public static SurveyQuestion createGridQuestion(Survey survey, int order) {
-        SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
+    public static GridSurveyQuestion createGridQuestion(Survey survey, int order) {
+        GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                 "그리드 질문 " + order, null, false, order);
         SurveyQuestionOption option = SurveyQuestionOption.create(question, "열 1", 1);
         question.addOption(option);
@@ -162,10 +162,25 @@ public final class SurveyTestFixture {
      * @param order  표시 순서
      * @return 선형 배율 질문
      */
-    public static SurveyQuestion createLinearScaleQuestion(Survey survey, int order) {
-        SurveyQuestion question = SurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
+    public static LinearScaleSurveyQuestion createLinearScaleQuestion(Survey survey, int order) {
+        LinearScaleSurveyQuestion question = LinearScaleSurveyQuestion.create(survey, SurveyQuestionType.LINEAR_SCALE,
                 "선형 배율 질문 " + order, null, false, order);
         question.setScaleRange(1, 5);
         return question;
+    }
+
+    // ==================== accessLevel이 설정된 Survey 생성 ====================
+
+    /**
+     * 지정된 accessLevel의 PUBLISHED + OPEN 설문을 생성합니다.
+     *
+     * @param accessLevel 응답 대상 권한
+     * @return 공개 + 응답 수집 중 설문
+     */
+    public static Survey createPublishedAndOpenSurvey(SurveyAccessLevel accessLevel) {
+        Survey survey = Survey.create(DEFAULT_SURVEY_TITLE, DEFAULT_SURVEY_DESCRIPTION, accessLevel, null);
+        ReflectionTestUtils.setField(survey, "visibility", SurveyVisibility.PUBLISHED);
+        ReflectionTestUtils.setField(survey, "responseStatus", SurveyResponseStatus.OPEN);
+        return survey;
     }
 }

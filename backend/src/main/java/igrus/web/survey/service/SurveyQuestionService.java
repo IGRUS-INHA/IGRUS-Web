@@ -1,8 +1,7 @@
 package igrus.web.survey.service;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import igrus.web.survey.domain.Survey;
-import igrus.web.survey.domain.SurveyQuestion;
+import igrus.web.survey.domain.*;
 import igrus.web.survey.dto.request.CreateQuestionRequest;
 import igrus.web.survey.dto.request.UpdateQuestionRequest;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
@@ -10,6 +9,7 @@ import igrus.web.survey.exception.SurveyAccessDeniedException;
 import igrus.web.survey.exception.SurveyNotFoundException;
 import igrus.web.survey.exception.SurveyQuestionLimitExceededException;
 import igrus.web.survey.exception.SurveyQuestionNotFoundException;
+import igrus.web.survey.exception.SurveyQuestionValidationException;
 import igrus.web.survey.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.user.domain.User;
@@ -68,7 +68,7 @@ public class SurveyQuestionService {
             throw new SurveyQuestionLimitExceededException();
         }
 
-        SurveyQuestion question = SurveyQuestion.create(
+        SurveyQuestion question = createQuestionByType(
                 survey,
                 request.questionType(),
                 request.title(),
@@ -174,5 +174,17 @@ public class SurveyQuestionService {
         if (!question.getSurvey().getId().equals(surveyId)) {
             throw new SurveyAccessDeniedException("해당 설문의 질문이 아닙니다");
         }
+    }
+
+    private SurveyQuestion createQuestionByType(Survey survey, SurveyQuestionType questionType,
+                                                 String title, String description,
+                                                 boolean required, int displayOrder) {
+        return switch (questionType.getCategory()) {
+            case "TEXT" -> TextSurveyQuestion.create(survey, questionType, title, description, required, displayOrder);
+            case "SCALE" -> LinearScaleSurveyQuestion.create(survey, questionType, title, description, required, displayOrder);
+            case "OPTION" -> OptionSurveyQuestion.create(survey, questionType, title, description, required, displayOrder);
+            case "GRID" -> GridSurveyQuestion.create(survey, questionType, title, description, required, displayOrder);
+            default -> throw new SurveyQuestionValidationException("알 수 없는 질문 카테고리: " + questionType.getCategory());
+        };
     }
 }
