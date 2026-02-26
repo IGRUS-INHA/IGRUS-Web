@@ -45,6 +45,49 @@ class SurveyTest {
             assertThat(survey.getAccessLevel()).isEqualTo(SurveyAccessLevel.MEMBER);
             assertThat(survey.getDeadline()).isEqualTo(deadline);
         }
+
+        @DisplayName("SRV-009: 설명 null 생성 성공 (선택 필드)")
+        @Test
+        void create_DescriptionNull_Success() {
+            Survey survey = Survey.create("제목", null, SurveyAccessLevel.PUBLIC, null);
+            assertThat(survey.getDescription()).isNull();
+        }
+
+        @DisplayName("SRV-012: accessLevel PUBLIC 생성 성공")
+        @Test
+        void create_AccessLevelPublic_Success() {
+            Survey survey = Survey.create("제목", "설명", SurveyAccessLevel.PUBLIC, null);
+            assertThat(survey.getAccessLevel()).isEqualTo(SurveyAccessLevel.PUBLIC);
+        }
+
+        @DisplayName("SRV-013: accessLevel ASSOCIATE 생성 성공")
+        @Test
+        void create_AccessLevelAssociate_Success() {
+            Survey survey = Survey.create("제목", "설명", SurveyAccessLevel.ASSOCIATE, null);
+            assertThat(survey.getAccessLevel()).isEqualTo(SurveyAccessLevel.ASSOCIATE);
+        }
+
+        @DisplayName("SRV-014: accessLevel MEMBER 생성 성공")
+        @Test
+        void create_AccessLevelMember_Success() {
+            Survey survey = Survey.create("제목", "설명", SurveyAccessLevel.MEMBER, null);
+            assertThat(survey.getAccessLevel()).isEqualTo(SurveyAccessLevel.MEMBER);
+        }
+
+        @DisplayName("SRV-016: deadline null (미설정) 생성 성공")
+        @Test
+        void create_DeadlineNull_Success() {
+            Survey survey = Survey.create("제목", "설명", SurveyAccessLevel.PUBLIC, null);
+            assertThat(survey.getDeadline()).isNull();
+        }
+
+        @DisplayName("SRV-017: deadline 미래 시점 생성 성공")
+        @Test
+        void create_DeadlineFuture_Success() {
+            Instant future = Instant.now().plusSeconds(86400);
+            Survey survey = Survey.create("제목", "설명", SurveyAccessLevel.PUBLIC, future);
+            assertThat(survey.getDeadline()).isEqualTo(future);
+        }
     }
 
     @Nested
@@ -88,11 +131,50 @@ class SurveyTest {
             assertThat(survey.getVisibility()).isEqualTo(SurveyVisibility.UNPUBLISHED);
         }
 
-        @DisplayName("unpublish: OPEN 상태에서 비공개 시 자동 CLOSED (INV-20)")
+        @DisplayName("unpublish: OPEN 상태에서 비공개 시 자동 CLOSED (INV-20, SRV-040)")
         @Test
         void unpublish_WhenOpen_AutoClosesResponse() {
             // given
             Survey survey = createPublishedAndOpenSurvey();
+
+            // when
+            survey.unpublish();
+
+            // then
+            assertThat(survey.getVisibility()).isEqualTo(SurveyVisibility.UNPUBLISHED);
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.CLOSED);
+        }
+
+        @DisplayName("SRV-023: 이미 UNPUBLISHED에서 unpublish 시도 -> 에러")
+        @Test
+        void unpublish_AlreadyUnpublished_ThrowsException() {
+            // given
+            Survey survey = createSurvey();
+
+            // when & then
+            assertThatThrownBy(survey::unpublish)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @DisplayName("SRV-025/042: P+NS -> unpublish -> U+NS (NOT_STARTED 유지)")
+        @Test
+        void unpublish_WhenNotStarted_MaintainsResponseStatus() {
+            // given
+            Survey survey = createPublishedSurvey();
+
+            // when
+            survey.unpublish();
+
+            // then
+            assertThat(survey.getVisibility()).isEqualTo(SurveyVisibility.UNPUBLISHED);
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.NOT_STARTED);
+        }
+
+        @DisplayName("SRV-041: P+C -> unpublish -> U+C (이미 CLOSED, 변경 없음)")
+        @Test
+        void unpublish_WhenClosed_MaintainsClosedStatus() {
+            // given
+            Survey survey = createClosedSurvey();
 
             // when
             survey.unpublish();
@@ -179,6 +261,80 @@ class SurveyTest {
             // then
             assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.CLOSED);
         }
+
+        @DisplayName("SRV-033: NOT_STARTED에서 closeResponse 시도 -> 에러 (금지된 전이)")
+        @Test
+        void closeResponse_FromNotStarted_ThrowsException() {
+            // given
+            Survey survey = createPublishedSurvey();
+
+            // when & then
+            assertThatThrownBy(survey::closeResponse)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @DisplayName("SRV-038: 이미 CLOSED에서 closeResponse 시도 -> 에러")
+        @Test
+        void closeResponse_AlreadyClosed_ThrowsException() {
+            // given
+            Survey survey = createClosedSurvey();
+
+            // when & then
+            assertThatThrownBy(survey::closeResponse)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @DisplayName("SRV-050: deadline=null -> openResponse 성공")
+        @Test
+        void openResponse_DeadlineNull_Success() {
+            // given
+            Survey survey = createPublishedSurvey();
+
+            // when
+            survey.openResponse();
+
+            // then
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
+        }
+
+        @DisplayName("SRV-051: deadline=미래 -> openResponse 성공")
+        @Test
+        void openResponse_DeadlineFuture_Success() {
+            // given
+            Survey survey = createPublishedSurvey();
+            ReflectionTestUtils.setField(survey, "deadline", Instant.now().plusSeconds(86400));
+
+            // when
+            survey.openResponse();
+
+            // then
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
+        }
+
+        @DisplayName("SRV-053: CLOSED, deadline=null -> openResponse(재개) 성공")
+        @Test
+        void openResponse_FromClosedDeadlineNull_ResumeSuccess() {
+            // given
+            Survey survey = createClosedSurvey();
+
+            // when
+            survey.openResponse();
+
+            // then
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
+        }
+
+        @DisplayName("SRV-055: CLOSED, deadline=과거 -> openResponse(재개) 거부 (INV-11)")
+        @Test
+        void openResponse_FromClosedDeadlinePassed_ThrowsException() {
+            // given
+            Survey survey = createClosedSurvey();
+            ReflectionTestUtils.setField(survey, "deadline", Instant.now().minusSeconds(3600));
+
+            // when & then
+            assertThatThrownBy(survey::openResponse)
+                    .isInstanceOf(IllegalStateException.class);
+        }
     }
 
     @Nested
@@ -199,11 +355,33 @@ class SurveyTest {
             assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
         }
 
-        @DisplayName("publishAndOpen: 이미 PUBLISHED면 예외")
+        @DisplayName("publishAndOpen: 이미 PUBLISHED면 예외 (P+NS)")
         @Test
         void publishAndOpen_AlreadyPublished_ThrowsException() {
             // given
             Survey survey = createPublishedSurvey();
+
+            // when & then
+            assertThatThrownBy(survey::publishAndOpen)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @DisplayName("SRV-048: P+O -> publishAndOpen -> 에러 (이미 공개)")
+        @Test
+        void publishAndOpen_PublishedOpen_ThrowsException() {
+            // given
+            Survey survey = createPublishedAndOpenSurvey();
+
+            // when & then
+            assertThatThrownBy(survey::publishAndOpen)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @DisplayName("SRV-049: P+C -> publishAndOpen -> 에러 (이미 공개)")
+        @Test
+        void publishAndOpen_PublishedClosed_ThrowsException() {
+            // given
+            Survey survey = createClosedSurvey();
 
             // when & then
             assertThatThrownBy(survey::publishAndOpen)
@@ -245,6 +423,46 @@ class SurveyTest {
             assertThat(survey.getTitle()).isEqualTo("공개 중 수정");
             assertThat(survey.getAccessLevel()).isEqualTo(SurveyAccessLevel.ASSOCIATE);
         }
+
+        @DisplayName("SRV-087: P+O에서 update 성공 (INV-02)")
+        @Test
+        void update_WhenPublishedAndOpen_Success() {
+            // given
+            Survey survey = createPublishedAndOpenSurvey();
+
+            // when
+            survey.update("응답 중 수정", "응답 중 설명", SurveyAccessLevel.MEMBER, null);
+
+            // then
+            assertThat(survey.getTitle()).isEqualTo("응답 중 수정");
+        }
+
+        @DisplayName("SRV-088: P+C에서 update 성공")
+        @Test
+        void update_WhenClosed_Success() {
+            // given
+            Survey survey = createClosedSurvey();
+
+            // when
+            survey.update("마감 후 수정", "마감 후 설명", SurveyAccessLevel.PUBLIC, null);
+
+            // then
+            assertThat(survey.getTitle()).isEqualTo("마감 후 수정");
+        }
+
+        @DisplayName("SRV-091: accessLevel 변경 성공 (INV-05)")
+        @Test
+        void update_ChangeAccessLevel_Success() {
+            // given
+            Survey survey = createPublishedAndOpenSurvey();
+            assertThat(survey.getAccessLevel()).isEqualTo(SurveyAccessLevel.PUBLIC);
+
+            // when
+            survey.update(survey.getTitle(), survey.getDescription(), SurveyAccessLevel.MEMBER, survey.getDeadline());
+
+            // then
+            assertThat(survey.getAccessLevel()).isEqualTo(SurveyAccessLevel.MEMBER);
+        }
     }
 
     @Nested
@@ -263,6 +481,47 @@ class SurveyTest {
             // then
             assertThat(survey.isTrashed()).isTrue();
             assertThat(survey.getTrashedAt()).isNotNull();
+        }
+
+        @DisplayName("SRV-061: P+NS -> trash 성공")
+        @Test
+        void trash_PublishedNotStarted_Success() {
+            // given
+            Survey survey = createPublishedSurvey();
+
+            // when
+            survey.trash();
+
+            // then
+            assertThat(survey.isTrashed()).isTrue();
+            assertThat(survey.getVisibility()).isEqualTo(SurveyVisibility.PUBLISHED);
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.NOT_STARTED);
+        }
+
+        @DisplayName("SRV-062: P+O -> trash 성공")
+        @Test
+        void trash_PublishedOpen_Success() {
+            // given
+            Survey survey = createPublishedAndOpenSurvey();
+
+            // when
+            survey.trash();
+
+            // then
+            assertThat(survey.isTrashed()).isTrue();
+        }
+
+        @DisplayName("SRV-063: P+C -> trash 성공")
+        @Test
+        void trash_PublishedClosed_Success() {
+            // given
+            Survey survey = createClosedSurvey();
+
+            // when
+            survey.trash();
+
+            // then
+            assertThat(survey.isTrashed()).isTrue();
         }
 
         @DisplayName("trash: 이미 휴지통이면 예외")
@@ -389,6 +648,13 @@ class SurveyTest {
         @Test
         void isAcceptingResponses_WhenClosed_ReturnsFalse() {
             Survey survey = createClosedSurvey();
+            assertThat(survey.isAcceptingResponses()).isFalse();
+        }
+
+        @DisplayName("SRV-097: P+NS -> isAcceptingResponses=false (NOT_STARTED)")
+        @Test
+        void isAcceptingResponses_WhenPublishedNotStarted_ReturnsFalse() {
+            Survey survey = createPublishedSurvey();
             assertThat(survey.isAcceptingResponses()).isFalse();
         }
     }

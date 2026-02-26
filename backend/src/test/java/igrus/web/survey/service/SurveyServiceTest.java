@@ -370,6 +370,24 @@ class SurveyServiceTest {
                     .isInstanceOf(SurveyPublishValidationException.class);
         }
 
+        @DisplayName("모든 질문이 soft delete된 경우 SurveyPublishValidationException")
+        @Test
+        void publishSurvey_AllQuestionsDeleted_ThrowsValidationException() {
+            // given
+            Survey survey = createSurveyWithId();
+            SurveyQuestion deletedQuestion = createShortAnswerQuestion(survey, 1);
+            deletedQuestion.delete(operatorAuth.userId());
+            survey.getQuestions().add(deletedQuestion);
+
+            given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
+            given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
+                    .willReturn(Optional.of(survey));
+
+            // when & then
+            assertThatThrownBy(() -> surveyService.publishSurvey(DEFAULT_SURVEY_ID, operatorAuth))
+                    .isInstanceOf(SurveyPublishValidationException.class);
+        }
+
         @DisplayName("일반 회원 시 SurveyAccessDeniedException")
         @Test
         void publishSurvey_ByMember_ThrowsAccessDenied() {
