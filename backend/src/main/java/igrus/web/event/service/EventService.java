@@ -513,17 +513,22 @@ public class EventService {
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
-        // 2. 행사 공개 (도메인 메서드 호출)
+        // 2. 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 3. 행사 공개 (도메인 메서드 호출)
         String previousVisibility = event.getVisibility().name();
         event.publish();
 
-        // 3. 감사 이력 이벤트 발행
+        // 4. 감사 이력 이벤트 발행
         eventPublisher.publishEvent(new EventStatusChangeEvent(
                 eventId, userId, EventChangeType.EVENT_PUBLISHED,
                 previousVisibility, event.getVisibility().name(), null));
 
-        // 4. 응답 반환
-        return EventDetailResponse.from(event);
+        // 5. 응답 반환
+        boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                eventId, userId, ACTIVE_REGISTRATION_STATUSES);
+        return EventDetailResponse.from(event, true, isRegistered);
     }
 
     /**
@@ -542,17 +547,22 @@ public class EventService {
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
-        // 2. 행사 비공개 (도메인 메서드 호출 — OPEN이면 CLOSED 자동 마감)
+        // 2. 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 3. 행사 비공개 (도메인 메서드 호출 — OPEN이면 CLOSED 자동 마감)
         String previousVisibility = event.getVisibility().name();
         event.unpublish();
 
-        // 3. 감사 이력 이벤트 발행
+        // 4. 감사 이력 이벤트 발행
         eventPublisher.publishEvent(new EventStatusChangeEvent(
                 eventId, userId, EventChangeType.EVENT_UNPUBLISHED,
                 previousVisibility, event.getVisibility().name(), null));
 
-        // 4. 응답 반환
-        return EventDetailResponse.from(event);
+        // 5. 응답 반환
+        boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                eventId, userId, ACTIVE_REGISTRATION_STATUSES);
+        return EventDetailResponse.from(event, true, isRegistered);
     }
 
     /**

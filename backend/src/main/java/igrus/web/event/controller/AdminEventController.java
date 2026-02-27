@@ -41,7 +41,7 @@ public class AdminEventController {
 
     @Operation(summary = "관리자 행사 목록 조회", description = "관리자용 행사 목록을 조회합니다. visibility, 행사 진행 상태, 등록 상태별 필터링이 가능합니다. OPERATOR 이상 권한 필요.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "행사 목록 조회 성공"),
+            @ApiResponse(responseCode = "200", description = "행사 목록 조회 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "401", description = "인증 필요"),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
