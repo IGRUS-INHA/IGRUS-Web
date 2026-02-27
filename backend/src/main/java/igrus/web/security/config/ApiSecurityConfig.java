@@ -64,6 +64,9 @@ public class ApiSecurityConfig {
                 // 관리자 전용
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
+                // 파일 저장소 API - DELETE는 운영진 이상만 허용
+                .requestMatchers(HttpMethod.DELETE, SecurityPaths.STORAGE_API).hasAnyRole("OPERATOR", "ADMIN")
+
                 // 댓글 API - ASSOCIATE 이상 (접근 가능한 게시글에 한함)
                 .requestMatchers("/api/v1/posts/*/comments/**").hasAnyRole("ASSOCIATE", "MEMBER", "OPERATOR", "ADMIN")
                 .requestMatchers("/api/v1/comments/**").hasAnyRole("ASSOCIATE", "MEMBER", "OPERATOR", "ADMIN")

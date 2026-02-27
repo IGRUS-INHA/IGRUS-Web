@@ -3,6 +3,8 @@ spring:
     aws:
       secretsmanager:
         enabled: false
+      s3:
+        enabled: false
   data:
     web:
       pageable:
@@ -19,6 +21,10 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: false
+
+logging:
+  level:
+    igrus.web.storage: INFO
 
 springdoc:
   server-url: localhost:8080
@@ -43,3 +49,9 @@ app:
       secret: test-secret
       enabled: false
       timeout: 5000
+  storage:
+    s3:
+      bucket-name: test-bucket
+    upload-url-expiration: 300
+    download-url-expiration: 3600
+    max-file-size: 10485760

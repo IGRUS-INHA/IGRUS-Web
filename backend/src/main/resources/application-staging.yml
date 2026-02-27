@@ -1,6 +1,8 @@
 spring:
   datasource:
     url: jdbc:mysql://igrus-web-staging-mysql-rds.chw2emo2eysf.ap-northeast-2.rds.amazonaws.com:3306/igrus_web_staging
+    username: ${spring.datasource.username}
+    password: ${spring.datasource.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     database: mysql
@@ -24,6 +26,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
+    username: ${spring.mail.username}
+    password: ${spring.mail.password}
     properties:
       mail:
         smtp:
@@ -35,6 +39,8 @@ springdoc:
   server-url: https://staging-api.igrus.co.kr
 
 app:
+  jwt:
+    secret: ${app.jwt.secret}
   cookie:
     secure: true
     same-site: Lax

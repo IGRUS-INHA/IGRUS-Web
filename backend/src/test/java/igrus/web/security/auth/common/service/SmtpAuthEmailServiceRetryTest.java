@@ -37,7 +37,7 @@ class SmtpAuthEmailServiceRetryTest {
     private static final String TEST_CODE = "123456";
     private static final String TEST_RESET_LINK = "https://igrus.inha.ac.kr/reset?token=abc123";
     private static final String TEST_NAME = "홍길동";
-    private static final String FROM_ADDRESS = "noreply@igrus.inha.ac.kr";
+    private static final String FROM_ADDRESS = "test@gmail.com";
 
     @Nested
     @DisplayName("인증 코드 이메일 발송 테스트")
