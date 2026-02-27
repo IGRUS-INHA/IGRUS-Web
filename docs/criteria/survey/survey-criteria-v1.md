@@ -1,8 +1,8 @@
 # 설문 기능 검증 기준서
 
 > **Status**: Draft
-> **Last Updated**: 2026-02-25
-> **Scope**: 설문 생성(Survey CRUD), 질문 관리(Question Management), 응답 제출(Response Submission), 결과 조회(Result View), 설문 상태 관리(Lifecycle)
+> **Last Updated**: 2026-02-26
+> **Scope**: 설문 생성(Survey CRUD), 질문 관리(Question Management), 응답 제출(Response Submission), 본인 응답 조회(My Response), 설문 상태 관리(Lifecycle)
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 > **Epic**: [#406 설문 기능](https://github.com/IGRUS-INHA/IGRUS-Web/issues/406)
 
@@ -13,6 +13,8 @@
 | v1 | 2026-02-23 | 초안 작성. 2축 상태 모델, 불변조건 19개, 상태 매트릭스 |
 | v2 | 2026-02-25 | `DRAFT` → `UNPUBLISHED` 리네이밍. 공개 상태 양방향 전이(`unpublish()` 추가). 유효 상태 조합 4→5개. 시나리오 F11~F16 추가. INV-20 추가 |
 | v3 | 2026-02-25 | 설문 복사·질문 복사 기능 추가. INV-21~INV-25 추가. 시나리오 F17~F20 추가. 권한 매트릭스·테스트 커버리지 업데이트 |
+| v4 | 2026-02-26 | 응답 제출·수정 정책 확정. INV-26~INV-30 추가. 구현 범위·보류 항목 명시. Section 3-4 날짜/시간 형식 완화 |
+| v5 | 2026-02-27 | Section 3-4 유형별 선택 규칙·중복 검증 상세 표 추가. INV-01 동시 제출 경합 에러 정의(409). INV-28 수정 시 답변 제거 동작 명확화 |
 
 ### v2 주요 변경 사항
 
@@ -75,6 +77,20 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | `TIME` | 시간 | 시간 입력 | 시간 선택기 (Time Picker) | 없음 |
 | `FILE_UPLOAD` | 파일 업로드 | 파일 첨부 | 파일 선택 / 드래그 앤 드롭 | 없음 |
 
+### 질문 카테고리 (STI Discriminator)
+
+11가지 질문 유형은 데이터 구조에 따라 4개 카테고리로 분류된다. 같은 카테고리의 질문은 동일한 엔티티 서브클래스와 답변 저장 방식을 공유한다.
+
+| 카테고리 | 질문 엔티티 | 소속 유형 | 답변 엔티티 | 답변 저장 필드 |
+|---------|-----------|----------|-----------|-------------|
+| `TEXT` | `TextSurveyQuestion` | SHORT_ANSWER, PARAGRAPH, DATE, TIME, FILE_UPLOAD | `TextSurveyAnswer` | `textValue` (문자열) |
+| `OPTION` | `OptionSurveyQuestion` | MULTIPLE_CHOICE, CHECKBOX, DROPDOWN | `OptionSurveyAnswer` | `selectedOption` (선택지 FK) |
+| `SCALE` | `LinearScaleSurveyQuestion` | LINEAR_SCALE | `NumericSurveyAnswer` | `numericValue` (정수) |
+| `GRID` | `GridSurveyQuestion` | MULTIPLE_CHOICE_GRID, CHECKBOX_GRID | `GridSurveyAnswer` | `selectedRow` + `selectedOption` (행+열 FK) |
+
+- 동일 카테고리 내에서만 질문 유형 변경이 가능하다 (예: SHORT_ANSWER → PARAGRAPH 가능, SHORT_ANSWER → MULTIPLE_CHOICE 불가)
+- DB는 Single Table Inheritance(STI) 전략으로, `survey_questions` 테이블 하나에 모든 유형을 저장한다
+
 ### 그리드 유형 상세 설명
 
 그리드 유형(`MULTIPLE_CHOICE_GRID`, `CHECKBOX_GRID`)은 표 형태의 질문이다.
@@ -108,6 +124,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **사후조건**: 응답 제출 후 `(survey_id, user_id)` unique constraint 보장
 - **위반 시**: 중복 응답으로 통계 왜곡
 - **검증 계층**: DB unique constraint + 서비스 레벨 중복 검사
+- **동시 제출 경합**: 두 요청이 동시에 중복 검사를 통과하더라도, DB unique constraint가 최종 방어. 이 경우 **409 Conflict (중복 응답)** 에러를 반환한다
 - **관련 코드**: `SurveyResponse` 엔티티 `@UniqueConstraint(columnNames = {"survey_responses_survey_id", "survey_responses_user_id"})`
 
 ### INV-02: 질문 구조는 모든 상태에서 수정 가능
@@ -308,6 +325,73 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 - **근거**: 복사본은 원본과 완전히 독립된 엔티티. ID를 공유하면 수정/삭제 시 원본에 영향
 - **cascade 활용**: `Survey` → `SurveyQuestion` 관계가 `CascadeType.ALL`이므로, 복사된 Survey를 `save()`하면 하위 질문·선택지·행도 자동 persist
+
+### INV-26: 응답 수정은 OPEN 상태에서만 가능 (PUT 전체 교체)
+
+> 회원은 설문이 `PUBLISHED + OPEN` 상태일 때만 본인 응답을 수정할 수 있다. 수정은 **PUT 방식(전체 교체)**으로, 기존 답변을 모두 삭제하고 새 답변으로 대체한다.
+
+- **수정 방식**: PUT (전체 교체) — 구글폼과 동일. 프론트에서 전체 질문을 보여주고 전체를 다시 제출
+- **수정 가능 시점**: `survey.visibility == PUBLISHED && survey.responseStatus == OPEN && survey.trashedAt == null`
+- **수정 횟수 제한**: 없음 (무제한)
+- **CLOSED 이후**: 수정 불가. 본인 응답 조회만 가능
+- **구현 방식**: `response.getAnswers().clear()` (orphanRemoval) → 새 답변 생성
+- **관련 API**: `PUT /api/v1/surveys/{surveyId}/responses/me`
+
+### INV-27: 응답 삭제 미지원
+
+> 1차 구현에서 응답 삭제(철회) 기능은 제공하지 않는다. 제출된 응답은 수정만 가능하며, 삭제할 수 없다.
+
+- **근거**: 응답 삭제 시 unique constraint와 soft delete 간 충돌 문제 발생. 삭제 필요성이 낮으므로 보류
+- **결과**: `SurveyResponse`에 대한 soft delete 시나리오가 발생하지 않아 `(survey_id, user_id)` unique constraint가 안전하게 동작
+
+### INV-28: 질문 변경 후 기존 응답 유효성
+
+> 설문 질문이 변경(추가/삭제/수정)된 후에도 기존에 제출된 응답은 유효하다. 변경 시점 이전의 응답은 별도 재검증 없이 보존된다.
+
+- **삭제된 질문의 답변**: 수정하지 않는 한 DB에 보존됨. 본인 응답 조회 시 삭제된 질문의 답변은 노출하지 않음
+- **새로 추가된 필수 질문**: 기존 응답은 유효 (제출 시점에 해당 질문이 없었으므로)
+- **수정 시(PUT 전체 교체)**: 기존 답변을 모두 제거하고, 현재 활성 질문 기준으로 답변을 재생성함. 따라서 삭제된 질문·행·선택지에 대한 기존 답변은 DB에서도 제거됨. 새로 추가된 필수 질문에는 반드시 답변해야 함
+- **아카이빙**: 수정 전 답변의 별도 이력 보관은 하지 않음 (구글폼 동일)
+
+### INV-29: 본인 응답 조회 범위
+
+> 본인 응답 조회는 자신이 제출한 응답만 확인할 수 있다. 전체 응답 통계나 타인 응답은 조회할 수 없다.
+
+- **조회 대상**: `SurveyResponse.user == 요청자`인 응답 1건
+- **통계 조회**: 운영진 전용 (별도 API, 1차 미구현)
+- **관련 API**: `GET /api/v1/surveys/{surveyId}/responses/me`
+- **accessLevel 무관**: INV-19 적용 (설문 권한이 변경되어도 본인 응답 조회 가능)
+
+### INV-30: FILE_UPLOAD 1차 구현 범위
+
+> 1차 구현에서 FILE_UPLOAD 유형은 텍스트(URL 문자열)로만 저장한다. 실제 파일 업로드 인프라는 별도 이슈([#478](https://github.com/IGRUS-INHA/IGRUS-Web/issues/478))로 구현한다.
+
+- **저장 방식**: `TextSurveyAnswer.textValue`에 URL 문자열 저장
+- **검증**: 필수 질문일 때 비어있지 않은 문자열인지만 검증 (URL 형식 미검증)
+- **확장 계획**: S3 presigned URL 기반 파일 업로드 API 추가 시 기존 도메인 구조 변경 불필요
+
+---
+
+### 1차 구현 범위 및 보류 항목
+
+#### 구현 대상
+
+| 기능 | API | 비고 |
+|------|-----|------|
+| 회원 응답 제출 | `POST /api/v1/surveys/{surveyId}/responses` | INV-01, INV-09, INV-12, INV-15, INV-16 |
+| 비회원 응답 제출 | `POST /api/v1/surveys/{surveyId}/responses/anonymous` | PUBLIC 설문만, 중복 방지 없음 |
+| 회원 응답 수정 | `PUT /api/v1/surveys/{surveyId}/responses/me` | INV-26, OPEN 중에만 |
+| 본인 응답 조회 | `GET /api/v1/surveys/{surveyId}/responses/me` | INV-19, INV-29 |
+
+#### 보류 항목
+
+| 기능 | 사유 | 관련 이슈 |
+|------|------|----------|
+| 비회원 중복 응답 방지 | 본인 식별 방안 미확정 | [#479](https://github.com/IGRUS-INHA/IGRUS-Web/issues/479) |
+| 비회원 응답 수정 | 본인 식별 방안 미확정 | [#479](https://github.com/IGRUS-INHA/IGRUS-Web/issues/479) |
+| FILE_UPLOAD 파일 업로드 인프라 | S3 등 인프라 미구축 | [#478](https://github.com/IGRUS-INHA/IGRUS-Web/issues/478) |
+| 응답 삭제(철회) | INV-27에 의해 미구현 | - |
+| 전체 응답 통계 조회 | 별도 기능으로 분리 | - |
 
 ---
 
@@ -598,9 +682,25 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | LINEAR_SCALE | scaleMin ~ scaleMax 범위의 정수 | 범위 밖 정수, null (필수) |
 | MULTIPLE_CHOICE_GRID | 각 행마다 유효한 option ID 1개 | 행 누락 (필수), 존재하지 않는 row/option ID |
 | CHECKBOX_GRID | 각 행마다 유효한 option ID 1개 이상 | 행 누락 (필수), 빈 선택 |
-| DATE | 유효한 날짜 형식 | 잘못된 형식, null (필수) |
-| TIME | 유효한 시간 형식 | 잘못된 형식, null (필수) |
-| FILE_UPLOAD | 유효한 파일 URL | null (필수), 잘못된 URL |
+| DATE | 비어있지 않은 문자열 (형식은 프론트엔드 자유) | null (필수), 빈 문자열 (필수) |
+| TIME | 비어있지 않은 문자열 (형식은 프론트엔드 자유) | null (필수), 빈 문자열 (필수) |
+| FILE_UPLOAD | 비어있지 않은 문자열 (1차: URL 텍스트 저장, INV-30) | null (필수), 빈 문자열 (필수) |
+
+#### 유형별 선택 규칙 및 검증 상세
+
+| 질문 유형 | 선택 방식 | 필수일 때 | 비필수일 때 | 중복 검증 |
+|----------|----------|----------|-----------|----------|
+| MULTIPLE_CHOICE | 단일 선택 | 정확히 1개 필수 | 빈 응답 허용, 보내면 정확히 1개 | - |
+| DROPDOWN | 단일 선택 | 정확히 1개 필수 | 빈 응답 허용, 보내면 정확히 1개 | - |
+| CHECKBOX | 복수 선택 | 1개 이상 필수 | 빈 응답 허용, 보내면 1개 이상 | 동일 optionId 중복 불가 |
+| LINEAR_SCALE | 단일 값 | 값 필수 | 빈 응답 허용 | - |
+| MC_GRID | 행당 단일 선택 | 모든 활성 행 응답 필수, 행당 정확히 1개 | 빈 응답 허용, 보내면 행당 정확히 1개 | 동일 rowId 중복 불가 |
+| CB_GRID | 행당 복수 선택 | 모든 활성 행 응답 필수, 행당 1개 이상 | 빈 응답 허용, 보내면 행당 1개 이상 | 동일 rowId 중복 불가, 행 내 동일 optionId 중복 불가 |
+
+**공통 검증 규칙:**
+- 동일 questionId에 대한 중복 답변 불가
+- 삭제된(soft delete) 질문/선택지/행에 대한 답변 거부
+- 존재하지 않는 질문/선택지/행 ID에 대한 답변 거부
 
 ### 3-5. 설문 질문 수 경계값
 
@@ -740,6 +840,11 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | INV-23 (복사 시 soft delete 요소 제외) | - | 미작성 |
 | INV-24 (질문 복사 시 질문 수 제한 검증) | - | 미작성 |
 | INV-25 (복사된 엔티티 새 ID 부여) | - | 미작성 |
+| INV-26 (응답 수정 OPEN에서만, PUT 전체 교체) | - | 미작성 |
+| INV-27 (응답 삭제 미지원) | - | N/A (미구현) |
+| INV-28 (질문 변경 후 기존 응답 유효) | - | 미작성 |
+| INV-29 (본인 응답 조회만, 통계 X) | - | 미작성 |
+| INV-30 (FILE_UPLOAD 텍스트 저장) | - | 미작성 |
 
 ### 6-3. 상태 전이 커버리지 (테스트 작성 후 업데이트)
 
