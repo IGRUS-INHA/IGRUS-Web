@@ -66,6 +66,7 @@ class SurveyStatisticsControllerTest extends ServiceIntegrationTestBase {
     private static final String STATISTICS_URL = "/api/v1/surveys/{surveyId}/statistics";
 
     private User operatorUser;
+    private User adminUser;
     private User memberUser;
     private User associateUser;
     private Survey survey;
@@ -75,6 +76,7 @@ class SurveyStatisticsControllerTest extends ServiceIntegrationTestBase {
         setUpBase();
         transactionTemplate.execute(status -> {
             operatorUser = createAndSaveUser("20230001", "operator@inha.edu", UserRole.OPERATOR);
+            adminUser = createAndSaveUser("20230004", "admin@inha.edu", UserRole.ADMIN);
             memberUser = createAndSaveUser("20230002", "member@inha.edu", UserRole.MEMBER);
             associateUser = createAndSaveUser("20230003", "associate@inha.edu", UserRole.ASSOCIATE);
             survey = createAndSavePublishedClosedSurveyWithData();
@@ -165,6 +167,17 @@ class SurveyStatisticsControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.questionStatistics").isArray())
                     .andExpect(jsonPath("$.questionStatistics.length()").value(1))
                     .andExpect(jsonPath("$.questionStatistics[0].responseCount").value(2));
+        }
+
+        @DisplayName("TC-STAT-006: ADMIN 통계 조회 시 200 OK")
+        @Test
+        void getSurveyStatistics_AsAdmin_Returns200() throws Exception {
+            String token = generateToken(adminUser);
+
+            mockMvc.perform(get(STATISTICS_URL, survey.getId())
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalResponseCount").value(2));
         }
 
         @DisplayName("TC-STAT-005: MEMBER 접근 시 부작용 없음 - 403 후 데이터 변경 없음")
