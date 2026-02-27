@@ -42,10 +42,10 @@ public class PresignedUrlService {
     private final ObjectKeyGenerator objectKeyGenerator;
     private final FileMetadataRepository fileMetadataRepository;
 
-    @Value("${igrus.storage.s3.bucket-name}")
+    @Value("${app.storage.s3.bucket-name}")
     private String bucketName;
 
-    @Value("${igrus.storage.upload-url-expiration}")
+    @Value("${app.storage.upload-url-expiration}")
     private long uploadUrlExpiration;
 
     /**
