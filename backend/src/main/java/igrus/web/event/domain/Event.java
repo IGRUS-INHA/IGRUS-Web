@@ -91,7 +91,7 @@ public class Event extends SoftDeletableEntity {
     /** 축 1: 공개 상태 (UNPUBLISHED / PUBLISHED) */
     @Enumerated(EnumType.STRING)
     @Column(name = "event_visibility", nullable = false, length = 20)
-    private EventVisibility visibility;
+    private EventVisibility visibility = EventVisibility.UNPUBLISHED;
 
     /** 축 3: 행사 진행 상태 */
     @Enumerated(EnumType.STRING)
@@ -240,7 +240,7 @@ public class Event extends SoftDeletableEntity {
         }
     }
 
-    // === 축 2: 행사 진행 상태 변경 메서드 ===
+    // === 축 3: 행사 진행 상태 변경 메서드 ===
 
     /**
      * 행사를 진행 중 상태로 변경합니다. (UPCOMING → ONGOING)
@@ -311,16 +311,17 @@ public class Event extends SoftDeletableEntity {
         }
     }
 
-    // === Lazy Evaluation (2축 통합) ===
+    // === Lazy Evaluation (축 2 + 축 3 자동 전이) ===
 
     /**
-     * 현재 시간에 따라 2축 상태를 자동 갱신합니다. (Lazy Evaluation)
+     * 현재 시간에 따라 등록/행사 상태를 자동 갱신합니다. (Lazy Evaluation)
+     * visibility(축 1)는 수동 전환만 가능하므로 Lazy Evaluation 대상이 아닙니다.
      *
-     * <p>축 1 (등록):</p>
+     * <p>축 2 (등록):</p>
      * - NOT_STARTED → OPEN: 신청 시작일이 도래하고 eventStatus != CANCELED
      * - OPEN → CLOSED (DEADLINE_PASSED): 신청 마감일이 경과
      *
-     * <p>축 2 (행사):</p>
+     * <p>축 3 (행사):</p>
      * - UPCOMING → ONGOING: 행사 시작일이 도래
      * - ONGOING → COMPLETED: 행사 종료일이 경과 (registrationStatus도 CLOSED 강제)
      *

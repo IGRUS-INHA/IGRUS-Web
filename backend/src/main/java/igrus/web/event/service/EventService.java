@@ -552,12 +552,21 @@ public class EventService {
 
         // 3. 행사 비공개 (도메인 메서드 호출 — OPEN이면 CLOSED 자동 마감)
         String previousVisibility = event.getVisibility().name();
+        String previousRegStatus = event.getRegistrationStatus().name();
         event.unpublish();
 
-        // 4. 감사 이력 이벤트 발행
+        // 4. 감사 이력 이벤트 발행 (visibility 변경)
         eventPublisher.publishEvent(new EventStatusChangeEvent(
                 eventId, userId, EventChangeType.EVENT_UNPUBLISHED,
                 previousVisibility, event.getVisibility().name(), null));
+
+        // 5. 등록 자동 마감 시 추가 감사 이력 발행
+        if (!previousRegStatus.equals(event.getRegistrationStatus().name())) {
+            eventPublisher.publishEvent(new EventStatusChangeEvent(
+                    eventId, userId, EventChangeType.REGISTRATION_CLOSED_MANUAL,
+                    previousRegStatus, event.getRegistrationStatus().name(),
+                    "비공개 전환에 의한 자동 마감"));
+        }
 
         // 5. 응답 반환
         boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
