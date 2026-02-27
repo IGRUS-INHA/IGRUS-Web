@@ -1,33 +1,35 @@
 # 행사 (Event) 검증 기준서
 
 > **Status**: Draft
-> **Last Updated**: 2026-02-24
-> **Scope**: 행사 생성(Create), 조회(Read), 수정(Update), 삭제(Delete), 상태 관리(Status), Lazy Evaluation, 행사 취소/재활성화, 등록 수동 재오픈
-> **상태 모델**: 2축 모델 (registrationStatus + eventStatus)
+> **Last Updated**: 2026-02-27
+> **Scope**: 행사 생성(Create), 조회(Read), 수정(Update), 삭제(Delete), 상태 관리(Status), Lazy Evaluation, 행사 취소/재활성화, 등록 수동 재오픈, **Visibility(공개/비공개) 관리, 관리자 전용 API**
+> **상태 모델**: 3축 모델 (visibility + registrationStatus + eventStatus)
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
+> **관련 이슈**: [#483 행사 Visibility(공개/비공개) 추가 및 관리자 전용 API](https://github.com/IGRUS-INHA/IGRUS-Web/issues/483)
 
-> **✅ 리팩토링 완료**: 이 문서는 기존 단일 축 FSM(EventStatus 5상태)에서 **2축 모델**(registrationStatus + eventStatus)로 재설계된 사양을 기술한다. 코드 리팩토링이 완료되어 모든 항목이 현재 구현과 일치한다.
+> **3축 모델 확장**: 이 문서는 기존 2축 모델(registrationStatus + eventStatus)에 **3번째 축 visibility**(PUBLISHED/UNPUBLISHED)를 추가한 사양을 기술한다. Visibility 축은 SurveyVisibility 패턴을 따르며, eventStatus/registrationStatus와 독립적으로 동작한다.
 
 ## 목적
 
 이 문서는 행사(Event) 도메인에서 **반드시 지켜져야 하는 규칙**을 명시하여, 코드 변경 시 검증 기준으로 사용한다.
 
-기존 단일 축 FSM(UPCOMING → OPEN → CLOSED → ONGOING → COMPLETED)은 등록 상태와 행사 진행 상태를 하나의 축에서 관리하여, 행사 진행 중 등록 접수가 불가능하고, 상태 의미가 모호한 문제가 있었다. 이를 해결하기 위해 **2축 상태 모델**을 도입한다:
+기존 단일 축 FSM(UPCOMING -> OPEN -> CLOSED -> ONGOING -> COMPLETED)은 등록 상태와 행사 진행 상태를 하나의 축에서 관리하여, 행사 진행 중 등록 접수가 불가능하고, 상태 의미가 모호한 문제가 있었다. 이를 해결하기 위해 **2축 상태 모델**을 도입했으며, 이후 **3축 모델**로 확장한다:
 
-- **축 1: registrationStatus** — 등록(모집) 상태 관리 (NOT_STARTED, OPEN, CLOSED)
-- **축 2: eventStatus** — 행사 진행 상태 관리 (UPCOMING, ONGOING, COMPLETED, CANCELED)
+- **축 1: visibility** -- 공개 상태 관리 (PUBLISHED, UNPUBLISHED) **(신규)**
+- **축 2: registrationStatus** -- 등록(모집) 상태 관리 (NOT_STARTED, OPEN, CLOSED)
+- **축 3: eventStatus** -- 행사 진행 상태 관리 (UPCOMING, ONGOING, COMPLETED, CANCELED)
 
-이로써 **행사 진행 중 등록 접수**(`registrationStatus == OPEN && eventStatus == ONGOING`)가 가능해지고, 각 축의 의미가 명확해진다.
+이로써 운영진이 행사를 준비하는 동안 **비공개로 관리**하고, 준비 완료 시 **공개**하는 워크플로우가 가능해진다. 또한 **관리자 전용 API**를 통해 공개/비공개 행사를 모두 조회하고 관리할 수 있다.
 
 QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관련된 6개 영역을 적용한다:
 
 | # | 영역 | 적용 이유 |
 |---|------|----------|
-| 1 | 도메인 규칙과 불변조건 | 정원-신청자수 정합성, 날짜 순서 제약, 2축 상태 교차 불변조건 |
-| 2 | 상태 모델 | 2축 FSM (registrationStatus 3상태 + eventStatus 4상태), Lazy Evaluation 자동 전이 |
+| 1 | 도메인 규칙과 불변조건 | 정원-신청자수 정합성, 날짜 순서 제약, 3축 상태 교차 불변조건, Visibility 불변조건 |
+| 2 | 상태 모델 | 3축 FSM (visibility 2상태 + registrationStatus 3상태 + eventStatus 4상태), Lazy Evaluation 자동 전이 |
 | 3 | 입력 도메인 분할과 경계값 | 행사 생성/수정 입력값, 날짜 조건, 정원 경계, 등록/행사 기간 겹침 시나리오 |
-| 4 | 권한/보안 정책 | RBAC (ASSOCIATE 차단, OPERATOR+ 관리), 행사 취소/재활성화/수동 재오픈 |
-| 5 | 관측 가능성 | 컨트롤러/서비스 로그 메시지, 수동 재오픈 감사 이력 |
+| 4 | 권한/보안 정책 | RBAC (ASSOCIATE 차단, OPERATOR+ 관리), 관리자 전용 API 접근 제어, Visibility 변경 권한 |
+| 5 | 관측 가능성 | 컨트롤러/서비스 로그 메시지, 수동 재오픈 감사 이력, 관리자 API 로그 |
 | 6 | 테스트 전략 | 테스트-검증 항목 매핑, 커버리지 현황, 누락 식별 |
 
 ---
@@ -92,17 +94,20 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 ### EVT-INV-05: 초기 상태 제약
 
-> 행사 생성 시 초기 상태는 `registrationStatus = NOT_STARTED`, `eventStatus = UPCOMING`, `currentCount = 0`이다.
+> 행사 생성 시 초기 상태는 `visibility = UNPUBLISHED`, `registrationStatus = NOT_STARTED`, `eventStatus = UPCOMING`, `currentCount = 0`이다.
 
-- **사후조건**: `Event.create()` 반환값의 `registrationStatus == NOT_STARTED`, `eventStatus == UPCOMING`, `currentCount == 0`
-- **관련 코드** `(현재 구현 일치)`:
-  - `Event.create()` - `registrationStatus = NOT_STARTED`, `eventStatus = UPCOMING`, `currentCount = 0`
+- **사후조건**: `Event.create()` 반환값의 `visibility == UNPUBLISHED`, `registrationStatus == NOT_STARTED`, `eventStatus == UPCOMING`, `currentCount == 0`
+- **관련 코드**:
+  - `Event.create()` `(현재 구현 일치)`: `registrationStatus = NOT_STARTED`, `eventStatus = UPCOMING`, `currentCount = 0` (Event:124-138)
+  - `Event.create()` **(신규 구현 필요)**: `visibility = UNPUBLISHED` 설정 추가 필요 -- 현재 Event 엔티티에 visibility 필드 자체가 존재하지 않음
+- **SurveyVisibility 패턴 일관성**: `Survey.create()`도 `visibility = UNPUBLISHED`로 초기화 (동일 패턴)
+- **JPA 기본값 vs DB 기본값**: JPA 엔티티의 `Event.create()`에서 `visibility = UNPUBLISHED`를 명시적으로 설정한다 (신규 생성 행사). DB 마이그레이션에서는 `event_visibility` 컬럼 기본값이 `'PUBLISHED'`이다 (기존 데이터 보호, EVT-INV-23 참조). **적용 시점 차이**: 새로운 행사 생성 시 JPA 엔티티 값(`UNPUBLISHED`)이 INSERT 시 사용되어 DB 기본값을 덮어씀. DB 기본값(`PUBLISHED`)은 Flyway 마이그레이션 시 기존 행사 데이터에 적용됨
 
 ### EVT-INV-06: COMPLETED 종단 상태
 
 > `eventStatus == COMPLETED`에서는 어떤 eventStatus로도 전이할 수 없다.
 
-- **사후조건**: `COMPLETED.canTransitionTo(target)` → 모든 target에 대해 `false`
+- **사후조건**: `COMPLETED.canTransitionTo(target)` -> 모든 target에 대해 `false`
 - **위반 시 예외**: `InvalidEventStateTransitionException`
 - **관련 코드** `(현재 구현 일치)`:
   - `EventStatus:41` - `case COMPLETED -> false` (종단 상태)
@@ -134,6 +139,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | `registrationEndAt` | O | 등록 기간 연장 (2축 모델 핵심) |
 | `capacity` | O | 단, `capacity >= currentCount` 필수 (EVT-INV-01 보장) |
 
+- **visibility 수정**: `Event.update()` 메서드로 변경 **불가**. publish/unpublish API로만 변경 (EVT-INV-16 참조)
 - **위반 시 예외**:
   - COMPLETED 수정 시도: `EventNotEditableException`
   - ONGOING에서 금지 필드 변경 시도: `EventNotEditableException`
@@ -141,7 +147,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
   - `Event.update()` - COMPLETED: 수정 불가, ONGOING: 부분 수정(`eventStartAt`/`registrationStartAt` 변경 차단, `capacity >= currentCount` 검증), UPCOMING/CANCELED: 전체 수정 가능
 - **설계 근거**:
   - **ONGOING 부분 수정**: 2축 모델에서 `OPEN + ONGOING`(행사 진행 중 등록 접수)을 지원하려면 `registrationEndAt` 연장이 가능해야 하며, EVT-INV-13(수동 재오픈)에서 "기한 만료 시 `registrationEndAt`을 먼저 연장하라"는 흐름이 ONGOING에서도 동작해야 함
-  - **CANCELED 전체 수정**: 재활성화 전 날짜 수정이 불가하면 데드락 발생 (CANCELED 수정 불가 → 재활성화 → Lazy Evaluation으로 ONGOING 전이 → ONGOING에서도 `eventStartAt` 수정 불가)
+  - **CANCELED 전체 수정**: 재활성화 전 날짜 수정이 불가하면 데드락 발생 (CANCELED 수정 불가 -> 재활성화 -> Lazy Evaluation으로 ONGOING 전이 -> ONGOING에서도 `eventStartAt` 수정 불가)
 - **주의사항**:
   - ONGOING에서 `capacity` 감소 시 `capacity >= currentCount`를 반드시 검증 (EVT-INV-01 위반 방지)
   - CANCELED에서 수정 후에도 `eventStatus`는 CANCELED를 유지 (별도 재활성화 필요)
@@ -172,32 +178,33 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
   - `Event:23` - `@SQLRestriction` 적용
   - `EventService:232` - `event.delete(userId)` 호출
 
-### EVT-INV-10: 교차 축 불변조건 (신규)
+### EVT-INV-10: 교차 축 불변조건
 
-> 두 축의 상태는 다음 교차 조건을 항상 만족한다:
-> 1. `eventStatus == COMPLETED → registrationStatus == CLOSED`
-> 2. `eventStatus == CANCELED → registrationStatus == CLOSED`
-> 3. `eventStatus == COMPLETED → now > eventEndAt`
-> 4. `registrationStatus == NOT_STARTED → eventStatus == UPCOMING`
+> 두 축(registrationStatus, eventStatus)의 상태는 다음 교차 조건을 항상 만족한다:
+> 1. `eventStatus == COMPLETED -> registrationStatus == CLOSED`
+> 2. `eventStatus == CANCELED -> registrationStatus == CLOSED`
+> 3. `eventStatus == COMPLETED -> now > eventEndAt`
+> 4. `registrationStatus == NOT_STARTED -> eventStatus == UPCOMING`
 
 - **보장 방법** `(현재 구현 일치)`:
   - 조건 1, 2: COMPLETED/CANCELED 전이 시 registrationStatus를 CLOSED로 강제 전환
   - 조건 3: Lazy Evaluation에서 `now > eventEndAt`일 때만 COMPLETED 전이
   - 조건 4: 날짜 제약 `regStart < eventStart`에 의해 등록이 항상 행사보다 먼저 시작
 - **검증 방법**: 모든 상태 전이 후 교차 조건 assertion
+- **참고**: visibility 축은 registrationStatus/eventStatus와 독립이므로 이 교차 조건에 포함되지 않음 (EVT-INV-16 참조)
 
-### EVT-INV-11: CANCELED 시 등록 마감 강제 (신규)
+### EVT-INV-11: CANCELED 시 등록 마감 강제
 
 > `eventStatus`가 CANCELED로 전이되면 `registrationStatus`는 CLOSED로 강제 전환되고, `closeReason = MANUAL_CLOSE`로 설정된다.
 
 - **트리거**: 운영자 행사 취소 (`cancel()`)
 - **사후조건**: `registrationStatus == CLOSED && closeReason == MANUAL_CLOSE`
-- **관련 코드** `(현재 구현 일치)`: 새로운 `Event.cancel()` 메서드 구현 필요
+- **관련 코드** `(현재 구현 일치)`: `Event:230-236` - `cancel()`: `eventStatus = CANCELED`, `registrationStatus = CLOSED`, `closeReason = MANUAL_CLOSE`
 - **검증 방법**: 행사 취소 후 registrationStatus와 closeReason assertion
 
-### EVT-INV-12: 유효 복합 상태 조합 (신규)
+### EVT-INV-12: 유효 복합 상태 조합
 
-> 시스템에서 도달 가능한 복합 상태는 다음 7가지만 허용된다:
+> 시스템에서 도달 가능한 복합 상태는 다음 7가지만 허용된다 (registrationStatus x eventStatus). visibility 축은 독립이므로 각 조합에 PUBLISHED/UNPUBLISHED 모두 가능하여 총 14가지 복합 상태가 존재한다.
 
 | registrationStatus | eventStatus | 의미 | 유효 |
 |:---:|:---:|------|:---:|
@@ -221,11 +228,11 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 - **검증 방법**: 모든 상태 전이 후 현재 복합 상태가 유효 조합에 포함되는지 assertion
 
-### EVT-INV-13: 수동 재오픈 조건 (신규)
+### EVT-INV-13: 수동 재오픈 조건
 
-> 운영자가 등록을 수동으로 재오픈(`CLOSED → OPEN`)하려면 다음 5가지 조건을 모두 만족해야 한다:
+> 운영자가 등록을 수동으로 재오픈(`CLOSED -> OPEN`)하려면 다음 5가지 조건을 모두 만족해야 한다:
 > 1. OPERATOR 이상 권한
-> 2. `eventStatus ∉ {COMPLETED, CANCELED}`
+> 2. `eventStatus not in {COMPLETED, CANCELED}`
 > 3. `now <= registrationEndAt` (등록 마감 기한이 아직 경과하지 않음)
 > 4. `!isFull()` (정원에 여유가 있음)
 > 5. 재오픈 사유(`reason`) 필수 입력
@@ -240,25 +247,30 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 ### EVT-INV-14: 행사 상태 변경 감사 이력
 
-> 사용자가 직접 수행한 행사 상태 변경(취소, 재활성화, 등록 수동 마감, 등록 수동 재오픈)은 `EventStatusChangeHistory`에 기록된다. **모든 수동 상태 변경 시 사유(`reason`)가 반드시 기록된다.**
+> 사용자가 직접 수행한 행사 상태 변경(취소, 재활성화, 등록 수동 마감, 등록 수동 재오픈, **공개, 비공개**)은 `EventStatusChangeHistory`에 기록된다. **모든 수동 상태 변경 시 사유(`reason`)가 반드시 기록된다.** 단, publish/unpublish는 사유 불필요 (EVT-INV-19 참조).
 
-- **사전조건**: 모든 수동 상태 변경 시 `reason`이 null이거나 빈 문자열이면 변경 거부 (DTO `@NotBlank` 검증)
-- **사후조건**: 변경 유형(`EventChangeType`), 이전/이후 값, 변경자 정보, 학번(비정규화), **사유**가 감사 이력에 기록됨
+- **사전조건**: 모든 수동 상태 변경 시 `reason`이 null이거나 빈 문자열이면 변경 거부 (DTO `@NotBlank` 검증). **예외: publish/unpublish는 reason 불필요 (EVT-INV-19)**
+- **사후조건**: 변경 유형(`EventChangeType`), 이전/이후 값, 변경자 정보, 학번(비정규화), **사유**가 감사 이력에 기록됨. publish/unpublish 이력에서는 `reason = null`로 저장됨
+- **reason 필드 nullable**: `EventStatusChangeHistory.reason`은 `@Column(columnDefinition = "TEXT")` 선언으로 nullable임 (현재 구현에서 NOT NULL 제약 없음). publish/unpublish 이력 기록 시 `reason = null`로 `EventStatusChangeHistory.create()` 호출. 기존 cancel/reactivate/close/reopen 이력에서는 서비스 계층에서 reason 필수 검증을 유지하되, DB 컬럼 자체는 nullable을 유지 (DDL 변경 불필요)
 - **기록 대상 변경 유형**:
-  - `EVENT_CANCELED` — 행사 취소 (reason 필수)
-  - `EVENT_REACTIVATED` — 행사 재활성화 (reason 필수)
-  - `REGISTRATION_CLOSED_MANUAL` — 등록 수동 마감 (reason 필수)
-  - `REGISTRATION_REOPENED` — 등록 수동 재오픈 (reason 필수)
+  - `EVENT_CANCELED` -- 행사 취소 (reason 필수)
+  - `EVENT_REACTIVATED` -- 행사 재활성화 (reason 필수)
+  - `REGISTRATION_CLOSED_MANUAL` -- 등록 수동 마감 (reason 필수)
+  - `REGISTRATION_REOPENED` -- 등록 수동 재오픈 (reason 필수)
+  - `EVENT_PUBLISHED` -- 행사 공개 (reason 불필요) **(신규)**
+  - `EVENT_UNPUBLISHED` -- 행사 비공개 (reason 불필요) **(신규)**
 - **기록하지 않는 변경**: Lazy Evaluation에 의한 자동 상태 전이 (시간 기반, 매 조회마다 발생하여 노이즈 생성)
 - **구현 방식**: `@EventListener` + `REQUIRES_NEW` 독립 트랜잭션. 이력 저장 실패가 비즈니스 로직에 영향 없음 (try-catch 격리)
 - **설계 결정**: FK 없이 ID만 저장 (soft-delete/탈퇴 후에도 이력 영구 보존), `changedByStudentId` 비정규화 (유저 탈퇴 후에도 조회 가능)
-- **관련 코드** `(현재 구현 일치)`:
-  - `EventStatusChangeHistory` — 감사 이력 엔티티 (`BaseEntity` 상속)
-  - `EventChangeType` — 변경 유형 enum
-  - `EventStatusChangeEvent` — Spring 이벤트 record
-  - `EventStatusChangeReasonRequest` — 공유 요청 DTO (`@NotBlank String reason`)
-  - `RecordEventStatusChangeService` — `@EventListener` + `REQUIRES_NEW` TransactionTemplate 리스너
-  - `EventService:closeEvent()`, `cancelEvent()`, `reactivateEvent()`, `reopenRegistration()` — 이벤트 발행 (모두 `reason` 전달)
+- **관련 코드**:
+  - `EventStatusChangeHistory` -- 감사 이력 엔티티 (`BaseEntity` 상속) `(현재 구현 일치)`. reason 필드는 `@Column(columnDefinition = "TEXT")` nullable로 선언됨 (NOT NULL 제약 없음)
+  - `EventChangeType` -- 변경 유형 enum `(현재 구현 일치)`: `EVENT_CANCELED`, `EVENT_REACTIVATED`, `REGISTRATION_CLOSED_MANUAL`, `REGISTRATION_REOPENED` (4개 값)
+  - `EventChangeType` -- `EVENT_PUBLISHED`, `EVENT_UNPUBLISHED` 2개 값 추가 **(신규 구현 필요)**
+  - `EventStatusChangeEvent` -- Spring 이벤트 record `(현재 구현 일치)`
+  - `EventStatusChangeReasonRequest` -- 공유 요청 DTO (`@NotBlank String reason`) `(현재 구현 일치)`
+  - `RecordEventStatusChangeService` -- `@EventListener` + `REQUIRES_NEW` TransactionTemplate 리스너 `(현재 구현 일치)`
+  - `EventService:closeEvent()`, `cancelEvent()`, `reactivateEvent()`, `reopenRegistration()` -- 이벤트 발행 (모두 `reason` 전달) `(현재 구현 일치)`
+  - `EventService.publishEvent()`, `EventService.unpublishEvent()` -- 이벤트 발행 (`reason = null`) **(신규 구현 필요)**
 - **검증 방법**: 각 수동 상태 변경 후 감사 이력 조회, `reason`이 null/빈 문자열일 때 예외 발생 확인, 이력 레코드의 `reason` 값 검증
 
 ### EVT-INV-15: 신청자가 있는 행사 삭제 불가
@@ -266,22 +278,174 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 > 활성 신청(REGISTERED, WAITING, APPROVED)이 존재하는 행사는 삭제(soft delete)할 수 없다. 신청자가 있는 경우 행사 취소(cancel)를 사용해야 한다.
 
 - **사전조건**: `deleteEvent()` 호출
-- **검증**: `existsByEventIdAndStatusIn(eventId, {REGISTERED, WAITING, APPROVED})` → `true`이면 거부
+- **검증**: `existsByEventIdAndStatusIn(eventId, {REGISTERED, WAITING, APPROVED})` -> `true`이면 거부
 - **위반 시 예외**: `EventNotDeletableException`
 - **설계 근거**: 신청자가 있는 행사를 삭제하면 신청자 입장에서 신청한 행사가 무통보로 사라지므로, 행사 취소를 통해 명시적으로 상태를 관리해야 한다
-- **관련 코드**: `EventService.deleteEvent()` — 권한 확인 후 활성 신청 존재 여부 확인
+- **관련 코드**: `EventService.deleteEvent()` -- 권한 확인 후 활성 신청 존재 여부 확인
 - **검증 방법**: 활성 신청이 있는 행사 삭제 시도 시 예외 발생 확인, 신청자 없는 행사는 정상 삭제 확인
+
+### EVT-INV-16: Visibility 축 독립성 (신규)
+
+> `visibility`(PUBLISHED/UNPUBLISHED)는 `eventStatus`, `registrationStatus`와 **독립적인 3번째 축**이다. visibility 변경은 publish/unpublish 전용 API로만 가능하며, `Event.update()` 메서드로는 변경할 수 없다.
+
+- **사전조건**: visibility 변경은 `POST /api/v1/admin/events/{eventId}/publish` 또는 `POST /api/v1/admin/events/{eventId}/unpublish`로만 요청
+- **사후조건**:
+  - visibility 변경이 eventStatus, registrationStatus에 영향을 주지 않음 (단, unpublish 시 EVT-INV-20의 연동 규칙 적용)
+  - `Event.update()` 호출 전후로 visibility 값이 변경되지 않음
+- **관련 코드** **(신규 구현 필요)**:
+  - `Event.publish()` -- UNPUBLISHED -> PUBLISHED 전이
+  - `Event.unpublish()` -- PUBLISHED -> UNPUBLISHED 전이
+  - `Event.update()` -- visibility 필드 미포함 (기존과 동일)
+- **SurveyVisibility 패턴 일관성**: `Survey`도 `publish()`/`unpublish()` 별도 메서드 사용, `update()` 메서드에서 visibility 미변경
+- **검증 방법**: `Event.update()` 호출 전후 visibility 불변 assertion, publish/unpublish 호출 전후 eventStatus/registrationStatus 불변 assertion (unpublish + OPEN 연동 제외)
+
+### EVT-INV-17: Visibility 양방향 전이 (신규)
+
+> `EventVisibility`는 UNPUBLISHED <-> PUBLISHED 양방향 전이가 가능하다. 동일 상태로의 전이는 거부된다.
+
+- **전이 규칙**:
+  - `UNPUBLISHED -> PUBLISHED`: `publish()` 호출, 항상 허용
+  - `PUBLISHED -> UNPUBLISHED`: `unpublish()` 호출, 항상 허용 (연동: EVT-INV-20)
+  - `PUBLISHED -> PUBLISHED`: 거부 (`InvalidEventStateTransitionException` 또는 동등 예외)
+  - `UNPUBLISHED -> UNPUBLISHED`: 거부 (`InvalidEventStateTransitionException` 또는 동등 예외)
+- **관련 코드** **(신규 구현 필요)**:
+  - `EventVisibility.canTransitionTo(target)` -- `this != target` (SurveyVisibility와 동일 패턴)
+- **SurveyVisibility 패턴 일관성**: `SurveyVisibility.canTransitionTo()` = `this != target` (양방향, 동일 상태 거부)
+- **검증 방법**: 모든 4가지 전이 조합 테스트 (2 유효 + 2 무효)
+
+### EVT-INV-18: 공개 API에서 UNPUBLISHED 행사 접근 차단 (신규)
+
+> 공개 API(`/api/v1/events`, `/api/v1/events/{eventId}`)에서는 `visibility == PUBLISHED`인 행사만 접근 가능하다.
+
+- **영향 범위**:
+  - `GET /api/v1/events` -- PUBLISHED 행사만 목록에 포함
+  - `GET /api/v1/events/{eventId}` -- UNPUBLISHED 행사 접근 시 `EventNotFoundException` (404) 반환
+- **사후조건**:
+  - 목록 조회 응답에 `visibility == UNPUBLISHED`인 행사가 포함되지 않음
+  - 단건 조회에서 UNPUBLISHED 행사 ID로 요청 시 404
+- **관련 코드** **(신규 구현 필요)**:
+  - `EventService.getEventList()` -- PUBLISHED 필터 추가
+  - `EventService.getEvent()` -- UNPUBLISHED 행사 접근 시 `EventNotFoundException` throw
+  - `EventRepository` -- visibility 기반 쿼리 추가
+- **주의사항**:
+  - UNPUBLISHED 행사가 존재하지만 404를 반환하는 것은 **정보 은폐**(information hiding)이며 의도된 동작임
+  - 관리자 API(`/api/v1/admin/events/**`)에서는 UNPUBLISHED 행사도 접근 가능 (EVT-INV-21 참조)
+- **검증 방법**:
+  - 공개 목록 API에서 UNPUBLISHED 행사가 결과에 포함되지 않는지 확인
+  - 공개 단건 API에서 UNPUBLISHED 행사 ID로 접근 시 404 확인
+  - PUBLISHED 행사는 기존과 동일하게 정상 접근 확인
+
+### EVT-INV-19: Publish/Unpublish 사유 불필요 (신규)
+
+> publish 및 unpublish 작업에는 사유(reason)가 필요하지 않다. 요청 body 없이 호출 가능하다.
+
+- **근거**: 이슈 #483 결정사항 -- "Unpublish 사유: 불필요. 사유 없이 바로 unpublish 가능"
+- **SurveyVisibility 패턴 일관성**: Survey의 publish/unpublish도 사유 불필요 (SurveyController에서 body 없이 호출)
+- **사전조건**: `POST /api/v1/admin/events/{eventId}/publish` 및 `POST /api/v1/admin/events/{eventId}/unpublish` 요청에 request body 불필요
+- **사후조건**: 감사 이력(`EventStatusChangeHistory`)에 `reason = null`로 기록됨 (EVT-INV-14 참조). `EventStatusChangeHistory.reason` 컬럼은 nullable이므로 DDL 변경 불필요
+- **검증 방법**: body 없이 publish/unpublish 호출 시 정상 동작 확인
+
+### EVT-INV-20: Unpublish 시 등록 마감 연동 (신규)
+
+> 행사를 비공개(unpublish)할 때, `registrationStatus == OPEN`이면 자동으로 `registrationStatus = CLOSED`, `closeReason = MANUAL_CLOSE`로 처리한다.
+
+- **근거**: 비공개 행사에 등록이 열려 있으면 일반 사용자가 행사를 볼 수 없으면서도 등록이 열려 있는 비정상 상태가 됨
+- **SurveyVisibility 패턴 일관성**: `Survey.unpublish()`도 `responseStatus == OPEN`이면 자동으로 `CLOSED`로 전환 (Survey.java:137-139)
+- **사전조건**: `unpublish()` 호출 시 `registrationStatus == OPEN`
+- **사후조건**:
+  - `visibility == UNPUBLISHED`
+  - `registrationStatus == CLOSED`
+  - `closeReason == MANUAL_CLOSE`
+- **비연동 케이스**:
+  - `registrationStatus == NOT_STARTED` 시 unpublish: registrationStatus 변경 없음
+  - `registrationStatus == CLOSED` 시 unpublish: registrationStatus/closeReason 변경 없음 (이미 마감)
+  - **COMPLETED/CANCELED 상태에서의 unpublish**: `eventStatus == COMPLETED`(EVT-INV-10) 또는 `eventStatus == CANCELED`(EVT-INV-11)일 때 `registrationStatus`는 이미 CLOSED이므로(교차 축 불변조건에 의해 보장), 등록 마감 연동이 발생하지 않음. 따라서 COMPLETED/CANCELED 행사의 unpublish는 `visibility` 변경만 수행하고 `registrationStatus`/`closeReason`에는 추가 연동 불필요
+- **관련 코드** **(신규 구현 필요)**:
+  - `Event.unpublish()` -- visibility 변경 + registrationStatus 연동 로직
+- **검증 방법**:
+  - OPEN 상태에서 unpublish 시 registrationStatus = CLOSED, closeReason = MANUAL_CLOSE 확인
+  - NOT_STARTED 상태에서 unpublish 시 registrationStatus 변경 없음 확인
+  - CLOSED 상태에서 unpublish 시 기존 closeReason 유지 확인
+
+### EVT-INV-21: 관리자 API에서 Visibility 무관 접근 (신규)
+
+> 관리자 전용 API(`/api/v1/admin/events/**`)에서는 PUBLISHED, UNPUBLISHED 행사 모두 조회 가능하다.
+
+- **영향 범위**:
+  - `GET /api/v1/admin/events` -- PUBLISHED + UNPUBLISHED 행사 모두 반환, eventStatus/registrationStatus 필터 지원
+  - `GET /api/v1/admin/events/{eventId}` -- UNPUBLISHED 행사도 정상 조회
+- **사후조건**: visibility 값과 무관하게 모든 행사가 조회됨
+- **관련 코드** **(신규 구현 필요)**:
+  - `AdminEventController` -- 관리자 전용 컨트롤러 (신규)
+  - `EventService` -- 관리자용 조회 메서드 추가 (또는 AdminEventService 분리)
+- **검증 방법**: 관리자 API로 UNPUBLISHED 행사 목록 조회 시 포함 확인, 단건 조회 시 정상 반환 확인
+
+### EVT-INV-22: Visibility DTO 필드 포함 (신규)
+
+> `EventDetailResponse`, `EventListResponse`에 `visibility` 필드가 포함된다.
+
+- **사후조건**:
+  - `EventDetailResponse.visibility` -- 행사의 현재 visibility 값 (PUBLISHED 또는 UNPUBLISHED)
+  - `EventListResponse.visibility` -- 행사의 현재 visibility 값
+- **관련 코드** **(신규 구현 필요)**:
+  - `EventDetailResponse` -- visibility 필드 추가
+  - `EventListResponse` -- visibility 필드 추가
+- **주의사항**: 공개 API(`/api/v1/events/**`)의 응답에서도 visibility 필드가 포함되지만, 공개 API에서는 항상 `PUBLISHED`만 반환됨 (EVT-INV-18에 의해 UNPUBLISHED 행사는 접근 불가)
+- **검증 방법**: 응답 JSON에 `visibility` 필드가 포함되는지 확인, 공개 API에서는 항상 PUBLISHED 값만 반환되는지 확인
+
+### EVT-INV-23: DB 마이그레이션 기존 데이터 정합성 (신규)
+
+> Flyway 마이그레이션으로 `event_visibility` 컬럼을 추가할 때, 기존 행사 데이터는 모두 `PUBLISHED`로 설정된다.
+
+- **근거**: 기존 행사는 이미 공개된 상태이므로 마이그레이션 후에도 동일하게 공개 상태를 유지해야 함
+- **DDL 스펙**:
+  - 컬럼명: `event_visibility`
+  - 타입: `VARCHAR(20)`
+  - 제약: `NOT NULL`
+  - 기본값: `'PUBLISHED'`
+- **사후조건**: 마이그레이션 후 모든 기존 행사의 `event_visibility = 'PUBLISHED'`
+- **주의사항**: 새로 생성되는 행사는 `UNPUBLISHED`가 기본값 (EVT-INV-05), DB 기본값 `'PUBLISHED'`와 다름. **이유**: DB 기본값 `'PUBLISHED'`는 마이그레이션 시 기존 데이터에 적용되며, 신규 행사는 `Event.create()`에서 `visibility = UNPUBLISHED`를 명시적으로 설정하여 INSERT 시 DB 기본값을 덮어쓴다. 즉 DB DEFAULT는 마이그레이션 전용, JPA 엔티티 초기값은 신규 생성 전용
+- **검증 방법**: 마이그레이션 후 `SELECT COUNT(*) FROM events WHERE event_visibility != 'PUBLISHED'` = 0 확인
 
 ---
 
 ## 2. 상태 모델 (State Machine & Transitions)
 
+### 2-0. 축 0: visibility FSM (공개 상태) -- 신규
+
+```
+UNPUBLISHED ⇄ PUBLISHED
+```
+
+| 상태 | 의미 |
+|------|------|
+| `UNPUBLISHED` | 비공개 (일반 사용자에게 노출되지 않음) |
+| `PUBLISHED` | 공개 (일반 사용자에게 노출) |
+
+**전이 테이블**:
+
+| 전이 | 트리거 | 사전조건 | 사후조건 | 비고 |
+|------|--------|---------|---------|------|
+| UNPUBLISHED -> PUBLISHED | Manual (publish) | OPERATOR+ 권한 | `visibility = PUBLISHED`, registrationStatus/eventStatus 변경 없음 | 사유 불필요, registrationStatus 연동 없음 |
+| PUBLISHED -> UNPUBLISHED | Manual (unpublish) | OPERATOR+ 권한 | `visibility = UNPUBLISHED`. registrationStatus == OPEN이면 `registrationStatus = CLOSED, closeReason = MANUAL_CLOSE` (EVT-INV-20). NOT_STARTED/CLOSED이면 변경 없음 | 사유 불필요 |
+
+**관련 코드** **(신규 구현 필요)**:
+- `EventVisibility` enum -- PUBLISHED, UNPUBLISHED (SurveyVisibility 패턴)
+- `Event.publish()` -- UNPUBLISHED -> PUBLISHED
+- `Event.unpublish()` -- PUBLISHED -> UNPUBLISHED + registrationStatus 연동
+- `AdminEventController` -- publish/unpublish API 엔드포인트
+
+**eventStatus/registrationStatus와의 독립성**:
+- visibility 전이는 eventStatus/registrationStatus 전이와 독립
+- eventStatus가 COMPLETED든 CANCELED든 visibility 변경 가능 (행사 상태와 무관하게 공개/비공개 전환)
+- Lazy Evaluation은 visibility에 영향을 주지 않으며, visibility도 Lazy Evaluation에 영향을 주지 않음
+
 ### 2-1. 축 1: registrationStatus FSM (등록 상태)
 
 ```
-NOT_STARTED ──→ OPEN ──→ CLOSED
-                  ↑          │
-                  └──────────┘ (자동 재오픈 또는 수동 재오픈)
+NOT_STARTED --> OPEN --> CLOSED
+                  ^          |
+                  +----------+ (자동 재오픈 또는 수동 재오픈)
 ```
 
 | 상태 | 의미 |
@@ -294,47 +458,48 @@ NOT_STARTED ──→ OPEN ──→ CLOSED
 
 | 전이 | 트리거 | 사전조건 | 사후조건 | closeReason |
 |------|--------|---------|---------|-------------|
-| NOT_STARTED → OPEN | Lazy | `now >= regStart && eventStatus != CANCELED` | `registrationStatus = OPEN` | - |
-| OPEN → CLOSED | Lazy | `now > regEnd` | `registrationStatus = CLOSED` | DEADLINE_PASSED |
-| OPEN → CLOSED | Auto | `currentCount >= capacity` | `registrationStatus = CLOSED` | CAPACITY_FULL |
-| OPEN → CLOSED | Manual | 운영자 수동 마감, **사유 필수** | `registrationStatus = CLOSED` | MANUAL_CLOSE |
-| CLOSED → OPEN | Auto | `closeReason == CAPACITY_FULL && !isFull() && now < regEnd && eventStatus != CANCELED` | `registrationStatus = OPEN`, `closeReason = null` | - |
-| CLOSED → OPEN | Manual | 운영자 수동 재오픈 (EVT-INV-13 조건 전부 충족) | `registrationStatus = OPEN`, `closeReason = null` | - |
-| NOT_STARTED → CLOSED | Forced | `eventStatus` → CANCELED 전이 (EVT-INV-11) | `registrationStatus = CLOSED` | MANUAL_CLOSE |
+| NOT_STARTED -> OPEN | Lazy | `now >= regStart && eventStatus != CANCELED` | `registrationStatus = OPEN` | - |
+| OPEN -> CLOSED | Lazy | `now > regEnd` | `registrationStatus = CLOSED` | DEADLINE_PASSED |
+| OPEN -> CLOSED | Auto | `currentCount >= capacity` | `registrationStatus = CLOSED` | CAPACITY_FULL |
+| OPEN -> CLOSED | Manual | 운영자 수동 마감, **사유 필수** | `registrationStatus = CLOSED` | MANUAL_CLOSE |
+| OPEN -> CLOSED | Forced | `unpublish()` 연동 (EVT-INV-20) | `registrationStatus = CLOSED` | MANUAL_CLOSE |
+| CLOSED -> OPEN | Auto | `closeReason == CAPACITY_FULL && !isFull() && now < regEnd && eventStatus != CANCELED` | `registrationStatus = OPEN`, `closeReason = null` | - |
+| CLOSED -> OPEN | Manual | 운영자 수동 재오픈 (EVT-INV-13 조건 전부 충족) | `registrationStatus = OPEN`, `closeReason = null` | - |
+| NOT_STARTED -> CLOSED | Forced | `eventStatus` -> CANCELED 전이 (EVT-INV-11) | `registrationStatus = CLOSED` | MANUAL_CLOSE |
 
 **관련 코드** `(현재 구현 일치)`:
-- 현재: 단일 `EventStatus`의 UPCOMING → OPEN → CLOSED 부분이 이 축에 해당
+- 현재: 단일 `EventStatus`의 UPCOMING -> OPEN -> CLOSED 부분이 이 축에 해당
 - 목표: 별도의 `RegistrationStatus` enum과 전이 메서드
 
 ### 2-2. 축 2: eventStatus FSM (행사 상태)
 
 ```
-UPCOMING ──→ ONGOING ──→ COMPLETED (종단)
-   │            │
-   └──→ CANCELED ←──┘
-         │
-         └──→ UPCOMING 또는 ONGOING (재활성화)
+UPCOMING --> ONGOING --> COMPLETED (종단)
+   |            |
+   +---> CANCELED <--+
+         |
+         +--> UPCOMING 또는 ONGOING (재활성화)
 ```
 
 | 상태 | 의미 |
 |------|------|
 | `UPCOMING` | 행사 시작 전 |
 | `ONGOING` | 행사 진행 중 |
-| `COMPLETED` | 행사 완료 (종단 — 되돌릴 수 없음) |
+| `COMPLETED` | 행사 완료 (종단 -- 되돌릴 수 없음) |
 | `CANCELED` | 행사 취소 (되돌릴 수 있음) |
 
 **전이 테이블**:
 
 | 전이 | 트리거 | 사전조건 | 사후조건 |
 |------|--------|---------|---------|
-| UPCOMING → ONGOING | Lazy | `now >= eventStartAt` | `eventStatus = ONGOING` |
-| ONGOING → COMPLETED | Lazy | `now > eventEndAt` | `eventStatus = COMPLETED`, `registrationStatus = CLOSED` (EVT-INV-10) |
-| UPCOMING → CANCELED | Manual | OPERATOR+ 권한, **사유 필수** | `eventStatus = CANCELED`, `registrationStatus = CLOSED` (EVT-INV-11) |
-| ONGOING → CANCELED | Manual | OPERATOR+ 권한, **사유 필수** | `eventStatus = CANCELED`, `registrationStatus = CLOSED` (EVT-INV-11) |
-| CANCELED → UPCOMING/ONGOING | Manual | OPERATOR+ 권한, **사유 필수**, 재활성화 | Lazy Evaluation 실행하여 현재 시간 기반으로 올바른 상태 복원 |
+| UPCOMING -> ONGOING | Lazy | `now >= eventStartAt` | `eventStatus = ONGOING` |
+| ONGOING -> COMPLETED | Lazy | `now > eventEndAt` | `eventStatus = COMPLETED`, `registrationStatus = CLOSED` (EVT-INV-10) |
+| UPCOMING -> CANCELED | Manual | OPERATOR+ 권한, **사유 필수** | `eventStatus = CANCELED`, `registrationStatus = CLOSED` (EVT-INV-11) |
+| ONGOING -> CANCELED | Manual | OPERATOR+ 권한, **사유 필수** | `eventStatus = CANCELED`, `registrationStatus = CLOSED` (EVT-INV-11) |
+| CANCELED -> UPCOMING/ONGOING | Manual | OPERATOR+ 권한, **사유 필수**, 재활성화 | Lazy Evaluation 실행하여 현재 시간 기반으로 올바른 상태 복원 |
 
 **관련 코드** `(현재 구현 일치)`:
-- 현재: 단일 `EventStatus`의 ONGOING → COMPLETED 부분이 이 축에 해당
+- 현재: 단일 `EventStatus`의 ONGOING -> COMPLETED 부분이 이 축에 해당
 - 목표: 별도의 `EventStatus` enum (UPCOMING, ONGOING, COMPLETED, CANCELED)
 
 ### 2-3. 교차 축 불변조건 + 복합 상태 유효 조합
@@ -345,9 +510,11 @@ UPCOMING ──→ ONGOING ──→ COMPLETED (종단)
 
 이 조합은 등록 기간과 행사 기간이 겹치는 경우(예: `eventStartAt < regEnd`)에 발생한다. 이것이 2축 모델 도입의 핵심 이유이며, 기존 단일 축 FSM에서는 표현할 수 없었던 상태이다.
 
+**visibility와의 독립성**: visibility는 registrationStatus/eventStatus의 교차 축 불변조건에 참여하지 않는다. UNPUBLISHED + OPEN + ONGOING, PUBLISHED + CLOSED + CANCELED 등 모든 visibility x (registrationStatus, eventStatus) 조합이 유효하다.
+
 ### 2-4. Lazy Evaluation (통합)
 
-`updateStatusIfNeeded(Instant now)` 메서드는 조회 시점에 호출되어 두 축의 상태를 현재 시간에 맞게 자동 갱신한다.
+`updateStatusIfNeeded(Instant now)` 메서드는 조회 시점에 호출되어 두 축(registrationStatus, eventStatus)의 상태를 현재 시간에 맞게 자동 갱신한다. **visibility 축은 Lazy Evaluation 대상이 아니다.**
 
 ```
 updateStatusIfNeeded(now):
@@ -355,18 +522,20 @@ updateStatusIfNeeded(now):
   if (registrationStatus == NOT_STARTED
       && now >= registrationStartAt
       && eventStatus != CANCELED)
-    → registrationStatus = OPEN
+    -> registrationStatus = OPEN
 
   if (registrationStatus == OPEN && now > registrationEndAt)
-    → registrationStatus = CLOSED, closeReason = DEADLINE_PASSED
+    -> registrationStatus = CLOSED, closeReason = DEADLINE_PASSED
 
   // 2. 행사 축
   if (eventStatus == UPCOMING && now >= eventStartAt)
-    → eventStatus = ONGOING
+    -> eventStatus = ONGOING
 
   if (eventStatus == ONGOING && now > eventEndAt)
-    → eventStatus = COMPLETED
-    → if (registrationStatus != CLOSED) registrationStatus = CLOSED
+    -> eventStatus = COMPLETED
+    -> if (registrationStatus != CLOSED) registrationStatus = CLOSED
+
+  // visibility 축: 변경 없음 (시간 기반 자동 전이 없음)
 ```
 
 - **관련 코드** `(현재 구현 일치)`:
@@ -378,7 +547,7 @@ updateStatusIfNeeded(now):
   - `EventService:158-162` - Lazy 갱신 후 상태 변경된 행사 필터에서 제외
 - **참고**: 각 축은 독립적으로 전이되므로 실행 순서가 결과에 영향을 주지 않음 (단, eventStatus가 COMPLETED가 되면 registrationStatus를 CLOSED로 강제)
 
-### 2-5. CLOSED → OPEN 재전이 조건
+### 2-5. CLOSED -> OPEN 재전이 조건
 
 등록이 CLOSED된 행사에서 다시 OPEN으로 전이되는 경우는 두 가지이다:
 
@@ -402,31 +571,38 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | 조건 | 위반 시 |
 |------|---------|
 | OPERATOR+ 권한 | `EventAccessDeniedException` |
-| `eventStatus ∉ {COMPLETED, CANCELED}` | 거부 (행사가 종료/취소된 상태) |
-| `now <= registrationEndAt` | 거부 (기한 만료 — `regEnd` 연장 후 재시도) |
+| `eventStatus not in {COMPLETED, CANCELED}` | 거부 (행사가 종료/취소된 상태) |
+| `now <= registrationEndAt` | 거부 (기한 만료 -- `regEnd` 연장 후 재시도) |
 | `!isFull()` | 거부 (OPEN 직후 자동 재마감 방지) |
 | `reason` 비어있지 않음 | 거부 (감사 이력 필수) |
 
-- **관련 코드** `(현재 구현 일치)`: 새로운 `reopenRegistration(reason)` 메서드 구현 필요
+- **관련 코드** `(현재 구현 일치)`: `Event:190` - `reopenRegistration()`, `EventService:389-424` - `reopenRegistration(eventId, userId, reason)`
 
 ### 2-6. 금지된 전이 (Invalid Transition)
+
+#### visibility 축 (신규)
+
+| 시도 | 예상 결과 | 이유 |
+|------|----------|------|
+| PUBLISHED -> PUBLISHED | 거부 | 이미 공개 상태 |
+| UNPUBLISHED -> UNPUBLISHED | 거부 | 이미 비공개 상태 |
 
 #### registrationStatus 축
 
 | 시도 | 예상 결과 | 이유 |
 |------|----------|------|
-| NOT_STARTED → CLOSED (단독) | 거부 | OPEN 단계를 거쳐야 함. 단, 행사 취소(EVT-INV-11)에 의한 강제 전환은 예외 |
-| OPEN → NOT_STARTED | 거부 | 역방향 전이 불가 |
-| CLOSED → NOT_STARTED | 거부 | 역방향 전이 불가 |
+| NOT_STARTED -> CLOSED (단독) | 거부 | OPEN 단계를 거쳐야 함. 단, 행사 취소(EVT-INV-11)에 의한 강제 전환은 예외 |
+| OPEN -> NOT_STARTED | 거부 | 역방향 전이 불가 |
+| CLOSED -> NOT_STARTED | 거부 | 역방향 전이 불가 |
 
 #### eventStatus 축
 
 | 시도 | 예상 결과 | 이유 |
 |------|----------|------|
-| UPCOMING → COMPLETED | 거부 | ONGOING 단계를 거쳐야 함 |
-| ONGOING → UPCOMING | 거부 | 역방향 전이 불가 |
-| COMPLETED → 어떤 상태든 | 거부 | 종단 상태 (EVT-INV-06) |
-| CANCELED → COMPLETED | 거부 | CANCELED에서는 재활성화(UPCOMING/ONGOING)만 가능 |
+| UPCOMING -> COMPLETED | 거부 | ONGOING 단계를 거쳐야 함 |
+| ONGOING -> UPCOMING | 거부 | 역방향 전이 불가 |
+| COMPLETED -> 어떤 상태든 | 거부 | 종단 상태 (EVT-INV-06) |
+| CANCELED -> COMPLETED | 거부 | CANCELED에서는 재활성화(UPCOMING/ONGOING)만 가능 |
 
 ---
 
@@ -446,10 +622,13 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | `capacity` | 1 이상 정수 | null, 0, 음수 | 1 (최소 유효), 0 (최대 무효) | `@NotNull`, `@Min(1)` |
 | `registrationType` | `AUTO_APPROVE` 또는 `MANUAL_APPROVE` | null, 유효하지 않은 값 | - | `@NotNull` |
 
+**참고**: `visibility`는 CreateEventRequest에 포함되지 않음. 생성 시 기본값 UNPUBLISHED가 적용됨 (EVT-INV-05).
+
 ### 3-2. 행사 수정 입력값 (UpdateEventRequest)
 
 `CreateEventRequest`와 동일하되, 다음 차이점:
 - `registrationType` 필드 **없음** (생성 시 결정, 수정 불가)
+- `visibility` 필드 **없음** (publish/unpublish API로만 변경, EVT-INV-16)
 - `registrationStartAt`에 대한 미래 제약 **없음** (기존 값 보존 가능)
 - 수정 범위는 `eventStatus`에 따라 다름 (EVT-INV-07). COMPLETED에서는 수정 불가, ONGOING에서는 `eventStartAt`/`registrationStartAt` 변경 불가
 
@@ -459,12 +638,12 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 |----------|---------|----------|
 | `regStart == regEnd` | **무효** | EVT-INV-02의 `regStart < regEnd` (strict) 제약에 의해 `InvalidEventDateException` 발생 |
 | `regStart > regEnd` | **무효** | `InvalidEventDateException` |
-| `regStart == eventStart` | **무효** | `!regStart.isBefore(eventStart)` → true → 예외 발생 |
-| `regStart` 1ms before `eventStart` | **유효** | `regStart.isBefore(eventStart)` → true |
+| `regStart == eventStart` | **무효** | `!regStart.isBefore(eventStart)` -> true -> 예외 발생 |
+| `regStart` 1ms before `eventStart` | **유효** | `regStart.isBefore(eventStart)` -> true |
 | `regEnd == eventStart` | **유효** | 등록이 행사 시작 시점에 마감 (기존에는 무효였으나 변경) |
 | `regEnd == eventEnd` | **유효** | 등록이 행사 종료까지 가능 |
-| `regEnd > eventEnd` | **무효** | `regEnd.isAfter(eventEnd)` → true → 예외 발생 |
-| `eventStart == eventEnd` | **유효** | `eventStart.isAfter(eventEnd)` → false |
+| `regEnd > eventEnd` | **무효** | `regEnd.isAfter(eventEnd)` -> true -> 예외 발생 |
+| `eventStart == eventEnd` | **유효** | `eventStart.isAfter(eventEnd)` -> false |
 | `eventStart > eventEnd` | **무효** | `InvalidEventDateException` |
 
 ### 3-4. 겹침 시나리오 엣지 케이스
@@ -481,7 +660,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | 행사 취소 | 운영자가 UPCOMING/ONGOING에서 취소 | reg=CLOSED(MANUAL_CLOSE), event=CANCELED |
 | 행사 재활성화 | 취소 후 운영자가 복원 | Lazy Evaluation으로 두 축 모두 현재 시간 기반 복원 |
 | 기한 만료 후 수동 재오픈 시도 | `now > regEnd`, 운영자 재오픈 시도 | **거부** (`regEnd` 연장 필요) |
-| 기한 연장 후 수동 재오픈 | `regEnd` 연장 → 운영자 재오픈 | reg=OPEN, closeReason=null |
+| 기한 연장 후 수동 재오픈 | `regEnd` 연장 -> 운영자 재오픈 | reg=OPEN, closeReason=null |
 | 수동 마감 후 수동 재오픈 | `now <= regEnd`, 운영자 재오픈 | reg=OPEN, closeReason=null |
 
 ### 3-5. 정원 경계값 분석
@@ -494,16 +673,35 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | `1` | **유효** (최소) | 1명 신청 시 즉시 정원 마감 |
 | `Integer.MAX_VALUE` | **유효** | 실질적으로 무제한 |
 
+### 3-6. Visibility 관련 엣지 케이스 (신규)
+
+| 시나리오 | 초기 상태 | 작업 | 기대 결과 |
+|---------|----------|------|----------|
+| 비공개 행사에 대해 공개 API 목록 조회 | vis=UNPUBLISHED | `GET /api/v1/events` | 목록에 포함되지 않음 |
+| 비공개 행사에 대해 공개 API 단건 조회 | vis=UNPUBLISHED | `GET /api/v1/events/{id}` | 404 (EventNotFoundException) |
+| 비공개 행사를 관리자가 목록 조회 | vis=UNPUBLISHED | `GET /api/v1/admin/events` | 목록에 포함됨 |
+| 비공개 행사를 관리자가 단건 조회 | vis=UNPUBLISHED | `GET /api/v1/admin/events/{id}` | 정상 반환 |
+| 공개 후 다시 비공개 전환 | vis=PUBLISHED, reg=OPEN | unpublish | vis=UNPUBLISHED, reg=CLOSED(MANUAL_CLOSE) |
+| 공개 후 다시 비공개 전환 (NOT_STARTED) | vis=PUBLISHED, reg=NOT_STARTED | unpublish | vis=UNPUBLISHED, reg=NOT_STARTED (변경 없음) |
+| 비공개 상태에서 재공개 | vis=UNPUBLISHED | publish | vis=PUBLISHED |
+| 이미 공개된 행사 공개 시도 | vis=PUBLISHED | publish | 거부 (동일 상태 전이) |
+| 이미 비공개인 행사 비공개 시도 | vis=UNPUBLISHED | unpublish | 거부 (동일 상태 전이) |
+| COMPLETED 행사 unpublish | vis=PUBLISHED, event=COMPLETED | unpublish | vis=UNPUBLISHED, reg/event 변경 없음 (이미 CLOSED) |
+| CANCELED 행사 publish | vis=UNPUBLISHED, event=CANCELED | publish | vis=PUBLISHED (eventStatus와 독립) |
+| unpublish + 자동 재오픈 경합 | vis=PUBLISHED, reg=OPEN, close by capacity | unpublish 후 신청 취소 | reg=CLOSED(MANUAL_CLOSE), 자동 재오픈 불가 (closeReason이 MANUAL_CLOSE이므로) |
+
 ---
 
 ## 4. 권한/보안 정책 (RBAC & Authorization)
 
 ### 4-1. 역할별 접근 제어 매트릭스
 
+#### 공개 API (`/api/v1/events/**`)
+
 | 작업 | 비인증 | ASSOCIATE | MEMBER | OPERATOR | ADMIN |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| 행사 목록 조회 | 401 | O | O | O | O |
-| 행사 상세 조회 | 401 | **403** | O | O | O |
+| 행사 목록 조회 (PUBLISHED만) | 401 | O | O | O | O |
+| 행사 상세 조회 (PUBLISHED만) | 401 | **403** | O | O | O |
 | 행사 생성 | 401 | 403 | 403 | **O** | **O** |
 | 행사 수정 | 401 | 403 | 403 | **O** | **O** |
 | 행사 삭제 | 401 | 403 | 403 | **O** (신청자 없을 때만) | **O** (신청자 없을 때만) |
@@ -511,6 +709,15 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | 행사 취소 | 401 | 403 | 403 | **O** | **O** |
 | 행사 재활성화 | 401 | 403 | 403 | **O** | **O** |
 | 등록 수동 재오픈 | 401 | 403 | 403 | **O** | **O** |
+
+#### 관리자 전용 API (`/api/v1/admin/events/**`) -- 신규
+
+| 작업 | 비인증 | ASSOCIATE | MEMBER | OPERATOR | ADMIN |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| 관리자 행사 목록 조회 | 401 | 403 | 403 | **O** | **O** |
+| 관리자 행사 상세 조회 | 401 | 403 | 403 | **O** | **O** |
+| 행사 공개 (publish) | 401 | 403 | 403 | **O** | **O** |
+| 행사 비공개 (unpublish) | 401 | 403 | 403 | **O** | **O** |
 
 ### 4-2. 권한 검증 체크리스트
 
@@ -526,6 +733,13 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | SEC-EVT-07 | 일반 회원이 행사 취소 시도 | `EventAccessDeniedException` (403) | `(현재 구현 일치)` |
 | SEC-EVT-08 | 일반 회원이 행사 재활성화 시도 | `EventAccessDeniedException` (403) | `(현재 구현 일치)` |
 | SEC-EVT-09 | 일반 회원이 등록 수동 재오픈 시도 | `EventAccessDeniedException` (403) | `(현재 구현 일치)` |
+| SEC-EVT-11 | 비인증 사용자가 관리자 행사 목록 조회 시도 | 401 Unauthorized | SecurityConfig URL 규칙 **(신규)** |
+| SEC-EVT-12 | ASSOCIATE가 관리자 행사 목록 조회 시도 | 403 Forbidden | SecurityConfig URL 규칙 **(신규)** |
+| SEC-EVT-13 | MEMBER가 관리자 행사 상세 조회 시도 | 403 Forbidden | SecurityConfig URL 규칙 **(신규)** |
+| SEC-EVT-14 | MEMBER가 행사 publish 시도 | 403 Forbidden | SecurityConfig URL 규칙 (`/api/v1/admin/events/**` -> OPERATOR+) **(신규)** |
+| SEC-EVT-15 | MEMBER가 행사 unpublish 시도 | 403 Forbidden | SecurityConfig URL 규칙 (`/api/v1/admin/events/**` -> OPERATOR+) **(신규)** |
+| SEC-EVT-16 | OPERATOR가 관리자 행사 목록/상세 조회 성공 | 200 OK | **(신규)** |
+| SEC-EVT-17 | OPERATOR가 행사 publish/unpublish 성공 | 200 OK | **(신규)** |
 
 ### 4-3. 권한 검증 방식 차이
 
@@ -538,12 +752,37 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | `EventService.reopenRegistration` | 서비스 내부 `validateEditPermission()` | `EventAccessDeniedException` `(현재 구현 일치)` |
 | `EventService.getEvent` | 서비스 내부 `user.isAssociate()` 직접 확인 | `AssociateMemberNotAllowedException` |
 | `EventService.getEventList` | **검증 없음** (인증된 사용자 모두 접근 가능) | - |
+| **관리자 API 전체** `(신규)` | **SecurityConfig URL 규칙** (`/api/v1/admin/events/**` -> `hasAnyRole("OPERATOR", "ADMIN")`) | Spring Security 403 |
+| **EventService.publishEvent** `(신규)` | **SecurityConfig URL 규칙으로 OPERATOR+ 보장**. 서비스 레벨 추가 검증 불필요 (관리자 전용 API 경로에 의해 이미 OPERATOR+ 접근만 허용됨. Survey 패턴 참고: SurveyService에서는 서비스 내부 `validateOperatorPermission()` 사용, 그러나 Event 관리자 API는 `/api/v1/admin/events/**` 경로에 배치되므로 SecurityConfig 규칙이 권한 보장) | Spring Security 403 |
+| **EventService.unpublishEvent** `(신규)` | **SecurityConfig URL 규칙으로 OPERATOR+ 보장**. 서비스 레벨 추가 검증 불필요 (위와 동일) | Spring Security 403 |
+
+### 4-4. SecurityConfig 변경 사항 (신규)
+
+> `/api/v1/admin/events/**` 경로에 대해 OPERATOR+ 권한 규칙이 추가되어야 한다.
+
+현재 SecurityConfig의 관리자 경로 규칙:
+```
+.requestMatchers("/api/v1/admin/dashboard", "/api/v1/admin/users/**", ...)
+    .hasAnyRole("OPERATOR", "ADMIN")
+```
+
+추가 필요:
+```
+.requestMatchers("/api/v1/admin/events/**").hasAnyRole("OPERATOR", "ADMIN")
+```
+
+**주의사항**:
+- 기존 `.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")` 규칙보다 **앞에** 배치해야 함 (더 구체적인 경로 우선)
+- 현재 구현에서는 `/api/v1/admin/**`이 ADMIN 전용으로 설정되어 있으므로, `/api/v1/admin/events/**`를 OPERATOR+로 열어야 함
+- **검증 방법**: OPERATOR 역할로 `/api/v1/admin/events` 접근 시 200 OK 확인, MEMBER 역할로 접근 시 403 확인
 
 ---
 
 ## 5. 관측 가능성 (Observability & Audit)
 
 ### 5-1. 컨트롤러 로그 메시지
+
+#### 공개 API (EventController)
 
 | 엔드포인트 | 로그 메시지 | 관련 코드 |
 |-----------|-----------|----------|
@@ -556,6 +795,15 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | POST `/api/v1/events/{eventId}/cancel` | `행사 취소 요청 - eventId: {}, userId: {}, reason: {}` | `(현재 구현 일치)` |
 | POST `/api/v1/events/{eventId}/reactivate` | `행사 재활성화 요청 - eventId: {}, userId: {}, reason: {}` | `(현재 구현 일치)` |
 | POST `/api/v1/events/{eventId}/reopen-registration` | `등록 재오픈 요청 - eventId: {}, userId: {}, reason: {}` | `EventController:208` |
+
+#### 관리자 API (AdminEventController) -- 신규
+
+| 엔드포인트 | 로그 메시지 (예상) | 관련 코드 |
+|-----------|------------------|----------|
+| GET `/api/v1/admin/events` | `[관리자] 행사 목록 조회 요청 - userId: {}, eventStatus: {}, registrationStatus: {}` | **(신규 구현 필요)** |
+| GET `/api/v1/admin/events/{eventId}` | `[관리자] 행사 상세 조회 요청 - eventId: {}, userId: {}` | **(신규 구현 필요)** |
+| POST `/api/v1/admin/events/{eventId}/publish` | `행사 공개 요청 - eventId: {}, userId: {}` | **(신규 구현 필요)** |
+| POST `/api/v1/admin/events/{eventId}/unpublish` | `행사 비공개 요청 - eventId: {}, userId: {}` | **(신규 구현 필요)** |
 
 ### 5-2. Soft Delete 감사 이력
 
@@ -577,18 +825,19 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | 변경 유형 | `EventChangeType` enum | `event_status_change_histories_change_type` |
 | 이전 값 | 변경 전 상태명 | `event_status_change_histories_previous_value` |
 | 이후 값 | 변경 후 상태명 | `event_status_change_histories_new_value` |
-| 사유 | 변경 사유 (모든 수동 상태 변경 시 필수) | `event_status_change_histories_reason` |
+| 사유 | 변경 사유 (publish/unpublish 제외, 나머지 필수) | `event_status_change_histories_reason` |
 | 생성 시각 | 이력 기록 시각 | `event_status_change_histories_created_at` |
 
 - **구현 방식** `(현재 구현 일치)`: `@EventListener` + `REQUIRES_NEW` TransactionTemplate (`RecordEventStatusChangeService`)
 - **FK 없음**: soft-delete/탈퇴 후에도 이력 영구 보존
 - **인덱스**: `event_id`, `changed_by_id`, `change_type`, `created_at`
+- **신규 EventChangeType**: `EVENT_PUBLISHED`, `EVENT_UNPUBLISHED` **(신규 구현 필요)** -- 현재 `EventChangeType.java`에는 4개 값만 존재 (`EVENT_CANCELED`, `EVENT_REACTIVATED`, `REGISTRATION_CLOSED_MANUAL`, `REGISTRATION_REOPENED`)
 
 ### 5-4. 관측 가능성 누락 사항
 
 | 항목 | 현황 | 영향 |
 |------|------|------|
-| Lazy Evaluation 상태 변경 로그 | **없음** (의도적 — 자동 전이는 노이즈) | 자동 상태 전이 추적 불가 |
+| Lazy Evaluation 상태 변경 로그 | **없음** (의도적 -- 자동 전이는 노이즈) | 자동 상태 전이 추적 불가 |
 | 행사 수정 시 변경 내용 로그 | **없음** | 어떤 필드가 변경되었는지 추적 불가 |
 | 행사 생성 완료 로그 | **없음** (요청 로그만 존재) | 생성 성공/실패 구분 불가 |
 | ~~행사 취소/재활성화 이력~~ | **해결됨** | `EventStatusChangeHistory`에 기록 |
@@ -621,8 +870,8 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | EVT-INV-02 (날짜 순서) | `EventServiceTest:createEvent_WithInvalidEventDates`, `createEvent_WithRegEndAfterEventStart` | **부분 커버** (새 제약 `regStart < eventStart`, `regEnd <= eventEnd` 미검증) |
 | EVT-INV-03 (생성 시 미래 제약) | - | **누락** |
 | EVT-INV-04 (정원 최소값) | `EventTest:EVT-003~005` (0, 음수, null) | **커버됨** |
-| EVT-INV-05 (초기 상태) | `EventTest:EVT-001` (UPCOMING, currentCount=0 assertion) | **커버됨** (2축 모델 반영 완료) |
-| EVT-INV-06 (COMPLETED 종단) | `EventTest:EVT-015` (COMPLETED→OPEN 거부) | **커버됨** (COMPLETED 종단 상태 검증 완료) |
+| EVT-INV-05 (초기 상태) | `EventTest:EVT-001` (UPCOMING, currentCount=0 assertion) | **부분 커버 (visibility 미검증)** -- visibility=UNPUBLISHED assertion 추가 필요 |
+| EVT-INV-06 (COMPLETED 종단) | `EventTest:EVT-015` (COMPLETED->OPEN 거부) | **커버됨** (COMPLETED 종단 상태 검증 완료) |
 | EVT-INV-07 (상태별 수정 정책) | `EventTest:EVT-052,053` | **부분 커버** (ONGOING 부분 수정, CANCELED 수정 허용, COMPLETED 수정 불가 미검증) |
 | EVT-INV-08 (closeReason 정합성) | `EventTest:EVT-012,013,014,016` (각 마감 사유 + 재오픈 시 null) | **커버됨** (registrationStatus 축으로 재해석 필요) |
 | EVT-INV-09 (soft delete 필터링) | `EventServiceTest:getEvent_DeletedEvent_ThrowsException` | **커버됨** |
@@ -631,28 +880,40 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | EVT-INV-11 (CANCELED 시 CLOSED 강제) | - | **커버됨** (cancel 테스트에서 registrationStatus 검증) |
 | EVT-INV-12 (유효 복합 상태 조합) | - | **커버됨** (유효 복합 상태 조합 테스트 구현 완료) |
 | EVT-INV-13 (수동 재오픈 조건) | - | **커버됨** (수동 재오픈 조건 테스트 구현 완료) |
-| EVT-INV-14 (수동 재오픈 감사 이력) | - | **커버됨** (감사 이력 기록 테스트 구현 완료) |
+| EVT-INV-14 (감사 이력) | - | **부분 커버 (visibility 미검증)** -- 기존 4개 변경 유형(cancel/reactivate/close/reopen) 감사 이력은 커버됨. EVENT_PUBLISHED/EVENT_UNPUBLISHED 이력 기록 및 reason=null 저장은 미검증 |
+| EVT-INV-16 (Visibility 축 독립성) | - | **누락** **(신규)** |
+| EVT-INV-17 (Visibility 양방향 전이) | - | **누락** **(신규)** |
+| EVT-INV-18 (공개 API UNPUBLISHED 차단) | - | **누락** **(신규)** |
+| EVT-INV-19 (publish/unpublish 사유 불필요) | - | **누락** **(신규)** |
+| EVT-INV-20 (unpublish 시 등록 마감 연동) | - | **누락** **(신규)** |
+| EVT-INV-21 (관리자 API visibility 무관 접근) | - | **누락** **(신규)** |
+| EVT-INV-22 (Visibility DTO 필드 포함) | - | **누락** **(신규)** |
+| EVT-INV-23 (DB 마이그레이션 정합성) | - | **누락** **(신규)** |
 
 #### 상태 전이 커버리지
 
 | 전이 | 커버 테스트 | 상태 |
 |------|-----------|------|
-| UPCOMING → OPEN (수동) | `EventTest:EVT-010` | **커버됨** |
-| UPCOMING → OPEN (Lazy) | - | **누락** (Lazy Evaluation 단독 테스트) |
-| OPEN → CLOSED (수동 마감) | `EventTest:EVT-012` | **커버됨** |
-| OPEN → CLOSED (기한 만료) | `EventTest:EVT-013` | **커버됨** |
-| OPEN → CLOSED (정원 초과) | `EventTest:EVT-021` | **커버됨** |
-| CLOSED → OPEN (자동 재오픈) | `EventTest:EVT-014,023` | **커버됨** |
-| CLOSED → OPEN (수동 재오픈) | - | **커버됨** (EventServiceTest 및 EventTest에서 검증) |
-| CLOSED → ONGOING (Lazy) | `EventTest:EVT-060` | **커버됨** (2축에서는 eventStatus 전이로 재해석) |
-| ONGOING → COMPLETED (Lazy) | `EventTest:EVT-061` | **커버됨** |
-| UPCOMING → CANCELED (수동) | - | **커버됨** (EventTest에서 검증) |
-| ONGOING → CANCELED (수동) | - | **커버됨** (EventTest에서 검증) |
-| CANCELED → UPCOMING/ONGOING (재활성화) | - | **커버됨** (EventTest에서 검증) |
-| UPCOMING → COMPLETED (금지) | `EventTest:EVT-017` | **커버됨** |
-| COMPLETED → OPEN (금지) | `EventTest:EVT-015` | **커버됨** |
-| OPEN → ONGOING (금지) | `EventTest:EVT-018` | **커버됨** (2축에서는 해당 없음) |
+| UPCOMING -> OPEN (수동) | `EventTest:EVT-010` | **커버됨** |
+| UPCOMING -> OPEN (Lazy) | - | **누락** (Lazy Evaluation 단독 테스트) |
+| OPEN -> CLOSED (수동 마감) | `EventTest:EVT-012` | **커버됨** |
+| OPEN -> CLOSED (기한 만료) | `EventTest:EVT-013` | **커버됨** |
+| OPEN -> CLOSED (정원 초과) | `EventTest:EVT-021` | **커버됨** |
+| CLOSED -> OPEN (자동 재오픈) | `EventTest:EVT-014,023` | **커버됨** |
+| CLOSED -> OPEN (수동 재오픈) | - | **커버됨** (EventServiceTest 및 EventTest에서 검증) |
+| CLOSED -> ONGOING (Lazy) | `EventTest:EVT-060` | **커버됨** (2축에서는 eventStatus 전이로 재해석) |
+| ONGOING -> COMPLETED (Lazy) | `EventTest:EVT-061` | **커버됨** |
+| UPCOMING -> CANCELED (수동) | - | **커버됨** (EventTest에서 검증) |
+| ONGOING -> CANCELED (수동) | - | **커버됨** (EventTest에서 검증) |
+| CANCELED -> UPCOMING/ONGOING (재활성화) | - | **커버됨** (EventTest에서 검증) |
+| UPCOMING -> COMPLETED (금지) | `EventTest:EVT-017` | **커버됨** |
+| COMPLETED -> OPEN (금지) | `EventTest:EVT-015` | **커버됨** |
+| OPEN -> ONGOING (금지) | `EventTest:EVT-018` | **커버됨** (2축에서는 해당 없음) |
 | Lazy 갱신 후 필터 재적용 | `EventServiceTest:getEventList_LazyUpdateChangesStatus_FilteredOut` | **커버됨** |
+| UNPUBLISHED -> PUBLISHED (publish) | - | **누락** **(신규)** |
+| PUBLISHED -> UNPUBLISHED (unpublish) | - | **누락** **(신규)** |
+| PUBLISHED -> PUBLISHED (금지) | - | **누락** **(신규)** |
+| UNPUBLISHED -> UNPUBLISHED (금지) | - | **누락** **(신규)** |
 
 #### 권한 검증 커버리지
 
@@ -667,6 +928,13 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | SEC-EVT-07 (일반 회원 취소 차단) | - | **커버됨** (EventServiceTest에서 검증) |
 | SEC-EVT-08 (일반 회원 재활성화 차단) | - | **커버됨** (EventServiceTest에서 검증) |
 | SEC-EVT-09 (일반 회원 재오픈 차단) | - | **커버됨** (EventServiceTest에서 검증) |
+| SEC-EVT-11 (비인증 관리자 API 차단) | - | **누락** **(신규)** |
+| SEC-EVT-12 (ASSOCIATE 관리자 API 차단) | - | **누락** **(신규)** |
+| SEC-EVT-13 (MEMBER 관리자 API 차단) | - | **누락** **(신규)** |
+| SEC-EVT-14 (MEMBER publish 차단) | - | **누락** **(신규)** |
+| SEC-EVT-15 (MEMBER unpublish 차단) | - | **누락** **(신규)** |
+| SEC-EVT-16 (OPERATOR 관리자 API 성공) | - | **누락** **(신규)** |
+| SEC-EVT-17 (OPERATOR publish/unpublish 성공) | - | **누락** **(신규)** |
 
 ### 6-3. 발견된 누락 및 개선 사항
 
@@ -677,10 +945,10 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | GAP-EVT-01 | 생성 시 `registrationStartAt` 미래 제약 테스트 부재 | **중간** | 미해결 |
 | GAP-EVT-02 | 날짜 검증에서 `regStart > regEnd` 케이스 단위 테스트 부재 | **낮음** | 미해결 |
 | GAP-EVT-03 | COMPLETED 상태에서 CLOSED/ONGOING 전이 시도 금지 테스트 부재 | **낮음** | 미해결 |
-| GAP-EVT-04 | Lazy Evaluation 단독 테스트 부재 (UPCOMING→OPEN 자동 전이) | **낮음** | 미해결 (EVT-060,061에서 CLOSED→ONGOING, ONGOING→COMPLETED는 커버) |
+| GAP-EVT-04 | Lazy Evaluation 단독 테스트 부재 (UPCOMING->OPEN 자동 전이) | **낮음** | 미해결 (EVT-060,061에서 CLOSED->ONGOING, ONGOING->COMPLETED는 커버) |
 | GAP-EVT-05 | 비인가 접근 시 DB 상태 변경 없음(부작용 없음) 명시적 테스트 부재 | **중간** | 미해결 |
 | GAP-EVT-06 | 컨트롤러 레벨 RBAC 검증 테스트 (MockMvc) 부재 | **중간** | 미해결 |
-| GAP-EVT-07 | `regEnd == eventStart` 경계값 테스트 부재 → 2축 모델에서 **유효 케이스**로 변경, 테스트 방향 전환 필요 | **낮음** | 미해결 |
+| GAP-EVT-07 | `regEnd == eventStart` 경계값 테스트 부재 -> 2축 모델에서 **유효 케이스**로 변경, 테스트 방향 전환 필요 | **낮음** | 미해결 |
 | GAP-EVT-08 | `regStart == regEnd` 경계값 테스트 부재 | **낮음** | 미해결 |
 
 #### 신규 GAP 항목 (2축 모델)
@@ -688,7 +956,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | ID | 내용 | 심각도 | 상태 |
 |----|------|--------|------|
 | GAP-EVT-09 | 2축 모델에서 겹침 기간(`reg=OPEN, event=ONGOING`) 동작 테스트 | **높음** | 해결 |
-| GAP-EVT-10 | 겹침 기간 중 정원 마감 → 자동 재오픈 테스트 | **높음** | 미해결 |
+| GAP-EVT-10 | 겹침 기간 중 정원 마감 -> 자동 재오픈 테스트 | **높음** | 미해결 |
 | GAP-EVT-11 | 행사 취소 시 `registrationStatus=CLOSED` 강제 전환 테스트 | **높음** | 해결 |
 | GAP-EVT-12 | 행사 재활성화 후 Lazy Evaluation 올바른 상태 복원 테스트 | **중간** | 미해결 |
 | GAP-EVT-13 | 교차 축 불변조건(유효/무효 조합) 테스트 | **높음** | 해결 |
@@ -700,17 +968,46 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | GAP-EVT-19 | ONGOING에서 금지 필드(`eventStartAt`, `registrationStartAt`) 변경 시도 거부 테스트 | **높음** | 해결 |
 | GAP-EVT-20 | ONGOING에서 `capacity` 감소 시 `capacity >= currentCount` 검증 테스트 | **중간** | 미해결 |
 | GAP-EVT-21 | CANCELED에서 전체 필드 수정 성공 테스트 | **중간** | 해결 |
-| GAP-EVT-22 | CANCELED에서 수정 → 재활성화 E2E 흐름 테스트 | **중간** | 미해결 |
+| GAP-EVT-22 | CANCELED에서 수정 -> 재활성화 E2E 흐름 테스트 | **중간** | 미해결 |
 | GAP-EVT-23 | COMPLETED에서 수정 시도 시 `EventNotEditableException` 발생 테스트 | **낮음** | 미해결 |
 | GAP-EVT-24 | 신청자가 있는 행사 삭제 거부 테스트 (EVT-INV-15) | **높음** | 해결 |
+
+#### 신규 GAP 항목 (Visibility)
+
+| ID | 내용 | 심각도 | 상태 |
+|----|------|--------|------|
+| GAP-EVT-25 | 행사 생성 시 `visibility = UNPUBLISHED` 초기값 테스트 (EVT-INV-05) | **높음** | 미해결 |
+| GAP-EVT-26 | `EventVisibility` 양방향 전이 테스트 (UNPUBLISHED->PUBLISHED, PUBLISHED->UNPUBLISHED) 및 동일 상태 전이 거부 (EVT-INV-17) | **높음** | 미해결 |
+| GAP-EVT-27 | 공개 API 목록 조회에서 UNPUBLISHED 행사 제외 테스트 (EVT-INV-18) | **높음** | 미해결 |
+| GAP-EVT-28 | 공개 API 단건 조회에서 UNPUBLISHED 행사 404 반환 테스트 (EVT-INV-18) | **높음** | 미해결 |
+| GAP-EVT-29 | 관리자 API 목록 조회에서 PUBLISHED + UNPUBLISHED 모두 반환 테스트 (EVT-INV-21) | **높음** | 미해결 |
+| GAP-EVT-30 | 관리자 API 단건 조회에서 UNPUBLISHED 행사 정상 반환 테스트 (EVT-INV-21) | **높음** | 미해결 |
+| GAP-EVT-31 | unpublish 시 `registrationStatus == OPEN`이면 CLOSED(MANUAL_CLOSE) 연동 테스트 (EVT-INV-20) | **높음** | 미해결 |
+| GAP-EVT-32 | unpublish 시 `registrationStatus == NOT_STARTED`이면 변경 없음 테스트 (EVT-INV-20) | **중간** | 미해결 |
+| GAP-EVT-33 | unpublish 시 `registrationStatus == CLOSED`이면 기존 closeReason 유지 테스트 (EVT-INV-20) | **중간** | 미해결 |
+| GAP-EVT-34 | publish/unpublish 시 eventStatus 변경 없음 테스트 (EVT-INV-16 독립성) | **중간** | 미해결 |
+| GAP-EVT-35 | `Event.update()` 호출 전후 visibility 변경 없음 테스트 (EVT-INV-16) | **중간** | 미해결 |
+| GAP-EVT-36 | SecurityConfig `/api/v1/admin/events/**` OPERATOR+ 접근 허용 테스트 (SEC-EVT-16, SEC-EVT-17) | **높음** | 미해결 |
+| GAP-EVT-37 | SecurityConfig `/api/v1/admin/events/**` MEMBER/ASSOCIATE 접근 차단 테스트 (SEC-EVT-12~15) | **높음** | 미해결 |
+| GAP-EVT-38 | `EventDetailResponse`, `EventListResponse`에 visibility 필드 포함 테스트 (EVT-INV-22) | **중간** | 미해결 |
+| GAP-EVT-39 | publish/unpublish body 없이 호출 성공 테스트 (EVT-INV-19) | **중간** | 미해결 |
+| GAP-EVT-40 | 관리자 API 목록 조회 시 eventStatus/registrationStatus 필터 동작 테스트 | **중간** | 미해결 |
+| GAP-EVT-41 | DB 마이그레이션 후 기존 데이터 `event_visibility = 'PUBLISHED'` 확인 (EVT-INV-23) | **높음** | 미해결 |
+| GAP-EVT-42 | COMPLETED 행사 unpublish 시 registrationStatus 변경 없음 확인 (이미 CLOSED) | **낮음** | 미해결 |
+| GAP-EVT-43 | CANCELED 행사 publish 시 eventStatus 변경 없음 확인 (독립성) | **낮음** | 미해결 |
+| GAP-EVT-44 | publish/unpublish 감사 이력 기록 테스트 (EVT-INV-14의 EVENT_PUBLISHED/EVENT_UNPUBLISHED) | **중간** | 미해결 |
 
 ---
 
 ## 관련 문서
 
 - [행사 신청 검증 기준서](./event-registration-verification-criteria.md) - 행사 신청 관련 검증 기준
-  - **주의**: REG-INV-05의 "OPEN 상태" 기준이 2축 모델에서 `registrationStatus == OPEN`으로 변경됨 (기존 `event.getStatus() == OPEN` → `event.getRegistrationStatus() == OPEN`)
+  - **주의**: REG-INV-05의 "OPEN 상태" 기준이 2축 모델에서 `registrationStatus == OPEN`으로 변경됨 (기존 `event.getStatus() == OPEN` -> `event.getRegistrationStatus() == OPEN`)
+  - **주의**: visibility가 UNPUBLISHED인 행사는 공개 API에서 접근 불가하므로, 일반 사용자의 행사 신청은 PUBLISHED 행사에만 가능
 - [IGRUS_WEB_PRD_V2.md](../../feature/common/IGRUS_WEB_PRD_V2.md) - PRD 행사 섹션 (5. 행사)
 - [회원가입/승인/강등 검증 기준서](../verification-criteria.md) - 동일 형식의 기존 검증 기준서
 - [문의 검증 기준서](../inquiry-verification-criteria.md) - 동일 형식의 기존 검증 기준서
 - [QA Testing 관련 용어 정리 (Wiki)](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC) - 용어 및 개념 참조
+- [GitHub Issue #483](https://github.com/IGRUS-INHA/IGRUS-Web/issues/483) - 행사 Visibility(공개/비공개) 추가 및 관리자 전용 API
+- [SurveyVisibility.java](../../../backend/src/main/java/igrus/web/survey/domain/SurveyVisibility.java) - Visibility 패턴 참조 (동일 구조)
+- [Survey.java](../../../backend/src/main/java/igrus/web/survey/domain/Survey.java) - unpublish 연동 패턴 참조
