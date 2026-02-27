@@ -22,22 +22,10 @@ surveysBySurveyId:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
   put:
@@ -69,28 +57,12 @@ surveysBySurveyId:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
   delete:
@@ -144,16 +116,8 @@ surveysBySurveyIdResponsesMe:
               $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '404':
         description: 설문 또는 응답을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
     security:
     - BearerAuthentication: []
   put:
@@ -185,22 +149,10 @@ surveysBySurveyIdResponsesMe:
               $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '400':
         description: 응답 유효성 검증 실패 또는 응답 불가 상태
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '404':
         description: 설문 또는 응답을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
     security:
     - BearerAuthentication: []
 surveys:
@@ -221,20 +173,8 @@ surveys:
                 $ref: ../schemas/surveys.yaml#/SurveyListResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/SurveyListResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/SurveyListResponse
     security:
     - BearerAuthentication: []
   post:
@@ -258,22 +198,10 @@ surveys:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdUnpublish:
@@ -300,28 +228,12 @@ surveysBySurveyIdUnpublish:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '400':
         description: 이미 비공개 상태
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdTrash:
@@ -408,34 +320,14 @@ surveysBySurveyIdResponses:
               $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '400':
         description: 응답 유효성 검증 실패 또는 응답 불가 상태
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '403':
         description: 응답 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '409':
         description: 이미 응답한 설문
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdResponsesAnonymous:
@@ -468,22 +360,10 @@ surveysBySurveyIdResponsesAnonymous:
               $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '400':
         description: 응답 유효성 검증 실패 또는 응답 불가 상태
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '403':
         description: 비회원 응답이 허용되지 않는 설문
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyResponseDetailResponse
 surveysBySurveyIdQuestions:
   get:
     tags:
@@ -510,28 +390,10 @@ surveysBySurveyIdQuestions:
                 $ref: ../schemas/surveys.yaml#/QuestionResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/QuestionResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/QuestionResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/QuestionResponse
     security:
     - BearerAuthentication: []
   post:
@@ -563,28 +425,12 @@ surveysBySurveyIdQuestions:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdQuestionsByQuestionIdRows:
@@ -620,28 +466,10 @@ surveysBySurveyIdQuestionsByQuestionIdRows:
                 $ref: ../schemas/surveys.yaml#/RowResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
       '404':
         description: 설문 또는 질문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
     security:
     - BearerAuthentication: []
   post:
@@ -682,36 +510,12 @@ surveysBySurveyIdQuestionsByQuestionIdRows:
                 $ref: ../schemas/surveys.yaml#/RowResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
       '404':
         description: 설문 또는 질문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdQuestionsByQuestionIdOptions:
@@ -747,28 +551,10 @@ surveysBySurveyIdQuestionsByQuestionIdOptions:
                 $ref: ../schemas/surveys.yaml#/OptionResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
       '404':
         description: 설문 또는 질문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
     security:
     - BearerAuthentication: []
   post:
@@ -809,36 +595,12 @@ surveysBySurveyIdQuestionsByQuestionIdOptions:
                 $ref: ../schemas/surveys.yaml#/OptionResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
       '404':
         description: 설문 또는 질문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdPublish:
@@ -865,28 +627,12 @@ surveysBySurveyIdPublish:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '400':
         description: 공개 조건 미충족 또는 이미 공개 상태
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdPublishAndOpen:
@@ -913,28 +659,12 @@ surveysBySurveyIdPublishAndOpen:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '400':
         description: 공개 조건 미충족 또는 마감일 경과
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdOpen:
@@ -961,28 +691,12 @@ surveysBySurveyIdOpen:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '400':
         description: 시작 불가능한 상태 또는 마감일 경과
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdClose:
@@ -1009,28 +723,12 @@ surveysBySurveyIdClose:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '400':
         description: 마감 불가능한 상태
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '404':
         description: 설문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdQuestionsByQuestionId:
@@ -1102,28 +800,12 @@ surveysBySurveyIdQuestionsByQuestionId:
               $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
       '404':
         description: 질문을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdQuestionsByQuestionIdRowsByRowId:
@@ -1211,36 +893,12 @@ surveysBySurveyIdQuestionsByQuestionIdRowsByRowId:
                 $ref: ../schemas/surveys.yaml#/RowResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
       '404':
         description: 행을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/RowResponse
     security:
     - BearerAuthentication: []
 surveysBySurveyIdQuestionsByQuestionIdOptionsByOptionId:
@@ -1328,36 +986,12 @@ surveysBySurveyIdQuestionsByQuestionIdOptionsByOptionId:
                 $ref: ../schemas/surveys.yaml#/OptionResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
       '404':
         description: 선택지를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/OptionResponse
     security:
     - BearerAuthentication: []
 surveysTrash:
@@ -1378,19 +1012,7 @@ surveysTrash:
                 $ref: ../schemas/surveys.yaml#/SurveyListResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/SurveyListResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/surveys.yaml#/SurveyListResponse
     security:
     - BearerAuthentication: []

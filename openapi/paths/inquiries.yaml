@@ -60,22 +60,10 @@ inquiriesByIdReply:
               $ref: ../schemas/inquiries.yaml#/InquiryReplyResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryReplyResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryReplyResponse
       '404':
         description: 문의 또는 답변을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryReplyResponse
     security:
     - BearerAuthentication: []
   post:
@@ -107,28 +95,12 @@ inquiriesByIdReply:
               $ref: ../schemas/inquiries.yaml#/InquiryReplyResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryReplyResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryReplyResponse
       '404':
         description: 문의를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryReplyResponse
       '409':
         description: 이미 답변이 존재함
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryReplyResponse
     security:
     - BearerAuthentication: []
 inquiriesByIdMemo:
@@ -161,22 +133,10 @@ inquiriesByIdMemo:
               $ref: ../schemas/inquiries.yaml#/InquiryMemoResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryMemoResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryMemoResponse
       '404':
         description: 문의를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryMemoResponse
     security:
     - BearerAuthentication: []
 inquiriesMember:
@@ -201,16 +161,8 @@ inquiriesMember:
               $ref: ../schemas/inquiries.yaml#/InquiryCreateResponse
       '400':
         description: 잘못된 요청 (유효성 검증 실패)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryCreateResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryCreateResponse
     security:
     - BearerAuthentication: []
 inquiriesLookup:
@@ -235,16 +187,8 @@ inquiriesLookup:
               $ref: ../schemas/inquiries.yaml#/InquiryResponse
       '401':
         description: 비밀번호 불일치
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryResponse
       '404':
         description: 문의를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryResponse
 inquiriesGuest:
   post:
     tags:
@@ -267,10 +211,6 @@ inquiriesGuest:
               $ref: ../schemas/inquiries.yaml#/InquiryCreateResponse
       '400':
         description: 잘못된 요청 (유효성 검증 실패)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryCreateResponse
 inquiries:
   get:
     tags:
@@ -341,16 +281,8 @@ inquiries:
               $ref: ../schemas/inquiries.yaml#/InquiryListPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryListPageResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryListPageResponse
     security:
     - BearerAuthentication: []
 inquiriesById:
@@ -377,22 +309,10 @@ inquiriesById:
               $ref: ../schemas/inquiries.yaml#/InquiryDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryDetailResponse
       '404':
         description: 문의를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryDetailResponse
     security:
     - BearerAuthentication: []
   delete:
@@ -466,10 +386,6 @@ inquiriesMy:
               $ref: ../schemas/inquiries.yaml#/InquiryListPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryListPageResponse
     security:
     - BearerAuthentication: []
 inquiriesMyById:
@@ -496,15 +412,7 @@ inquiriesMyById:
               $ref: ../schemas/inquiries.yaml#/InquiryResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryResponse
       '404':
         description: 문의를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/inquiries.yaml#/InquiryResponse
     security:
     - BearerAuthentication: []

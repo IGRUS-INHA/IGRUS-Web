@@ -30,22 +30,10 @@ boardsByBoardCodePostsByPostId:
               $ref: ../schemas/boards.yaml#/PostDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostDetailResponse
       '403':
         description: 읽기 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostDetailResponse
       '404':
         description: 게시글을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostDetailResponse
     security:
     - BearerAuthentication: []
   put:
@@ -85,28 +73,12 @@ boardsByBoardCodePostsByPostId:
               $ref: ../schemas/boards.yaml#/PostUpdateResponse
       '400':
         description: 잘못된 요청 (제목 누락, 100자 초과, 이미지 5개 초과 등)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostUpdateResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostUpdateResponse
       '403':
         description: 수정 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostUpdateResponse
       '404':
         description: 게시글을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostUpdateResponse
     security:
     - BearerAuthentication: []
   delete:
@@ -207,22 +179,10 @@ boardsByBoardCodePosts:
               $ref: ../schemas/boards.yaml#/PostListPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostListPageResponse
       '403':
         description: 읽기 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostListPageResponse
       '404':
         description: 게시판을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostListPageResponse
     security:
     - BearerAuthentication: []
   post:
@@ -254,34 +214,14 @@ boardsByBoardCodePosts:
               $ref: ../schemas/boards.yaml#/PostCreateResponse
       '400':
         description: 잘못된 요청 (제목 누락, 100자 초과, 이미지 5개 초과 등)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostCreateResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostCreateResponse
       '403':
         description: 쓰기 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostCreateResponse
       '404':
         description: 게시판을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostCreateResponse
       '429':
         description: 게시글 작성 제한 초과 (시간당 20회)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostCreateResponse
     security:
     - BearerAuthentication: []
 boards:
@@ -302,12 +242,6 @@ boards:
                 $ref: ../schemas/boards.yaml#/BoardListResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/boards.yaml#/BoardListResponse
     security:
     - BearerAuthentication: []
 boardsByCode:
@@ -334,16 +268,8 @@ boardsByCode:
               $ref: ../schemas/boards.yaml#/BoardDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/BoardDetailResponse
       '404':
         description: 게시판을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/BoardDetailResponse
     security:
     - BearerAuthentication: []
 boardsByBoardCodePostsByPostIdViewStats:
@@ -378,22 +304,10 @@ boardsByBoardCodePostsByPostIdViewStats:
               $ref: ../schemas/boards.yaml#/PostViewStatsResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostViewStatsResponse
       '403':
         description: 조회 권한 없음 (OPERATOR 이상 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostViewStatsResponse
       '404':
         description: 게시글을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostViewStatsResponse
     security:
     - BearerAuthentication: []
 boardsByBoardCodePostsByPostIdViewHistory:
@@ -457,21 +371,9 @@ boardsByBoardCodePostsByPostIdViewHistory:
               $ref: ../schemas/boards.yaml#/PostViewHistoryPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostViewHistoryPageResponse
       '403':
         description: 조회 권한 없음 (OPERATOR 이상 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostViewHistoryPageResponse
       '404':
         description: 게시글을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/boards.yaml#/PostViewHistoryPageResponse
     security:
     - BearerAuthentication: []

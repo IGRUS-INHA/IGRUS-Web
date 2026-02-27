@@ -150,6 +150,7 @@ Page:
     empty:
       type: boolean
 ErrorResponse:
+  type: object
   description: 에러 응답
   properties:
     status:
@@ -170,3 +171,30 @@ ErrorResponse:
       format: date-time
       description: 에러 발생 시각
       example: '2024-01-15T10:30:00Z'
+EmailNotVerifiedErrorResponse:
+  type: object
+  description: 이메일 미인증 에러 응답. 클라이언트가 인증 플로우로 이동할 수 있도록 이메일 정보를 포함합니다.
+  allOf:
+  - $ref: '#/ErrorResponse'
+  - type: object
+    properties:
+      email:
+        type: string
+        description: 사용자 등록 이메일
+        example: user@inha.edu
+AccountRecoverableErrorResponse:
+  type: object
+  description: 복구 가능한 탈퇴 계정 에러 응답. 클라이언트가 복구 플로우로 이동할 수 있도록 추가 정보를 포함합니다.
+  allOf:
+  - $ref: '#/ErrorResponse'
+  - type: object
+    properties:
+      studentId:
+        type: string
+        description: 학번
+        example: '12345678'
+      recoveryDeadline:
+        type: string
+        format: date-time
+        description: 복구 가능 마감 시한
+        example: '2024-02-15T10:30:00Z'

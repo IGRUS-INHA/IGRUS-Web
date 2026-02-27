@@ -133,22 +133,10 @@ adminSemestersByYearBySemesterMembers:
               $ref: ../schemas/admin.yaml#/RegisterSemesterMembersResponse
       '400':
         description: 잘못된 요청 (빈 목록, 잘못된 연도/학기)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/RegisterSemesterMembersResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/RegisterSemesterMembersResponse
       '403':
         description: 권한 없음 (ADMIN 권한 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/RegisterSemesterMembersResponse
     security:
     - BearerAuthentication: []
   delete:
@@ -190,25 +178,10 @@ adminSemestersByYearBySemesterMembers:
               format: int32
       '400':
         description: 잘못된 요청 (빈 목록, 잘못된 연도/학기)
-        content:
-          application/json:
-            schema:
-              type: integer
-              format: int32
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: integer
-              format: int32
       '403':
         description: 권한 없음 (ADMIN 권한 필요)
-        content:
-          application/json:
-            schema:
-              type: integer
-              format: int32
     security:
     - BearerAuthentication: []
 adminAssociatesByIdReject:
@@ -297,22 +270,10 @@ adminAssociatesRejectBatch:
               $ref: ../schemas/admin.yaml#/BulkRejectionResultResponse
       '400':
         description: 거절할 사용자 목록이 비어있음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/BulkRejectionResultResponse
       '401':
         description: 인증 필요 (로그인하지 않음)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/BulkRejectionResultResponse
       '403':
         description: 권한 없음 (ADMIN 권한 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/BulkRejectionResultResponse
     security:
     - BearerAuthentication: []
 adminAssociatesApproveBatch:
@@ -337,22 +298,10 @@ adminAssociatesApproveBatch:
               $ref: ../schemas/admin.yaml#/BulkApprovalResultResponse
       '401':
         description: 인증 필요 (로그인하지 않음)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/BulkApprovalResultResponse
       '403':
         description: 권한 없음 (ADMIN 권한 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/BulkApprovalResultResponse
       '400':
         description: 승인할 사용자 목록이 비어있음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/BulkApprovalResultResponse
     security:
     - BearerAuthentication: []
 adminUsersByUserIdInfo:
@@ -500,16 +449,8 @@ adminUsers:
               $ref: ../schemas/admin.yaml#/UserListPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/UserListPageResponse
       '403':
         description: 권한 없음 (OPERATOR 이상 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/UserListPageResponse
     security:
     - BearerAuthentication: []
 adminUsersByUserId:
@@ -536,22 +477,10 @@ adminUsersByUserId:
               $ref: ../schemas/admin.yaml#/UserDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/UserDetailResponse
       '403':
         description: 권한 없음 (OPERATOR 이상 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/UserDetailResponse
       '404':
         description: 사용자를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/UserDetailResponse
     security:
     - BearerAuthentication: []
   delete:
@@ -683,22 +612,10 @@ adminUsersRoleHistories:
               $ref: ../schemas/admin.yaml#/PageUserRoleHistoryResponse
       '400':
         description: 잘못된 요청 (날짜 범위 역전 등)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageUserRoleHistoryResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageUserRoleHistoryResponse
       '403':
         description: 권한 없음 (ADMIN 전용)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageUserRoleHistoryResponse
     security:
     - BearerAuthentication: []
 adminSemestersByYearBySemesterCandidates:
@@ -736,28 +653,10 @@ adminSemestersByYearBySemesterCandidates:
                 $ref: ../schemas/admin.yaml#/CandidateMemberResponse
       '400':
         description: 잘못된 연도 또는 학기
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/admin.yaml#/CandidateMemberResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/admin.yaml#/CandidateMemberResponse
       '403':
         description: 권한 없음 (ADMIN 권한 필요)
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/admin.yaml#/CandidateMemberResponse
     security:
     - BearerAuthentication: []
 adminLoginHistories:
@@ -843,16 +742,8 @@ adminLoginHistories:
               $ref: ../schemas/_common.yaml#/Page
       '401':
         description: 인증 필요 (로그인하지 않음)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageLoginHistoryResponse
       '403':
         description: 권한 없음 (ADMIN 권한 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageLoginHistoryResponse
     security:
     - BearerAuthentication: []
 adminDashboard:
@@ -871,16 +762,8 @@ adminDashboard:
               $ref: ../schemas/admin.yaml#/DashboardStatsResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/DashboardStatsResponse
       '403':
         description: 권한 없음 (ADMIN 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/DashboardStatsResponse
     security:
     - BearerAuthentication: []
 adminCommentReports:
@@ -901,20 +784,8 @@ adminCommentReports:
                 $ref: ../schemas/comments.yaml#/CommentReportResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/comments.yaml#/CommentReportResponse
       '403':
         description: 권한 없음 (OPERATOR 이상 필요)
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/comments.yaml#/CommentReportResponse
     security:
     - BearerAuthentication: []
 adminAssociatesRejected:
@@ -963,16 +834,8 @@ adminAssociatesRejected:
               $ref: ../schemas/admin.yaml#/PageRejectedAssociateInfoResponse
       '401':
         description: 인증 필요 (로그인하지 않음)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageRejectedAssociateInfoResponse
       '403':
         description: 권한 없음 (ADMIN 권한 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageRejectedAssociateInfoResponse
     security:
     - BearerAuthentication: []
 adminAssociatesPending:
@@ -1021,16 +884,8 @@ adminAssociatesPending:
               $ref: ../schemas/admin.yaml#/AssociateInfoPageResponse
       '401':
         description: 인증 필요 (로그인하지 않음)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/AssociateInfoPageResponse
       '403':
         description: 권한 없음 (ADMIN 권한 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/AssociateInfoPageResponse
     security:
     - BearerAuthentication: []
 adminAssociatesDemoted:
@@ -1079,16 +934,8 @@ adminAssociatesDemoted:
               $ref: ../schemas/admin.yaml#/PageDemotedAssociateInfoResponse
       '401':
         description: 인증 필요 (로그인하지 않음)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageDemotedAssociateInfoResponse
       '403':
         description: 권한 없음 (ADMIN 권한 필요)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageDemotedAssociateInfoResponse
     security:
     - BearerAuthentication: []
 adminAccountStatusHistories:
@@ -1181,15 +1028,7 @@ adminAccountStatusHistories:
               $ref: ../schemas/_common.yaml#/Page
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageAccountStatusChangeHistoryResponse
       '403':
         description: 권한 없음 (ADMIN 전용)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/admin.yaml#/PageAccountStatusChangeHistoryResponse
     security:
     - BearerAuthentication: []

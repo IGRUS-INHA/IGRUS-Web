@@ -22,10 +22,6 @@ privacyConsentNeedsReconsent:
               $ref: ../schemas/privacy.yaml#/ConsentCheckResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/privacy.yaml#/ConsentCheckResponse
     security:
     - BearerAuthentication: []
 privacyConsentLatest:
@@ -44,16 +40,8 @@ privacyConsentLatest:
               $ref: ../schemas/privacy.yaml#/PrivacyConsentResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/privacy.yaml#/PrivacyConsentResponse
       '404':
         description: 동의 기록 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/privacy.yaml#/PrivacyConsentResponse
     security:
     - BearerAuthentication: []
 privacyConsentHistory:
@@ -72,10 +60,6 @@ privacyConsentHistory:
               $ref: ../schemas/privacy.yaml#/PrivacyConsentHistoryResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/privacy.yaml#/PrivacyConsentHistoryResponse
     security:
     - BearerAuthentication: []
 privacyConsentCheck:
@@ -94,10 +78,6 @@ privacyConsentCheck:
               $ref: ../schemas/privacy.yaml#/ConsentCheckResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/privacy.yaml#/ConsentCheckResponse
     security:
     - BearerAuthentication: []
 privacyConsentCheckVersion:
@@ -124,9 +104,5 @@ privacyConsentCheckVersion:
               $ref: ../schemas/privacy.yaml#/ConsentCheckResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/privacy.yaml#/ConsentCheckResponse
     security:
     - BearerAuthentication: []

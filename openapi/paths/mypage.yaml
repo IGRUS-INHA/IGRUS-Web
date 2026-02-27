@@ -136,12 +136,6 @@ mypageRegistrations:
                 $ref: ../schemas/events.yaml#/MyRegistrationResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/events.yaml#/MyRegistrationResponse
     security:
     - BearerAuthentication: []
 mypageProfile:
@@ -160,16 +154,8 @@ mypageProfile:
               $ref: ../schemas/mypage.yaml#/MyProfileResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/mypage.yaml#/MyProfileResponse
       '404':
         description: 사용자를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/mypage.yaml#/MyProfileResponse
     security:
     - BearerAuthentication: []
 mypagePosts:
@@ -218,10 +204,6 @@ mypagePosts:
               $ref: ../schemas/mypage.yaml#/MyPostPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/mypage.yaml#/MyPostPageResponse
     security:
     - BearerAuthentication: []
 mypageLikes:
@@ -270,10 +252,6 @@ mypageLikes:
               $ref: ../schemas/mypage.yaml#/LikedPostPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/mypage.yaml#/LikedPostPageResponse
     security:
     - BearerAuthentication: []
 mypageComments:
@@ -322,10 +300,6 @@ mypageComments:
               $ref: ../schemas/mypage.yaml#/MyCommentPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/mypage.yaml#/MyCommentPageResponse
     security:
     - BearerAuthentication: []
 mypageBookmarks:
@@ -374,10 +348,6 @@ mypageBookmarks:
               $ref: ../schemas/posts.yaml#/BookmarkedPostPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/posts.yaml#/BookmarkedPostPageResponse
     security:
     - BearerAuthentication: []
 mypageAccount:
