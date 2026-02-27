@@ -34,10 +34,10 @@ public class DownloadUrlService {
     private final S3Presigner s3Presigner;
     private final FileMetadataRepository fileMetadataRepository;
 
-    @Value("${igrus.storage.s3.bucket-name}")
+    @Value("${app.storage.s3.bucket-name}")
     private String bucketName;
 
-    @Value("${igrus.storage.download-url-expiration}")
+    @Value("${app.storage.download-url-expiration}")
     private long downloadUrlExpiration;
 
     /**

@@ -39,7 +39,7 @@ public class UploadConfirmService {
     private final FileMetadataRepository fileMetadataRepository;
     private final Clock clock;
 
-    @Value("${igrus.storage.s3.bucket-name}")
+    @Value("${app.storage.s3.bucket-name}")
     private String bucketName;
 
     /**
