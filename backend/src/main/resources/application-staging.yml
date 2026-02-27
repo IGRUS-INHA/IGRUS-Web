@@ -49,4 +49,3 @@ app:
   webhook:
     baebdung-i:
       enabled: false
-      secret: ${app.webhook.baebdung-i.secret}
