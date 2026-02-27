@@ -9,7 +9,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ImagePreviewList } from '@/components/feature/upload';
+import { ImageUploadArea } from '@/components/feature/upload';
 import { CreateMemberInquiryRequestType } from '@/api/model/models/createMemberInquiryRequestType';
+import { useImageUpload } from '@/hooks/useImageUpload';
+import { useToast } from '@/hooks/useToast';
+import { INQUIRY_ATTACHMENT_CONFIG } from '@/utils/upload';
 import { cn } from '@/lib/utils';
 
 const TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -28,6 +33,8 @@ export interface InquiryFormData {
   email?: string;
   name?: string;
   password?: string;
+  /** 첨부파일 */
+  attachments?: Array<{ fileUrl: string; fileName: string; fileSize: number }>;
 }
 
 interface InquiryFormProps {
@@ -43,9 +50,20 @@ export default function InquiryForm({
 }: InquiryFormProps) {
   const isGuest = variant === 'guest';
   const typeOptions = TYPE_OPTIONS;
+  const toast = useToast();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const { files, isUploading, addFiles, removeFile, uploadAll } = useImageUpload({
+    config: INQUIRY_ATTACHMENT_CONFIG,
+    onValidationError: (errors) => {
+      errors.forEach((msg) => toast.error(msg));
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const uploadResults = await uploadAll();
+
     const formData = new FormData(e.currentTarget);
     onSubmit?.({
       type: formData.get('type') as string,
@@ -55,6 +73,13 @@ export default function InquiryForm({
         email: formData.get('email') as string,
         name: formData.get('name') as string,
         password: formData.get('password') as string,
+      }),
+      ...(uploadResults.length > 0 && {
+        attachments: uploadResults.map((r) => ({
+          fileUrl: r.fileUrl,
+          fileName: r.fileName,
+          fileSize: r.fileSize,
+        })),
       }),
     });
   };
@@ -157,14 +182,30 @@ export default function InquiryForm({
         />
       </FormField>
 
+      {/* 첨부파일 */}
+      <FormField label="첨부파일 (선택)">
+        <ImageUploadArea
+          onFilesSelected={addFiles}
+          maxFiles={INQUIRY_ATTACHMENT_CONFIG.maxFiles}
+          currentCount={files.length}
+        />
+        {files.length > 0 && (
+          <ImagePreviewList
+            files={files}
+            onRemove={removeFile}
+            className="mt-s3"
+          />
+        )}
+      </FormField>
+
       {/* 제출 */}
       <Button
         type="submit"
-        disabled={loading}
+        disabled={loading || isUploading}
         className="flex w-full items-center justify-center gap-s2 rounded-r3 py-s5 font-bold"
       >
-        {loading ? '제출 중...' : '문의 제출'}
-        {!loading && <Send size={18} />}
+        {isUploading ? '업로드 중...' : loading ? '제출 중...' : '문의 제출'}
+        {!loading && !isUploading && <Send size={18} />}
       </Button>
     </form>
   );

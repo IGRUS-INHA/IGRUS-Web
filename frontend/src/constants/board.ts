@@ -107,6 +107,7 @@ export const postFormSchema = z.object({
   isAnonymous: z.boolean().optional(),
   isQuestion: z.boolean().optional(),
   isVisibleToAssociate: z.boolean().optional(),
+  imageUrls: z.array(z.string().url()).max(5).optional(),
 });
 
 export type PostFormData = z.infer<typeof postFormSchema>;

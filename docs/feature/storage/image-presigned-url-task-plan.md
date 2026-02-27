@@ -343,6 +343,11 @@
 - **선행 작업**: TASK-023
 - **구현 범위**: frontend
 - **예상 난이도**: 상
+- **스텁 구현 상태**: ✅ 완료 (`frontend/src/hooks/useImageUpload.ts`)
+  - 클라이언트 검증 (1), S3 PUT 업로드 (3), 진행률 추적 (5), 재시도 (6, 최대 2회) 구현됨
+  - Presigned URL은 스텁 서비스 (`services/uploadService.ts`) 사용 — `VITE_MOCK_UPLOAD_URL` 환경변수 또는 백엔드 연동 후 교체
+  - 완료 알림 (4)은 백엔드 API 완성 후 추가 필요
+  - 관련 파일: `types/upload.ts`, `utils/upload.ts`, `services/uploadService.ts`
 
 #### TASK-025: useImageDownload 커스텀 훅 구현
 
@@ -363,6 +368,10 @@
 - **선행 작업**: TASK-024
 - **구현 범위**: frontend
 - **예상 난이도**: 중
+- **스텁 구현 상태**: ✅ 완료 (2개 컴포넌트로 분리 구현)
+  - `ImageUploadArea` (`components/feature/upload/ImageUploadArea.tsx`): 파일 선택 + 드래그 앤 드롭
+  - `ImagePreviewList` (`components/feature/upload/ImagePreviewList.tsx`): 썸네일 그리드 + 상태 오버레이 (진행바, 에러, 완료)
+  - 게시판 작성/수정 (PostWritePage, PostEditPage), 문의하기 (InquiryForm), 행사 작성 (EventWritePage, UI만) 4곳에 연동 완료
 
 ---
 
