@@ -29,7 +29,7 @@ public class SmtpAuthEmailService implements AuthEmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${app.mail.from-address}")
+    @Value("${spring.mail.username}")
     private String fromAddress;
 
     @Async("emailTaskExecutor")
