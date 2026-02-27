@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: acd4c9c
+ * OpenAPI spec version: ec724ff
  */
 import {
   useMutation,
@@ -57,8 +57,8 @@ import type {
   EventCreateResponse,
   EventDetailResponse,
   EventListResponse,
+  EventStatusChangeReasonRequest,
   GetEventListParams,
-  ReopenRegistrationRequest,
   UpdateEventRequest
 } from '.././models';
 
@@ -669,7 +669,7 @@ export const getReopenRegistrationUrl = (eventId: number,) => {
 }
 
 export const reopenRegistration = async (eventId: number,
-    reopenRegistrationRequest: ReopenRegistrationRequest, options?: RequestInit): Promise<reopenRegistrationResponse> => {
+    eventStatusChangeReasonRequest: EventStatusChangeReasonRequest, options?: RequestInit): Promise<reopenRegistrationResponse> => {
   
   return customFetch<reopenRegistrationResponse>(getReopenRegistrationUrl(eventId),
   {      
@@ -677,7 +677,7 @@ export const reopenRegistration = async (eventId: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      reopenRegistrationRequest,)
+      eventStatusChangeReasonRequest,)
   }
 );}
 
@@ -685,8 +685,8 @@ export const reopenRegistration = async (eventId: number,
 
 
 export const getReopenRegistrationMutationOptions = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: ReopenRegistrationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: ReopenRegistrationRequest}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext> => {
 
 const mutationKey = ['reopenRegistration'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -698,7 +698,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenRegistration>>, {eventId: number;data: ReopenRegistrationRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenRegistration>>, {eventId: number;data: EventStatusChangeReasonRequest}> = (props) => {
           const {eventId,data} = props ?? {};
 
           return  reopenRegistration(eventId,data,requestOptions)
@@ -712,24 +712,24 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReopenRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof reopenRegistration>>>
-    export type ReopenRegistrationMutationBody = ReopenRegistrationRequest
+    export type ReopenRegistrationMutationBody = EventStatusChangeReasonRequest
     export type ReopenRegistrationMutationError = EventDetailResponse
 
     /**
  * @summary 등록 수동 재오픈
  */
 export const useReopenRegistration = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: ReopenRegistrationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof reopenRegistration>>,
         TError,
-        {eventId: number;data: ReopenRegistrationRequest},
+        {eventId: number;data: EventStatusChangeReasonRequest},
         TContext
       > => {
       return useMutation(getReopenRegistrationMutationOptions(options), queryClient);
     }
     /**
- * 취소된 행사를 재활성화합니다. 운영진 이상만 가능합니다.
+ * 취소된 행사를 재활성화합니다. 운영진 이상만 가능합니다. 사유 필수.
  * @summary 행사 재활성화
  */
 export type reactivateEventResponse200 = {
@@ -769,14 +769,16 @@ export const getReactivateEventUrl = (eventId: number,) => {
   return `/api/v1/events/${eventId}/reactivate`
 }
 
-export const reactivateEvent = async (eventId: number, options?: RequestInit): Promise<reactivateEventResponse> => {
+export const reactivateEvent = async (eventId: number,
+    eventStatusChangeReasonRequest: EventStatusChangeReasonRequest, options?: RequestInit): Promise<reactivateEventResponse> => {
   
   return customFetch<reactivateEventResponse>(getReactivateEventUrl(eventId),
   {      
     ...options,
-    method: 'POST'
-    
-    
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      eventStatusChangeReasonRequest,)
   }
 );}
 
@@ -784,8 +786,8 @@ export const reactivateEvent = async (eventId: number, options?: RequestInit): P
 
 
 export const getReactivateEventMutationOptions = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext> => {
 
 const mutationKey = ['reactivateEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -797,10 +799,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reactivateEvent>>, {eventId: number}> = (props) => {
-          const {eventId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reactivateEvent>>, {eventId: number;data: EventStatusChangeReasonRequest}> = (props) => {
+          const {eventId,data} = props ?? {};
 
-          return  reactivateEvent(eventId,requestOptions)
+          return  reactivateEvent(eventId,data,requestOptions)
         }
 
 
@@ -811,24 +813,24 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReactivateEventMutationResult = NonNullable<Awaited<ReturnType<typeof reactivateEvent>>>
-    
+    export type ReactivateEventMutationBody = EventStatusChangeReasonRequest
     export type ReactivateEventMutationError = EventDetailResponse
 
     /**
  * @summary 행사 재활성화
  */
 export const useReactivateEvent = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof reactivateEvent>>,
         TError,
-        {eventId: number},
+        {eventId: number;data: EventStatusChangeReasonRequest},
         TContext
       > => {
       return useMutation(getReactivateEventMutationOptions(options), queryClient);
     }
     /**
- * 행사 등록을 수동으로 마감합니다. 운영진 이상만 가능합니다.
+ * 행사 등록을 수동으로 마감합니다. 운영진 이상만 가능합니다. 사유 필수.
  * @summary 등록 수동 마감
  */
 export type closeEventResponse200 = {
@@ -868,14 +870,16 @@ export const getCloseEventUrl = (eventId: number,) => {
   return `/api/v1/events/${eventId}/close`
 }
 
-export const closeEvent = async (eventId: number, options?: RequestInit): Promise<closeEventResponse> => {
+export const closeEvent = async (eventId: number,
+    eventStatusChangeReasonRequest: EventStatusChangeReasonRequest, options?: RequestInit): Promise<closeEventResponse> => {
   
   return customFetch<closeEventResponse>(getCloseEventUrl(eventId),
   {      
     ...options,
-    method: 'POST'
-    
-    
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      eventStatusChangeReasonRequest,)
   }
 );}
 
@@ -883,8 +887,8 @@ export const closeEvent = async (eventId: number, options?: RequestInit): Promis
 
 
 export const getCloseEventMutationOptions = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext> => {
 
 const mutationKey = ['closeEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -896,10 +900,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof closeEvent>>, {eventId: number}> = (props) => {
-          const {eventId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof closeEvent>>, {eventId: number;data: EventStatusChangeReasonRequest}> = (props) => {
+          const {eventId,data} = props ?? {};
 
-          return  closeEvent(eventId,requestOptions)
+          return  closeEvent(eventId,data,requestOptions)
         }
 
 
@@ -910,24 +914,24 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CloseEventMutationResult = NonNullable<Awaited<ReturnType<typeof closeEvent>>>
-    
+    export type CloseEventMutationBody = EventStatusChangeReasonRequest
     export type CloseEventMutationError = EventDetailResponse
 
     /**
  * @summary 등록 수동 마감
  */
 export const useCloseEvent = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof closeEvent>>,
         TError,
-        {eventId: number},
+        {eventId: number;data: EventStatusChangeReasonRequest},
         TContext
       > => {
       return useMutation(getCloseEventMutationOptions(options), queryClient);
     }
     /**
- * 행사를 취소합니다. 운영진 이상만 가능합니다.
+ * 행사를 취소합니다. 운영진 이상만 가능합니다. 사유 필수.
  * @summary 행사 취소
  */
 export type cancelEventResponse200 = {
@@ -967,14 +971,16 @@ export const getCancelEventUrl = (eventId: number,) => {
   return `/api/v1/events/${eventId}/cancel`
 }
 
-export const cancelEvent = async (eventId: number, options?: RequestInit): Promise<cancelEventResponse> => {
+export const cancelEvent = async (eventId: number,
+    eventStatusChangeReasonRequest: EventStatusChangeReasonRequest, options?: RequestInit): Promise<cancelEventResponse> => {
   
   return customFetch<cancelEventResponse>(getCancelEventUrl(eventId),
   {      
     ...options,
-    method: 'POST'
-    
-    
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      eventStatusChangeReasonRequest,)
   }
 );}
 
@@ -982,8 +988,8 @@ export const cancelEvent = async (eventId: number, options?: RequestInit): Promi
 
 
 export const getCancelEventMutationOptions = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext> => {
 
 const mutationKey = ['cancelEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -995,10 +1001,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelEvent>>, {eventId: number}> = (props) => {
-          const {eventId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelEvent>>, {eventId: number;data: EventStatusChangeReasonRequest}> = (props) => {
+          const {eventId,data} = props ?? {};
 
-          return  cancelEvent(eventId,requestOptions)
+          return  cancelEvent(eventId,data,requestOptions)
         }
 
 
@@ -1009,18 +1015,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CancelEventMutationResult = NonNullable<Awaited<ReturnType<typeof cancelEvent>>>
-    
+    export type CancelEventMutationBody = EventStatusChangeReasonRequest
     export type CancelEventMutationError = EventDetailResponse
 
     /**
  * @summary 행사 취소
  */
 export const useCancelEvent = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number;data: EventStatusChangeReasonRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof cancelEvent>>,
         TError,
-        {eventId: number},
+        {eventId: number;data: EventStatusChangeReasonRequest},
         TContext
       > => {
       return useMutation(getCancelEventMutationOptions(options), queryClient);
