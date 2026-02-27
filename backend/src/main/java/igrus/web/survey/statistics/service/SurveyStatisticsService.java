@@ -1,6 +1,7 @@
 package igrus.web.survey.statistics.service;
 
 import igrus.web.survey.domain.Survey;
+import igrus.web.survey.domain.SurveyAccessLevel;
 import igrus.web.survey.exception.SurveyNotFoundException;
 import igrus.web.survey.question.domain.*;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
@@ -9,6 +10,7 @@ import igrus.web.survey.response.domain.*;
 import igrus.web.survey.response.repository.SurveyAnswerRepository;
 import igrus.web.survey.response.repository.SurveyResponseRepository;
 import igrus.web.survey.statistics.dto.response.*;
+import igrus.web.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,12 +55,17 @@ public class SurveyStatisticsService {
                     return new SurveyNotFoundException(surveyId);
                 });
 
-        // 2. 유효 응답(deleted=false) 목록 조회 -> totalResponseCount 계산
-        List<SurveyResponse> validResponses = surveyResponseRepository
-                .findBySurveyIdAndDeletedFalseOrderByCreatedAtAsc(surveyId);
+        // 2. 응답자 정보 포함 여부 판단 (PUBLIC 설문은 응답자 정보 생략)
+        boolean includeRespondentInfo = survey.getAccessLevel() != SurveyAccessLevel.PUBLIC;
+
+        // 3. 유효 응답(deleted=false) 목록 조회 -> totalResponseCount 계산
+        //    응답자 정보가 필요한 경우 user를 함께 fetch join하여 N+1 방지
+        List<SurveyResponse> validResponses = includeRespondentInfo
+                ? surveyResponseRepository.findValidResponsesWithUserBySurveyId(surveyId)
+                : surveyResponseRepository.findBySurveyIdAndDeletedFalseOrderByCreatedAtAsc(surveyId);
         int totalResponseCount = validResponses.size();
 
-        // 3. 응답 기간 계산 (min/max createdAt, 0건이면 null)
+        // 4. 응답 기간 계산 (min/max createdAt, 0건이면 null)
         Instant responseStartedAt = null;
         Instant responseEndedAt = null;
         if (!validResponses.isEmpty()) {
@@ -66,7 +73,17 @@ public class SurveyStatisticsService {
             responseEndedAt = validResponses.getLast().getCreatedAt();
         }
 
-        // 4. 설문의 삭제되지 않은 질문 조회 (displayOrder 오름차순)
+        // 5. 응답자 정보 목록 생성 (비PUBLIC 설문만)
+        List<RespondentInfo> respondents = null;
+        if (includeRespondentInfo) {
+            respondents = validResponses.stream()
+                    .map(SurveyResponse::getUser)
+                    .filter(Objects::nonNull)
+                    .map(RespondentInfo::from)
+                    .toList();
+        }
+
+        // 6. 설문의 삭제되지 않은 질문 조회 (displayOrder 오름차순)
         //    MultipleBagFetchException 방지를 위해 options, rows를 분리 조회합니다.
         //    같은 트랜잭션(영속성 컨텍스트) 내에서 두 쿼리를 순차 호출하면
         //    첫 번째 쿼리 결과의 엔티티에 두 번째 쿼리의 rows 컬렉션이 자동 병합됩니다.
@@ -74,16 +91,17 @@ public class SurveyStatisticsService {
                 .findAllBySurveyIdWithOptions(surveyId);
         surveyQuestionRepository.findAllBySurveyIdWithRows(surveyId);
 
-        // 5. 유효 답변 조회 (SurveyAnswer.deleted=false AND SurveyResponse.deleted=false)
+        // 7. 유효 답변 조회 (SurveyAnswer.deleted=false AND SurveyResponse.deleted=false)
         List<SurveyAnswer> validAnswers = surveyAnswerRepository.findValidAnswersBySurveyId(surveyId);
 
         // 질문별로 답변 그룹핑
         Map<Long, List<SurveyAnswer>> answersByQuestionId = validAnswers.stream()
                 .collect(Collectors.groupingBy(a -> a.getQuestion().getId()));
 
-        // 6. 질문별 통계 계산
+        // 8. 질문별 통계 계산
         List<QuestionStatisticsResponse> questionStatistics = allQuestions.stream()
-                .map(question -> buildQuestionStatistics(question, answersByQuestionId, totalResponseCount))
+                .map(question -> buildQuestionStatistics(
+                        question, answersByQuestionId, totalResponseCount, includeRespondentInfo))
                 .toList();
 
         log.info("설문 통계 조회 완료: surveyId={}, 총 응답 수={}", surveyId, totalResponseCount);
@@ -92,6 +110,7 @@ public class SurveyStatisticsService {
                 totalResponseCount,
                 responseStartedAt,
                 responseEndedAt,
+                respondents,
                 questionStatistics
         );
     }
@@ -104,7 +123,8 @@ public class SurveyStatisticsService {
     private QuestionStatisticsResponse buildQuestionStatistics(
             SurveyQuestion question,
             Map<Long, List<SurveyAnswer>> answersByQuestionId,
-            int totalResponseCount) {
+            int totalResponseCount,
+            boolean includeRespondentInfo) {
 
         List<SurveyAnswer> answers = answersByQuestionId.getOrDefault(question.getId(), List.of());
         int responseCount = answers.size();
@@ -117,7 +137,7 @@ public class SurveyStatisticsService {
         GridQuestionStatistics gridStatistics = null;
 
         switch (category) {
-            case "TEXT" -> textStatistics = buildTextStatistics(answers);
+            case "TEXT" -> textStatistics = buildTextStatistics(answers, includeRespondentInfo);
             case "SCALE" -> scaleStatistics = buildScaleStatistics(question, answers);
             case "OPTION" -> {
                 // OPTION 카테고리에는 MC, CHECKBOX, DROPDOWN이 포함
@@ -159,12 +179,26 @@ public class SurveyStatisticsService {
 
     /**
      * TEXT 카테고리 통계를 생성합니다.
-     * 텍스트 응답 목록을 SurveyResponse.createdAt 오름차순으로 반환합니다.
+     * 텍스트 응답 항목 목록을 SurveyResponse.createdAt 오름차순으로 반환합니다.
+     *
+     * @param answers               답변 목록
+     * @param includeRespondentInfo 응답자 정보 포함 여부 (비PUBLIC 설문이면 true)
      */
-    private TextQuestionStatistics buildTextStatistics(List<SurveyAnswer> answers) {
-        List<String> textResponses = answers.stream()
+    private TextQuestionStatistics buildTextStatistics(List<SurveyAnswer> answers,
+                                                       boolean includeRespondentInfo) {
+        List<TextResponseItem> textResponses = answers.stream()
                 .sorted(Comparator.comparing(a -> a.getResponse().getCreatedAt()))
-                .map(a -> ((TextSurveyAnswer) a).getTextValue())
+                .map(a -> {
+                    String text = ((TextSurveyAnswer) a).getTextValue();
+                    RespondentInfo respondent = null;
+                    if (includeRespondentInfo) {
+                        User user = a.getResponse().getUser();
+                        if (user != null) {
+                            respondent = RespondentInfo.from(user);
+                        }
+                    }
+                    return new TextResponseItem(text, respondent);
+                })
                 .toList();
 
         return new TextQuestionStatistics(textResponses);

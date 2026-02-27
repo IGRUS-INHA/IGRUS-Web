@@ -65,4 +65,19 @@ public interface SurveyResponseRepository extends JpaRepository<SurveyResponse, 
      * @return 유효 응답 목록 (createdAt 오름차순)
      */
     List<SurveyResponse> findBySurveyIdAndDeletedFalseOrderByCreatedAtAsc(Long surveyId);
+
+    /**
+     * 특정 설문의 유효(deleted=false) 응답 목록을 user와 함께 조회합니다.
+     * N+1 방지를 위해 user를 LEFT JOIN FETCH합니다.
+     * createdAt 오름차순 정렬. 통계 집계 시 응답자 정보가 필요한 경우 사용합니다.
+     *
+     * @param surveyId 설문 ID
+     * @return 유효 응답 목록 (user 포함, createdAt 오름차순)
+     */
+    @Query("SELECT r FROM SurveyResponse r " +
+            "LEFT JOIN FETCH r.user " +
+            "WHERE r.survey.id = :surveyId " +
+            "AND r.deleted = false " +
+            "ORDER BY r.createdAt ASC")
+    List<SurveyResponse> findValidResponsesWithUserBySurveyId(@Param("surveyId") Long surveyId);
 }

@@ -54,6 +54,7 @@ public interface SurveyAnswerRepository extends JpaRepository<SurveyAnswer, Long
      */
     @Query("SELECT a FROM SurveyAnswer a " +
             "JOIN FETCH a.response r " +
+            "LEFT JOIN FETCH r.user " +
             "JOIN FETCH a.question q " +
             "LEFT JOIN FETCH a.selectedOption " +
             "LEFT JOIN FETCH a.selectedRow " +
