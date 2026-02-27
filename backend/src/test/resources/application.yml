@@ -49,8 +49,6 @@ app:
       secret: test-secret
       enabled: false
       timeout: 5000
-
-igrus:
   storage:
     s3:
       bucket-name: test-bucket
