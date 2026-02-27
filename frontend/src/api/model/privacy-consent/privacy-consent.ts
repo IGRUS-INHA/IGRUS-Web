@@ -50,18 +50,12 @@ import type {
 
 import type {
   CheckConsentedToVersion200,
-  CheckConsentedToVersion401,
   CheckConsentedToVersionParams,
   CheckHasConsent200,
-  CheckHasConsent401,
   CheckNeedsReConsent200,
-  CheckNeedsReConsent401,
   CheckNeedsReConsentParams,
   GetConsentHistory200,
-  GetConsentHistory401,
-  GetLatestConsent200,
-  GetLatestConsent401,
-  GetLatestConsent404
+  GetLatestConsent200
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -81,7 +75,7 @@ export type checkNeedsReConsentResponse200 = {
 }
 
 export type checkNeedsReConsentResponse401 = {
-  data: CheckNeedsReConsent401
+  data: void
   status: 401
 }
     
@@ -131,7 +125,7 @@ export const getCheckNeedsReConsentQueryKey = (params?: CheckNeedsReConsentParam
     }
 
     
-export const getCheckNeedsReConsentQueryOptions = <TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = CheckNeedsReConsent401>(params: CheckNeedsReConsentParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNeedsReConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCheckNeedsReConsentQueryOptions = <TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = void>(params: CheckNeedsReConsentParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNeedsReConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -150,10 +144,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CheckNeedsReConsentQueryResult = NonNullable<Awaited<ReturnType<typeof checkNeedsReConsent>>>
-export type CheckNeedsReConsentQueryError = CheckNeedsReConsent401
+export type CheckNeedsReConsentQueryError = void
 
 
-export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = CheckNeedsReConsent401>(
+export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = void>(
  params: CheckNeedsReConsentParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNeedsReConsent>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkNeedsReConsent>>,
@@ -163,7 +157,7 @@ export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNe
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = CheckNeedsReConsent401>(
+export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = void>(
  params: CheckNeedsReConsentParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNeedsReConsent>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkNeedsReConsent>>,
@@ -173,7 +167,7 @@ export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNe
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = CheckNeedsReConsent401>(
+export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = void>(
  params: CheckNeedsReConsentParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNeedsReConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -181,7 +175,7 @@ export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNe
  * @summary 재동의 필요 여부 확인
  */
 
-export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = CheckNeedsReConsent401>(
+export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNeedsReConsent>>, TError = void>(
  params: CheckNeedsReConsentParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNeedsReConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -206,12 +200,12 @@ export type getLatestConsentResponse200 = {
 }
 
 export type getLatestConsentResponse401 = {
-  data: GetLatestConsent401
+  data: void
   status: 401
 }
 
 export type getLatestConsentResponse404 = {
-  data: GetLatestConsent404
+  data: void
   status: 404
 }
     
@@ -254,7 +248,7 @@ export const getGetLatestConsentQueryKey = () => {
     }
 
     
-export const getGetLatestConsentQueryOptions = <TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = GetLatestConsent401 | GetLatestConsent404>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLatestConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetLatestConsentQueryOptions = <TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLatestConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -273,10 +267,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetLatestConsentQueryResult = NonNullable<Awaited<ReturnType<typeof getLatestConsent>>>
-export type GetLatestConsentQueryError = GetLatestConsent401 | GetLatestConsent404
+export type GetLatestConsentQueryError = void
 
 
-export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = GetLatestConsent401 | GetLatestConsent404>(
+export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = void>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLatestConsent>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLatestConsent>>,
@@ -286,7 +280,7 @@ export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestC
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = GetLatestConsent401 | GetLatestConsent404>(
+export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLatestConsent>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLatestConsent>>,
@@ -296,7 +290,7 @@ export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestC
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = GetLatestConsent401 | GetLatestConsent404>(
+export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLatestConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -304,7 +298,7 @@ export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestC
  * @summary 최신 동의 기록 조회
  */
 
-export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = GetLatestConsent401 | GetLatestConsent404>(
+export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestConsent>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLatestConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -329,7 +323,7 @@ export type getConsentHistoryResponse200 = {
 }
 
 export type getConsentHistoryResponse401 = {
-  data: GetConsentHistory401
+  data: void
   status: 401
 }
     
@@ -372,7 +366,7 @@ export const getGetConsentHistoryQueryKey = () => {
     }
 
     
-export const getGetConsentHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = GetConsentHistory401>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsentHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetConsentHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsentHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -391,10 +385,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetConsentHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getConsentHistory>>>
-export type GetConsentHistoryQueryError = GetConsentHistory401
+export type GetConsentHistoryQueryError = void
 
 
-export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = GetConsentHistory401>(
+export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = void>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsentHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getConsentHistory>>,
@@ -404,7 +398,7 @@ export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsen
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = GetConsentHistory401>(
+export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsentHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getConsentHistory>>,
@@ -414,7 +408,7 @@ export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsen
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = GetConsentHistory401>(
+export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsentHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -422,7 +416,7 @@ export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsen
  * @summary 동의 이력 조회
  */
 
-export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = GetConsentHistory401>(
+export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsentHistory>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConsentHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -447,7 +441,7 @@ export type checkHasConsentResponse200 = {
 }
 
 export type checkHasConsentResponse401 = {
-  data: CheckHasConsent401
+  data: void
   status: 401
 }
     
@@ -490,7 +484,7 @@ export const getCheckHasConsentQueryKey = () => {
     }
 
     
-export const getCheckHasConsentQueryOptions = <TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = CheckHasConsent401>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkHasConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCheckHasConsentQueryOptions = <TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkHasConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -509,10 +503,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CheckHasConsentQueryResult = NonNullable<Awaited<ReturnType<typeof checkHasConsent>>>
-export type CheckHasConsentQueryError = CheckHasConsent401
+export type CheckHasConsentQueryError = void
 
 
-export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = CheckHasConsent401>(
+export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = void>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkHasConsent>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkHasConsent>>,
@@ -522,7 +516,7 @@ export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasCon
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = CheckHasConsent401>(
+export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkHasConsent>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkHasConsent>>,
@@ -532,7 +526,7 @@ export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasCon
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = CheckHasConsent401>(
+export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkHasConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -540,7 +534,7 @@ export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasCon
  * @summary 동의 기록 존재 확인
  */
 
-export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = CheckHasConsent401>(
+export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasConsent>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkHasConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -565,7 +559,7 @@ export type checkConsentedToVersionResponse200 = {
 }
 
 export type checkConsentedToVersionResponse401 = {
-  data: CheckConsentedToVersion401
+  data: void
   status: 401
 }
     
@@ -615,7 +609,7 @@ export const getCheckConsentedToVersionQueryKey = (params?: CheckConsentedToVers
     }
 
     
-export const getCheckConsentedToVersionQueryOptions = <TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = CheckConsentedToVersion401>(params: CheckConsentedToVersionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkConsentedToVersion>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCheckConsentedToVersionQueryOptions = <TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = void>(params: CheckConsentedToVersionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkConsentedToVersion>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -634,10 +628,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CheckConsentedToVersionQueryResult = NonNullable<Awaited<ReturnType<typeof checkConsentedToVersion>>>
-export type CheckConsentedToVersionQueryError = CheckConsentedToVersion401
+export type CheckConsentedToVersionQueryError = void
 
 
-export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = CheckConsentedToVersion401>(
+export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = void>(
  params: CheckConsentedToVersionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkConsentedToVersion>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkConsentedToVersion>>,
@@ -647,7 +641,7 @@ export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof che
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = CheckConsentedToVersion401>(
+export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = void>(
  params: CheckConsentedToVersionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkConsentedToVersion>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkConsentedToVersion>>,
@@ -657,7 +651,7 @@ export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof che
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = CheckConsentedToVersion401>(
+export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = void>(
  params: CheckConsentedToVersionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkConsentedToVersion>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -665,7 +659,7 @@ export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof che
  * @summary 특정 버전 동의 확인
  */
 
-export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = CheckConsentedToVersion401>(
+export function useCheckConsentedToVersion<TData = Awaited<ReturnType<typeof checkConsentedToVersion>>, TError = void>(
  params: CheckConsentedToVersionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkConsentedToVersion>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

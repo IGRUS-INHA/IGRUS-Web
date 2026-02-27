@@ -10,6 +10,7 @@
 IGRUS-Web/
 ├── backend/     # Spring Boot 백엔드
 ├── frontend/    # React + Vite 프론트엔드
+├── openapi/     # OpenAPI 스펙 (단일진실점 - 프론트/백 공유)
 ├── docs/        # 프로젝트 문서 (ADR, 기능 명세 등)
 ├── specs/       # 기능 스펙 문서
 └── README.md

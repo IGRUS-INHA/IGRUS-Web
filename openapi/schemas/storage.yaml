@@ -4,7 +4,8 @@ CreatePresignedUrlRequest:
     fileName:
       type: string
       maxLength: 255
-      minLength: 0
+      minLength: 1
+      pattern: .*\S.*
     contentType:
       type: string
       minLength: 1

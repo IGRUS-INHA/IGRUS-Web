@@ -16,20 +16,8 @@ semesters:
                 $ref: ../schemas/semesters.yaml#/SemesterSummaryResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/semesters.yaml#/SemesterSummaryResponse
       '403':
         description: 권한 없음 (OPERATOR 이상 필요)
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/semesters.yaml#/SemesterSummaryResponse
     security:
     - BearerAuthentication: []
 semestersByYearBySemesterMembers:
@@ -73,27 +61,9 @@ semestersByYearBySemesterMembers:
                 $ref: ../schemas/semesters.yaml#/SemesterMemberListResponse
       '400':
         description: 잘못된 연도 또는 학기
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/semesters.yaml#/SemesterMemberListResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/semesters.yaml#/SemesterMemberListResponse
       '403':
         description: 권한 없음 (OPERATOR 이상 필요)
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/semesters.yaml#/SemesterMemberListResponse
     security:
     - BearerAuthentication: []

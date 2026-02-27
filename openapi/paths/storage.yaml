@@ -20,22 +20,10 @@ storagePresignedUrl:
               $ref: ../schemas/storage.yaml#/CreatePresignedUrlResponse
       '400':
         description: 잘못된 요청 (파일 크기/타입 제한 위반)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/CreatePresignedUrlResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/CreatePresignedUrlResponse
       '500':
         description: S3 SDK 장애
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/CreatePresignedUrlResponse
     security:
     - BearerAuthentication: []
 storageConfirm:
@@ -60,28 +48,12 @@ storageConfirm:
               $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
       '403':
         description: 소유권 불일치
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
       '404':
         description: 파일 메타데이터 미존재
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
     security:
     - BearerAuthentication: []
 storageDownloadUrl:
@@ -107,22 +79,10 @@ storageDownloadUrl:
               $ref: ../schemas/storage.yaml#/DownloadUrlResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/DownloadUrlResponse
       '404':
         description: 파일 미존재 또는 COMPLETED 상태가 아님
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/DownloadUrlResponse
       '500':
         description: S3 SDK 장애
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/storage.yaml#/DownloadUrlResponse
     security:
     - BearerAuthentication: []
 storage:

@@ -54,20 +54,10 @@ import type {
 
 import type {
   ConfirmUpload200,
-  ConfirmUpload400,
-  ConfirmUpload401,
-  ConfirmUpload403,
-  ConfirmUpload404,
   ConfirmUploadBody,
   CreateDownloadUrl200,
-  CreateDownloadUrl401,
-  CreateDownloadUrl404,
-  CreateDownloadUrl500,
   CreateDownloadUrlParams,
   CreateUploadUrl200,
-  CreateUploadUrl400,
-  CreateUploadUrl401,
-  CreateUploadUrl500,
   CreateUploadUrlBody,
   DeleteFileParams
 } from '.././models';
@@ -89,17 +79,17 @@ export type createUploadUrlResponse200 = {
 }
 
 export type createUploadUrlResponse400 = {
-  data: CreateUploadUrl400
+  data: void
   status: 400
 }
 
 export type createUploadUrlResponse401 = {
-  data: CreateUploadUrl401
+  data: void
   status: 401
 }
 
 export type createUploadUrlResponse500 = {
-  data: CreateUploadUrl500
+  data: void
   status: 500
 }
     
@@ -135,7 +125,7 @@ export const createUploadUrl = async (createUploadUrlBody: CreateUploadUrlBody, 
 
 
 
-export const getCreateUploadUrlMutationOptions = <TError = CreateUploadUrl400 | CreateUploadUrl401 | CreateUploadUrl500,
+export const getCreateUploadUrlMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreateUploadUrlBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreateUploadUrlBody}, TContext> => {
 
@@ -164,12 +154,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateUploadUrlMutationResult = NonNullable<Awaited<ReturnType<typeof createUploadUrl>>>
     export type CreateUploadUrlMutationBody = CreateUploadUrlBody
-    export type CreateUploadUrlMutationError = CreateUploadUrl400 | CreateUploadUrl401 | CreateUploadUrl500
+    export type CreateUploadUrlMutationError = void
 
     /**
  * @summary 업로드용 Presigned URL 생성
  */
-export const useCreateUploadUrl = <TError = CreateUploadUrl400 | CreateUploadUrl401 | CreateUploadUrl500,
+export const useCreateUploadUrl = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreateUploadUrlBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createUploadUrl>>,
@@ -189,22 +179,22 @@ export type confirmUploadResponse200 = {
 }
 
 export type confirmUploadResponse400 = {
-  data: ConfirmUpload400
+  data: void
   status: 400
 }
 
 export type confirmUploadResponse401 = {
-  data: ConfirmUpload401
+  data: void
   status: 401
 }
 
 export type confirmUploadResponse403 = {
-  data: ConfirmUpload403
+  data: void
   status: 403
 }
 
 export type confirmUploadResponse404 = {
-  data: ConfirmUpload404
+  data: void
   status: 404
 }
     
@@ -240,7 +230,7 @@ export const confirmUpload = async (confirmUploadBody: ConfirmUploadBody, option
 
 
 
-export const getConfirmUploadMutationOptions = <TError = ConfirmUpload400 | ConfirmUpload401 | ConfirmUpload403 | ConfirmUpload404,
+export const getConfirmUploadMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadBody}, TContext> => {
 
@@ -269,12 +259,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ConfirmUploadMutationResult = NonNullable<Awaited<ReturnType<typeof confirmUpload>>>
     export type ConfirmUploadMutationBody = ConfirmUploadBody
-    export type ConfirmUploadMutationError = ConfirmUpload400 | ConfirmUpload401 | ConfirmUpload403 | ConfirmUpload404
+    export type ConfirmUploadMutationError = void
 
     /**
  * @summary 업로드 완료 확인
  */
-export const useConfirmUpload = <TError = ConfirmUpload400 | ConfirmUpload401 | ConfirmUpload403 | ConfirmUpload404,
+export const useConfirmUpload = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof confirmUpload>>,
@@ -294,17 +284,17 @@ export type createDownloadUrlResponse200 = {
 }
 
 export type createDownloadUrlResponse401 = {
-  data: CreateDownloadUrl401
+  data: void
   status: 401
 }
 
 export type createDownloadUrlResponse404 = {
-  data: CreateDownloadUrl404
+  data: void
   status: 404
 }
 
 export type createDownloadUrlResponse500 = {
-  data: CreateDownloadUrl500
+  data: void
   status: 500
 }
     
@@ -354,7 +344,7 @@ export const getCreateDownloadUrlQueryKey = (params?: CreateDownloadUrlParams,) 
     }
 
     
-export const getCreateDownloadUrlQueryOptions = <TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = CreateDownloadUrl401 | CreateDownloadUrl404 | CreateDownloadUrl500>(params: CreateDownloadUrlParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCreateDownloadUrlQueryOptions = <TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(params: CreateDownloadUrlParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -373,10 +363,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CreateDownloadUrlQueryResult = NonNullable<Awaited<ReturnType<typeof createDownloadUrl>>>
-export type CreateDownloadUrlQueryError = CreateDownloadUrl401 | CreateDownloadUrl404 | CreateDownloadUrl500
+export type CreateDownloadUrlQueryError = void
 
 
-export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = CreateDownloadUrl401 | CreateDownloadUrl404 | CreateDownloadUrl500>(
+export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(
  params: CreateDownloadUrlParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof createDownloadUrl>>,
@@ -386,7 +376,7 @@ export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDow
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = CreateDownloadUrl401 | CreateDownloadUrl404 | CreateDownloadUrl500>(
+export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(
  params: CreateDownloadUrlParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof createDownloadUrl>>,
@@ -396,7 +386,7 @@ export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDow
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = CreateDownloadUrl401 | CreateDownloadUrl404 | CreateDownloadUrl500>(
+export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(
  params: CreateDownloadUrlParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -404,7 +394,7 @@ export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDow
  * @summary 다운로드용 Presigned URL 생성
  */
 
-export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = CreateDownloadUrl401 | CreateDownloadUrl404 | CreateDownloadUrl500>(
+export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(
  params: CreateDownloadUrlParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

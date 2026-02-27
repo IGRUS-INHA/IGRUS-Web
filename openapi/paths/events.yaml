@@ -22,22 +22,10 @@ eventsByEventId:
               $ref: ../schemas/events.yaml#/EventDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '403':
         description: 준회원 접근 불가
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '404':
         description: 행사를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
     security:
     - BearerAuthentication: []
   put:
@@ -69,28 +57,12 @@ eventsByEventId:
               $ref: ../schemas/events.yaml#/EventDetailResponse
       '400':
         description: 잘못된 요청 또는 수정 불가능한 상태
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '404':
         description: 행사를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
     security:
     - BearerAuthentication: []
   delete:
@@ -142,22 +114,10 @@ registrationsByRegistrationIdRevert:
               $ref: ../schemas/events.yaml#/RegistrationResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '404':
         description: 신청을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
     security:
     - BearerAuthentication: []
 registrationsByRegistrationIdReject:
@@ -184,22 +144,10 @@ registrationsByRegistrationIdReject:
               $ref: ../schemas/events.yaml#/RegistrationResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '404':
         description: 신청을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
     security:
     - BearerAuthentication: []
 registrationsByRegistrationIdApprove:
@@ -226,22 +174,10 @@ registrationsByRegistrationIdApprove:
               $ref: ../schemas/events.yaml#/RegistrationResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '404':
         description: 신청을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
     security:
     - BearerAuthentication: []
 events:
@@ -284,12 +220,6 @@ events:
                 $ref: ../schemas/events.yaml#/EventListResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/events.yaml#/EventListResponse
     security:
     - BearerAuthentication: []
   post:
@@ -313,22 +243,10 @@ events:
               $ref: ../schemas/events.yaml#/EventCreateResponse
       '400':
         description: 잘못된 요청
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventCreateResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventCreateResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventCreateResponse
     security:
     - BearerAuthentication: []
 eventsByEventIdReopenRegistration:
@@ -361,22 +279,10 @@ eventsByEventIdReopenRegistration:
               $ref: ../schemas/events.yaml#/EventDetailResponse
       '400':
         description: 재오픈 불가능한 상태 또는 사유 누락
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
     security:
     - BearerAuthentication: []
 eventsByEventIdRegistrations:
@@ -432,22 +338,10 @@ eventsByEventIdRegistrations:
               $ref: ../schemas/events.yaml#/PageRegistrationListResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/PageRegistrationListResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/PageRegistrationListResponse
       '404':
         description: 행사를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/PageRegistrationListResponse
     security:
     - BearerAuthentication: []
   post:
@@ -473,34 +367,14 @@ eventsByEventIdRegistrations:
               $ref: ../schemas/events.yaml#/RegistrationResponse
       '400':
         description: 신청 불가 (정원 초과, 기간 외 등)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '403':
         description: 권한 없음 (준회원)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '404':
         description: 행사를 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '409':
         description: 이미 신청함
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
     security:
     - BearerAuthentication: []
   delete:
@@ -526,16 +400,8 @@ eventsByEventIdRegistrations:
               $ref: ../schemas/events.yaml#/RegistrationResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
       '404':
         description: 신청을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/RegistrationResponse
     security:
     - BearerAuthentication: []
 eventsByEventIdReactivate:
@@ -568,22 +434,10 @@ eventsByEventIdReactivate:
               $ref: ../schemas/events.yaml#/EventDetailResponse
       '400':
         description: 재활성화 불가능한 상태 또는 사유 누락
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
     security:
     - BearerAuthentication: []
 eventsByEventIdClose:
@@ -616,22 +470,10 @@ eventsByEventIdClose:
               $ref: ../schemas/events.yaml#/EventDetailResponse
       '400':
         description: 마감 불가능한 상태 또는 사유 누락
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
     security:
     - BearerAuthentication: []
 eventsByEventIdCancel:
@@ -664,22 +506,10 @@ eventsByEventIdCancel:
               $ref: ../schemas/events.yaml#/EventDetailResponse
       '400':
         description: 취소 불가능한 상태 또는 사유 누락
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
       '403':
         description: 권한 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
     security:
     - BearerAuthentication: []
 myRegistrations:
@@ -700,11 +530,5 @@ myRegistrations:
                 $ref: ../schemas/events.yaml#/MyRegistrationResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/events.yaml#/MyRegistrationResponse
     security:
     - BearerAuthentication: []
