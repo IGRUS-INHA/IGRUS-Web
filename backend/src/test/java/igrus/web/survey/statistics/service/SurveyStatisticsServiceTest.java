@@ -1,6 +1,7 @@
 package igrus.web.survey.statistics.service;
 
 import igrus.web.survey.domain.Survey;
+import igrus.web.survey.domain.SurveyAccessLevel;
 import igrus.web.survey.exception.SurveyNotFoundException;
 import igrus.web.survey.question.domain.*;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
@@ -171,8 +172,9 @@ class SurveyStatisticsServiceTest {
             TextQuestionStatistics textStats = result.questionStatistics().getFirst().textStatistics();
             assertThat(textStats).isNotNull();
             assertThat(textStats.textResponses()).hasSize(3);
-            assertThat(textStats.textResponses()).containsExactly(
-                    "첫번째 응답", "두번째 응답", "세번째 응답");
+            assertThat(textStats.textResponses())
+                    .extracting(TextResponseItem::text)
+                    .containsExactly("첫번째 응답", "두번째 응답", "세번째 응답");
         }
 
         @DisplayName("TC-STAT-012: DATE 유형도 TEXT 카테고리 통계 구조 적용")
@@ -206,8 +208,9 @@ class SurveyStatisticsServiceTest {
             assertThat(qStat.questionType()).isEqualTo(SurveyQuestionType.DATE);
             assertThat(qStat.textStatistics()).isNotNull();
             assertThat(qStat.textStatistics().textResponses()).hasSize(2);
-            assertThat(qStat.textStatistics().textResponses()).containsExactly(
-                    "2026-02-01", "2026-02-15");
+            assertThat(qStat.textStatistics().textResponses())
+                    .extracting(TextResponseItem::text)
+                    .containsExactly("2026-02-01", "2026-02-15");
             // TEXT 구조이므로 다른 통계 필드는 null
             assertThat(qStat.scaleStatistics()).isNull();
             assertThat(qStat.optionStatistics()).isNull();
@@ -242,10 +245,12 @@ class SurveyStatisticsServiceTest {
             // then
             TextQuestionStatistics textStats = result.questionStatistics().getFirst().textStatistics();
             assertThat(textStats).isNotNull();
-            assertThat(textStats.textResponses()).containsExactly(
-                    "https://example.com/file1.pdf",
-                    "https://example.com/file2.pdf"
-            );
+            assertThat(textStats.textResponses())
+                    .extracting(TextResponseItem::text)
+                    .containsExactly(
+                            "https://example.com/file1.pdf",
+                            "https://example.com/file2.pdf"
+                    );
         }
     }
 
@@ -1353,7 +1358,9 @@ class SurveyStatisticsServiceTest {
             // TEXT 질문
             QuestionStatisticsResponse textStat = result.questionStatistics().get(0);
             assertThat(textStat.responseCount()).isEqualTo(1);
-            assertThat(textStat.textStatistics().textResponses()).containsExactly("응답1");
+            assertThat(textStat.textStatistics().textResponses())
+                    .extracting(TextResponseItem::text)
+                    .containsExactly("응답1");
 
             // MC 질문: A=1 (100.0%), B=0 (0.0%)
             QuestionStatisticsResponse mcStat = result.questionStatistics().get(1);
@@ -1859,6 +1866,180 @@ class SurveyStatisticsServiceTest {
             assertThatThrownBy(() -> surveyStatisticsService.getSurveyStatistics(
                     DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID))
                     .isInstanceOf(SurveyNotFoundException.class);
+        }
+    }
+
+    // ==================== 응답자 정보 테스트 ====================
+
+    @Nested
+    @DisplayName("응답자 정보 포함/생략")
+    class RespondentInfoStatistics {
+
+        /**
+         * 비PUBLIC 설문용 Mock 설정 (findValidResponsesWithUserBySurveyId 사용)
+         */
+        private void setUpMocksForNonPublicSurvey(Survey nonPublicSurvey,
+                                                   List<SurveyResponse> responses,
+                                                   List<SurveyQuestion> questions,
+                                                   List<SurveyAnswer> answers) {
+            given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID))
+                    .willReturn(Optional.of(nonPublicSurvey));
+            given(surveyResponseRepository.findValidResponsesWithUserBySurveyId(DEFAULT_SURVEY_ID))
+                    .willReturn(responses);
+            given(surveyQuestionRepository.findAllBySurveyIdWithOptions(DEFAULT_SURVEY_ID))
+                    .willReturn(questions);
+            given(surveyQuestionRepository.findAllBySurveyIdWithRows(DEFAULT_SURVEY_ID))
+                    .willReturn(questions);
+            given(surveyAnswerRepository.findValidAnswersBySurveyId(DEFAULT_SURVEY_ID))
+                    .willReturn(answers);
+        }
+
+        @DisplayName("PUBLIC 설문 - respondents null, TEXT respondent null")
+        @Test
+        void getSurveyStatistics_PublicSurvey_RespondentsNullAndTextRespondentNull() {
+            // given: 기본 survey는 PUBLIC
+            TextSurveyQuestion question = TextSurveyQuestion.create(
+                    survey, SurveyQuestionType.SHORT_ANSWER, "질문", null, true, 1);
+            withId(question, 100L);
+
+            SurveyResponse r1 = createResponseWithIdAndCreatedAt(1L, Instant.parse("2026-02-01T00:00:00Z"));
+            List<SurveyAnswer> answers = List.of(TextSurveyAnswer.create(r1, question, "답변1"));
+
+            setUpMocks(List.of(r1), List.of(question), answers);
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then
+            assertThat(result.respondents()).isNull();
+            TextResponseItem textItem = result.questionStatistics().getFirst()
+                    .textStatistics().textResponses().getFirst();
+            assertThat(textItem.text()).isEqualTo("답변1");
+            assertThat(textItem.respondent()).isNull();
+        }
+
+        @DisplayName("비PUBLIC(MEMBER) 설문 - respondents 포함, TEXT respondent 포함")
+        @Test
+        void getSurveyStatistics_MemberSurvey_RespondentsAndTextRespondentIncluded() {
+            // given: MEMBER 접근 수준 설문
+            Survey memberSurvey = Survey.create("MEMBER 설문", "설명", SurveyAccessLevel.MEMBER, null);
+            withId(memberSurvey, DEFAULT_SURVEY_ID);
+
+            User member1 = createMemberWithId(10L);
+            User member2 = createMemberWithId(20L);
+
+            TextSurveyQuestion question = TextSurveyQuestion.create(
+                    memberSurvey, SurveyQuestionType.SHORT_ANSWER, "질문", null, true, 1);
+            withId(question, 100L);
+
+            SurveyResponse r1 = SurveyResponse.create(memberSurvey, member1);
+            withId(r1, 1L);
+            ReflectionTestUtils.setField(r1, "createdAt", Instant.parse("2026-02-01T00:00:00Z"));
+
+            SurveyResponse r2 = SurveyResponse.create(memberSurvey, member2);
+            withId(r2, 2L);
+            ReflectionTestUtils.setField(r2, "createdAt", Instant.parse("2026-02-02T00:00:00Z"));
+
+            List<SurveyAnswer> answers = List.of(
+                    TextSurveyAnswer.create(r1, question, "답변1"),
+                    TextSurveyAnswer.create(r2, question, "답변2")
+            );
+
+            setUpMocksForNonPublicSurvey(memberSurvey, List.of(r1, r2), List.of(question), answers);
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then: respondents 목록 검증
+            assertThat(result.respondents()).hasSize(2);
+            assertThat(result.respondents().get(0).userId()).isEqualTo(10L);
+            assertThat(result.respondents().get(0).name()).isEqualTo(DEFAULT_NAME);
+            assertThat(result.respondents().get(0).grade()).isEqualTo(DEFAULT_GRADE);
+            assertThat(result.respondents().get(0).department()).isEqualTo(DEFAULT_DEPARTMENT);
+            assertThat(result.respondents().get(1).userId()).isEqualTo(20L);
+
+            // TEXT respondent 검증
+            List<TextResponseItem> textResponses = result.questionStatistics().getFirst()
+                    .textStatistics().textResponses();
+            assertThat(textResponses).hasSize(2);
+            assertThat(textResponses.get(0).text()).isEqualTo("답변1");
+            assertThat(textResponses.get(0).respondent()).isNotNull();
+            assertThat(textResponses.get(0).respondent().userId()).isEqualTo(10L);
+            assertThat(textResponses.get(1).text()).isEqualTo("답변2");
+            assertThat(textResponses.get(1).respondent()).isNotNull();
+            assertThat(textResponses.get(1).respondent().userId()).isEqualTo(20L);
+        }
+
+        @DisplayName("비PUBLIC(MEMBER) 설문 + 비회원(user=null) 응답 - respondent 생략")
+        @Test
+        void getSurveyStatistics_MemberSurveyWithNullUser_RespondentSkipped() {
+            // given: MEMBER 접근 수준이지만 비회원 응답이 섞인 경우 (이론적 엣지 케이스)
+            Survey memberSurvey = Survey.create("MEMBER 설문", "설명", SurveyAccessLevel.MEMBER, null);
+            withId(memberSurvey, DEFAULT_SURVEY_ID);
+
+            User member1 = createMemberWithId(10L);
+
+            TextSurveyQuestion question = TextSurveyQuestion.create(
+                    memberSurvey, SurveyQuestionType.SHORT_ANSWER, "질문", null, true, 1);
+            withId(question, 100L);
+
+            // 회원 응답
+            SurveyResponse r1 = SurveyResponse.create(memberSurvey, member1);
+            withId(r1, 1L);
+            ReflectionTestUtils.setField(r1, "createdAt", Instant.parse("2026-02-01T00:00:00Z"));
+
+            // 비회원 응답 (user=null)
+            SurveyResponse r2 = SurveyResponse.createAnonymous(memberSurvey);
+            withId(r2, 2L);
+            ReflectionTestUtils.setField(r2, "createdAt", Instant.parse("2026-02-02T00:00:00Z"));
+
+            List<SurveyAnswer> answers = List.of(
+                    TextSurveyAnswer.create(r1, question, "회원 답변"),
+                    TextSurveyAnswer.create(r2, question, "비회원 답변")
+            );
+
+            setUpMocksForNonPublicSurvey(memberSurvey, List.of(r1, r2), List.of(question), answers);
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then: respondents에서 null user 제외
+            assertThat(result.respondents()).hasSize(1);
+            assertThat(result.respondents().get(0).userId()).isEqualTo(10L);
+
+            // TEXT: 회원 응답은 respondent 포함, 비회원 응답은 respondent null
+            List<TextResponseItem> textResponses = result.questionStatistics().getFirst()
+                    .textStatistics().textResponses();
+            assertThat(textResponses).hasSize(2);
+            assertThat(textResponses.get(0).respondent()).isNotNull();
+            assertThat(textResponses.get(0).respondent().userId()).isEqualTo(10L);
+            assertThat(textResponses.get(1).respondent()).isNull();
+        }
+
+        @DisplayName("OPERATOR 접근 수준 설문 - respondents 포함")
+        @Test
+        void getSurveyStatistics_OperatorSurvey_RespondentsIncluded() {
+            // given
+            Survey operatorSurvey = Survey.create("OPERATOR 설문", "설명", SurveyAccessLevel.OPERATOR, null);
+            withId(operatorSurvey, DEFAULT_SURVEY_ID);
+
+            SurveyResponse r1 = SurveyResponse.create(operatorSurvey, operator);
+            withId(r1, 1L);
+            ReflectionTestUtils.setField(r1, "createdAt", Instant.parse("2026-02-01T00:00:00Z"));
+
+            setUpMocksForNonPublicSurvey(operatorSurvey, List.of(r1), List.of(), List.of());
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then
+            assertThat(result.respondents()).hasSize(1);
+            assertThat(result.respondents().get(0).userId()).isEqualTo(DEFAULT_OPERATOR_ID);
+            assertThat(result.respondents().get(0).name()).isEqualTo(OPERATOR_NAME);
         }
     }
 }

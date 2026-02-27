@@ -160,6 +160,8 @@ class SurveyStatisticsControllerTest extends ServiceIntegrationTestBase {
                             .header("Authorization", "Bearer " + token))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalResponseCount").value(2))
+                    .andExpect(jsonPath("$.respondents").isArray())
+                    .andExpect(jsonPath("$.respondents.length()").value(2))
                     .andExpect(jsonPath("$.questionStatistics").isArray())
                     .andExpect(jsonPath("$.questionStatistics.length()").value(1))
                     .andExpect(jsonPath("$.questionStatistics[0].responseCount").value(2));

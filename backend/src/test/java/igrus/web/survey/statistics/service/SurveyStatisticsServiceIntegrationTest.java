@@ -196,6 +196,8 @@ class SurveyStatisticsServiceIntegrationTest extends ServiceIntegrationTestBase 
             assertThat(textStat.responseCount()).isEqualTo(2);
             assertThat(textStat.textStatistics()).isNotNull();
             assertThat(textStat.textStatistics().textResponses()).hasSize(2);
+            // PUBLIC 설문이므로 respondent는 null
+            assertThat(textStat.textStatistics().textResponses().getFirst().respondent()).isNull();
 
             // MC 검증
             QuestionStatisticsResponse mcStat = result.questionStatistics().get(1);
@@ -354,6 +356,7 @@ class SurveyStatisticsServiceIntegrationTest extends ServiceIntegrationTestBase 
             assertThat(result.totalResponseCount()).isEqualTo(3);
             assertThat(result.questionStatistics().getFirst().responseCount()).isEqualTo(3);
             assertThat(result.questionStatistics().getFirst().textStatistics().textResponses())
+                    .extracting(TextResponseItem::text)
                     .containsExactly("회원 응답1", "회원 응답2", "비회원 응답");
         }
 
@@ -387,6 +390,97 @@ class SurveyStatisticsServiceIntegrationTest extends ServiceIntegrationTestBase 
             assertThat(result.questionStatistics().get(0).questionTitle()).isEqualTo("질문 B");
             assertThat(result.questionStatistics().get(1).questionTitle()).isEqualTo("질문 C");
             assertThat(result.questionStatistics().get(2).questionTitle()).isEqualTo("질문 A");
+        }
+    }
+
+    // ==================== 응답자 정보 통합 테스트 ====================
+
+    @Nested
+    @DisplayName("응답자 정보 통합 테스트")
+    class RespondentInfoIntegrationTest {
+
+        /**
+         * MEMBER 접근 수준의 PUBLISHED + CLOSED 설문을 생성하고 저장합니다.
+         */
+        private Survey createAndSaveMemberAccessSurvey() {
+            Survey survey = Survey.create("MEMBER 설문", "설명", SurveyAccessLevel.MEMBER, null);
+            ReflectionTestUtils.setField(survey, "visibility", SurveyVisibility.PUBLISHED);
+            ReflectionTestUtils.setField(survey, "responseStatus", SurveyResponseStatus.CLOSED);
+            return surveyRepository.save(survey);
+        }
+
+        @DisplayName("비PUBLIC(MEMBER) 설문 - respondents 포함, TEXT respondent 포함")
+        @Test
+        void getSurveyStatistics_MemberSurvey_RespondentsIncluded() {
+            // given
+            Survey survey = transactionTemplate.execute(status -> {
+                Survey s = createAndSaveMemberAccessSurvey();
+
+                TextSurveyQuestion textQ = TextSurveyQuestion.create(
+                        s, SurveyQuestionType.SHORT_ANSWER, "질문", null, true, 0);
+                textQ = surveyQuestionRepository.save(textQ);
+
+                User member1 = createAndSaveUser("20230050", "m50@inha.edu", UserRole.MEMBER);
+                User member2 = createAndSaveUser("20230051", "m51@inha.edu", UserRole.MEMBER);
+
+                SurveyResponse r1 = createAndSaveResponse(s, member1);
+                surveyAnswerRepository.save(TextSurveyAnswer.create(r1, textQ, "답변1"));
+
+                SurveyResponse r2 = createAndSaveResponse(s, member2);
+                surveyAnswerRepository.save(TextSurveyAnswer.create(r2, textQ, "답변2"));
+
+                return s;
+            });
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    survey.getId(), operatorUser.getId());
+
+            // then: respondents 포함
+            assertThat(result.respondents()).hasSize(2);
+            assertThat(result.respondents()).allSatisfy(r -> {
+                assertThat(r.userId()).isNotNull();
+                assertThat(r.name()).isNotNull();
+                assertThat(r.grade()).isNotNull();
+                assertThat(r.department()).isNotNull();
+            });
+
+            // TEXT respondent 포함
+            List<TextResponseItem> textItems = result.questionStatistics().getFirst()
+                    .textStatistics().textResponses();
+            assertThat(textItems).hasSize(2);
+            assertThat(textItems).allSatisfy(item -> {
+                assertThat(item.respondent()).isNotNull();
+                assertThat(item.respondent().userId()).isNotNull();
+            });
+        }
+
+        @DisplayName("PUBLIC 설문 - respondents null")
+        @Test
+        void getSurveyStatistics_PublicSurvey_RespondentsNull() {
+            // given
+            Survey survey = transactionTemplate.execute(status -> {
+                Survey s = createAndSavePublishedClosedSurvey();
+
+                TextSurveyQuestion textQ = TextSurveyQuestion.create(
+                        s, SurveyQuestionType.SHORT_ANSWER, "질문", null, true, 0);
+                textQ = surveyQuestionRepository.save(textQ);
+
+                User member = createAndSaveUser("20230060", "m60@inha.edu", UserRole.MEMBER);
+                SurveyResponse r1 = createAndSaveResponse(s, member);
+                surveyAnswerRepository.save(TextSurveyAnswer.create(r1, textQ, "답변"));
+
+                return s;
+            });
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    survey.getId(), operatorUser.getId());
+
+            // then
+            assertThat(result.respondents()).isNull();
+            assertThat(result.questionStatistics().getFirst().textStatistics()
+                    .textResponses().getFirst().respondent()).isNull();
         }
     }
 
