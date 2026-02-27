@@ -4,6 +4,7 @@ import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.survey.exception.SurveyAlreadyTrashedException;
 import igrus.web.survey.exception.SurveyInvalidStateTransitionException;
 import igrus.web.survey.exception.SurveyNotTrashedException;
+import igrus.web.survey.question.domain.SurveyQuestion;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -125,7 +126,7 @@ public class Survey extends SoftDeletableEntity {
 
     /**
      * 설문을 비공개로 전환합니다. PUBLISHED → UNPUBLISHED (visibility 변경)
-     * OPEN 상태이면 자동으로 응답을 마감합니다. (INV-20)
+     * OPEN 상태이면 자동으로 응답을 마감합니다.
      *
      * @throws SurveyInvalidStateTransitionException 이미 비공개 상태인 경우
      */
@@ -238,7 +239,7 @@ public class Survey extends SoftDeletableEntity {
     }
 
     /**
-     * 영구 삭제합니다. 휴지통 상태에서만 가능합니다. (INV-18)
+     * 영구 삭제합니다. 휴지통 상태에서만 가능합니다.
      *
      * @param deletedBy 삭제 수행자 ID
      * @throws SurveyNotTrashedException 휴지통에 있지 않은 경우

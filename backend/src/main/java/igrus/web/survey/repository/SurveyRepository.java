@@ -42,7 +42,7 @@ public interface SurveyRepository extends JpaRepository<Survey, Long> {
     Optional<Survey> findByIdAndDeletedFalseAndTrashedAtIsNull(Long id);
 
     /**
-     * 활성 설문 목록 조회 (삭제되지 않고 휴지통에 있지 않은 설문). (INV-17)
+     * 활성 설문 목록 조회 (삭제되지 않고 휴지통에 있지 않은 설문).
      *
      * @return 활성 설문 목록
      */
@@ -51,7 +51,7 @@ public interface SurveyRepository extends JpaRepository<Survey, Long> {
     // === 휴지통 조회 ===
 
     /**
-     * 휴지통 설문 목록 조회 (삭제되지 않고 휴지통에 있는 설문). (INV-17)
+     * 휴지통 설문 목록 조회 (삭제되지 않고 휴지통에 있는 설문).
      *
      * @return 휴지통 설문 목록
      */

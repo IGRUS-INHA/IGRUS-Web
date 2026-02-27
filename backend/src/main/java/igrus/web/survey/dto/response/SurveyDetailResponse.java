@@ -1,6 +1,7 @@
 package igrus.web.survey.dto.response;
 
 import igrus.web.survey.domain.*;
+import igrus.web.survey.question.domain.*;
 
 import java.time.Instant;
 import java.util.List;

@@ -2,6 +2,7 @@ package igrus.web.survey.service;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.domain.*;
+import igrus.web.survey.question.domain.*;
 import igrus.web.survey.dto.request.CreateSurveyRequest;
 import igrus.web.survey.dto.request.UpdateSurveyRequest;
 import igrus.web.survey.dto.response.SurveyDetailResponse;

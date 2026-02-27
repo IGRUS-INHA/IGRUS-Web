@@ -134,7 +134,7 @@ class SurveyTest {
             assertThat(survey.getVisibility()).isEqualTo(SurveyVisibility.UNPUBLISHED);
         }
 
-        @DisplayName("unpublish: OPEN 상태에서 비공개 시 자동 CLOSED (INV-20, SRV-040)")
+        @DisplayName("unpublish: OPEN 상태에서 비공개 시 자동 CLOSED (SRV-040)")
         @Test
         void unpublish_WhenOpen_AutoClosesResponse() {
             // given
@@ -327,7 +327,7 @@ class SurveyTest {
             assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
         }
 
-        @DisplayName("SRV-055: CLOSED, deadline=과거 -> openResponse(재개) 거부 (INV-11)")
+        @DisplayName("SRV-055: CLOSED, deadline=과거 -> openResponse(재개) 거부")
         @Test
         void openResponse_FromClosedDeadlinePassed_ThrowsException() {
             // given
@@ -427,7 +427,7 @@ class SurveyTest {
             assertThat(survey.getAccessLevel()).isEqualTo(SurveyAccessLevel.ASSOCIATE);
         }
 
-        @DisplayName("SRV-087: P+O에서 update 성공 (INV-02)")
+        @DisplayName("SRV-087: P+O에서 update 성공")
         @Test
         void update_WhenPublishedAndOpen_Success() {
             // given
@@ -453,7 +453,7 @@ class SurveyTest {
             assertThat(survey.getTitle()).isEqualTo("마감 후 수정");
         }
 
-        @DisplayName("SRV-091: accessLevel 변경 성공 (INV-05)")
+        @DisplayName("SRV-091: accessLevel 변경 성공")
         @Test
         void update_ChangeAccessLevel_Success() {
             // given
@@ -576,7 +576,7 @@ class SurveyTest {
             assertThat(survey.isDeleted()).isTrue();
         }
 
-        @DisplayName("permanentDelete: 활성 설문이면 예외 (INV-18)")
+        @DisplayName("permanentDelete: 활성 설문이면 예외")
         @Test
         void permanentDelete_ActiveSurvey_ThrowsException() {
             // given

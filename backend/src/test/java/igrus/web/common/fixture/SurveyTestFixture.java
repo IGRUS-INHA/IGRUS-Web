@@ -1,6 +1,7 @@
 package igrus.web.common.fixture;
 
 import igrus.web.survey.domain.*;
+import igrus.web.survey.question.domain.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;

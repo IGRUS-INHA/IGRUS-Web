@@ -2,6 +2,7 @@ package igrus.web.survey.service;
 
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.domain.*;
+import igrus.web.survey.question.domain.*;
 import igrus.web.survey.dto.request.CreateSurveyRequest;
 import igrus.web.survey.dto.request.UpdateSurveyRequest;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
@@ -204,7 +205,7 @@ public class SurveyService {
 
     /**
      * 설문을 공개합니다. UNPUBLISHED → PUBLISHED
-     * 발행 전 질문 구조 유효성을 검증합니다. (INV-04, INV-06, INV-13)
+     * 발행 전 질문 구조 유효성을 검증합니다.
      *
      * @param surveyId          설문 ID
      * @param authenticatedUser 인증된 사용자 정보
@@ -226,7 +227,7 @@ public class SurveyService {
 
     /**
      * 설문을 비공개로 전환합니다. PUBLISHED → UNPUBLISHED
-     * OPEN 상태이면 자동으로 응답을 마감합니다. (INV-20)
+     * OPEN 상태이면 자동으로 응답을 마감합니다.
      *
      * @param surveyId          설문 ID
      * @param authenticatedUser 인증된 사용자 정보
@@ -289,7 +290,7 @@ public class SurveyService {
     /**
      * 설문을 공개하고 동시에 응답 수집을 시작합니다.
      * UNPUBLISHED 상태에서 한 번에 공개 + 응답 시작 (편의 메서드)
-     * 발행 전 질문 구조 유효성을 검증합니다. (INV-04, INV-06, INV-13)
+     * 발행 전 질문 구조 유효성을 검증합니다.
      *
      * @param surveyId          설문 ID
      * @param authenticatedUser 인증된 사용자 정보
@@ -319,9 +320,9 @@ public class SurveyService {
 
     /**
      * 설문 발행 전 질문 구조 유효성을 검증합니다.
-     * - INV-04: 활성 질문 수 1~50개
-     * - INV-13: 질문 유형별 필수 구성요소
-     * - INV-06: 그리드 질문의 최소 구성 (행 + 선택지)
+     * - 활성 질문 수 1~50개
+     * - 질문 유형별 필수 구성요소
+     * - 그리드 질문의 최소 구성 (행 + 선택지)
      */
     private void validatePublishPreConditions(Survey survey) {
         List<SurveyQuestion> activeQuestions = survey.getQuestions().stream()
@@ -341,7 +342,7 @@ public class SurveyService {
     }
 
     /**
-     * 질문 유형별 필수 구성요소를 검증합니다. (INV-13)
+     * 질문 유형별 필수 구성요소를 검증합니다.
      */
     private void validateQuestionStructure(SurveyQuestion question) {
         if (question instanceof LinearScaleSurveyQuestion scaleQ) {
