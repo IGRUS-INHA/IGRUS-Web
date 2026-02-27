@@ -2,6 +2,8 @@ package igrus.web.survey.response.repository;
 
 import igrus.web.survey.response.domain.SurveyAnswer;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -41,4 +43,23 @@ public interface SurveyAnswerRepository extends JpaRepository<SurveyAnswer, Long
      * @return 참조 중이면 true
      */
     boolean existsByQuestionId(Long questionId);
+
+    /**
+     * 특정 설문의 유효 답변 목록을 조회합니다.
+     * SurveyAnswer.deleted=false AND SurveyResponse.deleted=false 조건을 적용합니다.
+     * N+1 방지를 위해 question, selectedOption, selectedRow, response를 fetch join합니다.
+     *
+     * @param surveyId 설문 ID
+     * @return 유효 답변 목록
+     */
+    @Query("SELECT a FROM SurveyAnswer a " +
+            "JOIN FETCH a.response r " +
+            "LEFT JOIN FETCH r.user " +
+            "JOIN FETCH a.question q " +
+            "LEFT JOIN FETCH a.selectedOption " +
+            "LEFT JOIN FETCH a.selectedRow " +
+            "WHERE r.survey.id = :surveyId " +
+            "AND r.deleted = false " +
+            "AND a.deleted = false")
+    List<SurveyAnswer> findValidAnswersBySurveyId(@Param("surveyId") Long surveyId);
 }
