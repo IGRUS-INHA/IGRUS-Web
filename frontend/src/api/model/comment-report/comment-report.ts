@@ -54,12 +54,7 @@ import type {
 
 import type {
   GetPendingReports200Item,
-  GetPendingReports401Item,
-  GetPendingReports403Item,
   ReportComment201,
-  ReportComment400,
-  ReportComment401,
-  ReportComment404,
   ReportCommentBody,
   UpdateReportStatusBody
 } from '.././models';
@@ -81,17 +76,17 @@ export type reportCommentResponse201 = {
 }
 
 export type reportCommentResponse400 = {
-  data: ReportComment400
+  data: void
   status: 400
 }
 
 export type reportCommentResponse401 = {
-  data: ReportComment401
+  data: void
   status: 401
 }
 
 export type reportCommentResponse404 = {
-  data: ReportComment404
+  data: void
   status: 404
 }
     
@@ -128,7 +123,7 @@ export const reportComment = async (commentId: number,
 
 
 
-export const getReportCommentMutationOptions = <TError = ReportComment400 | ReportComment401 | ReportComment404,
+export const getReportCommentMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: ReportCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: ReportCommentBody}, TContext> => {
 
@@ -157,12 +152,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ReportCommentMutationResult = NonNullable<Awaited<ReturnType<typeof reportComment>>>
     export type ReportCommentMutationBody = ReportCommentBody
-    export type ReportCommentMutationError = ReportComment400 | ReportComment401 | ReportComment404
+    export type ReportCommentMutationError = void
 
     /**
  * @summary 댓글 신고
  */
-export const useReportComment = <TError = ReportComment400 | ReportComment401 | ReportComment404,
+export const useReportComment = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: ReportCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof reportComment>>,
@@ -288,12 +283,12 @@ export type getPendingReportsResponse200 = {
 }
 
 export type getPendingReportsResponse401 = {
-  data: GetPendingReports401Item[]
+  data: void
   status: 401
 }
 
 export type getPendingReportsResponse403 = {
-  data: GetPendingReports403Item[]
+  data: void
   status: 403
 }
     
@@ -336,7 +331,7 @@ export const getGetPendingReportsQueryKey = () => {
     }
 
     
-export const getGetPendingReportsQueryOptions = <TData = Awaited<ReturnType<typeof getPendingReports>>, TError = GetPendingReports401Item[] | GetPendingReports403Item[]>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetPendingReportsQueryOptions = <TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -355,10 +350,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPendingReportsQueryResult = NonNullable<Awaited<ReturnType<typeof getPendingReports>>>
-export type GetPendingReportsQueryError = GetPendingReports401Item[] | GetPendingReports403Item[]
+export type GetPendingReportsQueryError = void
 
 
-export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = GetPendingReports401Item[] | GetPendingReports403Item[]>(
+export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPendingReports>>,
@@ -368,7 +363,7 @@ export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendin
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = GetPendingReports401Item[] | GetPendingReports403Item[]>(
+export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPendingReports>>,
@@ -378,7 +373,7 @@ export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendin
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = GetPendingReports401Item[] | GetPendingReports403Item[]>(
+export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -386,7 +381,7 @@ export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendin
  * @summary 신고 목록 조회 (관리자)
  */
 
-export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = GetPendingReports401Item[] | GetPendingReports403Item[]>(
+export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

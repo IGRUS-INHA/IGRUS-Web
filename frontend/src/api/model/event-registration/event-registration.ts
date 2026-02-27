@@ -54,33 +54,13 @@ import type {
 
 import type {
   ApproveRegistration200,
-  ApproveRegistration401,
-  ApproveRegistration403,
-  ApproveRegistration404,
   CancelRegistration200,
-  CancelRegistration401,
-  CancelRegistration404,
   GetMyRegistrations1200Item,
-  GetMyRegistrations1401Item,
   GetRegistrationList200,
-  GetRegistrationList401,
-  GetRegistrationList403,
-  GetRegistrationList404,
   GetRegistrationListParams,
   RegisterEvent201,
-  RegisterEvent400,
-  RegisterEvent401,
-  RegisterEvent403,
-  RegisterEvent404,
-  RegisterEvent409,
   RejectRegistration200,
-  RejectRegistration401,
-  RejectRegistration403,
-  RejectRegistration404,
-  RevertRegistration200,
-  RevertRegistration401,
-  RevertRegistration403,
-  RevertRegistration404
+  RevertRegistration200
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -100,17 +80,17 @@ export type revertRegistrationResponse200 = {
 }
 
 export type revertRegistrationResponse401 = {
-  data: RevertRegistration401
+  data: void
   status: 401
 }
 
 export type revertRegistrationResponse403 = {
-  data: RevertRegistration403
+  data: void
   status: 403
 }
 
 export type revertRegistrationResponse404 = {
-  data: RevertRegistration404
+  data: void
   status: 404
 }
     
@@ -145,7 +125,7 @@ export const revertRegistration = async (registrationId: number, options?: Reque
 
 
 
-export const getRevertRegistrationMutationOptions = <TError = RevertRegistration401 | RevertRegistration403 | RevertRegistration404,
+export const getRevertRegistrationMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revertRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof revertRegistration>>, TError,{registrationId: number}, TContext> => {
 
@@ -174,12 +154,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RevertRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof revertRegistration>>>
     
-    export type RevertRegistrationMutationError = RevertRegistration401 | RevertRegistration403 | RevertRegistration404
+    export type RevertRegistrationMutationError = void
 
     /**
  * @summary 승인/거절 되돌리기
  */
-export const useRevertRegistration = <TError = RevertRegistration401 | RevertRegistration403 | RevertRegistration404,
+export const useRevertRegistration = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revertRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof revertRegistration>>,
@@ -199,17 +179,17 @@ export type rejectRegistrationResponse200 = {
 }
 
 export type rejectRegistrationResponse401 = {
-  data: RejectRegistration401
+  data: void
   status: 401
 }
 
 export type rejectRegistrationResponse403 = {
-  data: RejectRegistration403
+  data: void
   status: 403
 }
 
 export type rejectRegistrationResponse404 = {
-  data: RejectRegistration404
+  data: void
   status: 404
 }
     
@@ -244,7 +224,7 @@ export const rejectRegistration = async (registrationId: number, options?: Reque
 
 
 
-export const getRejectRegistrationMutationOptions = <TError = RejectRegistration401 | RejectRegistration403 | RejectRegistration404,
+export const getRejectRegistrationMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof rejectRegistration>>, TError,{registrationId: number}, TContext> => {
 
@@ -273,12 +253,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RejectRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof rejectRegistration>>>
     
-    export type RejectRegistrationMutationError = RejectRegistration401 | RejectRegistration403 | RejectRegistration404
+    export type RejectRegistrationMutationError = void
 
     /**
  * @summary 신청 거절
  */
-export const useRejectRegistration = <TError = RejectRegistration401 | RejectRegistration403 | RejectRegistration404,
+export const useRejectRegistration = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof rejectRegistration>>,
@@ -298,17 +278,17 @@ export type approveRegistrationResponse200 = {
 }
 
 export type approveRegistrationResponse401 = {
-  data: ApproveRegistration401
+  data: void
   status: 401
 }
 
 export type approveRegistrationResponse403 = {
-  data: ApproveRegistration403
+  data: void
   status: 403
 }
 
 export type approveRegistrationResponse404 = {
-  data: ApproveRegistration404
+  data: void
   status: 404
 }
     
@@ -343,7 +323,7 @@ export const approveRegistration = async (registrationId: number, options?: Requ
 
 
 
-export const getApproveRegistrationMutationOptions = <TError = ApproveRegistration401 | ApproveRegistration403 | ApproveRegistration404,
+export const getApproveRegistrationMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof approveRegistration>>, TError,{registrationId: number}, TContext> => {
 
@@ -372,12 +352,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ApproveRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof approveRegistration>>>
     
-    export type ApproveRegistrationMutationError = ApproveRegistration401 | ApproveRegistration403 | ApproveRegistration404
+    export type ApproveRegistrationMutationError = void
 
     /**
  * @summary 신청 승인
  */
-export const useApproveRegistration = <TError = ApproveRegistration401 | ApproveRegistration403 | ApproveRegistration404,
+export const useApproveRegistration = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveRegistration>>, TError,{registrationId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof approveRegistration>>,
@@ -397,17 +377,17 @@ export type getRegistrationListResponse200 = {
 }
 
 export type getRegistrationListResponse401 = {
-  data: GetRegistrationList401
+  data: void
   status: 401
 }
 
 export type getRegistrationListResponse403 = {
-  data: GetRegistrationList403
+  data: void
   status: 403
 }
 
 export type getRegistrationListResponse404 = {
-  data: GetRegistrationList404
+  data: void
   status: 404
 }
     
@@ -460,7 +440,7 @@ export const getGetRegistrationListQueryKey = (eventId: number,
     }
 
     
-export const getGetRegistrationListQueryOptions = <TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = GetRegistrationList401 | GetRegistrationList403 | GetRegistrationList404>(eventId: number,
+export const getGetRegistrationListQueryOptions = <TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = void>(eventId: number,
     params?: GetRegistrationListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
@@ -480,10 +460,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRegistrationListQueryResult = NonNullable<Awaited<ReturnType<typeof getRegistrationList>>>
-export type GetRegistrationListQueryError = GetRegistrationList401 | GetRegistrationList403 | GetRegistrationList404
+export type GetRegistrationListQueryError = void
 
 
-export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = GetRegistrationList401 | GetRegistrationList403 | GetRegistrationList404>(
+export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = void>(
  eventId: number,
     params: undefined |  GetRegistrationListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -494,7 +474,7 @@ export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegi
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = GetRegistrationList401 | GetRegistrationList403 | GetRegistrationList404>(
+export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = void>(
  eventId: number,
     params?: GetRegistrationListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -505,7 +485,7 @@ export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegi
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = GetRegistrationList401 | GetRegistrationList403 | GetRegistrationList404>(
+export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = void>(
  eventId: number,
     params?: GetRegistrationListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
@@ -514,7 +494,7 @@ export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegi
  * @summary 신청자 목록 조회
  */
 
-export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = GetRegistrationList401 | GetRegistrationList403 | GetRegistrationList404>(
+export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegistrationList>>, TError = void>(
  eventId: number,
     params?: GetRegistrationListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRegistrationList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
@@ -540,27 +520,27 @@ export type registerEventResponse201 = {
 }
 
 export type registerEventResponse400 = {
-  data: RegisterEvent400
+  data: void
   status: 400
 }
 
 export type registerEventResponse401 = {
-  data: RegisterEvent401
+  data: void
   status: 401
 }
 
 export type registerEventResponse403 = {
-  data: RegisterEvent403
+  data: void
   status: 403
 }
 
 export type registerEventResponse404 = {
-  data: RegisterEvent404
+  data: void
   status: 404
 }
 
 export type registerEventResponse409 = {
-  data: RegisterEvent409
+  data: void
   status: 409
 }
     
@@ -595,7 +575,7 @@ export const registerEvent = async (eventId: number, options?: RequestInit): Pro
 
 
 
-export const getRegisterEventMutationOptions = <TError = RegisterEvent400 | RegisterEvent401 | RegisterEvent403 | RegisterEvent404 | RegisterEvent409,
+export const getRegisterEventMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof registerEvent>>, TError,{eventId: number}, TContext> => {
 
@@ -624,12 +604,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RegisterEventMutationResult = NonNullable<Awaited<ReturnType<typeof registerEvent>>>
     
-    export type RegisterEventMutationError = RegisterEvent400 | RegisterEvent401 | RegisterEvent403 | RegisterEvent404 | RegisterEvent409
+    export type RegisterEventMutationError = void
 
     /**
  * @summary 행사 신청
  */
-export const useRegisterEvent = <TError = RegisterEvent400 | RegisterEvent401 | RegisterEvent403 | RegisterEvent404 | RegisterEvent409,
+export const useRegisterEvent = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof registerEvent>>,
@@ -649,12 +629,12 @@ export type cancelRegistrationResponse200 = {
 }
 
 export type cancelRegistrationResponse401 = {
-  data: CancelRegistration401
+  data: void
   status: 401
 }
 
 export type cancelRegistrationResponse404 = {
-  data: CancelRegistration404
+  data: void
   status: 404
 }
     
@@ -689,7 +669,7 @@ export const cancelRegistration = async (eventId: number, options?: RequestInit)
 
 
 
-export const getCancelRegistrationMutationOptions = <TError = CancelRegistration401 | CancelRegistration404,
+export const getCancelRegistrationMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelRegistration>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof cancelRegistration>>, TError,{eventId: number}, TContext> => {
 
@@ -718,12 +698,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CancelRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof cancelRegistration>>>
     
-    export type CancelRegistrationMutationError = CancelRegistration401 | CancelRegistration404
+    export type CancelRegistrationMutationError = void
 
     /**
  * @summary 신청 취소
  */
-export const useCancelRegistration = <TError = CancelRegistration401 | CancelRegistration404,
+export const useCancelRegistration = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelRegistration>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof cancelRegistration>>,
@@ -743,7 +723,7 @@ export type getMyRegistrations1Response200 = {
 }
 
 export type getMyRegistrations1Response401 = {
-  data: GetMyRegistrations1401Item[]
+  data: void
   status: 401
 }
     
@@ -786,7 +766,7 @@ export const getGetMyRegistrations1QueryKey = () => {
     }
 
     
-export const getGetMyRegistrations1QueryOptions = <TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = GetMyRegistrations1401Item[]>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetMyRegistrations1QueryOptions = <TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -805,10 +785,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetMyRegistrations1QueryResult = NonNullable<Awaited<ReturnType<typeof getMyRegistrations1>>>
-export type GetMyRegistrations1QueryError = GetMyRegistrations1401Item[]
+export type GetMyRegistrations1QueryError = void
 
 
-export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = GetMyRegistrations1401Item[]>(
+export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = void>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyRegistrations1>>,
@@ -818,7 +798,7 @@ export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRe
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = GetMyRegistrations1401Item[]>(
+export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyRegistrations1>>,
@@ -828,7 +808,7 @@ export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRe
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = GetMyRegistrations1401Item[]>(
+export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -836,7 +816,7 @@ export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRe
  * @summary 내 신청 목록 조회
  */
 
-export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = GetMyRegistrations1401Item[]>(
+export function useGetMyRegistrations1<TData = Awaited<ReturnType<typeof getMyRegistrations1>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

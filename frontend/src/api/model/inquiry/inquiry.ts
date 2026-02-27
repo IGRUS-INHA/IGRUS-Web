@@ -54,46 +54,23 @@ import type {
 
 import type {
   CreateGuestInquiry201,
-  CreateGuestInquiry400,
   CreateGuestInquiryBody,
   CreateMemberInquiry201,
-  CreateMemberInquiry400,
-  CreateMemberInquiry401,
   CreateMemberInquiryBody,
   CreateMemo201,
-  CreateMemo401,
-  CreateMemo403,
-  CreateMemo404,
   CreateMemoBody,
   CreateReply201,
-  CreateReply401,
-  CreateReply403,
-  CreateReply404,
-  CreateReply409,
   CreateReplyBody,
   GetAllInquiries200,
-  GetAllInquiries401,
-  GetAllInquiries403,
   GetAllInquiriesParams,
   GetInquiryDetail200,
-  GetInquiryDetail401,
-  GetInquiryDetail403,
-  GetInquiryDetail404,
   GetMyInquiries200,
-  GetMyInquiries401,
   GetMyInquiriesParams,
   GetMyInquiry200,
-  GetMyInquiry401,
-  GetMyInquiry404,
   LookupGuestInquiry200,
-  LookupGuestInquiry401,
-  LookupGuestInquiry404,
   LookupGuestInquiryBody,
   UpdateInquiryStatusBody,
   UpdateReply200,
-  UpdateReply401,
-  UpdateReply403,
-  UpdateReply404,
   UpdateReplyBody
 } from '.././models';
 
@@ -215,17 +192,17 @@ export type updateReplyResponse200 = {
 }
 
 export type updateReplyResponse401 = {
-  data: UpdateReply401
+  data: void
   status: 401
 }
 
 export type updateReplyResponse403 = {
-  data: UpdateReply403
+  data: void
   status: 403
 }
 
 export type updateReplyResponse404 = {
-  data: UpdateReply404
+  data: void
   status: 404
 }
     
@@ -262,7 +239,7 @@ export const updateReply = async (id: number,
 
 
 
-export const getUpdateReplyMutationOptions = <TError = UpdateReply401 | UpdateReply403 | UpdateReply404,
+export const getUpdateReplyMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReply>>, TError,{id: number;data: UpdateReplyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateReply>>, TError,{id: number;data: UpdateReplyBody}, TContext> => {
 
@@ -291,12 +268,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateReplyMutationResult = NonNullable<Awaited<ReturnType<typeof updateReply>>>
     export type UpdateReplyMutationBody = UpdateReplyBody
-    export type UpdateReplyMutationError = UpdateReply401 | UpdateReply403 | UpdateReply404
+    export type UpdateReplyMutationError = void
 
     /**
  * @summary 답변 수정
  */
-export const useUpdateReply = <TError = UpdateReply401 | UpdateReply403 | UpdateReply404,
+export const useUpdateReply = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReply>>, TError,{id: number;data: UpdateReplyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateReply>>,
@@ -316,22 +293,22 @@ export type createReplyResponse201 = {
 }
 
 export type createReplyResponse401 = {
-  data: CreateReply401
+  data: void
   status: 401
 }
 
 export type createReplyResponse403 = {
-  data: CreateReply403
+  data: void
   status: 403
 }
 
 export type createReplyResponse404 = {
-  data: CreateReply404
+  data: void
   status: 404
 }
 
 export type createReplyResponse409 = {
-  data: CreateReply409
+  data: void
   status: 409
 }
     
@@ -368,7 +345,7 @@ export const createReply = async (id: number,
 
 
 
-export const getCreateReplyMutationOptions = <TError = CreateReply401 | CreateReply403 | CreateReply404 | CreateReply409,
+export const getCreateReplyMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply>>, TError,{id: number;data: CreateReplyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createReply>>, TError,{id: number;data: CreateReplyBody}, TContext> => {
 
@@ -397,12 +374,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateReplyMutationResult = NonNullable<Awaited<ReturnType<typeof createReply>>>
     export type CreateReplyMutationBody = CreateReplyBody
-    export type CreateReplyMutationError = CreateReply401 | CreateReply403 | CreateReply404 | CreateReply409
+    export type CreateReplyMutationError = void
 
     /**
  * @summary 답변 작성
  */
-export const useCreateReply = <TError = CreateReply401 | CreateReply403 | CreateReply404 | CreateReply409,
+export const useCreateReply = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply>>, TError,{id: number;data: CreateReplyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createReply>>,
@@ -422,17 +399,17 @@ export type createMemoResponse201 = {
 }
 
 export type createMemoResponse401 = {
-  data: CreateMemo401
+  data: void
   status: 401
 }
 
 export type createMemoResponse403 = {
-  data: CreateMemo403
+  data: void
   status: 403
 }
 
 export type createMemoResponse404 = {
-  data: CreateMemo404
+  data: void
   status: 404
 }
     
@@ -469,7 +446,7 @@ export const createMemo = async (id: number,
 
 
 
-export const getCreateMemoMutationOptions = <TError = CreateMemo401 | CreateMemo403 | CreateMemo404,
+export const getCreateMemoMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMemo>>, TError,{id: number;data: CreateMemoBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createMemo>>, TError,{id: number;data: CreateMemoBody}, TContext> => {
 
@@ -498,12 +475,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateMemoMutationResult = NonNullable<Awaited<ReturnType<typeof createMemo>>>
     export type CreateMemoMutationBody = CreateMemoBody
-    export type CreateMemoMutationError = CreateMemo401 | CreateMemo403 | CreateMemo404
+    export type CreateMemoMutationError = void
 
     /**
  * @summary 내부 메모 작성
  */
-export const useCreateMemo = <TError = CreateMemo401 | CreateMemo403 | CreateMemo404,
+export const useCreateMemo = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMemo>>, TError,{id: number;data: CreateMemoBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createMemo>>,
@@ -523,12 +500,12 @@ export type createMemberInquiryResponse201 = {
 }
 
 export type createMemberInquiryResponse400 = {
-  data: CreateMemberInquiry400
+  data: void
   status: 400
 }
 
 export type createMemberInquiryResponse401 = {
-  data: CreateMemberInquiry401
+  data: void
   status: 401
 }
     
@@ -564,7 +541,7 @@ export const createMemberInquiry = async (createMemberInquiryBody: CreateMemberI
 
 
 
-export const getCreateMemberInquiryMutationOptions = <TError = CreateMemberInquiry400 | CreateMemberInquiry401,
+export const getCreateMemberInquiryMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMemberInquiry>>, TError,{data: CreateMemberInquiryBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createMemberInquiry>>, TError,{data: CreateMemberInquiryBody}, TContext> => {
 
@@ -593,12 +570,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateMemberInquiryMutationResult = NonNullable<Awaited<ReturnType<typeof createMemberInquiry>>>
     export type CreateMemberInquiryMutationBody = CreateMemberInquiryBody
-    export type CreateMemberInquiryMutationError = CreateMemberInquiry400 | CreateMemberInquiry401
+    export type CreateMemberInquiryMutationError = void
 
     /**
  * @summary 회원 문의 작성
  */
-export const useCreateMemberInquiry = <TError = CreateMemberInquiry400 | CreateMemberInquiry401,
+export const useCreateMemberInquiry = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMemberInquiry>>, TError,{data: CreateMemberInquiryBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createMemberInquiry>>,
@@ -618,12 +595,12 @@ export type lookupGuestInquiryResponse200 = {
 }
 
 export type lookupGuestInquiryResponse401 = {
-  data: LookupGuestInquiry401
+  data: void
   status: 401
 }
 
 export type lookupGuestInquiryResponse404 = {
-  data: LookupGuestInquiry404
+  data: void
   status: 404
 }
     
@@ -659,7 +636,7 @@ export const lookupGuestInquiry = async (lookupGuestInquiryBody: LookupGuestInqu
 
 
 
-export const getLookupGuestInquiryMutationOptions = <TError = LookupGuestInquiry401 | LookupGuestInquiry404,
+export const getLookupGuestInquiryMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lookupGuestInquiry>>, TError,{data: LookupGuestInquiryBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lookupGuestInquiry>>, TError,{data: LookupGuestInquiryBody}, TContext> => {
 
@@ -688,12 +665,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type LookupGuestInquiryMutationResult = NonNullable<Awaited<ReturnType<typeof lookupGuestInquiry>>>
     export type LookupGuestInquiryMutationBody = LookupGuestInquiryBody
-    export type LookupGuestInquiryMutationError = LookupGuestInquiry401 | LookupGuestInquiry404
+    export type LookupGuestInquiryMutationError = void
 
     /**
  * @summary 비회원 문의 조회
  */
-export const useLookupGuestInquiry = <TError = LookupGuestInquiry401 | LookupGuestInquiry404,
+export const useLookupGuestInquiry = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lookupGuestInquiry>>, TError,{data: LookupGuestInquiryBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof lookupGuestInquiry>>,
@@ -713,7 +690,7 @@ export type createGuestInquiryResponse201 = {
 }
 
 export type createGuestInquiryResponse400 = {
-  data: CreateGuestInquiry400
+  data: void
   status: 400
 }
     
@@ -749,7 +726,7 @@ export const createGuestInquiry = async (createGuestInquiryBody: CreateGuestInqu
 
 
 
-export const getCreateGuestInquiryMutationOptions = <TError = CreateGuestInquiry400,
+export const getCreateGuestInquiryMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuestInquiry>>, TError,{data: CreateGuestInquiryBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createGuestInquiry>>, TError,{data: CreateGuestInquiryBody}, TContext> => {
 
@@ -778,12 +755,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateGuestInquiryMutationResult = NonNullable<Awaited<ReturnType<typeof createGuestInquiry>>>
     export type CreateGuestInquiryMutationBody = CreateGuestInquiryBody
-    export type CreateGuestInquiryMutationError = CreateGuestInquiry400
+    export type CreateGuestInquiryMutationError = void
 
     /**
  * @summary 비회원 문의 작성
  */
-export const useCreateGuestInquiry = <TError = CreateGuestInquiry400,
+export const useCreateGuestInquiry = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuestInquiry>>, TError,{data: CreateGuestInquiryBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createGuestInquiry>>,
@@ -803,12 +780,12 @@ export type getAllInquiriesResponse200 = {
 }
 
 export type getAllInquiriesResponse401 = {
-  data: GetAllInquiries401
+  data: void
   status: 401
 }
 
 export type getAllInquiriesResponse403 = {
-  data: GetAllInquiries403
+  data: void
   status: 403
 }
     
@@ -858,7 +835,7 @@ export const getGetAllInquiriesQueryKey = (params?: GetAllInquiriesParams,) => {
     }
 
     
-export const getGetAllInquiriesQueryOptions = <TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = GetAllInquiries401 | GetAllInquiries403>(params?: GetAllInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetAllInquiriesQueryOptions = <TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = void>(params?: GetAllInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -877,10 +854,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetAllInquiriesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllInquiries>>>
-export type GetAllInquiriesQueryError = GetAllInquiries401 | GetAllInquiries403
+export type GetAllInquiriesQueryError = void
 
 
-export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = GetAllInquiries401 | GetAllInquiries403>(
+export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = void>(
  params: undefined |  GetAllInquiriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllInquiries>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllInquiries>>,
@@ -890,7 +867,7 @@ export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInqui
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = GetAllInquiries401 | GetAllInquiries403>(
+export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = void>(
  params?: GetAllInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllInquiries>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllInquiries>>,
@@ -900,7 +877,7 @@ export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInqui
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = GetAllInquiries401 | GetAllInquiries403>(
+export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = void>(
  params?: GetAllInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -908,7 +885,7 @@ export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInqui
  * @summary 전체 문의 목록 조회
  */
 
-export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = GetAllInquiries401 | GetAllInquiries403>(
+export function useGetAllInquiries<TData = Awaited<ReturnType<typeof getAllInquiries>>, TError = void>(
  params?: GetAllInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -933,17 +910,17 @@ export type getInquiryDetailResponse200 = {
 }
 
 export type getInquiryDetailResponse401 = {
-  data: GetInquiryDetail401
+  data: void
   status: 401
 }
 
 export type getInquiryDetailResponse403 = {
-  data: GetInquiryDetail403
+  data: void
   status: 403
 }
 
 export type getInquiryDetailResponse404 = {
-  data: GetInquiryDetail404
+  data: void
   status: 404
 }
     
@@ -986,7 +963,7 @@ export const getGetInquiryDetailQueryKey = (id: number,) => {
     }
 
     
-export const getGetInquiryDetailQueryOptions = <TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = GetInquiryDetail401 | GetInquiryDetail403 | GetInquiryDetail404>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInquiryDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetInquiryDetailQueryOptions = <TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInquiryDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1005,10 +982,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetInquiryDetailQueryResult = NonNullable<Awaited<ReturnType<typeof getInquiryDetail>>>
-export type GetInquiryDetailQueryError = GetInquiryDetail401 | GetInquiryDetail403 | GetInquiryDetail404
+export type GetInquiryDetailQueryError = void
 
 
-export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = GetInquiryDetail401 | GetInquiryDetail403 | GetInquiryDetail404>(
+export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = void>(
  id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInquiryDetail>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getInquiryDetail>>,
@@ -1018,7 +995,7 @@ export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiry
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = GetInquiryDetail401 | GetInquiryDetail403 | GetInquiryDetail404>(
+export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = void>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInquiryDetail>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getInquiryDetail>>,
@@ -1028,7 +1005,7 @@ export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiry
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = GetInquiryDetail401 | GetInquiryDetail403 | GetInquiryDetail404>(
+export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = void>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInquiryDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1036,7 +1013,7 @@ export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiry
  * @summary 문의 상세 조회 (관리자)
  */
 
-export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = GetInquiryDetail401 | GetInquiryDetail403 | GetInquiryDetail404>(
+export function useGetInquiryDetail<TData = Awaited<ReturnType<typeof getInquiryDetail>>, TError = void>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInquiryDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1160,7 +1137,7 @@ export type getMyInquiriesResponse200 = {
 }
 
 export type getMyInquiriesResponse401 = {
-  data: GetMyInquiries401
+  data: void
   status: 401
 }
     
@@ -1210,7 +1187,7 @@ export const getGetMyInquiriesQueryKey = (params?: GetMyInquiriesParams,) => {
     }
 
     
-export const getGetMyInquiriesQueryOptions = <TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = GetMyInquiries401>(params?: GetMyInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetMyInquiriesQueryOptions = <TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(params?: GetMyInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1229,10 +1206,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetMyInquiriesQueryResult = NonNullable<Awaited<ReturnType<typeof getMyInquiries>>>
-export type GetMyInquiriesQueryError = GetMyInquiries401
+export type GetMyInquiriesQueryError = void
 
 
-export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = GetMyInquiries401>(
+export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(
  params: undefined |  GetMyInquiriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyInquiries>>,
@@ -1242,7 +1219,7 @@ export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiri
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = GetMyInquiries401>(
+export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(
  params?: GetMyInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyInquiries>>,
@@ -1252,7 +1229,7 @@ export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiri
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = GetMyInquiries401>(
+export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(
  params?: GetMyInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1260,7 +1237,7 @@ export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiri
  * @summary 내 문의 목록 조회
  */
 
-export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = GetMyInquiries401>(
+export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(
  params?: GetMyInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1285,12 +1262,12 @@ export type getMyInquiryResponse200 = {
 }
 
 export type getMyInquiryResponse401 = {
-  data: GetMyInquiry401
+  data: void
   status: 401
 }
 
 export type getMyInquiryResponse404 = {
-  data: GetMyInquiry404
+  data: void
   status: 404
 }
     
@@ -1333,7 +1310,7 @@ export const getGetMyInquiryQueryKey = (id: number,) => {
     }
 
     
-export const getGetMyInquiryQueryOptions = <TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = GetMyInquiry401 | GetMyInquiry404>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetMyInquiryQueryOptions = <TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1352,10 +1329,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetMyInquiryQueryResult = NonNullable<Awaited<ReturnType<typeof getMyInquiry>>>
-export type GetMyInquiryQueryError = GetMyInquiry401 | GetMyInquiry404
+export type GetMyInquiryQueryError = void
 
 
-export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = GetMyInquiry401 | GetMyInquiry404>(
+export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(
  id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyInquiry>>,
@@ -1365,7 +1342,7 @@ export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = GetMyInquiry401 | GetMyInquiry404>(
+export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyInquiry>>,
@@ -1375,7 +1352,7 @@ export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = GetMyInquiry401 | GetMyInquiry404>(
+export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1383,7 +1360,7 @@ export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>
  * @summary 내 문의 상세 조회
  */
 
-export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = GetMyInquiry401 | GetMyInquiry404>(
+export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

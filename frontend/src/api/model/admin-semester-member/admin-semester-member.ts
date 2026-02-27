@@ -54,13 +54,7 @@ import type {
 
 import type {
   GetCandidateMembers200Item,
-  GetCandidateMembers400Item,
-  GetCandidateMembers401Item,
-  GetCandidateMembers403Item,
   RegisterMembers200,
-  RegisterMembers400,
-  RegisterMembers401,
-  RegisterMembers403,
   RegisterMembersBody,
   RemoveMembersBody
 } from '.././models';
@@ -82,17 +76,17 @@ export type registerMembersResponse200 = {
 }
 
 export type registerMembersResponse400 = {
-  data: RegisterMembers400
+  data: void
   status: 400
 }
 
 export type registerMembersResponse401 = {
-  data: RegisterMembers401
+  data: void
   status: 401
 }
 
 export type registerMembersResponse403 = {
-  data: RegisterMembers403
+  data: void
   status: 403
 }
     
@@ -131,7 +125,7 @@ export const registerMembers = async (year: number,
 
 
 
-export const getRegisterMembersMutationOptions = <TError = RegisterMembers400 | RegisterMembers401 | RegisterMembers403,
+export const getRegisterMembersMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMembers>>, TError,{year: number;semester: number;data: RegisterMembersBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof registerMembers>>, TError,{year: number;semester: number;data: RegisterMembersBody}, TContext> => {
 
@@ -160,12 +154,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RegisterMembersMutationResult = NonNullable<Awaited<ReturnType<typeof registerMembers>>>
     export type RegisterMembersMutationBody = RegisterMembersBody
-    export type RegisterMembersMutationError = RegisterMembers400 | RegisterMembers401 | RegisterMembers403
+    export type RegisterMembersMutationError = void
 
     /**
  * @summary 회원 일괄 등록
  */
-export const useRegisterMembers = <TError = RegisterMembers400 | RegisterMembers401 | RegisterMembers403,
+export const useRegisterMembers = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMembers>>, TError,{year: number;semester: number;data: RegisterMembersBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof registerMembers>>,
@@ -185,17 +179,17 @@ export type removeMembersResponse200 = {
 }
 
 export type removeMembersResponse400 = {
-  data: number
+  data: void
   status: 400
 }
 
 export type removeMembersResponse401 = {
-  data: number
+  data: void
   status: 401
 }
 
 export type removeMembersResponse403 = {
-  data: number
+  data: void
   status: 403
 }
     
@@ -234,7 +228,7 @@ export const removeMembers = async (year: number,
 
 
 
-export const getRemoveMembersMutationOptions = <TError = number,
+export const getRemoveMembersMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMembers>>, TError,{year: number;semester: number;data: RemoveMembersBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof removeMembers>>, TError,{year: number;semester: number;data: RemoveMembersBody}, TContext> => {
 
@@ -263,12 +257,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RemoveMembersMutationResult = NonNullable<Awaited<ReturnType<typeof removeMembers>>>
     export type RemoveMembersMutationBody = RemoveMembersBody
-    export type RemoveMembersMutationError = number
+    export type RemoveMembersMutationError = void
 
     /**
  * @summary 회원 일괄 제외
  */
-export const useRemoveMembers = <TError = number,
+export const useRemoveMembers = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMembers>>, TError,{year: number;semester: number;data: RemoveMembersBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof removeMembers>>,
@@ -288,17 +282,17 @@ export type getCandidateMembersResponse200 = {
 }
 
 export type getCandidateMembersResponse400 = {
-  data: GetCandidateMembers400Item[]
+  data: void
   status: 400
 }
 
 export type getCandidateMembersResponse401 = {
-  data: GetCandidateMembers401Item[]
+  data: void
   status: 401
 }
 
 export type getCandidateMembersResponse403 = {
-  data: GetCandidateMembers403Item[]
+  data: void
   status: 403
 }
     
@@ -344,7 +338,7 @@ export const getGetCandidateMembersQueryKey = (year: number,
     }
 
     
-export const getGetCandidateMembersQueryOptions = <TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = GetCandidateMembers400Item[] | GetCandidateMembers401Item[] | GetCandidateMembers403Item[]>(year: number,
+export const getGetCandidateMembersQueryOptions = <TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(year: number,
     semester: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
@@ -364,10 +358,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetCandidateMembersQueryResult = NonNullable<Awaited<ReturnType<typeof getCandidateMembers>>>
-export type GetCandidateMembersQueryError = GetCandidateMembers400Item[] | GetCandidateMembers401Item[] | GetCandidateMembers403Item[]
+export type GetCandidateMembersQueryError = void
 
 
-export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = GetCandidateMembers400Item[] | GetCandidateMembers401Item[] | GetCandidateMembers403Item[]>(
+export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(
  year: number,
     semester: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -378,7 +372,7 @@ export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCand
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = GetCandidateMembers400Item[] | GetCandidateMembers401Item[] | GetCandidateMembers403Item[]>(
+export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(
  year: number,
     semester: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -389,7 +383,7 @@ export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCand
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = GetCandidateMembers400Item[] | GetCandidateMembers401Item[] | GetCandidateMembers403Item[]>(
+export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(
  year: number,
     semester: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
@@ -398,7 +392,7 @@ export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCand
  * @summary 등록 후보 회원 목록 조회
  */
 
-export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = GetCandidateMembers400Item[] | GetCandidateMembers401Item[] | GetCandidateMembers403Item[]>(
+export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(
  year: number,
     semester: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 

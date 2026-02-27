@@ -45,9 +45,6 @@ import type {
 
 import type {
   SubmitAnonymousResponse201,
-  SubmitAnonymousResponse400,
-  SubmitAnonymousResponse403,
-  SubmitAnonymousResponse404,
   SubmitAnonymousResponseBody
 } from '.././models';
 
@@ -68,17 +65,17 @@ export type submitAnonymousResponseResponse201 = {
 }
 
 export type submitAnonymousResponseResponse400 = {
-  data: SubmitAnonymousResponse400
+  data: void
   status: 400
 }
 
 export type submitAnonymousResponseResponse403 = {
-  data: SubmitAnonymousResponse403
+  data: void
   status: 403
 }
 
 export type submitAnonymousResponseResponse404 = {
-  data: SubmitAnonymousResponse404
+  data: void
   status: 404
 }
     
@@ -115,7 +112,7 @@ export const submitAnonymousResponse = async (surveyId: number,
 
 
 
-export const getSubmitAnonymousResponseMutationOptions = <TError = SubmitAnonymousResponse400 | SubmitAnonymousResponse403 | SubmitAnonymousResponse404,
+export const getSubmitAnonymousResponseMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitAnonymousResponse>>, TError,{surveyId: number;data: SubmitAnonymousResponseBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitAnonymousResponse>>, TError,{surveyId: number;data: SubmitAnonymousResponseBody}, TContext> => {
 
@@ -144,12 +141,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SubmitAnonymousResponseMutationResult = NonNullable<Awaited<ReturnType<typeof submitAnonymousResponse>>>
     export type SubmitAnonymousResponseMutationBody = SubmitAnonymousResponseBody
-    export type SubmitAnonymousResponseMutationError = SubmitAnonymousResponse400 | SubmitAnonymousResponse403 | SubmitAnonymousResponse404
+    export type SubmitAnonymousResponseMutationError = void
 
     /**
  * @summary 비회원 설문 응답 제출
  */
-export const useSubmitAnonymousResponse = <TError = SubmitAnonymousResponse400 | SubmitAnonymousResponse403 | SubmitAnonymousResponse404,
+export const useSubmitAnonymousResponse = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitAnonymousResponse>>, TError,{surveyId: number;data: SubmitAnonymousResponseBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitAnonymousResponse>>,

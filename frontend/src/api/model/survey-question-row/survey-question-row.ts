@@ -54,20 +54,9 @@ import type {
 
 import type {
   CreateRow201Item,
-  CreateRow400Item,
-  CreateRow401Item,
-  CreateRow403Item,
-  CreateRow404Item,
   CreateRowBody,
   GetRowList200Item,
-  GetRowList401Item,
-  GetRowList403Item,
-  GetRowList404Item,
   UpdateRow200Item,
-  UpdateRow400Item,
-  UpdateRow401Item,
-  UpdateRow403Item,
-  UpdateRow404Item,
   UpdateRowBody
 } from '.././models';
 
@@ -88,17 +77,17 @@ export type getRowListResponse200 = {
 }
 
 export type getRowListResponse401 = {
-  data: GetRowList401Item[]
+  data: void
   status: 401
 }
 
 export type getRowListResponse403 = {
-  data: GetRowList403Item[]
+  data: void
   status: 403
 }
 
 export type getRowListResponse404 = {
-  data: GetRowList404Item[]
+  data: void
   status: 404
 }
     
@@ -144,7 +133,7 @@ export const getGetRowListQueryKey = (surveyId: number,
     }
 
     
-export const getGetRowListQueryOptions = <TData = Awaited<ReturnType<typeof getRowList>>, TError = GetRowList401Item[] | GetRowList403Item[] | GetRowList404Item[]>(surveyId: number,
+export const getGetRowListQueryOptions = <TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
@@ -164,10 +153,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRowListQueryResult = NonNullable<Awaited<ReturnType<typeof getRowList>>>
-export type GetRowListQueryError = GetRowList401Item[] | GetRowList403Item[] | GetRowList404Item[]
+export type GetRowListQueryError = void
 
 
-export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = GetRowList401Item[] | GetRowList403Item[] | GetRowList404Item[]>(
+export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(
  surveyId: number,
     questionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -178,7 +167,7 @@ export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TE
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = GetRowList401Item[] | GetRowList403Item[] | GetRowList404Item[]>(
+export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(
  surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -189,7 +178,7 @@ export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TE
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = GetRowList401Item[] | GetRowList403Item[] | GetRowList404Item[]>(
+export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(
  surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
@@ -198,7 +187,7 @@ export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TE
  * @summary 행 목록 조회
  */
 
-export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = GetRowList401Item[] | GetRowList403Item[] | GetRowList404Item[]>(
+export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(
  surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
@@ -224,22 +213,22 @@ export type createRowResponse201 = {
 }
 
 export type createRowResponse400 = {
-  data: CreateRow400Item[]
+  data: void
   status: 400
 }
 
 export type createRowResponse401 = {
-  data: CreateRow401Item[]
+  data: void
   status: 401
 }
 
 export type createRowResponse403 = {
-  data: CreateRow403Item[]
+  data: void
   status: 403
 }
 
 export type createRowResponse404 = {
-  data: CreateRow404Item[]
+  data: void
   status: 404
 }
     
@@ -278,7 +267,7 @@ export const createRow = async (surveyId: number,
 
 
 
-export const getCreateRowMutationOptions = <TError = CreateRow400Item[] | CreateRow401Item[] | CreateRow403Item[] | CreateRow404Item[],
+export const getCreateRowMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRow>>, TError,{surveyId: number;questionId: number;data: CreateRowBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createRow>>, TError,{surveyId: number;questionId: number;data: CreateRowBody}, TContext> => {
 
@@ -307,12 +296,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateRowMutationResult = NonNullable<Awaited<ReturnType<typeof createRow>>>
     export type CreateRowMutationBody = CreateRowBody
-    export type CreateRowMutationError = CreateRow400Item[] | CreateRow401Item[] | CreateRow403Item[] | CreateRow404Item[]
+    export type CreateRowMutationError = void
 
     /**
  * @summary 행 추가
  */
-export const useCreateRow = <TError = CreateRow400Item[] | CreateRow401Item[] | CreateRow403Item[] | CreateRow404Item[],
+export const useCreateRow = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRow>>, TError,{surveyId: number;questionId: number;data: CreateRowBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createRow>>,
@@ -435,22 +424,22 @@ export type updateRowResponse200 = {
 }
 
 export type updateRowResponse400 = {
-  data: UpdateRow400Item[]
+  data: void
   status: 400
 }
 
 export type updateRowResponse401 = {
-  data: UpdateRow401Item[]
+  data: void
   status: 401
 }
 
 export type updateRowResponse403 = {
-  data: UpdateRow403Item[]
+  data: void
   status: 403
 }
 
 export type updateRowResponse404 = {
-  data: UpdateRow404Item[]
+  data: void
   status: 404
 }
     
@@ -491,7 +480,7 @@ export const updateRow = async (surveyId: number,
 
 
 
-export const getUpdateRowMutationOptions = <TError = UpdateRow400Item[] | UpdateRow401Item[] | UpdateRow403Item[] | UpdateRow404Item[],
+export const getUpdateRowMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRow>>, TError,{surveyId: number;questionId: number;rowId: number;data: UpdateRowBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateRow>>, TError,{surveyId: number;questionId: number;rowId: number;data: UpdateRowBody}, TContext> => {
 
@@ -520,12 +509,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateRowMutationResult = NonNullable<Awaited<ReturnType<typeof updateRow>>>
     export type UpdateRowMutationBody = UpdateRowBody
-    export type UpdateRowMutationError = UpdateRow400Item[] | UpdateRow401Item[] | UpdateRow403Item[] | UpdateRow404Item[]
+    export type UpdateRowMutationError = void
 
     /**
  * @summary 행 수정
  */
-export const useUpdateRow = <TError = UpdateRow400Item[] | UpdateRow401Item[] | UpdateRow403Item[] | UpdateRow404Item[],
+export const useUpdateRow = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRow>>, TError,{surveyId: number;questionId: number;rowId: number;data: UpdateRowBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateRow>>,

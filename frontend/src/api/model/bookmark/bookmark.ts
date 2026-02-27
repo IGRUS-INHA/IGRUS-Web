@@ -54,16 +54,9 @@ import type {
 
 import type {
   GetBookmarkStatus200,
-  GetBookmarkStatus401,
-  GetBookmarkStatus404,
   GetMyBookmarks200,
-  GetMyBookmarks401,
   GetMyBookmarksParams,
-  ToggleBookmark200,
-  ToggleBookmark401,
-  ToggleBookmark403,
-  ToggleBookmark404,
-  ToggleBookmark410
+  ToggleBookmark200
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -83,22 +76,22 @@ export type toggleBookmarkResponse200 = {
 }
 
 export type toggleBookmarkResponse401 = {
-  data: ToggleBookmark401
+  data: void
   status: 401
 }
 
 export type toggleBookmarkResponse403 = {
-  data: ToggleBookmark403
+  data: void
   status: 403
 }
 
 export type toggleBookmarkResponse404 = {
-  data: ToggleBookmark404
+  data: void
   status: 404
 }
 
 export type toggleBookmarkResponse410 = {
-  data: ToggleBookmark410
+  data: void
   status: 410
 }
     
@@ -133,7 +126,7 @@ export const toggleBookmark = async (postId: number, options?: RequestInit): Pro
 
 
 
-export const getToggleBookmarkMutationOptions = <TError = ToggleBookmark401 | ToggleBookmark403 | ToggleBookmark404 | ToggleBookmark410,
+export const getToggleBookmarkMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleBookmark>>, TError,{postId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof toggleBookmark>>, TError,{postId: number}, TContext> => {
 
@@ -162,12 +155,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ToggleBookmarkMutationResult = NonNullable<Awaited<ReturnType<typeof toggleBookmark>>>
     
-    export type ToggleBookmarkMutationError = ToggleBookmark401 | ToggleBookmark403 | ToggleBookmark404 | ToggleBookmark410
+    export type ToggleBookmarkMutationError = void
 
     /**
  * @summary 북마크 토글
  */
-export const useToggleBookmark = <TError = ToggleBookmark401 | ToggleBookmark403 | ToggleBookmark404 | ToggleBookmark410,
+export const useToggleBookmark = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleBookmark>>, TError,{postId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof toggleBookmark>>,
@@ -187,7 +180,7 @@ export type getMyBookmarksResponse200 = {
 }
 
 export type getMyBookmarksResponse401 = {
-  data: GetMyBookmarks401
+  data: void
   status: 401
 }
     
@@ -237,7 +230,7 @@ export const getGetMyBookmarksQueryKey = (params?: GetMyBookmarksParams,) => {
     }
 
     
-export const getGetMyBookmarksQueryOptions = <TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = GetMyBookmarks401>(params?: GetMyBookmarksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetMyBookmarksQueryOptions = <TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = void>(params?: GetMyBookmarksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -256,10 +249,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetMyBookmarksQueryResult = NonNullable<Awaited<ReturnType<typeof getMyBookmarks>>>
-export type GetMyBookmarksQueryError = GetMyBookmarks401
+export type GetMyBookmarksQueryError = void
 
 
-export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = GetMyBookmarks401>(
+export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = void>(
  params: undefined |  GetMyBookmarksParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyBookmarks>>,
@@ -269,7 +262,7 @@ export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmar
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = GetMyBookmarks401>(
+export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = void>(
  params?: GetMyBookmarksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyBookmarks>>,
@@ -279,7 +272,7 @@ export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmar
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = GetMyBookmarks401>(
+export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = void>(
  params?: GetMyBookmarksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -287,7 +280,7 @@ export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmar
  * @summary 내 북마크 목록 조회
  */
 
-export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = GetMyBookmarks401>(
+export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmarks>>, TError = void>(
  params?: GetMyBookmarksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -312,12 +305,12 @@ export type getBookmarkStatusResponse200 = {
 }
 
 export type getBookmarkStatusResponse401 = {
-  data: GetBookmarkStatus401
+  data: void
   status: 401
 }
 
 export type getBookmarkStatusResponse404 = {
-  data: GetBookmarkStatus404
+  data: void
   status: 404
 }
     
@@ -360,7 +353,7 @@ export const getGetBookmarkStatusQueryKey = (postId: number,) => {
     }
 
     
-export const getGetBookmarkStatusQueryOptions = <TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = GetBookmarkStatus401 | GetBookmarkStatus404>(postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBookmarkStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetBookmarkStatusQueryOptions = <TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = void>(postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBookmarkStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -379,10 +372,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetBookmarkStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getBookmarkStatus>>>
-export type GetBookmarkStatusQueryError = GetBookmarkStatus401 | GetBookmarkStatus404
+export type GetBookmarkStatusQueryError = void
 
 
-export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = GetBookmarkStatus401 | GetBookmarkStatus404>(
+export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = void>(
  postId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBookmarkStatus>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getBookmarkStatus>>,
@@ -392,7 +385,7 @@ export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookma
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = GetBookmarkStatus401 | GetBookmarkStatus404>(
+export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = void>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBookmarkStatus>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getBookmarkStatus>>,
@@ -402,7 +395,7 @@ export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookma
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = GetBookmarkStatus401 | GetBookmarkStatus404>(
+export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = void>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBookmarkStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -410,7 +403,7 @@ export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookma
  * @summary 북마크 상태 조회
  */
 
-export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = GetBookmarkStatus401 | GetBookmarkStatus404>(
+export function useGetBookmarkStatus<TData = Awaited<ReturnType<typeof getBookmarkStatus>>, TError = void>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBookmarkStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
