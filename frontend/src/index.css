@@ -16,6 +16,9 @@
   --radius-r4: 16px;
   --radius-full: 100px;
 
+  /* Font Family — Tailwind v4 preflight에서 사용 */
+  --font-sans: 'Inter', 'Pretendard Variable', system-ui, sans-serif;
+
   /* Spacing */
   --spacing-s1: 4px;
   --spacing-s2: 8px;
@@ -906,7 +909,7 @@
 .event-timeline::before {
   content: '';
   position: absolute;
-  left: 15px;
+  left: 20.5px;
   top: 8px;
   bottom: 8px;
   width: 1px;
@@ -996,7 +999,7 @@
   .hero-ring { display: none; }
   .hero-bubbles { height: 200px; }
   .event-timeline { padding-left: 32px; }
-  .event-timeline::before { left: 11px; }
+  .event-timeline::before { left: 16.5px; }
   .timeline-dot { left: -21px; }
 }
 
