@@ -112,6 +112,7 @@ class SurveyResponseServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.surveyId()).isEqualTo(DEFAULT_SURVEY_ID);
             assertThat(result.userId()).isEqualTo(DEFAULT_MEMBER_ID);
+            assertThat(result.answers()).hasSize(1);
             verify(surveyResponseRepository).save(any(SurveyResponse.class));
         }
 
@@ -334,6 +335,24 @@ class SurveyResponseServiceTest {
                     .isInstanceOf(SurveyAnonymousNotAllowedException.class);
         }
 
+        @DisplayName("OPERATOR 설문에 비회원 응답 거부")
+        @Test
+        void submitAnonymousResponse_OperatorSurvey_ThrowsException() {
+            // given
+            Survey survey = withId(createPublishedAndOpenSurvey(SurveyAccessLevel.OPERATOR), DEFAULT_SURVEY_ID);
+
+            given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
+
+            SubmitSurveyResponseRequest request = new SubmitSurveyResponseRequest(List.of(
+                    new SubmitAnswerRequest(100L, "답변", null, null, null)
+            ));
+
+            // when & then
+            assertThatThrownBy(() -> surveyResponseService.submitAnonymousResponse(
+                    DEFAULT_SURVEY_ID, request))
+                    .isInstanceOf(SurveyAnonymousNotAllowedException.class);
+        }
+
         @DisplayName("CLOSED PUBLIC 설문에 비회원 응답 거부")
         @Test
         void submitAnonymousResponse_ClosedPublicSurvey_ThrowsException() {
@@ -376,8 +395,10 @@ class SurveyResponseServiceTest {
 
             given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
             given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
-            given(surveyResponseRepository.findBySurveyIdAndUserId(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
+            given(surveyResponseRepository.findBySurveyIdAndUserIdWithAnswers(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
                     .willReturn(Optional.of(existingResponse));
+            given(surveyResponseRepository.save(any(SurveyResponse.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
             SubmitSurveyResponseRequest request = new SubmitSurveyResponseRequest(List.of(
                     new SubmitAnswerRequest(100L, "수정된 답변", null, null, null)
@@ -390,6 +411,7 @@ class SurveyResponseServiceTest {
             // then
             assertThat(result).isNotNull();
             assertThat(result.answers()).hasSize(1);
+            verify(surveyResponseRepository).save(any(SurveyResponse.class));
         }
 
         @DisplayName("CLOSED 상태에서 응답 수정 거부")
@@ -397,6 +419,46 @@ class SurveyResponseServiceTest {
         void updateMyResponse_ClosedSurvey_ThrowsException() {
             // given
             Survey survey = withId(createClosedSurvey(), DEFAULT_SURVEY_ID);
+
+            given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
+            given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
+
+            SubmitSurveyResponseRequest request = new SubmitSurveyResponseRequest(List.of(
+                    new SubmitAnswerRequest(100L, "수정", null, null, null)
+            ));
+
+            // when & then
+            assertThatThrownBy(() -> surveyResponseService.updateMyResponse(
+                    DEFAULT_SURVEY_ID, request, memberAuth))
+                    .isInstanceOf(SurveyNotAcceptingResponsesException.class);
+        }
+
+        @DisplayName("OPERATOR 설문에 MEMBER 사용자 수정 시 거부")
+        @Test
+        void updateMyResponse_OperatorSurveyByMember_ThrowsException() {
+            // given
+            Survey survey = withId(createPublishedAndOpenSurvey(SurveyAccessLevel.OPERATOR), DEFAULT_SURVEY_ID);
+
+            given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
+            given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
+
+            SubmitSurveyResponseRequest request = new SubmitSurveyResponseRequest(List.of(
+                    new SubmitAnswerRequest(100L, "수정", null, null, null)
+            ));
+
+            // when & then
+            assertThatThrownBy(() -> surveyResponseService.updateMyResponse(
+                    DEFAULT_SURVEY_ID, request, memberAuth))
+                    .isInstanceOf(SurveyResponseAccessDeniedException.class);
+        }
+
+        @DisplayName("휴지통 설문에서 응답 수정 시 거부")
+        @Test
+        void updateMyResponse_TrashedSurvey_ThrowsException() {
+            // given: PUBLISHED+OPEN 상태이지만 휴지통에 있는 설문
+            Survey survey = createPublishedAndOpenSurvey();
+            ReflectionTestUtils.setField(survey, "trashedAt", Instant.now());
+            withId(survey, DEFAULT_SURVEY_ID);
 
             given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
             given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
@@ -419,7 +481,7 @@ class SurveyResponseServiceTest {
 
             given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
             given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
-            given(surveyResponseRepository.findBySurveyIdAndUserId(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
+            given(surveyResponseRepository.findBySurveyIdAndUserIdWithAnswers(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
                     .willReturn(Optional.empty());
 
             SubmitSurveyResponseRequest request = new SubmitSurveyResponseRequest(List.of(
@@ -454,7 +516,7 @@ class SurveyResponseServiceTest {
             existingResponse.addAnswer(textAnswer);
 
             given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
-            given(surveyResponseRepository.findBySurveyIdAndUserId(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
+            given(surveyResponseRepository.findBySurveyIdAndUserIdWithAnswers(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
                     .willReturn(Optional.of(existingResponse));
 
             // when
@@ -474,7 +536,7 @@ class SurveyResponseServiceTest {
         void getMyResponse_NotFound_ThrowsException() {
             // given
             given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
-            given(surveyResponseRepository.findBySurveyIdAndUserId(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
+            given(surveyResponseRepository.findBySurveyIdAndUserIdWithAnswers(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -503,7 +565,7 @@ class SurveyResponseServiceTest {
             existingResponse.addAnswer(TextSurveyAnswer.create(existingResponse, question2, "답변2"));
 
             given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
-            given(surveyResponseRepository.findBySurveyIdAndUserId(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
+            given(surveyResponseRepository.findBySurveyIdAndUserIdWithAnswers(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
                     .willReturn(Optional.of(existingResponse));
 
             // when
@@ -530,7 +592,7 @@ class SurveyResponseServiceTest {
             existingResponse.addAnswer(TextSurveyAnswer.create(existingResponse, question, "답변"));
 
             given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
-            given(surveyResponseRepository.findBySurveyIdAndUserId(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
+            given(surveyResponseRepository.findBySurveyIdAndUserIdWithAnswers(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
                     .willReturn(Optional.of(existingResponse));
 
             // when: accessLevel이 OPERATOR이지만 본인 응답 조회는 accessLevel과 무관

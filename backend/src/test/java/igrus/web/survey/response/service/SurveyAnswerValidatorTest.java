@@ -74,6 +74,23 @@ class SurveyAnswerValidatorTest {
                     .isInstanceOf(SurveyResponseValidationException.class);
         }
 
+        @DisplayName("필수 텍스트 질문에 null 값이면 실패")
+        @Test
+        void validate_RequiredTextWithNull_ThrowsException() {
+            Survey survey = withId(createPublishedAndOpenSurvey(), DEFAULT_SURVEY_ID);
+            TextSurveyQuestion question = createShortAnswerQuestion(survey, 1);
+            makeRequired(question);
+            withId(question, 100L);
+            survey.getQuestions().add(question);
+
+            List<SubmitAnswerRequest> answers = List.of(
+                    new SubmitAnswerRequest(100L, null, null, null, null)
+            );
+
+            assertThatThrownBy(() -> validator.validate(survey, answers))
+                    .isInstanceOf(SurveyResponseValidationException.class);
+        }
+
         @DisplayName("선택적 텍스트 질문에 빈 값이면 통과")
         @Test
         void validate_OptionalTextWithBlank_Success() {
