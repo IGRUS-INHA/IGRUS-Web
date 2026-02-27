@@ -4,6 +4,7 @@ import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventChangeType;
 import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.UpdateEventRequest;
@@ -23,6 +24,7 @@ import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,18 +40,23 @@ import java.util.Set;
  * <p>제공 기능:</p>
  * <ul>
  *   <li>{@link #createEvent} - 행사 생성 (운영진 이상)</li>
- *   <li>{@link #getEvent} - 행사 단건 조회</li>
- *   <li>{@link #getEventList} - 행사 목록 조회 (상태 필터 가능)</li>
+ *   <li>{@link #getEvent} - 행사 단건 조회 (공개 API, PUBLISHED만)</li>
+ *   <li>{@link #getEventList} - 행사 목록 조회 (공개 API, PUBLISHED만)</li>
+ *   <li>{@link #getAdminEvent} - 행사 단건 조회 (관리자 API, visibility 무관)</li>
+ *   <li>{@link #getAdminEventList} - 행사 목록 조회 (관리자 API, visibility 선택적 필터)</li>
  *   <li>{@link #updateEvent} - 행사 수정 (운영진 이상)</li>
  *   <li>{@link #deleteEvent} - 행사 삭제 (운영진 이상)</li>
  *   <li>{@link #closeEvent} - 등록 수동 마감 (운영진 이상)</li>
  *   <li>{@link #cancelEvent} - 행사 취소 (운영진 이상)</li>
  *   <li>{@link #reactivateEvent} - 행사 재활성화 (운영진 이상)</li>
  *   <li>{@link #reopenRegistration} - 등록 수동 재오픈 (운영진 이상)</li>
+ *   <li>{@link #publishEvent} - 행사 공개 (운영진 이상)</li>
+ *   <li>{@link #unpublishEvent} - 행사 비공개 (운영진 이상)</li>
  * </ul>
  *
  * @see EventRegistrationService 행사 신청 관련 기능
  */
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 @Service
@@ -110,17 +117,18 @@ public class EventService {
     }
 
     /**
-     * 행사를 단건 조회합니다.
+     * 행사를 단건 조회합니다. (공개 API)
+     * PUBLISHED 행사만 조회 가능합니다. UNPUBLISHED 행사 접근 시 EventNotFoundException을 반환합니다.
      * 조회 시 현재 시간에 따라 행사 상태가 자동 갱신됩니다. (Lazy Evaluation)
      *
      * @param eventId 행사 ID
      * @param userId  현재 사용자 ID
      * @return 행사 상세 응답 DTO
-     * @throws EventNotFoundException             행사를 찾을 수 없는 경우
+     * @throws EventNotFoundException             행사를 찾을 수 없는 경우 (UNPUBLISHED 포함)
      * @throws AssociateMemberNotAllowedException 준회원인 경우
      */
     public EventDetailResponse getEvent(Long eventId, Long userId) {
-        Event event = eventRepository.findByIdAndNotDeleted(eventId)
+        Event event = eventRepository.findByIdAndVisibility(eventId, EventVisibility.PUBLISHED)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
@@ -143,7 +151,8 @@ public class EventService {
     }
 
     /**
-     * 행사 목록을 조회합니다.
+     * 행사 목록을 조회합니다. (공개 API)
+     * PUBLISHED 행사만 반환합니다.
      * 조회 시 현재 시간에 따라 행사 상태가 자동 갱신됩니다. (Lazy Evaluation)
      *
      * @param eventStatus        행사 진행 상태 필터 (null이면 필터 안 함)
@@ -151,15 +160,8 @@ public class EventService {
      * @return 행사 목록 응답 DTO 리스트
      */
     public List<EventListResponse> getEventList(EventStatus eventStatus, RegistrationStatus registrationStatus) {
-        List<Event> events;
-
-        if (eventStatus != null) {
-            events = eventRepository.findByEventStatus(eventStatus);
-        } else if (registrationStatus != null) {
-            events = eventRepository.findByRegistrationStatus(registrationStatus);
-        } else {
-            events = eventRepository.findAllNotDeleted();
-        }
+        List<Event> events = eventRepository.findByVisibilityAndFilters(
+                EventVisibility.PUBLISHED, eventStatus, registrationStatus);
 
         // 각 행사의 상태를 시간에 따라 자동 갱신 (Lazy Evaluation)
         Instant now = Instant.now();
@@ -429,6 +431,127 @@ public class EventService {
                 previousRegStatus, event.getRegistrationStatus().name(), reason));
 
         // 8. 응답 반환
+        return EventDetailResponse.from(event);
+    }
+
+    // === 관리자 API 메서드 ===
+
+    /**
+     * 관리자용 행사 목록을 조회합니다.
+     * visibility 파라미터가 null이면 모든 행사(PUBLISHED + UNPUBLISHED)를 반환합니다.
+     * 조회 시 현재 시간에 따라 행사 상태가 자동 갱신됩니다. (Lazy Evaluation)
+     *
+     * @param visibility         공개 상태 필터 (null이면 전체)
+     * @param eventStatus        행사 진행 상태 필터 (null이면 전체)
+     * @param registrationStatus 등록 상태 필터 (null이면 전체)
+     * @return 행사 목록 응답 DTO 리스트
+     */
+    public List<EventListResponse> getAdminEventList(EventVisibility visibility,
+                                                     EventStatus eventStatus,
+                                                     RegistrationStatus registrationStatus) {
+        List<Event> events = eventRepository.findAllByAdminFilters(visibility, eventStatus, registrationStatus);
+
+        // 각 행사의 상태를 시간에 따라 자동 갱신 (Lazy Evaluation)
+        Instant now = Instant.now();
+        events.forEach(event -> event.updateStatusIfNeeded(now));
+
+        // Lazy 갱신 후 상태가 변경되었을 수 있으므로, 필터가 있으면 다시 적용
+        if (eventStatus != null) {
+            events = events.stream()
+                    .filter(e -> e.getEventStatus() == eventStatus)
+                    .toList();
+        }
+        if (registrationStatus != null) {
+            events = events.stream()
+                    .filter(e -> e.getRegistrationStatus() == registrationStatus)
+                    .toList();
+        }
+
+        return events.stream()
+                .map(EventListResponse::from)
+                .toList();
+    }
+
+    /**
+     * 관리자용 행사 단건을 조회합니다.
+     * visibility 값과 무관하게 모든 행사를 조회할 수 있습니다.
+     * 조회 시 현재 시간에 따라 행사 상태가 자동 갱신됩니다. (Lazy Evaluation)
+     *
+     * @param eventId 행사 ID
+     * @param userId  현재 사용자 ID
+     * @return 행사 상세 응답 DTO
+     * @throws EventNotFoundException 행사를 찾을 수 없는 경우
+     */
+    public EventDetailResponse getAdminEvent(Long eventId, Long userId) {
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
+        event.updateStatusIfNeeded(Instant.now());
+
+        // 관리자 API에서는 canEdit=true, isRegistered는 확인하지 않음
+        boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                eventId, userId, ACTIVE_REGISTRATION_STATUSES);
+
+        return EventDetailResponse.from(event, true, isRegistered);
+    }
+
+    // === Visibility 변경 메서드 ===
+
+    /**
+     * 행사를 공개합니다. (UNPUBLISHED -> PUBLISHED)
+     * SecurityConfig에서 OPERATOR+ 권한이 보장되므로 서비스 레벨 권한 검증은 불필요합니다.
+     *
+     * @param eventId 행사 ID
+     * @param userId  요청자 ID
+     * @return 공개된 행사 상세 응답 DTO
+     * @throws EventNotFoundException                행사를 찾을 수 없는 경우
+     * @throws InvalidEventStateTransitionException 이미 공개 상태인 경우
+     */
+    public EventDetailResponse publishEvent(Long eventId, Long userId) {
+        // 1. 행사 조회
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 2. 행사 공개 (도메인 메서드 호출)
+        String previousVisibility = event.getVisibility().name();
+        event.publish();
+
+        // 3. 감사 이력 이벤트 발행
+        eventPublisher.publishEvent(new EventStatusChangeEvent(
+                eventId, userId, EventChangeType.EVENT_PUBLISHED,
+                previousVisibility, event.getVisibility().name(), null));
+
+        // 4. 응답 반환
+        return EventDetailResponse.from(event);
+    }
+
+    /**
+     * 행사를 비공개로 전환합니다. (PUBLISHED -> UNPUBLISHED)
+     * registrationStatus가 OPEN이면 CLOSED(MANUAL_CLOSE)로 자동 마감됩니다.
+     * SecurityConfig에서 OPERATOR+ 권한이 보장되므로 서비스 레벨 권한 검증은 불필요합니다.
+     *
+     * @param eventId 행사 ID
+     * @param userId  요청자 ID
+     * @return 비공개 처리된 행사 상세 응답 DTO
+     * @throws EventNotFoundException                행사를 찾을 수 없는 경우
+     * @throws InvalidEventStateTransitionException 이미 비공개 상태인 경우
+     */
+    public EventDetailResponse unpublishEvent(Long eventId, Long userId) {
+        // 1. 행사 조회
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 2. 행사 비공개 (도메인 메서드 호출 — OPEN이면 CLOSED 자동 마감)
+        String previousVisibility = event.getVisibility().name();
+        event.unpublish();
+
+        // 3. 감사 이력 이벤트 발행
+        eventPublisher.publishEvent(new EventStatusChangeEvent(
+                eventId, userId, EventChangeType.EVENT_UNPUBLISHED,
+                previousVisibility, event.getVisibility().name(), null));
+
+        // 4. 응답 반환
         return EventDetailResponse.from(event);
     }
 
