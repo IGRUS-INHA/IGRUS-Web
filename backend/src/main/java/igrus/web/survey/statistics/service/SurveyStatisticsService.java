@@ -3,6 +3,7 @@ package igrus.web.survey.statistics.service;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.domain.SurveyAccessLevel;
 import igrus.web.survey.exception.SurveyNotFoundException;
+import igrus.web.survey.exception.SurveyStatisticsAggregationException;
 import igrus.web.survey.question.domain.*;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyRepository;
@@ -189,7 +190,12 @@ public class SurveyStatisticsService {
         List<TextResponseItem> textResponses = answers.stream()
                 .sorted(Comparator.comparing(a -> a.getResponse().getCreatedAt()))
                 .map(a -> {
-                    String text = ((TextSurveyAnswer) a).getTextValue();
+                    if (!(a instanceof TextSurveyAnswer textAnswer)) {
+                        throw new SurveyStatisticsAggregationException(
+                                "TEXT 질문에 잘못된 답변 유형: answerId=" + a.getId()
+                                        + ", actualType=" + a.getClass().getSimpleName());
+                    }
+                    String text = textAnswer.getTextValue();
                     RespondentInfo respondent = null;
                     if (includeRespondentInfo) {
                         User user = a.getResponse().getUser();
@@ -209,7 +215,11 @@ public class SurveyStatisticsService {
      * 평균(HALF_UP, scale=1), 최솟값, 최댓값, 값별 분포를 계산합니다.
      */
     private ScaleQuestionStatistics buildScaleStatistics(SurveyQuestion question, List<SurveyAnswer> answers) {
-        LinearScaleSurveyQuestion scaleQuestion = (LinearScaleSurveyQuestion) question;
+        if (!(question instanceof LinearScaleSurveyQuestion scaleQuestion)) {
+            throw new SurveyStatisticsAggregationException(
+                    "SCALE 질문에 잘못된 질문 유형: questionId=" + question.getId()
+                            + ", actualType=" + question.getClass().getSimpleName());
+        }
         int scaleMin = scaleQuestion.getScaleMin();
         int scaleMax = scaleQuestion.getScaleMax();
 
@@ -222,14 +232,21 @@ public class SurveyStatisticsService {
         if (answers.isEmpty()) {
             return new ScaleQuestionStatistics(
                     BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP),
-                    null,
-                    null,
+                    0,
+                    0,
                     distribution
             );
         }
 
         List<Integer> values = answers.stream()
-                .map(a -> ((NumericSurveyAnswer) a).getNumericValue())
+                .map(a -> {
+                    if (!(a instanceof NumericSurveyAnswer numericAnswer)) {
+                        throw new SurveyStatisticsAggregationException(
+                                "SCALE 질문에 잘못된 답변 유형: answerId=" + a.getId()
+                                        + ", actualType=" + a.getClass().getSimpleName());
+                    }
+                    return numericAnswer.getNumericValue();
+                })
                 .toList();
 
         // 분포 계산
@@ -259,7 +276,12 @@ public class SurveyStatisticsService {
             int totalResponseCount) {
 
         // 질문의 삭제되지 않은 옵션만 조회
-        List<SurveyQuestionOption> activeOptions = ((OptionSurveyQuestion) question).getOptions().stream()
+        if (!(question instanceof OptionSurveyQuestion optionQuestion)) {
+            throw new SurveyStatisticsAggregationException(
+                    "OPTION 질문에 잘못된 질문 유형: questionId=" + question.getId()
+                            + ", actualType=" + question.getClass().getSimpleName());
+        }
+        List<SurveyQuestionOption> activeOptions = optionQuestion.getOptions().stream()
                 .filter(option -> !option.isDeleted())
                 .toList();
 
@@ -269,7 +291,11 @@ public class SurveyStatisticsService {
             optionCounts.put(option.getId(), 0);
         }
         for (SurveyAnswer answer : answers) {
-            OptionSurveyAnswer optionAnswer = (OptionSurveyAnswer) answer;
+            if (!(answer instanceof OptionSurveyAnswer optionAnswer)) {
+                throw new SurveyStatisticsAggregationException(
+                        "OPTION 질문에 잘못된 답변 유형: answerId=" + answer.getId()
+                                + ", actualType=" + answer.getClass().getSimpleName());
+            }
             Long optionId = optionAnswer.getSelectedOption().getId();
             optionCounts.merge(optionId, 1, Integer::sum);
         }
@@ -296,7 +322,11 @@ public class SurveyStatisticsService {
             List<SurveyAnswer> answers,
             int totalResponseCount) {
 
-        GridSurveyQuestion gridQuestion = (GridSurveyQuestion) question;
+        if (!(question instanceof GridSurveyQuestion gridQuestion)) {
+            throw new SurveyStatisticsAggregationException(
+                    "GRID 질문에 잘못된 질문 유형: questionId=" + question.getId()
+                            + ", actualType=" + question.getClass().getSimpleName());
+        }
         List<SurveyQuestionOption> activeOptions = gridQuestion.getOptions().stream()
                 .filter(option -> !option.isDeleted())
                 .toList();
@@ -315,7 +345,11 @@ public class SurveyStatisticsService {
         }
 
         for (SurveyAnswer answer : answers) {
-            GridSurveyAnswer gridAnswer = (GridSurveyAnswer) answer;
+            if (!(answer instanceof GridSurveyAnswer gridAnswer)) {
+                throw new SurveyStatisticsAggregationException(
+                        "GRID 질문에 잘못된 답변 유형: answerId=" + answer.getId()
+                                + ", actualType=" + answer.getClass().getSimpleName());
+            }
             Long rowId = gridAnswer.getSelectedRow().getId();
             Long optionId = gridAnswer.getSelectedOption().getId();
             rowOptionCounts.computeIfAbsent(rowId, k -> new LinkedHashMap<>())
