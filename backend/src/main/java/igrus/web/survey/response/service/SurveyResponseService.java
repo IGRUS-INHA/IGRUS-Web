@@ -17,6 +17,7 @@ import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,7 +71,13 @@ public class SurveyResponseService {
 
         SurveyResponse response = SurveyResponse.create(survey, user);
         createAnswers(response, survey, request.answers());
-        SurveyResponse savedResponse = surveyResponseRepository.save(response);
+
+        SurveyResponse savedResponse;
+        try {
+            savedResponse = surveyResponseRepository.save(response);
+        } catch (DataIntegrityViolationException e) {
+            throw new SurveyResponseDuplicateException();
+        }
 
         log.info("설문 응답 제출 - surveyId: {}, userId: {}", surveyId, user.getId());
         return SurveyResponseDetailResponse.from(savedResponse);
@@ -129,16 +136,17 @@ public class SurveyResponseService {
 
         validateAccessLevel(survey.getAccessLevel(), user);
 
-        SurveyResponse response = surveyResponseRepository.findBySurveyIdAndUserId(surveyId, user.getId())
+        SurveyResponse response = surveyResponseRepository.findBySurveyIdAndUserIdWithAnswers(surveyId, user.getId())
                 .orElseThrow(SurveyResponseNotFoundException::new);
 
         answerValidator.validate(survey, request.answers());
 
         response.getAnswers().clear();
         createAnswers(response, survey, request.answers());
+        SurveyResponse savedResponse = surveyResponseRepository.save(response);
 
         log.info("설문 응답 수정 - surveyId: {}, userId: {}", surveyId, user.getId());
-        return SurveyResponseDetailResponse.from(response);
+        return SurveyResponseDetailResponse.from(savedResponse);
     }
 
     /**
@@ -153,7 +161,7 @@ public class SurveyResponseService {
         User user = userRepository.findById(auth.userId())
                 .orElseThrow(() -> new UserNotFoundException(auth.userId()));
 
-        SurveyResponse response = surveyResponseRepository.findBySurveyIdAndUserId(surveyId, user.getId())
+        SurveyResponse response = surveyResponseRepository.findBySurveyIdAndUserIdWithAnswers(surveyId, user.getId())
                 .orElseThrow(SurveyResponseNotFoundException::new);
 
         log.info("본인 응답 조회 - surveyId: {}, userId: {}", surveyId, user.getId());
