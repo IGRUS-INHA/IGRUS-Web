@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "orval": "orval"
+    "orval": "orval",
+    "api:generate": "orval"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

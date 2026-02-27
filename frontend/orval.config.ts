@@ -1,19 +1,9 @@
-import "dotenv/config";
 import { defineConfig } from "orval";
-
-// .env 파일에서 VITE_SWAGGER_URL을 읽어옴
-const swaggerSchemaUrl = process.env.VITE_SWAGGER_URL;
-
-if (!swaggerSchemaUrl) {
-  throw new Error(
-    "VITE_SWAGGER_URL 환경 변수가 설정되지 않았습니다. .env 파일을 확인하세요."
-  );
-}
 
 export default defineConfig({
   api: {
     input: {
-      target: swaggerSchemaUrl,
+      target: "../openapi/openapi.yaml",
     },
     output: {
       mode: "tags-split",
