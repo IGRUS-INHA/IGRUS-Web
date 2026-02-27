@@ -20,7 +20,7 @@ public class SmtpInquiryNotificationService implements InquiryNotificationServic
 
     private final JavaMailSender mailSender;
 
-    @Value("${app.mail.from-address}")
+    @Value("${spring.mail.username}")
     private String fromAddress;
 
     @Override

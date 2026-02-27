@@ -17,4 +17,9 @@ public final class SecurityPaths {
             "/api/v1/inquiries/lookup",  // 비회원 문의 조회
             "/api/v1/surveys/*/responses/anonymous"  // 비회원 설문 응답
     };
+
+    /**
+     * 파일 저장소 API 경로 (인증 필요, DELETE는 운영진 이상)
+     */
+    public static final String STORAGE_API = "/api/v1/storage/**";
 }

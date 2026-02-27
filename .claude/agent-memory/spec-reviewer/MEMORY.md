@@ -37,3 +37,67 @@
 ### TASK-006 Repository Method Gap
 - Task plan specified `findByObjectKey(String objectKey)` but implementation only has `findByObjectKeyAndDeletedFalse`
 - This is a recurring pattern: plan specifies both soft-delete-aware and raw queries, implementer only creates the soft-delete-aware version
+
+## Storage Domain Service Reviews
+
+### Round 1: TASK-014/008/009/010/011/012 - PASS (2026-02-26)
+- All 6 tasks fully met verification criteria and TC expectations
+- Key recommended improvements (non-blocking):
+  1. PresignedUrlService: try-catch wraps both S3 + DB ops -> DB exceptions get masked as S3OperationFailedException
+  2. UploadConfirmService: Content-Length null check allows bypass if null (should fail instead of skip)
+  3. FileExpirationService: No pagination for bulk processing (acceptable per task plan "consider" wording)
+  4. DownloadUrlService: COMPLETED check throws same 404 as not-found (semantically ambiguous but functionally correct per spec)
+
+### Common Service Layer Checklist
+1. Bean Validation annotations match criteria doc section 5-1 input domain
+2. State transition domain methods include precondition validation
+3. Service logs do NOT include Presigned URL itself (security: section 7-3)
+4. S3 exceptions vs business exceptions are separated
+5. @Transactional + external call (S3) ordering matches rollback policy
+
+## API Layer Reviews
+
+### Round 1: TASK-013/015 - FAIL (2026-02-26)
+- Critical: DELETE endpoint `@DeleteMapping("/{objectKey}")` cannot handle slash-containing Object Keys
+  - Object Key format: `posts/2026/02/26/UUID.png` (contains slashes)
+  - Single `{objectKey}` path variable only matches one path segment
+  - `%2F` encoding rejected by Spring Boot's default security (RequestRejectedException)
+  - Fix options: @RequestParam, `{*objectKey}` catch-all, or request body
+- Recommended: TC-017 expects HTTP 200 but implementation returns 204 (noContent) for delete
+- Recommended: Criteria doc uses `/api/storage/*` but implementation uses `/api/v1/storage/*` (task plan is correct)
+
+### Round 2: TASK-013/015 - PASS (2026-02-26)
+- Round 1 Critical resolved: DELETE changed to `@DeleteMapping` + `@RequestParam String objectKey`
+- Round 1 Recommended items remain as-is (TC-017 204 vs 200, criteria doc path notation)
+- New Recommended: authenticated() vs explicit role restriction for future-proofing
+- Security config correctly places DELETE OPERATOR/ADMIN rule before anyRequest().authenticated()
+- UserRole enum: ASSOCIATE/MEMBER/OPERATOR/ADMIN -- no SUSPENDED role, so authenticated() = ASSOCIATE+
+
+### API Layer Checklist
+1. PathVariable patterns must handle domain values containing slashes (e.g., S3 Object Keys)
+2. HTTP method restrictions in Security config must match RBAC matrix
+3. Security rule ordering matters -- more specific rules (DELETE) before generic (anyRequest)
+4. Verify HTTP status codes in implementation match TC expected results
+5. authenticated() is equivalent to ASSOCIATE+ only when no SUSPENDED/lower role exists in UserRole enum
+
+## Test Layer Reviews
+
+### Round 1: TASK-016~021 (Unit + Service Integration Tests) - PASS (2026-02-27)
+- All 6 tasks fully met 34 TCs (TC-003, 007-012, 014-028, 029, 031, 033-034, 036, 051-053, 056, 058-062)
+- Test infrastructure properly configured:
+  - TestExternalServiceConfig: @Primary Mock for S3Client, S3Presigner, Clock
+  - ServiceIntegrationTestBase: cleanupDatabase() includes file_metadata table
+  - application.yml: igrus.storage properties + spring.cloud.aws.s3.enabled: false
+- Key testing techniques observed:
+  - ArgumentCaptor for S3 SDK parameter verification (signatureDuration, contentType, contentLength)
+  - OutputCaptureExtension for log content verification (userId/contentType/fileSize present, URL absent)
+  - Native SQL for overriding @CreatedDate values in scheduler tests
+  - @TestConfiguration + volatile variable for controlling FileReferenceChecker behavior
+  - verify(never()) for idempotent HEAD skip verification
+
+### Test Layer Checklist
+1. SDK call parameters verified via ArgumentCaptor (not just "returns success")
+2. Log assertions include both positive (required fields present) and negative (sensitive data absent)
+3. Scheduler/time-sensitive tests override createdAt via native SQL (not ReflectionTestUtils on managed entity)
+4. Forbidden state transition tests may need architectural interpretation (TC-025: same-key re-upload impossible by design)
+5. Boundary tests for time-based queries: strict less-than vs less-than-or-equal matters
