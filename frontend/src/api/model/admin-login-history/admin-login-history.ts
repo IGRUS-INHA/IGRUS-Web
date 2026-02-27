@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: acd4c9c
+ * OpenAPI spec version: ec724ff
  */
 import {
   useQuery
@@ -49,9 +49,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetLoginHistoriesParams,
-  Page,
-  PageLoginHistoryResponse
+  GetLoginHistories200,
+  GetLoginHistories401,
+  GetLoginHistories403,
+  GetLoginHistoriesParams
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -66,17 +67,17 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 로그인 이력 조회
  */
 export type getLoginHistoriesResponse200 = {
-  data: Page
+  data: GetLoginHistories200
   status: 200
 }
 
 export type getLoginHistoriesResponse401 = {
-  data: PageLoginHistoryResponse
+  data: GetLoginHistories401
   status: 401
 }
 
 export type getLoginHistoriesResponse403 = {
-  data: PageLoginHistoryResponse
+  data: GetLoginHistories403
   status: 403
 }
     
@@ -126,7 +127,7 @@ export const getGetLoginHistoriesQueryKey = (params?: GetLoginHistoriesParams,) 
     }
 
     
-export const getGetLoginHistoriesQueryOptions = <TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = PageLoginHistoryResponse>(params?: GetLoginHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetLoginHistoriesQueryOptions = <TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = GetLoginHistories401 | GetLoginHistories403>(params?: GetLoginHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -145,10 +146,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetLoginHistoriesQueryResult = NonNullable<Awaited<ReturnType<typeof getLoginHistories>>>
-export type GetLoginHistoriesQueryError = PageLoginHistoryResponse
+export type GetLoginHistoriesQueryError = GetLoginHistories401 | GetLoginHistories403
 
 
-export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = PageLoginHistoryResponse>(
+export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = GetLoginHistories401 | GetLoginHistories403>(
  params: undefined |  GetLoginHistoriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLoginHistories>>,
@@ -158,7 +159,7 @@ export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginH
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = PageLoginHistoryResponse>(
+export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = GetLoginHistories401 | GetLoginHistories403>(
  params?: GetLoginHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLoginHistories>>,
@@ -168,7 +169,7 @@ export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginH
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = PageLoginHistoryResponse>(
+export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = GetLoginHistories401 | GetLoginHistories403>(
  params?: GetLoginHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -176,7 +177,7 @@ export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginH
  * @summary 로그인 이력 조회
  */
 
-export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = PageLoginHistoryResponse>(
+export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = GetLoginHistories401 | GetLoginHistories403>(
  params?: GetLoginHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

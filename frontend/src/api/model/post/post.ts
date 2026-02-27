@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: acd4c9c
+ * OpenAPI spec version: ec724ff
  */
 import {
   useMutation,
@@ -53,16 +53,37 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CreatePostRequest,
+  CreatePost201,
+  CreatePost400,
+  CreatePost401,
+  CreatePost403,
+  CreatePost404,
+  CreatePost429,
+  CreatePostBody,
+  GetPostDetail200,
+  GetPostDetail401,
+  GetPostDetail403,
+  GetPostDetail404,
+  GetPostList200,
+  GetPostList401,
+  GetPostList403,
+  GetPostList404,
   GetPostListParams,
+  GetPostViewHistory200,
+  GetPostViewHistory401,
+  GetPostViewHistory403,
+  GetPostViewHistory404,
   GetPostViewHistoryParams,
-  PostCreateResponse,
-  PostDetailResponse,
-  PostListPageResponse,
-  PostUpdateResponse,
-  PostViewHistoryPageResponse,
-  PostViewStatsResponse,
-  UpdatePostRequest
+  GetPostViewStats200,
+  GetPostViewStats401,
+  GetPostViewStats403,
+  GetPostViewStats404,
+  UpdatePost200,
+  UpdatePost400,
+  UpdatePost401,
+  UpdatePost403,
+  UpdatePost404,
+  UpdatePostBody
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -77,22 +98,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 게시글 상세 조회
  */
 export type getPostDetailResponse200 = {
-  data: PostDetailResponse
+  data: GetPostDetail200
   status: 200
 }
 
 export type getPostDetailResponse401 = {
-  data: PostDetailResponse
+  data: GetPostDetail401
   status: 401
 }
 
 export type getPostDetailResponse403 = {
-  data: PostDetailResponse
+  data: GetPostDetail403
   status: 403
 }
 
 export type getPostDetailResponse404 = {
-  data: PostDetailResponse
+  data: GetPostDetail404
   status: 404
 }
     
@@ -138,7 +159,7 @@ export const getGetPostDetailQueryKey = (boardCode: string,
     }
 
     
-export const getGetPostDetailQueryOptions = <TData = Awaited<ReturnType<typeof getPostDetail>>, TError = PostDetailResponse>(boardCode: string,
+export const getGetPostDetailQueryOptions = <TData = Awaited<ReturnType<typeof getPostDetail>>, TError = GetPostDetail401 | GetPostDetail403 | GetPostDetail404>(boardCode: string,
     postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
@@ -158,10 +179,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPostDetailQueryResult = NonNullable<Awaited<ReturnType<typeof getPostDetail>>>
-export type GetPostDetailQueryError = PostDetailResponse
+export type GetPostDetailQueryError = GetPostDetail401 | GetPostDetail403 | GetPostDetail404
 
 
-export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail>>, TError = PostDetailResponse>(
+export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail>>, TError = GetPostDetail401 | GetPostDetail403 | GetPostDetail404>(
  boardCode: string,
     postId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostDetail>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -172,7 +193,7 @@ export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail>>, TError = PostDetailResponse>(
+export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail>>, TError = GetPostDetail401 | GetPostDetail403 | GetPostDetail404>(
  boardCode: string,
     postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostDetail>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -183,7 +204,7 @@ export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail>>, TError = PostDetailResponse>(
+export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail>>, TError = GetPostDetail401 | GetPostDetail403 | GetPostDetail404>(
  boardCode: string,
     postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
@@ -192,7 +213,7 @@ export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail
  * @summary 게시글 상세 조회
  */
 
-export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail>>, TError = PostDetailResponse>(
+export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail>>, TError = GetPostDetail401 | GetPostDetail403 | GetPostDetail404>(
  boardCode: string,
     postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
@@ -213,27 +234,27 @@ export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail
  * @summary 게시글 수정
  */
 export type updatePostResponse200 = {
-  data: PostUpdateResponse
+  data: UpdatePost200
   status: 200
 }
 
 export type updatePostResponse400 = {
-  data: PostUpdateResponse
+  data: UpdatePost400
   status: 400
 }
 
 export type updatePostResponse401 = {
-  data: PostUpdateResponse
+  data: UpdatePost401
   status: 401
 }
 
 export type updatePostResponse403 = {
-  data: PostUpdateResponse
+  data: UpdatePost403
   status: 403
 }
 
 export type updatePostResponse404 = {
-  data: PostUpdateResponse
+  data: UpdatePost404
   status: 404
 }
     
@@ -257,7 +278,7 @@ export const getUpdatePostUrl = (boardCode: string,
 
 export const updatePost = async (boardCode: string,
     postId: number,
-    updatePostRequest: UpdatePostRequest, options?: RequestInit): Promise<updatePostResponse> => {
+    updatePostBody: UpdatePostBody, options?: RequestInit): Promise<updatePostResponse> => {
   
   return customFetch<updatePostResponse>(getUpdatePostUrl(boardCode,postId),
   {      
@@ -265,16 +286,16 @@ export const updatePost = async (boardCode: string,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      updatePostRequest,)
+      updatePostBody,)
   }
 );}
 
 
 
 
-export const getUpdatePostMutationOptions = <TError = PostUpdateResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostRequest}, TContext> => {
+export const getUpdatePostMutationOptions = <TError = UpdatePost400 | UpdatePost401 | UpdatePost403 | UpdatePost404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostBody}, TContext> => {
 
 const mutationKey = ['updatePost'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -286,7 +307,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePost>>, {boardCode: string;postId: number;data: UpdatePostRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePost>>, {boardCode: string;postId: number;data: UpdatePostBody}> = (props) => {
           const {boardCode,postId,data} = props ?? {};
 
           return  updatePost(boardCode,postId,data,requestOptions)
@@ -300,18 +321,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdatePostMutationResult = NonNullable<Awaited<ReturnType<typeof updatePost>>>
-    export type UpdatePostMutationBody = UpdatePostRequest
-    export type UpdatePostMutationError = PostUpdateResponse
+    export type UpdatePostMutationBody = UpdatePostBody
+    export type UpdatePostMutationError = UpdatePost400 | UpdatePost401 | UpdatePost403 | UpdatePost404
 
     /**
  * @summary 게시글 수정
  */
-export const useUpdatePost = <TError = PostUpdateResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdatePost = <TError = UpdatePost400 | UpdatePost401 | UpdatePost403 | UpdatePost404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updatePost>>,
         TError,
-        {boardCode: string;postId: number;data: UpdatePostRequest},
+        {boardCode: string;postId: number;data: UpdatePostBody},
         TContext
       > => {
       return useMutation(getUpdatePostMutationOptions(options), queryClient);
@@ -422,22 +443,22 @@ export const useDeletePost = <TError = void,
  * @summary 게시글 목록 조회
  */
 export type getPostListResponse200 = {
-  data: PostListPageResponse
+  data: GetPostList200
   status: 200
 }
 
 export type getPostListResponse401 = {
-  data: PostListPageResponse
+  data: GetPostList401
   status: 401
 }
 
 export type getPostListResponse403 = {
-  data: PostListPageResponse
+  data: GetPostList403
   status: 403
 }
 
 export type getPostListResponse404 = {
-  data: PostListPageResponse
+  data: GetPostList404
   status: 404
 }
     
@@ -490,7 +511,7 @@ export const getGetPostListQueryKey = (boardCode: string,
     }
 
     
-export const getGetPostListQueryOptions = <TData = Awaited<ReturnType<typeof getPostList>>, TError = PostListPageResponse>(boardCode: string,
+export const getGetPostListQueryOptions = <TData = Awaited<ReturnType<typeof getPostList>>, TError = GetPostList401 | GetPostList403 | GetPostList404>(boardCode: string,
     params?: GetPostListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
@@ -510,10 +531,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPostListQueryResult = NonNullable<Awaited<ReturnType<typeof getPostList>>>
-export type GetPostListQueryError = PostListPageResponse
+export type GetPostListQueryError = GetPostList401 | GetPostList403 | GetPostList404
 
 
-export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, TError = PostListPageResponse>(
+export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, TError = GetPostList401 | GetPostList403 | GetPostList404>(
  boardCode: string,
     params: undefined |  GetPostListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -524,7 +545,7 @@ export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, 
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, TError = PostListPageResponse>(
+export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, TError = GetPostList401 | GetPostList403 | GetPostList404>(
  boardCode: string,
     params?: GetPostListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -535,7 +556,7 @@ export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, 
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, TError = PostListPageResponse>(
+export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, TError = GetPostList401 | GetPostList403 | GetPostList404>(
  boardCode: string,
     params?: GetPostListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
@@ -544,7 +565,7 @@ export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, 
  * @summary 게시글 목록 조회
  */
 
-export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, TError = PostListPageResponse>(
+export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, TError = GetPostList401 | GetPostList403 | GetPostList404>(
  boardCode: string,
     params?: GetPostListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
@@ -565,32 +586,32 @@ export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, 
  * @summary 게시글 작성
  */
 export type createPostResponse201 = {
-  data: PostCreateResponse
+  data: CreatePost201
   status: 201
 }
 
 export type createPostResponse400 = {
-  data: PostCreateResponse
+  data: CreatePost400
   status: 400
 }
 
 export type createPostResponse401 = {
-  data: PostCreateResponse
+  data: CreatePost401
   status: 401
 }
 
 export type createPostResponse403 = {
-  data: PostCreateResponse
+  data: CreatePost403
   status: 403
 }
 
 export type createPostResponse404 = {
-  data: PostCreateResponse
+  data: CreatePost404
   status: 404
 }
 
 export type createPostResponse429 = {
-  data: PostCreateResponse
+  data: CreatePost429
   status: 429
 }
     
@@ -612,7 +633,7 @@ export const getCreatePostUrl = (boardCode: string,) => {
 }
 
 export const createPost = async (boardCode: string,
-    createPostRequest: CreatePostRequest, options?: RequestInit): Promise<createPostResponse> => {
+    createPostBody: CreatePostBody, options?: RequestInit): Promise<createPostResponse> => {
   
   return customFetch<createPostResponse>(getCreatePostUrl(boardCode),
   {      
@@ -620,16 +641,16 @@ export const createPost = async (boardCode: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createPostRequest,)
+      createPostBody,)
   }
 );}
 
 
 
 
-export const getCreatePostMutationOptions = <TError = PostCreateResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostRequest}, TContext> => {
+export const getCreatePostMutationOptions = <TError = CreatePost400 | CreatePost401 | CreatePost403 | CreatePost404 | CreatePost429,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostBody}, TContext> => {
 
 const mutationKey = ['createPost'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -641,7 +662,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPost>>, {boardCode: string;data: CreatePostRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPost>>, {boardCode: string;data: CreatePostBody}> = (props) => {
           const {boardCode,data} = props ?? {};
 
           return  createPost(boardCode,data,requestOptions)
@@ -655,18 +676,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreatePostMutationResult = NonNullable<Awaited<ReturnType<typeof createPost>>>
-    export type CreatePostMutationBody = CreatePostRequest
-    export type CreatePostMutationError = PostCreateResponse
+    export type CreatePostMutationBody = CreatePostBody
+    export type CreatePostMutationError = CreatePost400 | CreatePost401 | CreatePost403 | CreatePost404 | CreatePost429
 
     /**
  * @summary 게시글 작성
  */
-export const useCreatePost = <TError = PostCreateResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreatePost = <TError = CreatePost400 | CreatePost401 | CreatePost403 | CreatePost404 | CreatePost429,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createPost>>,
         TError,
-        {boardCode: string;data: CreatePostRequest},
+        {boardCode: string;data: CreatePostBody},
         TContext
       > => {
       return useMutation(getCreatePostMutationOptions(options), queryClient);
@@ -676,22 +697,22 @@ export const useCreatePost = <TError = PostCreateResponse,
  * @summary 게시글 조회 통계
  */
 export type getPostViewStatsResponse200 = {
-  data: PostViewStatsResponse
+  data: GetPostViewStats200
   status: 200
 }
 
 export type getPostViewStatsResponse401 = {
-  data: PostViewStatsResponse
+  data: GetPostViewStats401
   status: 401
 }
 
 export type getPostViewStatsResponse403 = {
-  data: PostViewStatsResponse
+  data: GetPostViewStats403
   status: 403
 }
 
 export type getPostViewStatsResponse404 = {
-  data: PostViewStatsResponse
+  data: GetPostViewStats404
   status: 404
 }
     
@@ -737,7 +758,7 @@ export const getGetPostViewStatsQueryKey = (boardCode: string,
     }
 
     
-export const getGetPostViewStatsQueryOptions = <TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = PostViewStatsResponse>(boardCode: string,
+export const getGetPostViewStatsQueryOptions = <TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = GetPostViewStats401 | GetPostViewStats403 | GetPostViewStats404>(boardCode: string,
     postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewStats>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
@@ -757,10 +778,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPostViewStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getPostViewStats>>>
-export type GetPostViewStatsQueryError = PostViewStatsResponse
+export type GetPostViewStatsQueryError = GetPostViewStats401 | GetPostViewStats403 | GetPostViewStats404
 
 
-export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = PostViewStatsResponse>(
+export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = GetPostViewStats401 | GetPostViewStats403 | GetPostViewStats404>(
  boardCode: string,
     postId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -771,7 +792,7 @@ export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostVie
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = PostViewStatsResponse>(
+export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = GetPostViewStats401 | GetPostViewStats403 | GetPostViewStats404>(
  boardCode: string,
     postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -782,7 +803,7 @@ export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostVie
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = PostViewStatsResponse>(
+export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = GetPostViewStats401 | GetPostViewStats403 | GetPostViewStats404>(
  boardCode: string,
     postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewStats>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
@@ -791,7 +812,7 @@ export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostVie
  * @summary 게시글 조회 통계
  */
 
-export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = PostViewStatsResponse>(
+export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostViewStats>>, TError = GetPostViewStats401 | GetPostViewStats403 | GetPostViewStats404>(
  boardCode: string,
     postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewStats>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
@@ -812,22 +833,22 @@ export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostVie
  * @summary 게시글 조회 기록 목록
  */
 export type getPostViewHistoryResponse200 = {
-  data: PostViewHistoryPageResponse
+  data: GetPostViewHistory200
   status: 200
 }
 
 export type getPostViewHistoryResponse401 = {
-  data: PostViewHistoryPageResponse
+  data: GetPostViewHistory401
   status: 401
 }
 
 export type getPostViewHistoryResponse403 = {
-  data: PostViewHistoryPageResponse
+  data: GetPostViewHistory403
   status: 403
 }
 
 export type getPostViewHistoryResponse404 = {
-  data: PostViewHistoryPageResponse
+  data: GetPostViewHistory404
   status: 404
 }
     
@@ -883,7 +904,7 @@ export const getGetPostViewHistoryQueryKey = (boardCode: string,
     }
 
     
-export const getGetPostViewHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = PostViewHistoryPageResponse>(boardCode: string,
+export const getGetPostViewHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = GetPostViewHistory401 | GetPostViewHistory403 | GetPostViewHistory404>(boardCode: string,
     postId: number,
     params?: GetPostViewHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
@@ -904,10 +925,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPostViewHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPostViewHistory>>>
-export type GetPostViewHistoryQueryError = PostViewHistoryPageResponse
+export type GetPostViewHistoryQueryError = GetPostViewHistory401 | GetPostViewHistory403 | GetPostViewHistory404
 
 
-export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = PostViewHistoryPageResponse>(
+export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = GetPostViewHistory401 | GetPostViewHistory403 | GetPostViewHistory404>(
  boardCode: string,
     postId: number,
     params: undefined |  GetPostViewHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewHistory>>, TError, TData>> & Pick<
@@ -919,7 +940,7 @@ export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostV
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = PostViewHistoryPageResponse>(
+export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = GetPostViewHistory401 | GetPostViewHistory403 | GetPostViewHistory404>(
  boardCode: string,
     postId: number,
     params?: GetPostViewHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewHistory>>, TError, TData>> & Pick<
@@ -931,7 +952,7 @@ export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostV
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = PostViewHistoryPageResponse>(
+export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = GetPostViewHistory401 | GetPostViewHistory403 | GetPostViewHistory404>(
  boardCode: string,
     postId: number,
     params?: GetPostViewHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
@@ -941,7 +962,7 @@ export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostV
  * @summary 게시글 조회 기록 목록
  */
 
-export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = PostViewHistoryPageResponse>(
+export function useGetPostViewHistory<TData = Awaited<ReturnType<typeof getPostViewHistory>>, TError = GetPostViewHistory401 | GetPostViewHistory403 | GetPostViewHistory404>(
  boardCode: string,
     postId: number,
     params?: GetPostViewHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostViewHistory>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}

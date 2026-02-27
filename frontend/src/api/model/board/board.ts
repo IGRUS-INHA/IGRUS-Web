@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: acd4c9c
+ * OpenAPI spec version: ec724ff
  */
 import {
   useQuery
@@ -49,8 +49,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  BoardDetailResponse,
-  BoardListResponse
+  GetBoardByCode200,
+  GetBoardByCode401,
+  GetBoardByCode404,
+  GetBoardList200Item,
+  GetBoardList401Item
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -65,12 +68,12 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 게시판 목록 조회
  */
 export type getBoardListResponse200 = {
-  data: BoardListResponse[]
+  data: GetBoardList200Item[]
   status: 200
 }
 
 export type getBoardListResponse401 = {
-  data: BoardListResponse[]
+  data: GetBoardList401Item[]
   status: 401
 }
     
@@ -113,7 +116,7 @@ export const getGetBoardListQueryKey = () => {
     }
 
     
-export const getGetBoardListQueryOptions = <TData = Awaited<ReturnType<typeof getBoardList>>, TError = BoardListResponse[]>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetBoardListQueryOptions = <TData = Awaited<ReturnType<typeof getBoardList>>, TError = GetBoardList401Item[]>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -132,10 +135,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetBoardListQueryResult = NonNullable<Awaited<ReturnType<typeof getBoardList>>>
-export type GetBoardListQueryError = BoardListResponse[]
+export type GetBoardListQueryError = GetBoardList401Item[]
 
 
-export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>, TError = BoardListResponse[]>(
+export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>, TError = GetBoardList401Item[]>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getBoardList>>,
@@ -145,7 +148,7 @@ export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>, TError = BoardListResponse[]>(
+export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>, TError = GetBoardList401Item[]>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getBoardList>>,
@@ -155,7 +158,7 @@ export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>, TError = BoardListResponse[]>(
+export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>, TError = GetBoardList401Item[]>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -163,7 +166,7 @@ export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>
  * @summary 게시판 목록 조회
  */
 
-export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>, TError = BoardListResponse[]>(
+export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>, TError = GetBoardList401Item[]>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -183,17 +186,17 @@ export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>
  * @summary 게시판 상세 조회
  */
 export type getBoardByCodeResponse200 = {
-  data: BoardDetailResponse
+  data: GetBoardByCode200
   status: 200
 }
 
 export type getBoardByCodeResponse401 = {
-  data: BoardDetailResponse
+  data: GetBoardByCode401
   status: 401
 }
 
 export type getBoardByCodeResponse404 = {
-  data: BoardDetailResponse
+  data: GetBoardByCode404
   status: 404
 }
     
@@ -236,7 +239,7 @@ export const getGetBoardByCodeQueryKey = (code: string,) => {
     }
 
     
-export const getGetBoardByCodeQueryOptions = <TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = BoardDetailResponse>(code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardByCode>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetBoardByCodeQueryOptions = <TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = GetBoardByCode401 | GetBoardByCode404>(code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardByCode>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -255,10 +258,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetBoardByCodeQueryResult = NonNullable<Awaited<ReturnType<typeof getBoardByCode>>>
-export type GetBoardByCodeQueryError = BoardDetailResponse
+export type GetBoardByCodeQueryError = GetBoardByCode401 | GetBoardByCode404
 
 
-export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = BoardDetailResponse>(
+export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = GetBoardByCode401 | GetBoardByCode404>(
  code: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardByCode>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getBoardByCode>>,
@@ -268,7 +271,7 @@ export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCo
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = BoardDetailResponse>(
+export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = GetBoardByCode401 | GetBoardByCode404>(
  code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardByCode>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getBoardByCode>>,
@@ -278,7 +281,7 @@ export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCo
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = BoardDetailResponse>(
+export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = GetBoardByCode401 | GetBoardByCode404>(
  code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardByCode>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -286,7 +289,7 @@ export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCo
  * @summary 게시판 상세 조회
  */
 
-export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = BoardDetailResponse>(
+export function useGetBoardByCode<TData = Awaited<ReturnType<typeof getBoardByCode>>, TError = GetBoardByCode401 | GetBoardByCode404>(
  code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBoardByCode>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
