@@ -2,6 +2,7 @@ package igrus.web.event.repository;
 
 import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -65,6 +66,58 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      * @return 해당 사용자가 생성한 삭제되지 않은 행사 목록
      */
     List<Event> findByUserId(Long userId);
+
+    // === 공개 API 조회 (visibility = PUBLISHED 필터) ===
+
+    /**
+     * 공개(PUBLISHED) 행사를 ID로 조회합니다.
+     * 공개 API 단건 조회용입니다.
+     *
+     * @param id         행사 ID
+     * @param visibility 공개 상태 (PUBLISHED)
+     * @return 공개 상태의 행사
+     */
+    Optional<Event> findByIdAndVisibility(Long id, EventVisibility visibility);
+
+    /**
+     * 공개(PUBLISHED) 행사 목록을 복합 필터로 조회합니다.
+     * 공개 API 목록 조회용입니다. visibility는 항상 PUBLISHED로 고정됩니다.
+     * eventStatus, registrationStatus 파라미터가 null이면 해당 필터를 적용하지 않습니다.
+     * 두 필터를 동시에 지정해도 모두 적용됩니다.
+     *
+     * @param visibility         공개 상태 (항상 PUBLISHED)
+     * @param eventStatus        행사 진행 상태 필터 (null이면 전체)
+     * @param registrationStatus 등록 상태 필터 (null이면 전체)
+     * @return 필터 조건에 맞는 공개 행사 목록
+     */
+    @Query("SELECT e FROM Event e WHERE " +
+           "e.visibility = :visibility AND " +
+           "(:eventStatus IS NULL OR e.eventStatus = :eventStatus) AND " +
+           "(:registrationStatus IS NULL OR e.registrationStatus = :registrationStatus)")
+    List<Event> findByVisibilityAndFilters(
+            @Param("visibility") EventVisibility visibility,
+            @Param("eventStatus") EventStatus eventStatus,
+            @Param("registrationStatus") RegistrationStatus registrationStatus);
+
+    // === 관리자 API 조회 (visibility 선택적 필터) ===
+
+    /**
+     * 관리자용 행사 목록을 조회합니다.
+     * visibility, eventStatus, registrationStatus 파라미터가 null이면 해당 필터를 적용하지 않습니다.
+     *
+     * @param visibility         공개 상태 필터 (null이면 전체)
+     * @param eventStatus        행사 진행 상태 필터 (null이면 전체)
+     * @param registrationStatus 등록 상태 필터 (null이면 전체)
+     * @return 필터 조건에 맞는 행사 목록
+     */
+    @Query("SELECT e FROM Event e WHERE " +
+           "(:visibility IS NULL OR e.visibility = :visibility) AND " +
+           "(:eventStatus IS NULL OR e.eventStatus = :eventStatus) AND " +
+           "(:registrationStatus IS NULL OR e.registrationStatus = :registrationStatus)")
+    List<Event> findAllByAdminFilters(
+            @Param("visibility") EventVisibility visibility,
+            @Param("eventStatus") EventStatus eventStatus,
+            @Param("registrationStatus") RegistrationStatus registrationStatus);
 
     // === 원자적 UPDATE (@SQLRestriction 미적용, 명시적 deleted 조건 필요) ===
 
