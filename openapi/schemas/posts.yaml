@@ -1,0 +1,191 @@
+PostLikeToggleResponse:
+  type: object
+  description: 게시글 좋아요 토글 응답
+  properties:
+    liked:
+      type: boolean
+      description: 현재 좋아요 상태
+      example: true
+    likeCount:
+      type: integer
+      format: int32
+      description: 게시글 총 좋아요 수
+      example: 42
+CreateCommentRequest:
+  type: object
+  properties:
+    content:
+      type: string
+      maxLength: 500
+      minLength: 0
+    anonymous:
+      type: boolean
+  required:
+  - content
+CommentResponse:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    postId:
+      type: integer
+      format: int64
+    parentCommentId:
+      type: integer
+      format: int64
+    content:
+      type: string
+    authorId:
+      type: integer
+      format: int64
+    authorName:
+      type: string
+    likeCount:
+      type: integer
+      format: int64
+    createdAt:
+      type: string
+      format: date-time
+    anonymous:
+      type: boolean
+    deleted:
+      type: boolean
+    likedByMe:
+      type: boolean
+BookmarkToggleResponse:
+  type: object
+  description: 북마크 토글 응답
+  properties:
+    bookmarked:
+      type: boolean
+      description: 현재 북마크 상태
+      example: true
+BookmarkedPostPageResponse:
+  type: object
+  description: 북마크한 게시글 목록 페이징 응답
+  properties:
+    posts:
+      type: array
+      description: 북마크한 게시글 목록
+      items:
+        $ref: '#/BookmarkedPostResponse'
+    totalElements:
+      type: integer
+      format: int64
+      description: 전체 요소 수
+      example: 100
+    totalPages:
+      type: integer
+      format: int32
+      description: 전체 페이지 수
+      example: 5
+    currentPage:
+      type: integer
+      format: int32
+      description: 현재 페이지 번호 (0부터 시작)
+      example: 0
+    hasNext:
+      type: boolean
+      description: 다음 페이지 존재 여부
+      example: true
+PostLikeStatusResponse:
+  type: object
+  description: 게시글 좋아요 상태 조회 응답
+  properties:
+    liked:
+      type: boolean
+      description: 현재 좋아요 상태
+      example: true
+    likeCount:
+      type: integer
+      format: int32
+      description: 게시글 총 좋아요 수
+      example: 42
+CommentListResponse:
+  type: object
+  properties:
+    comments:
+      type: array
+      items:
+        $ref: '#/CommentWithRepliesResponse'
+    totalCount:
+      type: integer
+      format: int64
+BookmarkStatusResponse:
+  type: object
+  description: 북마크 상태 조회 응답
+  properties:
+    bookmarked:
+      type: boolean
+      description: 현재 북마크 상태
+      example: true
+BookmarkedPostResponse:
+  type: object
+  description: 북마크한 게시글 응답
+  properties:
+    postId:
+      type: integer
+      format: int64
+      description: 게시글 ID
+      example: 1
+    title:
+      type: string
+      description: 게시글 제목
+      example: 안녕하세요
+    boardCode:
+      type: string
+      description: 게시판 코드
+      example: GENERAL
+    boardName:
+      type: string
+      description: 게시판 이름
+      example: 자유게시판
+    authorName:
+      type: string
+      description: 작성자 이름
+      example: 홍길동
+    createdAt:
+      type: string
+      format: date-time
+      description: 게시글 작성일
+    isDeleted:
+      type: boolean
+      description: 삭제 여부
+      example: false
+    deletedMessage:
+      type: string
+      description: 삭제된 경우 메시지
+      example: 삭제된 게시글입니다
+CommentWithRepliesResponse:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    postId:
+      type: integer
+      format: int64
+    content:
+      type: string
+    authorId:
+      type: integer
+      format: int64
+    authorName:
+      type: string
+    likeCount:
+      type: integer
+      format: int64
+    createdAt:
+      type: string
+      format: date-time
+    replies:
+      type: array
+      items:
+        $ref: '#/CommentResponse'
+    anonymous:
+      type: boolean
+    deleted:
+      type: boolean
+    likedByMe:
+      type: boolean

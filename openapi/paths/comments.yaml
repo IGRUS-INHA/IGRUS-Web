@@ -1,0 +1,100 @@
+commentsByCommentIdReports:
+  post:
+    tags:
+    - Comment Report
+    summary: 댓글 신고
+    description: 댓글을 신고합니다. 동일 사용자가 동일 댓글을 중복 신고할 수 없습니다.
+    operationId: reportComment
+    parameters:
+    - name: commentId
+      in: path
+      description: 댓글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/comments.yaml#/CreateCommentReportRequest
+      required: true
+    responses:
+      '201':
+        description: 신고 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/comments.yaml#/CommentReportResponse
+      '400':
+        description: 잘못된 요청 (신고 사유 누락, 중복 신고)
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/comments.yaml#/CommentReportResponse
+      '401':
+        description: 인증 필요
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/comments.yaml#/CommentReportResponse
+      '404':
+        description: 댓글을 찾을 수 없음
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/comments.yaml#/CommentReportResponse
+    security:
+    - BearerAuthentication: []
+commentsByCommentIdLikes:
+  post:
+    tags:
+    - Comment Like
+    summary: 댓글 좋아요
+    description: 댓글에 좋아요를 추가합니다. 본인 댓글에는 좋아요할 수 없습니다.
+    operationId: likeComment
+    parameters:
+    - name: commentId
+      in: path
+      description: 댓글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '201':
+        description: 좋아요 성공
+      '400':
+        description: 잘못된 요청 (본인 댓글에 좋아요, 이미 좋아요한 댓글)
+      '401':
+        description: 인증 필요
+      '404':
+        description: 댓글을 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+  delete:
+    tags:
+    - Comment Like
+    summary: 댓글 좋아요 취소
+    description: 댓글 좋아요를 취소합니다.
+    operationId: unlikeComment
+    parameters:
+    - name: commentId
+      in: path
+      description: 댓글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '204':
+        description: 좋아요 취소 성공
+      '401':
+        description: 인증 필요
+      '404':
+        description: 댓글 또는 좋아요 정보를 찾을 수 없음
+    security:
+    - BearerAuthentication: []

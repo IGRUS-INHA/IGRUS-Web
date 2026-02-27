@@ -1,0 +1,156 @@
+storagePresignedUrl:
+  post:
+    tags:
+    - Storage
+    summary: 업로드용 Presigned URL 생성
+    description: S3에 파일을 업로드하기 위한 Presigned URL을 생성합니다. 인증 필요.
+    operationId: createUploadUrl
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/storage.yaml#/CreatePresignedUrlRequest
+      required: true
+    responses:
+      '200':
+        description: Presigned URL 생성 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/CreatePresignedUrlResponse
+      '400':
+        description: 잘못된 요청 (파일 크기/타입 제한 위반)
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/CreatePresignedUrlResponse
+      '401':
+        description: 인증 필요
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/CreatePresignedUrlResponse
+      '500':
+        description: S3 SDK 장애
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/CreatePresignedUrlResponse
+    security:
+    - BearerAuthentication: []
+storageConfirm:
+  post:
+    tags:
+    - Storage
+    summary: 업로드 완료 확인
+    description: S3에 파일 업로드 완료 후 백엔드에 알립니다. S3 HEAD 검증을 수행합니다. 인증 필요.
+    operationId: confirmUpload
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/storage.yaml#/ConfirmUploadRequest
+      required: true
+    responses:
+      '200':
+        description: 업로드 완료 확인 성공 (COMPLETED 또는 FAILED)
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
+      '400':
+        description: 잘못된 요청
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
+      '401':
+        description: 인증 필요
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
+      '403':
+        description: 소유권 불일치
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
+      '404':
+        description: 파일 메타데이터 미존재
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/ConfirmUploadResponse
+    security:
+    - BearerAuthentication: []
+storageDownloadUrl:
+  get:
+    tags:
+    - Storage
+    summary: 다운로드용 Presigned URL 생성
+    description: S3에서 파일을 다운로드하기 위한 Presigned URL을 생성합니다. COMPLETED 상태의 파일만 가능합니다. 인증 필요.
+    operationId: createDownloadUrl
+    parameters:
+    - name: objectKey
+      in: query
+      description: S3 Object Key
+      required: true
+      schema:
+        type: string
+    responses:
+      '200':
+        description: 다운로드 URL 생성 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/DownloadUrlResponse
+      '401':
+        description: 인증 필요
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/DownloadUrlResponse
+      '404':
+        description: 파일 미존재 또는 COMPLETED 상태가 아님
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/DownloadUrlResponse
+      '500':
+        description: S3 SDK 장애
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/storage.yaml#/DownloadUrlResponse
+    security:
+    - BearerAuthentication: []
+storage:
+  delete:
+    tags:
+    - Storage
+    summary: 파일 삭제
+    description: S3 객체와 파일 메타데이터를 삭제합니다. OPERATOR 이상 권한 필요.
+    operationId: deleteFile
+    parameters:
+    - name: objectKey
+      in: query
+      description: S3 Object Key
+      required: true
+      schema:
+        type: string
+    responses:
+      '204':
+        description: 파일 삭제 성공
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음 (OPERATOR 이상 필요)
+      '404':
+        description: 파일 메타데이터 미존재
+      '409':
+        description: 참조 무결성 위반 (상위 엔티티에서 참조 중)
+      '500':
+        description: S3 삭제 실패
+    security:
+    - BearerAuthentication: []

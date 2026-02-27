@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: acd4c9c
+ * OpenAPI spec version: ec724ff
  */
 import {
   useMutation,
@@ -53,10 +53,20 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CreatePinnedPostRequest,
-  PinnedPostDetailResponse,
-  PinnedPostListResponse,
-  UpdateDisplayOrderRequest
+  CreatePinnedPost201,
+  CreatePinnedPost400,
+  CreatePinnedPost401,
+  CreatePinnedPost403,
+  CreatePinnedPost404,
+  CreatePinnedPost409,
+  CreatePinnedPostBody,
+  GetPinnedPostList200Item,
+  UpdateDisplayOrder200,
+  UpdateDisplayOrder400,
+  UpdateDisplayOrder401,
+  UpdateDisplayOrder403,
+  UpdateDisplayOrder404,
+  UpdateDisplayOrderBody
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -71,27 +81,27 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 고정 게시글 표시 순서 변경
  */
 export type updateDisplayOrderResponse200 = {
-  data: PinnedPostDetailResponse
+  data: UpdateDisplayOrder200
   status: 200
 }
 
 export type updateDisplayOrderResponse400 = {
-  data: PinnedPostDetailResponse
+  data: UpdateDisplayOrder400
   status: 400
 }
 
 export type updateDisplayOrderResponse401 = {
-  data: PinnedPostDetailResponse
+  data: UpdateDisplayOrder401
   status: 401
 }
 
 export type updateDisplayOrderResponse403 = {
-  data: PinnedPostDetailResponse
+  data: UpdateDisplayOrder403
   status: 403
 }
 
 export type updateDisplayOrderResponse404 = {
-  data: PinnedPostDetailResponse
+  data: UpdateDisplayOrder404
   status: 404
 }
     
@@ -113,7 +123,7 @@ export const getUpdateDisplayOrderUrl = (id: number,) => {
 }
 
 export const updateDisplayOrder = async (id: number,
-    updateDisplayOrderRequest: UpdateDisplayOrderRequest, options?: RequestInit): Promise<updateDisplayOrderResponse> => {
+    updateDisplayOrderBody: UpdateDisplayOrderBody, options?: RequestInit): Promise<updateDisplayOrderResponse> => {
   
   return customFetch<updateDisplayOrderResponse>(getUpdateDisplayOrderUrl(id),
   {      
@@ -121,16 +131,16 @@ export const updateDisplayOrder = async (id: number,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      updateDisplayOrderRequest,)
+      updateDisplayOrderBody,)
   }
 );}
 
 
 
 
-export const getUpdateDisplayOrderMutationOptions = <TError = PinnedPostDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDisplayOrder>>, TError,{id: number;data: UpdateDisplayOrderRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateDisplayOrder>>, TError,{id: number;data: UpdateDisplayOrderRequest}, TContext> => {
+export const getUpdateDisplayOrderMutationOptions = <TError = UpdateDisplayOrder400 | UpdateDisplayOrder401 | UpdateDisplayOrder403 | UpdateDisplayOrder404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDisplayOrder>>, TError,{id: number;data: UpdateDisplayOrderBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateDisplayOrder>>, TError,{id: number;data: UpdateDisplayOrderBody}, TContext> => {
 
 const mutationKey = ['updateDisplayOrder'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -142,7 +152,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDisplayOrder>>, {id: number;data: UpdateDisplayOrderRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDisplayOrder>>, {id: number;data: UpdateDisplayOrderBody}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateDisplayOrder(id,data,requestOptions)
@@ -156,18 +166,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateDisplayOrderMutationResult = NonNullable<Awaited<ReturnType<typeof updateDisplayOrder>>>
-    export type UpdateDisplayOrderMutationBody = UpdateDisplayOrderRequest
-    export type UpdateDisplayOrderMutationError = PinnedPostDetailResponse
+    export type UpdateDisplayOrderMutationBody = UpdateDisplayOrderBody
+    export type UpdateDisplayOrderMutationError = UpdateDisplayOrder400 | UpdateDisplayOrder401 | UpdateDisplayOrder403 | UpdateDisplayOrder404
 
     /**
  * @summary 고정 게시글 표시 순서 변경
  */
-export const useUpdateDisplayOrder = <TError = PinnedPostDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDisplayOrder>>, TError,{id: number;data: UpdateDisplayOrderRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdateDisplayOrder = <TError = UpdateDisplayOrder400 | UpdateDisplayOrder401 | UpdateDisplayOrder403 | UpdateDisplayOrder404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDisplayOrder>>, TError,{id: number;data: UpdateDisplayOrderBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateDisplayOrder>>,
         TError,
-        {id: number;data: UpdateDisplayOrderRequest},
+        {id: number;data: UpdateDisplayOrderBody},
         TContext
       > => {
       return useMutation(getUpdateDisplayOrderMutationOptions(options), queryClient);
@@ -177,7 +187,7 @@ export const useUpdateDisplayOrder = <TError = PinnedPostDetailResponse,
  * @summary 고정 게시글 목록 조회
  */
 export type getPinnedPostListResponse200 = {
-  data: PinnedPostListResponse[]
+  data: GetPinnedPostList200Item[]
   status: 200
 }
     
@@ -288,32 +298,32 @@ export function useGetPinnedPostList<TData = Awaited<ReturnType<typeof getPinned
  * @summary 게시글 고정
  */
 export type createPinnedPostResponse201 = {
-  data: PinnedPostDetailResponse
+  data: CreatePinnedPost201
   status: 201
 }
 
 export type createPinnedPostResponse400 = {
-  data: PinnedPostDetailResponse
+  data: CreatePinnedPost400
   status: 400
 }
 
 export type createPinnedPostResponse401 = {
-  data: PinnedPostDetailResponse
+  data: CreatePinnedPost401
   status: 401
 }
 
 export type createPinnedPostResponse403 = {
-  data: PinnedPostDetailResponse
+  data: CreatePinnedPost403
   status: 403
 }
 
 export type createPinnedPostResponse404 = {
-  data: PinnedPostDetailResponse
+  data: CreatePinnedPost404
   status: 404
 }
 
 export type createPinnedPostResponse409 = {
-  data: PinnedPostDetailResponse
+  data: CreatePinnedPost409
   status: 409
 }
     
@@ -334,7 +344,7 @@ export const getCreatePinnedPostUrl = () => {
   return `/api/v1/pinned-posts`
 }
 
-export const createPinnedPost = async (createPinnedPostRequest: CreatePinnedPostRequest, options?: RequestInit): Promise<createPinnedPostResponse> => {
+export const createPinnedPost = async (createPinnedPostBody: CreatePinnedPostBody, options?: RequestInit): Promise<createPinnedPostResponse> => {
   
   return customFetch<createPinnedPostResponse>(getCreatePinnedPostUrl(),
   {      
@@ -342,16 +352,16 @@ export const createPinnedPost = async (createPinnedPostRequest: CreatePinnedPost
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createPinnedPostRequest,)
+      createPinnedPostBody,)
   }
 );}
 
 
 
 
-export const getCreatePinnedPostMutationOptions = <TError = PinnedPostDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPinnedPost>>, TError,{data: CreatePinnedPostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createPinnedPost>>, TError,{data: CreatePinnedPostRequest}, TContext> => {
+export const getCreatePinnedPostMutationOptions = <TError = CreatePinnedPost400 | CreatePinnedPost401 | CreatePinnedPost403 | CreatePinnedPost404 | CreatePinnedPost409,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPinnedPost>>, TError,{data: CreatePinnedPostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPinnedPost>>, TError,{data: CreatePinnedPostBody}, TContext> => {
 
 const mutationKey = ['createPinnedPost'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -363,7 +373,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPinnedPost>>, {data: CreatePinnedPostRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPinnedPost>>, {data: CreatePinnedPostBody}> = (props) => {
           const {data} = props ?? {};
 
           return  createPinnedPost(data,requestOptions)
@@ -377,18 +387,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreatePinnedPostMutationResult = NonNullable<Awaited<ReturnType<typeof createPinnedPost>>>
-    export type CreatePinnedPostMutationBody = CreatePinnedPostRequest
-    export type CreatePinnedPostMutationError = PinnedPostDetailResponse
+    export type CreatePinnedPostMutationBody = CreatePinnedPostBody
+    export type CreatePinnedPostMutationError = CreatePinnedPost400 | CreatePinnedPost401 | CreatePinnedPost403 | CreatePinnedPost404 | CreatePinnedPost409
 
     /**
  * @summary 게시글 고정
  */
-export const useCreatePinnedPost = <TError = PinnedPostDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPinnedPost>>, TError,{data: CreatePinnedPostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreatePinnedPost = <TError = CreatePinnedPost400 | CreatePinnedPost401 | CreatePinnedPost403 | CreatePinnedPost404 | CreatePinnedPost409,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPinnedPost>>, TError,{data: CreatePinnedPostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createPinnedPost>>,
         TError,
-        {data: CreatePinnedPostRequest},
+        {data: CreatePinnedPostBody},
         TContext
       > => {
       return useMutation(getCreatePinnedPostMutationOptions(options), queryClient);

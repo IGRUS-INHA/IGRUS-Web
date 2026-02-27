@@ -1,0 +1,172 @@
+PinnedByInfo:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    name:
+      type: string
+AttachmentInfo:
+  type: object
+  description: 첨부파일 정보
+  properties:
+    fileUrl:
+      type: string
+      description: 파일 URL
+      example: https://storage.example.com/files/document.pdf
+      minLength: 1
+      pattern: ^https?://[\w.-]+(?:\.[\w.-]+)+[\w.,@?^=%&:/~+#-]*$
+    fileName:
+      type: string
+      description: 파일명 (255자 이내)
+      example: document.pdf
+      maxLength: 255
+      minLength: 0
+    fileSize:
+      type: integer
+      format: int64
+      description: 파일 크기 (바이트)
+      example: 1024
+  required:
+  - fileName
+  - fileSize
+  - fileUrl
+AttachmentResponse:
+  type: object
+  description: 첨부파일 응답
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: 첨부파일 ID
+      example: 1
+    fileUrl:
+      type: string
+      description: 파일 URL
+      example: https://storage.example.com/files/document.pdf
+    fileName:
+      type: string
+      description: 파일명
+      example: document.pdf
+    fileSize:
+      type: integer
+      format: int64
+      description: 파일 크기 (바이트)
+      example: 1024
+AuthorInfo:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    name:
+      type: string
+PostInfo:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    title:
+      type: string
+    contentPreview:
+      type: string
+    boardCode:
+      type: string
+    boardName:
+      type: string
+    author:
+      $ref: '#/AuthorInfo'
+    isVisibleToAssociate:
+      type: boolean
+    viewCount:
+      type: integer
+      format: int32
+    likeCount:
+      type: integer
+      format: int32
+    commentCount:
+      type: integer
+      format: int32
+    createdAt:
+      type: string
+      format: date-time
+PageableObject:
+  type: object
+  properties:
+    paged:
+      type: boolean
+    pageNumber:
+      type: integer
+      format: int32
+    pageSize:
+      type: integer
+      format: int32
+    offset:
+      type: integer
+      format: int64
+    sort:
+      $ref: '#/SortObject'
+    unpaged:
+      type: boolean
+SortObject:
+  type: object
+  properties:
+    sorted:
+      type: boolean
+    empty:
+      type: boolean
+    unsorted:
+      type: boolean
+Page:
+  type: object
+  properties:
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32
+    pageable:
+      $ref: '#/PageableObject'
+    size:
+      type: integer
+      format: int32
+    content:
+      type: array
+      items: {}
+    number:
+      type: integer
+      format: int32
+    sort:
+      $ref: '#/SortObject'
+    numberOfElements:
+      type: integer
+      format: int32
+    first:
+      type: boolean
+    last:
+      type: boolean
+    empty:
+      type: boolean
+ErrorResponse:
+  description: 에러 응답
+  properties:
+    status:
+      type: integer
+      format: int32
+      description: HTTP 상태 코드
+      example: 400
+    code:
+      type: string
+      description: 에러 코드
+      example: AUTH_001
+    message:
+      type: string
+      description: 에러 메시지
+      example: 잘못된 요청입니다.
+    timestamp:
+      type: string
+      format: date-time
+      description: 에러 발생 시각
+      example: '2024-01-15T10:30:00Z'

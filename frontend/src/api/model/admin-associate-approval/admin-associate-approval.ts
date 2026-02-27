@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: acd4c9c
+ * OpenAPI spec version: ec724ff
  */
 import {
   useMutation,
@@ -53,17 +53,29 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  AssociateInfoPageResponse,
-  BulkApprovalRequest,
-  BulkApprovalResultResponse,
-  BulkRejectionRequest,
-  BulkRejectionResultResponse,
+  ApproveBulk200,
+  ApproveBulk400,
+  ApproveBulk401,
+  ApproveBulk403,
+  ApproveBulkBody,
+  GetDemotedAssociates200,
+  GetDemotedAssociates401,
+  GetDemotedAssociates403,
   GetDemotedAssociatesParams,
+  GetPendingAssociates200,
+  GetPendingAssociates401,
+  GetPendingAssociates403,
   GetPendingAssociatesParams,
+  GetRejectedAssociates200,
+  GetRejectedAssociates401,
+  GetRejectedAssociates403,
   GetRejectedAssociatesParams,
-  PageDemotedAssociateInfoResponse,
-  PageRejectedAssociateInfoResponse,
-  RejectAssociateRequest
+  RejectAssociateBody,
+  RejectBulk200,
+  RejectBulk400,
+  RejectBulk401,
+  RejectBulk403,
+  RejectBulkBody
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -120,7 +132,7 @@ export const getRejectAssociateUrl = (id: number,) => {
 }
 
 export const rejectAssociate = async (id: number,
-    rejectAssociateRequest: RejectAssociateRequest, options?: RequestInit): Promise<rejectAssociateResponse> => {
+    rejectAssociateBody: RejectAssociateBody, options?: RequestInit): Promise<rejectAssociateResponse> => {
   
   return customFetch<rejectAssociateResponse>(getRejectAssociateUrl(id),
   {      
@@ -128,7 +140,7 @@ export const rejectAssociate = async (id: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      rejectAssociateRequest,)
+      rejectAssociateBody,)
   }
 );}
 
@@ -136,8 +148,8 @@ export const rejectAssociate = async (id: number,
 
 
 export const getRejectAssociateMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateRequest}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateBody}, TContext> => {
 
 const mutationKey = ['rejectAssociate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -149,7 +161,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectAssociate>>, {id: number;data: RejectAssociateRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectAssociate>>, {id: number;data: RejectAssociateBody}> = (props) => {
           const {id,data} = props ?? {};
 
           return  rejectAssociate(id,data,requestOptions)
@@ -163,18 +175,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RejectAssociateMutationResult = NonNullable<Awaited<ReturnType<typeof rejectAssociate>>>
-    export type RejectAssociateMutationBody = RejectAssociateRequest
+    export type RejectAssociateMutationBody = RejectAssociateBody
     export type RejectAssociateMutationError = void
 
     /**
  * @summary 개별 준회원 거절
  */
 export const useRejectAssociate = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof rejectAssociate>>,
         TError,
-        {id: number;data: RejectAssociateRequest},
+        {id: number;data: RejectAssociateBody},
         TContext
       > => {
       return useMutation(getRejectAssociateMutationOptions(options), queryClient);
@@ -288,22 +300,22 @@ export const useApproveAssociate = <TError = void,
  * @summary 준회원 일괄 거절
  */
 export type rejectBulkResponse200 = {
-  data: BulkRejectionResultResponse
+  data: RejectBulk200
   status: 200
 }
 
 export type rejectBulkResponse400 = {
-  data: BulkRejectionResultResponse
+  data: RejectBulk400
   status: 400
 }
 
 export type rejectBulkResponse401 = {
-  data: BulkRejectionResultResponse
+  data: RejectBulk401
   status: 401
 }
 
 export type rejectBulkResponse403 = {
-  data: BulkRejectionResultResponse
+  data: RejectBulk403
   status: 403
 }
     
@@ -324,7 +336,7 @@ export const getRejectBulkUrl = () => {
   return `/api/v1/admin/associates/reject-batch`
 }
 
-export const rejectBulk = async (bulkRejectionRequest: BulkRejectionRequest, options?: RequestInit): Promise<rejectBulkResponse> => {
+export const rejectBulk = async (rejectBulkBody: RejectBulkBody, options?: RequestInit): Promise<rejectBulkResponse> => {
   
   return customFetch<rejectBulkResponse>(getRejectBulkUrl(),
   {      
@@ -332,16 +344,16 @@ export const rejectBulk = async (bulkRejectionRequest: BulkRejectionRequest, opt
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      bulkRejectionRequest,)
+      rejectBulkBody,)
   }
 );}
 
 
 
 
-export const getRejectBulkMutationOptions = <TError = BulkRejectionResultResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: BulkRejectionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: BulkRejectionRequest}, TContext> => {
+export const getRejectBulkMutationOptions = <TError = RejectBulk400 | RejectBulk401 | RejectBulk403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: RejectBulkBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: RejectBulkBody}, TContext> => {
 
 const mutationKey = ['rejectBulk'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -353,7 +365,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectBulk>>, {data: BulkRejectionRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectBulk>>, {data: RejectBulkBody}> = (props) => {
           const {data} = props ?? {};
 
           return  rejectBulk(data,requestOptions)
@@ -367,18 +379,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RejectBulkMutationResult = NonNullable<Awaited<ReturnType<typeof rejectBulk>>>
-    export type RejectBulkMutationBody = BulkRejectionRequest
-    export type RejectBulkMutationError = BulkRejectionResultResponse
+    export type RejectBulkMutationBody = RejectBulkBody
+    export type RejectBulkMutationError = RejectBulk400 | RejectBulk401 | RejectBulk403
 
     /**
  * @summary 준회원 일괄 거절
  */
-export const useRejectBulk = <TError = BulkRejectionResultResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: BulkRejectionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useRejectBulk = <TError = RejectBulk400 | RejectBulk401 | RejectBulk403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: RejectBulkBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof rejectBulk>>,
         TError,
-        {data: BulkRejectionRequest},
+        {data: RejectBulkBody},
         TContext
       > => {
       return useMutation(getRejectBulkMutationOptions(options), queryClient);
@@ -388,22 +400,22 @@ export const useRejectBulk = <TError = BulkRejectionResultResponse,
  * @summary 준회원 일괄 승인
  */
 export type approveBulkResponse200 = {
-  data: BulkApprovalResultResponse
+  data: ApproveBulk200
   status: 200
 }
 
 export type approveBulkResponse400 = {
-  data: BulkApprovalResultResponse
+  data: ApproveBulk400
   status: 400
 }
 
 export type approveBulkResponse401 = {
-  data: BulkApprovalResultResponse
+  data: ApproveBulk401
   status: 401
 }
 
 export type approveBulkResponse403 = {
-  data: BulkApprovalResultResponse
+  data: ApproveBulk403
   status: 403
 }
     
@@ -424,7 +436,7 @@ export const getApproveBulkUrl = () => {
   return `/api/v1/admin/associates/approve-batch`
 }
 
-export const approveBulk = async (bulkApprovalRequest: BulkApprovalRequest, options?: RequestInit): Promise<approveBulkResponse> => {
+export const approveBulk = async (approveBulkBody: ApproveBulkBody, options?: RequestInit): Promise<approveBulkResponse> => {
   
   return customFetch<approveBulkResponse>(getApproveBulkUrl(),
   {      
@@ -432,16 +444,16 @@ export const approveBulk = async (bulkApprovalRequest: BulkApprovalRequest, opti
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      bulkApprovalRequest,)
+      approveBulkBody,)
   }
 );}
 
 
 
 
-export const getApproveBulkMutationOptions = <TError = BulkApprovalResultResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: BulkApprovalRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: BulkApprovalRequest}, TContext> => {
+export const getApproveBulkMutationOptions = <TError = ApproveBulk400 | ApproveBulk401 | ApproveBulk403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: ApproveBulkBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: ApproveBulkBody}, TContext> => {
 
 const mutationKey = ['approveBulk'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -453,7 +465,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveBulk>>, {data: BulkApprovalRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveBulk>>, {data: ApproveBulkBody}> = (props) => {
           const {data} = props ?? {};
 
           return  approveBulk(data,requestOptions)
@@ -467,18 +479,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ApproveBulkMutationResult = NonNullable<Awaited<ReturnType<typeof approveBulk>>>
-    export type ApproveBulkMutationBody = BulkApprovalRequest
-    export type ApproveBulkMutationError = BulkApprovalResultResponse
+    export type ApproveBulkMutationBody = ApproveBulkBody
+    export type ApproveBulkMutationError = ApproveBulk400 | ApproveBulk401 | ApproveBulk403
 
     /**
  * @summary 준회원 일괄 승인
  */
-export const useApproveBulk = <TError = BulkApprovalResultResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: BulkApprovalRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useApproveBulk = <TError = ApproveBulk400 | ApproveBulk401 | ApproveBulk403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: ApproveBulkBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof approveBulk>>,
         TError,
-        {data: BulkApprovalRequest},
+        {data: ApproveBulkBody},
         TContext
       > => {
       return useMutation(getApproveBulkMutationOptions(options), queryClient);
@@ -488,17 +500,17 @@ export const useApproveBulk = <TError = BulkApprovalResultResponse,
  * @summary 거절된 준회원 목록 조회
  */
 export type getRejectedAssociatesResponse200 = {
-  data: PageRejectedAssociateInfoResponse
+  data: GetRejectedAssociates200
   status: 200
 }
 
 export type getRejectedAssociatesResponse401 = {
-  data: PageRejectedAssociateInfoResponse
+  data: GetRejectedAssociates401
   status: 401
 }
 
 export type getRejectedAssociatesResponse403 = {
-  data: PageRejectedAssociateInfoResponse
+  data: GetRejectedAssociates403
   status: 403
 }
     
@@ -548,7 +560,7 @@ export const getGetRejectedAssociatesQueryKey = (params?: GetRejectedAssociatesP
     }
 
     
-export const getGetRejectedAssociatesQueryOptions = <TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = PageRejectedAssociateInfoResponse>(params?: GetRejectedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetRejectedAssociatesQueryOptions = <TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = GetRejectedAssociates401 | GetRejectedAssociates403>(params?: GetRejectedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -567,10 +579,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRejectedAssociatesQueryResult = NonNullable<Awaited<ReturnType<typeof getRejectedAssociates>>>
-export type GetRejectedAssociatesQueryError = PageRejectedAssociateInfoResponse
+export type GetRejectedAssociatesQueryError = GetRejectedAssociates401 | GetRejectedAssociates403
 
 
-export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = PageRejectedAssociateInfoResponse>(
+export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = GetRejectedAssociates401 | GetRejectedAssociates403>(
  params: undefined |  GetRejectedAssociatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRejectedAssociates>>,
@@ -580,7 +592,7 @@ export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRe
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = PageRejectedAssociateInfoResponse>(
+export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = GetRejectedAssociates401 | GetRejectedAssociates403>(
  params?: GetRejectedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRejectedAssociates>>,
@@ -590,7 +602,7 @@ export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRe
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = PageRejectedAssociateInfoResponse>(
+export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = GetRejectedAssociates401 | GetRejectedAssociates403>(
  params?: GetRejectedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -598,7 +610,7 @@ export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRe
  * @summary 거절된 준회원 목록 조회
  */
 
-export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = PageRejectedAssociateInfoResponse>(
+export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRejectedAssociates>>, TError = GetRejectedAssociates401 | GetRejectedAssociates403>(
  params?: GetRejectedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRejectedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -618,17 +630,17 @@ export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRe
  * @summary 승인 대기 준회원 목록 조회
  */
 export type getPendingAssociatesResponse200 = {
-  data: AssociateInfoPageResponse
+  data: GetPendingAssociates200
   status: 200
 }
 
 export type getPendingAssociatesResponse401 = {
-  data: AssociateInfoPageResponse
+  data: GetPendingAssociates401
   status: 401
 }
 
 export type getPendingAssociatesResponse403 = {
-  data: AssociateInfoPageResponse
+  data: GetPendingAssociates403
   status: 403
 }
     
@@ -678,7 +690,7 @@ export const getGetPendingAssociatesQueryKey = (params?: GetPendingAssociatesPar
     }
 
     
-export const getGetPendingAssociatesQueryOptions = <TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = AssociateInfoPageResponse>(params?: GetPendingAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetPendingAssociatesQueryOptions = <TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = GetPendingAssociates401 | GetPendingAssociates403>(params?: GetPendingAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -697,10 +709,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPendingAssociatesQueryResult = NonNullable<Awaited<ReturnType<typeof getPendingAssociates>>>
-export type GetPendingAssociatesQueryError = AssociateInfoPageResponse
+export type GetPendingAssociatesQueryError = GetPendingAssociates401 | GetPendingAssociates403
 
 
-export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = AssociateInfoPageResponse>(
+export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = GetPendingAssociates401 | GetPendingAssociates403>(
  params: undefined |  GetPendingAssociatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingAssociates>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPendingAssociates>>,
@@ -710,7 +722,7 @@ export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPen
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = AssociateInfoPageResponse>(
+export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = GetPendingAssociates401 | GetPendingAssociates403>(
  params?: GetPendingAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingAssociates>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPendingAssociates>>,
@@ -720,7 +732,7 @@ export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPen
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = AssociateInfoPageResponse>(
+export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = GetPendingAssociates401 | GetPendingAssociates403>(
  params?: GetPendingAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -728,7 +740,7 @@ export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPen
  * @summary 승인 대기 준회원 목록 조회
  */
 
-export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = AssociateInfoPageResponse>(
+export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPendingAssociates>>, TError = GetPendingAssociates401 | GetPendingAssociates403>(
  params?: GetPendingAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -748,17 +760,17 @@ export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPen
  * @summary 강등된 준회원 목록 조회
  */
 export type getDemotedAssociatesResponse200 = {
-  data: PageDemotedAssociateInfoResponse
+  data: GetDemotedAssociates200
   status: 200
 }
 
 export type getDemotedAssociatesResponse401 = {
-  data: PageDemotedAssociateInfoResponse
+  data: GetDemotedAssociates401
   status: 401
 }
 
 export type getDemotedAssociatesResponse403 = {
-  data: PageDemotedAssociateInfoResponse
+  data: GetDemotedAssociates403
   status: 403
 }
     
@@ -808,7 +820,7 @@ export const getGetDemotedAssociatesQueryKey = (params?: GetDemotedAssociatesPar
     }
 
     
-export const getGetDemotedAssociatesQueryOptions = <TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = PageDemotedAssociateInfoResponse>(params?: GetDemotedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemotedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetDemotedAssociatesQueryOptions = <TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = GetDemotedAssociates401 | GetDemotedAssociates403>(params?: GetDemotedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemotedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -827,10 +839,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetDemotedAssociatesQueryResult = NonNullable<Awaited<ReturnType<typeof getDemotedAssociates>>>
-export type GetDemotedAssociatesQueryError = PageDemotedAssociateInfoResponse
+export type GetDemotedAssociatesQueryError = GetDemotedAssociates401 | GetDemotedAssociates403
 
 
-export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = PageDemotedAssociateInfoResponse>(
+export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = GetDemotedAssociates401 | GetDemotedAssociates403>(
  params: undefined |  GetDemotedAssociatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemotedAssociates>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDemotedAssociates>>,
@@ -840,7 +852,7 @@ export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDem
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = PageDemotedAssociateInfoResponse>(
+export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = GetDemotedAssociates401 | GetDemotedAssociates403>(
  params?: GetDemotedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemotedAssociates>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDemotedAssociates>>,
@@ -850,7 +862,7 @@ export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDem
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = PageDemotedAssociateInfoResponse>(
+export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = GetDemotedAssociates401 | GetDemotedAssociates403>(
  params?: GetDemotedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemotedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -858,7 +870,7 @@ export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDem
  * @summary 강등된 준회원 목록 조회
  */
 
-export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = PageDemotedAssociateInfoResponse>(
+export function useGetDemotedAssociates<TData = Awaited<ReturnType<typeof getDemotedAssociates>>, TError = GetDemotedAssociates401 | GetDemotedAssociates403>(
  params?: GetDemotedAssociatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemotedAssociates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

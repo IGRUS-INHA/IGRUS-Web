@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: acd4c9c
+ * OpenAPI spec version: ec724ff
  */
 import {
   useMutation,
@@ -53,9 +53,20 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CommentListResponse,
-  CommentResponse,
-  CreateCommentRequest
+  CreateComment201,
+  CreateComment400,
+  CreateComment401,
+  CreateComment403,
+  CreateComment404,
+  CreateCommentBody,
+  CreateReply1201,
+  CreateReply1400,
+  CreateReply1401,
+  CreateReply1403,
+  CreateReply1404,
+  CreateReply1Body,
+  GetComments200,
+  GetComments404
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -70,12 +81,12 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 댓글 목록 조회
  */
 export type getCommentsResponse200 = {
-  data: CommentListResponse
+  data: GetComments200
   status: 200
 }
 
 export type getCommentsResponse404 = {
-  data: CommentListResponse
+  data: GetComments404
   status: 404
 }
     
@@ -118,7 +129,7 @@ export const getGetCommentsQueryKey = (postId: number,) => {
     }
 
     
-export const getGetCommentsQueryOptions = <TData = Awaited<ReturnType<typeof getComments>>, TError = CommentListResponse>(postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetCommentsQueryOptions = <TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -137,10 +148,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetCommentsQueryResult = NonNullable<Awaited<ReturnType<typeof getComments>>>
-export type GetCommentsQueryError = CommentListResponse
+export type GetCommentsQueryError = GetComments404
 
 
-export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = CommentListResponse>(
+export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(
  postId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getComments>>,
@@ -150,7 +161,7 @@ export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, 
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = CommentListResponse>(
+export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getComments>>,
@@ -160,7 +171,7 @@ export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, 
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = CommentListResponse>(
+export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -168,7 +179,7 @@ export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, 
  * @summary 댓글 목록 조회
  */
 
-export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = CommentListResponse>(
+export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -188,27 +199,27 @@ export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, 
  * @summary 댓글 작성
  */
 export type createCommentResponse201 = {
-  data: CommentResponse
+  data: CreateComment201
   status: 201
 }
 
 export type createCommentResponse400 = {
-  data: CommentResponse
+  data: CreateComment400
   status: 400
 }
 
 export type createCommentResponse401 = {
-  data: CommentResponse
+  data: CreateComment401
   status: 401
 }
 
 export type createCommentResponse403 = {
-  data: CommentResponse
+  data: CreateComment403
   status: 403
 }
 
 export type createCommentResponse404 = {
-  data: CommentResponse
+  data: CreateComment404
   status: 404
 }
     
@@ -230,7 +241,7 @@ export const getCreateCommentUrl = (postId: number,) => {
 }
 
 export const createComment = async (postId: number,
-    createCommentRequest: CreateCommentRequest, options?: RequestInit): Promise<createCommentResponse> => {
+    createCommentBody: CreateCommentBody, options?: RequestInit): Promise<createCommentResponse> => {
   
   return customFetch<createCommentResponse>(getCreateCommentUrl(postId),
   {      
@@ -238,16 +249,16 @@ export const createComment = async (postId: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createCommentRequest,)
+      createCommentBody,)
   }
 );}
 
 
 
 
-export const getCreateCommentMutationOptions = <TError = CommentResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentRequest}, TContext> => {
+export const getCreateCommentMutationOptions = <TError = CreateComment400 | CreateComment401 | CreateComment403 | CreateComment404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentBody}, TContext> => {
 
 const mutationKey = ['createComment'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -259,7 +270,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createComment>>, {postId: number;data: CreateCommentRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createComment>>, {postId: number;data: CreateCommentBody}> = (props) => {
           const {postId,data} = props ?? {};
 
           return  createComment(postId,data,requestOptions)
@@ -273,18 +284,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateCommentMutationResult = NonNullable<Awaited<ReturnType<typeof createComment>>>
-    export type CreateCommentMutationBody = CreateCommentRequest
-    export type CreateCommentMutationError = CommentResponse
+    export type CreateCommentMutationBody = CreateCommentBody
+    export type CreateCommentMutationError = CreateComment400 | CreateComment401 | CreateComment403 | CreateComment404
 
     /**
  * @summary 댓글 작성
  */
-export const useCreateComment = <TError = CommentResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateComment = <TError = CreateComment400 | CreateComment401 | CreateComment403 | CreateComment404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createComment>>,
         TError,
-        {postId: number;data: CreateCommentRequest},
+        {postId: number;data: CreateCommentBody},
         TContext
       > => {
       return useMutation(getCreateCommentMutationOptions(options), queryClient);
@@ -294,27 +305,27 @@ export const useCreateComment = <TError = CommentResponse,
  * @summary 대댓글 작성
  */
 export type createReply1Response201 = {
-  data: CommentResponse
+  data: CreateReply1201
   status: 201
 }
 
 export type createReply1Response400 = {
-  data: CommentResponse
+  data: CreateReply1400
   status: 400
 }
 
 export type createReply1Response401 = {
-  data: CommentResponse
+  data: CreateReply1401
   status: 401
 }
 
 export type createReply1Response403 = {
-  data: CommentResponse
+  data: CreateReply1403
   status: 403
 }
 
 export type createReply1Response404 = {
-  data: CommentResponse
+  data: CreateReply1404
   status: 404
 }
     
@@ -338,7 +349,7 @@ export const getCreateReply1Url = (postId: number,
 
 export const createReply1 = async (postId: number,
     commentId: number,
-    createCommentRequest: CreateCommentRequest, options?: RequestInit): Promise<createReply1Response> => {
+    createReply1Body: CreateReply1Body, options?: RequestInit): Promise<createReply1Response> => {
   
   return customFetch<createReply1Response>(getCreateReply1Url(postId,commentId),
   {      
@@ -346,16 +357,16 @@ export const createReply1 = async (postId: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createCommentRequest,)
+      createReply1Body,)
   }
 );}
 
 
 
 
-export const getCreateReply1MutationOptions = <TError = CommentResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateCommentRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateCommentRequest}, TContext> => {
+export const getCreateReply1MutationOptions = <TError = CreateReply1400 | CreateReply1401 | CreateReply1403 | CreateReply1404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateReply1Body}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateReply1Body}, TContext> => {
 
 const mutationKey = ['createReply1'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -367,7 +378,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createReply1>>, {postId: number;commentId: number;data: CreateCommentRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createReply1>>, {postId: number;commentId: number;data: CreateReply1Body}> = (props) => {
           const {postId,commentId,data} = props ?? {};
 
           return  createReply1(postId,commentId,data,requestOptions)
@@ -381,18 +392,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateReply1MutationResult = NonNullable<Awaited<ReturnType<typeof createReply1>>>
-    export type CreateReply1MutationBody = CreateCommentRequest
-    export type CreateReply1MutationError = CommentResponse
+    export type CreateReply1MutationBody = CreateReply1Body
+    export type CreateReply1MutationError = CreateReply1400 | CreateReply1401 | CreateReply1403 | CreateReply1404
 
     /**
  * @summary 대댓글 작성
  */
-export const useCreateReply1 = <TError = CommentResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateCommentRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateReply1 = <TError = CreateReply1400 | CreateReply1401 | CreateReply1403 | CreateReply1404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateReply1Body}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createReply1>>,
         TError,
-        {postId: number;commentId: number;data: CreateCommentRequest},
+        {postId: number;commentId: number;data: CreateReply1Body},
         TContext
       > => {
       return useMutation(getCreateReply1MutationOptions(options), queryClient);

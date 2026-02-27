@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: acd4c9c
+ * OpenAPI spec version: ec724ff
  */
 import {
   useMutation,
@@ -53,29 +53,55 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  AccountRecoveryRequest,
-  AccountRecoveryResponse,
+  CheckEmailDuplicate200,
+  CheckEmailDuplicate400,
+  CheckEmailDuplicate409,
   CheckEmailDuplicateParams,
+  CheckPhoneNumberDuplicate200,
+  CheckPhoneNumberDuplicate400,
+  CheckPhoneNumberDuplicate409,
   CheckPhoneNumberDuplicateParams,
+  CheckReRegistrationEligibility200,
+  CheckReRegistrationEligibility400,
   CheckReRegistrationEligibilityParams,
+  CheckRecoveryEligibility200,
+  CheckRecoveryEligibility400,
   CheckRecoveryEligibilityParams,
+  CheckStudentIdDuplicate200,
+  CheckStudentIdDuplicate400,
+  CheckStudentIdDuplicate409,
   CheckStudentIdDuplicateParams,
-  DuplicateCheckResponse,
-  EmailVerificationRequest,
-  PasswordLoginRequest,
-  PasswordLoginResponse,
-  PasswordResetConfirmRequest,
-  PasswordResetRequest,
-  PasswordSignupRequest,
-  PasswordSignupResponse,
-  PreSignupVerificationResponse,
-  ReRegistrationCheckResult,
-  RecoveryEligibilityResponse,
-  ResendVerificationRequest,
-  TemporaryStudentIdSignupRequest,
-  TokenRefreshResponse,
+  ConfirmPasswordResetBody,
+  Login200,
+  Login400,
+  Login401,
+  Login403,
+  LoginBody,
+  RecoverAccount200,
+  RecoverAccount400,
+  RecoverAccount401,
+  RecoverAccountBody,
+  RefreshToken200,
+  RefreshToken400,
+  RefreshToken401,
+  RequestPasswordResetBody,
+  SendPreSignupCode200,
+  SendPreSignupCode409,
+  SendPreSignupCode429,
+  SendPreSignupCodeBody,
+  Signup201,
+  Signup400,
+  Signup409,
+  SignupBody,
+  SignupWithTemporaryStudentId201,
+  SignupWithTemporaryStudentId400,
+  SignupWithTemporaryStudentId409,
+  SignupWithTemporaryStudentIdBody,
   ValidateResetTokenParams,
-  VerificationResendResponse
+  VerifyPreSignupCode200,
+  VerifyPreSignupCode400,
+  VerifyPreSignupCode429,
+  VerifyPreSignupCodeBody
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -90,17 +116,17 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 회원가입
  */
 export type signupResponse201 = {
-  data: PasswordSignupResponse
+  data: Signup201
   status: 201
 }
 
 export type signupResponse400 = {
-  data: PasswordSignupResponse
+  data: Signup400
   status: 400
 }
 
 export type signupResponse409 = {
-  data: PasswordSignupResponse
+  data: Signup409
   status: 409
 }
     
@@ -121,7 +147,7 @@ export const getSignupUrl = () => {
   return `/api/v1/auth/password/signup`
 }
 
-export const signup = async (passwordSignupRequest: PasswordSignupRequest, options?: RequestInit): Promise<signupResponse> => {
+export const signup = async (signupBody: SignupBody, options?: RequestInit): Promise<signupResponse> => {
   
   return customFetch<signupResponse>(getSignupUrl(),
   {      
@@ -129,16 +155,16 @@ export const signup = async (passwordSignupRequest: PasswordSignupRequest, optio
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      passwordSignupRequest,)
+      signupBody,)
   }
 );}
 
 
 
 
-export const getSignupMutationOptions = <TError = PasswordSignupResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: PasswordSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: PasswordSignupRequest}, TContext> => {
+export const getSignupMutationOptions = <TError = Signup400 | Signup409,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: SignupBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: SignupBody}, TContext> => {
 
 const mutationKey = ['signup'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -150,7 +176,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signup>>, {data: PasswordSignupRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signup>>, {data: SignupBody}> = (props) => {
           const {data} = props ?? {};
 
           return  signup(data,requestOptions)
@@ -164,18 +190,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SignupMutationResult = NonNullable<Awaited<ReturnType<typeof signup>>>
-    export type SignupMutationBody = PasswordSignupRequest
-    export type SignupMutationError = PasswordSignupResponse
+    export type SignupMutationBody = SignupBody
+    export type SignupMutationError = Signup400 | Signup409
 
     /**
  * @summary 회원가입
  */
-export const useSignup = <TError = PasswordSignupResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: PasswordSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useSignup = <TError = Signup400 | Signup409,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: SignupBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof signup>>,
         TError,
-        {data: PasswordSignupRequest},
+        {data: SignupBody},
         TContext
       > => {
       return useMutation(getSignupMutationOptions(options), queryClient);
@@ -185,17 +211,17 @@ export const useSignup = <TError = PasswordSignupResponse,
  * @summary 임시 학번 회원가입
  */
 export type signupWithTemporaryStudentIdResponse201 = {
-  data: PasswordSignupResponse
+  data: SignupWithTemporaryStudentId201
   status: 201
 }
 
 export type signupWithTemporaryStudentIdResponse400 = {
-  data: PasswordSignupResponse
+  data: SignupWithTemporaryStudentId400
   status: 400
 }
 
 export type signupWithTemporaryStudentIdResponse409 = {
-  data: PasswordSignupResponse
+  data: SignupWithTemporaryStudentId409
   status: 409
 }
     
@@ -216,7 +242,7 @@ export const getSignupWithTemporaryStudentIdUrl = () => {
   return `/api/v1/auth/password/signup/temporary`
 }
 
-export const signupWithTemporaryStudentId = async (temporaryStudentIdSignupRequest: TemporaryStudentIdSignupRequest, options?: RequestInit): Promise<signupWithTemporaryStudentIdResponse> => {
+export const signupWithTemporaryStudentId = async (signupWithTemporaryStudentIdBody: SignupWithTemporaryStudentIdBody, options?: RequestInit): Promise<signupWithTemporaryStudentIdResponse> => {
   
   return customFetch<signupWithTemporaryStudentIdResponse>(getSignupWithTemporaryStudentIdUrl(),
   {      
@@ -224,16 +250,16 @@ export const signupWithTemporaryStudentId = async (temporaryStudentIdSignupReque
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      temporaryStudentIdSignupRequest,)
+      signupWithTemporaryStudentIdBody,)
   }
 );}
 
 
 
 
-export const getSignupWithTemporaryStudentIdMutationOptions = <TError = PasswordSignupResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: TemporaryStudentIdSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: TemporaryStudentIdSignupRequest}, TContext> => {
+export const getSignupWithTemporaryStudentIdMutationOptions = <TError = SignupWithTemporaryStudentId400 | SignupWithTemporaryStudentId409,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: SignupWithTemporaryStudentIdBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: SignupWithTemporaryStudentIdBody}, TContext> => {
 
 const mutationKey = ['signupWithTemporaryStudentId'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -245,7 +271,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, {data: TemporaryStudentIdSignupRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, {data: SignupWithTemporaryStudentIdBody}> = (props) => {
           const {data} = props ?? {};
 
           return  signupWithTemporaryStudentId(data,requestOptions)
@@ -259,18 +285,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SignupWithTemporaryStudentIdMutationResult = NonNullable<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>>
-    export type SignupWithTemporaryStudentIdMutationBody = TemporaryStudentIdSignupRequest
-    export type SignupWithTemporaryStudentIdMutationError = PasswordSignupResponse
+    export type SignupWithTemporaryStudentIdMutationBody = SignupWithTemporaryStudentIdBody
+    export type SignupWithTemporaryStudentIdMutationError = SignupWithTemporaryStudentId400 | SignupWithTemporaryStudentId409
 
     /**
  * @summary 임시 학번 회원가입
  */
-export const useSignupWithTemporaryStudentId = <TError = PasswordSignupResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: TemporaryStudentIdSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useSignupWithTemporaryStudentId = <TError = SignupWithTemporaryStudentId400 | SignupWithTemporaryStudentId409,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: SignupWithTemporaryStudentIdBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof signupWithTemporaryStudentId>>,
         TError,
-        {data: TemporaryStudentIdSignupRequest},
+        {data: SignupWithTemporaryStudentIdBody},
         TContext
       > => {
       return useMutation(getSignupWithTemporaryStudentIdMutationOptions(options), queryClient);
@@ -306,7 +332,7 @@ export const getRequestPasswordResetUrl = () => {
   return `/api/v1/auth/password/reset-request`
 }
 
-export const requestPasswordReset = async (passwordResetRequest: PasswordResetRequest, options?: RequestInit): Promise<requestPasswordResetResponse> => {
+export const requestPasswordReset = async (requestPasswordResetBody: RequestPasswordResetBody, options?: RequestInit): Promise<requestPasswordResetResponse> => {
   
   return customFetch<requestPasswordResetResponse>(getRequestPasswordResetUrl(),
   {      
@@ -314,7 +340,7 @@ export const requestPasswordReset = async (passwordResetRequest: PasswordResetRe
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      passwordResetRequest,)
+      requestPasswordResetBody,)
   }
 );}
 
@@ -322,8 +348,8 @@ export const requestPasswordReset = async (passwordResetRequest: PasswordResetRe
 
 
 export const getRequestPasswordResetMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: PasswordResetRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: PasswordResetRequest}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: RequestPasswordResetBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: RequestPasswordResetBody}, TContext> => {
 
 const mutationKey = ['requestPasswordReset'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -335,7 +361,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPasswordReset>>, {data: PasswordResetRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPasswordReset>>, {data: RequestPasswordResetBody}> = (props) => {
           const {data} = props ?? {};
 
           return  requestPasswordReset(data,requestOptions)
@@ -349,18 +375,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RequestPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof requestPasswordReset>>>
-    export type RequestPasswordResetMutationBody = PasswordResetRequest
+    export type RequestPasswordResetMutationBody = RequestPasswordResetBody
     export type RequestPasswordResetMutationError = void
 
     /**
  * @summary 비밀번호 재설정 요청
  */
 export const useRequestPasswordReset = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: PasswordResetRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: RequestPasswordResetBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof requestPasswordReset>>,
         TError,
-        {data: PasswordResetRequest},
+        {data: RequestPasswordResetBody},
         TContext
       > => {
       return useMutation(getRequestPasswordResetMutationOptions(options), queryClient);
@@ -396,7 +422,7 @@ export const getConfirmPasswordResetUrl = () => {
   return `/api/v1/auth/password/reset-confirm`
 }
 
-export const confirmPasswordReset = async (passwordResetConfirmRequest: PasswordResetConfirmRequest, options?: RequestInit): Promise<confirmPasswordResetResponse> => {
+export const confirmPasswordReset = async (confirmPasswordResetBody: ConfirmPasswordResetBody, options?: RequestInit): Promise<confirmPasswordResetResponse> => {
   
   return customFetch<confirmPasswordResetResponse>(getConfirmPasswordResetUrl(),
   {      
@@ -404,7 +430,7 @@ export const confirmPasswordReset = async (passwordResetConfirmRequest: Password
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      passwordResetConfirmRequest,)
+      confirmPasswordResetBody,)
   }
 );}
 
@@ -412,8 +438,8 @@ export const confirmPasswordReset = async (passwordResetConfirmRequest: Password
 
 
 export const getConfirmPasswordResetMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: PasswordResetConfirmRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: PasswordResetConfirmRequest}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: ConfirmPasswordResetBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: ConfirmPasswordResetBody}, TContext> => {
 
 const mutationKey = ['confirmPasswordReset'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -425,7 +451,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmPasswordReset>>, {data: PasswordResetConfirmRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmPasswordReset>>, {data: ConfirmPasswordResetBody}> = (props) => {
           const {data} = props ?? {};
 
           return  confirmPasswordReset(data,requestOptions)
@@ -439,18 +465,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ConfirmPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof confirmPasswordReset>>>
-    export type ConfirmPasswordResetMutationBody = PasswordResetConfirmRequest
+    export type ConfirmPasswordResetMutationBody = ConfirmPasswordResetBody
     export type ConfirmPasswordResetMutationError = void
 
     /**
  * @summary 비밀번호 재설정 확인
  */
 export const useConfirmPasswordReset = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: PasswordResetConfirmRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: ConfirmPasswordResetBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof confirmPasswordReset>>,
         TError,
-        {data: PasswordResetConfirmRequest},
+        {data: ConfirmPasswordResetBody},
         TContext
       > => {
       return useMutation(getConfirmPasswordResetMutationOptions(options), queryClient);
@@ -460,17 +486,17 @@ export const useConfirmPasswordReset = <TError = void,
  * @summary 토큰 갱신
  */
 export type refreshTokenResponse200 = {
-  data: TokenRefreshResponse
+  data: RefreshToken200
   status: 200
 }
 
 export type refreshTokenResponse400 = {
-  data: TokenRefreshResponse
+  data: RefreshToken400
   status: 400
 }
 
 export type refreshTokenResponse401 = {
-  data: TokenRefreshResponse
+  data: RefreshToken401
   status: 401
 }
     
@@ -505,7 +531,7 @@ export const refreshToken = async ( options?: RequestInit): Promise<refreshToken
 
 
 
-export const getRefreshTokenMutationOptions = <TError = TokenRefreshResponse,
+export const getRefreshTokenMutationOptions = <TError = RefreshToken400 | RefreshToken401,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,void, TContext> => {
 
@@ -534,12 +560,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RefreshTokenMutationResult = NonNullable<Awaited<ReturnType<typeof refreshToken>>>
     
-    export type RefreshTokenMutationError = TokenRefreshResponse
+    export type RefreshTokenMutationError = RefreshToken400 | RefreshToken401
 
     /**
  * @summary 토큰 갱신
  */
-export const useRefreshToken = <TError = TokenRefreshResponse,
+export const useRefreshToken = <TError = RefreshToken400 | RefreshToken401,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof refreshToken>>,
@@ -554,17 +580,17 @@ export const useRefreshToken = <TError = TokenRefreshResponse,
  * @summary 사전 이메일 인증 코드 확인
  */
 export type verifyPreSignupCodeResponse200 = {
-  data: PreSignupVerificationResponse
+  data: VerifyPreSignupCode200
   status: 200
 }
 
 export type verifyPreSignupCodeResponse400 = {
-  data: PreSignupVerificationResponse
+  data: VerifyPreSignupCode400
   status: 400
 }
 
 export type verifyPreSignupCodeResponse429 = {
-  data: PreSignupVerificationResponse
+  data: VerifyPreSignupCode429
   status: 429
 }
     
@@ -585,7 +611,7 @@ export const getVerifyPreSignupCodeUrl = () => {
   return `/api/v1/auth/password/pre-signup/verify-code`
 }
 
-export const verifyPreSignupCode = async (emailVerificationRequest: EmailVerificationRequest, options?: RequestInit): Promise<verifyPreSignupCodeResponse> => {
+export const verifyPreSignupCode = async (verifyPreSignupCodeBody: VerifyPreSignupCodeBody, options?: RequestInit): Promise<verifyPreSignupCodeResponse> => {
   
   return customFetch<verifyPreSignupCodeResponse>(getVerifyPreSignupCodeUrl(),
   {      
@@ -593,16 +619,16 @@ export const verifyPreSignupCode = async (emailVerificationRequest: EmailVerific
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      emailVerificationRequest,)
+      verifyPreSignupCodeBody,)
   }
 );}
 
 
 
 
-export const getVerifyPreSignupCodeMutationOptions = <TError = PreSignupVerificationResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: EmailVerificationRequest}, TContext> => {
+export const getVerifyPreSignupCodeMutationOptions = <TError = VerifyPreSignupCode400 | VerifyPreSignupCode429,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: VerifyPreSignupCodeBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: VerifyPreSignupCodeBody}, TContext> => {
 
 const mutationKey = ['verifyPreSignupCode'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -614,7 +640,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyPreSignupCode>>, {data: EmailVerificationRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyPreSignupCode>>, {data: VerifyPreSignupCodeBody}> = (props) => {
           const {data} = props ?? {};
 
           return  verifyPreSignupCode(data,requestOptions)
@@ -628,18 +654,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type VerifyPreSignupCodeMutationResult = NonNullable<Awaited<ReturnType<typeof verifyPreSignupCode>>>
-    export type VerifyPreSignupCodeMutationBody = EmailVerificationRequest
-    export type VerifyPreSignupCodeMutationError = PreSignupVerificationResponse
+    export type VerifyPreSignupCodeMutationBody = VerifyPreSignupCodeBody
+    export type VerifyPreSignupCodeMutationError = VerifyPreSignupCode400 | VerifyPreSignupCode429
 
     /**
  * @summary 사전 이메일 인증 코드 확인
  */
-export const useVerifyPreSignupCode = <TError = PreSignupVerificationResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useVerifyPreSignupCode = <TError = VerifyPreSignupCode400 | VerifyPreSignupCode429,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: VerifyPreSignupCodeBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof verifyPreSignupCode>>,
         TError,
-        {data: EmailVerificationRequest},
+        {data: VerifyPreSignupCodeBody},
         TContext
       > => {
       return useMutation(getVerifyPreSignupCodeMutationOptions(options), queryClient);
@@ -649,17 +675,17 @@ export const useVerifyPreSignupCode = <TError = PreSignupVerificationResponse,
  * @summary 사전 이메일 인증 코드 발송
  */
 export type sendPreSignupCodeResponse200 = {
-  data: VerificationResendResponse
+  data: SendPreSignupCode200
   status: 200
 }
 
 export type sendPreSignupCodeResponse409 = {
-  data: VerificationResendResponse
+  data: SendPreSignupCode409
   status: 409
 }
 
 export type sendPreSignupCodeResponse429 = {
-  data: VerificationResendResponse
+  data: SendPreSignupCode429
   status: 429
 }
     
@@ -680,7 +706,7 @@ export const getSendPreSignupCodeUrl = () => {
   return `/api/v1/auth/password/pre-signup/send-code`
 }
 
-export const sendPreSignupCode = async (resendVerificationRequest: ResendVerificationRequest, options?: RequestInit): Promise<sendPreSignupCodeResponse> => {
+export const sendPreSignupCode = async (sendPreSignupCodeBody: SendPreSignupCodeBody, options?: RequestInit): Promise<sendPreSignupCodeResponse> => {
   
   return customFetch<sendPreSignupCodeResponse>(getSendPreSignupCodeUrl(),
   {      
@@ -688,16 +714,16 @@ export const sendPreSignupCode = async (resendVerificationRequest: ResendVerific
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      resendVerificationRequest,)
+      sendPreSignupCodeBody,)
   }
 );}
 
 
 
 
-export const getSendPreSignupCodeMutationOptions = <TError = VerificationResendResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: ResendVerificationRequest}, TContext> => {
+export const getSendPreSignupCodeMutationOptions = <TError = SendPreSignupCode409 | SendPreSignupCode429,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: SendPreSignupCodeBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: SendPreSignupCodeBody}, TContext> => {
 
 const mutationKey = ['sendPreSignupCode'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -709,7 +735,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendPreSignupCode>>, {data: ResendVerificationRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendPreSignupCode>>, {data: SendPreSignupCodeBody}> = (props) => {
           const {data} = props ?? {};
 
           return  sendPreSignupCode(data,requestOptions)
@@ -723,18 +749,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SendPreSignupCodeMutationResult = NonNullable<Awaited<ReturnType<typeof sendPreSignupCode>>>
-    export type SendPreSignupCodeMutationBody = ResendVerificationRequest
-    export type SendPreSignupCodeMutationError = VerificationResendResponse
+    export type SendPreSignupCodeMutationBody = SendPreSignupCodeBody
+    export type SendPreSignupCodeMutationError = SendPreSignupCode409 | SendPreSignupCode429
 
     /**
  * @summary 사전 이메일 인증 코드 발송
  */
-export const useSendPreSignupCode = <TError = VerificationResendResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useSendPreSignupCode = <TError = SendPreSignupCode409 | SendPreSignupCode429,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: SendPreSignupCodeBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof sendPreSignupCode>>,
         TError,
-        {data: ResendVerificationRequest},
+        {data: SendPreSignupCodeBody},
         TContext
       > => {
       return useMutation(getSendPreSignupCodeMutationOptions(options), queryClient);
@@ -838,22 +864,22 @@ export const useLogout = <TError = void,
  * @summary 로그인
  */
 export type loginResponse200 = {
-  data: PasswordLoginResponse
+  data: Login200
   status: 200
 }
 
 export type loginResponse400 = {
-  data: PasswordLoginResponse
+  data: Login400
   status: 400
 }
 
 export type loginResponse401 = {
-  data: PasswordLoginResponse
+  data: Login401
   status: 401
 }
 
 export type loginResponse403 = {
-  data: PasswordLoginResponse
+  data: Login403
   status: 403
 }
     
@@ -874,7 +900,7 @@ export const getLoginUrl = () => {
   return `/api/v1/auth/password/login`
 }
 
-export const login = async (passwordLoginRequest: PasswordLoginRequest, options?: RequestInit): Promise<loginResponse> => {
+export const login = async (loginBody: LoginBody, options?: RequestInit): Promise<loginResponse> => {
   
   return customFetch<loginResponse>(getLoginUrl(),
   {      
@@ -882,16 +908,16 @@ export const login = async (passwordLoginRequest: PasswordLoginRequest, options?
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      passwordLoginRequest,)
+      loginBody,)
   }
 );}
 
 
 
 
-export const getLoginMutationOptions = <TError = PasswordLoginResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PasswordLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PasswordLoginRequest}, TContext> => {
+export const getLoginMutationOptions = <TError = Login400 | Login401 | Login403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginBody}, TContext> => {
 
 const mutationKey = ['login'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -903,7 +929,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: PasswordLoginRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: LoginBody}> = (props) => {
           const {data} = props ?? {};
 
           return  login(data,requestOptions)
@@ -917,18 +943,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
-    export type LoginMutationBody = PasswordLoginRequest
-    export type LoginMutationError = PasswordLoginResponse
+    export type LoginMutationBody = LoginBody
+    export type LoginMutationError = Login400 | Login401 | Login403
 
     /**
  * @summary 로그인
  */
-export const useLogin = <TError = PasswordLoginResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PasswordLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useLogin = <TError = Login400 | Login401 | Login403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof login>>,
         TError,
-        {data: PasswordLoginRequest},
+        {data: LoginBody},
         TContext
       > => {
       return useMutation(getLoginMutationOptions(options), queryClient);
@@ -938,17 +964,17 @@ export const useLogin = <TError = PasswordLoginResponse,
  * @summary 계정 복구
  */
 export type recoverAccountResponse200 = {
-  data: AccountRecoveryResponse
+  data: RecoverAccount200
   status: 200
 }
 
 export type recoverAccountResponse400 = {
-  data: AccountRecoveryResponse
+  data: RecoverAccount400
   status: 400
 }
 
 export type recoverAccountResponse401 = {
-  data: AccountRecoveryResponse
+  data: RecoverAccount401
   status: 401
 }
     
@@ -969,7 +995,7 @@ export const getRecoverAccountUrl = () => {
   return `/api/v1/auth/password/account/recover`
 }
 
-export const recoverAccount = async (accountRecoveryRequest: AccountRecoveryRequest, options?: RequestInit): Promise<recoverAccountResponse> => {
+export const recoverAccount = async (recoverAccountBody: RecoverAccountBody, options?: RequestInit): Promise<recoverAccountResponse> => {
   
   return customFetch<recoverAccountResponse>(getRecoverAccountUrl(),
   {      
@@ -977,16 +1003,16 @@ export const recoverAccount = async (accountRecoveryRequest: AccountRecoveryRequ
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      accountRecoveryRequest,)
+      recoverAccountBody,)
   }
 );}
 
 
 
 
-export const getRecoverAccountMutationOptions = <TError = AccountRecoveryResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: AccountRecoveryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: AccountRecoveryRequest}, TContext> => {
+export const getRecoverAccountMutationOptions = <TError = RecoverAccount400 | RecoverAccount401,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: RecoverAccountBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: RecoverAccountBody}, TContext> => {
 
 const mutationKey = ['recoverAccount'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -998,7 +1024,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recoverAccount>>, {data: AccountRecoveryRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recoverAccount>>, {data: RecoverAccountBody}> = (props) => {
           const {data} = props ?? {};
 
           return  recoverAccount(data,requestOptions)
@@ -1012,18 +1038,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RecoverAccountMutationResult = NonNullable<Awaited<ReturnType<typeof recoverAccount>>>
-    export type RecoverAccountMutationBody = AccountRecoveryRequest
-    export type RecoverAccountMutationError = AccountRecoveryResponse
+    export type RecoverAccountMutationBody = RecoverAccountBody
+    export type RecoverAccountMutationError = RecoverAccount400 | RecoverAccount401
 
     /**
  * @summary 계정 복구
  */
-export const useRecoverAccount = <TError = AccountRecoveryResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: AccountRecoveryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useRecoverAccount = <TError = RecoverAccount400 | RecoverAccount401,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: RecoverAccountBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof recoverAccount>>,
         TError,
-        {data: AccountRecoveryRequest},
+        {data: RecoverAccountBody},
         TContext
       > => {
       return useMutation(getRecoverAccountMutationOptions(options), queryClient);
@@ -1158,17 +1184,17 @@ export function useValidateResetToken<TData = Awaited<ReturnType<typeof validate
  * @summary 학번 중복 체크
  */
 export type checkStudentIdDuplicateResponse200 = {
-  data: DuplicateCheckResponse
+  data: CheckStudentIdDuplicate200
   status: 200
 }
 
 export type checkStudentIdDuplicateResponse400 = {
-  data: DuplicateCheckResponse
+  data: CheckStudentIdDuplicate400
   status: 400
 }
 
 export type checkStudentIdDuplicateResponse409 = {
-  data: DuplicateCheckResponse
+  data: CheckStudentIdDuplicate409
   status: 409
 }
     
@@ -1218,7 +1244,7 @@ export const getCheckStudentIdDuplicateQueryKey = (params?: CheckStudentIdDuplic
     }
 
     
-export const getCheckStudentIdDuplicateQueryOptions = <TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(params: CheckStudentIdDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCheckStudentIdDuplicateQueryOptions = <TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = CheckStudentIdDuplicate400 | CheckStudentIdDuplicate409>(params: CheckStudentIdDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1237,10 +1263,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CheckStudentIdDuplicateQueryResult = NonNullable<Awaited<ReturnType<typeof checkStudentIdDuplicate>>>
-export type CheckStudentIdDuplicateQueryError = DuplicateCheckResponse
+export type CheckStudentIdDuplicateQueryError = CheckStudentIdDuplicate400 | CheckStudentIdDuplicate409
 
 
-export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = CheckStudentIdDuplicate400 | CheckStudentIdDuplicate409>(
  params: CheckStudentIdDuplicateParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkStudentIdDuplicate>>,
@@ -1250,7 +1276,7 @@ export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof che
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = CheckStudentIdDuplicate400 | CheckStudentIdDuplicate409>(
  params: CheckStudentIdDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkStudentIdDuplicate>>,
@@ -1260,7 +1286,7 @@ export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof che
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = CheckStudentIdDuplicate400 | CheckStudentIdDuplicate409>(
  params: CheckStudentIdDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1268,7 +1294,7 @@ export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof che
  * @summary 학번 중복 체크
  */
 
-export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError = CheckStudentIdDuplicate400 | CheckStudentIdDuplicate409>(
  params: CheckStudentIdDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkStudentIdDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1288,17 +1314,17 @@ export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof che
  * @summary 전화번호 중복 체크
  */
 export type checkPhoneNumberDuplicateResponse200 = {
-  data: DuplicateCheckResponse
+  data: CheckPhoneNumberDuplicate200
   status: 200
 }
 
 export type checkPhoneNumberDuplicateResponse400 = {
-  data: DuplicateCheckResponse
+  data: CheckPhoneNumberDuplicate400
   status: 400
 }
 
 export type checkPhoneNumberDuplicateResponse409 = {
-  data: DuplicateCheckResponse
+  data: CheckPhoneNumberDuplicate409
   status: 409
 }
     
@@ -1348,7 +1374,7 @@ export const getCheckPhoneNumberDuplicateQueryKey = (params?: CheckPhoneNumberDu
     }
 
     
-export const getCheckPhoneNumberDuplicateQueryOptions = <TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(params: CheckPhoneNumberDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCheckPhoneNumberDuplicateQueryOptions = <TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = CheckPhoneNumberDuplicate400 | CheckPhoneNumberDuplicate409>(params: CheckPhoneNumberDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1367,10 +1393,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CheckPhoneNumberDuplicateQueryResult = NonNullable<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>>
-export type CheckPhoneNumberDuplicateQueryError = DuplicateCheckResponse
+export type CheckPhoneNumberDuplicateQueryError = CheckPhoneNumberDuplicate400 | CheckPhoneNumberDuplicate409
 
 
-export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = CheckPhoneNumberDuplicate400 | CheckPhoneNumberDuplicate409>(
  params: CheckPhoneNumberDuplicateParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>,
@@ -1380,7 +1406,7 @@ export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof c
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = CheckPhoneNumberDuplicate400 | CheckPhoneNumberDuplicate409>(
  params: CheckPhoneNumberDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>,
@@ -1390,7 +1416,7 @@ export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof c
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = CheckPhoneNumberDuplicate400 | CheckPhoneNumberDuplicate409>(
  params: CheckPhoneNumberDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1398,7 +1424,7 @@ export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof c
  * @summary 전화번호 중복 체크
  */
 
-export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError = CheckPhoneNumberDuplicate400 | CheckPhoneNumberDuplicate409>(
  params: CheckPhoneNumberDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPhoneNumberDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1418,17 +1444,17 @@ export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof c
  * @summary 이메일 중복 체크
  */
 export type checkEmailDuplicateResponse200 = {
-  data: DuplicateCheckResponse
+  data: CheckEmailDuplicate200
   status: 200
 }
 
 export type checkEmailDuplicateResponse400 = {
-  data: DuplicateCheckResponse
+  data: CheckEmailDuplicate400
   status: 400
 }
 
 export type checkEmailDuplicateResponse409 = {
-  data: DuplicateCheckResponse
+  data: CheckEmailDuplicate409
   status: 409
 }
     
@@ -1478,7 +1504,7 @@ export const getCheckEmailDuplicateQueryKey = (params?: CheckEmailDuplicateParam
     }
 
     
-export const getCheckEmailDuplicateQueryOptions = <TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(params: CheckEmailDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCheckEmailDuplicateQueryOptions = <TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = CheckEmailDuplicate400 | CheckEmailDuplicate409>(params: CheckEmailDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1497,10 +1523,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CheckEmailDuplicateQueryResult = NonNullable<Awaited<ReturnType<typeof checkEmailDuplicate>>>
-export type CheckEmailDuplicateQueryError = DuplicateCheckResponse
+export type CheckEmailDuplicateQueryError = CheckEmailDuplicate400 | CheckEmailDuplicate409
 
 
-export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = CheckEmailDuplicate400 | CheckEmailDuplicate409>(
  params: CheckEmailDuplicateParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkEmailDuplicate>>,
@@ -1510,7 +1536,7 @@ export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEm
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = CheckEmailDuplicate400 | CheckEmailDuplicate409>(
  params: CheckEmailDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkEmailDuplicate>>,
@@ -1520,7 +1546,7 @@ export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEm
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = CheckEmailDuplicate400 | CheckEmailDuplicate409>(
  params: CheckEmailDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1528,7 +1554,7 @@ export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEm
  * @summary 이메일 중복 체크
  */
 
-export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = DuplicateCheckResponse>(
+export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEmailDuplicate>>, TError = CheckEmailDuplicate400 | CheckEmailDuplicate409>(
  params: CheckEmailDuplicateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmailDuplicate>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1548,12 +1574,12 @@ export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEm
  * @summary 재가입 가능 여부 확인
  */
 export type checkReRegistrationEligibilityResponse200 = {
-  data: ReRegistrationCheckResult
+  data: CheckReRegistrationEligibility200
   status: 200
 }
 
 export type checkReRegistrationEligibilityResponse400 = {
-  data: ReRegistrationCheckResult
+  data: CheckReRegistrationEligibility400
   status: 400
 }
     
@@ -1603,7 +1629,7 @@ export const getCheckReRegistrationEligibilityQueryKey = (params?: CheckReRegist
     }
 
     
-export const getCheckReRegistrationEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(params: CheckReRegistrationEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCheckReRegistrationEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = CheckReRegistrationEligibility400>(params: CheckReRegistrationEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1622,10 +1648,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CheckReRegistrationEligibilityQueryResult = NonNullable<Awaited<ReturnType<typeof checkReRegistrationEligibility>>>
-export type CheckReRegistrationEligibilityQueryError = ReRegistrationCheckResult
+export type CheckReRegistrationEligibilityQueryError = CheckReRegistrationEligibility400
 
 
-export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(
+export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = CheckReRegistrationEligibility400>(
  params: CheckReRegistrationEligibilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkReRegistrationEligibility>>,
@@ -1635,7 +1661,7 @@ export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typ
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(
+export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = CheckReRegistrationEligibility400>(
  params: CheckReRegistrationEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkReRegistrationEligibility>>,
@@ -1645,7 +1671,7 @@ export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typ
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(
+export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = CheckReRegistrationEligibility400>(
  params: CheckReRegistrationEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1653,7 +1679,7 @@ export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typ
  * @summary 재가입 가능 여부 확인
  */
 
-export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = ReRegistrationCheckResult>(
+export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError = CheckReRegistrationEligibility400>(
  params: CheckReRegistrationEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkReRegistrationEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1673,12 +1699,12 @@ export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typ
  * @summary 계정 복구 가능 여부 확인
  */
 export type checkRecoveryEligibilityResponse200 = {
-  data: RecoveryEligibilityResponse
+  data: CheckRecoveryEligibility200
   status: 200
 }
 
 export type checkRecoveryEligibilityResponse400 = {
-  data: RecoveryEligibilityResponse
+  data: CheckRecoveryEligibility400
   status: 400
 }
     
@@ -1728,7 +1754,7 @@ export const getCheckRecoveryEligibilityQueryKey = (params?: CheckRecoveryEligib
     }
 
     
-export const getCheckRecoveryEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getCheckRecoveryEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = CheckRecoveryEligibility400>(params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1747,10 +1773,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CheckRecoveryEligibilityQueryResult = NonNullable<Awaited<ReturnType<typeof checkRecoveryEligibility>>>
-export type CheckRecoveryEligibilityQueryError = RecoveryEligibilityResponse
+export type CheckRecoveryEligibilityQueryError = CheckRecoveryEligibility400
 
 
-export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(
+export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = CheckRecoveryEligibility400>(
  params: CheckRecoveryEligibilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkRecoveryEligibility>>,
@@ -1760,7 +1786,7 @@ export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof ch
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(
+export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = CheckRecoveryEligibility400>(
  params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkRecoveryEligibility>>,
@@ -1770,7 +1796,7 @@ export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof ch
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(
+export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = CheckRecoveryEligibility400>(
  params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1778,7 +1804,7 @@ export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof ch
  * @summary 계정 복구 가능 여부 확인
  */
 
-export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = RecoveryEligibilityResponse>(
+export function useCheckRecoveryEligibility<TData = Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError = CheckRecoveryEligibility400>(
  params: CheckRecoveryEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkRecoveryEligibility>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

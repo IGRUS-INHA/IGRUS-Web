@@ -1,0 +1,43 @@
+CreateCommentReportRequest:
+  type: object
+  properties:
+    reason:
+      type: string
+      minLength: 1
+  required:
+  - reason
+CommentReportResponse:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    commentId:
+      type: integer
+      format: int64
+    commentContent:
+      type: string
+    reporterId:
+      type: integer
+      format: int64
+    reporterName:
+      type: string
+    reason:
+      type: string
+    status:
+      type: string
+      enum:
+      - PENDING
+      - RESOLVED
+      - DISMISSED
+    createdAt:
+      type: string
+      format: date-time
+    resolvedAt:
+      type: string
+      format: date-time
+    resolvedById:
+      type: integer
+      format: int64
+    resolvedByName:
+      type: string
