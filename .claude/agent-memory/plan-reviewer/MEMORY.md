@@ -30,7 +30,7 @@
 - Exception classes extend `CustomBaseException`
 
 ### Flyway Migration
-- Latest version as of 2026-02-26: V40
+- Latest version as of 2026-02-27: V45
 - Version conflict check is essential before committing (backend CLAUDE.md rule 17)
 
 ## Common Plan Issues (Patterns to Watch)
@@ -46,12 +46,25 @@
 - Transaction boundary design presented with multiple options instead of a single recommendation
 - DTO naming deviations from convention without explicit justification
 - SDK/library choice presented as "A or B" without final decision
+- Service class placement presented as "A or B" without final decision (e.g., AdminEventService vs EventService)
+- Controller package placement presented as two options without decision
+
+### Frequently Missing Downstream Impact Analysis
+- When adding visibility/access control to a domain, check ALL services that query that domain
+- Example: Adding visibility filter to EventService but missing EventRegistrationService
+- Pattern: Search for all `Repository.findById()` / `Repository.findByXxx()` callers across services
 
 ## Review History
 
 ### Storage: image-presigned-url-task-plan.md
 - Round 1: FAIL (3 Critical: API path missing /api/v1/, Spring Boot version wrong, Flyway column naming missing)
 - Round 2: PASS (All 3 Critical resolved. 5 Recommended: cross-doc API paths, DTO naming, DELETE path slash encoding, transaction design decision, SDK version confirmation)
+
+### Event: event-visibility-task-plan.md
+- Round 1: FAIL (2 Critical: EventRegistrationService visibility filter missing, admin list API missing visibility filter param)
+- 5 Recommended: Flyway column name pattern verification, documentation TASK missing, AdminEventService split undecided, unpublish audit trail for registration close, controller package undecided
+- Round 2: PASS (Both Critical resolved via TASK-020/021 addition and TASK-007/010/011/017 updates)
+- 5 Recommended persisting: AdminEventService split still undecided, criteria doc log message missing visibility, GAP-EVT-45 not in criteria doc, documentation TASK still missing, unpublish registration close audit trail undecided
 
 ## Review Checklist Additions
 - [See review-checklist.md for detailed checklist](./review-checklist.md)
