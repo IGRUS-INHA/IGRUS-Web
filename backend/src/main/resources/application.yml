@@ -36,3 +36,9 @@ app:
       timeout: 5000
   cleanup:
     unverified-user-retention-hours: 24 # 24시간
+  storage:
+    s3:
+      bucket-name: ${app.storage.s3.bucket-name:igrus-web-storage}
+    upload-url-expiration: 300           # 5분 (초)
+    download-url-expiration: 3600        # 1시간 (초)
+    max-file-size: 10485760              # 10MB (bytes)
