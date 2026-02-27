@@ -1,0 +1,52 @@
+CreatePresignedUrlRequest:
+  type: object
+  properties:
+    fileName:
+      type: string
+      maxLength: 255
+      minLength: 0
+    contentType:
+      type: string
+      minLength: 1
+    fileSize:
+      type: integer
+      format: int64
+      maximum: 10485760
+      minimum: 1
+    purpose:
+      type: string
+      minLength: 1
+  required:
+  - contentType
+  - fileName
+  - fileSize
+  - purpose
+CreatePresignedUrlResponse:
+  type: object
+  properties:
+    presignedUrl:
+      type: string
+    objectKey:
+      type: string
+ConfirmUploadRequest:
+  type: object
+  properties:
+    objectKey:
+      type: string
+      minLength: 1
+  required:
+  - objectKey
+ConfirmUploadResponse:
+  type: object
+  properties:
+    status:
+      type: string
+    objectKey:
+      type: string
+    reason:
+      type: string
+DownloadUrlResponse:
+  type: object
+  properties:
+    presignedUrl:
+      type: string

@@ -1,0 +1,326 @@
+ChangeEmailRequest:
+  type: object
+  description: 이메일 변경 요청
+  properties:
+    password:
+      type: string
+      description: 현재 비밀번호
+      minLength: 1
+    newEmail:
+      type: string
+      format: email
+      description: 새 이메일
+      example: user@example.com
+      minLength: 1
+  required:
+  - newEmail
+  - password
+UpdateStudentIdRequest:
+  type: object
+  description: 학번 변경 요청
+  properties:
+    password:
+      type: string
+      description: 현재 비밀번호
+      minLength: 1
+    newStudentId:
+      type: string
+      description: 새 학번 (8자리 숫자)
+      example: 12345678
+      minLength: 1
+      pattern: ^\d{8}$
+  required:
+  - newStudentId
+  - password
+ChangePhoneNumberRequest:
+  type: object
+  description: 전화번호 변경 요청
+  properties:
+    password:
+      type: string
+      description: 현재 비밀번호
+      minLength: 1
+    newPhoneNumber:
+      type: string
+      description: 새 전화번호
+      example: 010-1234-5678
+      minLength: 1
+      pattern: ^\d{3}-\d{4}-\d{4}$
+  required:
+  - newPhoneNumber
+  - password
+ChangePasswordRequest:
+  type: object
+  description: 비밀번호 변경 요청
+  properties:
+    currentPassword:
+      type: string
+      description: 현재 비밀번호
+      example: CurrentPass123!
+      minLength: 1
+    newPassword:
+      type: string
+      description: 새 비밀번호 (8자 이상, 영문 대소문자, 숫자, 특수문자 포함)
+      example: NewPass456!
+      minLength: 1
+  required:
+  - currentPassword
+  - newPassword
+LikedPostPageResponse:
+  type: object
+  description: 좋아요한 게시글 목록 페이징 응답
+  properties:
+    posts:
+      type: array
+      description: 좋아요한 게시글 목록
+      items:
+        $ref: '#/LikedPostResponse'
+    totalElements:
+      type: integer
+      format: int64
+      description: 전체 요소 수
+      example: 100
+    totalPages:
+      type: integer
+      format: int32
+      description: 전체 페이지 수
+      example: 5
+    currentPage:
+      type: integer
+      format: int32
+      description: 현재 페이지 번호 (0부터 시작)
+      example: 0
+    hasNext:
+      type: boolean
+      description: 다음 페이지 존재 여부
+      example: true
+MyProfileResponse:
+  type: object
+  description: 내 프로필 정보
+  properties:
+    studentId:
+      type: string
+      description: 학번
+      example: 12201234
+    name:
+      type: string
+      description: 이름
+      example: 홍길동
+    email:
+      type: string
+      description: 이메일
+      example: hong@example.com
+    phoneNumber:
+      type: string
+      description: 전화번호
+      example: 010-1234-5678
+    department:
+      type: string
+      description: 학과
+      example: 컴퓨터공학과
+    role:
+      type: string
+      description: 역할
+      enum:
+      - ASSOCIATE
+      - MEMBER
+      - OPERATOR
+      - ADMIN
+      example: MEMBER
+    createdAt:
+      type: string
+      format: date-time
+      description: 가입일
+    hasTemporaryStudentId:
+      type: boolean
+      description: 임시 학번 사용 여부
+      example: false
+MyPostPageResponse:
+  type: object
+  description: 내 게시글 목록 페이징 응답
+  properties:
+    posts:
+      type: array
+      description: 게시글 목록
+      items:
+        $ref: '#/MyPostResponse'
+    totalElements:
+      type: integer
+      format: int64
+      description: 전체 요소 수
+      example: 100
+    totalPages:
+      type: integer
+      format: int32
+      description: 전체 페이지 수
+      example: 5
+    currentPage:
+      type: integer
+      format: int32
+      description: 현재 페이지 번호 (0부터 시작)
+      example: 0
+    hasNext:
+      type: boolean
+      description: 다음 페이지 존재 여부
+      example: true
+MyCommentPageResponse:
+  type: object
+  description: 내 댓글 목록 페이징 응답
+  properties:
+    comments:
+      type: array
+      description: 댓글 목록
+      items:
+        $ref: '#/MyCommentResponse'
+    totalElements:
+      type: integer
+      format: int64
+      description: 전체 요소 수
+      example: 100
+    totalPages:
+      type: integer
+      format: int32
+      description: 전체 페이지 수
+      example: 5
+    currentPage:
+      type: integer
+      format: int32
+      description: 현재 페이지 번호 (0부터 시작)
+      example: 0
+    hasNext:
+      type: boolean
+      description: 다음 페이지 존재 여부
+      example: true
+WithdrawRequest:
+  type: object
+  description: 회원 탈퇴 요청
+  properties:
+    password:
+      type: string
+      description: 현재 비밀번호
+      example: Password1!
+      minLength: 1
+    reason:
+      type: string
+      description: 탈퇴 사유
+      example: 더 이상 사용하지 않습니다
+      maxLength: 500
+      minLength: 0
+  required:
+  - password
+  - reason
+LikedPostResponse:
+  type: object
+  description: 좋아요한 게시글 응답
+  properties:
+    postId:
+      type: integer
+      format: int64
+      description: 게시글 ID
+      example: 1
+    title:
+      type: string
+      description: 게시글 제목
+      example: 안녕하세요
+    boardCode:
+      type: string
+      description: 게시판 코드
+      example: GENERAL
+    boardName:
+      type: string
+      description: 게시판 이름
+      example: 자유게시판
+    authorName:
+      type: string
+      description: 작성자 이름
+      example: 홍길동
+    likeCount:
+      type: integer
+      format: int32
+      description: 좋아요 수
+      example: 42
+    createdAt:
+      type: string
+      format: date-time
+      description: 게시글 작성일
+    isDeleted:
+      type: boolean
+      description: 삭제 여부
+      example: false
+    deletedMessage:
+      type: string
+      description: 삭제된 경우 메시지
+      example: 삭제된 게시글입니다
+MyPostResponse:
+  type: object
+  description: 내 게시글 정보
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: 게시글 ID
+      example: 1
+    boardCode:
+      type: string
+      description: 게시판 코드
+      example: GENERAL
+    boardName:
+      type: string
+      description: 게시판 이름
+      example: 자유게시판
+    title:
+      type: string
+      description: 제목
+      example: 첫 번째 게시글
+    viewCount:
+      type: integer
+      format: int32
+      description: 조회수
+      example: 100
+    likeCount:
+      type: integer
+      format: int32
+      description: 좋아요 수
+      example: 10
+    isAnonymous:
+      type: boolean
+      description: 익명 여부
+      example: false
+    createdAt:
+      type: string
+      format: date-time
+      description: 작성일
+MyCommentResponse:
+  type: object
+  description: 내 댓글 정보
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: 댓글 ID
+      example: 1
+    postId:
+      type: integer
+      format: int64
+      description: 게시글 ID
+      example: 10
+    postTitle:
+      type: string
+      description: 게시글 제목
+      example: 첫 번째 게시글
+    content:
+      type: string
+      description: 댓글 내용
+      example: 좋은 글이네요!
+    isAnonymous:
+      type: boolean
+      description: 익명 여부
+      example: false
+    isReply:
+      type: boolean
+      description: 대댓글 여부
+      example: false
+    createdAt:
+      type: string
+      format: date-time
+      description: 작성일
