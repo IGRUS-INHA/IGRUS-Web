@@ -111,6 +111,7 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
                     10,
                     EventRegistrationType.AUTO_APPROVE
             );
+            event.publish();
             event.openRegistration();
             return eventRepository.save(event);
         });
@@ -134,6 +135,7 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
                     10,
                     EventRegistrationType.AUTO_APPROVE
             );
+            event.publish();
             event.openRegistration();
             event.cancel();
             return eventRepository.save(event);
@@ -158,6 +160,7 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
                     10,
                     EventRegistrationType.AUTO_APPROVE
             );
+            event.publish();
             event.openRegistration();
             event.closeRegistrationManually();
             return eventRepository.save(event);

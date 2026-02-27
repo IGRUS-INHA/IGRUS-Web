@@ -110,6 +110,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     10,
                     EventRegistrationType.AUTO_APPROVE
             );
+            event.publish();
             event.openRegistration();
             return eventRepository.save(event);
         });
@@ -130,6 +131,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     10,
                     EventRegistrationType.MANUAL_APPROVE
             );
+            event.publish();
             event.openRegistration();
             return eventRepository.save(event);
         });
@@ -152,6 +154,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     10,
                     EventRegistrationType.AUTO_APPROVE
             );
+            event.publish();
             return eventRepository.save(event);
         });
     }
@@ -171,6 +174,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     capacity,
                     EventRegistrationType.AUTO_APPROVE
             );
+            event.publish();
             return eventRepository.save(event);
         });
     }
@@ -190,6 +194,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     capacity,
                     EventRegistrationType.MANUAL_APPROVE
             );
+            event.publish();
             return eventRepository.save(event);
         });
     }
@@ -209,6 +214,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     10,
                     EventRegistrationType.AUTO_APPROVE
             );
+            event.publish();
             return eventRepository.save(event);
         });
     }
@@ -687,6 +693,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         1,  // capacity=1
                         EventRegistrationType.MANUAL_APPROVE
                 );
+                e.publish();
                 e.openRegistration();
                 return eventRepository.save(e);
             });
@@ -738,6 +745,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         2,
                         EventRegistrationType.MANUAL_APPROVE
                 );
+                e.publish();
                 e.openRegistration();
                 return eventRepository.save(e);
             });
