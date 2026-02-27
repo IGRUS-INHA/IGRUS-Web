@@ -158,6 +158,9 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM positions").executeUpdate();
 
+            // Phase 3.5: Storage
+            entityManager.createNativeQuery("DELETE FROM file_metadata").executeUpdate();
+
             // Phase 4: 독립 테이블
             entityManager.createNativeQuery("DELETE FROM email_verifications").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM login_attempts").executeUpdate();

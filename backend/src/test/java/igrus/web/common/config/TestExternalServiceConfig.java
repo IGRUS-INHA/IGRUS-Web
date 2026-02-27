@@ -7,11 +7,13 @@ import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 /**
  * 테스트 전용 외부 서비스 Mock 설정.
  *
- * <p>외부 의존성(이메일, 웹훅, 시계)을 Mockito Mock으로 교체하여
+ * <p>외부 의존성(이메일, 웹훅, 시계, S3)을 Mockito Mock으로 교체하여
  * 테스트에서 실제 외부 서비스를 호출하지 않도록 합니다.</p>
  *
  * <p>{@code @MockitoBean} 대신 {@code @TestConfiguration + @Primary}를 사용하여
@@ -38,5 +40,17 @@ public class TestExternalServiceConfig {
     @Primary
     public Clock testClock() {
         return Mockito.mock(Clock.class);
+    }
+
+    @Bean
+    @Primary
+    public S3Client testS3Client() {
+        return Mockito.mock(S3Client.class);
+    }
+
+    @Bean
+    @Primary
+    public S3Presigner testS3Presigner() {
+        return Mockito.mock(S3Presigner.class);
     }
 }
