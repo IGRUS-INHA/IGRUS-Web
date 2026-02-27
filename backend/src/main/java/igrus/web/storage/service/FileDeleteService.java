@@ -34,7 +34,7 @@ public class FileDeleteService {
     private final FileMetadataRepository fileMetadataRepository;
     private final List<FileReferenceChecker> fileReferenceCheckers;
 
-    @Value("${igrus.storage.s3.bucket-name}")
+    @Value("${app.storage.s3.bucket-name}")
     private String bucketName;
 
     /**
