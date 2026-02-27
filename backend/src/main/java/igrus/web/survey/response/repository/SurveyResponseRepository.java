@@ -1,6 +1,6 @@
-package igrus.web.survey.repository;
+package igrus.web.survey.response.repository;
 
-import igrus.web.survey.domain.SurveyResponse;
+import igrus.web.survey.response.domain.SurveyResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface SurveyResponseRepository extends JpaRepository<SurveyResponse, Long> {
 
     /**
-     * 특정 회원이 특정 설문에 이미 응답했는지 확인합니다. (INV-01: 중복 응답 방지)
+     * 특정 회원이 특정 설문에 이미 응답했는지 확인합니다.
      *
      * @param surveyId 설문 ID
      * @param userId   사용자 ID

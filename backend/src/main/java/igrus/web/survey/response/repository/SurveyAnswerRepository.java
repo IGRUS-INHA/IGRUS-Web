@@ -1,6 +1,6 @@
-package igrus.web.survey.repository;
+package igrus.web.survey.response.repository;
 
-import igrus.web.survey.domain.SurveyAnswer;
+import igrus.web.survey.response.domain.SurveyAnswer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public interface SurveyAnswerRepository extends JpaRepository<SurveyAnswer, Long
     List<SurveyAnswer> findByResponseId(Long responseId);
 
     /**
-     * 특정 선택지를 참조하는 답변이 존재하는지 확인합니다. (INV-10: 선택지 삭제 전 참조 검증)
+     * 특정 선택지를 참조하는 답변이 존재하는지 확인합니다.
      *
      * @param optionId 선택지 ID
      * @return 참조 중이면 true
@@ -27,7 +27,7 @@ public interface SurveyAnswerRepository extends JpaRepository<SurveyAnswer, Long
     boolean existsBySelectedOptionId(Long optionId);
 
     /**
-     * 특정 행을 참조하는 답변이 존재하는지 확인합니다. (INV-10: 행 삭제 전 참조 검증)
+     * 특정 행을 참조하는 답변이 존재하는지 확인합니다.
      *
      * @param rowId 행 ID
      * @return 참조 중이면 true
@@ -35,7 +35,7 @@ public interface SurveyAnswerRepository extends JpaRepository<SurveyAnswer, Long
     boolean existsBySelectedRowId(Long rowId);
 
     /**
-     * 특정 질문을 참조하는 답변이 존재하는지 확인합니다. (INV-14: 질문 삭제 전 참조 검증)
+     * 특정 질문을 참조하는 답변이 존재하는지 확인합니다.
      *
      * @param questionId 질문 ID
      * @return 참조 중이면 true

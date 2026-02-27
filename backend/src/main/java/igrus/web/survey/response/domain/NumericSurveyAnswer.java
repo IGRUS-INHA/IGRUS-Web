@@ -1,5 +1,6 @@
-package igrus.web.survey.domain;
+package igrus.web.survey.response.domain;
 
+import igrus.web.survey.question.domain.SurveyQuestion;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import lombok.AccessLevel;

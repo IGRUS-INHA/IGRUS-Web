@@ -1,6 +1,7 @@
-package igrus.web.survey.domain;
+package igrus.web.survey.response.domain;
 
 import igrus.web.common.domain.SoftDeletableEntity;
+import igrus.web.survey.domain.Survey;
 import igrus.web.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

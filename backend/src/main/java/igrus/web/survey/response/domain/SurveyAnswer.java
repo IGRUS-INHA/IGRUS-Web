@@ -1,6 +1,9 @@
-package igrus.web.survey.domain;
+package igrus.web.survey.response.domain;
 
 import igrus.web.common.domain.SoftDeletableEntity;
+import igrus.web.survey.question.domain.SurveyQuestion;
+import igrus.web.survey.question.domain.SurveyQuestionOption;
+import igrus.web.survey.question.domain.SurveyQuestionRow;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
