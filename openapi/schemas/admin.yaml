@@ -1,0 +1,1031 @@
+ChangeUserStatusRequest:
+  type: object
+  description: 회원 상태 변경 요청
+  properties:
+    action:
+      type: string
+      description: 수행할 행위
+      enum:
+      - SUSPEND
+      - LIFT
+      example: SUSPEND
+    reason:
+      type: string
+      description: 정지 사유 (SUSPEND일 때 필수)
+      example: 규칙 위반
+    suspendedUntil:
+      type: string
+      format: date-time
+      description: 정지 종료일 (SUSPEND일 때 필수)
+      example: '2025-03-01T00:00:00Z'
+  required:
+  - action
+ChangeUserRoleRequest:
+  type: object
+  description: 회원 권한 변경 요청
+  properties:
+    role:
+      type: string
+      description: 변경할 역할
+      enum:
+      - ASSOCIATE
+      - MEMBER
+      - OPERATOR
+      - ADMIN
+      example: MEMBER
+  required:
+  - role
+RegisterSemesterMembersRequest:
+  type: object
+  description: 학기별 회원 등록 요청
+  properties:
+    userIds:
+      type: array
+      description: 등록할 회원 ID 목록
+      example:
+      - 1
+      - 2
+      - 3
+      items:
+        type: integer
+        format: int64
+      minItems: 1
+  required:
+  - userIds
+RegisterSemesterMembersResponse:
+  type: object
+  description: 학기별 회원 등록 결과 응답
+  properties:
+    registeredCount:
+      type: integer
+      format: int32
+      description: 등록된 회원 수
+      example: 5
+    skippedCount:
+      type: integer
+      format: int32
+      description: 이미 등록되어 건너뛴 회원 수
+      example: 2
+    totalRequested:
+      type: integer
+      format: int32
+      description: 요청된 총 회원 수
+      example: 7
+RejectAssociateRequest:
+  type: object
+  description: 준회원 거절 요청
+  properties:
+    reason:
+      type: string
+      description: 거절 사유
+      example: 가입 동기가 불충분합니다.
+      maxLength: 255
+      minLength: 0
+  required:
+  - reason
+BulkRejectionRequest:
+  type: object
+  description: 준회원 일괄 거절 요청
+  properties:
+    userIds:
+      type: array
+      description: 거절할 사용자 ID 목록
+      example:
+      - 1
+      - 2
+      - 3
+      items:
+        type: integer
+        format: int64
+      minItems: 1
+    reason:
+      type: string
+      description: 거절 사유
+      example: 가입 동기가 불충분합니다.
+      maxLength: 255
+      minLength: 0
+  required:
+  - reason
+  - userIds
+BulkRejectionResultResponse:
+  type: object
+  description: 준회원 일괄 거절 결과 응답
+  properties:
+    rejectedCount:
+      type: integer
+      format: int32
+      description: 거절 성공 수
+      example: 3
+    failedCount:
+      type: integer
+      format: int32
+      description: 거절 실패 수
+      example: 1
+    totalRequested:
+      type: integer
+      format: int32
+      description: 총 요청 수
+      example: 4
+BulkApprovalRequest:
+  type: object
+  description: 일괄 준회원 승인 요청
+  properties:
+    userIds:
+      type: array
+      description: 승인할 사용자 ID 목록
+      example:
+      - 1
+      - 2
+      - 3
+      items:
+        type: integer
+        format: int64
+      minItems: 1
+    reason:
+      type: string
+      description: 승인 사유 (선택)
+      example: 2026년 1월 일괄 승인
+      maxLength: 255
+      minLength: 0
+  required:
+  - userIds
+BulkApprovalResultResponse:
+  type: object
+  description: 일괄 승인 결과 응답
+  properties:
+    approvedCount:
+      type: integer
+      format: int32
+      description: 승인 성공 건수
+      example: 5
+    failedCount:
+      type: integer
+      format: int32
+      description: 승인 실패 건수
+      example: 1
+    totalRequested:
+      type: integer
+      format: int32
+      description: 총 요청 건수
+      example: 6
+AdminEditUserInfoRequest:
+  type: object
+  description: '관리자 회원 정보 수정 요청 (부분 업데이트: null 필드는 기존 값 유지)'
+  properties:
+    studentId:
+      type: string
+      description: 학번 (null이면 변경하지 않음)
+      example: 20231234
+      pattern: ^\d{8}$
+    email:
+      type: string
+      format: email
+      description: 이메일 (null이면 변경하지 않음)
+      example: user@inha.edu
+    name:
+      type: string
+      description: 이름 (null이면 변경하지 않음)
+      example: 홍길동
+      maxLength: 50
+      minLength: 1
+    phoneNumber:
+      type: string
+      description: 전화번호 (null이면 변경하지 않음)
+      example: 010-1234-5678
+    department:
+      type: string
+      description: 학과 (null이면 변경하지 않음)
+      example: 컴퓨터공학과
+      maxLength: 50
+      minLength: 0
+    gender:
+      type: string
+      description: 성별 (null이면 변경하지 않음)
+      enum:
+      - MALE
+      - FEMALE
+    grade:
+      type: integer
+      format: int32
+      description: 학년 (null이면 변경하지 않음)
+      example: 2
+      maximum: 4
+      minimum: 1
+    enrollmentStatus:
+      type: string
+      description: 재학 상태 (null이면 변경하지 않음)
+      enum:
+      - ENROLLED
+      - GENERAL_LEAVE
+      - MILITARY_LEAVE
+    motivation:
+      type: string
+      description: 가입 동기 (null이면 변경하지 않음)
+    wishes:
+      type: array
+      description: 가입 목적 (null이면 변경하지 않음)
+      items:
+        type: string
+        enum:
+        - NETWORKING
+        - STUDY
+        - PROJECT
+        - CAREER
+        - PROGRAMMING
+    interests:
+      type: array
+      description: 관심 분야 (null이면 변경하지 않음)
+      items:
+        type: string
+        enum:
+        - WEB_FRONTEND
+        - WEB_BACKEND
+        - APP
+        - SECURITY
+        - UI_UX_DESIGN
+        - OTHER_DESIGN
+        - AI
+        - CLOUD
+        - GAME
+        - OTHER
+    customInterest:
+      type: string
+      description: 기타 관심 분야 (null이면 변경하지 않음)
+      maxLength: 100
+      minLength: 0
+    joinRoute:
+      type: string
+      description: 가입 경로 (null이면 변경하지 않음)
+      enum:
+      - EVERYTIME
+      - POSTER
+      - OT
+      - REFERRAL
+      - OTHER
+    customJoinRoute:
+      type: string
+      description: 기타 가입 경로 (null이면 변경하지 않음)
+      maxLength: 100
+      minLength: 0
+UpdateReportStatusRequest:
+  type: object
+  properties:
+    status:
+      type: string
+      enum:
+      - PENDING
+      - RESOLVED
+      - DISMISSED
+  required:
+  - status
+UserListPageResponse:
+  type: object
+  description: 관리자용 회원 목록 페이징 응답
+  properties:
+    users:
+      type: array
+      description: 회원 목록
+      items:
+        $ref: '#/UserListResponse'
+    totalElements:
+      type: integer
+      format: int64
+      description: 전체 요소 수
+      example: 100
+    totalPages:
+      type: integer
+      format: int32
+      description: 전체 페이지 수
+      example: 5
+    currentPage:
+      type: integer
+      format: int32
+      description: 현재 페이지 번호 (0부터 시작)
+      example: 0
+    hasNext:
+      type: boolean
+      description: 다음 페이지 존재 여부
+      example: true
+UserDetailResponse:
+  type: object
+  description: 관리자용 회원 상세 응답
+  properties:
+    userId:
+      type: integer
+      format: int64
+      description: 사용자 ID
+      example: 1
+    studentId:
+      type: string
+      description: 학번
+      example: 20231234
+    name:
+      type: string
+      description: 이름
+      example: 홍길동
+    email:
+      type: string
+      description: 이메일
+      example: hong@inha.edu
+    phoneNumber:
+      type: string
+      description: 전화번호
+      example: 010-1234-5678
+    department:
+      type: string
+      description: 학과
+      example: 컴퓨터공학과
+    motivation:
+      type: string
+      description: 가입 동기
+      example: 프로그래밍을 배우고 싶어서
+    wishes:
+      type: array
+      description: 가입 목적
+      items:
+        type: string
+        enum:
+        - NETWORKING
+        - STUDY
+        - PROJECT
+        - CAREER
+        - PROGRAMMING
+    interests:
+      type: array
+      description: 관심 분야
+      items:
+        type: string
+        enum:
+        - WEB_FRONTEND
+        - WEB_BACKEND
+        - APP
+        - SECURITY
+        - UI_UX_DESIGN
+        - OTHER_DESIGN
+        - AI
+        - CLOUD
+        - GAME
+        - OTHER
+    customInterest:
+      type: string
+      description: 기타 관심 분야
+    joinRoute:
+      type: string
+      description: 가입 경로
+      enum:
+      - EVERYTIME
+      - POSTER
+      - OT
+      - REFERRAL
+      - OTHER
+    customJoinRoute:
+      type: string
+      description: 기타 가입 경로
+    gender:
+      type: string
+      description: 성별
+      enum:
+      - MALE
+      - FEMALE
+      example: MALE
+    grade:
+      type: integer
+      format: int32
+      description: 학년
+      example: 2
+    enrollmentStatus:
+      type: string
+      description: 재학 상태
+      enum:
+      - ENROLLED
+      - GENERAL_LEAVE
+      - MILITARY_LEAVE
+      example: ENROLLED
+    role:
+      type: string
+      description: 역할
+      enum:
+      - ASSOCIATE
+      - MEMBER
+      - OPERATOR
+      - ADMIN
+      example: MEMBER
+    status:
+      type: string
+      description: 상태
+      enum:
+      - PENDING_VERIFICATION
+      - ACTIVE
+      - SUSPENDED
+      - WITHDRAWN
+      example: ACTIVE
+    createdAt:
+      type: string
+      format: date-time
+      description: 가입일
+      example: '2025-01-15T10:30:00Z'
+PageUserRoleHistoryResponse:
+  type: object
+  properties:
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32
+    pageable:
+      $ref: ./_common.yaml#/PageableObject
+    size:
+      type: integer
+      format: int32
+    content:
+      type: array
+      items:
+        $ref: '#/UserRoleHistoryResponse'
+    number:
+      type: integer
+      format: int32
+    sort:
+      $ref: ./_common.yaml#/SortObject
+    numberOfElements:
+      type: integer
+      format: int32
+    first:
+      type: boolean
+    last:
+      type: boolean
+    empty:
+      type: boolean
+CandidateMemberResponse:
+  type: object
+  description: 학기별 회원 등록 후보 응답
+  properties:
+    userId:
+      type: integer
+      format: int64
+      description: 사용자 ID
+      example: 1
+    studentId:
+      type: string
+      description: 학번
+      example: 12345678
+    name:
+      type: string
+      description: 이름
+      example: 홍길동
+    department:
+      type: string
+      description: 학과
+      example: 컴퓨터공학과
+    role:
+      type: string
+      description: 현재 역할
+      enum:
+      - ASSOCIATE
+      - MEMBER
+      - OPERATOR
+      - ADMIN
+      example: MEMBER
+    alreadyRegistered:
+      type: boolean
+      description: 해당 학기 등록 여부
+    motivation:
+      type: string
+      description: 가입 동기
+      example: 웹 개발 역량을 키우고 싶습니다.
+    wishes:
+      type: array
+      description: 가입 목적
+      items:
+        type: string
+        enum:
+        - NETWORKING
+        - STUDY
+        - PROJECT
+        - CAREER
+        - PROGRAMMING
+PageLoginHistoryResponse:
+  type: object
+  properties:
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32
+    pageable:
+      $ref: ./_common.yaml#/PageableObject
+    size:
+      type: integer
+      format: int32
+    content:
+      type: array
+      items:
+        $ref: '#/LoginHistoryResponse'
+    number:
+      type: integer
+      format: int32
+    sort:
+      $ref: ./_common.yaml#/SortObject
+    numberOfElements:
+      type: integer
+      format: int32
+    first:
+      type: boolean
+    last:
+      type: boolean
+    empty:
+      type: boolean
+DashboardStatsResponse:
+  type: object
+  properties:
+    todayPostCount:
+      type: integer
+      format: int64
+    todayCommentCount:
+      type: integer
+      format: int64
+    weeklyApprovedMemberCount:
+      type: integer
+      format: int64
+    pendingInquiryCount:
+      type: integer
+      format: int64
+    pendingAssociateCount:
+      type: integer
+      format: int64
+PageRejectedAssociateInfoResponse:
+  type: object
+  properties:
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32
+    pageable:
+      $ref: ./_common.yaml#/PageableObject
+    size:
+      type: integer
+      format: int32
+    content:
+      type: array
+      items:
+        $ref: '#/RejectedAssociateInfoResponse'
+    number:
+      type: integer
+      format: int32
+    sort:
+      $ref: ./_common.yaml#/SortObject
+    numberOfElements:
+      type: integer
+      format: int32
+    first:
+      type: boolean
+    last:
+      type: boolean
+    empty:
+      type: boolean
+AssociateInfoPageResponse:
+  type: object
+  description: 준회원 목록 페이징 응답
+  properties:
+    associates:
+      type: array
+      description: 준회원 목록
+      items:
+        $ref: '#/AssociateInfoResponse'
+    totalElements:
+      type: integer
+      format: int64
+      description: 전체 요소 수
+      example: 100
+    totalPages:
+      type: integer
+      format: int32
+      description: 전체 페이지 수
+      example: 5
+    currentPage:
+      type: integer
+      format: int32
+      description: 현재 페이지 번호 (0부터 시작)
+      example: 0
+    hasNext:
+      type: boolean
+      description: 다음 페이지 존재 여부
+      example: true
+PageDemotedAssociateInfoResponse:
+  type: object
+  properties:
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32
+    pageable:
+      $ref: ./_common.yaml#/PageableObject
+    size:
+      type: integer
+      format: int32
+    content:
+      type: array
+      items:
+        $ref: '#/DemotedAssociateInfoResponse'
+    number:
+      type: integer
+      format: int32
+    sort:
+      $ref: ./_common.yaml#/SortObject
+    numberOfElements:
+      type: integer
+      format: int32
+    first:
+      type: boolean
+    last:
+      type: boolean
+    empty:
+      type: boolean
+PageAccountStatusChangeHistoryResponse:
+  type: object
+  properties:
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32
+    pageable:
+      $ref: ./_common.yaml#/PageableObject
+    size:
+      type: integer
+      format: int32
+    content:
+      type: array
+      items:
+        $ref: '#/AccountStatusChangeHistoryResponse'
+    number:
+      type: integer
+      format: int32
+    sort:
+      $ref: ./_common.yaml#/SortObject
+    numberOfElements:
+      type: integer
+      format: int32
+    first:
+      type: boolean
+    last:
+      type: boolean
+    empty:
+      type: boolean
+ForceWithdrawRequest:
+  type: object
+  description: 강제 탈퇴 요청
+  properties:
+    reason:
+      type: string
+      description: 강제 탈퇴 사유
+      example: 동아리 규정 위반
+      maxLength: 500
+      minLength: 0
+  required:
+  - reason
+RemoveSemesterMembersRequest:
+  type: object
+  description: 학기별 회원 제외 요청
+  properties:
+    userIds:
+      type: array
+      description: 제외할 회원 ID 목록
+      example:
+      - 1
+      - 2
+      - 3
+      items:
+        type: integer
+        format: int64
+      minItems: 1
+  required:
+  - userIds
+UserListResponse:
+  type: object
+  description: 관리자용 회원 목록 응답
+  properties:
+    userId:
+      type: integer
+      format: int64
+      description: 사용자 ID
+      example: 1
+    studentId:
+      type: string
+      description: 학번
+      example: 20231234
+    name:
+      type: string
+      description: 이름
+      example: 홍길동
+    email:
+      type: string
+      description: 이메일
+      example: hong@inha.edu
+    role:
+      type: string
+      description: 역할
+      enum:
+      - ASSOCIATE
+      - MEMBER
+      - OPERATOR
+      - ADMIN
+      example: MEMBER
+    status:
+      type: string
+      description: 상태
+      enum:
+      - PENDING_VERIFICATION
+      - ACTIVE
+      - SUSPENDED
+      - WITHDRAWN
+      example: ACTIVE
+    createdAt:
+      type: string
+      format: date-time
+      description: 가입일
+      example: '2025-01-15T10:30:00Z'
+UserRoleHistoryResponse:
+  type: object
+  description: 권한 변경 이력 응답
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: 이력 ID
+      example: 1
+    userId:
+      type: integer
+      format: int64
+      description: 대상 사용자 ID
+      example: 10
+    userName:
+      type: string
+      description: 대상 사용자 이름
+      example: 홍길동
+    studentId:
+      type: string
+      description: 대상 사용자 학번
+      example: 20231234
+    previousRole:
+      type: string
+      description: 변경 전 역할
+      enum:
+      - ASSOCIATE
+      - MEMBER
+      - OPERATOR
+      - ADMIN
+      example: ASSOCIATE
+    newRole:
+      type: string
+      description: 변경 후 역할
+      enum:
+      - ASSOCIATE
+      - MEMBER
+      - OPERATOR
+      - ADMIN
+      example: MEMBER
+    reason:
+      type: string
+      description: 변경 사유
+    changedBy:
+      type: integer
+      format: int64
+      description: 변경자 ID
+      example: 1
+    changedAt:
+      type: string
+      format: date-time
+      description: 변경 일시
+      example: '2025-01-15T10:30:00Z'
+LoginHistoryResponse:
+  type: object
+  description: 로그인 이력 응답
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: 로그인 이력 ID
+      example: 1
+    userId:
+      type: integer
+      format: int64
+      description: 사용자 ID (실패 시 null 가능)
+      example: 1
+    studentId:
+      type: string
+      description: 학번
+      example: 12345678
+    ipAddress:
+      type: string
+      description: 클라이언트 IP 주소
+      example: 192.168.1.100
+    userAgent:
+      type: string
+      description: 클라이언트 User-Agent
+      example: Mozilla/5.0
+    success:
+      type: boolean
+      description: 로그인 성공 여부
+      example: true
+    failureReason:
+      type: string
+      description: 실패 사유 (성공 시 null)
+      enum:
+      - INVALID_CREDENTIALS
+      - ACCOUNT_LOCKED
+      - ACCOUNT_SUSPENDED
+      - ACCOUNT_WITHDRAWN
+      - EMAIL_NOT_VERIFIED
+      - ACCOUNT_RECOVERABLE
+      example: INVALID_CREDENTIALS
+    attemptedAt:
+      type: string
+      format: date-time
+      description: 로그인 시도 시각
+      example: '2024-01-15T10:30:00Z'
+RejectedAssociateInfoResponse:
+  type: object
+  description: 거절된 준회원 정보 응답
+  properties:
+    userId:
+      type: integer
+      format: int64
+      description: 사용자 고유 ID
+      example: 1
+    studentId:
+      type: string
+      description: 학번
+      example: 12345678
+    name:
+      type: string
+      description: 이름
+      example: 홍길동
+    department:
+      type: string
+      description: 학과
+      example: 컴퓨터공학과
+    motivation:
+      type: string
+      description: 가입 동기
+      example: 웹 개발 역량을 키우고 싶습니다.
+    wishes:
+      type: array
+      description: 가입 목적
+      items:
+        type: string
+        enum:
+        - NETWORKING
+        - STUDY
+        - PROJECT
+        - CAREER
+        - PROGRAMMING
+    createdAt:
+      type: string
+      format: date-time
+      description: 가입 신청 일시
+      example: '2024-01-15T10:30:00Z'
+    rejectionReason:
+      type: string
+      description: 거절 사유
+      example: 가입 동기가 불충분합니다.
+    rejectedAt:
+      type: string
+      format: date-time
+      description: 거절 일시
+      example: '2024-01-20T14:00:00Z'
+    rejectedBy:
+      type: integer
+      format: int64
+      description: 거절 처리자 ID
+      example: 100
+AssociateInfoResponse:
+  type: object
+  description: 준회원(가입 승인 대기자) 정보 응답
+  properties:
+    userId:
+      type: integer
+      format: int64
+      description: 사용자 고유 ID
+      example: 1
+    studentId:
+      type: string
+      description: 학번
+      example: 12345678
+    name:
+      type: string
+      description: 이름
+      example: 홍길동
+    department:
+      type: string
+      description: 학과
+      example: 컴퓨터공학과
+    motivation:
+      type: string
+      description: 가입 동기
+      example: 웹 개발 역량을 키우고 싶습니다.
+    wishes:
+      type: array
+      description: 가입 목적
+      items:
+        type: string
+        enum:
+        - NETWORKING
+        - STUDY
+        - PROJECT
+        - CAREER
+        - PROGRAMMING
+    createdAt:
+      type: string
+      format: date-time
+      description: 가입 신청 일시
+      example: '2024-01-15T10:30:00Z'
+    demoted:
+      type: boolean
+      description: 강등된 유저 여부
+      example: false
+DemotedAssociateInfoResponse:
+  type: object
+  description: 강등된 준회원 정보 응답
+  properties:
+    userId:
+      type: integer
+      format: int64
+      description: 사용자 고유 ID
+      example: 1
+    studentId:
+      type: string
+      description: 학번
+      example: 12345678
+    name:
+      type: string
+      description: 이름
+      example: 홍길동
+    department:
+      type: string
+      description: 학과
+      example: 컴퓨터공학과
+    demotedAt:
+      type: string
+      format: date-time
+      description: 강등 일시
+      example: '2024-01-20T14:00:00Z'
+    demotedBy:
+      type: integer
+      format: int64
+      description: 강등 처리자 ID
+      example: 100
+AccountStatusChangeHistoryResponse:
+  type: object
+  description: 계정 상태 변경 감사 이력 응답
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: 이력 ID
+    userId:
+      type: integer
+      format: int64
+      description: 대상 사용자 ID
+    userStudentId:
+      type: string
+      description: 대상 사용자 학번
+    changedByUserId:
+      type: integer
+      format: int64
+      description: 변경자 사용자 ID
+    changedByStudentId:
+      type: string
+      description: 변경자 학번
+    changeType:
+      type: string
+      description: 변경 유형
+      enum:
+      - ROLE_CHANGE
+      - SUSPENSION
+      - SUSPENSION_LIFT
+      - WITHDRAWAL
+      - FORCE_WITHDRAWAL
+      - APPROVAL
+      - FORCE_ACTIVATION
+      - ADMIN_INFO_EDIT
+      - STUDENT_ID_UPDATE
+    previousValue:
+      type: string
+      description: 변경 전 값
+    newValue:
+      type: string
+      description: 변경 후 값
+    reason:
+      type: string
+      description: 변경 사유
+    createdAt:
+      type: string
+      format: date-time
+      description: 변경 일시

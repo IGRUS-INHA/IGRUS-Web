@@ -1,0 +1,350 @@
+openapi: 3.1.0
+info:
+  title: IGRUS Web API
+  description: |
+    인하대학교 정보통신처 소속 컴퓨터 연구 동아리 IGRUS 웹사이트 API
+
+    ## 인증 방식
+
+    이 API는 JWT (JSON Web Token) 기반 Bearer 인증을 사용합니다.
+
+    ### 인증 헤더 형식
+    ```
+    Authorization: Bearer {access_token}
+    ```
+
+    ### 사용 방법
+    1. 로그인 API를 호출하여 Access Token을 발급받습니다.
+    2. 인증이 필요한 API 호출 시, HTTP 헤더에 위 형식으로 토큰을 포함합니다.
+
+    ### 예시
+    ```
+    GET /api/v1/users/me
+    Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    ```
+
+    ### 토큰 정보
+    - **Access Token**: API 요청 인증에 사용 (유효 기간: 설정에 따름)
+    - **Refresh Token**: Access Token 갱신에 사용 (유효 기간: 설정에 따름)
+
+    ### 주의사항
+    - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
+    - Refresh Token도 만료되면 다시 로그인해야 합니다.
+  version: ec724ff
+servers:
+- url: https://staging-api.igrus.co.kr
+  description: API Server
+tags:
+- name: Pinned Post
+  description: 고정 게시글 API
+- name: Comment Report
+  description: 댓글 신고 API
+- name: Admin Dashboard
+  description: 관리자 대시보드 API (ADMIN 전용)
+- name: PostLike
+  description: 게시글 좋아요 API
+- name: Survey Question
+  description: 설문 질문 API
+- name: Survey Question Row
+  description: 설문 그리드 행 API
+- name: Post
+  description: 게시글 API
+- name: Privacy Consent
+  description: 개인정보 동의 관리 API
+- name: Storage
+  description: 파일 저장소 API
+- name: Semester Member
+  description: 학기별 회원 명단 조회 API (운영진 이상)
+- name: Event
+  description: 행사 API
+- name: Bookmark
+  description: 북마크 API
+- name: Admin Semester Member
+  description: 학기별 회원 관리 API (ADMIN 전용)
+- name: Admin User Management
+  description: 관리자 회원 관리 API (OPERATOR 이상, 권한 변경은 ADMIN 전용)
+- name: Board
+  description: 게시판 API
+- name: Survey Anonymous Response
+  description: 비회원 설문 응답 API
+- name: Comment
+  description: 댓글 API
+- name: Admin Login History
+  description: 관리자 로그인 이력 조회 API (ADMIN 전용)
+- name: Survey Response
+  description: 설문 응답 API
+- name: Account Status Change History
+  description: 계정 상태 변경 감사 이력 조회 API (ADMIN 전용)
+- name: Survey Question Option
+  description: 설문 질문 선택지 API
+- name: Inquiry
+  description: 문의 API
+- name: Health
+  description: 헬스체크 API
+- name: Event Registration
+  description: 행사 신청 API
+- name: Password Authentication
+  description: 비밀번호 기반 인증 관련 API
+- name: MyPage
+  description: 마이페이지 API
+- name: Survey
+  description: 설문 API
+- name: Comment Like
+  description: 댓글 좋아요 API
+- name: Admin Associate Approval
+  description: 관리자 준회원 승인 API (ADMIN 전용)
+paths:
+  /api/v1/surveys/{surveyId}:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyId
+  /api/v1/surveys/{surveyId}/responses/me:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdResponsesMe
+  /api/v1/pinned-posts/{id}/display-order:
+    $ref: ./paths/pinned-posts.yaml#/pinnedPostsByIdDisplayOrder
+  /api/v1/inquiries/{id}/status:
+    $ref: ./paths/inquiries.yaml#/inquiriesByIdStatus
+  /api/v1/inquiries/{id}/reply:
+    $ref: ./paths/inquiries.yaml#/inquiriesByIdReply
+  /api/v1/events/{eventId}:
+    $ref: ./paths/events.yaml#/eventsByEventId
+  /api/v1/boards/{boardCode}/posts/{postId}:
+    $ref: ./paths/boards.yaml#/boardsByBoardCodePostsByPostId
+  /api/v1/admin/users/{userId}/status:
+    $ref: ./paths/admin.yaml#/adminUsersByUserIdStatus
+  /api/v1/admin/users/{userId}/role:
+    $ref: ./paths/admin.yaml#/adminUsersByUserIdRole
+  /api/v1/surveys:
+    $ref: ./paths/surveys.yaml#/surveys
+  /api/v1/surveys/{surveyId}/unpublish:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdUnpublish
+  /api/v1/surveys/{surveyId}/trash:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdTrash
+  /api/v1/surveys/{surveyId}/restore:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdRestore
+  /api/v1/surveys/{surveyId}/responses:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdResponses
+  /api/v1/surveys/{surveyId}/responses/anonymous:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdResponsesAnonymous
+  /api/v1/surveys/{surveyId}/questions:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdQuestions
+  /api/v1/surveys/{surveyId}/questions/{questionId}/rows:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdQuestionsByQuestionIdRows
+  /api/v1/surveys/{surveyId}/questions/{questionId}/options:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdQuestionsByQuestionIdOptions
+  /api/v1/surveys/{surveyId}/publish:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdPublish
+  /api/v1/surveys/{surveyId}/publish-and-open:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdPublishAndOpen
+  /api/v1/surveys/{surveyId}/open:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdOpen
+  /api/v1/surveys/{surveyId}/close:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdClose
+  /api/v1/storage/presigned-url:
+    $ref: ./paths/storage.yaml#/storagePresignedUrl
+  /api/v1/storage/confirm:
+    $ref: ./paths/storage.yaml#/storageConfirm
+  /api/v1/registrations/{registrationId}/revert:
+    $ref: ./paths/events.yaml#/registrationsByRegistrationIdRevert
+  /api/v1/registrations/{registrationId}/reject:
+    $ref: ./paths/events.yaml#/registrationsByRegistrationIdReject
+  /api/v1/registrations/{registrationId}/approve:
+    $ref: ./paths/events.yaml#/registrationsByRegistrationIdApprove
+  /api/v1/posts/{postId}/likes:
+    $ref: ./paths/posts.yaml#/postsByPostIdLikes
+  /api/v1/posts/{postId}/comments:
+    $ref: ./paths/posts.yaml#/postsByPostIdComments
+  /api/v1/posts/{postId}/comments/{commentId}/replies:
+    $ref: ./paths/posts.yaml#/postsByPostIdCommentsByCommentIdReplies
+  /api/v1/posts/{postId}/bookmarks:
+    $ref: ./paths/posts.yaml#/postsByPostIdBookmarks
+  /api/v1/pinned-posts:
+    $ref: ./paths/pinned-posts.yaml#/pinnedPosts
+  /api/v1/mypage/email/verify:
+    $ref: ./paths/mypage.yaml#/mypageEmailVerify
+  /api/v1/mypage/email/change-request:
+    $ref: ./paths/mypage.yaml#/mypageEmailChangeRequest
+  /api/v1/inquiries/{id}/memo:
+    $ref: ./paths/inquiries.yaml#/inquiriesByIdMemo
+  /api/v1/inquiries/member:
+    $ref: ./paths/inquiries.yaml#/inquiriesMember
+  /api/v1/inquiries/lookup:
+    $ref: ./paths/inquiries.yaml#/inquiriesLookup
+  /api/v1/inquiries/guest:
+    $ref: ./paths/inquiries.yaml#/inquiriesGuest
+  /api/v1/events:
+    $ref: ./paths/events.yaml#/events
+  /api/v1/events/{eventId}/reopen-registration:
+    $ref: ./paths/events.yaml#/eventsByEventIdReopenRegistration
+  /api/v1/events/{eventId}/registrations:
+    $ref: ./paths/events.yaml#/eventsByEventIdRegistrations
+  /api/v1/events/{eventId}/reactivate:
+    $ref: ./paths/events.yaml#/eventsByEventIdReactivate
+  /api/v1/events/{eventId}/close:
+    $ref: ./paths/events.yaml#/eventsByEventIdClose
+  /api/v1/events/{eventId}/cancel:
+    $ref: ./paths/events.yaml#/eventsByEventIdCancel
+  /api/v1/comments/{commentId}/reports:
+    $ref: ./paths/comments.yaml#/commentsByCommentIdReports
+  /api/v1/comments/{commentId}/likes:
+    $ref: ./paths/comments.yaml#/commentsByCommentIdLikes
+  /api/v1/boards/{boardCode}/posts:
+    $ref: ./paths/boards.yaml#/boardsByBoardCodePosts
+  /api/v1/auth/password/signup:
+    $ref: ./paths/auth.yaml#/authPasswordSignup
+  /api/v1/auth/password/signup/temporary:
+    $ref: ./paths/auth.yaml#/authPasswordSignupTemporary
+  /api/v1/auth/password/reset-request:
+    $ref: ./paths/auth.yaml#/authPasswordResetRequest
+  /api/v1/auth/password/reset-confirm:
+    $ref: ./paths/auth.yaml#/authPasswordResetConfirm
+  /api/v1/auth/password/refresh:
+    $ref: ./paths/auth.yaml#/authPasswordRefresh
+  /api/v1/auth/password/pre-signup/verify-code:
+    $ref: ./paths/auth.yaml#/authPasswordPreSignupVerifyCode
+  /api/v1/auth/password/pre-signup/send-code:
+    $ref: ./paths/auth.yaml#/authPasswordPreSignupSendCode
+  /api/v1/auth/password/logout:
+    $ref: ./paths/auth.yaml#/authPasswordLogout
+  /api/v1/auth/password/login:
+    $ref: ./paths/auth.yaml#/authPasswordLogin
+  /api/v1/auth/password/account/recover:
+    $ref: ./paths/auth.yaml#/authPasswordAccountRecover
+  /api/v1/admin/users/{userId}/force-activate:
+    $ref: ./paths/admin.yaml#/adminUsersByUserIdForceActivate
+  /api/v1/admin/semesters/{year}/{semester}/members:
+    $ref: ./paths/admin.yaml#/adminSemestersByYearBySemesterMembers
+  /api/v1/admin/associates/{id}/reject:
+    $ref: ./paths/admin.yaml#/adminAssociatesByIdReject
+  /api/v1/admin/associates/{id}/approve:
+    $ref: ./paths/admin.yaml#/adminAssociatesByIdApprove
+  /api/v1/admin/associates/reject-batch:
+    $ref: ./paths/admin.yaml#/adminAssociatesRejectBatch
+  /api/v1/admin/associates/approve-batch:
+    $ref: ./paths/admin.yaml#/adminAssociatesApproveBatch
+  /api/v1/surveys/{surveyId}/questions/{questionId}:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdQuestionsByQuestionId
+  /api/v1/surveys/{surveyId}/questions/{questionId}/rows/{rowId}:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdQuestionsByQuestionIdRowsByRowId
+  /api/v1/surveys/{surveyId}/questions/{questionId}/options/{optionId}:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdQuestionsByQuestionIdOptionsByOptionId
+  /api/v1/mypage/student-id:
+    $ref: ./paths/mypage.yaml#/mypageStudentId
+  /api/v1/mypage/phone:
+    $ref: ./paths/mypage.yaml#/mypagePhone
+  /api/v1/mypage/password:
+    $ref: ./paths/mypage.yaml#/mypagePassword
+  /api/v1/admin/users/{userId}/info:
+    $ref: ./paths/admin.yaml#/adminUsersByUserIdInfo
+  /api/v1/admin/comment-reports/{reportId}:
+    $ref: ./paths/admin.yaml#/adminCommentReportsByReportId
+  /api/v1/users/me/likes:
+    $ref: ./paths/users.yaml#/usersMeLikes
+  /api/v1/users/me/bookmarks:
+    $ref: ./paths/users.yaml#/usersMeBookmarks
+  /api/v1/surveys/trash:
+    $ref: ./paths/surveys.yaml#/surveysTrash
+  /api/v1/storage/download-url:
+    $ref: ./paths/storage.yaml#/storageDownloadUrl
+  /api/v1/semesters:
+    $ref: ./paths/semesters.yaml#/semesters
+  /api/v1/semesters/{year}/{semester}/members:
+    $ref: ./paths/semesters.yaml#/semestersByYearBySemesterMembers
+  /api/v1/privacy/consent/needs-reconsent:
+    $ref: ./paths/privacy.yaml#/privacyConsentNeedsReconsent
+  /api/v1/privacy/consent/latest:
+    $ref: ./paths/privacy.yaml#/privacyConsentLatest
+  /api/v1/privacy/consent/history:
+    $ref: ./paths/privacy.yaml#/privacyConsentHistory
+  /api/v1/privacy/consent/check:
+    $ref: ./paths/privacy.yaml#/privacyConsentCheck
+  /api/v1/privacy/consent/check-version:
+    $ref: ./paths/privacy.yaml#/privacyConsentCheckVersion
+  /api/v1/posts/{postId}/likes/status:
+    $ref: ./paths/posts.yaml#/postsByPostIdLikesStatus
+  /api/v1/posts/{postId}/bookmarks/status:
+    $ref: ./paths/posts.yaml#/postsByPostIdBookmarksStatus
+  /api/v1/mypage/registrations:
+    $ref: ./paths/mypage.yaml#/mypageRegistrations
+  /api/v1/mypage/profile:
+    $ref: ./paths/mypage.yaml#/mypageProfile
+  /api/v1/mypage/posts:
+    $ref: ./paths/mypage.yaml#/mypagePosts
+  /api/v1/mypage/likes:
+    $ref: ./paths/mypage.yaml#/mypageLikes
+  /api/v1/mypage/comments:
+    $ref: ./paths/mypage.yaml#/mypageComments
+  /api/v1/mypage/bookmarks:
+    $ref: ./paths/mypage.yaml#/mypageBookmarks
+  /api/v1/my/registrations:
+    $ref: ./paths/events.yaml#/myRegistrations
+  /api/v1/inquiries:
+    $ref: ./paths/inquiries.yaml#/inquiries
+  /api/v1/inquiries/{id}:
+    $ref: ./paths/inquiries.yaml#/inquiriesById
+  /api/v1/inquiries/my:
+    $ref: ./paths/inquiries.yaml#/inquiriesMy
+  /api/v1/inquiries/my/{id}:
+    $ref: ./paths/inquiries.yaml#/inquiriesMyById
+  /api/v1/health:
+    $ref: ./paths/health.yaml#/health
+  /api/v1/boards:
+    $ref: ./paths/boards.yaml#/boards
+  /api/v1/boards/{code}:
+    $ref: ./paths/boards.yaml#/boardsByCode
+  /api/v1/boards/{boardCode}/posts/{postId}/view-stats:
+    $ref: ./paths/boards.yaml#/boardsByBoardCodePostsByPostIdViewStats
+  /api/v1/boards/{boardCode}/posts/{postId}/view-history:
+    $ref: ./paths/boards.yaml#/boardsByBoardCodePostsByPostIdViewHistory
+  /api/v1/auth/password/reset-validate:
+    $ref: ./paths/auth.yaml#/authPasswordResetValidate
+  /api/v1/auth/password/check-student-id:
+    $ref: ./paths/auth.yaml#/authPasswordCheckStudentId
+  /api/v1/auth/password/check-phone-number:
+    $ref: ./paths/auth.yaml#/authPasswordCheckPhoneNumber
+  /api/v1/auth/password/check-email:
+    $ref: ./paths/auth.yaml#/authPasswordCheckEmail
+  /api/v1/auth/password/account/reregistration-check:
+    $ref: ./paths/auth.yaml#/authPasswordAccountReregistrationCheck
+  /api/v1/auth/password/account/recovery-check:
+    $ref: ./paths/auth.yaml#/authPasswordAccountRecoveryCheck
+  /api/v1/admin/users:
+    $ref: ./paths/admin.yaml#/adminUsers
+  /api/v1/admin/users/{userId}:
+    $ref: ./paths/admin.yaml#/adminUsersByUserId
+  /api/v1/admin/users/role-histories:
+    $ref: ./paths/admin.yaml#/adminUsersRoleHistories
+  /api/v1/admin/semesters/{year}/{semester}/candidates:
+    $ref: ./paths/admin.yaml#/adminSemestersByYearBySemesterCandidates
+  /api/v1/admin/login-histories:
+    $ref: ./paths/admin.yaml#/adminLoginHistories
+  /api/v1/admin/dashboard:
+    $ref: ./paths/admin.yaml#/adminDashboard
+  /api/v1/admin/comment-reports:
+    $ref: ./paths/admin.yaml#/adminCommentReports
+  /api/v1/admin/associates/rejected:
+    $ref: ./paths/admin.yaml#/adminAssociatesRejected
+  /api/v1/admin/associates/pending:
+    $ref: ./paths/admin.yaml#/adminAssociatesPending
+  /api/v1/admin/associates/demoted:
+    $ref: ./paths/admin.yaml#/adminAssociatesDemoted
+  /api/v1/admin/account-status-histories:
+    $ref: ./paths/admin.yaml#/adminAccountStatusHistories
+  /api/v1/storage:
+    $ref: ./paths/storage.yaml#/storage
+  /api/v1/posts/{postId}/comments/{commentId}:
+    $ref: ./paths/posts.yaml#/postsByPostIdCommentsByCommentId
+  /api/v1/pinned-posts/{id}:
+    $ref: ./paths/pinned-posts.yaml#/pinnedPostsById
+  /api/v1/mypage/account:
+    $ref: ./paths/mypage.yaml#/mypageAccount
+components:
+  securitySchemes:
+    BearerAuthentication:
+      type: http
+      description: |
+        JWT Access Token을 입력하세요.
+
+        형식: Bearer {token} (Bearer 접두사는 자동으로 추가됩니다)
+
+        예시: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+      scheme: bearer
+      bearerFormat: JWT

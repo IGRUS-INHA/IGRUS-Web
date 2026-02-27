@@ -1,0 +1,294 @@
+UpdatePostRequest:
+  type: object
+  properties:
+    title:
+      type: string
+      maxLength: 100
+      minLength: 0
+    content:
+      type: string
+      minLength: 1
+    isQuestion:
+      type: boolean
+    isVisibleToAssociate:
+      type: boolean
+    imageUrls:
+      type: array
+      items:
+        type: string
+      maxItems: 5
+      minItems: 0
+  required:
+  - content
+  - title
+PostUpdateResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      format: int64
+    boardCode:
+      type: string
+    title:
+      type: string
+    updatedAt:
+      type: string
+      format: date-time
+CreatePostRequest:
+  type: object
+  properties:
+    title:
+      type: string
+      maxLength: 100
+      minLength: 0
+    content:
+      type: string
+      minLength: 1
+    isAnonymous:
+      type: boolean
+    isQuestion:
+      type: boolean
+    isVisibleToAssociate:
+      type: boolean
+    imageUrls:
+      type: array
+      items:
+        type: string
+      maxItems: 5
+      minItems: 0
+  required:
+  - content
+  - title
+PostCreateResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      format: int64
+    boardCode:
+      type: string
+    title:
+      type: string
+    createdAt:
+      type: string
+      format: date-time
+BoardListResponse:
+  type: object
+  description: 게시판 목록 응답
+  properties:
+    code:
+      type: string
+      description: 게시판 코드
+      example: GENERAL
+    name:
+      type: string
+      description: 게시판 이름
+      example: 자유게시판
+    description:
+      type: string
+      description: 게시판 설명
+      example: 자유롭게 이야기를 나눌 수 있는 공간입니다.
+    canRead:
+      type: boolean
+      description: 읽기 권한 여부
+      example: true
+    canWrite:
+      type: boolean
+      description: 쓰기 권한 여부
+      example: true
+BoardDetailResponse:
+  type: object
+  description: 게시판 상세 응답
+  properties:
+    code:
+      type: string
+      description: 게시판 코드
+      example: GENERAL
+    name:
+      type: string
+      description: 게시판 이름
+      example: 자유게시판
+    description:
+      type: string
+      description: 게시판 설명
+      example: 자유롭게 이야기를 나눌 수 있는 공간입니다.
+    allowsAnonymous:
+      type: boolean
+      description: 익명 작성 허용 여부
+      example: true
+    allowsQuestionTag:
+      type: boolean
+      description: 질문 태그 허용 여부
+      example: true
+    canRead:
+      type: boolean
+      description: 읽기 권한 여부
+      example: true
+    canWrite:
+      type: boolean
+      description: 쓰기 권한 여부
+      example: true
+PostListPageResponse:
+  type: object
+  description: 게시글 목록 페이징 응답
+  properties:
+    posts:
+      type: array
+      description: 게시글 목록
+      items:
+        $ref: '#/PostListResponse'
+    totalElements:
+      type: integer
+      format: int64
+      description: 전체 요소 수
+      example: 100
+    totalPages:
+      type: integer
+      format: int32
+      description: 전체 페이지 수
+      example: 5
+    currentPage:
+      type: integer
+      format: int32
+      description: 현재 페이지 번호 (0부터 시작)
+      example: 0
+    hasNext:
+      type: boolean
+      description: 다음 페이지 존재 여부
+      example: true
+PostDetailResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      format: int64
+    boardCode:
+      type: string
+    title:
+      type: string
+    content:
+      type: string
+    authorId:
+      type: integer
+      format: int64
+    authorName:
+      type: string
+    isAnonymous:
+      type: boolean
+    isQuestion:
+      type: boolean
+    isVisibleToAssociate:
+      type: boolean
+    viewCount:
+      type: integer
+      format: int32
+    likeCount:
+      type: integer
+      format: int32
+    bookmarkCount:
+      type: integer
+      format: int32
+    commentCount:
+      type: integer
+      format: int32
+    imageUrls:
+      type: array
+      items:
+        type: string
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+    isAuthor:
+      type: boolean
+    liked:
+      type: boolean
+    bookmarked:
+      type: boolean
+PostViewStatsResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      format: int64
+    totalViews:
+      type: integer
+      format: int64
+    uniqueViewers:
+      type: integer
+      format: int64
+PostViewHistoryPageResponse:
+  type: object
+  description: 게시글 조회 기록 페이징 응답
+  properties:
+    viewHistory:
+      type: array
+      description: 조회 기록 목록
+      items:
+        $ref: '#/PostViewHistoryResponse'
+    totalElements:
+      type: integer
+      format: int64
+      description: 전체 요소 수
+      example: 100
+    totalPages:
+      type: integer
+      format: int32
+      description: 전체 페이지 수
+      example: 5
+    currentPage:
+      type: integer
+      format: int32
+      description: 현재 페이지 번호 (0부터 시작)
+      example: 0
+    hasNext:
+      type: boolean
+      description: 다음 페이지 존재 여부
+      example: true
+PostListResponse:
+  type: object
+  properties:
+    postId:
+      type: integer
+      format: int64
+    title:
+      type: string
+    authorName:
+      type: string
+    isAnonymous:
+      type: boolean
+    isQuestion:
+      type: boolean
+    isVisibleToAssociate:
+      type: boolean
+    viewCount:
+      type: integer
+      format: int32
+    likeCount:
+      type: integer
+      format: int32
+    commentCount:
+      type: integer
+      format: int32
+    bookmarkCount:
+      type: integer
+      format: int32
+    createdAt:
+      type: string
+      format: date-time
+PostViewHistoryResponse:
+  type: object
+  properties:
+    viewId:
+      type: integer
+      format: int64
+    viewerId:
+      type: integer
+      format: int64
+    viewerName:
+      type: string
+    viewedAt:
+      type: string
+      format: date-time

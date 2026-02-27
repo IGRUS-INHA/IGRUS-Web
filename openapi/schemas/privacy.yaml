@@ -1,0 +1,54 @@
+ConsentCheckResponse:
+  type: object
+  description: 동의 확인 응답
+  properties:
+    result:
+      type: boolean
+      description: 확인 결과
+      example: true
+PrivacyConsentResponse:
+  type: object
+  description: 개인정보 동의 응답
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: 동의 ID
+      example: 1
+    userId:
+      type: integer
+      format: int64
+      description: 사용자 ID
+      example: 1
+    consentGiven:
+      type: boolean
+      description: 동의 여부
+      example: true
+    consentDate:
+      type: string
+      format: date-time
+      description: 동의 일시
+      example: '2024-01-15T10:30:00Z'
+    policyVersion:
+      type: string
+      description: 동의한 개인정보 처리방침 버전
+      example: 1.0
+PrivacyConsentHistoryResponse:
+  type: object
+  description: 개인정보 동의 이력 응답
+  properties:
+    userId:
+      type: integer
+      format: int64
+      description: 사용자 ID
+      example: 1
+    consents:
+      type: array
+      description: 동의 이력 목록 (최신순)
+      items:
+        $ref: '#/PrivacyConsentResponse'
+    totalCount:
+      type: integer
+      format: int32
+      description: 총 동의 횟수
+      example: 3

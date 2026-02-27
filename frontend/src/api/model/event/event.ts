@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: acd4c9c
+ * OpenAPI spec version: ec724ff
  */
 import {
   useMutation,
@@ -53,13 +53,44 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CreateEventRequest,
-  EventCreateResponse,
-  EventDetailResponse,
-  EventListResponse,
+  CancelEvent200,
+  CancelEvent400,
+  CancelEvent401,
+  CancelEvent403,
+  CancelEventBody,
+  CloseEvent200,
+  CloseEvent400,
+  CloseEvent401,
+  CloseEvent403,
+  CloseEventBody,
+  CreateEvent201,
+  CreateEvent400,
+  CreateEvent401,
+  CreateEvent403,
+  CreateEventBody,
+  GetEvent200,
+  GetEvent401,
+  GetEvent403,
+  GetEvent404,
+  GetEventList200Item,
+  GetEventList401Item,
   GetEventListParams,
-  ReopenRegistrationRequest,
-  UpdateEventRequest
+  ReactivateEvent200,
+  ReactivateEvent400,
+  ReactivateEvent401,
+  ReactivateEvent403,
+  ReactivateEventBody,
+  ReopenRegistration200,
+  ReopenRegistration400,
+  ReopenRegistration401,
+  ReopenRegistration403,
+  ReopenRegistrationBody,
+  UpdateEvent200,
+  UpdateEvent400,
+  UpdateEvent401,
+  UpdateEvent403,
+  UpdateEvent404,
+  UpdateEventBody
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -74,22 +105,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 행사 상세 조회
  */
 export type getEventResponse200 = {
-  data: EventDetailResponse
+  data: GetEvent200
   status: 200
 }
 
 export type getEventResponse401 = {
-  data: EventDetailResponse
+  data: GetEvent401
   status: 401
 }
 
 export type getEventResponse403 = {
-  data: EventDetailResponse
+  data: GetEvent403
   status: 403
 }
 
 export type getEventResponse404 = {
-  data: EventDetailResponse
+  data: GetEvent404
   status: 404
 }
     
@@ -132,7 +163,7 @@ export const getGetEventQueryKey = (eventId: number,) => {
     }
 
     
-export const getGetEventQueryOptions = <TData = Awaited<ReturnType<typeof getEvent>>, TError = EventDetailResponse>(eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetEventQueryOptions = <TData = Awaited<ReturnType<typeof getEvent>>, TError = GetEvent401 | GetEvent403 | GetEvent404>(eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -151,10 +182,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetEventQueryResult = NonNullable<Awaited<ReturnType<typeof getEvent>>>
-export type GetEventQueryError = EventDetailResponse
+export type GetEventQueryError = GetEvent401 | GetEvent403 | GetEvent404
 
 
-export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError = EventDetailResponse>(
+export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError = GetEvent401 | GetEvent403 | GetEvent404>(
  eventId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEvent>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEvent>>,
@@ -164,7 +195,7 @@ export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError = EventDetailResponse>(
+export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError = GetEvent401 | GetEvent403 | GetEvent404>(
  eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEvent>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEvent>>,
@@ -174,7 +205,7 @@ export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError = EventDetailResponse>(
+export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError = GetEvent401 | GetEvent403 | GetEvent404>(
  eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -182,7 +213,7 @@ export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError
  * @summary 행사 상세 조회
  */
 
-export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError = EventDetailResponse>(
+export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError = GetEvent401 | GetEvent403 | GetEvent404>(
  eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -202,27 +233,27 @@ export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError
  * @summary 행사 수정
  */
 export type updateEventResponse200 = {
-  data: EventDetailResponse
+  data: UpdateEvent200
   status: 200
 }
 
 export type updateEventResponse400 = {
-  data: EventDetailResponse
+  data: UpdateEvent400
   status: 400
 }
 
 export type updateEventResponse401 = {
-  data: EventDetailResponse
+  data: UpdateEvent401
   status: 401
 }
 
 export type updateEventResponse403 = {
-  data: EventDetailResponse
+  data: UpdateEvent403
   status: 403
 }
 
 export type updateEventResponse404 = {
-  data: EventDetailResponse
+  data: UpdateEvent404
   status: 404
 }
     
@@ -244,7 +275,7 @@ export const getUpdateEventUrl = (eventId: number,) => {
 }
 
 export const updateEvent = async (eventId: number,
-    updateEventRequest: UpdateEventRequest, options?: RequestInit): Promise<updateEventResponse> => {
+    updateEventBody: UpdateEventBody, options?: RequestInit): Promise<updateEventResponse> => {
   
   return customFetch<updateEventResponse>(getUpdateEventUrl(eventId),
   {      
@@ -252,16 +283,16 @@ export const updateEvent = async (eventId: number,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      updateEventRequest,)
+      updateEventBody,)
   }
 );}
 
 
 
 
-export const getUpdateEventMutationOptions = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{eventId: number;data: UpdateEventRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{eventId: number;data: UpdateEventRequest}, TContext> => {
+export const getUpdateEventMutationOptions = <TError = UpdateEvent400 | UpdateEvent401 | UpdateEvent403 | UpdateEvent404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{eventId: number;data: UpdateEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{eventId: number;data: UpdateEventBody}, TContext> => {
 
 const mutationKey = ['updateEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -273,7 +304,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateEvent>>, {eventId: number;data: UpdateEventRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateEvent>>, {eventId: number;data: UpdateEventBody}> = (props) => {
           const {eventId,data} = props ?? {};
 
           return  updateEvent(eventId,data,requestOptions)
@@ -287,18 +318,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateEventMutationResult = NonNullable<Awaited<ReturnType<typeof updateEvent>>>
-    export type UpdateEventMutationBody = UpdateEventRequest
-    export type UpdateEventMutationError = EventDetailResponse
+    export type UpdateEventMutationBody = UpdateEventBody
+    export type UpdateEventMutationError = UpdateEvent400 | UpdateEvent401 | UpdateEvent403 | UpdateEvent404
 
     /**
  * @summary 행사 수정
  */
-export const useUpdateEvent = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{eventId: number;data: UpdateEventRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdateEvent = <TError = UpdateEvent400 | UpdateEvent401 | UpdateEvent403 | UpdateEvent404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{eventId: number;data: UpdateEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateEvent>>,
         TError,
-        {eventId: number;data: UpdateEventRequest},
+        {eventId: number;data: UpdateEventBody},
         TContext
       > => {
       return useMutation(getUpdateEventMutationOptions(options), queryClient);
@@ -407,12 +438,12 @@ export const useDeleteEvent = <TError = void,
  * @summary 행사 목록 조회
  */
 export type getEventListResponse200 = {
-  data: EventListResponse[]
+  data: GetEventList200Item[]
   status: 200
 }
 
 export type getEventListResponse401 = {
-  data: EventListResponse[]
+  data: GetEventList401Item[]
   status: 401
 }
     
@@ -462,7 +493,7 @@ export const getGetEventListQueryKey = (params?: GetEventListParams,) => {
     }
 
     
-export const getGetEventListQueryOptions = <TData = Awaited<ReturnType<typeof getEventList>>, TError = EventListResponse[]>(params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetEventListQueryOptions = <TData = Awaited<ReturnType<typeof getEventList>>, TError = GetEventList401Item[]>(params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -481,10 +512,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetEventListQueryResult = NonNullable<Awaited<ReturnType<typeof getEventList>>>
-export type GetEventListQueryError = EventListResponse[]
+export type GetEventListQueryError = GetEventList401Item[]
 
 
-export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = EventListResponse[]>(
+export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = GetEventList401Item[]>(
  params: undefined |  GetEventListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventList>>,
@@ -494,7 +525,7 @@ export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = EventListResponse[]>(
+export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = GetEventList401Item[]>(
  params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventList>>,
@@ -504,7 +535,7 @@ export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = EventListResponse[]>(
+export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = GetEventList401Item[]>(
  params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -512,7 +543,7 @@ export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>
  * @summary 행사 목록 조회
  */
 
-export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = EventListResponse[]>(
+export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = GetEventList401Item[]>(
  params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -532,22 +563,22 @@ export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>
  * @summary 행사 생성
  */
 export type createEventResponse201 = {
-  data: EventCreateResponse
+  data: CreateEvent201
   status: 201
 }
 
 export type createEventResponse400 = {
-  data: EventCreateResponse
+  data: CreateEvent400
   status: 400
 }
 
 export type createEventResponse401 = {
-  data: EventCreateResponse
+  data: CreateEvent401
   status: 401
 }
 
 export type createEventResponse403 = {
-  data: EventCreateResponse
+  data: CreateEvent403
   status: 403
 }
     
@@ -568,7 +599,7 @@ export const getCreateEventUrl = () => {
   return `/api/v1/events`
 }
 
-export const createEvent = async (createEventRequest: CreateEventRequest, options?: RequestInit): Promise<createEventResponse> => {
+export const createEvent = async (createEventBody: CreateEventBody, options?: RequestInit): Promise<createEventResponse> => {
   
   return customFetch<createEventResponse>(getCreateEventUrl(),
   {      
@@ -576,16 +607,16 @@ export const createEvent = async (createEventRequest: CreateEventRequest, option
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createEventRequest,)
+      createEventBody,)
   }
 );}
 
 
 
 
-export const getCreateEventMutationOptions = <TError = EventCreateResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: CreateEventRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: CreateEventRequest}, TContext> => {
+export const getCreateEventMutationOptions = <TError = CreateEvent400 | CreateEvent401 | CreateEvent403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: CreateEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: CreateEventBody}, TContext> => {
 
 const mutationKey = ['createEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -597,7 +628,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createEvent>>, {data: CreateEventRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createEvent>>, {data: CreateEventBody}> = (props) => {
           const {data} = props ?? {};
 
           return  createEvent(data,requestOptions)
@@ -611,18 +642,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateEventMutationResult = NonNullable<Awaited<ReturnType<typeof createEvent>>>
-    export type CreateEventMutationBody = CreateEventRequest
-    export type CreateEventMutationError = EventCreateResponse
+    export type CreateEventMutationBody = CreateEventBody
+    export type CreateEventMutationError = CreateEvent400 | CreateEvent401 | CreateEvent403
 
     /**
  * @summary 행사 생성
  */
-export const useCreateEvent = <TError = EventCreateResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: CreateEventRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateEvent = <TError = CreateEvent400 | CreateEvent401 | CreateEvent403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: CreateEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createEvent>>,
         TError,
-        {data: CreateEventRequest},
+        {data: CreateEventBody},
         TContext
       > => {
       return useMutation(getCreateEventMutationOptions(options), queryClient);
@@ -632,22 +663,22 @@ export const useCreateEvent = <TError = EventCreateResponse,
  * @summary 등록 수동 재오픈
  */
 export type reopenRegistrationResponse200 = {
-  data: EventDetailResponse
+  data: ReopenRegistration200
   status: 200
 }
 
 export type reopenRegistrationResponse400 = {
-  data: EventDetailResponse
+  data: ReopenRegistration400
   status: 400
 }
 
 export type reopenRegistrationResponse401 = {
-  data: EventDetailResponse
+  data: ReopenRegistration401
   status: 401
 }
 
 export type reopenRegistrationResponse403 = {
-  data: EventDetailResponse
+  data: ReopenRegistration403
   status: 403
 }
     
@@ -669,7 +700,7 @@ export const getReopenRegistrationUrl = (eventId: number,) => {
 }
 
 export const reopenRegistration = async (eventId: number,
-    reopenRegistrationRequest: ReopenRegistrationRequest, options?: RequestInit): Promise<reopenRegistrationResponse> => {
+    reopenRegistrationBody: ReopenRegistrationBody, options?: RequestInit): Promise<reopenRegistrationResponse> => {
   
   return customFetch<reopenRegistrationResponse>(getReopenRegistrationUrl(eventId),
   {      
@@ -677,16 +708,16 @@ export const reopenRegistration = async (eventId: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      reopenRegistrationRequest,)
+      reopenRegistrationBody,)
   }
 );}
 
 
 
 
-export const getReopenRegistrationMutationOptions = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: ReopenRegistrationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: ReopenRegistrationRequest}, TContext> => {
+export const getReopenRegistrationMutationOptions = <TError = ReopenRegistration400 | ReopenRegistration401 | ReopenRegistration403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: ReopenRegistrationBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: ReopenRegistrationBody}, TContext> => {
 
 const mutationKey = ['reopenRegistration'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -698,7 +729,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenRegistration>>, {eventId: number;data: ReopenRegistrationRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenRegistration>>, {eventId: number;data: ReopenRegistrationBody}> = (props) => {
           const {eventId,data} = props ?? {};
 
           return  reopenRegistration(eventId,data,requestOptions)
@@ -712,43 +743,43 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReopenRegistrationMutationResult = NonNullable<Awaited<ReturnType<typeof reopenRegistration>>>
-    export type ReopenRegistrationMutationBody = ReopenRegistrationRequest
-    export type ReopenRegistrationMutationError = EventDetailResponse
+    export type ReopenRegistrationMutationBody = ReopenRegistrationBody
+    export type ReopenRegistrationMutationError = ReopenRegistration400 | ReopenRegistration401 | ReopenRegistration403
 
     /**
  * @summary 등록 수동 재오픈
  */
-export const useReopenRegistration = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: ReopenRegistrationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useReopenRegistration = <TError = ReopenRegistration400 | ReopenRegistration401 | ReopenRegistration403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenRegistration>>, TError,{eventId: number;data: ReopenRegistrationBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof reopenRegistration>>,
         TError,
-        {eventId: number;data: ReopenRegistrationRequest},
+        {eventId: number;data: ReopenRegistrationBody},
         TContext
       > => {
       return useMutation(getReopenRegistrationMutationOptions(options), queryClient);
     }
     /**
- * 취소된 행사를 재활성화합니다. 운영진 이상만 가능합니다.
+ * 취소된 행사를 재활성화합니다. 운영진 이상만 가능합니다. 사유 필수.
  * @summary 행사 재활성화
  */
 export type reactivateEventResponse200 = {
-  data: EventDetailResponse
+  data: ReactivateEvent200
   status: 200
 }
 
 export type reactivateEventResponse400 = {
-  data: EventDetailResponse
+  data: ReactivateEvent400
   status: 400
 }
 
 export type reactivateEventResponse401 = {
-  data: EventDetailResponse
+  data: ReactivateEvent401
   status: 401
 }
 
 export type reactivateEventResponse403 = {
-  data: EventDetailResponse
+  data: ReactivateEvent403
   status: 403
 }
     
@@ -769,23 +800,25 @@ export const getReactivateEventUrl = (eventId: number,) => {
   return `/api/v1/events/${eventId}/reactivate`
 }
 
-export const reactivateEvent = async (eventId: number, options?: RequestInit): Promise<reactivateEventResponse> => {
+export const reactivateEvent = async (eventId: number,
+    reactivateEventBody: ReactivateEventBody, options?: RequestInit): Promise<reactivateEventResponse> => {
   
   return customFetch<reactivateEventResponse>(getReactivateEventUrl(eventId),
   {      
     ...options,
-    method: 'POST'
-    
-    
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      reactivateEventBody,)
   }
 );}
 
 
 
 
-export const getReactivateEventMutationOptions = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number}, TContext> => {
+export const getReactivateEventMutationOptions = <TError = ReactivateEvent400 | ReactivateEvent401 | ReactivateEvent403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number;data: ReactivateEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number;data: ReactivateEventBody}, TContext> => {
 
 const mutationKey = ['reactivateEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -797,10 +830,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reactivateEvent>>, {eventId: number}> = (props) => {
-          const {eventId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reactivateEvent>>, {eventId: number;data: ReactivateEventBody}> = (props) => {
+          const {eventId,data} = props ?? {};
 
-          return  reactivateEvent(eventId,requestOptions)
+          return  reactivateEvent(eventId,data,requestOptions)
         }
 
 
@@ -811,43 +844,43 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReactivateEventMutationResult = NonNullable<Awaited<ReturnType<typeof reactivateEvent>>>
-    
-    export type ReactivateEventMutationError = EventDetailResponse
+    export type ReactivateEventMutationBody = ReactivateEventBody
+    export type ReactivateEventMutationError = ReactivateEvent400 | ReactivateEvent401 | ReactivateEvent403
 
     /**
  * @summary 행사 재활성화
  */
-export const useReactivateEvent = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useReactivateEvent = <TError = ReactivateEvent400 | ReactivateEvent401 | ReactivateEvent403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactivateEvent>>, TError,{eventId: number;data: ReactivateEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof reactivateEvent>>,
         TError,
-        {eventId: number},
+        {eventId: number;data: ReactivateEventBody},
         TContext
       > => {
       return useMutation(getReactivateEventMutationOptions(options), queryClient);
     }
     /**
- * 행사 등록을 수동으로 마감합니다. 운영진 이상만 가능합니다.
+ * 행사 등록을 수동으로 마감합니다. 운영진 이상만 가능합니다. 사유 필수.
  * @summary 등록 수동 마감
  */
 export type closeEventResponse200 = {
-  data: EventDetailResponse
+  data: CloseEvent200
   status: 200
 }
 
 export type closeEventResponse400 = {
-  data: EventDetailResponse
+  data: CloseEvent400
   status: 400
 }
 
 export type closeEventResponse401 = {
-  data: EventDetailResponse
+  data: CloseEvent401
   status: 401
 }
 
 export type closeEventResponse403 = {
-  data: EventDetailResponse
+  data: CloseEvent403
   status: 403
 }
     
@@ -868,23 +901,25 @@ export const getCloseEventUrl = (eventId: number,) => {
   return `/api/v1/events/${eventId}/close`
 }
 
-export const closeEvent = async (eventId: number, options?: RequestInit): Promise<closeEventResponse> => {
+export const closeEvent = async (eventId: number,
+    closeEventBody: CloseEventBody, options?: RequestInit): Promise<closeEventResponse> => {
   
   return customFetch<closeEventResponse>(getCloseEventUrl(eventId),
   {      
     ...options,
-    method: 'POST'
-    
-    
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      closeEventBody,)
   }
 );}
 
 
 
 
-export const getCloseEventMutationOptions = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number}, TContext> => {
+export const getCloseEventMutationOptions = <TError = CloseEvent400 | CloseEvent401 | CloseEvent403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number;data: CloseEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number;data: CloseEventBody}, TContext> => {
 
 const mutationKey = ['closeEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -896,10 +931,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof closeEvent>>, {eventId: number}> = (props) => {
-          const {eventId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof closeEvent>>, {eventId: number;data: CloseEventBody}> = (props) => {
+          const {eventId,data} = props ?? {};
 
-          return  closeEvent(eventId,requestOptions)
+          return  closeEvent(eventId,data,requestOptions)
         }
 
 
@@ -910,43 +945,43 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CloseEventMutationResult = NonNullable<Awaited<ReturnType<typeof closeEvent>>>
-    
-    export type CloseEventMutationError = EventDetailResponse
+    export type CloseEventMutationBody = CloseEventBody
+    export type CloseEventMutationError = CloseEvent400 | CloseEvent401 | CloseEvent403
 
     /**
  * @summary 등록 수동 마감
  */
-export const useCloseEvent = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCloseEvent = <TError = CloseEvent400 | CloseEvent401 | CloseEvent403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeEvent>>, TError,{eventId: number;data: CloseEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof closeEvent>>,
         TError,
-        {eventId: number},
+        {eventId: number;data: CloseEventBody},
         TContext
       > => {
       return useMutation(getCloseEventMutationOptions(options), queryClient);
     }
     /**
- * 행사를 취소합니다. 운영진 이상만 가능합니다.
+ * 행사를 취소합니다. 운영진 이상만 가능합니다. 사유 필수.
  * @summary 행사 취소
  */
 export type cancelEventResponse200 = {
-  data: EventDetailResponse
+  data: CancelEvent200
   status: 200
 }
 
 export type cancelEventResponse400 = {
-  data: EventDetailResponse
+  data: CancelEvent400
   status: 400
 }
 
 export type cancelEventResponse401 = {
-  data: EventDetailResponse
+  data: CancelEvent401
   status: 401
 }
 
 export type cancelEventResponse403 = {
-  data: EventDetailResponse
+  data: CancelEvent403
   status: 403
 }
     
@@ -967,23 +1002,25 @@ export const getCancelEventUrl = (eventId: number,) => {
   return `/api/v1/events/${eventId}/cancel`
 }
 
-export const cancelEvent = async (eventId: number, options?: RequestInit): Promise<cancelEventResponse> => {
+export const cancelEvent = async (eventId: number,
+    cancelEventBody: CancelEventBody, options?: RequestInit): Promise<cancelEventResponse> => {
   
   return customFetch<cancelEventResponse>(getCancelEventUrl(eventId),
   {      
     ...options,
-    method: 'POST'
-    
-    
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      cancelEventBody,)
   }
 );}
 
 
 
 
-export const getCancelEventMutationOptions = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number}, TContext> => {
+export const getCancelEventMutationOptions = <TError = CancelEvent400 | CancelEvent401 | CancelEvent403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number;data: CancelEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number;data: CancelEventBody}, TContext> => {
 
 const mutationKey = ['cancelEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -995,10 +1032,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelEvent>>, {eventId: number}> = (props) => {
-          const {eventId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelEvent>>, {eventId: number;data: CancelEventBody}> = (props) => {
+          const {eventId,data} = props ?? {};
 
-          return  cancelEvent(eventId,requestOptions)
+          return  cancelEvent(eventId,data,requestOptions)
         }
 
 
@@ -1009,18 +1046,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CancelEventMutationResult = NonNullable<Awaited<ReturnType<typeof cancelEvent>>>
-    
-    export type CancelEventMutationError = EventDetailResponse
+    export type CancelEventMutationBody = CancelEventBody
+    export type CancelEventMutationError = CancelEvent400 | CancelEvent401 | CancelEvent403
 
     /**
  * @summary 행사 취소
  */
-export const useCancelEvent = <TError = EventDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCancelEvent = <TError = CancelEvent400 | CancelEvent401 | CancelEvent403,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelEvent>>, TError,{eventId: number;data: CancelEventBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof cancelEvent>>,
         TError,
-        {eventId: number},
+        {eventId: number;data: CancelEventBody},
         TContext
       > => {
       return useMutation(getCancelEventMutationOptions(options), queryClient);
