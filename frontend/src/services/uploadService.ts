@@ -1,37 +1,49 @@
-import type { PresignedUrlResponse } from '@/types/upload';
+import { createUploadUrl, confirmUpload, createDownloadUrl } from '@/api/model/storage/storage';
+
+/** 업로드 용도 상수 */
+export const UPLOAD_PURPOSE = {
+  POST_IMAGE: 'POST_IMAGE',
+  INQUIRY_ATTACHMENT: 'INQUIRY_ATTACHMENT',
+} as const;
 
 /**
- * 백엔드에서 presigned URL을 발급받는다.
- *
- * TODO: 백엔드 엔드포인트 추가 시 이 함수만 Orval 호출로 교체하면 됨.
- * 예상 엔드포인트: POST /api/v1/uploads/presigned-url
- * 예상 요청: { fileName: string, contentType: string }
- * 예상 응답: { uploadUrl: string, fileUrl: string }
+ * 백엔드에서 presigned upload URL을 발급받는다.
+ * Mock 모드: VITE_MOCK_UPLOAD_URL 설정 시 stub 동작.
  */
-export async function getPresignedUrl(
-  fileName: string,
-  _contentType: string,
-): Promise<PresignedUrlResponse> {
+export async function getPresignedUploadUrl(
+  file: File,
+  purpose: string,
+): Promise<{ presignedUrl: string; objectKey: string }> {
   const mockUploadUrl = import.meta.env.VITE_MOCK_UPLOAD_URL;
 
   if (mockUploadUrl) {
-    const fileKey = `uploads/${Date.now()}-${fileName}`;
+    const objectKey = `uploads/${Date.now()}-${file.name}`;
     return {
-      uploadUrl: `${mockUploadUrl}/${fileKey}`,
-      fileUrl: `${mockUploadUrl}/${fileKey}`,
+      presignedUrl: `${mockUploadUrl}/${objectKey}`,
+      objectKey,
     };
   }
 
-  throw new Error(
-    'Presigned URL 엔드포인트가 아직 준비되지 않았습니다. ' +
-      '개발 테스트를 위해 VITE_MOCK_UPLOAD_URL 환경변수를 설정하세요.',
-  );
+  const response = await createUploadUrl({
+    fileName: file.name,
+    contentType: file.type,
+    fileSize: file.size,
+    purpose,
+  });
+
+  if (response.status !== 200 || !response.data.presignedUrl || !response.data.objectKey) {
+    throw new Error('Presigned URL 발급에 실패했습니다');
+  }
+
+  return {
+    presignedUrl: response.data.presignedUrl,
+    objectKey: response.data.objectKey,
+  };
 }
 
 /**
  * Presigned URL을 사용하여 S3에 직접 업로드한다.
  * fetch는 upload progress를 지원하지 않으므로 XMLHttpRequest 사용.
- * CLAUDE.md: fetch는 외부 API에서만 허용 — S3는 외부이므로 OK.
  */
 export function uploadFileToS3(
   presignedUrl: string,
@@ -64,4 +76,39 @@ export function uploadFileToS3(
 
     xhr.send(file);
   });
+}
+
+/**
+ * S3 업로드 완료 후 백엔드에 확인 요청.
+ * Mock 모드: skip (바로 반환).
+ */
+export async function confirmS3Upload(objectKey: string): Promise<void> {
+  const mockUploadUrl = import.meta.env.VITE_MOCK_UPLOAD_URL;
+  if (mockUploadUrl) return;
+
+  const response = await confirmUpload({ objectKey });
+
+  if (response.status !== 200) {
+    throw new Error(
+      `업로드 확인 실패: ${response.data.reason ?? `HTTP ${response.status}`}`,
+    );
+  }
+}
+
+/**
+ * objectKey로 presigned download URL을 발급받는다.
+ */
+export async function getImageDownloadUrl(objectKey: string): Promise<string> {
+  const mockUploadUrl = import.meta.env.VITE_MOCK_UPLOAD_URL;
+  if (mockUploadUrl) {
+    return `${mockUploadUrl}/${objectKey}`;
+  }
+
+  const response = await createDownloadUrl({ objectKey });
+
+  if (response.status !== 200 || !response.data.presignedUrl) {
+    throw new Error('다운로드 URL 발급에 실패했습니다');
+  }
+
+  return response.data.presignedUrl;
 }

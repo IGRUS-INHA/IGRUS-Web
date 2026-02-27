@@ -15,6 +15,7 @@ import { CreateMemberInquiryRequestType } from '@/api/model/models/createMemberI
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { useToast } from '@/hooks/useToast';
 import { INQUIRY_ATTACHMENT_CONFIG } from '@/utils/upload';
+import { getImageDownloadUrl, UPLOAD_PURPOSE } from '@/services/uploadService';
 import { cn } from '@/lib/utils';
 
 const TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -54,6 +55,7 @@ export default function InquiryForm({
 
   const { files, isUploading, addFiles, removeFile, uploadAll } = useImageUpload({
     config: INQUIRY_ATTACHMENT_CONFIG,
+    purpose: UPLOAD_PURPOSE.INQUIRY_ATTACHMENT,
     onValidationError: (errors) => {
       errors.forEach((msg) => toast.error(msg));
     },
@@ -63,6 +65,17 @@ export default function InquiryForm({
     e.preventDefault();
 
     const uploadResults = await uploadAll();
+
+    // objectKey → presigned download URL 변환 (AttachmentInfo.fileUrl은 https:// 필요)
+    const attachments = uploadResults.length > 0
+      ? await Promise.all(
+          uploadResults.map(async (r) => ({
+            fileUrl: await getImageDownloadUrl(r.objectKey),
+            fileName: r.fileName,
+            fileSize: r.fileSize,
+          })),
+        )
+      : undefined;
 
     const formData = new FormData(e.currentTarget);
     onSubmit?.({
@@ -74,13 +87,7 @@ export default function InquiryForm({
         name: formData.get('name') as string,
         password: formData.get('password') as string,
       }),
-      ...(uploadResults.length > 0 && {
-        attachments: uploadResults.map((r) => ({
-          fileUrl: r.fileUrl,
-          fileName: r.fileName,
-          fileSize: r.fileSize,
-        })),
-      }),
+      ...(attachments && { attachments }),
     });
   };
 

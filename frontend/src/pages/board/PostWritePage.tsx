@@ -93,7 +93,7 @@ export default function PostWritePage() {
   const onSubmit = async (data: PostFormData) => {
     // 업로드 대기 중인 파일이 있으면 먼저 업로드
     const uploadResults = await uploadAll();
-    const imageUrls = uploadResults.map((r) => r.fileUrl);
+    const imageUrls = uploadResults.map((r) => r.objectKey);
 
     createPost.mutate(
       {

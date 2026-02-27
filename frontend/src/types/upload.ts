@@ -20,8 +20,8 @@ export interface UploadFile {
   status: UploadStatus;
   /** 업로드 진행률 0-100 */
   progress: number;
-  /** 업로드 완료 후 S3 URL */
-  uploadedUrl?: string;
+  /** 업로드 완료 후 S3 object key */
+  objectKey?: string;
   /** 업로드 실패 시 에러 메시지 */
   error?: string;
 }
@@ -36,18 +36,10 @@ export interface UploadConfig {
   acceptedTypes: string[];
 }
 
-/** Presigned URL 응답 형태 */
-export interface PresignedUrlResponse {
-  /** S3 업로드용 presigned PUT URL */
-  uploadUrl: string;
-  /** 업로드 완료 후 파일의 공개 URL */
-  fileUrl: string;
-}
-
 /** 완료된 업로드 결과 (폼 제출용) */
 export interface UploadResult {
-  /** S3 파일 URL */
-  fileUrl: string;
+  /** S3 object key */
+  objectKey: string;
   /** 원본 파일명 */
   fileName: string;
   /** 파일 크기 (bytes) */

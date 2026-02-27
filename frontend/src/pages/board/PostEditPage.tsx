@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Image as ImageIcon } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -12,6 +12,7 @@ import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageUpload } from '@/hooks/useImageUpload';
+import { useResolvedImageUrls } from '@/hooks/useResolvedImageUrls';
 import { useToast } from '@/hooks/useToast';
 import { IMAGE_UPLOAD_CONFIG } from '@/utils/upload';
 import { useQueryClient } from '@tanstack/react-query';
@@ -52,12 +53,16 @@ export default function PostEditPage() {
   const allowVisibleToAssociate = validBoardType === BOARDS.NOTICES;
 
   // Image upload
-  const { files, isUploading, addFiles, removeFile, uploadAll, setExistingUrls } = useImageUpload({
+  const { files, isUploading, addFiles, removeFile, uploadAll, setExistingItems } = useImageUpload({
     config: IMAGE_UPLOAD_CONFIG,
     onValidationError: (errors) => {
       errors.forEach((msg) => toast.error(msg));
     },
   });
+
+  // 기존 이미지 objectKey → presigned download URL 변환
+  const existingObjectKeys = useMemo(() => post?.imageUrls ?? [], [post?.imageUrls]);
+  const { urls: resolvedUrls } = useResolvedImageUrls(existingObjectKeys);
 
   // Form setup
   const {
@@ -80,6 +85,7 @@ export default function PostEditPage() {
 
   // Initialize form with fetched data
   const [formReady, setFormReady] = useState(false);
+  const [imagesInitialized, setImagesInitialized] = useState(false);
   useEffect(() => {
     if (post) {
       reset({
@@ -90,12 +96,23 @@ export default function PostEditPage() {
         isQuestion: post.isQuestion || false,
         isVisibleToAssociate: post.isVisibleToAssociate || false,
       });
-      if (post.imageUrls && post.imageUrls.length > 0) {
-        setExistingUrls(post.imageUrls);
-      }
       setFormReady(true);
     }
-  }, [post, reset, categories, setExistingUrls]);
+  }, [post, reset, categories]);
+
+  // 기존 이미지 URL이 resolve되면 setExistingItems 호출
+  useEffect(() => {
+    if (imagesInitialized) return;
+    if (existingObjectKeys.length === 0) return;
+    if (resolvedUrls.size < existingObjectKeys.length) return;
+
+    const items = existingObjectKeys.map((key) => ({
+      objectKey: key,
+      previewUrl: resolvedUrls.get(key) ?? key,
+    }));
+    setExistingItems(items);
+    setImagesInitialized(true);
+  }, [existingObjectKeys, resolvedUrls, setExistingItems, imagesInitialized]);
 
   // Watch form values
   const title = watch('title');
@@ -125,7 +142,7 @@ export default function PostEditPage() {
 
   const onSubmit = async (data: PostFormData) => {
     const uploadResults = await uploadAll();
-    const imageUrls = uploadResults.map((r) => r.fileUrl);
+    const imageUrls = uploadResults.map((r) => r.objectKey);
 
     updatePost.mutate(
       {
