@@ -1311,13 +1311,13 @@ class SurveyStatisticsServiceTest {
                 assertThat(item.percentage()).isEqualByComparingTo(new BigDecimal("0.0"));
             }
 
-            // SCALE 질문: average = 0.0, min/max = null
+            // SCALE 질문: average = 0.0, min/max = 0
             QuestionStatisticsResponse scaleStat = result.questionStatistics().get(1);
             assertThat(scaleStat.responseCount()).isZero();
             assertThat(scaleStat.scaleStatistics()).isNotNull();
             assertThat(scaleStat.scaleStatistics().average()).isEqualByComparingTo(new BigDecimal("0.0"));
-            assertThat(scaleStat.scaleStatistics().min()).isNull();
-            assertThat(scaleStat.scaleStatistics().max()).isNull();
+            assertThat(scaleStat.scaleStatistics().min()).isZero();
+            assertThat(scaleStat.scaleStatistics().max()).isZero();
         }
 
         @DisplayName("TC-STAT-071: 응답 1건 통계 - 최소 유효 응답 경계값")
