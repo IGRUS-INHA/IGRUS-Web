@@ -29,22 +29,10 @@ commentsByCommentIdReports:
               $ref: ../schemas/comments.yaml#/CommentReportResponse
       '400':
         description: 잘못된 요청 (신고 사유 누락, 중복 신고)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/comments.yaml#/CommentReportResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/comments.yaml#/CommentReportResponse
       '404':
         description: 댓글을 찾을 수 없음
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/comments.yaml#/CommentReportResponse
     security:
     - BearerAuthentication: []
 commentsByCommentIdLikes:

@@ -54,20 +54,9 @@ import type {
 
 import type {
   CreateOption201Item,
-  CreateOption400Item,
-  CreateOption401Item,
-  CreateOption403Item,
-  CreateOption404Item,
   CreateOptionBody,
   GetOptionList200Item,
-  GetOptionList401Item,
-  GetOptionList403Item,
-  GetOptionList404Item,
   UpdateOption200Item,
-  UpdateOption400Item,
-  UpdateOption401Item,
-  UpdateOption403Item,
-  UpdateOption404Item,
   UpdateOptionBody
 } from '.././models';
 
@@ -88,17 +77,17 @@ export type getOptionListResponse200 = {
 }
 
 export type getOptionListResponse401 = {
-  data: GetOptionList401Item[]
+  data: void
   status: 401
 }
 
 export type getOptionListResponse403 = {
-  data: GetOptionList403Item[]
+  data: void
   status: 403
 }
 
 export type getOptionListResponse404 = {
-  data: GetOptionList404Item[]
+  data: void
   status: 404
 }
     
@@ -144,7 +133,7 @@ export const getGetOptionListQueryKey = (surveyId: number,
     }
 
     
-export const getGetOptionListQueryOptions = <TData = Awaited<ReturnType<typeof getOptionList>>, TError = GetOptionList401Item[] | GetOptionList403Item[] | GetOptionList404Item[]>(surveyId: number,
+export const getGetOptionListQueryOptions = <TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
@@ -164,10 +153,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetOptionListQueryResult = NonNullable<Awaited<ReturnType<typeof getOptionList>>>
-export type GetOptionListQueryError = GetOptionList401Item[] | GetOptionList403Item[] | GetOptionList404Item[]
+export type GetOptionListQueryError = void
 
 
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = GetOptionList401Item[] | GetOptionList403Item[] | GetOptionList404Item[]>(
+export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
  surveyId: number,
     questionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -178,7 +167,7 @@ export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = GetOptionList401Item[] | GetOptionList403Item[] | GetOptionList404Item[]>(
+export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
  surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -189,7 +178,7 @@ export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = GetOptionList401Item[] | GetOptionList403Item[] | GetOptionList404Item[]>(
+export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
  surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
@@ -198,7 +187,7 @@ export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList
  * @summary 선택지 목록 조회
  */
 
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = GetOptionList401Item[] | GetOptionList403Item[] | GetOptionList404Item[]>(
+export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
  surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
@@ -224,22 +213,22 @@ export type createOptionResponse201 = {
 }
 
 export type createOptionResponse400 = {
-  data: CreateOption400Item[]
+  data: void
   status: 400
 }
 
 export type createOptionResponse401 = {
-  data: CreateOption401Item[]
+  data: void
   status: 401
 }
 
 export type createOptionResponse403 = {
-  data: CreateOption403Item[]
+  data: void
   status: 403
 }
 
 export type createOptionResponse404 = {
-  data: CreateOption404Item[]
+  data: void
   status: 404
 }
     
@@ -278,7 +267,7 @@ export const createOption = async (surveyId: number,
 
 
 
-export const getCreateOptionMutationOptions = <TError = CreateOption400Item[] | CreateOption401Item[] | CreateOption403Item[] | CreateOption404Item[],
+export const getCreateOptionMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: CreateOptionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: CreateOptionBody}, TContext> => {
 
@@ -307,12 +296,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateOptionMutationResult = NonNullable<Awaited<ReturnType<typeof createOption>>>
     export type CreateOptionMutationBody = CreateOptionBody
-    export type CreateOptionMutationError = CreateOption400Item[] | CreateOption401Item[] | CreateOption403Item[] | CreateOption404Item[]
+    export type CreateOptionMutationError = void
 
     /**
  * @summary 선택지 추가
  */
-export const useCreateOption = <TError = CreateOption400Item[] | CreateOption401Item[] | CreateOption403Item[] | CreateOption404Item[],
+export const useCreateOption = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: CreateOptionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createOption>>,
@@ -435,22 +424,22 @@ export type updateOptionResponse200 = {
 }
 
 export type updateOptionResponse400 = {
-  data: UpdateOption400Item[]
+  data: void
   status: 400
 }
 
 export type updateOptionResponse401 = {
-  data: UpdateOption401Item[]
+  data: void
   status: 401
 }
 
 export type updateOptionResponse403 = {
-  data: UpdateOption403Item[]
+  data: void
   status: 403
 }
 
 export type updateOptionResponse404 = {
-  data: UpdateOption404Item[]
+  data: void
   status: 404
 }
     
@@ -491,7 +480,7 @@ export const updateOption = async (surveyId: number,
 
 
 
-export const getUpdateOptionMutationOptions = <TError = UpdateOption400Item[] | UpdateOption401Item[] | UpdateOption403Item[] | UpdateOption404Item[],
+export const getUpdateOptionMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: UpdateOptionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: UpdateOptionBody}, TContext> => {
 
@@ -520,12 +509,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateOptionMutationResult = NonNullable<Awaited<ReturnType<typeof updateOption>>>
     export type UpdateOptionMutationBody = UpdateOptionBody
-    export type UpdateOptionMutationError = UpdateOption400Item[] | UpdateOption401Item[] | UpdateOption403Item[] | UpdateOption404Item[]
+    export type UpdateOptionMutationError = void
 
     /**
  * @summary 선택지 수정
  */
-export const useUpdateOption = <TError = UpdateOption400Item[] | UpdateOption401Item[] | UpdateOption403Item[] | UpdateOption404Item[],
+export const useUpdateOption = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: UpdateOptionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateOption>>,

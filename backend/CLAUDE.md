@@ -17,7 +17,7 @@ IGRUS Web 백엔드 - Spring Boot 기반 REST API 서버
 | Database | MySQL | 8.x |
 | Migration | Flyway | - |
 | JWT | JJWT | 0.12.3 |
-| API Docs | SpringDoc OpenAPI (Swagger) | 2.8.14 |
+| API Docs | openapi-generator (Contract-First) | 7.12.0 |
 | Cloud | AWS | - |
 | Build | Gradle | - |
 | Test | JUnit 5, H2 (in-memory) | - |
@@ -245,69 +245,49 @@ public class UserService {
 5. 테스트 케이스에 대한 테스트 코드를 작성한다. 이 과정에서 구현에 문제가 있다면 고친다.
 6. 테스트 코드를 실행해 문제가 없는지 확인한다.
 
-#### Swagger
-- Swagger/OpenAPI 3.0 사용
-- Controller 메서드에 `@Operation`, `@ApiResponse` 어노테이션
-    - 컨트롤러에는 꼭 Swagger/OpenAPI 관련 어노테이션을 붙여서 문서화 할 것
-- 새로운 기능 구현, 기능 수정 이후에는 Swagger 관련 코드를 업데이트 해서 문서화 상태를 항상 최신으로 유지할 것
-- 인증이 필요한 엔드포인트에는 `@SecurityRequirement` 를 붙일 것
-- 프론트엔드에서 'Orval'을 이용해 API 모델 객체를 만들고 있음. 모든 Swagger 코드는 Orval 연동에 문제가 없도록 작성되어야 함.
+#### API 문서화: Contract-First (openapi-generator)
 
-##### @ApiResponse 작성 시 필수 규칙
+**단일진실점**: `openapi/` 폴더의 YAML 스펙이 API의 유일한 정의이다.
 
-**성공 응답(2xx):**
-- **`@Content`에 반드시 `mediaType = "application/json"` 명시**: 생략하면 SpringDoc이 `*/*`로 생성하여 Orval이 Blob 타입으로 처리함
-- **제네릭 타입(`Page<T>`, `List<T>` 등)은 `@Schema(implementation = ...)` 사용 금지**: 제네릭 정보가 유실되어 빈 객체(`{}`)로 생성됨. 대신 메서드 반환 타입으로부터 SpringDoc이 자동 추론하도록 `@Content`의 `schema`를 생략하거나, 구체적인 응답 DTO 클래스를 지정할 것
+- `openapi-generator`가 스펙에서 **컨트롤러 인터페이스 + DTO**를 자동 생성 (`build/generated/openapi/`)
+- 컨트롤러는 생성된 인터페이스를 `implements`하여 스펙 준수를 컴파일 타임에 강제
+- 스펙에 없는 API를 만들거나, 스펙과 다른 시그니처를 쓰면 **컴파일 에러** 발생
+- 프론트엔드의 Orval도 같은 `openapi/openapi.yaml`에서 TypeScript 타입을 생성
 
-**에러 응답(4xx/5xx):**
-- **`content` 파라미터 생략**: 에러 응답에 `@Content`와 `@Schema(implementation = ErrorResponse.class)`를 지정하면 Orval이 `ErrorResponse`를 성공 응답과 union 타입으로 생성하여 프론트엔드 타입 에러를 유발함. 프론트엔드 `client.ts`가 non-2xx 응답을 `ApiError`로 throw하므로, 에러 응답 스키마는 Orval 생성 타입에 포함되어서는 안 됨. `responseCode`와 `description`만 지정할 것
+##### API 변경 시 워크플로우
+1. `openapi/` 스펙 수정 (paths, schemas YAML)
+2. `./gradlew openApiGenerate`로 인터페이스/모델 재생성
+3. 백엔드 컨트롤러가 새 인터페이스에 맞게 구현
+4. `./gradlew test`로 전체 테스트 통과 확인
+5. 프론트엔드 `pnpm orval`로 API 클라이언트 재생성
+
+##### 컨트롤러 작성 규칙
+- 생성된 인터페이스를 `implements` (예: `StorageApi`, `BoardApi`)
+- `@RequestMapping`, `@Operation`, `@ApiResponse`, `@Tag`, `@SecurityRequirement` 등 Swagger 어노테이션 **사용 금지** (인터페이스가 이미 포함)
+- 인증: `SecurityUtils.requireCurrentUser()` 사용 (`@AuthenticationPrincipal` 대신)
+- 페이지네이션: `PageableUtils.of(page, size, sort)` 사용 (`@ParameterObject Pageable` 대신)
+- `@PreAuthorize`는 컨트롤러 구현체에 직접 명시
 
 ```java
-// Bad - Content-Type */*로 생성, 제네릭 정보 유실
-@ApiResponse(
-    responseCode = "200",
-    description = "조회 성공",
-    content = @Content(schema = @Schema(implementation = Page.class))
-)
+// 올바른 패턴
+@RestController
+@RequiredArgsConstructor
+public class StorageController implements StorageApi {
 
-// Good - mediaType 명시, 제네릭은 메서드 반환 타입에서 자동 추론
-@ApiResponse(
-    responseCode = "200",
-    description = "조회 성공",
-    useReturnTypeSchema = true
-)
-
-// Good - 비제네릭 응답은 명시적으로 지정 가능
-@ApiResponse(
-    responseCode = "200",
-    description = "조회 성공",
-    content = @Content(
-        mediaType = "application/json",
-        schema = @Schema(implementation = UserDetailResponse.class)
-    )
-)
-
-// Bad - Orval이 ErrorResponse를 union 타입에 포함시킴
-@ApiResponse(
-    responseCode = "400",
-    description = "잘못된 요청",
-    content = @Content(mediaType = "application/json",
-        schema = @Schema(implementation = ErrorResponse.class))
-)
-
-// Bad - content = @Content 도 불필요
-@ApiResponse(
-    responseCode = "400",
-    description = "잘못된 요청",
-    content = @Content
-)
-
-// Good - 에러 응답에는 content 파라미터 생략
-@ApiResponse(
-    responseCode = "400",
-    description = "잘못된 요청"
-)
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CreateUploadUrl200Response> createUploadUrl(
+            CreateUploadUrlRequest request) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        // 비즈니스 로직
+    }
+}
 ```
+
+##### 마이그레이션 중 참고 (임시)
+- SpringDoc은 아직 마이그레이션이 진행 중인 컨트롤러를 위해 유지됨
+- 마이그레이션 완료된 컨트롤러에서는 Swagger 어노테이션을 제거할 것
+- 모든 컨트롤러 마이그레이션 완료 후 SpringDoc 의존성 제거 예정
 
 ### 12. SOLID 원칙 준수
 - SRP(Single Responsibility Principle): 단일 책임 원칙

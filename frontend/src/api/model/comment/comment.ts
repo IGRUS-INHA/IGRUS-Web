@@ -54,19 +54,10 @@ import type {
 
 import type {
   CreateComment201,
-  CreateComment400,
-  CreateComment401,
-  CreateComment403,
-  CreateComment404,
   CreateCommentBody,
   CreateReply1201,
-  CreateReply1400,
-  CreateReply1401,
-  CreateReply1403,
-  CreateReply1404,
   CreateReply1Body,
-  GetComments200,
-  GetComments404
+  GetComments200
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -86,7 +77,7 @@ export type getCommentsResponse200 = {
 }
 
 export type getCommentsResponse404 = {
-  data: GetComments404
+  data: void
   status: 404
 }
     
@@ -129,7 +120,7 @@ export const getGetCommentsQueryKey = (postId: number,) => {
     }
 
     
-export const getGetCommentsQueryOptions = <TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetCommentsQueryOptions = <TData = Awaited<ReturnType<typeof getComments>>, TError = void>(postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -148,10 +139,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetCommentsQueryResult = NonNullable<Awaited<ReturnType<typeof getComments>>>
-export type GetCommentsQueryError = GetComments404
+export type GetCommentsQueryError = void
 
 
-export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(
+export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = void>(
  postId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getComments>>,
@@ -161,7 +152,7 @@ export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, 
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(
+export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = void>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getComments>>,
@@ -171,7 +162,7 @@ export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, 
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(
+export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = void>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -179,7 +170,7 @@ export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, 
  * @summary 댓글 목록 조회
  */
 
-export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = GetComments404>(
+export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, TError = void>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -204,22 +195,22 @@ export type createCommentResponse201 = {
 }
 
 export type createCommentResponse400 = {
-  data: CreateComment400
+  data: void
   status: 400
 }
 
 export type createCommentResponse401 = {
-  data: CreateComment401
+  data: void
   status: 401
 }
 
 export type createCommentResponse403 = {
-  data: CreateComment403
+  data: void
   status: 403
 }
 
 export type createCommentResponse404 = {
-  data: CreateComment404
+  data: void
   status: 404
 }
     
@@ -256,7 +247,7 @@ export const createComment = async (postId: number,
 
 
 
-export const getCreateCommentMutationOptions = <TError = CreateComment400 | CreateComment401 | CreateComment403 | CreateComment404,
+export const getCreateCommentMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentBody}, TContext> => {
 
@@ -285,12 +276,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateCommentMutationResult = NonNullable<Awaited<ReturnType<typeof createComment>>>
     export type CreateCommentMutationBody = CreateCommentBody
-    export type CreateCommentMutationError = CreateComment400 | CreateComment401 | CreateComment403 | CreateComment404
+    export type CreateCommentMutationError = void
 
     /**
  * @summary 댓글 작성
  */
-export const useCreateComment = <TError = CreateComment400 | CreateComment401 | CreateComment403 | CreateComment404,
+export const useCreateComment = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createComment>>,
@@ -310,22 +301,22 @@ export type createReply1Response201 = {
 }
 
 export type createReply1Response400 = {
-  data: CreateReply1400
+  data: void
   status: 400
 }
 
 export type createReply1Response401 = {
-  data: CreateReply1401
+  data: void
   status: 401
 }
 
 export type createReply1Response403 = {
-  data: CreateReply1403
+  data: void
   status: 403
 }
 
 export type createReply1Response404 = {
-  data: CreateReply1404
+  data: void
   status: 404
 }
     
@@ -364,7 +355,7 @@ export const createReply1 = async (postId: number,
 
 
 
-export const getCreateReply1MutationOptions = <TError = CreateReply1400 | CreateReply1401 | CreateReply1403 | CreateReply1404,
+export const getCreateReply1MutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateReply1Body}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateReply1Body}, TContext> => {
 
@@ -393,12 +384,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateReply1MutationResult = NonNullable<Awaited<ReturnType<typeof createReply1>>>
     export type CreateReply1MutationBody = CreateReply1Body
-    export type CreateReply1MutationError = CreateReply1400 | CreateReply1401 | CreateReply1403 | CreateReply1404
+    export type CreateReply1MutationError = void
 
     /**
  * @summary 대댓글 작성
  */
-export const useCreateReply1 = <TError = CreateReply1400 | CreateReply1401 | CreateReply1403 | CreateReply1404,
+export const useCreateReply1 = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateReply1Body}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createReply1>>,

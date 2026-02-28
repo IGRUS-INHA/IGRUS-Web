@@ -20,16 +20,8 @@ authPasswordSignup:
               $ref: ../schemas/auth.yaml#/PasswordSignupResponse
       '400':
         description: 잘못된 요청 (유효성 검증 실패)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/PasswordSignupResponse
       '409':
         description: 중복된 학번, 이메일 또는 전화번호
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/PasswordSignupResponse
 authPasswordSignupTemporary:
   post:
     tags:
@@ -52,16 +44,8 @@ authPasswordSignupTemporary:
               $ref: ../schemas/auth.yaml#/PasswordSignupResponse
       '400':
         description: 잘못된 요청 (유효성 검증 실패, 1~2월이 아닌 경우, 1학년이 아닌 경우)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/PasswordSignupResponse
       '409':
         description: 중복된 이메일 또는 전화번호
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/PasswordSignupResponse
 authPasswordResetRequest:
   post:
     tags:
@@ -103,8 +87,7 @@ authPasswordRefresh:
     tags:
     - Password Authentication
     summary: 토큰 갱신
-    description: 리프레시 토큰으로 새로운 액세스 토큰을 발급합니다. 토큰 로테이션이 적용되어 매 갱신마다 새 리프레시 토큰이 Set-Cookie로 발급됩니다. Grace Period(10초) 내 중복 요청
-      시에는 액세스 토큰만 갱신됩니다.
+    description: 리프레시 토큰으로 새로운 액세스 토큰을 발급합니다. 토큰 로테이션이 적용되어 매 갱신마다 새 리프레시 토큰이 Set-Cookie로 발급됩니다. Grace Period(10초) 내 중복 요청 시에는 액세스 토큰만 갱신됩니다.
     operationId: refreshToken
     responses:
       '200':
@@ -115,16 +98,8 @@ authPasswordRefresh:
               $ref: ../schemas/auth.yaml#/TokenRefreshResponse
       '400':
         description: 잘못된 요청 (유효성 검증 실패)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/TokenRefreshResponse
       '401':
         description: 유효하지 않거나 만료된 리프레시 토큰, 또는 토큰 탈취 감지
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/TokenRefreshResponse
 authPasswordPreSignupVerifyCode:
   post:
     tags:
@@ -147,16 +122,8 @@ authPasswordPreSignupVerifyCode:
               $ref: ../schemas/auth.yaml#/PreSignupVerificationResponse
       '400':
         description: 잘못된 인증 코드 또는 만료된 코드
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/PreSignupVerificationResponse
       '429':
         description: 인증 시도 횟수 초과
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/PreSignupVerificationResponse
 authPasswordPreSignupSendCode:
   post:
     tags:
@@ -179,16 +146,8 @@ authPasswordPreSignupSendCode:
               $ref: ../schemas/auth.yaml#/VerificationResendResponse
       '409':
         description: 이미 가입된 이메일
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/VerificationResendResponse
       '429':
         description: 재발송 요청 횟수 초과 (1분 내 재요청 불가)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/VerificationResendResponse
 authPasswordLogout:
   post:
     tags:
@@ -225,22 +184,10 @@ authPasswordLogin:
               $ref: ../schemas/auth.yaml#/PasswordLoginResponse
       '400':
         description: 잘못된 요청 (유효성 검증 실패)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/PasswordLoginResponse
       '401':
         description: 인증 실패 (학번 또는 비밀번호 불일치)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/PasswordLoginResponse
       '403':
         description: 이메일 인증 미완료
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/PasswordLoginResponse
 authPasswordAccountRecover:
   post:
     tags:
@@ -263,16 +210,8 @@ authPasswordAccountRecover:
               $ref: ../schemas/auth.yaml#/AccountRecoveryResponse
       '400':
         description: 잘못된 요청 (유효성 검증 실패) 또는 복구 기간 만료
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/AccountRecoveryResponse
       '401':
         description: 인증 실패 (학번 또는 비밀번호 불일치)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/AccountRecoveryResponse
 authPasswordResetValidate:
   get:
     tags:
@@ -316,16 +255,8 @@ authPasswordCheckStudentId:
               $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
       '400':
         description: 학번 형식 오류 (8자리 숫자가 아님)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
       '409':
         description: 이미 가입된 학번
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
 authPasswordCheckPhoneNumber:
   get:
     tags:
@@ -350,16 +281,8 @@ authPasswordCheckPhoneNumber:
               $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
       '400':
         description: 전화번호 형식 오류 (XXX-XXXX-XXXX 형식이 아님)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
       '409':
         description: 이미 등록된 전화번호
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
 authPasswordCheckEmail:
   get:
     tags:
@@ -384,16 +307,8 @@ authPasswordCheckEmail:
               $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
       '400':
         description: 이메일 형식 오류
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
       '409':
         description: 이미 존재하는 이메일
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
 authPasswordAccountReregistrationCheck:
   get:
     tags:
@@ -419,10 +334,6 @@ authPasswordAccountReregistrationCheck:
               $ref: ../schemas/auth.yaml#/ReRegistrationCheckResult
       '400':
         description: 잘못된 요청 (학번 형식 오류)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/ReRegistrationCheckResult
 authPasswordAccountRecoveryCheck:
   get:
     tags:
@@ -448,7 +359,3 @@ authPasswordAccountRecoveryCheck:
               $ref: ../schemas/auth.yaml#/RecoveryEligibilityResponse
       '400':
         description: 잘못된 요청 (학번 형식 오류)
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/auth.yaml#/RecoveryEligibilityResponse

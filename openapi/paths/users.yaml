@@ -44,10 +44,6 @@ usersMeLikes:
               $ref: ../schemas/mypage.yaml#/LikedPostPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/mypage.yaml#/LikedPostPageResponse
     security:
     - BearerAuthentication: []
 usersMeBookmarks:
@@ -96,9 +92,5 @@ usersMeBookmarks:
               $ref: ../schemas/posts.yaml#/BookmarkedPostPageResponse
       '401':
         description: 인증 필요
-        content:
-          application/json:
-            schema:
-              $ref: ../schemas/posts.yaml#/BookmarkedPostPageResponse
     security:
     - BearerAuthentication: []

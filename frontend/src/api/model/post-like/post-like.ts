@@ -54,16 +54,9 @@ import type {
 
 import type {
   GetLikeStatus200,
-  GetLikeStatus401,
-  GetLikeStatus404,
   GetMyLikes200,
-  GetMyLikes401,
   GetMyLikesParams,
-  ToggleLike200,
-  ToggleLike401,
-  ToggleLike403,
-  ToggleLike404,
-  ToggleLike410
+  ToggleLike200
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -83,22 +76,22 @@ export type toggleLikeResponse200 = {
 }
 
 export type toggleLikeResponse401 = {
-  data: ToggleLike401
+  data: void
   status: 401
 }
 
 export type toggleLikeResponse403 = {
-  data: ToggleLike403
+  data: void
   status: 403
 }
 
 export type toggleLikeResponse404 = {
-  data: ToggleLike404
+  data: void
   status: 404
 }
 
 export type toggleLikeResponse410 = {
-  data: ToggleLike410
+  data: void
   status: 410
 }
     
@@ -133,7 +126,7 @@ export const toggleLike = async (postId: number, options?: RequestInit): Promise
 
 
 
-export const getToggleLikeMutationOptions = <TError = ToggleLike401 | ToggleLike403 | ToggleLike404 | ToggleLike410,
+export const getToggleLikeMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleLike>>, TError,{postId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof toggleLike>>, TError,{postId: number}, TContext> => {
 
@@ -162,12 +155,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ToggleLikeMutationResult = NonNullable<Awaited<ReturnType<typeof toggleLike>>>
     
-    export type ToggleLikeMutationError = ToggleLike401 | ToggleLike403 | ToggleLike404 | ToggleLike410
+    export type ToggleLikeMutationError = void
 
     /**
  * @summary 게시글 좋아요 토글
  */
-export const useToggleLike = <TError = ToggleLike401 | ToggleLike403 | ToggleLike404 | ToggleLike410,
+export const useToggleLike = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleLike>>, TError,{postId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof toggleLike>>,
@@ -187,7 +180,7 @@ export type getMyLikesResponse200 = {
 }
 
 export type getMyLikesResponse401 = {
-  data: GetMyLikes401
+  data: void
   status: 401
 }
     
@@ -237,7 +230,7 @@ export const getGetMyLikesQueryKey = (params?: GetMyLikesParams,) => {
     }
 
     
-export const getGetMyLikesQueryOptions = <TData = Awaited<ReturnType<typeof getMyLikes>>, TError = GetMyLikes401>(params?: GetMyLikesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetMyLikesQueryOptions = <TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(params?: GetMyLikesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -256,10 +249,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetMyLikesQueryResult = NonNullable<Awaited<ReturnType<typeof getMyLikes>>>
-export type GetMyLikesQueryError = GetMyLikes401
+export type GetMyLikesQueryError = void
 
 
-export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = GetMyLikes401>(
+export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(
  params: undefined |  GetMyLikesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyLikes>>,
@@ -269,7 +262,7 @@ export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TE
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = GetMyLikes401>(
+export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(
  params?: GetMyLikesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyLikes>>,
@@ -279,7 +272,7 @@ export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TE
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = GetMyLikes401>(
+export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(
  params?: GetMyLikesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -287,7 +280,7 @@ export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TE
  * @summary 내 게시글 좋아요 목록 조회
  */
 
-export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = GetMyLikes401>(
+export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(
  params?: GetMyLikesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -312,12 +305,12 @@ export type getLikeStatusResponse200 = {
 }
 
 export type getLikeStatusResponse401 = {
-  data: GetLikeStatus401
+  data: void
   status: 401
 }
 
 export type getLikeStatusResponse404 = {
-  data: GetLikeStatus404
+  data: void
   status: 404
 }
     
@@ -360,7 +353,7 @@ export const getGetLikeStatusQueryKey = (postId: number,) => {
     }
 
     
-export const getGetLikeStatusQueryOptions = <TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = GetLikeStatus401 | GetLikeStatus404>(postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetLikeStatusQueryOptions = <TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -379,10 +372,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetLikeStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getLikeStatus>>>
-export type GetLikeStatusQueryError = GetLikeStatus401 | GetLikeStatus404
+export type GetLikeStatusQueryError = void
 
 
-export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = GetLikeStatus401 | GetLikeStatus404>(
+export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(
  postId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLikeStatus>>,
@@ -392,7 +385,7 @@ export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = GetLikeStatus401 | GetLikeStatus404>(
+export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLikeStatus>>,
@@ -402,7 +395,7 @@ export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = GetLikeStatus401 | GetLikeStatus404>(
+export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -410,7 +403,7 @@ export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus
  * @summary 게시글 좋아요 상태 조회
  */
 
-export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = GetLikeStatus401 | GetLikeStatus404>(
+export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(
  postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
