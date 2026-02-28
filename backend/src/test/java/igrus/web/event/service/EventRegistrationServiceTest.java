@@ -101,6 +101,7 @@ class EventRegistrationServiceTest {
         when(event.getId()).thenReturn(EVENT_ID);
         when(event.getRegistrationStatus()).thenReturn(RegistrationStatus.OPEN);
         when(event.getEventStatus()).thenReturn(EventStatus.UPCOMING);
+        when(event.getVisibility()).thenReturn(EventVisibility.PUBLISHED);
         when(event.getRegistrationStartAt()).thenReturn(Instant.now().minus(1, ChronoUnit.DAYS));
         when(event.getRegistrationEndAt()).thenReturn(Instant.now().plus(7, ChronoUnit.DAYS));
         when(event.isAutoApprove()).thenReturn(type == EventRegistrationType.AUTO_APPROVE);
@@ -1469,6 +1470,112 @@ class EventRegistrationServiceTest {
             // SQL 레벨에서도 registrationStatus='OPEN' 조건이 있으므로 0을 반환하는 것을 검증
             // 이 테스트는 서비스 레벨에서 이중으로 보호됨을 확인
             verify(eventRepository, never()).incrementCurrentCountIfAvailable(any());
+        }
+    }
+
+    // ========== registerEvent - UNPUBLISHED 행사 신청 차단 ==========
+
+    @Nested
+    @DisplayName("registerEvent - UNPUBLISHED 행사 신청 차단")
+    class RegisterEventVisibilityTest {
+
+        /**
+         * GAP-EVT-45: UNPUBLISHED 행사에 대한 registerEvent() 호출 시 EventNotFoundException
+         */
+        @Test
+        @DisplayName("[GAP-EVT-45] UNPUBLISHED 행사에 신청하면 EventNotFoundException 발생 (정보 은폐)")
+        void registerEvent_UnpublishedEvent_ThrowsEventNotFoundException() {
+            // given: UNPUBLISHED 행사 Mock
+            Event unpublishedEvent = mock(Event.class);
+            when(unpublishedEvent.getId()).thenReturn(EVENT_ID);
+            when(unpublishedEvent.getVisibility()).thenReturn(EventVisibility.UNPUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(unpublishedEvent));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
+                    .isInstanceOf(EventNotFoundException.class);
+        }
+
+        /**
+         * GAP-EVT-45: PUBLISHED 행사에 대한 registerEvent()는 visibility 차단 없이 진행
+         */
+        @Test
+        @DisplayName("[GAP-EVT-45] PUBLISHED 행사 신청은 visibility 차단 없이 정상 진행된다")
+        void registerEvent_PublishedEvent_PassesVisibilityCheck() {
+            // given: PUBLISHED 행사 (autoApproveEvent는 setUp에서 PUBLISHED로 설정됨)
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
+
+            EventRegistration savedRegistration = mock(EventRegistration.class);
+            when(savedRegistration.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
+            when(savedRegistration.getRegisteredAt()).thenReturn(Instant.now());
+            when(savedRegistration.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.save(any(EventRegistration.class))).thenReturn(savedRegistration);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, USER_ID);
+
+            // then: visibility 차단 없이 정상 처리됨
+            assertThat(response).isNotNull();
+            verify(eventRegistrationRepository).save(any(EventRegistration.class));
+        }
+
+        /**
+         * GAP-EVT-45: UNPUBLISHED 행사에서 신청 시 EventNotFoundException이 발생하므로
+         * 사용자 조회까지 도달하지 않음 (정보 은폐 원칙)
+         */
+        @Test
+        @DisplayName("[GAP-EVT-45] UNPUBLISHED 행사 신청 시 사용자 조회까지 도달하지 않는다")
+        void registerEvent_UnpublishedEvent_DoesNotReachUserLookup() {
+            // given
+            Event unpublishedEvent = mock(Event.class);
+            when(unpublishedEvent.getId()).thenReturn(EVENT_ID);
+            when(unpublishedEvent.getVisibility()).thenReturn(EventVisibility.UNPUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(unpublishedEvent));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
+                    .isInstanceOf(EventNotFoundException.class);
+
+            // 사용자 조회는 호출되지 않아야 함
+            verify(userRepository, never()).findById(any());
+        }
+
+        /**
+         * TASK-021 항목 3: PUBLISHED 행사에서 신청 후 unpublish한 경우,
+         * 기존 신청에 대한 cancelRegistration()은 visibility와 무관하게 정상 동작해야 한다.
+         */
+        @Test
+        @DisplayName("UNPUBLISHED 행사에서 기존 신청에 대한 cancelRegistration()이 정상 동작한다")
+        void cancelRegistration_UnpublishedEvent_WorksNormally() {
+            // given: UNPUBLISHED 상태의 행사 (publish 후 unpublish된 경우)
+            Event unpublishedEvent = mock(Event.class);
+            when(unpublishedEvent.getId()).thenReturn(EVENT_ID);
+            when(unpublishedEvent.getVisibility()).thenReturn(EventVisibility.UNPUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(unpublishedEvent));
+
+            // 기존 신청이 존재 (PUBLISHED 시절에 신청한 것, cancel 전 REGISTERED 상태)
+            EventRegistration registration = mock(EventRegistration.class);
+            when(registration.isCanceled()).thenReturn(false);
+            when(registration.isActive()).thenReturn(true);
+            when(registration.getStatus())
+                    .thenReturn(EventRegistrationStatus.REGISTERED)  // cancel 전
+                    .thenReturn(EventRegistrationStatus.CANCELED);   // cancel 후 (RegistrationResponse.from용)
+            when(registration.getRegisteredAt()).thenReturn(Instant.now());
+            when(registration.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
+                    .thenReturn(Optional.of(registration));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            // when: visibility와 무관하게 취소 가능
+            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
+
+            // then: 정상 취소 처리
+            assertThat(response).isNotNull();
+            verify(registration).cancel();
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
         }
     }
 }

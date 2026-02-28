@@ -2,12 +2,13 @@ package igrus.web.event.exception;
 
 import igrus.web.common.exception.CustomBaseException;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
 import lombok.Getter;
 
 /**
  * 잘못된 행사 상태 전이 시 발생하는 예외.
- * EventStatus 및 RegistrationStatus 양쪽 전이 오류를 처리합니다.
+ * EventStatus, RegistrationStatus, EventVisibility 전이 오류를 처리합니다.
  */
 @Getter
 public class InvalidEventStateTransitionException extends CustomBaseException {
@@ -25,6 +26,13 @@ public class InvalidEventStateTransitionException extends CustomBaseException {
     public InvalidEventStateTransitionException(RegistrationStatus from, RegistrationStatus to) {
         super(EventErrorCode.EVENT_INVALID_STATE_TRANSITION,
                 String.format("등록 상태를 %s에서 %s로 변경할 수 없습니다.", from.getDisplayName(), to.getDisplayName()));
+        this.fromState = from.name();
+        this.toState = to.name();
+    }
+
+    public InvalidEventStateTransitionException(EventVisibility from, EventVisibility to) {
+        super(EventErrorCode.EVENT_INVALID_STATE_TRANSITION,
+                String.format("공개 상태를 %s에서 %s로 변경할 수 없습니다.", from.getDisplayName(), to.getDisplayName()));
         this.fromState = from.name();
         this.toState = to.name();
     }

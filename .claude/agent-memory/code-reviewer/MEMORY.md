@@ -21,3 +21,15 @@
 - Flyway 버전 변경 시 파일 내부 주석 + 체크리스트 문서 동시 갱신 누락 주의
 - catch(Exception) 블록이 S3 호출뿐 아니라 DB 저장 로직까지 감싸는 패턴 -> 잘못된 에러 변환 유발
 - 외부 SDK 에러 메시지(e.getMessage())를 API 응답에 그대로 노출하는 패턴 -> Information Disclosure 보안 취약점
+
+## Lazy Evaluation + @Transactional(readOnly) 패턴 주의
+- Event 도메인의 updateStatusIfNeeded(now) = Lazy Evaluation 패턴
+- readOnly=true 트랜잭션에서 호출 시, 엔티티 필드는 변경되지만 DB에 반영되지 않음 (FlushMode.MANUAL)
+- 같은 Lazy Evaluation이 쓰기 트랜잭션에서 호출되면 dirty checking으로 DB 반영됨
+- 이로 인해 조회 API 간 DB 반영 여부가 비일관적 -> 반드시 트랜잭션 모드 통일 필요
+- Event 도메인 라운드 1 리뷰에서 Critical로 식별됨 (2026-02-27)
+
+## Event 도메인 권한 검증 예외 비일관성
+- EventService: EventAccessDeniedException 사용
+- EventRegistrationService: OperatorPermissionRequiredException 사용
+- 동일한 isOperatorOrAbove() 체크에 대해 다른 예외 -> Recommended로 분류

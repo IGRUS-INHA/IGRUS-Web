@@ -21,6 +21,9 @@
 - [ ] Path variables with special characters (slashes, etc.) handled
 - [ ] External dependency (S3, etc.) failure/retry policy defined
 - [ ] Spring Security path configuration included
+- [ ] Downstream service impact analyzed (all callers of affected repository methods checked)
+- [ ] When adding access control (visibility, permissions), ALL services querying the domain are updated
+- [ ] Design decisions finalized (no "A or B" without resolution)
 
 ## Test Coverage
 - [ ] Backend unit tests planned
