@@ -4,6 +4,7 @@ import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventCloseReason;
 import igrus.web.event.domain.EventRegistrationType;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
 
 import java.time.Instant;
@@ -23,8 +24,9 @@ import java.time.Instant;
  * @param registrationEndAt   신청 마감일시
  * @param capacity            정원
  * @param currentCount        현재 신청자 수
- * @param registrationStatus  등록 상태 (축 1)
- * @param eventStatus         행사 진행 상태 (축 2)
+ * @param visibility          공개 상태 (축 1)
+ * @param registrationStatus  등록 상태 (축 2)
+ * @param eventStatus         행사 진행 상태 (축 3)
  * @param closeReason         마감 사유 (CLOSED 상태일 때만)
  * @param registrationType    신청 방식 (선착순/선발제)
  * @param isRegistrable       신청 가능 여부
@@ -45,6 +47,7 @@ public record EventDetailResponse(
         Instant registrationEndAt,
         int capacity,
         int currentCount,
+        EventVisibility visibility,
         RegistrationStatus registrationStatus,
         EventStatus eventStatus,
         EventCloseReason closeReason,
@@ -77,6 +80,7 @@ public record EventDetailResponse(
                 event.getRegistrationEndAt(),
                 event.getCapacity(),
                 event.getCurrentCount(),
+                event.getVisibility(),
                 event.getRegistrationStatus(),
                 event.getEventStatus(),
                 event.getRegistrationStatus() == RegistrationStatus.CLOSED ? event.getCloseReason() : null,

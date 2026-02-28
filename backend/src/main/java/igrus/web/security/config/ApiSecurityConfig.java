@@ -57,6 +57,7 @@ public class ApiSecurityConfig {
                 .requestMatchers(
                         "/api/v1/admin/dashboard",
                         "/api/v1/admin/users/**",
+                        "/api/v1/admin/events/**",
                         "/api/events/*/registrations",
                         "/api/v1/admin/comment-reports/**"
                 ).hasAnyRole("OPERATOR", "ADMIN")

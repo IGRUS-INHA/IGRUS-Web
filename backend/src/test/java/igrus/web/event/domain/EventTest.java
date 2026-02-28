@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Event 도메인 테스트. (2축 상태 모델)
+ * Event 도메인 테스트. (3축 상태 모델: EventStatus + RegistrationStatus + EventVisibility)
  * 테스트 케이스 문서: docs/test-case/event/event-domain-test-cases.md v2.0
  *
  * @see igrus.web.event.domain.Event
@@ -1391,6 +1391,190 @@ class EventTest {
 
             assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.NOT_STARTED);
             assertThat(event.getCloseReason()).isNull();
+        }
+    }
+
+    // === 축 1: Visibility (공개 상태) 전이 ===
+
+    @Nested
+    @DisplayName("축 1: Visibility (공개 상태) 전이")
+    class VisibilityTransitionTest {
+
+        @Test
+        @DisplayName("[GAP-EVT-25] 행사 생성 시 visibility=UNPUBLISHED 초기 상태")
+        void create_InitialVisibility_IsUnpublished() {
+            Event event = createTestEvent();
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-26] publish(): UNPUBLISHED -> PUBLISHED 전이 성공")
+        void publish_FromUnpublished_TransitionsToPublished() {
+            Event event = createTestEvent();
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+
+            event.publish();
+
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.PUBLISHED);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-26] publish(): 이미 PUBLISHED이면 InvalidEventStateTransitionException")
+        void publish_FromPublished_ThrowsException() {
+            Event event = createTestEvent();
+            event.publish();
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.PUBLISHED);
+
+            assertThatThrownBy(() -> event.publish())
+                    .isInstanceOf(InvalidEventStateTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-26] unpublish(): PUBLISHED -> UNPUBLISHED 전이 성공")
+        void unpublish_FromPublished_TransitionsToUnpublished() {
+            Event event = createTestEvent();
+            event.publish();
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.PUBLISHED);
+
+            event.unpublish();
+
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-26] unpublish(): 이미 UNPUBLISHED이면 InvalidEventStateTransitionException")
+        void unpublish_FromUnpublished_ThrowsException() {
+            Event event = createTestEvent();
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+
+            assertThatThrownBy(() -> event.unpublish())
+                    .isInstanceOf(InvalidEventStateTransitionException.class);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-31] unpublish(): registrationStatus=OPEN이면 CLOSED(MANUAL_CLOSE)로 자동 마감")
+        void unpublish_WhenRegistrationOpen_AutoClosesWithManualClose() {
+            Event event = createTestEvent();
+            event.publish();
+            event.openRegistration();
+            assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.OPEN);
+
+            event.unpublish();
+
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+            assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
+            assertThat(event.getCloseReason()).isEqualTo(EventCloseReason.MANUAL_CLOSE);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-32] unpublish(): registrationStatus=NOT_STARTED이면 변경 없음")
+        void unpublish_WhenRegistrationNotStarted_NoChange() {
+            Event event = createTestEvent();
+            event.publish();
+            assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.NOT_STARTED);
+
+            event.unpublish();
+
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+            assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.NOT_STARTED);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-33] unpublish(): registrationStatus=CLOSED이면 기존 closeReason 유지")
+        void unpublish_WhenRegistrationClosed_KeepsCloseReason() {
+            Event event = createTestEvent();
+            event.publish();
+            event.openRegistration();
+            event.closeRegistrationByDeadline();
+            assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
+            assertThat(event.getCloseReason()).isEqualTo(EventCloseReason.DEADLINE_PASSED);
+
+            event.unpublish();
+
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+            assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
+            assertThat(event.getCloseReason()).isEqualTo(EventCloseReason.DEADLINE_PASSED);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-34] publish() 시 eventStatus 변경 없음 (독립성)")
+        void publish_DoesNotChangeEventStatus() {
+            Event event = createTestEvent();
+            assertThat(event.getEventStatus()).isEqualTo(EventStatus.UPCOMING);
+
+            event.publish();
+
+            assertThat(event.getEventStatus()).isEqualTo(EventStatus.UPCOMING);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-34] unpublish() 시 eventStatus 변경 없음 (독립성)")
+        void unpublish_DoesNotChangeEventStatus() {
+            Event event = createTestEvent();
+            event.publish();
+            assertThat(event.getEventStatus()).isEqualTo(EventStatus.UPCOMING);
+
+            event.unpublish();
+
+            assertThat(event.getEventStatus()).isEqualTo(EventStatus.UPCOMING);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-35] update() 호출 전후 visibility 변경 없음 (축 독립성)")
+        void update_DoesNotChangeVisibility() {
+            Event event = createTestEvent();
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+
+            event.update("새 제목", "새 설명", "새 장소",
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 50);
+
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-35] update() 호출 전후 PUBLISHED visibility 유지")
+        void update_KeepsPublishedVisibility() {
+            Event event = createTestEvent();
+            event.publish();
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.PUBLISHED);
+
+            event.update("새 제목", "새 설명", "새 장소",
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 50);
+
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.PUBLISHED);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-42] COMPLETED 행사 unpublish: registrationStatus 변경 없음 (이미 CLOSED)")
+        void unpublish_CompletedEvent_RegistrationStatusUnchanged() {
+            Event event = createTestEvent();
+            event.publish();
+            event.openRegistration();
+            event.closeRegistrationManually();
+            event.startOngoing();
+            event.complete();
+            assertThat(event.getEventStatus()).isEqualTo(EventStatus.COMPLETED);
+            assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
+            EventCloseReason originalCloseReason = event.getCloseReason();
+
+            event.unpublish();
+
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+            assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
+            assertThat(event.getCloseReason()).isEqualTo(originalCloseReason);
+        }
+
+        @Test
+        @DisplayName("[GAP-EVT-43] CANCELED 행사 publish: eventStatus 변경 없음 (독립성)")
+        void publish_CanceledEvent_EventStatusUnchanged() {
+            Event event = createTestEvent();
+            event.cancel();
+            assertThat(event.getEventStatus()).isEqualTo(EventStatus.CANCELED);
+
+            event.publish();
+
+            assertThat(event.getVisibility()).isEqualTo(EventVisibility.PUBLISHED);
+            assertThat(event.getEventStatus()).isEqualTo(EventStatus.CANCELED);
         }
     }
 

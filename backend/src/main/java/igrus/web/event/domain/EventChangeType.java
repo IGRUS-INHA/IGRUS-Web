@@ -13,5 +13,9 @@ public enum EventChangeType {
     /** 관리자에 의한 수동 등록 마감. */
     REGISTRATION_CLOSED_MANUAL,
     /** 등록 마감 후 재오픈. */
-    REGISTRATION_REOPENED
+    REGISTRATION_REOPENED,
+    /** 행사 공개. */
+    EVENT_PUBLISHED,
+    /** 행사 비공개. */
+    EVENT_UNPUBLISHED
 }

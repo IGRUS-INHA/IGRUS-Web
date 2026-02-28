@@ -18,10 +18,11 @@ import java.util.Optional;
  * 행사 엔티티.
  * 동아리에서 진행하는 행사 정보를 관리합니다.
  *
- * <p>2축 상태 모델:</p>
+ * <p>3축 상태 모델:</p>
  * <ul>
- *   <li>축 1: {@link #registrationStatus} — 등록(모집) 상태 (NOT_STARTED, OPEN, CLOSED)</li>
- *   <li>축 2: {@link #eventStatus} — 행사 진행 상태 (UPCOMING, ONGOING, COMPLETED, CANCELED)</li>
+ *   <li>축 1: {@link #visibility} — 공개 상태 (UNPUBLISHED, PUBLISHED)</li>
+ *   <li>축 2: {@link #registrationStatus} — 등록(모집) 상태 (NOT_STARTED, OPEN, CLOSED)</li>
+ *   <li>축 3: {@link #eventStatus} — 행사 진행 상태 (UPCOMING, ONGOING, COMPLETED, CANCELED)</li>
  * </ul>
  */
 @Entity
@@ -87,12 +88,17 @@ public class Event extends SoftDeletableEntity {
     @Column(name = "event_current_count", nullable = false)
     private int currentCount = 0;
 
-    /** 축 2: 행사 진행 상태 */
+    /** 축 1: 공개 상태 (UNPUBLISHED / PUBLISHED) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "event_visibility", nullable = false, length = 20)
+    private EventVisibility visibility = EventVisibility.UNPUBLISHED;
+
+    /** 축 3: 행사 진행 상태 */
     @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false, length = 20)
     private EventStatus eventStatus = EventStatus.UPCOMING;
 
-    /** 축 1: 등록(모집) 상태 */
+    /** 축 2: 등록(모집) 상태 */
     @Enumerated(EnumType.STRING)
     @Column(name = "event_registration_status", nullable = false, length = 20)
     private RegistrationStatus registrationStatus = RegistrationStatus.NOT_STARTED;
@@ -111,7 +117,8 @@ public class Event extends SoftDeletableEntity {
 
     /**
      * 행사를 생성합니다.
-     * 초기 상태: registrationStatus=NOT_STARTED, eventStatus=UPCOMING, currentCount=0
+     * 초기 상태: visibility=UNPUBLISHED, registrationStatus=NOT_STARTED, eventStatus=UPCOMING, currentCount=0
+     * DB 기본값은 PUBLISHED이지만, 신규 생성 시에는 UNPUBLISHED로 명시 설정합니다.
      *
      * @throws InvalidEventCapacityException 정원이 1 미만인 경우
      */
@@ -132,6 +139,7 @@ public class Event extends SoftDeletableEntity {
         event.registrationEndAt = registrationEndAt;
         event.capacity = capacity;
         event.currentCount = 0;
+        event.visibility = EventVisibility.UNPUBLISHED;
         event.registrationStatus = RegistrationStatus.NOT_STARTED;
         event.eventStatus = EventStatus.UPCOMING;
         event.registrationType = registrationType;
@@ -144,7 +152,40 @@ public class Event extends SoftDeletableEntity {
         }
     }
 
-    // === 축 1: 등록 상태 변경 메서드 ===
+    // === 축 1: 공개 상태 변경 메서드 ===
+
+    /**
+     * 행사를 공개합니다. UNPUBLISHED -> PUBLISHED (visibility 변경)
+     * registrationStatus/eventStatus는 변경하지 않습니다.
+     *
+     * @throws InvalidEventStateTransitionException 이미 공개 상태인 경우
+     */
+    public void publish() {
+        if (!this.visibility.canTransitionTo(EventVisibility.PUBLISHED)) {
+            throw new InvalidEventStateTransitionException(this.visibility, EventVisibility.PUBLISHED);
+        }
+        this.visibility = EventVisibility.PUBLISHED;
+    }
+
+    /**
+     * 행사를 비공개로 전환합니다. PUBLISHED -> UNPUBLISHED (visibility 변경)
+     * registrationStatus가 OPEN이면 CLOSED(MANUAL_CLOSE)로 자동 마감합니다.
+     * NOT_STARTED/CLOSED이면 registrationStatus를 변경하지 않습니다.
+     *
+     * @throws InvalidEventStateTransitionException 이미 비공개 상태인 경우
+     */
+    public void unpublish() {
+        if (!this.visibility.canTransitionTo(EventVisibility.UNPUBLISHED)) {
+            throw new InvalidEventStateTransitionException(this.visibility, EventVisibility.UNPUBLISHED);
+        }
+        if (this.registrationStatus == RegistrationStatus.OPEN) {
+            this.registrationStatus = RegistrationStatus.CLOSED;
+            this.closeReason = EventCloseReason.MANUAL_CLOSE;
+        }
+        this.visibility = EventVisibility.UNPUBLISHED;
+    }
+
+    // === 축 2: 등록 상태 변경 메서드 ===
 
     /**
      * 등록을 오픈합니다. (NOT_STARTED → OPEN)
@@ -199,7 +240,7 @@ public class Event extends SoftDeletableEntity {
         }
     }
 
-    // === 축 2: 행사 진행 상태 변경 메서드 ===
+    // === 축 3: 행사 진행 상태 변경 메서드 ===
 
     /**
      * 행사를 진행 중 상태로 변경합니다. (UPCOMING → ONGOING)
@@ -270,16 +311,17 @@ public class Event extends SoftDeletableEntity {
         }
     }
 
-    // === Lazy Evaluation (2축 통합) ===
+    // === Lazy Evaluation (축 2 + 축 3 자동 전이) ===
 
     /**
-     * 현재 시간에 따라 2축 상태를 자동 갱신합니다. (Lazy Evaluation)
+     * 현재 시간에 따라 등록/행사 상태를 자동 갱신합니다. (Lazy Evaluation)
+     * visibility(축 1)는 수동 전환만 가능하므로 Lazy Evaluation 대상이 아닙니다.
      *
-     * <p>축 1 (등록):</p>
+     * <p>축 2 (등록):</p>
      * - NOT_STARTED → OPEN: 신청 시작일이 도래하고 eventStatus != CANCELED
      * - OPEN → CLOSED (DEADLINE_PASSED): 신청 마감일이 경과
      *
-     * <p>축 2 (행사):</p>
+     * <p>축 3 (행사):</p>
      * - UPCOMING → ONGOING: 행사 시작일이 도래
      * - ONGOING → COMPLETED: 행사 종료일이 경과 (registrationStatus도 CLOSED 강제)
      *

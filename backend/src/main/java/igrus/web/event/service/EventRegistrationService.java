@@ -4,6 +4,7 @@ import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.dto.response.RegistrationListResponse;
@@ -95,6 +96,11 @@ public class EventRegistrationService {
         // 1. 행사 조회 (락 없이)
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 1-1. UNPUBLISHED 행사 신청 차단 (정보 은폐: 존재하지 않는 것처럼 처리)
+        if (event.getVisibility() == EventVisibility.UNPUBLISHED) {
+            throw new EventNotFoundException(eventId);
+        }
 
         // 2. 사용자 조회
         User user = userRepository.findById(userId)

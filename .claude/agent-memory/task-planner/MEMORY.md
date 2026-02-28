@@ -11,7 +11,8 @@
 - `docs/feature/design-agent/` - 디자인 에이전트
 - `docs/feature/monitoring/` - 모니터링
 - `docs/feature/tech-research/` - 기술 조사
-- `docs/feature/storage/` - 스토리지 (신규 생성)
+- `docs/feature/storage/` - 스토리지
+- `docs/feature/event/` - 행사 (신규 생성, task-plan.md)
 
 ### 검증 기준/테스트 케이스 문서 위치
 - 검증 기준: `docs/criteria/{도메인}/`
@@ -41,7 +42,7 @@
 - `CustomBaseException` -> 도메인별 커스텀 예외
 
 ### Flyway 마이그레이션
-- 최신 버전: V40 (2026-02-26 기준)
+- 최신 버전: V45 (2026-02-27 기준, V45__create_file_metadata_table.sql)
 - 형식: `V{N}__{description}.sql`
 
 ### 빌드 의존성 (build.gradle)
@@ -71,3 +72,15 @@
 ### 출력 형식 규칙
 - 파일 경로 출력: 마지막 줄에 `생성된 파일: {절대 경로}` 또는 `수정된 파일: {절대 경로}`
 - 이 줄 이후에는 어떠한 텍스트도 출력하지 말 것
+
+### SecurityConfig 패턴
+- `ApiSecurityConfig.java`: Spring Security 경로 규칙 설정
+- 구체적인 경로를 `/api/v1/admin/**` 보다 먼저 배치해야 함 (첫 번째 매칭 규칙 적용)
+- OPERATOR+ 권한: `.hasAnyRole("OPERATOR", "ADMIN")`
+- ADMIN 전용: `.hasRole("ADMIN")`
+
+### Survey Visibility 참조 패턴
+- `SurveyVisibility` enum: canTransitionTo(target) = this != target
+- `Survey.publish()`: visibility 전이만 수행
+- `Survey.unpublish()`: visibility 전이 + responseStatus==OPEN이면 CLOSED 자동 마감
+- `SurveyController`: @PostMapping("/{id}/publish"), body 없이 호출
