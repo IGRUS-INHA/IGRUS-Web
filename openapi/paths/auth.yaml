@@ -1,0 +1,361 @@
+authPasswordSignup:
+  post:
+    tags:
+    - Password Authentication
+    summary: 회원가입
+    description: 새로운 회원을 등록합니다. 사전 이메일 인증이 완료되어야 합니다.
+    operationId: signup
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/auth.yaml#/PasswordSignupRequest
+      required: true
+    responses:
+      '201':
+        description: 회원가입 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/PasswordSignupResponse
+      '400':
+        description: 잘못된 요청 (유효성 검증 실패)
+      '409':
+        description: 중복된 학번, 이메일 또는 전화번호
+authPasswordSignupTemporary:
+  post:
+    tags:
+    - Password Authentication
+    summary: 임시 학번 회원가입
+    description: 1~2월에 1학년 신입생이 임시 학번으로 회원가입합니다. 사전 이메일 인증이 완료되어야 하며, 임시 학번이 자동 발급되어 이메일로 전송됩니다.
+    operationId: signupWithTemporaryStudentId
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/auth.yaml#/TemporaryStudentIdSignupRequest
+      required: true
+    responses:
+      '201':
+        description: 회원가입 성공 (임시 학번 발급)
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/PasswordSignupResponse
+      '400':
+        description: 잘못된 요청 (유효성 검증 실패, 1~2월이 아닌 경우, 1학년이 아닌 경우)
+      '409':
+        description: 중복된 이메일 또는 전화번호
+authPasswordResetRequest:
+  post:
+    tags:
+    - Password Authentication
+    summary: 비밀번호 재설정 요청
+    description: 학번을 입력하여 비밀번호 재설정 링크를 이메일로 발송합니다. 보안상 존재하지 않는 학번도 동일한 응답을 반환합니다.
+    operationId: requestPasswordReset
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/auth.yaml#/PasswordResetRequest
+      required: true
+    responses:
+      '200':
+        description: 요청 처리 완료 (이메일이 등록된 경우 재설정 링크 발송)
+      '400':
+        description: 잘못된 요청 (학번 형식 오류)
+authPasswordResetConfirm:
+  post:
+    tags:
+    - Password Authentication
+    summary: 비밀번호 재설정 확인
+    description: 재설정 토큰과 새 비밀번호를 입력하여 비밀번호를 변경합니다. 비밀번호는 영문 대/소문자, 숫자, 특수문자를 포함한 8자 이상이어야 합니다.
+    operationId: confirmPasswordReset
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/auth.yaml#/PasswordResetConfirmRequest
+      required: true
+    responses:
+      '200':
+        description: 비밀번호 재설정 성공
+      '400':
+        description: 잘못된 요청 (유효성 검증 실패) 또는 유효하지 않은/만료된 토큰
+authPasswordRefresh:
+  post:
+    tags:
+    - Password Authentication
+    summary: 토큰 갱신
+    description: 리프레시 토큰으로 새로운 액세스 토큰을 발급합니다. 토큰 로테이션이 적용되어 매 갱신마다 새 리프레시 토큰이 Set-Cookie로 발급됩니다. Grace Period(10초) 내 중복 요청 시에는 액세스 토큰만 갱신됩니다.
+    operationId: refreshToken
+    responses:
+      '200':
+        description: 토큰 갱신 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/TokenRefreshResponse
+      '400':
+        description: 잘못된 요청 (유효성 검증 실패)
+      '401':
+        description: 유효하지 않거나 만료된 리프레시 토큰, 또는 토큰 탈취 감지
+authPasswordPreSignupVerifyCode:
+  post:
+    tags:
+    - Password Authentication
+    summary: 사전 이메일 인증 코드 확인
+    description: 회원가입 전 이메일 인증 코드를 확인합니다.
+    operationId: verifyPreSignupCode
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/auth.yaml#/EmailVerificationRequest
+      required: true
+    responses:
+      '200':
+        description: 이메일 인증 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/PreSignupVerificationResponse
+      '400':
+        description: 잘못된 인증 코드 또는 만료된 코드
+      '429':
+        description: 인증 시도 횟수 초과
+authPasswordPreSignupSendCode:
+  post:
+    tags:
+    - Password Authentication
+    summary: 사전 이메일 인증 코드 발송
+    description: 회원가입 전 이메일 인증 코드를 발송합니다.
+    operationId: sendPreSignupCode
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/auth.yaml#/ResendVerificationRequest
+      required: true
+    responses:
+      '200':
+        description: 인증 코드 발송 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/VerificationResendResponse
+      '409':
+        description: 이미 가입된 이메일
+      '429':
+        description: 재발송 요청 횟수 초과 (1분 내 재요청 불가)
+authPasswordLogout:
+  post:
+    tags:
+    - Password Authentication
+    summary: 로그아웃
+    description: 리프레시 토큰을 무효화하여 로그아웃합니다.
+    operationId: logout
+    responses:
+      '200':
+        description: 로그아웃 성공
+      '400':
+        description: 잘못된 요청 (유효성 검증 실패)
+      '401':
+        description: 유효하지 않은 리프레시 토큰
+authPasswordLogin:
+  post:
+    tags:
+    - Password Authentication
+    summary: 로그인
+    description: 학번과 비밀번호로 로그인합니다.
+    operationId: login
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/auth.yaml#/PasswordLoginRequest
+      required: true
+    responses:
+      '200':
+        description: 로그인 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/PasswordLoginResponse
+      '400':
+        description: 잘못된 요청 (유효성 검증 실패)
+      '401':
+        description: 인증 실패 (학번 또는 비밀번호 불일치)
+      '403':
+        description: 이메일 인증 미완료
+authPasswordAccountRecover:
+  post:
+    tags:
+    - Password Authentication
+    summary: 계정 복구
+    description: 탈퇴한 계정을 복구합니다. 탈퇴 후 5일 이내에만 가능하며, 학번과 비밀번호로 인증이 필요합니다. 복구 성공 시 새로운 Access Token과 Refresh Token이 발급됩니다.
+    operationId: recoverAccount
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/auth.yaml#/AccountRecoveryRequest
+      required: true
+    responses:
+      '200':
+        description: 계정 복구 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/AccountRecoveryResponse
+      '400':
+        description: 잘못된 요청 (유효성 검증 실패) 또는 복구 기간 만료
+      '401':
+        description: 인증 실패 (학번 또는 비밀번호 불일치)
+authPasswordResetValidate:
+  get:
+    tags:
+    - Password Authentication
+    summary: 비밀번호 재설정 토큰 검증
+    description: 재설정 토큰의 유효성을 검증합니다. 토큰이 유효하고 만료되지 않았는지 확인합니다.
+    operationId: validateResetToken
+    parameters:
+    - name: token
+      in: query
+      description: 검증할 재설정 토큰
+      required: true
+      schema:
+        type: string
+    responses:
+      '200':
+        description: 토큰 유효
+      '400':
+        description: 유효하지 않거나 만료된 토큰
+authPasswordCheckStudentId:
+  get:
+    tags:
+    - Password Authentication
+    summary: 학번 중복 체크
+    description: 학번의 유효성 검사 및 중복 여부를 확인합니다.
+    operationId: checkStudentIdDuplicate
+    parameters:
+    - name: studentId
+      in: query
+      description: 확인할 학번 (8자리 숫자)
+      required: true
+      schema:
+        type: string
+      example: 12345678
+    responses:
+      '200':
+        description: 사용 가능한 학번
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
+      '400':
+        description: 학번 형식 오류 (8자리 숫자가 아님)
+      '409':
+        description: 이미 가입된 학번
+authPasswordCheckPhoneNumber:
+  get:
+    tags:
+    - Password Authentication
+    summary: 전화번호 중복 체크
+    description: 전화번호의 유효성 검사 및 중복 여부를 확인합니다.
+    operationId: checkPhoneNumberDuplicate
+    parameters:
+    - name: phoneNumber
+      in: query
+      description: 확인할 전화번호 (XXX-XXXX-XXXX)
+      required: true
+      schema:
+        type: string
+      example: 010-1234-5678
+    responses:
+      '200':
+        description: 사용 가능한 전화번호
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
+      '400':
+        description: 전화번호 형식 오류 (XXX-XXXX-XXXX 형식이 아님)
+      '409':
+        description: 이미 등록된 전화번호
+authPasswordCheckEmail:
+  get:
+    tags:
+    - Password Authentication
+    summary: 이메일 중복 체크
+    description: 이메일의 유효성 검사 및 중복 여부를 확인합니다.
+    operationId: checkEmailDuplicate
+    parameters:
+    - name: email
+      in: query
+      description: 확인할 이메일
+      required: true
+      schema:
+        type: string
+      example: user@example.com
+    responses:
+      '200':
+        description: 사용 가능한 이메일
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/DuplicateCheckResponse
+      '400':
+        description: 이메일 형식 오류
+      '409':
+        description: 이미 존재하는 이메일
+authPasswordAccountReregistrationCheck:
+  get:
+    tags:
+    - Password Authentication
+    summary: 재가입 가능 여부 확인
+    description: 탈퇴 후 재가입 제한 기간(5일)이 지났는지 확인합니다. 회원가입 전 호출하여 재가입 가능 여부를 확인할 수 있습니다.
+    operationId: checkReRegistrationEligibility
+    parameters:
+    - name: studentId
+      in: query
+      description: 재가입 가능 여부를 확인할 학번 (8자리 숫자)
+      required: true
+      schema:
+        type: string
+        pattern: ^\d{8}$
+      example: 12345678
+    responses:
+      '200':
+        description: 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/ReRegistrationCheckResult
+      '400':
+        description: 잘못된 요청 (학번 형식 오류)
+authPasswordAccountRecoveryCheck:
+  get:
+    tags:
+    - Password Authentication
+    summary: 계정 복구 가능 여부 확인
+    description: 탈퇴한 계정의 복구 가능 여부를 확인합니다. 탈퇴 후 5일 이내에는 계정을 복구할 수 있습니다.
+    operationId: checkRecoveryEligibility
+    parameters:
+    - name: studentId
+      in: query
+      description: 복구 가능 여부를 확인할 학번 (8자리 숫자)
+      required: true
+      schema:
+        type: string
+        pattern: ^\d{8}$
+      example: 12345678
+    responses:
+      '200':
+        description: 복구 가능 여부 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/RecoveryEligibilityResponse
+      '400':
+        description: 잘못된 요청 (학번 형식 오류)

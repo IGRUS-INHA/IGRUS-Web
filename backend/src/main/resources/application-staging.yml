@@ -36,7 +36,7 @@ spring:
             enable: true
 
 springdoc:
-  server-url: https://staging-api.igrus.co.kr
+  server-url: https://staging-api.igrus.co.kr:8080
 
 app:
   jwt:

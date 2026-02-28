@@ -53,10 +53,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CreateQuestionRequest,
-  QuestionResponse,
-  SurveyDetailResponse,
-  UpdateQuestionRequest
+  CreateQuestion201,
+  CreateQuestionBody,
+  GetQuestionList200Item,
+  UpdateQuestion200,
+  UpdateQuestionBody
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -71,22 +72,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 질문 목록 조회
  */
 export type getQuestionListResponse200 = {
-  data: QuestionResponse[]
+  data: GetQuestionList200Item[]
   status: 200
 }
 
 export type getQuestionListResponse401 = {
-  data: QuestionResponse[]
+  data: void
   status: 401
 }
 
 export type getQuestionListResponse403 = {
-  data: QuestionResponse[]
+  data: void
   status: 403
 }
 
 export type getQuestionListResponse404 = {
-  data: QuestionResponse[]
+  data: void
   status: 404
 }
     
@@ -129,7 +130,7 @@ export const getGetQuestionListQueryKey = (surveyId: number,) => {
     }
 
     
-export const getGetQuestionListQueryOptions = <TData = Awaited<ReturnType<typeof getQuestionList>>, TError = QuestionResponse[]>(surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetQuestionListQueryOptions = <TData = Awaited<ReturnType<typeof getQuestionList>>, TError = void>(surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -148,10 +149,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetQuestionListQueryResult = NonNullable<Awaited<ReturnType<typeof getQuestionList>>>
-export type GetQuestionListQueryError = QuestionResponse[]
+export type GetQuestionListQueryError = void
 
 
-export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestionList>>, TError = QuestionResponse[]>(
+export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestionList>>, TError = void>(
  surveyId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionList>>,
@@ -161,7 +162,7 @@ export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestion
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestionList>>, TError = QuestionResponse[]>(
+export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestionList>>, TError = void>(
  surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionList>>,
@@ -171,7 +172,7 @@ export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestion
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestionList>>, TError = QuestionResponse[]>(
+export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestionList>>, TError = void>(
  surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -179,7 +180,7 @@ export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestion
  * @summary 질문 목록 조회
  */
 
-export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestionList>>, TError = QuestionResponse[]>(
+export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestionList>>, TError = void>(
  surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -199,27 +200,27 @@ export function useGetQuestionList<TData = Awaited<ReturnType<typeof getQuestion
  * @summary 질문 추가
  */
 export type createQuestionResponse201 = {
-  data: SurveyDetailResponse
+  data: CreateQuestion201
   status: 201
 }
 
 export type createQuestionResponse400 = {
-  data: SurveyDetailResponse
+  data: void
   status: 400
 }
 
 export type createQuestionResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type createQuestionResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
 
 export type createQuestionResponse404 = {
-  data: SurveyDetailResponse
+  data: void
   status: 404
 }
     
@@ -241,7 +242,7 @@ export const getCreateQuestionUrl = (surveyId: number,) => {
 }
 
 export const createQuestion = async (surveyId: number,
-    createQuestionRequest: CreateQuestionRequest, options?: RequestInit): Promise<createQuestionResponse> => {
+    createQuestionBody: CreateQuestionBody, options?: RequestInit): Promise<createQuestionResponse> => {
   
   return customFetch<createQuestionResponse>(getCreateQuestionUrl(surveyId),
   {      
@@ -249,16 +250,16 @@ export const createQuestion = async (surveyId: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createQuestionRequest,)
+      createQuestionBody,)
   }
 );}
 
 
 
 
-export const getCreateQuestionMutationOptions = <TError = SurveyDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createQuestion>>, TError,{surveyId: number;data: CreateQuestionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createQuestion>>, TError,{surveyId: number;data: CreateQuestionRequest}, TContext> => {
+export const getCreateQuestionMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createQuestion>>, TError,{surveyId: number;data: CreateQuestionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createQuestion>>, TError,{surveyId: number;data: CreateQuestionBody}, TContext> => {
 
 const mutationKey = ['createQuestion'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -270,7 +271,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createQuestion>>, {surveyId: number;data: CreateQuestionRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createQuestion>>, {surveyId: number;data: CreateQuestionBody}> = (props) => {
           const {surveyId,data} = props ?? {};
 
           return  createQuestion(surveyId,data,requestOptions)
@@ -284,18 +285,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateQuestionMutationResult = NonNullable<Awaited<ReturnType<typeof createQuestion>>>
-    export type CreateQuestionMutationBody = CreateQuestionRequest
-    export type CreateQuestionMutationError = SurveyDetailResponse
+    export type CreateQuestionMutationBody = CreateQuestionBody
+    export type CreateQuestionMutationError = void
 
     /**
  * @summary 질문 추가
  */
-export const useCreateQuestion = <TError = SurveyDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createQuestion>>, TError,{surveyId: number;data: CreateQuestionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateQuestion = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createQuestion>>, TError,{surveyId: number;data: CreateQuestionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createQuestion>>,
         TError,
-        {surveyId: number;data: CreateQuestionRequest},
+        {surveyId: number;data: CreateQuestionBody},
         TContext
       > => {
       return useMutation(getCreateQuestionMutationOptions(options), queryClient);
@@ -406,27 +407,27 @@ export const useDeleteQuestion = <TError = void,
  * @summary 질문 수정
  */
 export type updateQuestionResponse200 = {
-  data: SurveyDetailResponse
+  data: UpdateQuestion200
   status: 200
 }
 
 export type updateQuestionResponse400 = {
-  data: SurveyDetailResponse
+  data: void
   status: 400
 }
 
 export type updateQuestionResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type updateQuestionResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
 
 export type updateQuestionResponse404 = {
-  data: SurveyDetailResponse
+  data: void
   status: 404
 }
     
@@ -450,7 +451,7 @@ export const getUpdateQuestionUrl = (surveyId: number,
 
 export const updateQuestion = async (surveyId: number,
     questionId: number,
-    updateQuestionRequest: UpdateQuestionRequest, options?: RequestInit): Promise<updateQuestionResponse> => {
+    updateQuestionBody: UpdateQuestionBody, options?: RequestInit): Promise<updateQuestionResponse> => {
   
   return customFetch<updateQuestionResponse>(getUpdateQuestionUrl(surveyId,questionId),
   {      
@@ -458,16 +459,16 @@ export const updateQuestion = async (surveyId: number,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      updateQuestionRequest,)
+      updateQuestionBody,)
   }
 );}
 
 
 
 
-export const getUpdateQuestionMutationOptions = <TError = SurveyDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateQuestion>>, TError,{surveyId: number;questionId: number;data: UpdateQuestionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateQuestion>>, TError,{surveyId: number;questionId: number;data: UpdateQuestionRequest}, TContext> => {
+export const getUpdateQuestionMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateQuestion>>, TError,{surveyId: number;questionId: number;data: UpdateQuestionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateQuestion>>, TError,{surveyId: number;questionId: number;data: UpdateQuestionBody}, TContext> => {
 
 const mutationKey = ['updateQuestion'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -479,7 +480,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateQuestion>>, {surveyId: number;questionId: number;data: UpdateQuestionRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateQuestion>>, {surveyId: number;questionId: number;data: UpdateQuestionBody}> = (props) => {
           const {surveyId,questionId,data} = props ?? {};
 
           return  updateQuestion(surveyId,questionId,data,requestOptions)
@@ -493,18 +494,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateQuestionMutationResult = NonNullable<Awaited<ReturnType<typeof updateQuestion>>>
-    export type UpdateQuestionMutationBody = UpdateQuestionRequest
-    export type UpdateQuestionMutationError = SurveyDetailResponse
+    export type UpdateQuestionMutationBody = UpdateQuestionBody
+    export type UpdateQuestionMutationError = void
 
     /**
  * @summary 질문 수정
  */
-export const useUpdateQuestion = <TError = SurveyDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateQuestion>>, TError,{surveyId: number;questionId: number;data: UpdateQuestionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdateQuestion = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateQuestion>>, TError,{surveyId: number;questionId: number;data: UpdateQuestionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateQuestion>>,
         TError,
-        {surveyId: number;questionId: number;data: UpdateQuestionRequest},
+        {surveyId: number;questionId: number;data: UpdateQuestionBody},
         TContext
       > => {
       return useMutation(getUpdateQuestionMutationOptions(options), queryClient);

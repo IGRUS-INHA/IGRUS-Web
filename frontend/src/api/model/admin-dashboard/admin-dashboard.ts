@@ -49,7 +49,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  DashboardStatsResponse
+  GetDashboardStats200
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -64,17 +64,17 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 대시보드 통계 조회
  */
 export type getDashboardStatsResponse200 = {
-  data: DashboardStatsResponse
+  data: GetDashboardStats200
   status: 200
 }
 
 export type getDashboardStatsResponse401 = {
-  data: DashboardStatsResponse
+  data: void
   status: 401
 }
 
 export type getDashboardStatsResponse403 = {
-  data: DashboardStatsResponse
+  data: void
   status: 403
 }
     
@@ -117,7 +117,7 @@ export const getGetDashboardStatsQueryKey = () => {
     }
 
     
-export const getGetDashboardStatsQueryOptions = <TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = DashboardStatsResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetDashboardStatsQueryOptions = <TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -136,10 +136,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetDashboardStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getDashboardStats>>>
-export type GetDashboardStatsQueryError = DashboardStatsResponse
+export type GetDashboardStatsQueryError = void
 
 
-export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = DashboardStatsResponse>(
+export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = void>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDashboardStats>>,
@@ -149,7 +149,7 @@ export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashbo
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = DashboardStatsResponse>(
+export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDashboardStats>>,
@@ -159,7 +159,7 @@ export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashbo
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = DashboardStatsResponse>(
+export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -167,7 +167,7 @@ export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashbo
  * @summary 대시보드 통계 조회
  */
 
-export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = DashboardStatsResponse>(
+export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

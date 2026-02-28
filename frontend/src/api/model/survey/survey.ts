@@ -53,10 +53,18 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CreateSurveyRequest,
-  SurveyDetailResponse,
-  SurveyListResponse,
-  UpdateSurveyRequest
+  CloseResponse200,
+  CreateSurvey201,
+  CreateSurveyBody,
+  GetSurveyDetail200,
+  GetSurveyList200Item,
+  GetTrashedSurveyList200Item,
+  OpenResponse200,
+  PublishAndOpen200,
+  PublishSurvey200,
+  UnpublishSurvey200,
+  UpdateSurvey200,
+  UpdateSurveyBody
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -71,22 +79,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 설문 상세 조회
  */
 export type getSurveyDetailResponse200 = {
-  data: SurveyDetailResponse
+  data: GetSurveyDetail200
   status: 200
 }
 
 export type getSurveyDetailResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type getSurveyDetailResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
 
 export type getSurveyDetailResponse404 = {
-  data: SurveyDetailResponse
+  data: void
   status: 404
 }
     
@@ -129,7 +137,7 @@ export const getGetSurveyDetailQueryKey = (surveyId: number,) => {
     }
 
     
-export const getGetSurveyDetailQueryOptions = <TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = SurveyDetailResponse>(surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetSurveyDetailQueryOptions = <TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = void>(surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -148,10 +156,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetSurveyDetailQueryResult = NonNullable<Awaited<ReturnType<typeof getSurveyDetail>>>
-export type GetSurveyDetailQueryError = SurveyDetailResponse
+export type GetSurveyDetailQueryError = void
 
 
-export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = SurveyDetailResponse>(
+export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = void>(
  surveyId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyDetail>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSurveyDetail>>,
@@ -161,7 +169,7 @@ export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDe
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = SurveyDetailResponse>(
+export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = void>(
  surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyDetail>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSurveyDetail>>,
@@ -171,7 +179,7 @@ export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDe
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = SurveyDetailResponse>(
+export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = void>(
  surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -179,7 +187,7 @@ export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDe
  * @summary 설문 상세 조회
  */
 
-export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = SurveyDetailResponse>(
+export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDetail>>, TError = void>(
  surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyDetail>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -199,27 +207,27 @@ export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDe
  * @summary 설문 수정
  */
 export type updateSurveyResponse200 = {
-  data: SurveyDetailResponse
+  data: UpdateSurvey200
   status: 200
 }
 
 export type updateSurveyResponse400 = {
-  data: SurveyDetailResponse
+  data: void
   status: 400
 }
 
 export type updateSurveyResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type updateSurveyResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
 
 export type updateSurveyResponse404 = {
-  data: SurveyDetailResponse
+  data: void
   status: 404
 }
     
@@ -241,7 +249,7 @@ export const getUpdateSurveyUrl = (surveyId: number,) => {
 }
 
 export const updateSurvey = async (surveyId: number,
-    updateSurveyRequest: UpdateSurveyRequest, options?: RequestInit): Promise<updateSurveyResponse> => {
+    updateSurveyBody: UpdateSurveyBody, options?: RequestInit): Promise<updateSurveyResponse> => {
   
   return customFetch<updateSurveyResponse>(getUpdateSurveyUrl(surveyId),
   {      
@@ -249,16 +257,16 @@ export const updateSurvey = async (surveyId: number,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      updateSurveyRequest,)
+      updateSurveyBody,)
   }
 );}
 
 
 
 
-export const getUpdateSurveyMutationOptions = <TError = SurveyDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyRequest}, TContext> => {
+export const getUpdateSurveyMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyBody}, TContext> => {
 
 const mutationKey = ['updateSurvey'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -270,7 +278,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSurvey>>, {surveyId: number;data: UpdateSurveyRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSurvey>>, {surveyId: number;data: UpdateSurveyBody}> = (props) => {
           const {surveyId,data} = props ?? {};
 
           return  updateSurvey(surveyId,data,requestOptions)
@@ -284,18 +292,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateSurveyMutationResult = NonNullable<Awaited<ReturnType<typeof updateSurvey>>>
-    export type UpdateSurveyMutationBody = UpdateSurveyRequest
-    export type UpdateSurveyMutationError = SurveyDetailResponse
+    export type UpdateSurveyMutationBody = UpdateSurveyBody
+    export type UpdateSurveyMutationError = void
 
     /**
  * @summary 설문 수정
  */
-export const useUpdateSurvey = <TError = SurveyDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdateSurvey = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateSurvey>>,
         TError,
-        {surveyId: number;data: UpdateSurveyRequest},
+        {surveyId: number;data: UpdateSurveyBody},
         TContext
       > => {
       return useMutation(getUpdateSurveyMutationOptions(options), queryClient);
@@ -409,17 +417,17 @@ export const usePermanentDeleteSurvey = <TError = void,
  * @summary 설문 목록 조회
  */
 export type getSurveyListResponse200 = {
-  data: SurveyListResponse[]
+  data: GetSurveyList200Item[]
   status: 200
 }
 
 export type getSurveyListResponse401 = {
-  data: SurveyListResponse[]
+  data: void
   status: 401
 }
 
 export type getSurveyListResponse403 = {
-  data: SurveyListResponse[]
+  data: void
   status: 403
 }
     
@@ -462,7 +470,7 @@ export const getGetSurveyListQueryKey = () => {
     }
 
     
-export const getGetSurveyListQueryOptions = <TData = Awaited<ReturnType<typeof getSurveyList>>, TError = SurveyListResponse[]>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetSurveyListQueryOptions = <TData = Awaited<ReturnType<typeof getSurveyList>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -481,10 +489,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetSurveyListQueryResult = NonNullable<Awaited<ReturnType<typeof getSurveyList>>>
-export type GetSurveyListQueryError = SurveyListResponse[]
+export type GetSurveyListQueryError = void
 
 
-export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList>>, TError = SurveyListResponse[]>(
+export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList>>, TError = void>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSurveyList>>,
@@ -494,7 +502,7 @@ export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList>>, TError = SurveyListResponse[]>(
+export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSurveyList>>,
@@ -504,7 +512,7 @@ export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList>>, TError = SurveyListResponse[]>(
+export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -512,7 +520,7 @@ export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList
  * @summary 설문 목록 조회
  */
 
-export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList>>, TError = SurveyListResponse[]>(
+export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -532,22 +540,22 @@ export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList
  * @summary 설문 생성
  */
 export type createSurveyResponse201 = {
-  data: SurveyDetailResponse
+  data: CreateSurvey201
   status: 201
 }
 
 export type createSurveyResponse400 = {
-  data: SurveyDetailResponse
+  data: void
   status: 400
 }
 
 export type createSurveyResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type createSurveyResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
     
@@ -568,7 +576,7 @@ export const getCreateSurveyUrl = () => {
   return `/api/v1/surveys`
 }
 
-export const createSurvey = async (createSurveyRequest: CreateSurveyRequest, options?: RequestInit): Promise<createSurveyResponse> => {
+export const createSurvey = async (createSurveyBody: CreateSurveyBody, options?: RequestInit): Promise<createSurveyResponse> => {
   
   return customFetch<createSurveyResponse>(getCreateSurveyUrl(),
   {      
@@ -576,16 +584,16 @@ export const createSurvey = async (createSurveyRequest: CreateSurveyRequest, opt
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createSurveyRequest,)
+      createSurveyBody,)
   }
 );}
 
 
 
 
-export const getCreateSurveyMutationOptions = <TError = SurveyDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyRequest}, TContext> => {
+export const getCreateSurveyMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyBody}, TContext> => {
 
 const mutationKey = ['createSurvey'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -597,7 +605,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSurvey>>, {data: CreateSurveyRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSurvey>>, {data: CreateSurveyBody}> = (props) => {
           const {data} = props ?? {};
 
           return  createSurvey(data,requestOptions)
@@ -611,18 +619,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateSurveyMutationResult = NonNullable<Awaited<ReturnType<typeof createSurvey>>>
-    export type CreateSurveyMutationBody = CreateSurveyRequest
-    export type CreateSurveyMutationError = SurveyDetailResponse
+    export type CreateSurveyMutationBody = CreateSurveyBody
+    export type CreateSurveyMutationError = void
 
     /**
  * @summary 설문 생성
  */
-export const useCreateSurvey = <TError = SurveyDetailResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateSurvey = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSurvey>>,
         TError,
-        {data: CreateSurveyRequest},
+        {data: CreateSurveyBody},
         TContext
       > => {
       return useMutation(getCreateSurveyMutationOptions(options), queryClient);
@@ -632,27 +640,27 @@ export const useCreateSurvey = <TError = SurveyDetailResponse,
  * @summary 설문 비공개
  */
 export type unpublishSurveyResponse200 = {
-  data: SurveyDetailResponse
+  data: UnpublishSurvey200
   status: 200
 }
 
 export type unpublishSurveyResponse400 = {
-  data: SurveyDetailResponse
+  data: void
   status: 400
 }
 
 export type unpublishSurveyResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type unpublishSurveyResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
 
 export type unpublishSurveyResponse404 = {
-  data: SurveyDetailResponse
+  data: void
   status: 404
 }
     
@@ -687,7 +695,7 @@ export const unpublishSurvey = async (surveyId: number, options?: RequestInit): 
 
 
 
-export const getUnpublishSurveyMutationOptions = <TError = SurveyDetailResponse,
+export const getUnpublishSurveyMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpublishSurvey>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof unpublishSurvey>>, TError,{surveyId: number}, TContext> => {
 
@@ -716,12 +724,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UnpublishSurveyMutationResult = NonNullable<Awaited<ReturnType<typeof unpublishSurvey>>>
     
-    export type UnpublishSurveyMutationError = SurveyDetailResponse
+    export type UnpublishSurveyMutationError = void
 
     /**
  * @summary 설문 비공개
  */
-export const useUnpublishSurvey = <TError = SurveyDetailResponse,
+export const useUnpublishSurvey = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpublishSurvey>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof unpublishSurvey>>,
@@ -939,27 +947,27 @@ export const useRestoreSurvey = <TError = void,
  * @summary 설문 공개
  */
 export type publishSurveyResponse200 = {
-  data: SurveyDetailResponse
+  data: PublishSurvey200
   status: 200
 }
 
 export type publishSurveyResponse400 = {
-  data: SurveyDetailResponse
+  data: void
   status: 400
 }
 
 export type publishSurveyResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type publishSurveyResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
 
 export type publishSurveyResponse404 = {
-  data: SurveyDetailResponse
+  data: void
   status: 404
 }
     
@@ -994,7 +1002,7 @@ export const publishSurvey = async (surveyId: number, options?: RequestInit): Pr
 
 
 
-export const getPublishSurveyMutationOptions = <TError = SurveyDetailResponse,
+export const getPublishSurveyMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishSurvey>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof publishSurvey>>, TError,{surveyId: number}, TContext> => {
 
@@ -1023,12 +1031,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PublishSurveyMutationResult = NonNullable<Awaited<ReturnType<typeof publishSurvey>>>
     
-    export type PublishSurveyMutationError = SurveyDetailResponse
+    export type PublishSurveyMutationError = void
 
     /**
  * @summary 설문 공개
  */
-export const usePublishSurvey = <TError = SurveyDetailResponse,
+export const usePublishSurvey = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishSurvey>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof publishSurvey>>,
@@ -1043,27 +1051,27 @@ export const usePublishSurvey = <TError = SurveyDetailResponse,
  * @summary 설문 공개 + 응답 수집 시작
  */
 export type publishAndOpenResponse200 = {
-  data: SurveyDetailResponse
+  data: PublishAndOpen200
   status: 200
 }
 
 export type publishAndOpenResponse400 = {
-  data: SurveyDetailResponse
+  data: void
   status: 400
 }
 
 export type publishAndOpenResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type publishAndOpenResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
 
 export type publishAndOpenResponse404 = {
-  data: SurveyDetailResponse
+  data: void
   status: 404
 }
     
@@ -1098,7 +1106,7 @@ export const publishAndOpen = async (surveyId: number, options?: RequestInit): P
 
 
 
-export const getPublishAndOpenMutationOptions = <TError = SurveyDetailResponse,
+export const getPublishAndOpenMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishAndOpen>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof publishAndOpen>>, TError,{surveyId: number}, TContext> => {
 
@@ -1127,12 +1135,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PublishAndOpenMutationResult = NonNullable<Awaited<ReturnType<typeof publishAndOpen>>>
     
-    export type PublishAndOpenMutationError = SurveyDetailResponse
+    export type PublishAndOpenMutationError = void
 
     /**
  * @summary 설문 공개 + 응답 수집 시작
  */
-export const usePublishAndOpen = <TError = SurveyDetailResponse,
+export const usePublishAndOpen = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishAndOpen>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof publishAndOpen>>,
@@ -1147,27 +1155,27 @@ export const usePublishAndOpen = <TError = SurveyDetailResponse,
  * @summary 응답 수집 시작
  */
 export type openResponseResponse200 = {
-  data: SurveyDetailResponse
+  data: OpenResponse200
   status: 200
 }
 
 export type openResponseResponse400 = {
-  data: SurveyDetailResponse
+  data: void
   status: 400
 }
 
 export type openResponseResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type openResponseResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
 
 export type openResponseResponse404 = {
-  data: SurveyDetailResponse
+  data: void
   status: 404
 }
     
@@ -1202,7 +1210,7 @@ export const openResponse = async (surveyId: number, options?: RequestInit): Pro
 
 
 
-export const getOpenResponseMutationOptions = <TError = SurveyDetailResponse,
+export const getOpenResponseMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof openResponse>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof openResponse>>, TError,{surveyId: number}, TContext> => {
 
@@ -1231,12 +1239,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type OpenResponseMutationResult = NonNullable<Awaited<ReturnType<typeof openResponse>>>
     
-    export type OpenResponseMutationError = SurveyDetailResponse
+    export type OpenResponseMutationError = void
 
     /**
  * @summary 응답 수집 시작
  */
-export const useOpenResponse = <TError = SurveyDetailResponse,
+export const useOpenResponse = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof openResponse>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof openResponse>>,
@@ -1251,27 +1259,27 @@ export const useOpenResponse = <TError = SurveyDetailResponse,
  * @summary 응답 수집 마감
  */
 export type closeResponseResponse200 = {
-  data: SurveyDetailResponse
+  data: CloseResponse200
   status: 200
 }
 
 export type closeResponseResponse400 = {
-  data: SurveyDetailResponse
+  data: void
   status: 400
 }
 
 export type closeResponseResponse401 = {
-  data: SurveyDetailResponse
+  data: void
   status: 401
 }
 
 export type closeResponseResponse403 = {
-  data: SurveyDetailResponse
+  data: void
   status: 403
 }
 
 export type closeResponseResponse404 = {
-  data: SurveyDetailResponse
+  data: void
   status: 404
 }
     
@@ -1306,7 +1314,7 @@ export const closeResponse = async (surveyId: number, options?: RequestInit): Pr
 
 
 
-export const getCloseResponseMutationOptions = <TError = SurveyDetailResponse,
+export const getCloseResponseMutationOptions = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeResponse>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof closeResponse>>, TError,{surveyId: number}, TContext> => {
 
@@ -1335,12 +1343,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CloseResponseMutationResult = NonNullable<Awaited<ReturnType<typeof closeResponse>>>
     
-    export type CloseResponseMutationError = SurveyDetailResponse
+    export type CloseResponseMutationError = void
 
     /**
  * @summary 응답 수집 마감
  */
-export const useCloseResponse = <TError = SurveyDetailResponse,
+export const useCloseResponse = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeResponse>>, TError,{surveyId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof closeResponse>>,
@@ -1355,17 +1363,17 @@ export const useCloseResponse = <TError = SurveyDetailResponse,
  * @summary 휴지통 목록 조회
  */
 export type getTrashedSurveyListResponse200 = {
-  data: SurveyListResponse[]
+  data: GetTrashedSurveyList200Item[]
   status: 200
 }
 
 export type getTrashedSurveyListResponse401 = {
-  data: SurveyListResponse[]
+  data: void
   status: 401
 }
 
 export type getTrashedSurveyListResponse403 = {
-  data: SurveyListResponse[]
+  data: void
   status: 403
 }
     
@@ -1408,7 +1416,7 @@ export const getGetTrashedSurveyListQueryKey = () => {
     }
 
     
-export const getGetTrashedSurveyListQueryOptions = <TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = SurveyListResponse[]>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrashedSurveyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetTrashedSurveyListQueryOptions = <TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrashedSurveyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1427,10 +1435,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetTrashedSurveyListQueryResult = NonNullable<Awaited<ReturnType<typeof getTrashedSurveyList>>>
-export type GetTrashedSurveyListQueryError = SurveyListResponse[]
+export type GetTrashedSurveyListQueryError = void
 
 
-export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = SurveyListResponse[]>(
+export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = void>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrashedSurveyList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTrashedSurveyList>>,
@@ -1440,7 +1448,7 @@ export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTra
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = SurveyListResponse[]>(
+export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrashedSurveyList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTrashedSurveyList>>,
@@ -1450,7 +1458,7 @@ export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTra
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = SurveyListResponse[]>(
+export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrashedSurveyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1458,7 +1466,7 @@ export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTra
  * @summary 휴지통 목록 조회
  */
 
-export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = SurveyListResponse[]>(
+export function useGetTrashedSurveyList<TData = Awaited<ReturnType<typeof getTrashedSurveyList>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrashedSurveyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

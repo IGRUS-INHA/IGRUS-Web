@@ -1,0 +1,115 @@
+pinnedPostsByIdDisplayOrder:
+  put:
+    tags:
+    - Pinned Post
+    summary: 고정 게시글 표시 순서 변경
+    description: 고정 게시글의 표시 순서를 변경합니다. OPERATOR 이상만 가능합니다.
+    operationId: updateDisplayOrder
+    parameters:
+    - name: id
+      in: path
+      description: 고정 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/pinned-posts.yaml#/UpdateDisplayOrderRequest
+      required: true
+    responses:
+      '200':
+        description: 변경 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/pinned-posts.yaml#/PinnedPostDetailResponse
+      '400':
+        description: 잘못된 요청
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음 (OPERATOR 이상 필요)
+      '404':
+        description: 고정 게시글을 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+pinnedPosts:
+  get:
+    tags:
+    - Pinned Post
+    summary: 고정 게시글 목록 조회
+    description: 메인 페이지에 고정된 모든 게시글을 표시 순서대로 조회합니다.
+    operationId: getPinnedPostList
+    responses:
+      '200':
+        description: 조회 성공
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../schemas/pinned-posts.yaml#/PinnedPostListResponse
+    security:
+    - BearerAuthentication: []
+  post:
+    tags:
+    - Pinned Post
+    summary: 게시글 고정
+    description: 게시글을 메인 페이지에 고정합니다. OPERATOR 이상만 가능합니다.
+    operationId: createPinnedPost
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/pinned-posts.yaml#/CreatePinnedPostRequest
+      required: true
+    responses:
+      '201':
+        description: 고정 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/pinned-posts.yaml#/PinnedPostDetailResponse
+      '400':
+        description: 잘못된 요청
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음 (OPERATOR 이상 필요)
+      '404':
+        description: 게시글을 찾을 수 없음
+      '409':
+        description: 이미 고정된 게시글
+    security:
+    - BearerAuthentication: []
+pinnedPostsById:
+  delete:
+    tags:
+    - Pinned Post
+    summary: 게시글 고정 해제
+    description: 게시글 고정을 해제합니다. OPERATOR 이상만 가능합니다.
+    operationId: deletePinnedPost
+    parameters:
+    - name: id
+      in: path
+      description: 고정 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '204':
+        description: 고정 해제 성공
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음 (OPERATOR 이상 필요)
+      '404':
+        description: 고정 게시글을 찾을 수 없음
+    security:
+    - BearerAuthentication: []

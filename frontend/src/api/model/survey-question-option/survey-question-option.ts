@@ -53,8 +53,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  OptionResponse,
-  SaveQuestionOptionRequest
+  CreateOption201Item,
+  CreateOptionBody,
+  GetOptionList200Item,
+  UpdateOption200Item,
+  UpdateOptionBody
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -69,22 +72,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 선택지 목록 조회
  */
 export type getOptionListResponse200 = {
-  data: OptionResponse[]
+  data: GetOptionList200Item[]
   status: 200
 }
 
 export type getOptionListResponse401 = {
-  data: OptionResponse[]
+  data: void
   status: 401
 }
 
 export type getOptionListResponse403 = {
-  data: OptionResponse[]
+  data: void
   status: 403
 }
 
 export type getOptionListResponse404 = {
-  data: OptionResponse[]
+  data: void
   status: 404
 }
     
@@ -130,7 +133,7 @@ export const getGetOptionListQueryKey = (surveyId: number,
     }
 
     
-export const getGetOptionListQueryOptions = <TData = Awaited<ReturnType<typeof getOptionList>>, TError = OptionResponse[]>(surveyId: number,
+export const getGetOptionListQueryOptions = <TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
@@ -150,10 +153,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetOptionListQueryResult = NonNullable<Awaited<ReturnType<typeof getOptionList>>>
-export type GetOptionListQueryError = OptionResponse[]
+export type GetOptionListQueryError = void
 
 
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = OptionResponse[]>(
+export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
  surveyId: number,
     questionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -164,7 +167,7 @@ export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = OptionResponse[]>(
+export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
  surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -175,7 +178,7 @@ export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = OptionResponse[]>(
+export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
  surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
@@ -184,7 +187,7 @@ export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList
  * @summary 선택지 목록 조회
  */
 
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = OptionResponse[]>(
+export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
  surveyId: number,
     questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
@@ -205,27 +208,27 @@ export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList
  * @summary 선택지 추가
  */
 export type createOptionResponse201 = {
-  data: OptionResponse[]
+  data: CreateOption201Item[]
   status: 201
 }
 
 export type createOptionResponse400 = {
-  data: OptionResponse[]
+  data: void
   status: 400
 }
 
 export type createOptionResponse401 = {
-  data: OptionResponse[]
+  data: void
   status: 401
 }
 
 export type createOptionResponse403 = {
-  data: OptionResponse[]
+  data: void
   status: 403
 }
 
 export type createOptionResponse404 = {
-  data: OptionResponse[]
+  data: void
   status: 404
 }
     
@@ -249,7 +252,7 @@ export const getCreateOptionUrl = (surveyId: number,
 
 export const createOption = async (surveyId: number,
     questionId: number,
-    saveQuestionOptionRequest: SaveQuestionOptionRequest, options?: RequestInit): Promise<createOptionResponse> => {
+    createOptionBody: CreateOptionBody, options?: RequestInit): Promise<createOptionResponse> => {
   
   return customFetch<createOptionResponse>(getCreateOptionUrl(surveyId,questionId),
   {      
@@ -257,16 +260,16 @@ export const createOption = async (surveyId: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      saveQuestionOptionRequest,)
+      createOptionBody,)
   }
 );}
 
 
 
 
-export const getCreateOptionMutationOptions = <TError = OptionResponse[],
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: SaveQuestionOptionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: SaveQuestionOptionRequest}, TContext> => {
+export const getCreateOptionMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: CreateOptionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: CreateOptionBody}, TContext> => {
 
 const mutationKey = ['createOption'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -278,7 +281,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOption>>, {surveyId: number;questionId: number;data: SaveQuestionOptionRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOption>>, {surveyId: number;questionId: number;data: CreateOptionBody}> = (props) => {
           const {surveyId,questionId,data} = props ?? {};
 
           return  createOption(surveyId,questionId,data,requestOptions)
@@ -292,18 +295,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateOptionMutationResult = NonNullable<Awaited<ReturnType<typeof createOption>>>
-    export type CreateOptionMutationBody = SaveQuestionOptionRequest
-    export type CreateOptionMutationError = OptionResponse[]
+    export type CreateOptionMutationBody = CreateOptionBody
+    export type CreateOptionMutationError = void
 
     /**
  * @summary 선택지 추가
  */
-export const useCreateOption = <TError = OptionResponse[],
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: SaveQuestionOptionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateOption = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: CreateOptionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createOption>>,
         TError,
-        {surveyId: number;questionId: number;data: SaveQuestionOptionRequest},
+        {surveyId: number;questionId: number;data: CreateOptionBody},
         TContext
       > => {
       return useMutation(getCreateOptionMutationOptions(options), queryClient);
@@ -416,27 +419,27 @@ export const useDeleteOption = <TError = void,
  * @summary 선택지 수정
  */
 export type updateOptionResponse200 = {
-  data: OptionResponse[]
+  data: UpdateOption200Item[]
   status: 200
 }
 
 export type updateOptionResponse400 = {
-  data: OptionResponse[]
+  data: void
   status: 400
 }
 
 export type updateOptionResponse401 = {
-  data: OptionResponse[]
+  data: void
   status: 401
 }
 
 export type updateOptionResponse403 = {
-  data: OptionResponse[]
+  data: void
   status: 403
 }
 
 export type updateOptionResponse404 = {
-  data: OptionResponse[]
+  data: void
   status: 404
 }
     
@@ -462,7 +465,7 @@ export const getUpdateOptionUrl = (surveyId: number,
 export const updateOption = async (surveyId: number,
     questionId: number,
     optionId: number,
-    saveQuestionOptionRequest: SaveQuestionOptionRequest, options?: RequestInit): Promise<updateOptionResponse> => {
+    updateOptionBody: UpdateOptionBody, options?: RequestInit): Promise<updateOptionResponse> => {
   
   return customFetch<updateOptionResponse>(getUpdateOptionUrl(surveyId,questionId,optionId),
   {      
@@ -470,16 +473,16 @@ export const updateOption = async (surveyId: number,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      saveQuestionOptionRequest,)
+      updateOptionBody,)
   }
 );}
 
 
 
 
-export const getUpdateOptionMutationOptions = <TError = OptionResponse[],
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest}, TContext> => {
+export const getUpdateOptionMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: UpdateOptionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: UpdateOptionBody}, TContext> => {
 
 const mutationKey = ['updateOption'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -491,7 +494,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOption>>, {surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOption>>, {surveyId: number;questionId: number;optionId: number;data: UpdateOptionBody}> = (props) => {
           const {surveyId,questionId,optionId,data} = props ?? {};
 
           return  updateOption(surveyId,questionId,optionId,data,requestOptions)
@@ -505,18 +508,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateOptionMutationResult = NonNullable<Awaited<ReturnType<typeof updateOption>>>
-    export type UpdateOptionMutationBody = SaveQuestionOptionRequest
-    export type UpdateOptionMutationError = OptionResponse[]
+    export type UpdateOptionMutationBody = UpdateOptionBody
+    export type UpdateOptionMutationError = void
 
     /**
  * @summary 선택지 수정
  */
-export const useUpdateOption = <TError = OptionResponse[],
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdateOption = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: UpdateOptionBody}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateOption>>,
         TError,
-        {surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest},
+        {surveyId: number;questionId: number;optionId: number;data: UpdateOptionBody},
         TContext
       > => {
       return useMutation(getUpdateOptionMutationOptions(options), queryClient);

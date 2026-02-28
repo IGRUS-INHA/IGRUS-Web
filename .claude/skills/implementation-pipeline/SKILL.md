@@ -7,7 +7,7 @@ model: opus
 
 # 코드 구현-리뷰 파이프라인
 
-검증 기준, 테스트 케이스, 작업 계획 문서를 기반으로 code-implementer 에이전트가 코드를 구현하고, spec-reviewer와 code-reviewer 에이전트가 순차적으로 리뷰합니다. 리뷰를 통과하지 못하면 수정-리뷰를 자동으로 반복합니다.
+검증 기준, 테스트 케이스, 작업 계획 문서를 기반으로 code-implementer 에이전트가 코드를 구현하고, spec-reviewer와 code-reviewer 에이전트가 병렬로 리뷰합니다. 리뷰를 통과하지 못하면 수정-리뷰를 자동으로 반복합니다.
 
 ## 사용자 입력
 
@@ -36,15 +36,11 @@ Phase 4: 작업 그룹별 구현-리뷰 루프 ←──────────
   │                                                      │
   Phase 4a: code-implementer 실행 (구현)                  │
   Phase 4b: 구현 결과 확인                                │
-  Phase 4c: spec-reviewer 실행 (명세 검증)                │
-  Phase 4d: spec-reviewer 판정 파싱                       │
-    ├── FAIL → Phase 4g (수정)                            │
-    └── PASS                                              │
-         Phase 4e: code-reviewer 실행 (코드 리뷰)         │
-         Phase 4f: code-reviewer 판정 파싱                │
-           ├── PASS → 다음 그룹                           │
-           └── FAIL → Phase 4g (수정)                     │
-  Phase 4g: 피드백 통합 → code-implementer 재실행 ───────┘
+  Phase 4c: spec-reviewer + code-reviewer 병렬 실행       │
+  Phase 4d: 양쪽 판정 파싱 및 통합                        │
+    ├── 양쪽 PASS → 다음 그룹                             │
+    └── 하나 이상 FAIL → Phase 4e (수정)                  │
+  Phase 4e: 피드백 통합 → code-implementer 재실행 ───────┘
        (최대 3회 반복)
   ↓
 Phase 5: 전체 테스트 실행
@@ -219,7 +215,7 @@ Task 도구로 `code-implementer` 서브에이전트를 실행합니다.
   형식: `생성된 파일: {절대 경로}` 또는 `수정된 파일: {절대 경로}`
 ```
 
-**수정 모드 프롬프트** (Phase 4g에서 재실행 시):
+**수정 모드 프롬프트** (Phase 4e에서 재실행 시):
 
 ```
 다음 리뷰 피드백에 따라 코드를 수정해주세요.
@@ -230,12 +226,14 @@ Task 도구로 `code-implementer` 서브에이전트를 실행합니다.
 ## 리뷰 피드백
 
 ### 명세 검증 피드백 (spec-reviewer)
-{spec-reviewer의 🔴 필수 수정 사항 + 🟡 권장 수정 사항}
-(spec-reviewer가 PASS인 경우 이 섹션 생략)
+{spec-reviewer가 FAIL인 경우: 🔴 필수 수정 사항 + 🟡 권장 수정 사항}
+{spec-reviewer가 PASS인 경우: 🟡 권장 수정 사항만 (참고용, 선택적)}
+(spec-reviewer가 PASS이고 🟡도 없는 경우 이 섹션 생략)
 
 ### 코드 리뷰 피드백 (code-reviewer)
-{code-reviewer의 🔴 필수 수정 사항 + 🟡 권장 수정 사항}
-(code-reviewer가 실행되지 않은 경우 이 섹션 생략)
+{code-reviewer가 FAIL인 경우: 🔴 필수 수정 사항 + 🟡 권장 수정 사항}
+{code-reviewer가 PASS인 경우: 🟡 권장 수정 사항만 (참고용, 선택적)}
+(code-reviewer가 PASS이고 🟡도 없는 경우 이 섹션 생략)
 
 ## 참조 문서
 - 검증 기준: {절대 경로}
@@ -263,11 +261,13 @@ code-implementer 출력에서 `생성된 파일:` 또는 `수정된 파일:` 패
 
 체크리스트 파일을 `Read`로 읽어 업데이트 상태를 확인합니다.
 
-### Phase 4c: spec-reviewer 에이전트 실행
+### Phase 4c: spec-reviewer + code-reviewer 병렬 실행
 
-Task 도구로 `spec-reviewer` 서브에이전트를 실행합니다.
+**spec-reviewer와 code-reviewer를 동시에 실행합니다.** 두 리뷰어는 모두 읽기 전용이므로 병렬 실행 시 충돌이 없습니다.
 
-**프롬프트 구성**:
+하나의 메시지에서 두 개의 Task 도구 호출을 병렬로 실행합니다:
+
+**Task 1: spec-reviewer 프롬프트**:
 
 ```
 다음 코드 구현을 검증 기준/테스트 케이스 문서 대비 검증해주세요.
@@ -295,25 +295,7 @@ Task 도구로 `spec-reviewer` 서브에이전트를 실행합니다.
 - 이전 라운드에서 지적한 이슈가 해결되었는지 중점적으로 확인할 것
 ```
 
-### Phase 4d: spec-reviewer 판정 파싱
-
-**파싱 규칙** (기존 파이프라인과 동일):
-1. `결과: **PASS**` 문자열이 포함되어 있으면 → **PASS**
-2. `결과: **FAIL**` 문자열이 포함되어 있으면 → **FAIL**
-3. 어느 쪽도 명확하지 않으면 → `🔴` 마커가 내용과 함께 있는지 확인하여 판단
-
-**분기 로직**:
-- **PASS** → Phase 4e (code-reviewer 실행)
-- **FAIL** + 현재 라운드 < 3 → Phase 4g (수정)
-- **FAIL** + 현재 라운드 >= 3 → Phase 7 방향으로 사용자에게 판단 위임
-
-### Phase 4e: code-reviewer 에이전트 실행
-
-**spec-reviewer가 PASS한 경우에만 실행합니다.**
-
-Task 도구로 `code-reviewer` 서브에이전트를 실행합니다.
-
-**프롬프트 구성**:
+**Task 2: code-reviewer 프롬프트**:
 
 ```
 다음 코드 구현을 코드 품질/보안/규칙 준수 관점에서 리뷰해주세요.
@@ -336,23 +318,28 @@ Task 도구로 `code-reviewer` 서브에이전트를 실행합니다.
 - 이전 라운드에서 지적한 이슈가 해결되었는지 중점적으로 확인할 것
 ```
 
-### Phase 4f: code-reviewer 판정 파싱
+### Phase 4d: 양쪽 판정 파싱 및 통합
 
-Phase 4d와 동일한 파싱 규칙을 적용합니다.
+양쪽 리뷰 결과를 각각 파싱합니다.
 
-**분기 로직**:
-- **PASS** → 체크리스트 업데이트 (그룹 상태: PASS, 검증 기준/TC 상태 업데이트) → 다음 그룹으로
-- **FAIL** + 현재 라운드 < 3 → Phase 4g (수정)
-- **FAIL** + 현재 라운드 >= 3 → Phase 7 방향으로 사용자에게 판단 위임
+**파싱 규칙** (각 리뷰어에 대해):
+1. `결과: **PASS**` 문자열이 포함되어 있으면 → **PASS**
+2. `결과: **FAIL**` 문자열이 포함되어 있으면 → **FAIL**
+3. 어느 쪽도 명확하지 않으면 → `🔴` 마커가 내용과 함께 있는지 확인하여 판단
 
-### Phase 4g: 피드백 통합 및 재실행
+**통합 분기 로직**:
+- spec-reviewer **PASS** + code-reviewer **PASS** → 체크리스트 업데이트 (그룹 상태: PASS, 검증 기준/TC 상태 업데이트) → 다음 그룹으로
+- 하나 이상 **FAIL** + 현재 라운드 < 3 → Phase 4e (수정)
+- 하나 이상 **FAIL** + 현재 라운드 >= 3 → Phase 7 방향으로 사용자에게 판단 위임
 
-1. FAIL한 리뷰어의 출력에서 🔴 필수 수정 사항과 🟡 권장 수정 사항을 추출합니다.
-2. spec-reviewer와 code-reviewer 양쪽의 피드백이 있으면 합칩니다.
+### Phase 4e: 피드백 통합 및 재실행
+
+1. 양쪽 리뷰어의 출력에서 🔴 필수 수정 사항과 🟡 권장 수정 사항을 추출합니다.
+2. FAIL한 리뷰어의 피드백은 전부 포함하고, PASS한 리뷰어의 🟡 권장 사항은 참고용으로 포함합니다.
 3. 체크리스트의 이슈 로그에 추가합니다 (Edit 도구 사용).
 4. Phase 4a의 **수정 모드 프롬프트**를 사용하여 code-implementer를 재실행합니다.
 5. TodoWrite를 업데이트하여 다음 라운드를 표시합니다.
-6. Phase 4c로 복귀합니다.
+6. Phase 4c로 복귀합니다 (다시 양쪽 병렬 리뷰).
 
 ### 그룹 PASS 시 체크리스트 업데이트
 
@@ -379,7 +366,7 @@ cd /c/dev/IGRUS-Web/frontend && npm test
 
 테스트 실패 시:
 1. 실패한 테스트를 분석하여 관련 그룹을 식별합니다.
-2. 해당 그룹에 대해 Phase 4g (수정 루프)를 다시 실행합니다.
+2. 해당 그룹에 대해 Phase 4e (수정 루프)를 다시 실행합니다.
 3. 수정 후 다시 전체 테스트를 실행합니다.
 
 ## Phase 6: 체크리스트 최종 업데이트
@@ -449,6 +436,7 @@ cd /c/dev/IGRUS-Web/frontend && npm test
 - 에이전트 실행 결과를 파싱할 때, 결과 텍스트 전체를 다음 에이전트에 전달하지 말고 핵심 정보만 추출하여 전달할 것
 - 파이프라인 중간에 에이전트 실행이 실패하면, 에러 내용을 사용자에게 보고하고 중단할 것
 - 3개 문서 경로는 모든 라운드에서 일관되게 유지할 것
-- spec-reviewer가 PASS한 경우에만 code-reviewer를 실행할 것 (순차 실행)
+- spec-reviewer와 code-reviewer를 하나의 메시지에서 동시에 Task 도구를 호출하여 병렬 실행할 것
+- 양쪽 리뷰 결과를 통합하여 판정할 것: 양쪽 PASS → 그룹 PASS, 하나 이상 FAIL → 피드백 합쳐서 수정 루프
 - 체크리스트 파일은 파이프라인과 code-implementer만 수정하고, 리뷰어들은 읽기만 할 것
 - 그룹 분할 결과는 반드시 사용자 확인을 받을 것

@@ -1,0 +1,59 @@
+UpdateDisplayOrderRequest:
+  type: object
+  properties:
+    displayOrder:
+      type: integer
+      format: int32
+      minimum: 1
+  required:
+  - displayOrder
+PinnedPostDetailResponse:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    postId:
+      type: integer
+      format: int64
+    postTitle:
+      type: string
+    boardCode:
+      type: string
+    displayOrder:
+      type: integer
+      format: int32
+    pinnedBy:
+      $ref: ./_common.yaml#/PinnedByInfo
+    createdAt:
+      type: string
+      format: date-time
+CreatePinnedPostRequest:
+  type: object
+  properties:
+    postId:
+      type: integer
+      format: int64
+    displayOrder:
+      type: integer
+      format: int32
+      minimum: 1
+  required:
+  - displayOrder
+  - postId
+PinnedPostListResponse:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    post:
+      $ref: ./_common.yaml#/PostInfo
+    displayOrder:
+      type: integer
+      format: int32
+    pinnedBy:
+      $ref: ./_common.yaml#/PinnedByInfo
+    pinnedAt:
+      type: string
+      format: date-time

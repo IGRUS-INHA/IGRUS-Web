@@ -1,0 +1,271 @@
+postsByPostIdLikes:
+  post:
+    tags:
+    - PostLike
+    summary: 게시글 좋아요 토글
+    description: 게시글 좋아요를 토글합니다. 좋아요가 없으면 추가하고, 있으면 취소합니다.
+    operationId: toggleLike
+    parameters:
+    - name: postId
+      in: path
+      description: 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '200':
+        description: 좋아요 토글 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/posts.yaml#/PostLikeToggleResponse
+      '401':
+        description: 인증 필요
+      '403':
+        description: 게시글 접근 권한 필요
+      '404':
+        description: 게시글을 찾을 수 없음
+      '410':
+        description: 삭제된 게시글
+    security:
+    - BearerAuthentication: []
+postsByPostIdComments:
+  get:
+    tags:
+    - Comment
+    summary: 댓글 목록 조회
+    description: 게시글의 댓글 목록을 계층 구조로 조회합니다. 등록순(오래된 순)으로 정렬됩니다.
+    operationId: getComments
+    parameters:
+    - name: postId
+      in: path
+      description: 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '200':
+        description: 댓글 목록 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/posts.yaml#/CommentListResponse
+      '404':
+        description: 게시글을 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+  post:
+    tags:
+    - Comment
+    summary: 댓글 작성
+    description: 게시글에 댓글을 작성합니다. 정회원 이상만 작성 가능합니다.
+    operationId: createComment
+    parameters:
+    - name: postId
+      in: path
+      description: 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/posts.yaml#/CreateCommentRequest
+      required: true
+    responses:
+      '201':
+        description: 댓글 작성 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/posts.yaml#/CommentResponse
+      '400':
+        description: 잘못된 요청 (내용 누락, 500자 초과, 익명 불가 게시판 등)
+      '401':
+        description: 인증 필요
+      '403':
+        description: 작성 권한 없음 (정회원 이상 권한 필요)
+      '404':
+        description: 게시글을 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+postsByPostIdCommentsByCommentIdReplies:
+  post:
+    tags:
+    - Comment
+    summary: 대댓글 작성
+    description: 댓글에 대댓글을 작성합니다. 정회원 이상만 작성 가능하며, 대댓글에는 답글을 달 수 없습니다 (1단계까지만 허용).
+    operationId: createReply_1
+    parameters:
+    - name: postId
+      in: path
+      description: 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    - name: commentId
+      in: path
+      description: 부모 댓글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/posts.yaml#/CreateCommentRequest
+      required: true
+    responses:
+      '201':
+        description: 대댓글 작성 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/posts.yaml#/CommentResponse
+      '400':
+        description: 잘못된 요청 (대댓글에 답글 시도, 내용 누락, 500자 초과 등)
+      '401':
+        description: 인증 필요
+      '403':
+        description: 작성 권한 없음 (정회원 이상 권한 필요)
+      '404':
+        description: 게시글 또는 부모 댓글을 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+postsByPostIdBookmarks:
+  post:
+    tags:
+    - Bookmark
+    summary: 북마크 토글
+    description: 게시글 북마크를 토글합니다. 북마크가 없으면 추가하고, 있으면 취소합니다.
+    operationId: toggleBookmark
+    parameters:
+    - name: postId
+      in: path
+      description: 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '200':
+        description: 북마크 토글 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/posts.yaml#/BookmarkToggleResponse
+      '401':
+        description: 인증 필요
+      '403':
+        description: 게시글 접근 권한 필요
+      '404':
+        description: 게시글을 찾을 수 없음
+      '410':
+        description: 삭제된 게시글
+    security:
+    - BearerAuthentication: []
+postsByPostIdLikesStatus:
+  get:
+    tags:
+    - PostLike
+    summary: 게시글 좋아요 상태 조회
+    description: 게시글의 좋아요 상태를 조회합니다.
+    operationId: getLikeStatus
+    parameters:
+    - name: postId
+      in: path
+      description: 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '200':
+        description: 좋아요 상태 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/posts.yaml#/PostLikeStatusResponse
+      '401':
+        description: 인증 필요
+      '404':
+        description: 게시글을 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+postsByPostIdBookmarksStatus:
+  get:
+    tags:
+    - Bookmark
+    summary: 북마크 상태 조회
+    description: 게시글의 북마크 상태를 조회합니다.
+    operationId: getBookmarkStatus
+    parameters:
+    - name: postId
+      in: path
+      description: 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '200':
+        description: 북마크 상태 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/posts.yaml#/BookmarkStatusResponse
+      '401':
+        description: 인증 필요
+      '404':
+        description: 게시글을 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+postsByPostIdCommentsByCommentId:
+  delete:
+    tags:
+    - Comment
+    summary: 댓글 삭제
+    description: 댓글을 삭제합니다. 작성자 본인 또는 운영자 이상 권한을 가진 사용자만 삭제 가능합니다. Soft Delete로 처리되며, 삭제된 댓글은 '삭제된 댓글입니다'로 표시됩니다.
+    operationId: deleteComment
+    parameters:
+    - name: postId
+      in: path
+      description: 게시글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    - name: commentId
+      in: path
+      description: 댓글 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '204':
+        description: 댓글 삭제 성공
+      '401':
+        description: 인증 필요
+      '403':
+        description: 삭제 권한 없음
+      '404':
+        description: 댓글을 찾을 수 없음
+    security:
+    - BearerAuthentication: []

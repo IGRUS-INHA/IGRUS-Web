@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.9'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.openapi.generator' version '7.12.0'
 }
 
 group = 'igrus'
@@ -37,6 +38,7 @@ dependencies {
 	implementation 'org.springframework.retry:spring-retry:2.0.11'
 	implementation 'org.springframework:spring-aspects'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
+	implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
 
 	// JSON structured logging (production)
 	implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
@@ -62,6 +64,38 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+openApiGenerate {
+	generatorName = 'spring'
+	inputSpec = file("${rootProject.projectDir}/../openapi/openapi.yaml").absolutePath.replace('\\', '/')
+	outputDir = layout.buildDirectory.dir("generated/openapi").get().asFile.absolutePath
+	apiPackage = 'igrus.web.generated.api'
+	modelPackage = 'igrus.web.generated.model'
+	configOptions = [
+		interfaceOnly      : 'true',
+		useTags            : 'true',
+		useSpringBoot3     : 'true',
+		useJakartaEe       : 'true',
+		openApiNullable    : 'false',
+		skipDefaultInterface: 'true',
+		useBeanValidation  : 'true',
+		documentationProvider: 'none',
+	]
+	typeMappings = ['DateTime': 'java.time.Instant']
+	importMappings = ['java.time.OffsetDateTime': 'java.time.Instant']
+}
+
+sourceSets {
+	main {
+		java {
+			srcDir "${layout.buildDirectory.get()}/generated/openapi/src/main/java"
+		}
+	}
+}
+
+tasks.named('compileJava') {
+	dependsOn 'openApiGenerate'
 }
 
 tasks.named('test') {
