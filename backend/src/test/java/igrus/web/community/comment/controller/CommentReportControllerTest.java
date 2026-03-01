@@ -15,6 +15,7 @@ import igrus.web.community.comment.repository.CommentReportRepository;
 import igrus.web.community.comment.repository.CommentRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
@@ -156,7 +157,8 @@ class CommentReportControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.id").isNumber())
                     .andExpect(jsonPath("$.commentId").value(comment.getId()))
                     .andExpect(jsonPath("$.reason").value("부적절한 내용입니다."))
-                    .andExpect(jsonPath("$.status").value("PENDING"));
+                    .andExpect(jsonPath("$.status").value("PENDING"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-RPT-002: 중복 신고 시 400 Bad Request")
@@ -246,7 +248,8 @@ class CommentReportControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()").value(2));
+                    .andExpect(jsonPath("$.length()").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-RPT-005: 정회원 관리자 API 접근 시 403 Forbidden")

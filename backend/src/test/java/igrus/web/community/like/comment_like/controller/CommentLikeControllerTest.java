@@ -11,6 +11,7 @@ import igrus.web.community.like.comment_like.domain.CommentLike;
 import igrus.web.community.like.comment_like.repository.CommentLikeRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
@@ -135,7 +136,8 @@ class CommentLikeControllerTest extends ServiceIntegrationTestBase {
                             .with(withAuth(memberUser2))
                             .with(csrf()))
                     .andDo(print())
-                    .andExpect(status().isCreated());
+                    .andExpect(status().isCreated())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-042: 본인 댓글 좋아요 시 400 Bad Request")

@@ -1,5 +1,6 @@
 package igrus.web.security.auth.approval.controller;
 
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.common.exception.CommonErrorCode;
 import igrus.web.security.auth.common.exception.AuthErrorCode;
@@ -95,7 +96,8 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.associates").isArray())
                     .andExpect(jsonPath("$.associates[0].studentId").value("20230001"))
                     .andExpect(jsonPath("$.associates[0].name").value("테스트유저"))
-                    .andExpect(jsonPath("$.totalElements").value(1));
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -131,7 +133,8 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .with(withAuth(adminUser))
                             .with(csrf()))
                     .andDo(print())
-                    .andExpect(status().isOk());
+                    .andExpect(status().isOk())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
 
             // verify - 역할이 MEMBER로 변경되었는지 확인
             User updatedUser = userRepository.findById(associateUser.getId()).orElseThrow();
@@ -200,7 +203,8 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.approvedCount").value(3))
                     .andExpect(jsonPath("$.failedCount").value(0))
-                    .andExpect(jsonPath("$.totalRequested").value(3));
+                    .andExpect(jsonPath("$.totalRequested").value(3))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
 
             // verify - 모든 사용자가 MEMBER로 변경되었는지 확인
             assert userRepository.findById(associateUser.getId()).orElseThrow().getRole() == UserRole.MEMBER;
@@ -227,7 +231,8 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.approvedCount").value(2))
                     .andExpect(jsonPath("$.failedCount").value(1))
-                    .andExpect(jsonPath("$.totalRequested").value(3));
+                    .andExpect(jsonPath("$.totalRequested").value(3))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -314,7 +319,8 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
-                    .andExpect(status().isOk());
+                    .andExpect(status().isOk())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
 
             // verify - 역할은 ASSOCIATE 유지
             User updatedUser = userRepository.findById(associateUser.getId()).orElseThrow();
@@ -394,7 +400,8 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.rejectedCount").value(2))
                     .andExpect(jsonPath("$.failedCount").value(0))
-                    .andExpect(jsonPath("$.totalRequested").value(2));
+                    .andExpect(jsonPath("$.totalRequested").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -434,7 +441,8 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content").isArray())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.content[0].rejectionReason").value("거절 사유"));
+                    .andExpect(jsonPath("$.content[0].rejectionReason").value("거절 사유"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -453,7 +461,8 @@ class AdminMemberControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.associates[0].studentId").value("20230002"));
+                    .andExpect(jsonPath("$.associates[0].studentId").value("20230002"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
