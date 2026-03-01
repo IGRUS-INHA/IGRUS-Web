@@ -86,6 +86,7 @@ class EventConcurrencyTest extends ServiceIntegrationTestBase {
                     capacity,
                     type
             );
+            event.publish();
             event.openRegistration();
             return eventRepository.save(event);
         });

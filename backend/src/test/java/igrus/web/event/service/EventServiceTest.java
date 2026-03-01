@@ -19,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -38,7 +39,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * EventService 테스트.
- * 2축 상태 모델 (RegistrationStatus + EventStatus) 기반.
+ * 3축 상태 모델 (EventStatus + RegistrationStatus + EventVisibility) 기반.
  * 테스트 케이스 문서: docs/test-case/event/event-domain-test-cases.md
  *
  * @see igrus.web.event.service.EventService
@@ -117,6 +118,7 @@ class EventServiceTest {
         when(event.getEventStatus()).thenReturn(EventStatus.UPCOMING);
         when(event.getRegistrationType()).thenReturn(EventRegistrationType.AUTO_APPROVE);
         when(event.isRegistrable()).thenReturn(true);
+        when(event.getVisibility()).thenReturn(EventVisibility.PUBLISHED);
         when(event.getCreatedAt()).thenReturn(Instant.now());
         when(event.getUpdatedAt()).thenReturn(Instant.now());
         when(event.getCloseReason()).thenReturn(null);
@@ -433,7 +435,7 @@ class EventServiceTest {
         @Test
         @DisplayName("[SVC-EVT-006] 정회원이 유효한 행사 ID로 조회하면 성공한다")
         void getEvent_WithValidId_Success() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(eventRepository.findByIdAndVisibility(EVENT_ID, EventVisibility.PUBLISHED)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
                     eq(EVENT_ID), eq(MEMBER_ID), any(Set.class))).thenReturn(false);
@@ -452,7 +454,7 @@ class EventServiceTest {
         @Test
         @DisplayName("[SVC-EVT-007] 삭제된 행사를 조회하면 EventNotFoundException 발생")
         void getEvent_DeletedEvent_ThrowsException() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.empty());
+            when(eventRepository.findByIdAndVisibility(EVENT_ID, EventVisibility.PUBLISHED)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> eventService.getEvent(EVENT_ID, MEMBER_ID))
                     .isInstanceOf(EventNotFoundException.class);
@@ -464,7 +466,7 @@ class EventServiceTest {
         @Test
         @DisplayName("[SVC-EVT-008] 준회원이 행사를 조회하면 AssociateMemberNotAllowedException 발생")
         void getEvent_WithAssociateMember_ThrowsException() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(eventRepository.findByIdAndVisibility(EVENT_ID, EventVisibility.PUBLISHED)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(4L)).thenReturn(Optional.of(associateMember));
 
             assertThatThrownBy(() -> eventService.getEvent(EVENT_ID, 4L))
@@ -477,7 +479,7 @@ class EventServiceTest {
         @Test
         @DisplayName("[SVC-EVT-009] 운영진이 조회하면 canEdit이 true인 응답을 반환한다")
         void getEvent_ByOperator_ReturnsCanEditTrue() {
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(eventRepository.findByIdAndVisibility(EVENT_ID, EventVisibility.PUBLISHED)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
                     eq(EVENT_ID), eq(OPERATOR_ID), any(Set.class))).thenReturn(false);
@@ -498,15 +500,15 @@ class EventServiceTest {
          * SVC-EVT-010: 상태 필터 없이 목록 조회
          */
         @Test
-        @DisplayName("[SVC-EVT-010] 필터 없이 전체 조회하면 삭제되지 않은 행사 목록을 반환한다")
+        @DisplayName("[SVC-EVT-010] 필터 없이 전체 조회하면 PUBLISHED 행사 목록을 반환한다")
         void getEventList_NoFilter_ReturnsAllNotDeleted() {
-            when(eventRepository.findAllNotDeleted()).thenReturn(List.of(mockEvent));
+            when(eventRepository.findByVisibilityAndFilters(EventVisibility.PUBLISHED, null, null)).thenReturn(List.of(mockEvent));
 
             List<EventListResponse> result = eventService.getEventList(null, null);
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).id()).isEqualTo(EVENT_ID);
-            verify(eventRepository).findAllNotDeleted();
+            verify(eventRepository).findByVisibilityAndFilters(EventVisibility.PUBLISHED, null, null);
             verify(mockEvent).updateStatusIfNeeded(any(Instant.class));
         }
 
@@ -514,28 +516,28 @@ class EventServiceTest {
          * SVC-EVT-011: EventStatus 필터로 목록 조회 (2축 모델)
          */
         @Test
-        @DisplayName("[SVC-EVT-011] EventStatus 필터로 조회하면 해당 상태의 행사만 반환한다")
+        @DisplayName("[SVC-EVT-011] EventStatus 필터로 조회하면 해당 상태의 PUBLISHED 행사만 반환한다")
         void getEventList_WithEventStatusFilter_ReturnsFiltered() {
-            when(eventRepository.findByEventStatus(EventStatus.UPCOMING)).thenReturn(List.of(mockEvent));
+            when(eventRepository.findByVisibilityAndFilters(EventVisibility.PUBLISHED, EventStatus.UPCOMING, null)).thenReturn(List.of(mockEvent));
 
             List<EventListResponse> result = eventService.getEventList(EventStatus.UPCOMING, null);
 
             assertThat(result).hasSize(1);
-            verify(eventRepository).findByEventStatus(EventStatus.UPCOMING);
+            verify(eventRepository).findByVisibilityAndFilters(EventVisibility.PUBLISHED, EventStatus.UPCOMING, null);
         }
 
         /**
          * SVC-EVT-011 확장: RegistrationStatus 필터로 목록 조회
          */
         @Test
-        @DisplayName("[SVC-EVT-011-ext] RegistrationStatus 필터로 조회하면 해당 상태의 행사만 반환한다")
+        @DisplayName("[SVC-EVT-011-ext] RegistrationStatus 필터로 조회하면 해당 상태의 PUBLISHED 행사만 반환한다")
         void getEventList_WithRegistrationStatusFilter_ReturnsFiltered() {
-            when(eventRepository.findByRegistrationStatus(RegistrationStatus.OPEN)).thenReturn(List.of(mockEvent));
+            when(eventRepository.findByVisibilityAndFilters(EventVisibility.PUBLISHED, null, RegistrationStatus.OPEN)).thenReturn(List.of(mockEvent));
 
             List<EventListResponse> result = eventService.getEventList(null, RegistrationStatus.OPEN);
 
             assertThat(result).hasSize(1);
-            verify(eventRepository).findByRegistrationStatus(RegistrationStatus.OPEN);
+            verify(eventRepository).findByVisibilityAndFilters(EventVisibility.PUBLISHED, null, RegistrationStatus.OPEN);
         }
 
         /**
@@ -544,7 +546,7 @@ class EventServiceTest {
         @Test
         @DisplayName("[SVC-EVT-012] 행사가 없으면 빈 목록을 반환한다")
         void getEventList_NoEvents_ReturnsEmptyList() {
-            when(eventRepository.findAllNotDeleted()).thenReturn(List.of());
+            when(eventRepository.findByVisibilityAndFilters(EventVisibility.PUBLISHED, null, null)).thenReturn(List.of());
 
             List<EventListResponse> result = eventService.getEventList(null, null);
 
@@ -574,6 +576,7 @@ class EventServiceTest {
             when(changingEvent.getCreatedAt()).thenReturn(Instant.now());
             when(changingEvent.getUpdatedAt()).thenReturn(Instant.now());
             when(changingEvent.getCloseReason()).thenReturn(null);
+            when(changingEvent.getVisibility()).thenReturn(EventVisibility.PUBLISHED);
 
             // updateStatusIfNeeded 호출 시 eventStatus가 ONGOING으로 변경
             when(changingEvent.getEventStatus()).thenReturn(EventStatus.UPCOMING);
@@ -582,7 +585,7 @@ class EventServiceTest {
                 return null;
             }).when(changingEvent).updateStatusIfNeeded(any(Instant.class));
 
-            when(eventRepository.findByEventStatus(EventStatus.UPCOMING))
+            when(eventRepository.findByVisibilityAndFilters(EventVisibility.PUBLISHED, EventStatus.UPCOMING, null))
                     .thenReturn(new java.util.ArrayList<>(List.of(mockEvent, changingEvent)));
 
             // when: UPCOMING 필터로 조회
@@ -805,7 +808,7 @@ class EventServiceTest {
 
             eventService.closeEvent(EVENT_ID, OPERATOR_ID, "정원 관리를 위한 수동 마감");
 
-            var captor = org.mockito.ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
             verify(eventPublisher).publishEvent(captor.capture());
             EventStatusChangeEvent captured = captor.getValue();
             assertThat(captured.reason()).isEqualTo("정원 관리를 위한 수동 마감");
@@ -888,7 +891,7 @@ class EventServiceTest {
 
             eventService.cancelEvent(EVENT_ID, OPERATOR_ID, "일정 변경으로 인한 취소");
 
-            var captor = org.mockito.ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
             verify(eventPublisher).publishEvent(captor.capture());
             EventStatusChangeEvent captured = captor.getValue();
             assertThat(captured.reason()).isEqualTo("일정 변경으로 인한 취소");
@@ -973,7 +976,7 @@ class EventServiceTest {
 
             eventService.reactivateEvent(EVENT_ID, OPERATOR_ID, "일정 재조정으로 재활성화");
 
-            var captor = org.mockito.ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
             verify(eventPublisher).publishEvent(captor.capture());
             EventStatusChangeEvent captured = captor.getValue();
             assertThat(captured.reason()).isEqualTo("일정 재조정으로 재활성화");
@@ -1101,7 +1104,7 @@ class EventServiceTest {
 
             eventService.reopenRegistration(EVENT_ID, OPERATOR_ID, "추가 모집 사유");
 
-            var captor = org.mockito.ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
             verify(eventPublisher).publishEvent(captor.capture());
             EventStatusChangeEvent captured = captor.getValue();
             assertThat(captured.reason()).isEqualTo("추가 모집 사유");
@@ -1121,6 +1124,490 @@ class EventServiceTest {
 
             assertThatThrownBy(() -> eventService.reopenRegistration(EVENT_ID, MEMBER_ID, "사유"))
                     .isInstanceOf(EventAccessDeniedException.class);
+        }
+    }
+
+    // ========== publishEvent ==========
+
+    @Nested
+    @DisplayName("publishEvent - 행사 공개")
+    class PublishEvent {
+
+        /**
+         * GAP-EVT-26: publishEvent 정상 동작 (UNPUBLISHED -> PUBLISHED)
+         */
+        @Test
+        @DisplayName("[GAP-EVT-26] 정상 publish 시 EventStatusChangeEvent(EVENT_PUBLISHED)가 발행된다")
+        void publishEvent_Success_PublishesEventStatusChangeEvent() {
+            when(mockEvent.getVisibility()).thenReturn(EventVisibility.UNPUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+
+            EventDetailResponse response = eventService.publishEvent(EVENT_ID, OPERATOR_ID);
+
+            assertThat(response).isNotNull();
+            verify(mockEvent).publish();
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            EventStatusChangeEvent captured = captor.getValue();
+            assertThat(captured.eventId()).isEqualTo(EVENT_ID);
+            assertThat(captured.changedByUserId()).isEqualTo(OPERATOR_ID);
+            assertThat(captured.changeType()).isEqualTo(EventChangeType.EVENT_PUBLISHED);
+            assertThat(captured.previousValue()).isEqualTo("UNPUBLISHED");
+            assertThat(captured.reason()).isNull();
+        }
+
+        /**
+         * GAP-EVT-44: publishEvent 감사 이력 reason=null 확인
+         */
+        @Test
+        @DisplayName("[GAP-EVT-44] publishEvent 감사 이력에 reason=null로 기록된다")
+        void publishEvent_AuditEvent_HasNullReason() {
+            when(mockEvent.getVisibility()).thenReturn(EventVisibility.UNPUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+
+            eventService.publishEvent(EVENT_ID, OPERATOR_ID);
+
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertThat(captor.getValue().reason()).isNull();
+        }
+
+        /**
+         * publishEvent: 이미 공개 상태에서 publish 호출 시 InvalidEventStateTransitionException
+         */
+        @Test
+        @DisplayName("이미 PUBLISHED 상태인 행사를 publish하면 InvalidEventStateTransitionException 발생")
+        void publishEvent_AlreadyPublished_ThrowsInvalidStateTransition() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            doThrow(new InvalidEventStateTransitionException(EventVisibility.PUBLISHED, EventVisibility.PUBLISHED))
+                    .when(mockEvent).publish();
+
+            assertThatThrownBy(() -> eventService.publishEvent(EVENT_ID, OPERATOR_ID))
+                    .isInstanceOf(InvalidEventStateTransitionException.class);
+        }
+
+        /**
+         * GAP-EVT-26: publishEvent 감사 이력 newValue 검증 (EVT-INV-14)
+         */
+        @Test
+        @DisplayName("[EVT-INV-14] publishEvent 감사 이력에 newValue=PUBLISHED로 기록된다")
+        void publishEvent_AuditEvent_HasCorrectNewValue() {
+            when(mockEvent.getVisibility())
+                    .thenReturn(EventVisibility.UNPUBLISHED)
+                    .thenReturn(EventVisibility.PUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+
+            eventService.publishEvent(EVENT_ID, OPERATOR_ID);
+
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertThat(captor.getValue().newValue()).isEqualTo("PUBLISHED");
+        }
+
+        /**
+         * publishEvent: 존재하지 않는 eventId -> EventNotFoundException
+         */
+        @Test
+        @DisplayName("존재하지 않는 행사 ID로 publish하면 EventNotFoundException 발생")
+        void publishEvent_EventNotFound_ThrowsException() {
+            when(eventRepository.findByIdAndNotDeleted(999L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> eventService.publishEvent(999L, OPERATOR_ID))
+                    .isInstanceOf(EventNotFoundException.class);
+        }
+    }
+
+    // ========== unpublishEvent ==========
+
+    @Nested
+    @DisplayName("unpublishEvent - 행사 비공개")
+    class UnpublishEvent {
+
+        /**
+         * GAP-EVT-26: unpublishEvent 정상 동작 (PUBLISHED -> UNPUBLISHED)
+         */
+        @Test
+        @DisplayName("[GAP-EVT-26] 정상 unpublish 시 EventStatusChangeEvent(EVENT_UNPUBLISHED)가 발행된다")
+        void unpublishEvent_Success_PublishesEventStatusChangeEvent() {
+            when(mockEvent.getVisibility()).thenReturn(EventVisibility.PUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+
+            EventDetailResponse response = eventService.unpublishEvent(EVENT_ID, OPERATOR_ID);
+
+            assertThat(response).isNotNull();
+            verify(mockEvent).unpublish();
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            EventStatusChangeEvent captured = captor.getValue();
+            assertThat(captured.eventId()).isEqualTo(EVENT_ID);
+            assertThat(captured.changedByUserId()).isEqualTo(OPERATOR_ID);
+            assertThat(captured.changeType()).isEqualTo(EventChangeType.EVENT_UNPUBLISHED);
+            assertThat(captured.previousValue()).isEqualTo("PUBLISHED");
+            assertThat(captured.reason()).isNull();
+        }
+
+        /**
+         * GAP-EVT-44: unpublishEvent 감사 이력 reason=null 확인
+         */
+        @Test
+        @DisplayName("[GAP-EVT-44] unpublishEvent 감사 이력에 reason=null로 기록된다")
+        void unpublishEvent_AuditEvent_HasNullReason() {
+            when(mockEvent.getVisibility()).thenReturn(EventVisibility.PUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+
+            eventService.unpublishEvent(EVENT_ID, OPERATOR_ID);
+
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertThat(captor.getValue().reason()).isNull();
+        }
+
+        /**
+         * unpublishEvent: 이미 비공개 상태에서 unpublish 호출 시 InvalidEventStateTransitionException
+         */
+        @Test
+        @DisplayName("이미 UNPUBLISHED 상태인 행사를 unpublish하면 InvalidEventStateTransitionException 발생")
+        void unpublishEvent_AlreadyUnpublished_ThrowsInvalidStateTransition() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            doThrow(new InvalidEventStateTransitionException(EventVisibility.UNPUBLISHED, EventVisibility.UNPUBLISHED))
+                    .when(mockEvent).unpublish();
+
+            assertThatThrownBy(() -> eventService.unpublishEvent(EVENT_ID, OPERATOR_ID))
+                    .isInstanceOf(InvalidEventStateTransitionException.class);
+        }
+
+        /**
+         * GAP-EVT-26: unpublishEvent 감사 이력 newValue 검증 (EVT-INV-14)
+         */
+        @Test
+        @DisplayName("[EVT-INV-14] unpublishEvent 감사 이력에 newValue=UNPUBLISHED로 기록된다")
+        void unpublishEvent_AuditEvent_HasCorrectNewValue() {
+            when(mockEvent.getVisibility())
+                    .thenReturn(EventVisibility.PUBLISHED)
+                    .thenReturn(EventVisibility.UNPUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+
+            eventService.unpublishEvent(EVENT_ID, OPERATOR_ID);
+
+            var captor = ArgumentCaptor.forClass(EventStatusChangeEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertThat(captor.getValue().newValue()).isEqualTo("UNPUBLISHED");
+        }
+
+        /**
+         * TASK-015 항목 5: unpublishEvent + OPEN 상태에서 도메인 unpublish() 호출 확인 (서비스 레벨)
+         * 도메인의 unpublish()가 OPEN이면 CLOSED(MANUAL_CLOSE) 자동 마감하므로,
+         * 서비스 레벨에서는 도메인 메서드가 호출됨을 verify한다.
+         */
+        @Test
+        @DisplayName("unpublishEvent 시 도메인 unpublish() 메서드가 호출되어 OPEN 행사가 자동 마감된다")
+        void unpublishEvent_WithOpenRegistration_CallsDomainUnpublish() {
+            when(mockEvent.getVisibility()).thenReturn(EventVisibility.PUBLISHED);
+            when(mockEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.OPEN);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+
+            eventService.unpublishEvent(EVENT_ID, OPERATOR_ID);
+
+            // 서비스는 도메인의 unpublish()를 호출하며, 도메인에서 OPEN -> CLOSED 자동 마감 처리
+            verify(mockEvent).unpublish();
+        }
+
+        /**
+         * unpublishEvent: 존재하지 않는 eventId -> EventNotFoundException
+         */
+        @Test
+        @DisplayName("존재하지 않는 행사 ID로 unpublish하면 EventNotFoundException 발생")
+        void unpublishEvent_EventNotFound_ThrowsException() {
+            when(eventRepository.findByIdAndNotDeleted(999L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> eventService.unpublishEvent(999L, OPERATOR_ID))
+                    .isInstanceOf(EventNotFoundException.class);
+        }
+    }
+
+    // ========== getEvent - visibility 필터 테스트 ==========
+
+    @Nested
+    @DisplayName("getEvent - Visibility 필터 (공개 API)")
+    class GetEventVisibilityFilter {
+
+        /**
+         * GAP-EVT-28: PUBLISHED 행사 조회 성공
+         */
+        @Test
+        @DisplayName("[GAP-EVT-28] PUBLISHED 행사를 조회하면 정상 반환한다")
+        void getEvent_PublishedEvent_ReturnsSuccess() {
+            when(eventRepository.findByIdAndVisibility(EVENT_ID, EventVisibility.PUBLISHED)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                    eq(EVENT_ID), eq(MEMBER_ID), any(Set.class))).thenReturn(false);
+
+            EventDetailResponse response = eventService.getEvent(EVENT_ID, MEMBER_ID);
+
+            assertThat(response).isNotNull();
+            assertThat(response.id()).isEqualTo(EVENT_ID);
+        }
+
+        /**
+         * GAP-EVT-28: UNPUBLISHED 행사 조회 시 EventNotFoundException
+         */
+        @Test
+        @DisplayName("[GAP-EVT-28] UNPUBLISHED 행사를 공개 API로 조회하면 EventNotFoundException 발생")
+        void getEvent_UnpublishedEvent_ThrowsEventNotFoundException() {
+            when(eventRepository.findByIdAndVisibility(EVENT_ID, EventVisibility.PUBLISHED)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> eventService.getEvent(EVENT_ID, MEMBER_ID))
+                    .isInstanceOf(EventNotFoundException.class);
+        }
+    }
+
+    // ========== getEventList - visibility 필터 테스트 ==========
+
+    @Nested
+    @DisplayName("getEventList - Visibility 필터 (공개 API)")
+    class GetEventListVisibilityFilter {
+
+        /**
+         * GAP-EVT-27: getEventList()는 PUBLISHED만 필터링하여 Repository에 전달
+         */
+        @Test
+        @DisplayName("[GAP-EVT-27] getEventList()는 Repository에 PUBLISHED 파라미터를 전달한다")
+        void getEventList_PassesPublishedVisibilityToRepository() {
+            when(eventRepository.findByVisibilityAndFilters(EventVisibility.PUBLISHED, null, null))
+                    .thenReturn(List.of(mockEvent));
+
+            List<EventListResponse> result = eventService.getEventList(null, null);
+
+            assertThat(result).hasSize(1);
+            verify(eventRepository).findByVisibilityAndFilters(EventVisibility.PUBLISHED, null, null);
+        }
+
+        /**
+         * GAP-EVT-27: eventStatus 필터와 함께 PUBLISHED 전달
+         */
+        @Test
+        @DisplayName("[GAP-EVT-27] eventStatus 필터와 함께 PUBLISHED가 Repository에 전달된다")
+        void getEventList_WithEventStatusFilter_PassesPublished() {
+            when(eventRepository.findByVisibilityAndFilters(EventVisibility.PUBLISHED, EventStatus.UPCOMING, null))
+                    .thenReturn(List.of(mockEvent));
+
+            List<EventListResponse> result = eventService.getEventList(EventStatus.UPCOMING, null);
+
+            assertThat(result).hasSize(1);
+            verify(eventRepository).findByVisibilityAndFilters(EventVisibility.PUBLISHED, EventStatus.UPCOMING, null);
+        }
+
+        /**
+         * GAP-EVT-27: registrationStatus 필터와 함께 PUBLISHED 전달
+         */
+        @Test
+        @DisplayName("[GAP-EVT-27] registrationStatus 필터와 함께 PUBLISHED가 Repository에 전달된다")
+        void getEventList_WithRegistrationStatusFilter_PassesPublished() {
+            when(eventRepository.findByVisibilityAndFilters(EventVisibility.PUBLISHED, null, RegistrationStatus.OPEN))
+                    .thenReturn(List.of(mockEvent));
+
+            List<EventListResponse> result = eventService.getEventList(null, RegistrationStatus.OPEN);
+
+            assertThat(result).hasSize(1);
+            verify(eventRepository).findByVisibilityAndFilters(EventVisibility.PUBLISHED, null, RegistrationStatus.OPEN);
+        }
+    }
+
+    // ========== getAdminEventList ==========
+
+    @Nested
+    @DisplayName("getAdminEventList - 관리자 행사 목록 조회")
+    class GetAdminEventList {
+
+        /**
+         * GAP-EVT-29: visibility=null -> 모든 행사 반환
+         */
+        @Test
+        @DisplayName("[GAP-EVT-29] visibility=null이면 전체 행사가 반환된다")
+        void getAdminEventList_NullVisibility_ReturnsAll() {
+            when(eventRepository.findAllByAdminFilters(null, null, null))
+                    .thenReturn(List.of(mockEvent));
+
+            List<EventListResponse> result = eventService.getAdminEventList(null, null, null);
+
+            assertThat(result).hasSize(1);
+            verify(eventRepository).findAllByAdminFilters(null, null, null);
+        }
+
+        /**
+         * GAP-EVT-40: visibility=PUBLISHED -> PUBLISHED만 반환
+         */
+        @Test
+        @DisplayName("[GAP-EVT-40] visibility=PUBLISHED이면 PUBLISHED 행사만 반환된다")
+        void getAdminEventList_PublishedFilter_ReturnsPublishedOnly() {
+            when(eventRepository.findAllByAdminFilters(EventVisibility.PUBLISHED, null, null))
+                    .thenReturn(List.of(mockEvent));
+
+            List<EventListResponse> result = eventService.getAdminEventList(EventVisibility.PUBLISHED, null, null);
+
+            assertThat(result).hasSize(1);
+            verify(eventRepository).findAllByAdminFilters(EventVisibility.PUBLISHED, null, null);
+        }
+
+        /**
+         * GAP-EVT-40: visibility=UNPUBLISHED -> UNPUBLISHED만 반환
+         */
+        @Test
+        @DisplayName("[GAP-EVT-40] visibility=UNPUBLISHED이면 UNPUBLISHED 행사만 반환된다")
+        void getAdminEventList_UnpublishedFilter_ReturnsUnpublishedOnly() {
+            // mockEvent의 visibility를 UNPUBLISHED로 오버라이드
+            when(mockEvent.getVisibility()).thenReturn(EventVisibility.UNPUBLISHED);
+
+            when(eventRepository.findAllByAdminFilters(EventVisibility.UNPUBLISHED, null, null))
+                    .thenReturn(List.of(mockEvent));
+
+            List<EventListResponse> result = eventService.getAdminEventList(EventVisibility.UNPUBLISHED, null, null);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).visibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+            verify(eventRepository).findAllByAdminFilters(EventVisibility.UNPUBLISHED, null, null);
+        }
+
+        /**
+         * GAP-EVT-40: eventStatus 필터 동작 확인
+         */
+        @Test
+        @DisplayName("[GAP-EVT-40] eventStatus 필터가 Repository에 전달된다")
+        void getAdminEventList_WithEventStatusFilter_PassesToRepository() {
+            when(eventRepository.findAllByAdminFilters(null, EventStatus.UPCOMING, null))
+                    .thenReturn(List.of(mockEvent));
+
+            List<EventListResponse> result = eventService.getAdminEventList(null, EventStatus.UPCOMING, null);
+
+            assertThat(result).hasSize(1);
+            verify(eventRepository).findAllByAdminFilters(null, EventStatus.UPCOMING, null);
+        }
+
+        /**
+         * GAP-EVT-40: registrationStatus 단독 필터 동작 확인
+         */
+        @Test
+        @DisplayName("[GAP-EVT-40] registrationStatus 필터가 Repository에 전달된다")
+        void getAdminEventList_WithRegistrationStatusFilter_PassesToRepository() {
+            when(eventRepository.findAllByAdminFilters(null, null, RegistrationStatus.OPEN))
+                    .thenReturn(List.of(mockEvent));
+
+            List<EventListResponse> result = eventService.getAdminEventList(null, null, RegistrationStatus.OPEN);
+
+            assertThat(result).hasSize(1);
+            verify(eventRepository).findAllByAdminFilters(null, null, RegistrationStatus.OPEN);
+        }
+
+        /**
+         * GAP-EVT-40: visibility + eventStatus 복합 필터 동작 확인
+         */
+        @Test
+        @DisplayName("[GAP-EVT-40] visibility + eventStatus 복합 필터가 Repository에 전달된다")
+        void getAdminEventList_WithVisibilityAndEventStatusFilter_PassesToRepository() {
+            when(eventRepository.findAllByAdminFilters(EventVisibility.PUBLISHED, EventStatus.UPCOMING, null))
+                    .thenReturn(List.of(mockEvent));
+
+            List<EventListResponse> result = eventService.getAdminEventList(EventVisibility.PUBLISHED, EventStatus.UPCOMING, null);
+
+            assertThat(result).hasSize(1);
+            verify(eventRepository).findAllByAdminFilters(EventVisibility.PUBLISHED, EventStatus.UPCOMING, null);
+        }
+
+        /**
+         * getAdminEventList: Lazy Evaluation 적용 확인
+         */
+        @Test
+        @DisplayName("getAdminEventList()는 각 행사에 Lazy Evaluation을 적용한다")
+        void getAdminEventList_AppliesLazyEvaluation() {
+            when(eventRepository.findAllByAdminFilters(null, null, null))
+                    .thenReturn(List.of(mockEvent));
+
+            eventService.getAdminEventList(null, null, null);
+
+            verify(mockEvent).updateStatusIfNeeded(any(Instant.class));
+        }
+    }
+
+    // ========== getAdminEvent ==========
+
+    @Nested
+    @DisplayName("getAdminEvent - 관리자 행사 상세 조회")
+    class GetAdminEvent {
+
+        /**
+         * GAP-EVT-30: UNPUBLISHED 행사 정상 반환 (404 아님)
+         */
+        @Test
+        @DisplayName("[GAP-EVT-30] UNPUBLISHED 행사도 관리자 API에서는 정상 반환된다")
+        void getAdminEvent_UnpublishedEvent_ReturnsSuccess() {
+            when(mockEvent.getVisibility()).thenReturn(EventVisibility.UNPUBLISHED);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                    eq(EVENT_ID), eq(OPERATOR_ID), any(Set.class))).thenReturn(false);
+
+            EventDetailResponse response = eventService.getAdminEvent(EVENT_ID, OPERATOR_ID);
+
+            assertThat(response).isNotNull();
+            assertThat(response.id()).isEqualTo(EVENT_ID);
+            assertThat(response.visibility()).isEqualTo(EventVisibility.UNPUBLISHED);
+        }
+
+        /**
+         * GAP-EVT-30: PUBLISHED 행사도 정상 반환
+         */
+        @Test
+        @DisplayName("[GAP-EVT-30] PUBLISHED 행사도 관리자 API에서 정상 반환된다")
+        void getAdminEvent_PublishedEvent_ReturnsSuccess() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                    eq(EVENT_ID), eq(OPERATOR_ID), any(Set.class))).thenReturn(false);
+
+            EventDetailResponse response = eventService.getAdminEvent(EVENT_ID, OPERATOR_ID);
+
+            assertThat(response).isNotNull();
+            assertThat(response.id()).isEqualTo(EVENT_ID);
+        }
+
+        /**
+         * getAdminEvent: Lazy Evaluation 적용 확인
+         */
+        @Test
+        @DisplayName("getAdminEvent()는 Lazy Evaluation을 적용한다")
+        void getAdminEvent_AppliesLazyEvaluation() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                    eq(EVENT_ID), eq(OPERATOR_ID), any(Set.class))).thenReturn(false);
+
+            eventService.getAdminEvent(EVENT_ID, OPERATOR_ID);
+
+            verify(mockEvent).updateStatusIfNeeded(any(Instant.class));
+        }
+
+        /**
+         * getAdminEvent: canEdit=true 확인
+         */
+        @Test
+        @DisplayName("getAdminEvent()는 canEdit=true로 응답한다")
+        void getAdminEvent_ReturnsCanEditTrue() {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                    eq(EVENT_ID), eq(OPERATOR_ID), any(Set.class))).thenReturn(false);
+
+            EventDetailResponse response = eventService.getAdminEvent(EVENT_ID, OPERATOR_ID);
+
+            assertThat(response.canEdit()).isTrue();
+        }
+
+        /**
+         * getAdminEvent: 존재하지 않는 행사 -> EventNotFoundException
+         */
+        @Test
+        @DisplayName("존재하지 않는 행사 ID로 관리자 조회하면 EventNotFoundException 발생")
+        void getAdminEvent_EventNotFound_ThrowsException() {
+            when(eventRepository.findByIdAndNotDeleted(999L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> eventService.getAdminEvent(999L, OPERATOR_ID))
+                    .isInstanceOf(EventNotFoundException.class);
         }
     }
 

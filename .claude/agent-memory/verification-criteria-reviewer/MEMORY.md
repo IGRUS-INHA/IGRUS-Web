@@ -40,6 +40,10 @@
 3. 상태 다이어그램의 상태와 감사 이력 필드 목록 불일치
 4. 멱등성 관련 정책이 섹션 간 충돌 (외부 의존성 섹션 vs 입력 검증 섹션)
 5. 구현 전 문서에서 테스트 전략이 "구현 후 작성" 수준에 머묾
+6. `(현재 구현 일치)`와 `(구현 예정)` 레이블이 같은 항목에 혼재 또는 잘못 표기되는 패턴 (event-verification-criteria.md EVT-INV-11, EVT-INV-14에서 발견)
+7. 비연동 케이스 열거가 불완전하여 구현자가 추론 부담을 지는 패턴 (EVT-INV-20: COMPLETED/CANCELED 행사 unpublish 케이스 누락)
+8. 검증 방식이 "A 또는 B"로 미확정 기술되어 예외 타입 불일치 유발 가능 (EVT 4-3절 publish/unpublish 권한 검증 방식)
+9. 이력 엔티티의 nullable 필드 컬럼 스키마 미명시 패턴 (EventStatusChangeHistory.reason nullable 여부 미정)
 
 ## 잘 작성된 패턴 (참조용)
 - inquiry-verification-criteria.md: 테스트 클래스명, 테스트 수, 커버 상태까지 구체적으로 기술한 모범 사례

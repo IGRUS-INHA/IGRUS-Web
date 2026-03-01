@@ -101,3 +101,27 @@
 3. Scheduler/time-sensitive tests override createdAt via native SQL (not ReflectionTestUtils on managed entity)
 4. Forbidden state transition tests may need architectural interpretation (TC-025: same-key re-upload impossible by design)
 5. Boundary tests for time-based queries: strict less-than vs less-than-or-equal matters
+
+## Event Domain Test Reviews
+
+### Round 1: TASK-013~021 (Unit Tests) - FAIL (2026-02-28)
+- 50 new tests across 7 tasks
+- Critical: TASK-015 missing "already same state -> exception" service tests; TASK-021 missing cancelRegistration after unpublish
+- Mock limitation: service tests can't verify newValue in audit events without doAnswer state simulation
+- Pattern: task plan numbered items must have 1:1 test mapping -- always count and compare
+
+### Round 2: TASK-013~021 (Unit Tests) - PASS (2026-02-28)
+- All 5 R1 issues (2 critical + 3 recommended) resolved
+- Key fix patterns:
+  1. Same-state exception: doThrow on mock + assertThatThrownBy (service level)
+  2. cancelRegistration visibility-independent: separate test with UNPUBLISHED mock event
+  3. newValue verification: thenReturn chaining (.thenReturn(UNPUBLISHED).thenReturn(PUBLISHED)) to simulate state change
+  4. OPEN auto-close at service level: verify(mockEvent).unpublish() (domain test handles actual state assertion)
+  5. registrationStatus solo filter: straightforward Repository mock verification
+
+### Event Domain Test Checklist
+1. Same-state transitions must be tested at BOTH domain level (actual exception) AND service level (doThrow mock)
+2. Visibility-independent operations (cancel, approve, revert) need explicit UNPUBLISHED event tests
+3. Audit event newValue: use thenReturn chaining on mock to simulate pre/post state
+4. Service-level tests for domain state changes: verify domain method call, not final state (state tested in domain tests)
+5. Multi-axis filtering: test each axis independently + at least one cross-axis combination

@@ -93,6 +93,7 @@ class EventRegistrationControllerIntegrationTest extends ServiceIntegrationTestB
                     10,
                     EventRegistrationType.MANUAL_APPROVE
             );
+            event.publish();
             event.openRegistration();
             return eventRepository.save(event);
         });
