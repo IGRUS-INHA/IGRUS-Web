@@ -53,16 +53,16 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CreatePost201,
-  CreatePostBody,
-  GetPostDetail200,
-  GetPostList200,
+  CreatePostRequest,
   GetPostListParams,
-  GetPostViewHistory200,
   GetPostViewHistoryParams,
-  GetPostViewStats200,
-  UpdatePost200,
-  UpdatePostBody
+  PostCreateResponse,
+  PostDetailResponse,
+  PostListPageResponse,
+  PostUpdateResponse,
+  PostViewHistoryPageResponse,
+  PostViewStatsResponse,
+  UpdatePostRequest
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -77,7 +77,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 게시글 상세 조회
  */
 export type getPostDetailResponse200 = {
-  data: GetPostDetail200
+  data: PostDetailResponse
   status: 200
 }
 
@@ -213,7 +213,7 @@ export function useGetPostDetail<TData = Awaited<ReturnType<typeof getPostDetail
  * @summary 게시글 수정
  */
 export type updatePostResponse200 = {
-  data: UpdatePost200
+  data: PostUpdateResponse
   status: 200
 }
 
@@ -257,7 +257,7 @@ export const getUpdatePostUrl = (boardCode: string,
 
 export const updatePost = async (boardCode: string,
     postId: number,
-    updatePostBody: UpdatePostBody, options?: RequestInit): Promise<updatePostResponse> => {
+    updatePostRequest: UpdatePostRequest, options?: RequestInit): Promise<updatePostResponse> => {
   
   return customFetch<updatePostResponse>(getUpdatePostUrl(boardCode,postId),
   {      
@@ -265,7 +265,7 @@ export const updatePost = async (boardCode: string,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      updatePostBody,)
+      updatePostRequest,)
   }
 );}
 
@@ -273,8 +273,8 @@ export const updatePost = async (boardCode: string,
 
 
 export const getUpdatePostMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostRequest}, TContext> => {
 
 const mutationKey = ['updatePost'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -286,7 +286,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePost>>, {boardCode: string;postId: number;data: UpdatePostBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePost>>, {boardCode: string;postId: number;data: UpdatePostRequest}> = (props) => {
           const {boardCode,postId,data} = props ?? {};
 
           return  updatePost(boardCode,postId,data,requestOptions)
@@ -300,18 +300,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdatePostMutationResult = NonNullable<Awaited<ReturnType<typeof updatePost>>>
-    export type UpdatePostMutationBody = UpdatePostBody
+    export type UpdatePostMutationBody = UpdatePostRequest
     export type UpdatePostMutationError = void
 
     /**
  * @summary 게시글 수정
  */
 export const useUpdatePost = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePost>>, TError,{boardCode: string;postId: number;data: UpdatePostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updatePost>>,
         TError,
-        {boardCode: string;postId: number;data: UpdatePostBody},
+        {boardCode: string;postId: number;data: UpdatePostRequest},
         TContext
       > => {
       return useMutation(getUpdatePostMutationOptions(options), queryClient);
@@ -422,7 +422,7 @@ export const useDeletePost = <TError = void,
  * @summary 게시글 목록 조회
  */
 export type getPostListResponse200 = {
-  data: GetPostList200
+  data: PostListPageResponse
   status: 200
 }
 
@@ -565,7 +565,7 @@ export function useGetPostList<TData = Awaited<ReturnType<typeof getPostList>>, 
  * @summary 게시글 작성
  */
 export type createPostResponse201 = {
-  data: CreatePost201
+  data: PostCreateResponse
   status: 201
 }
 
@@ -612,7 +612,7 @@ export const getCreatePostUrl = (boardCode: string,) => {
 }
 
 export const createPost = async (boardCode: string,
-    createPostBody: CreatePostBody, options?: RequestInit): Promise<createPostResponse> => {
+    createPostRequest: CreatePostRequest, options?: RequestInit): Promise<createPostResponse> => {
   
   return customFetch<createPostResponse>(getCreatePostUrl(boardCode),
   {      
@@ -620,7 +620,7 @@ export const createPost = async (boardCode: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createPostBody,)
+      createPostRequest,)
   }
 );}
 
@@ -628,8 +628,8 @@ export const createPost = async (boardCode: string,
 
 
 export const getCreatePostMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostRequest}, TContext> => {
 
 const mutationKey = ['createPost'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -641,7 +641,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPost>>, {boardCode: string;data: CreatePostBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPost>>, {boardCode: string;data: CreatePostRequest}> = (props) => {
           const {boardCode,data} = props ?? {};
 
           return  createPost(boardCode,data,requestOptions)
@@ -655,18 +655,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreatePostMutationResult = NonNullable<Awaited<ReturnType<typeof createPost>>>
-    export type CreatePostMutationBody = CreatePostBody
+    export type CreatePostMutationBody = CreatePostRequest
     export type CreatePostMutationError = void
 
     /**
  * @summary 게시글 작성
  */
 export const useCreatePost = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPost>>, TError,{boardCode: string;data: CreatePostRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createPost>>,
         TError,
-        {boardCode: string;data: CreatePostBody},
+        {boardCode: string;data: CreatePostRequest},
         TContext
       > => {
       return useMutation(getCreatePostMutationOptions(options), queryClient);
@@ -676,7 +676,7 @@ export const useCreatePost = <TError = void,
  * @summary 게시글 조회 통계
  */
 export type getPostViewStatsResponse200 = {
-  data: GetPostViewStats200
+  data: PostViewStatsResponse
   status: 200
 }
 
@@ -812,7 +812,7 @@ export function useGetPostViewStats<TData = Awaited<ReturnType<typeof getPostVie
  * @summary 게시글 조회 기록 목록
  */
 export type getPostViewHistoryResponse200 = {
-  data: GetPostViewHistory200
+  data: PostViewHistoryPageResponse
   status: 200
 }
 

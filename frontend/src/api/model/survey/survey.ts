@@ -53,18 +53,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CloseResponse200,
-  CreateSurvey201,
-  CreateSurveyBody,
-  GetSurveyDetail200,
-  GetSurveyList200Item,
-  GetTrashedSurveyList200Item,
-  OpenResponse200,
-  PublishAndOpen200,
-  PublishSurvey200,
-  UnpublishSurvey200,
-  UpdateSurvey200,
-  UpdateSurveyBody
+  CreateSurveyRequest,
+  SurveyDetailResponse,
+  SurveyListResponse,
+  UpdateSurveyRequest
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -79,7 +71,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 설문 상세 조회
  */
 export type getSurveyDetailResponse200 = {
-  data: GetSurveyDetail200
+  data: SurveyDetailResponse
   status: 200
 }
 
@@ -207,7 +199,7 @@ export function useGetSurveyDetail<TData = Awaited<ReturnType<typeof getSurveyDe
  * @summary 설문 수정
  */
 export type updateSurveyResponse200 = {
-  data: UpdateSurvey200
+  data: SurveyDetailResponse
   status: 200
 }
 
@@ -249,7 +241,7 @@ export const getUpdateSurveyUrl = (surveyId: number,) => {
 }
 
 export const updateSurvey = async (surveyId: number,
-    updateSurveyBody: UpdateSurveyBody, options?: RequestInit): Promise<updateSurveyResponse> => {
+    updateSurveyRequest: UpdateSurveyRequest, options?: RequestInit): Promise<updateSurveyResponse> => {
   
   return customFetch<updateSurveyResponse>(getUpdateSurveyUrl(surveyId),
   {      
@@ -257,7 +249,7 @@ export const updateSurvey = async (surveyId: number,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      updateSurveyBody,)
+      updateSurveyRequest,)
   }
 );}
 
@@ -265,8 +257,8 @@ export const updateSurvey = async (surveyId: number,
 
 
 export const getUpdateSurveyMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyRequest}, TContext> => {
 
 const mutationKey = ['updateSurvey'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -278,7 +270,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSurvey>>, {surveyId: number;data: UpdateSurveyBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSurvey>>, {surveyId: number;data: UpdateSurveyRequest}> = (props) => {
           const {surveyId,data} = props ?? {};
 
           return  updateSurvey(surveyId,data,requestOptions)
@@ -292,18 +284,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateSurveyMutationResult = NonNullable<Awaited<ReturnType<typeof updateSurvey>>>
-    export type UpdateSurveyMutationBody = UpdateSurveyBody
+    export type UpdateSurveyMutationBody = UpdateSurveyRequest
     export type UpdateSurveyMutationError = void
 
     /**
  * @summary 설문 수정
  */
 export const useUpdateSurvey = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSurvey>>, TError,{surveyId: number;data: UpdateSurveyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateSurvey>>,
         TError,
-        {surveyId: number;data: UpdateSurveyBody},
+        {surveyId: number;data: UpdateSurveyRequest},
         TContext
       > => {
       return useMutation(getUpdateSurveyMutationOptions(options), queryClient);
@@ -417,7 +409,7 @@ export const usePermanentDeleteSurvey = <TError = void,
  * @summary 설문 목록 조회
  */
 export type getSurveyListResponse200 = {
-  data: GetSurveyList200Item[]
+  data: SurveyListResponse[]
   status: 200
 }
 
@@ -540,7 +532,7 @@ export function useGetSurveyList<TData = Awaited<ReturnType<typeof getSurveyList
  * @summary 설문 생성
  */
 export type createSurveyResponse201 = {
-  data: CreateSurvey201
+  data: SurveyDetailResponse
   status: 201
 }
 
@@ -576,7 +568,7 @@ export const getCreateSurveyUrl = () => {
   return `/api/v1/surveys`
 }
 
-export const createSurvey = async (createSurveyBody: CreateSurveyBody, options?: RequestInit): Promise<createSurveyResponse> => {
+export const createSurvey = async (createSurveyRequest: CreateSurveyRequest, options?: RequestInit): Promise<createSurveyResponse> => {
   
   return customFetch<createSurveyResponse>(getCreateSurveyUrl(),
   {      
@@ -584,7 +576,7 @@ export const createSurvey = async (createSurveyBody: CreateSurveyBody, options?:
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createSurveyBody,)
+      createSurveyRequest,)
   }
 );}
 
@@ -592,8 +584,8 @@ export const createSurvey = async (createSurveyBody: CreateSurveyBody, options?:
 
 
 export const getCreateSurveyMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyRequest}, TContext> => {
 
 const mutationKey = ['createSurvey'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -605,7 +597,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSurvey>>, {data: CreateSurveyBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSurvey>>, {data: CreateSurveyRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  createSurvey(data,requestOptions)
@@ -619,18 +611,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateSurveyMutationResult = NonNullable<Awaited<ReturnType<typeof createSurvey>>>
-    export type CreateSurveyMutationBody = CreateSurveyBody
+    export type CreateSurveyMutationBody = CreateSurveyRequest
     export type CreateSurveyMutationError = void
 
     /**
  * @summary 설문 생성
  */
 export const useCreateSurvey = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSurvey>>, TError,{data: CreateSurveyRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createSurvey>>,
         TError,
-        {data: CreateSurveyBody},
+        {data: CreateSurveyRequest},
         TContext
       > => {
       return useMutation(getCreateSurveyMutationOptions(options), queryClient);
@@ -640,7 +632,7 @@ export const useCreateSurvey = <TError = void,
  * @summary 설문 비공개
  */
 export type unpublishSurveyResponse200 = {
-  data: UnpublishSurvey200
+  data: SurveyDetailResponse
   status: 200
 }
 
@@ -947,7 +939,7 @@ export const useRestoreSurvey = <TError = void,
  * @summary 설문 공개
  */
 export type publishSurveyResponse200 = {
-  data: PublishSurvey200
+  data: SurveyDetailResponse
   status: 200
 }
 
@@ -1051,7 +1043,7 @@ export const usePublishSurvey = <TError = void,
  * @summary 설문 공개 + 응답 수집 시작
  */
 export type publishAndOpenResponse200 = {
-  data: PublishAndOpen200
+  data: SurveyDetailResponse
   status: 200
 }
 
@@ -1155,7 +1147,7 @@ export const usePublishAndOpen = <TError = void,
  * @summary 응답 수집 시작
  */
 export type openResponseResponse200 = {
-  data: OpenResponse200
+  data: SurveyDetailResponse
   status: 200
 }
 
@@ -1259,7 +1251,7 @@ export const useOpenResponse = <TError = void,
  * @summary 응답 수집 마감
  */
 export type closeResponseResponse200 = {
-  data: CloseResponse200
+  data: SurveyDetailResponse
   status: 200
 }
 
@@ -1363,7 +1355,7 @@ export const useCloseResponse = <TError = void,
  * @summary 휴지통 목록 조회
  */
 export type getTrashedSurveyListResponse200 = {
-  data: GetTrashedSurveyList200Item[]
+  data: SurveyListResponse[]
   status: 200
 }
 

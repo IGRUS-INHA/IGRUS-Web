@@ -53,17 +53,17 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  ApproveBulk200,
-  ApproveBulkBody,
-  GetDemotedAssociates200,
+  AssociateInfoPageResponse,
+  BulkApprovalRequest,
+  BulkApprovalResultResponse,
+  BulkRejectionRequest,
+  BulkRejectionResultResponse,
   GetDemotedAssociatesParams,
-  GetPendingAssociates200,
   GetPendingAssociatesParams,
-  GetRejectedAssociates200,
   GetRejectedAssociatesParams,
-  RejectAssociateBody,
-  RejectBulk200,
-  RejectBulkBody
+  PageDemotedAssociateInfoResponse,
+  PageRejectedAssociateInfoResponse,
+  RejectAssociateRequest
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -120,7 +120,7 @@ export const getRejectAssociateUrl = (id: number,) => {
 }
 
 export const rejectAssociate = async (id: number,
-    rejectAssociateBody: RejectAssociateBody, options?: RequestInit): Promise<rejectAssociateResponse> => {
+    rejectAssociateRequest: RejectAssociateRequest, options?: RequestInit): Promise<rejectAssociateResponse> => {
   
   return customFetch<rejectAssociateResponse>(getRejectAssociateUrl(id),
   {      
@@ -128,7 +128,7 @@ export const rejectAssociate = async (id: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      rejectAssociateBody,)
+      rejectAssociateRequest,)
   }
 );}
 
@@ -136,8 +136,8 @@ export const rejectAssociate = async (id: number,
 
 
 export const getRejectAssociateMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateRequest}, TContext> => {
 
 const mutationKey = ['rejectAssociate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -149,7 +149,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectAssociate>>, {id: number;data: RejectAssociateBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectAssociate>>, {id: number;data: RejectAssociateRequest}> = (props) => {
           const {id,data} = props ?? {};
 
           return  rejectAssociate(id,data,requestOptions)
@@ -163,18 +163,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RejectAssociateMutationResult = NonNullable<Awaited<ReturnType<typeof rejectAssociate>>>
-    export type RejectAssociateMutationBody = RejectAssociateBody
+    export type RejectAssociateMutationBody = RejectAssociateRequest
     export type RejectAssociateMutationError = void
 
     /**
  * @summary 개별 준회원 거절
  */
 export const useRejectAssociate = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAssociate>>, TError,{id: number;data: RejectAssociateRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof rejectAssociate>>,
         TError,
-        {id: number;data: RejectAssociateBody},
+        {id: number;data: RejectAssociateRequest},
         TContext
       > => {
       return useMutation(getRejectAssociateMutationOptions(options), queryClient);
@@ -288,7 +288,7 @@ export const useApproveAssociate = <TError = void,
  * @summary 준회원 일괄 거절
  */
 export type rejectBulkResponse200 = {
-  data: RejectBulk200
+  data: BulkRejectionResultResponse
   status: 200
 }
 
@@ -324,7 +324,7 @@ export const getRejectBulkUrl = () => {
   return `/api/v1/admin/associates/reject-batch`
 }
 
-export const rejectBulk = async (rejectBulkBody: RejectBulkBody, options?: RequestInit): Promise<rejectBulkResponse> => {
+export const rejectBulk = async (bulkRejectionRequest: BulkRejectionRequest, options?: RequestInit): Promise<rejectBulkResponse> => {
   
   return customFetch<rejectBulkResponse>(getRejectBulkUrl(),
   {      
@@ -332,7 +332,7 @@ export const rejectBulk = async (rejectBulkBody: RejectBulkBody, options?: Reque
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      rejectBulkBody,)
+      bulkRejectionRequest,)
   }
 );}
 
@@ -340,8 +340,8 @@ export const rejectBulk = async (rejectBulkBody: RejectBulkBody, options?: Reque
 
 
 export const getRejectBulkMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: RejectBulkBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: RejectBulkBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: BulkRejectionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: BulkRejectionRequest}, TContext> => {
 
 const mutationKey = ['rejectBulk'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -353,7 +353,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectBulk>>, {data: RejectBulkBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectBulk>>, {data: BulkRejectionRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  rejectBulk(data,requestOptions)
@@ -367,18 +367,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RejectBulkMutationResult = NonNullable<Awaited<ReturnType<typeof rejectBulk>>>
-    export type RejectBulkMutationBody = RejectBulkBody
+    export type RejectBulkMutationBody = BulkRejectionRequest
     export type RejectBulkMutationError = void
 
     /**
  * @summary 준회원 일괄 거절
  */
 export const useRejectBulk = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: RejectBulkBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectBulk>>, TError,{data: BulkRejectionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof rejectBulk>>,
         TError,
-        {data: RejectBulkBody},
+        {data: BulkRejectionRequest},
         TContext
       > => {
       return useMutation(getRejectBulkMutationOptions(options), queryClient);
@@ -388,7 +388,7 @@ export const useRejectBulk = <TError = void,
  * @summary 준회원 일괄 승인
  */
 export type approveBulkResponse200 = {
-  data: ApproveBulk200
+  data: BulkApprovalResultResponse
   status: 200
 }
 
@@ -424,7 +424,7 @@ export const getApproveBulkUrl = () => {
   return `/api/v1/admin/associates/approve-batch`
 }
 
-export const approveBulk = async (approveBulkBody: ApproveBulkBody, options?: RequestInit): Promise<approveBulkResponse> => {
+export const approveBulk = async (bulkApprovalRequest: BulkApprovalRequest, options?: RequestInit): Promise<approveBulkResponse> => {
   
   return customFetch<approveBulkResponse>(getApproveBulkUrl(),
   {      
@@ -432,7 +432,7 @@ export const approveBulk = async (approveBulkBody: ApproveBulkBody, options?: Re
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      approveBulkBody,)
+      bulkApprovalRequest,)
   }
 );}
 
@@ -440,8 +440,8 @@ export const approveBulk = async (approveBulkBody: ApproveBulkBody, options?: Re
 
 
 export const getApproveBulkMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: ApproveBulkBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: ApproveBulkBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: BulkApprovalRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: BulkApprovalRequest}, TContext> => {
 
 const mutationKey = ['approveBulk'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -453,7 +453,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveBulk>>, {data: ApproveBulkBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveBulk>>, {data: BulkApprovalRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  approveBulk(data,requestOptions)
@@ -467,18 +467,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ApproveBulkMutationResult = NonNullable<Awaited<ReturnType<typeof approveBulk>>>
-    export type ApproveBulkMutationBody = ApproveBulkBody
+    export type ApproveBulkMutationBody = BulkApprovalRequest
     export type ApproveBulkMutationError = void
 
     /**
  * @summary 준회원 일괄 승인
  */
 export const useApproveBulk = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: ApproveBulkBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveBulk>>, TError,{data: BulkApprovalRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof approveBulk>>,
         TError,
-        {data: ApproveBulkBody},
+        {data: BulkApprovalRequest},
         TContext
       > => {
       return useMutation(getApproveBulkMutationOptions(options), queryClient);
@@ -488,7 +488,7 @@ export const useApproveBulk = <TError = void,
  * @summary 거절된 준회원 목록 조회
  */
 export type getRejectedAssociatesResponse200 = {
-  data: GetRejectedAssociates200
+  data: PageRejectedAssociateInfoResponse
   status: 200
 }
 
@@ -618,7 +618,7 @@ export function useGetRejectedAssociates<TData = Awaited<ReturnType<typeof getRe
  * @summary 승인 대기 준회원 목록 조회
  */
 export type getPendingAssociatesResponse200 = {
-  data: GetPendingAssociates200
+  data: AssociateInfoPageResponse
   status: 200
 }
 
@@ -748,7 +748,7 @@ export function useGetPendingAssociates<TData = Awaited<ReturnType<typeof getPen
  * @summary 강등된 준회원 목록 조회
  */
 export type getDemotedAssociatesResponse200 = {
-  data: GetDemotedAssociates200
+  data: PageDemotedAssociateInfoResponse
   status: 200
 }
 

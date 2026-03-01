@@ -53,10 +53,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetLikeStatus200,
-  GetMyLikes200,
   GetMyLikesParams,
-  ToggleLike200
+  LikedPostPageResponse,
+  PostLikeStatusResponse,
+  PostLikeToggleResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -71,7 +71,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 게시글 좋아요 토글
  */
 export type toggleLikeResponse200 = {
-  data: ToggleLike200
+  data: PostLikeToggleResponse
   status: 200
 }
 
@@ -175,7 +175,7 @@ export const useToggleLike = <TError = void,
  * @summary 내 게시글 좋아요 목록 조회
  */
 export type getMyLikesResponse200 = {
-  data: GetMyLikes200
+  data: LikedPostPageResponse
   status: 200
 }
 
@@ -300,7 +300,7 @@ export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TE
  * @summary 게시글 좋아요 상태 조회
  */
 export type getLikeStatusResponse200 = {
-  data: GetLikeStatus200
+  data: PostLikeStatusResponse
   status: 200
 }
 

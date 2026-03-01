@@ -53,14 +53,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  ApproveRegistration200,
-  CancelRegistration200,
-  GetMyRegistrations1200Item,
-  GetRegistrationList200,
   GetRegistrationListParams,
-  RegisterEvent201,
-  RejectRegistration200,
-  RevertRegistration200
+  MyRegistrationResponse,
+  PageRegistrationListResponse,
+  RegistrationResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -75,7 +71,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 승인/거절 되돌리기
  */
 export type revertRegistrationResponse200 = {
-  data: RevertRegistration200
+  data: RegistrationResponse
   status: 200
 }
 
@@ -174,7 +170,7 @@ export const useRevertRegistration = <TError = void,
  * @summary 신청 거절
  */
 export type rejectRegistrationResponse200 = {
-  data: RejectRegistration200
+  data: RegistrationResponse
   status: 200
 }
 
@@ -273,7 +269,7 @@ export const useRejectRegistration = <TError = void,
  * @summary 신청 승인
  */
 export type approveRegistrationResponse200 = {
-  data: ApproveRegistration200
+  data: RegistrationResponse
   status: 200
 }
 
@@ -372,7 +368,7 @@ export const useApproveRegistration = <TError = void,
  * @summary 신청자 목록 조회
  */
 export type getRegistrationListResponse200 = {
-  data: GetRegistrationList200
+  data: PageRegistrationListResponse
   status: 200
 }
 
@@ -515,7 +511,7 @@ export function useGetRegistrationList<TData = Awaited<ReturnType<typeof getRegi
  * @summary 행사 신청
  */
 export type registerEventResponse201 = {
-  data: RegisterEvent201
+  data: RegistrationResponse
   status: 201
 }
 
@@ -624,7 +620,7 @@ export const useRegisterEvent = <TError = void,
  * @summary 신청 취소
  */
 export type cancelRegistrationResponse200 = {
-  data: CancelRegistration200
+  data: RegistrationResponse
   status: 200
 }
 
@@ -718,7 +714,7 @@ export const useCancelRegistration = <TError = void,
  * @summary 내 신청 목록 조회
  */
 export type getMyRegistrations1Response200 = {
-  data: GetMyRegistrations1200Item[]
+  data: MyRegistrationResponse[]
   status: 200
 }
 

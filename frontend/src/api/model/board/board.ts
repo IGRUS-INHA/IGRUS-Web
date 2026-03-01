@@ -49,8 +49,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetBoardByCode200,
-  GetBoardList200Item
+  BoardDetailResponse,
+  BoardListResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -65,7 +65,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 게시판 목록 조회
  */
 export type getBoardListResponse200 = {
-  data: GetBoardList200Item[]
+  data: BoardListResponse[]
   status: 200
 }
 
@@ -183,7 +183,7 @@ export function useGetBoardList<TData = Awaited<ReturnType<typeof getBoardList>>
  * @summary 게시판 상세 조회
  */
 export type getBoardByCodeResponse200 = {
-  data: GetBoardByCode200
+  data: BoardDetailResponse
   status: 200
 }
 

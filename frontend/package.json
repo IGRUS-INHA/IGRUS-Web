@@ -9,8 +9,9 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "openapi:bundle": "redocly bundle ../openapi/openapi.yaml -o ../openapi/openapi.bundled.yaml",
     "orval": "orval",
-    "api:generate": "orval"
+    "api:generate": "pnpm openapi:bundle && orval"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@redocly/cli": "^2.20.0",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^25.1.0",
     "@types/react": "^19.2.5",
