@@ -28,7 +28,7 @@ IGRUS-Web/
 ### Backend
 
 - Java 21
-- Spring Boot 4.0.1
+- Spring Boot 3.5.9
 - Spring Data JPA
 - Spring Security
 - MySQL 8.x
