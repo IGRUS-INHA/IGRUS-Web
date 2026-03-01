@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PaginationProps {
   currentPage: number;
@@ -44,7 +44,7 @@ export function Pagination({
   if (firstPage === undefined || lastPage === undefined) return null;
 
   return (
-    <nav className={cn('flex items-center justify-center gap-s1', className)}>
+    <nav className={cn("flex items-center justify-center gap-s1", className)}>
       {/* 이전 페이지 */}
       <Button
         variant="outline"
@@ -60,7 +60,7 @@ export function Pagination({
       {firstPage > 1 && (
         <>
           <Button
-            variant={currentPage === 1 ? 'default' : 'outline'}
+            variant={currentPage === 1 ? "default" : "outline"}
             size="sm"
             onClick={() => onPageChange(1)}
             className="h-8 w-8 p-0"
@@ -77,7 +77,7 @@ export function Pagination({
       {pageNumbers.map((page) => (
         <Button
           key={page}
-          variant={currentPage === page ? 'default' : 'outline'}
+          variant={currentPage === page ? "default" : "outline"}
           size="sm"
           onClick={() => onPageChange(page)}
           className="h-8 w-8 p-0"
@@ -93,7 +93,7 @@ export function Pagination({
             <span className="px-s2 text-muted-foreground">...</span>
           )}
           <Button
-            variant={currentPage === totalPages ? 'default' : 'outline'}
+            variant={currentPage === totalPages ? "default" : "outline"}
             size="sm"
             onClick={() => onPageChange(totalPages)}
             className="h-8 w-8 p-0"

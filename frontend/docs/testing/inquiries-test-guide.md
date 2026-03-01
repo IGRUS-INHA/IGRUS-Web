@@ -5,6 +5,7 @@
 이 문서는 문의 시스템의 E2E 테스트를 Playwright로 작성할 때 참고할 수 있는 가이드입니다.
 
 **테스트 대상 기능**:
+
 - 문의 목록 조회 (내 문의 내역)
 - 문의 작성
 - 인증 상태에 따른 접근 제어 (로그인 필수)
@@ -23,7 +24,7 @@
 **파일**: `e2e/pages/InquiriesPage.ts`
 
 ```typescript
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator } from "@playwright/test";
 
 export class InquiriesPage {
   readonly page: Page;
@@ -46,8 +47,12 @@ export class InquiriesPage {
     this.page = page;
 
     // Tabs
-    this.myInquiriesTab = page.getByRole('tab', { name: /문의 내역 보기|내 문의/ });
-    this.newInquiryTab = page.getByRole('tab', { name: /새 문의 작성|문의하기/ });
+    this.myInquiriesTab = page.getByRole("tab", {
+      name: /문의 내역 보기|내 문의/,
+    });
+    this.newInquiryTab = page.getByRole("tab", {
+      name: /새 문의 작성|문의하기/,
+    });
 
     // Inquiry List
     this.inquiryListItems = page.locator('[data-testid="inquiry-item"]');
@@ -57,11 +62,11 @@ export class InquiriesPage {
     this.typeSelect = page.locator('select[name="type"]');
     this.titleInput = page.getByPlaceholder(/제목/);
     this.contentTextarea = page.getByPlaceholder(/문의 내용/);
-    this.submitButton = page.getByRole('button', { name: /문의 제출|제출/ });
+    this.submitButton = page.getByRole("button", { name: /문의 제출|제출/ });
   }
 
   async goto() {
-    await this.page.goto('/inquiries');
+    await this.page.goto("/inquiries");
   }
 
   async switchToMyInquiriesTab() {
@@ -92,7 +97,9 @@ export class InquiriesPage {
 
   async getFirstInquiryTitle() {
     const firstItem = this.inquiryListItems.first();
-    return await firstItem.locator('[data-testid="inquiry-title"]').textContent();
+    return await firstItem
+      .locator('[data-testid="inquiry-title"]')
+      .textContent();
   }
 }
 ```
@@ -111,7 +118,7 @@ export function generateUniqueInquiry() {
   const timestamp = Date.now();
 
   return {
-    type: 'JOIN', // 가입/입부 문의
+    type: "JOIN", // 가입/입부 문의
     title: `테스트 문의 ${timestamp}`,
     content: `테스트 문의 내용입니다. (${timestamp})`,
   };
@@ -121,11 +128,11 @@ export function generateUniqueInquiry() {
  * 문의 유형 매핑 (UI → API)
  */
 export const INQUIRY_TYPE_MAP = {
-  'signup': 'JOIN',
-  'activity': 'ACTIVITY',
-  'study': 'STUDY',
-  'project': 'PROJECT',
-  'general': 'GENERAL',
+  signup: "JOIN",
+  activity: "ACTIVITY",
+  study: "STUDY",
+  project: "PROJECT",
+  general: "GENERAL",
 } as const;
 ```
 
@@ -136,52 +143,52 @@ export const INQUIRY_TYPE_MAP = {
 **파일**: `e2e/inquiries/inquiry-list.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { InquiriesPage } from '../pages/InquiriesPage';
-import { LoginPage } from '../pages/LoginPage';
-import { EXISTING_USER } from '../utils/testData';
-import { waitForApiResponse } from '../utils/apiHelpers';
+import { test, expect } from "@playwright/test";
+import { InquiriesPage } from "../pages/InquiriesPage";
+import { LoginPage } from "../pages/LoginPage";
+import { EXISTING_USER } from "../utils/testData";
+import { waitForApiResponse } from "../utils/apiHelpers";
 
-test.describe('문의 목록 조회', () => {
+test.describe("문의 목록 조회", () => {
   test.beforeEach(async ({ page }) => {
     // 로그인 필수
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.login(EXISTING_USER.studentId, EXISTING_USER.password);
-    await waitForApiResponse(page, '/api/v1/auth/password/login', 200);
+    await waitForApiResponse(page, "/api/v1/auth/password/login", 200);
   });
 
-  test('내 문의 목록 조회', async ({ page }) => {
+  test("내 문의 목록 조회", async ({ page }) => {
     const inquiriesPage = new InquiriesPage(page);
     await inquiriesPage.goto();
 
     // API 응답 대기
     const response = await page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/inquiries/my') &&
-        response.status() === 200
+        response.url().includes("/api/v1/inquiries/my") &&
+        response.status() === 200,
     );
 
     // 응답 확인
     const responseBody = await response.json();
-    expect(responseBody).toHaveProperty('content'); // Page 객체의 content 배열
-    expect(responseBody).toHaveProperty('totalElements');
+    expect(responseBody).toHaveProperty("content"); // Page 객체의 content 배열
+    expect(responseBody).toHaveProperty("totalElements");
 
     // Authorization 헤더 확인
     const request = response.request();
     const headers = request.headers();
-    expect(headers['authorization']).toBeTruthy();
-    expect(headers['authorization']).toContain('Bearer ');
+    expect(headers["authorization"]).toBeTruthy();
+    expect(headers["authorization"]).toContain("Bearer ");
   });
 
-  test('빈 문의 목록 표시', async ({ page }) => {
+  test("빈 문의 목록 표시", async ({ page }) => {
     const inquiriesPage = new InquiriesPage(page);
     await inquiriesPage.goto();
 
     await page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/inquiries/my') &&
-        response.status() === 200
+        response.url().includes("/api/v1/inquiries/my") &&
+        response.status() === 200,
     );
 
     // 문의가 없을 경우 빈 상태 메시지 표시
@@ -198,22 +205,22 @@ test.describe('문의 목록 조회', () => {
 **파일**: `e2e/inquiries/inquiry-create.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { InquiriesPage } from '../pages/InquiriesPage';
-import { LoginPage } from '../pages/LoginPage';
-import { EXISTING_USER, generateUniqueInquiry } from '../utils/testData';
-import { waitForApiResponse } from '../utils/apiHelpers';
+import { test, expect } from "@playwright/test";
+import { InquiriesPage } from "../pages/InquiriesPage";
+import { LoginPage } from "../pages/LoginPage";
+import { EXISTING_USER, generateUniqueInquiry } from "../utils/testData";
+import { waitForApiResponse } from "../utils/apiHelpers";
 
-test.describe('문의 작성', () => {
+test.describe("문의 작성", () => {
   test.beforeEach(async ({ page }) => {
     // 로그인 필수
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.login(EXISTING_USER.studentId, EXISTING_USER.password);
-    await waitForApiResponse(page, '/api/v1/auth/password/login', 200);
+    await waitForApiResponse(page, "/api/v1/auth/password/login", 200);
   });
 
-  test('새 문의 작성', async ({ page }) => {
+  test("새 문의 작성", async ({ page }) => {
     const inquiriesPage = new InquiriesPage(page);
     const inquiryData = generateUniqueInquiry();
 
@@ -226,29 +233,36 @@ test.describe('문의 작성', () => {
     await inquiriesPage.fillInquiryForm(inquiryData);
 
     // 제출 시 API 요청 대기
-    const createPromise = waitForApiResponse(page, '/api/v1/inquiries/member', 201);
+    const createPromise = waitForApiResponse(
+      page,
+      "/api/v1/inquiries/member",
+      201,
+    );
 
     await inquiriesPage.submitInquiry();
 
     // API 응답 확인
     const response = await createPromise;
     const responseBody = await response.json();
-    expect(responseBody).toHaveProperty('id');
+    expect(responseBody).toHaveProperty("id");
 
     // 성공 메시지 확인
-    page.on('dialog', async (dialog) => {
-      expect(dialog.message()).toContain('문의가 작성되었습니다');
+    page.on("dialog", async (dialog) => {
+      expect(dialog.message()).toContain("문의가 작성되었습니다");
       await dialog.accept();
     });
 
     // "내 문의" 탭으로 자동 전환 확인
-    await expect(inquiriesPage.myInquiriesTab).toHaveAttribute('aria-selected', 'true');
+    await expect(inquiriesPage.myInquiriesTab).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
 
     // 목록 갱신 확인 (React Query invalidate)
     await page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/inquiries/my') &&
-        response.status() === 200
+        response.url().includes("/api/v1/inquiries/my") &&
+        response.status() === 200,
     );
 
     // 새로 작성한 문의가 목록에 있는지 확인
@@ -256,17 +270,17 @@ test.describe('문의 작성', () => {
     expect(firstInquiryTitle).toContain(inquiryData.title);
   });
 
-  test('문의 유형 선택 확인', async ({ page }) => {
+  test("문의 유형 선택 확인", async ({ page }) => {
     const inquiriesPage = new InquiriesPage(page);
     await inquiriesPage.goto();
     await inquiriesPage.switchToNewInquiryTab();
 
     // 문의 유형 선택
-    await inquiriesPage.typeSelect.selectOption('JOIN');
+    await inquiriesPage.typeSelect.selectOption("JOIN");
 
     // 선택된 값 확인
     const selectedValue = await inquiriesPage.typeSelect.inputValue();
-    expect(selectedValue).toBe('JOIN');
+    expect(selectedValue).toBe("JOIN");
   });
 });
 ```
@@ -276,11 +290,11 @@ test.describe('문의 작성', () => {
 **파일**: `e2e/inquiries/inquiry-auth.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { InquiriesPage } from '../pages/InquiriesPage';
+import { test, expect } from "@playwright/test";
+import { InquiriesPage } from "../pages/InquiriesPage";
 
-test.describe('문의 페이지 접근 제어', () => {
-  test('로그인하지 않은 상태에서 접근 시도', async ({ page }) => {
+test.describe("문의 페이지 접근 제어", () => {
+  test("로그인하지 않은 상태에서 접근 시도", async ({ page }) => {
     const inquiriesPage = new InquiriesPage(page);
 
     // 로그인 없이 접근
@@ -289,8 +303,8 @@ test.describe('문의 페이지 접근 제어', () => {
     // 401 Unauthorized 또는 403 Forbidden 응답 대기
     await page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/inquiries/my') &&
-        (response.status() === 401 || response.status() === 403)
+        response.url().includes("/api/v1/inquiries/my") &&
+        (response.status() === 401 || response.status() === 403),
     );
 
     // 로그인 페이지로 리다이렉트되는지 확인
@@ -306,6 +320,7 @@ test.describe('문의 페이지 접근 제어', () => {
 ### 준비 단계
 
 1. **개발 서버 실행**
+
    ```bash
    cd frontend
    npm run dev
@@ -323,6 +338,7 @@ test.describe('문의 페이지 접근 제어', () => {
 ### Test 3: 문의 시스템
 
 #### 3.1 내 문의 목록 조회 (로그인 필수)
+
 **시나리오**: 로그인 후 문의 페이지 접속
 
 1. 로그인 상태에서 `/inquiries` 접속
@@ -344,6 +360,7 @@ test.describe('문의 페이지 접근 제어', () => {
      ```
 
 #### 3.2 문의 작성
+
 **시나리오**: 새 문의 작성
 
 1. "새 문의 작성" 탭 클릭
@@ -385,6 +402,7 @@ test.describe('문의 페이지 접근 제어', () => {
    - `queryClient.invalidateQueries(['inquiries'])` 로그 확인
 
 #### 3.3 문의 목록 새로고침
+
 **시나리오**: 문의 작성 후 자동 새로고침
 
 1. 문의 작성 완료 후
@@ -397,6 +415,7 @@ test.describe('문의 페이지 접근 제어', () => {
    - 문의 작성 직후 자동으로 목록 조회 API 호출됨
 
 #### 3.4 로그인하지 않은 상태에서 문의 페이지 접근
+
 **시나리오**: 비로그인 상태에서 접근
 
 1. 로그아웃 또는 시크릿 모드에서 `/inquiries` 접속
@@ -411,6 +430,7 @@ test.describe('문의 페이지 접근 제어', () => {
    - `ProtectedRoute` 또는 axios interceptor에서 리다이렉트 처리 로그
 
 #### 3.5 페이지네이션
+
 **시나리오**: 문의가 많을 경우 페이지 이동
 
 1. 문의 목록에서 페이지네이션 버튼 클릭 (2페이지)
@@ -422,6 +442,7 @@ test.describe('문의 페이지 접근 제어', () => {
    - Status: 200 OK
 
 #### 3.6 문의 상세 조회 (있는 경우)
+
 **시나리오**: 문의 항목 클릭
 
 1. 문의 목록에서 문의 항목 클릭
@@ -474,7 +495,7 @@ test.beforeEach(async ({ page }) => {
   const loginPage = new LoginPage(page);
   await loginPage.goto();
   await loginPage.login(EXISTING_USER.studentId, EXISTING_USER.password);
-  await waitForApiResponse(page, '/api/v1/auth/password/login', 200);
+  await waitForApiResponse(page, "/api/v1/auth/password/login", 200);
 });
 ```
 
@@ -489,8 +510,8 @@ await inquiriesPage.submitInquiry();
 // 목록 API가 다시 호출되는지 확인
 await page.waitForResponse(
   (response) =>
-    response.url().includes('/api/v1/inquiries/my') &&
-    response.status() === 200
+    response.url().includes("/api/v1/inquiries/my") &&
+    response.status() === 200,
 );
 ```
 
@@ -511,7 +532,7 @@ Request Body를 확인하여 올바른 enum 값이 전송되는지 검증.
 ```typescript
 test.afterAll(async ({ request }) => {
   // 테스트 문의 삭제 (백엔드에 삭제 API 필요)
-  await request.delete('/api/v1/test/inquiries/cleanup');
+  await request.delete("/api/v1/test/inquiries/cleanup");
 });
 ```
 

@@ -1,50 +1,54 @@
-import { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, List, BarChart3 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FullPageSpinner } from '@/components/ui';
-import { Pagination } from '@/components/board/Pagination';
-import { useUIStore } from '@/stores';
-import { cn } from '@/lib/utils';
-import { useEvent } from '@/hooks/queries/useEvents';
+import { useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Users, List, BarChart3 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { FullPageSpinner } from "@/components/ui";
+import { Pagination } from "@/components/board/Pagination";
+import { useUIStore } from "@/stores";
+import { cn } from "@/lib/utils";
+import { useEvent } from "@/hooks/queries/useEvents";
 import {
   useRegistrationList,
   useApproveEventRegistration,
   useRejectEventRegistration,
   useRevertEventRegistration,
-} from '@/hooks/queries/useEventRegistrations';
-import { isForbiddenError, isEventAccessDenied, getErrorMessage } from '@/utils/error';
-import { formatDate } from '@/utils/date';
-import RegistrationChart from '@/components/feature/event/RegistrationChart';
+} from "@/hooks/queries/useEventRegistrations";
+import {
+  isForbiddenError,
+  isEventAccessDenied,
+  getErrorMessage,
+} from "@/utils/error";
+import { formatDate } from "@/utils/date";
+import RegistrationChart from "@/components/feature/event/RegistrationChart";
 import {
   aggregateByGender,
   aggregateByGrade,
   aggregateByDepartment,
   aggregateByStatus,
-} from '@/utils/chart';
-import type { RegistrationListResponse } from '@/api/model/models';
+} from "@/utils/chart";
+import type { RegistrationListResponse } from "@/api/model/models";
 
-type ActiveTab = 'list' | 'dashboard';
+type ActiveTab = "list" | "dashboard";
 
 const PAGE_SIZE = 20;
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  REGISTERED: { label: '등록', className: 'bg-primary/10 text-primary' },
-  WAITING: { label: '대기', className: 'bg-yellow-500/10 text-yellow-600' },
-  APPROVED: { label: '승인', className: 'bg-success/10 text-success' },
-  REJECTED: { label: '거절', className: 'bg-destructive/10 text-destructive' },
-  CANCELED: { label: '취소', className: 'bg-muted text-muted-foreground' },
+  REGISTERED: { label: "등록", className: "bg-primary/10 text-primary" },
+  WAITING: { label: "대기", className: "bg-yellow-500/10 text-yellow-600" },
+  APPROVED: { label: "승인", className: "bg-success/10 text-success" },
+  REJECTED: { label: "거절", className: "bg-destructive/10 text-destructive" },
+  CANCELED: { label: "취소", className: "bg-muted text-muted-foreground" },
 };
 
 const REGISTRATION_TYPE_LABEL: Record<string, string> = {
-  AUTO_APPROVE: '선착순',
-  MANUAL_APPROVE: '선발제',
+  AUTO_APPROVE: "선착순",
+  MANUAL_APPROVE: "선발제",
 };
 
 const TABS: { key: ActiveTab; label: string; icon: typeof List }[] = [
-  { key: 'list', label: '리스트', icon: List },
-  { key: 'dashboard', label: '대시보드', icon: BarChart3 },
+  { key: "list", label: "리스트", icon: List },
+  { key: "dashboard", label: "대시보드", icon: BarChart3 },
 ];
 
 export default function EventRegistrationsPage() {
@@ -53,26 +57,36 @@ export default function EventRegistrationsPage() {
   const addToast = useUIStore((s) => s.addToast);
   const numericEventId = Number(eventId);
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('list');
+  const [activeTab, setActiveTab] = useState<ActiveTab>("list");
   const [page, setPage] = useState(1);
 
-  const { data: eventResponse, isLoading: eventLoading, error: eventError } = useEvent(numericEventId);
+  const {
+    data: eventResponse,
+    isLoading: eventLoading,
+    error: eventError,
+  } = useEvent(numericEventId);
 
-  const { data: registrationsResponse, isLoading: regLoading } = useRegistrationList(
-    numericEventId,
-    { page: 0, size: 100, sort: ['registeredAt,DESC'] },
-  );
+  const { data: registrationsResponse, isLoading: regLoading } =
+    useRegistrationList(numericEventId, {
+      page: 0,
+      size: 100,
+      sort: ["registeredAt,DESC"],
+    });
 
-  const { mutate: approve, isPending: isApproving } = useApproveEventRegistration(numericEventId);
-  const { mutate: reject, isPending: isRejecting } = useRejectEventRegistration(numericEventId);
-  const { mutate: revert, isPending: isReverting } = useRevertEventRegistration(numericEventId);
+  const { mutate: approve, isPending: isApproving } =
+    useApproveEventRegistration(numericEventId);
+  const { mutate: reject, isPending: isRejecting } =
+    useRejectEventRegistration(numericEventId);
+  const { mutate: revert, isPending: isReverting } =
+    useRevertEventRegistration(numericEventId);
   const isBusy = isApproving || isRejecting || isReverting;
 
   const event = eventResponse?.data;
-  const allRegistrations = registrationsResponse?.status === 200
-    ? registrationsResponse.data.content ?? []
-    : [];
-  const isManualApprove = event?.registrationType === 'MANUAL_APPROVE';
+  const allRegistrations =
+    registrationsResponse?.status === 200
+      ? (registrationsResponse.data.content ?? [])
+      : [];
+  const isManualApprove = event?.registrationType === "MANUAL_APPROVE";
 
   // 페이지네이션
   const totalPages = Math.ceil(allRegistrations.length / PAGE_SIZE);
@@ -82,10 +96,22 @@ export default function EventRegistrationsPage() {
   }, [allRegistrations, page]);
 
   // 차트 데이터
-  const genderData = useMemo(() => aggregateByGender(allRegistrations), [allRegistrations]);
-  const gradeData = useMemo(() => aggregateByGrade(allRegistrations), [allRegistrations]);
-  const departmentData = useMemo(() => aggregateByDepartment(allRegistrations), [allRegistrations]);
-  const statusData = useMemo(() => aggregateByStatus(allRegistrations), [allRegistrations]);
+  const genderData = useMemo(
+    () => aggregateByGender(allRegistrations),
+    [allRegistrations],
+  );
+  const gradeData = useMemo(
+    () => aggregateByGrade(allRegistrations),
+    [allRegistrations],
+  );
+  const departmentData = useMemo(
+    () => aggregateByDepartment(allRegistrations),
+    [allRegistrations],
+  );
+  const statusData = useMemo(
+    () => aggregateByStatus(allRegistrations),
+    [allRegistrations],
+  );
 
   const isLoading = eventLoading || regLoading;
 
@@ -94,9 +120,14 @@ export default function EventRegistrationsPage() {
     approve(
       { registrationId },
       {
-        onSuccess: () => addToast({ type: 'success', message: '승인 완료' }),
+        onSuccess: () => addToast({ type: "success", message: "승인 완료" }),
         onError: (error: unknown) => {
-          addToast({ type: 'error', message: isForbiddenError(error) ? '승인 권한이 없습니다.' : getErrorMessage(error) });
+          addToast({
+            type: "error",
+            message: isForbiddenError(error)
+              ? "승인 권한이 없습니다."
+              : getErrorMessage(error),
+          });
         },
       },
     );
@@ -106,9 +137,14 @@ export default function EventRegistrationsPage() {
     reject(
       { registrationId },
       {
-        onSuccess: () => addToast({ type: 'success', message: '거절 완료' }),
+        onSuccess: () => addToast({ type: "success", message: "거절 완료" }),
         onError: (error: unknown) => {
-          addToast({ type: 'error', message: isForbiddenError(error) ? '거절 권한이 없습니다.' : getErrorMessage(error) });
+          addToast({
+            type: "error",
+            message: isForbiddenError(error)
+              ? "거절 권한이 없습니다."
+              : getErrorMessage(error),
+          });
         },
       },
     );
@@ -118,9 +154,14 @@ export default function EventRegistrationsPage() {
     revert(
       { registrationId },
       {
-        onSuccess: () => addToast({ type: 'success', message: '취소 완료' }),
+        onSuccess: () => addToast({ type: "success", message: "취소 완료" }),
         onError: (error: unknown) => {
-          addToast({ type: 'error', message: isForbiddenError(error) ? '권한이 없습니다.' : getErrorMessage(error) });
+          addToast({
+            type: "error",
+            message: isForbiddenError(error)
+              ? "권한이 없습니다."
+              : getErrorMessage(error),
+          });
         },
       },
     );
@@ -129,30 +170,49 @@ export default function EventRegistrationsPage() {
   const renderActions = (r: RegistrationListResponse) => {
     if (!isManualApprove || !r.registrationId) return null;
 
-    if (r.status === 'WAITING') {
+    if (r.status === "WAITING") {
       return (
         <div className="flex gap-s2 justify-end">
-          <Button size="xs" onClick={() => handleApprove(r.registrationId!)} disabled={isBusy}>
+          <Button
+            size="xs"
+            onClick={() => handleApprove(r.registrationId!)}
+            disabled={isBusy}
+          >
             승인
           </Button>
-          <Button size="xs" variant="destructive" onClick={() => handleReject(r.registrationId!)} disabled={isBusy}>
+          <Button
+            size="xs"
+            variant="destructive"
+            onClick={() => handleReject(r.registrationId!)}
+            disabled={isBusy}
+          >
             거절
           </Button>
         </div>
       );
     }
 
-    if (r.status === 'APPROVED') {
+    if (r.status === "APPROVED") {
       return (
-        <Button size="xs" variant="outline" onClick={() => handleRevert(r.registrationId!)} disabled={isBusy}>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => handleRevert(r.registrationId!)}
+          disabled={isBusy}
+        >
           승인 취소
         </Button>
       );
     }
 
-    if (r.status === 'REJECTED') {
+    if (r.status === "REJECTED") {
       return (
-        <Button size="xs" variant="outline" onClick={() => handleRevert(r.registrationId!)} disabled={isBusy}>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => handleRevert(r.registrationId!)}
+          disabled={isBusy}
+        >
           거절 취소
         </Button>
       );
@@ -169,7 +229,7 @@ export default function EventRegistrationsPage() {
         <p className="text-muted-foreground">신청자 관리 권한이 없습니다.</p>
         <button
           type="button"
-          onClick={() => navigate('/events')}
+          onClick={() => navigate("/events")}
           className="text-sm text-primary hover:underline cursor-pointer"
         >
           행사 목록으로 돌아가기
@@ -207,7 +267,8 @@ export default function EventRegistrationsPage() {
           <h2 className="typo-b1 text-muted-foreground">{event.title}</h2>
           {event.registrationType && (
             <span className="px-s2 py-0.5 rounded-r2 typo-c2 font-bold bg-primary/10 text-primary">
-              {REGISTRATION_TYPE_LABEL[event.registrationType] ?? event.registrationType}
+              {REGISTRATION_TYPE_LABEL[event.registrationType] ??
+                event.registrationType}
             </span>
           )}
           <span className="typo-b2 text-muted-foreground">
@@ -224,10 +285,10 @@ export default function EventRegistrationsPage() {
             type="button"
             onClick={() => setActiveTab(key)}
             className={cn(
-              'flex items-center gap-s2 px-s4 py-s3 rounded-r3 text-sm font-medium transition-all cursor-pointer',
+              "flex items-center gap-s2 px-s4 py-s3 rounded-r3 text-sm font-medium transition-all cursor-pointer",
               activeTab === key
-                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted",
             )}
           >
             <Icon size={16} />
@@ -238,7 +299,7 @@ export default function EventRegistrationsPage() {
 
       {/* 탭 콘텐츠 */}
       <div className="animate-in fade-in duration-200">
-        {activeTab === 'list' ? (
+        {activeTab === "list" ? (
           <>
             {/* 테이블 */}
             <Card className="p-s5 overflow-x-auto">
@@ -247,10 +308,14 @@ export default function EventRegistrationsPage() {
                   <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
                     <th className="pb-s4 font-bold">학번</th>
                     <th className="pb-s4 font-bold">이름</th>
-                    <th className="pb-s4 font-bold hidden lg:table-cell">이메일</th>
+                    <th className="pb-s4 font-bold hidden lg:table-cell">
+                      이메일
+                    </th>
                     <th className="pb-s4 font-bold">상태</th>
                     <th className="pb-s4 font-bold">신청일</th>
-                    {isManualApprove && <th className="pb-s4 font-bold text-right">작업</th>}
+                    {isManualApprove && (
+                      <th className="pb-s4 font-bold text-right">작업</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -258,25 +323,38 @@ export default function EventRegistrationsPage() {
                     const badge = r.status ? STATUS_BADGE[r.status] : undefined;
                     return (
                       <tr key={r.registrationId}>
-                        <td className="py-s4 typo-b2 font-medium">{r.studentId ?? '-'}</td>
-                        <td className="py-s4 typo-b2 font-bold">{r.userName ?? '-'}</td>
+                        <td className="py-s4 typo-b2 font-medium">
+                          {r.studentId ?? "-"}
+                        </td>
+                        <td className="py-s4 typo-b2 font-bold">
+                          {r.userName ?? "-"}
+                        </td>
                         <td className="py-s4 typo-b2 text-muted-foreground hidden lg:table-cell">
-                          {r.userEmail ?? '-'}
+                          {r.userEmail ?? "-"}
                         </td>
                         <td className="py-s4">
                           {badge ? (
-                            <span className={cn('px-s2 py-0.5 rounded-r2 typo-c2 font-bold', badge.className)}>
+                            <span
+                              className={cn(
+                                "px-s2 py-0.5 rounded-r2 typo-c2 font-bold",
+                                badge.className,
+                              )}
+                            >
                               {badge.label}
                             </span>
                           ) : (
-                            <span className="typo-c2 text-muted-foreground">-</span>
+                            <span className="typo-c2 text-muted-foreground">
+                              -
+                            </span>
                           )}
                         </td>
                         <td className="py-s4 typo-b2 text-muted-foreground">
                           {formatDate(r.registeredAt)}
                         </td>
                         {isManualApprove && (
-                          <td className="py-s4 text-right">{renderActions(r)}</td>
+                          <td className="py-s4 text-right">
+                            {renderActions(r)}
+                          </td>
                         )}
                       </tr>
                     );
@@ -292,7 +370,11 @@ export default function EventRegistrationsPage() {
 
             {totalPages > 1 && (
               <div className="mt-s6">
-                <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                />
               </div>
             )}
           </>

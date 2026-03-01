@@ -34,13 +34,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type GetAllInquiriesType = typeof GetAllInquiriesType[keyof typeof GetAllInquiriesType];
-
+export type GetAllInquiriesType =
+  (typeof GetAllInquiriesType)[keyof typeof GetAllInquiriesType];
 
 export const GetAllInquiriesType = {
-  JOIN: 'JOIN',
-  EVENT: 'EVENT',
-  REPORT: 'REPORT',
-  ACCOUNT: 'ACCOUNT',
-  OTHER: 'OTHER',
+  JOIN: "JOIN",
+  EVENT: "EVENT",
+  REPORT: "REPORT",
+  ACCOUNT: "ACCOUNT",
+  OTHER: "OTHER",
 } as const;

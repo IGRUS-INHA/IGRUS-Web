@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   PenLine,
   Hash,
@@ -10,44 +10,59 @@ import {
   Clock,
   AlertCircle,
   MessageSquare,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useLookupGuestInquiry } from '@/api/model/inquiry/inquiry';
-import type { InquiryResponse } from '@/api/model/models/inquiryResponse';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useLookupGuestInquiry } from "@/api/model/inquiry/inquiry";
+import type { InquiryResponse } from "@/api/model/models/inquiryResponse";
+import { cn } from "@/lib/utils";
 
-const STATUS_MAP: Record<string, { icon: typeof CheckCircle; label: string; className: string }> = {
-  PENDING: { icon: AlertCircle, label: '대기중', className: 'bg-warning/15 text-warning' },
-  IN_PROGRESS: { icon: Clock, label: '처리중', className: 'bg-primary/15 text-primary' },
-  COMPLETED: { icon: CheckCircle, label: '완료', className: 'bg-success/15 text-success' },
+const STATUS_MAP: Record<
+  string,
+  { icon: typeof CheckCircle; label: string; className: string }
+> = {
+  PENDING: {
+    icon: AlertCircle,
+    label: "대기중",
+    className: "bg-warning/15 text-warning",
+  },
+  IN_PROGRESS: {
+    icon: Clock,
+    label: "처리중",
+    className: "bg-primary/15 text-primary",
+  },
+  COMPLETED: {
+    icon: CheckCircle,
+    label: "완료",
+    className: "bg-success/15 text-success",
+  },
 };
 
 const formatDate = (dateString?: string): string => {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
 export default function InquiryLookupPage() {
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [result, setResult] = useState<InquiryResponse | null>(null);
 
   const mutation = useLookupGuestInquiry();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     const formData = new FormData(e.currentTarget);
-    const inquiryNumber = formData.get('inquiryNumber') as string;
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+    const inquiryNumber = formData.get("inquiryNumber") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
     try {
       const res = await mutation.mutateAsync({
@@ -56,7 +71,7 @@ export default function InquiryLookupPage() {
       setResult(res.data as InquiryResponse);
     } catch {
       setResult(null);
-      setError('문의를 찾을 수 없습니다. 입력 정보를 확인해주세요.');
+      setError("문의를 찾을 수 없습니다. 입력 정보를 확인해주세요.");
     }
   };
 
@@ -116,16 +131,14 @@ export default function InquiryLookupPage() {
             />
           </FormField>
 
-          {error && (
-            <p className="typo-c1 text-destructive">{error}</p>
-          )}
+          {error && <p className="typo-c1 text-destructive">{error}</p>}
 
           <Button
             type="submit"
             disabled={mutation.isPending}
             className="flex w-full items-center justify-center gap-s2 rounded-r3 py-s5 font-bold"
           >
-            {mutation.isPending ? '조회 중...' : '문의 조회'}
+            {mutation.isPending ? "조회 중..." : "문의 조회"}
             {!mutation.isPending && <Search size={18} />}
           </Button>
         </form>
@@ -139,7 +152,7 @@ export default function InquiryLookupPage() {
 
 /** 조회 결과 표시 */
 function InquiryResult({ inquiry }: { inquiry: InquiryResponse }) {
-  const status = inquiry.status ?? 'PENDING';
+  const status = inquiry.status ?? "PENDING";
   const statusInfo = STATUS_MAP[status] ?? STATUS_MAP.PENDING!;
   const StatusIcon = statusInfo!.icon;
 
@@ -163,7 +176,7 @@ function InquiryResult({ inquiry }: { inquiry: InquiryResponse }) {
           </div>
           <div
             className={cn(
-              'flex shrink-0 items-center gap-s1 rounded-full px-s3 py-s1 typo-c1 font-semibold',
+              "flex shrink-0 items-center gap-s1 rounded-full px-s3 py-s1 typo-c1 font-semibold",
               statusInfo!.className,
             )}
           >

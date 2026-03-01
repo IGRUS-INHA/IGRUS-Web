@@ -22,9 +22,9 @@ export default function Header() {
 
   // 검색 가능한 페이지 체크
   const searchablePaths = ["/board", "/events"];
-  const shouldShowSearch = __FEATURE_SEARCH__ && searchablePaths.some((path) =>
-    location.pathname.startsWith(path)
-  );
+  const shouldShowSearch =
+    __FEATURE_SEARCH__ &&
+    searchablePaths.some((path) => location.pathname.startsWith(path));
 
   // 검색어 상태 (URL 쿼리 파라미터와 동기화)
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -109,15 +109,17 @@ export default function Header() {
                 <h1 className="text-xl lg:text-3xl font-bold capitalize tracking-tight">
                   {pageTitle}
                 </h1>
-                <p className={`hidden lg:block text-xs text-muted-foreground mt-s1 ${pageTitle.trim() ? '' : 'invisible'}`}>
+                <p
+                  className={`hidden lg:block text-xs text-muted-foreground mt-s1 ${pageTitle.trim() ? "" : "invisible"}`}
+                >
                   {currentDate}
                 </p>
               </div>
             </div>
 
             {/* 오른쪽: 검색 */}
-            {shouldShowSearch && (
-              isMobile ? (
+            {shouldShowSearch &&
+              (isMobile ? (
                 <button
                   onClick={() => setMobileSearchOpen(true)}
                   type="button"
@@ -134,8 +136,7 @@ export default function Header() {
                     onSearch={handleSearch}
                   />
                 </div>
-              )
-            )}
+              ))}
           </div>
         )}
       </div>

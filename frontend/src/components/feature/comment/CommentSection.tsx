@@ -1,12 +1,15 @@
-import { useState } from 'react';
-import { User as UserIcon, Send } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Spinner } from '@/components/ui';
-import { useUIStore } from '@/stores';
-import { usePermission } from '@/hooks/usePermission';
-import { useComments, useCreateCommentMutation } from '@/hooks/queries/useComments';
-import { CommentList } from './CommentList';
-import { isForbiddenError, hasErrorCode, getErrorMessage } from '@/utils/error';
+import { useState } from "react";
+import { User as UserIcon, Send } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui";
+import { useUIStore } from "@/stores";
+import { usePermission } from "@/hooks/usePermission";
+import {
+  useComments,
+  useCreateCommentMutation,
+} from "@/hooks/queries/useComments";
+import { CommentList } from "./CommentList";
+import { isForbiddenError, hasErrorCode, getErrorMessage } from "@/utils/error";
 
 interface CommentSectionProps {
   postId: number;
@@ -20,10 +23,10 @@ interface CommentSectionProps {
  */
 export function CommentSection({ postId }: CommentSectionProps) {
   const { theme } = useUIStore();
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
   const { isAuthenticated } = usePermission();
 
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
 
   const { data: commentsResponse, isLoading } = useComments(postId);
@@ -31,9 +34,13 @@ export function CommentSection({ postId }: CommentSectionProps) {
 
   const responseData = commentsResponse?.data;
   const comments =
-    responseData && 'comments' in responseData ? responseData.comments ?? [] : [];
+    responseData && "comments" in responseData
+      ? (responseData.comments ?? [])
+      : [];
   const totalCount =
-    responseData && 'totalCount' in responseData ? responseData.totalCount ?? 0 : 0;
+    responseData && "totalCount" in responseData
+      ? (responseData.totalCount ?? 0)
+      : 0;
 
   const handleSubmit = () => {
     if (!comment.trim() || createComment.isPending) return;
@@ -46,19 +53,20 @@ export function CommentSection({ postId }: CommentSectionProps) {
       },
     };
 
-    console.log('댓글 작성 요청:', payload);
+    console.log("댓글 작성 요청:", payload);
 
     createComment.mutate(payload, {
       onSuccess: () => {
-        setComment('');
+        setComment("");
         setIsAnonymous(false);
       },
       onError: (error: unknown) => {
-        console.error('댓글 작성 실패:', error);
+        console.error("댓글 작성 실패:", error);
         const isForbidden =
-          isForbiddenError(error) || hasErrorCode(error, 'COMMENT_CREATE_DENIED');
+          isForbiddenError(error) ||
+          hasErrorCode(error, "COMMENT_CREATE_DENIED");
         const errorMessage = isForbidden
-          ? '정회원 승인 후 댓글 이용이 가능합니다.'
+          ? "정회원 승인 후 댓글 이용이 가능합니다."
           : getErrorMessage(error);
         alert(errorMessage);
       },
@@ -66,7 +74,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
@@ -81,8 +89,8 @@ export function CommentSection({ postId }: CommentSectionProps) {
       <div className="flex gap-s4 mb-s3">
         <div
           className={cn(
-            'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-            isDark ? 'bg-white/10' : 'bg-muted'
+            "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+            isDark ? "bg-white/10" : "bg-muted",
           )}
         >
           <UserIcon size={20} className="text-muted-foreground" />
@@ -98,19 +106,26 @@ export function CommentSection({ postId }: CommentSectionProps) {
               placeholder="댓글을 입력하세요..."
               disabled={!isAuthenticated || createComment.isPending}
               className={cn(
-                'w-full rounded-r4 px-s5 py-s3 pr-s7 border focus:outline-none focus:border-primary transition-all',
-                isDark ? 'bg-white/5 border-border' : 'bg-muted/50 border-border',
-                (!isAuthenticated || createComment.isPending) && 'opacity-50 cursor-not-allowed'
+                "w-full rounded-r4 px-s5 py-s3 pr-s7 border focus:outline-none focus:border-primary transition-all",
+                isDark
+                  ? "bg-white/5 border-border"
+                  : "bg-muted/50 border-border",
+                (!isAuthenticated || createComment.isPending) &&
+                  "opacity-50 cursor-not-allowed",
               )}
             />
             <button
               onClick={handleSubmit}
               type="button"
-              disabled={!isAuthenticated || !comment.trim() || createComment.isPending}
+              disabled={
+                !isAuthenticated || !comment.trim() || createComment.isPending
+              }
               className={cn(
-                'absolute right-s2 top-1/2 -translate-y-1/2 p-s2 text-primary hover:bg-primary/10 rounded-r2 transition cursor-pointer',
-                (!isAuthenticated || !comment.trim() || createComment.isPending) &&
-                  'opacity-50 cursor-not-allowed hover:bg-transparent'
+                "absolute right-s2 top-1/2 -translate-y-1/2 p-s2 text-primary hover:bg-primary/10 rounded-r2 transition cursor-pointer",
+                (!isAuthenticated ||
+                  !comment.trim() ||
+                  createComment.isPending) &&
+                  "opacity-50 cursor-not-allowed hover:bg-transparent",
               )}
             >
               <Send size={18} />

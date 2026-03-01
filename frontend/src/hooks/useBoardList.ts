@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { PAGINATION, SORT_TYPE, SEARCH_TYPE } from '@/constants/board';
+import { useState, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { PAGINATION, SORT_TYPE, SEARCH_TYPE } from "@/constants/board";
 
 interface BoardListParams {
   page: number;
@@ -67,14 +67,14 @@ export function useBoardList(): UseBoardListReturn {
   // URL에서 파라미터 읽기
   const params = useMemo<BoardListParams>(
     () => ({
-      page: Number(searchParams.get('page')) || PAGINATION.DEFAULT_PAGE,
-      size: Number(searchParams.get('size')) || PAGINATION.DEFAULT_SIZE,
-      sort: searchParams.get('sort') || SORT_TYPE.LATEST,
-      searchType: searchParams.get('searchType') || SEARCH_TYPE.TITLE_CONTENT,
-      keyword: searchParams.get('keyword') || '',
-      category: searchParams.get('category') || '',
+      page: Number(searchParams.get("page")) || PAGINATION.DEFAULT_PAGE,
+      size: Number(searchParams.get("size")) || PAGINATION.DEFAULT_SIZE,
+      sort: searchParams.get("sort") || SORT_TYPE.LATEST,
+      searchType: searchParams.get("searchType") || SEARCH_TYPE.TITLE_CONTENT,
+      keyword: searchParams.get("keyword") || "",
+      category: searchParams.get("category") || "",
     }),
-    [searchParams]
+    [searchParams],
   );
 
   // 파라미터 업데이트 헬퍼
@@ -82,7 +82,7 @@ export function useBoardList(): UseBoardListReturn {
     (updates: Partial<Record<string, string | number | undefined>>) => {
       setSearchParams((prev) => {
         Object.entries(updates).forEach(([key, value]) => {
-          if (value === '' || value === undefined) {
+          if (value === "" || value === undefined) {
             prev.delete(key);
           } else {
             prev.set(key, String(value));
@@ -91,19 +91,19 @@ export function useBoardList(): UseBoardListReturn {
         return prev;
       });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   // 페이지 변경
   const setPage = useCallback(
     (page: number) => updateParams({ page }),
-    [updateParams]
+    [updateParams],
   );
 
   // 정렬 변경 (페이지 1로 초기화)
   const setSort = useCallback(
     (sort: string) => updateParams({ sort, page: 1 }),
-    [updateParams]
+    [updateParams],
   );
 
   // 검색 (페이지 1로 초기화)
@@ -111,18 +111,18 @@ export function useBoardList(): UseBoardListReturn {
     (keyword: string, searchType: string = SEARCH_TYPE.TITLE_CONTENT) => {
       updateParams({ keyword, searchType, page: 1 });
     },
-    [updateParams]
+    [updateParams],
   );
 
   // 검색 초기화
   const clearSearch = useCallback(() => {
-    updateParams({ keyword: '', searchType: '', page: 1 });
+    updateParams({ keyword: "", searchType: "", page: 1 });
   }, [updateParams]);
 
   // 카테고리 변경 (페이지 1로 초기화)
   const setCategory = useCallback(
     (category: string) => updateParams({ category, page: 1 }),
-    [updateParams]
+    [updateParams],
   );
 
   // 전체 초기화
@@ -135,10 +135,10 @@ export function useBoardList(): UseBoardListReturn {
     (data: PaginationData) => {
       setTotalCount(data.totalCount ?? data.total ?? 0);
       setTotalPages(
-        data.totalPages ?? Math.ceil((data.totalCount ?? 0) / params.size)
+        data.totalPages ?? Math.ceil((data.totalCount ?? 0) / params.size),
       );
     },
-    [params.size]
+    [params.size],
   );
 
   // API 요청용 파라미터 객체
@@ -153,7 +153,7 @@ export function useBoardList(): UseBoardListReturn {
       }),
       ...(params.category && { category: params.category }),
     }),
-    [params]
+    [params],
   );
 
   return {

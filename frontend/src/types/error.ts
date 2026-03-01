@@ -13,14 +13,14 @@ export class ApiError extends Error {
     code: string,
     message: string,
     timestamp?: string | undefined,
-    data?: Record<string, unknown> | undefined
+    data?: Record<string, unknown> | undefined,
   ) {
     super(message);
     this.status = status;
     this.code = code;
     this.timestamp = timestamp;
     this.data = data;
-    this.name = 'ApiError';
+    this.name = "ApiError";
 
     // V8 엔진에서 스택 트레이스 올바르게 캡처
     if (Error.captureStackTrace) {

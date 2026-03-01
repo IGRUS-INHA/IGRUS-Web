@@ -37,10 +37,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 성별
  */
-export type UserDetailResponseGender = typeof UserDetailResponseGender[keyof typeof UserDetailResponseGender];
-
+export type UserDetailResponseGender =
+  (typeof UserDetailResponseGender)[keyof typeof UserDetailResponseGender];
 
 export const UserDetailResponseGender = {
-  MALE: 'MALE',
-  FEMALE: 'FEMALE',
+  MALE: "MALE",
+  FEMALE: "FEMALE",
 } as const;

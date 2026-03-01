@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { UpdateSurveyRequestAccessLevel } from './updateSurveyRequestAccessLevel';
+import type { UpdateSurveyRequestAccessLevel } from "./updateSurveyRequestAccessLevel";
 
 export interface UpdateSurveyRequest {
   /**

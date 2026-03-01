@@ -33,11 +33,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AdminEditUserInfoRequestEnrollmentStatus } from './adminEditUserInfoRequestEnrollmentStatus';
-import type { AdminEditUserInfoRequestGender } from './adminEditUserInfoRequestGender';
-import type { AdminEditUserInfoRequestInterestsItem } from './adminEditUserInfoRequestInterestsItem';
-import type { AdminEditUserInfoRequestJoinRoute } from './adminEditUserInfoRequestJoinRoute';
-import type { AdminEditUserInfoRequestWishesItem } from './adminEditUserInfoRequestWishesItem';
+import type { AdminEditUserInfoRequestEnrollmentStatus } from "./adminEditUserInfoRequestEnrollmentStatus";
+import type { AdminEditUserInfoRequestGender } from "./adminEditUserInfoRequestGender";
+import type { AdminEditUserInfoRequestInterestsItem } from "./adminEditUserInfoRequestInterestsItem";
+import type { AdminEditUserInfoRequestJoinRoute } from "./adminEditUserInfoRequestJoinRoute";
+import type { AdminEditUserInfoRequestWishesItem } from "./adminEditUserInfoRequestWishesItem";
 
 /**
  * 관리자 회원 정보 수정 요청 (부분 업데이트: null 필드는 기존 값 유지)

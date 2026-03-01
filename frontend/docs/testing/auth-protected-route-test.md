@@ -7,16 +7,19 @@
 ## 구현 내용
 
 ### 1. JWT 토큰 만료 사전 체크
+
 - **목적**: 앱 시작 시 localStorage의 토큰이 만료되었는지 클라이언트에서 미리 확인
 - **구현**: authStore의 `onRehydrateStorage` 훅에서 토큰 만료 체크 및 자동 갱신
 - **파일**: `frontend/src/stores/authStore.ts`
 
 ### 2. ProtectedRoute 권한 부족 피드백
+
 - **목적**: 권한 부족으로 접근이 차단될 때 사용자에게 명확한 피드백 제공
 - **구현**: 토스트 메시지로 필요 권한 및 현재 권한 표시
 - **파일**: `frontend/src/components/common/ProtectedRoute.tsx`
 
 ### 3. 토스트 시스템 통합
+
 - **목적**: 전역 토스트 메시지 표시
 - **구현**: Layout에 ToastContainer 추가
 - **파일**: `frontend/src/components/common/Layout.tsx`
@@ -26,6 +29,7 @@
 ## 테스트 환경 설정
 
 ### 사전 준비
+
 ```bash
 cd frontend
 npm run dev
@@ -44,29 +48,33 @@ npm run dev
 **목적**: 만료된 토큰이 자동으로 갱신되는지 확인
 
 **준비**:
+
 1. 정상 로그인
 2. 브라우저 개발자 도구 → Application → Local Storage → `accessToken` 확인
 3. [jwt.io](https://jwt.io)에서 토큰 디코딩
 4. payload의 `exp` 값을 과거 시간으로 변조 (예: 현재 Unix 타임스탬프 - 3600)
    ```javascript
    // 콘솔에서 실행하여 현재 타임스탬프 확인
-   Math.floor(Date.now() / 1000)
+   Math.floor(Date.now() / 1000);
    // 예: 1704067200 → exp를 1704063600으로 변조
    ```
 5. 변조된 토큰을 localStorage의 `accessToken`에 저장
 
 **실행**:
+
 1. 브라우저 새로고침 (F5)
 
 **예상 결과**:
+
 - ✅ Console에 `[AuthStore] Access token expired, attempting refresh...` 로그 출력
 - ✅ Refresh token이 유효하면 `[AuthStore] Token refreshed successfully` 로그 출력
 - ✅ localStorage의 `accessToken`이 새로운 토큰으로 갱신됨
 - ✅ 로그인 상태 유지
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -75,21 +83,25 @@ npm run dev
 **목적**: Refresh token도 만료된 경우 로그아웃 처리되는지 확인
 
 **준비**:
+
 1. 테스트 1-1과 동일하게 accessToken 만료 처리
 2. **추가**: 브라우저 개발자 도구 → Application → Cookies → Refresh Token 쿠키 삭제 또는 만료 처리
 
 **실행**:
+
 1. 브라우저 새로고침 (F5)
 
 **예상 결과**:
+
 - ✅ Console에 `[AuthStore] Access token expired, attempting refresh...` 로그 출력
 - ✅ Console에 `[AuthStore] Token refresh failed, logging out:` 에러 로그 출력
 - ✅ localStorage의 `accessToken` 삭제됨
 - ✅ 로그인 페이지(/login)로 리다이렉트
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -98,19 +110,23 @@ npm run dev
 **목적**: 유효한 토큰은 갱신 시도 없이 정상 동작하는지 확인
 
 **준비**:
+
 1. 정상 로그인
 
 **실행**:
+
 1. 브라우저 새로고침 (F5)
 
 **예상 결과**:
+
 - ✅ Console에 토큰 관련 로그 없음
 - ✅ 로그인 상태 유지
 - ✅ 정상 페이지 렌더링
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -121,12 +137,15 @@ npm run dev
 **목적**: 준회원이 정회원 전용 페이지 접근 시 토스트 메시지 표시
 
 **준비**:
+
 1. 준회원(ASSOCIATE) 계정으로 로그인
 
 **실행**:
+
 1. 브라우저 주소창에 `/board/general/write` 입력 (정회원 이상 필요)
 
 **예상 결과**:
+
 - ✅ 홈(/)으로 리다이렉트
 - ✅ 우측 하단에 토스트 메시지 표시:
   - **타입**: warning (노란색 배경)
@@ -136,8 +155,9 @@ npm run dev
 - ✅ 5초 후 토스트 자동 사라짐
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -146,20 +166,24 @@ npm run dev
 **목적**: 정회원이 운영진 전용 페이지 접근 시 토스트 메시지 표시
 
 **준비**:
+
 1. 정회원(MEMBER) 계정으로 로그인
 
 **실행**:
+
 1. 브라우저 주소창에 `/events/write` 입력 (운영진 이상 필요)
 
 **예상 결과**:
+
 - ✅ 홈(/)으로 리다이렉트
 - ✅ 우측 하단에 토스트 메시지 표시:
   - **제목**: "접근 권한 부족"
   - **내용**: "이 페이지는 운영진 이상 권한이 필요합니다. (현재 권한: 정회원)"
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -168,20 +192,24 @@ npm run dev
 **목적**: 운영진이 관리자 전용 페이지 접근 시 토스트 메시지 표시
 
 **준비**:
+
 1. 운영진(OPERATOR) 계정으로 로그인
 
 **실행**:
+
 1. 브라우저 주소창에 `/admin/associates` 입력 (관리자 필요)
 
 **예상 결과**:
+
 - ✅ 홈(/)으로 리다이렉트
 - ✅ 우측 하단에 토스트 메시지 표시:
   - **제목**: "접근 권한 부족"
   - **내용**: "이 페이지는 관리자 이상 권한이 필요합니다. (현재 권한: 운영진)"
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -190,19 +218,23 @@ npm run dev
 **목적**: 비로그인 사용자가 보호된 페이지 접근 시 로그인 페이지로 리다이렉트
 
 **준비**:
+
 1. 로그아웃 상태
 
 **실행**:
+
 1. 브라우저 주소창에 `/mypage` 입력
 
 **예상 결과**:
+
 - ✅ 로그인 페이지(/login)로 리다이렉트
 - ✅ 토스트 메시지 **없음** (로그인 필요 메시지는 LoginPage에서 처리)
 - ✅ location state에 `from: /mypage` 저장됨 (로그인 후 복귀용)
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -211,19 +243,23 @@ npm run dev
 **목적**: 충분한 권한이 있으면 정상 접근되는지 확인
 
 **준비**:
+
 1. 운영진(OPERATOR) 계정으로 로그인
 
 **실행**:
+
 1. 브라우저 주소창에 `/admin` 입력
 
 **예상 결과**:
+
 - ✅ 관리자 대시보드 정상 표시
 - ✅ 토스트 메시지 없음
 - ✅ 리다이렉트 없음
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -234,17 +270,20 @@ npm run dev
 **목적**: Layout에 ToastContainer가 정상 렌더링되는지 확인
 
 **실행**:
+
 1. 아무 페이지 접속
 2. React DevTools 열기 (크롬 확장 프로그램 설치 필요)
 3. Components 탭에서 Layout 컴포넌트 확인
 
 **예상 결과**:
+
 - ✅ Layout 컴포넌트 내부에 ToastContainer 렌더링됨
 - ✅ toasts 배열이 비어있음 (초기 상태)
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -253,20 +292,22 @@ npm run dev
 **목적**: 토스트가 제대로 표시되고 자동으로 사라지는지 확인
 
 **실행**:
+
 1. 브라우저 콘솔에서 다음 명령어 실행:
 
 ```javascript
 // Zustand store에 직접 접근
-const { useUIStore } = await import('/src/stores/index.ts');
+const { useUIStore } = await import("/src/stores/index.ts");
 useUIStore.getState().addToast({
-  type: 'success',
-  title: '테스트 성공',
-  message: '토스트 메시지가 정상 표시됩니다.',
-  duration: 3000
+  type: "success",
+  title: "테스트 성공",
+  message: "토스트 메시지가 정상 표시됩니다.",
+  duration: 3000,
 });
 ```
 
 **예상 결과**:
+
 - ✅ 우측 하단에 녹색 배경의 토스트 표시
 - ✅ 체크마크 아이콘과 함께 "테스트 성공" 제목 표시
 - ✅ "토스트 메시지가 정상 표시됩니다." 메시지 표시
@@ -274,8 +315,9 @@ useUIStore.getState().addToast({
 - ✅ 슬라이드 인/아웃 애니메이션
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -284,26 +326,44 @@ useUIStore.getState().addToast({
 **목적**: 여러 토스트가 동시에 표시될 때 정상 동작하는지 확인
 
 **실행**:
+
 1. 브라우저 콘솔에서 다음 명령어 순차 실행:
 
 ```javascript
-const { useUIStore } = await import('/src/stores/index.ts');
+const { useUIStore } = await import("/src/stores/index.ts");
 const { addToast } = useUIStore.getState();
 
-addToast({ type: 'success', title: '성공', message: '첫 번째 메시지', duration: 5000 });
-addToast({ type: 'warning', title: '경고', message: '두 번째 메시지', duration: 5000 });
-addToast({ type: 'error', title: '에러', message: '세 번째 메시지', duration: 5000 });
+addToast({
+  type: "success",
+  title: "성공",
+  message: "첫 번째 메시지",
+  duration: 5000,
+});
+addToast({
+  type: "warning",
+  title: "경고",
+  message: "두 번째 메시지",
+  duration: 5000,
+});
+addToast({
+  type: "error",
+  title: "에러",
+  message: "세 번째 메시지",
+  duration: 5000,
+});
 ```
 
 **예상 결과**:
+
 - ✅ 3개의 토스트가 수직으로 쌓여서 표시됨
 - ✅ 각각 다른 색상 (녹색, 노란색, 빨간색)
 - ✅ 각각 적절한 아이콘 표시
 - ✅ 5초 후 순차적으로 사라짐
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -314,19 +374,23 @@ addToast({ type: 'error', title: '에러', message: '세 번째 메시지', dura
 **목적**: 토큰 만료 후 갱신 실패하여 로그아웃된 상태에서 보호된 페이지 접근 시도
 
 **준비**:
+
 1. accessToken과 refresh token 모두 만료 처리 (테스트 1-2 참고)
 
 **실행**:
+
 1. 브라우저 새로고침 (F5) → 로그아웃 처리됨
 2. 브라우저 주소창에 `/admin` 입력
 
 **예상 결과**:
+
 - ✅ 로그인 페이지로 리다이렉트
 - ✅ 토스트 메시지 없음 (비로그인 사용자는 권한 체크 전에 로그인 페이지로 이동)
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -335,22 +399,26 @@ addToast({ type: 'error', title: '에러', message: '세 번째 메시지', dura
 **목적**: 권한이 업그레이드된 후 이전에 접근 불가했던 페이지에 정상 접근 가능한지 확인
 
 **준비**:
+
 1. 준회원(ASSOCIATE) 계정으로 로그인
 2. `/board/general/write` 접근 → 토스트 표시 후 홈으로 리다이렉트
 3. **관리자가 해당 계정을 정회원(MEMBER)으로 승격**
 4. 브라우저 새로고침 (Zustand persist에서 최신 user 정보 로드)
 
 **실행**:
+
 1. 브라우저 주소창에 `/board/general/write` 입력
 
 **예상 결과**:
+
 - ✅ 게시글 작성 페이지 정상 표시
 - ✅ 토스트 메시지 없음
 - ✅ 리다이렉트 없음
 
 **실제 결과**:
+
 - [ ] 통과
-- [ ] 실패 (사유: ________________)
+- [ ] 실패 (사유: ******\_\_\_\_******)
 
 ---
 
@@ -359,10 +427,12 @@ addToast({ type: 'error', title: '에러', message: '세 번째 메시지', dura
 ### 문제 1: 토스트가 표시되지 않음
 
 **가능한 원인**:
+
 - ToastContainer가 Layout에 렌더링되지 않음
 - CSS 스타일 이슈
 
 **해결 방법**:
+
 1. React DevTools에서 Layout → ToastContainer 확인
 2. 브라우저 개발자 도구 Elements 탭에서 `.fixed.bottom-s4.right-s4` 클래스 확인
 3. z-index 값 확인 (50 이상이어야 함)
@@ -372,10 +442,12 @@ addToast({ type: 'error', title: '에러', message: '세 번째 메시지', dura
 ### 문제 2: 토큰 갱신이 동작하지 않음
 
 **가능한 원인**:
+
 - API_BASE_URL 설정 오류
 - Refresh token 쿠키가 전송되지 않음
 
 **해결 방법**:
+
 1. Console에서 `[AuthStore]` 로그 확인
 2. Network 탭에서 `/api/v1/auth/password/refresh` 요청 확인
 3. Request Headers에 `Cookie` 포함 여부 확인
@@ -386,10 +458,12 @@ addToast({ type: 'error', title: '에러', message: '세 번째 메시지', dura
 ### 문제 3: 토스트가 중복 표시됨
 
 **가능한 원인**:
+
 - ProtectedRoute가 여러 번 렌더링됨
 - React Strict Mode에서 개발 환경에서 2번 렌더링됨
 
 **해결 방법**:
+
 1. Production 빌드로 테스트 (`npm run build && npm run preview`)
 2. React DevTools Profiler에서 렌더링 횟수 확인
 3. addToast 호출 직전에 `console.log` 추가하여 호출 횟수 확인
@@ -399,11 +473,13 @@ addToast({ type: 'error', title: '에러', message: '세 번째 메시지', dura
 ## 테스트 체크리스트
 
 ### JWT 토큰 만료 체크
+
 - [ ] 테스트 1-1: 만료된 토큰 자동 갱신
 - [ ] 테스트 1-2: 갱신 실패 시 로그아웃
 - [ ] 테스트 1-3: 유효한 토큰 정상 동작
 
 ### ProtectedRoute 권한 피드백
+
 - [ ] 테스트 2-1: 준회원 → 정회원 페이지
 - [ ] 테스트 2-2: 정회원 → 운영진 페이지
 - [ ] 테스트 2-3: 운영진 → 관리자 페이지
@@ -411,11 +487,13 @@ addToast({ type: 'error', title: '에러', message: '세 번째 메시지', dura
 - [ ] 테스트 2-5: 권한 충족 시 정상 접근
 
 ### 토스트 시스템
+
 - [ ] 테스트 3-1: ToastContainer 렌더링
 - [ ] 테스트 3-2: 토스트 수동 테스트
 - [ ] 테스트 3-3: 여러 토스트 동시 표시
 
 ### 통합 테스트
+
 - [ ] 테스트 4-1: 토큰 만료 + 권한 부족 연계
 - [ ] 테스트 4-2: 권한 업그레이드 후 접근
 
@@ -423,13 +501,14 @@ addToast({ type: 'error', title: '에러', message: '세 번째 메시지', dura
 
 ## 테스트 결과 기록
 
-**테스트 일시**: ___________
-**테스터**: ___________
-**브라우저**: ___________
+**테스트 일시**: ****\_\_\_****
+**테스터**: ****\_\_\_****
+**브라우저**: ****\_\_\_****
 **테스트 환경**: Development / Production
 
 **전체 테스트 결과**:
-- 통과: ___ / 13
-- 실패: ___ / 13
+
+- 통과: \_\_\_ / 13
+- 실패: \_\_\_ / 13
 
 **추가 메모**:

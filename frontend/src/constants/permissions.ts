@@ -1,10 +1,16 @@
-import { ROLES, BOARDS } from './index';
+import { ROLES, BOARDS } from "./index";
 
-type Role = typeof ROLES[keyof typeof ROLES];
-type Board = typeof BOARDS[keyof typeof BOARDS];
+type Role = (typeof ROLES)[keyof typeof ROLES];
+type Board = (typeof BOARDS)[keyof typeof BOARDS];
 
 // 역할 계층
-const ROLE_HIERARCHY: (Role | undefined)[] = [undefined, ROLES.ASSOCIATE, ROLES.MEMBER, ROLES.OPERATOR, ROLES.ADMIN];
+const ROLE_HIERARCHY: (Role | undefined)[] = [
+  undefined,
+  ROLES.ASSOCIATE,
+  ROLES.MEMBER,
+  ROLES.OPERATOR,
+  ROLES.ADMIN,
+];
 
 // 기능별 최소 권한 정의
 export const PERMISSIONS = {
@@ -47,7 +53,10 @@ export const PERMISSIONS = {
 /**
  * 권한 체크
  */
-export function hasPermission(userRole: Role | undefined, requiredRole: Role | undefined): boolean {
+export function hasPermission(
+  userRole: Role | undefined,
+  requiredRole: Role | undefined,
+): boolean {
   // 비회원도 가능한 기능
   if (requiredRole === undefined) return true;
   // 비회원인데 권한 필요
@@ -64,7 +73,10 @@ export function hasPermission(userRole: Role | undefined, requiredRole: Role | u
  * @deprecated 서버 응답(BoardListResponse.canRead) 우선 사용
  * 폴백 전용: useBoards() 훅에서 API 실패 시만 호출
  */
-export function canViewBoard(userRole: Role | undefined, boardType: Board): boolean {
+export function canViewBoard(
+  userRole: Role | undefined,
+  boardType: Board,
+): boolean {
   return hasPermission(userRole, PERMISSIONS.BOARD_VIEW[boardType]);
 }
 
@@ -73,14 +85,21 @@ export function canViewBoard(userRole: Role | undefined, boardType: Board): bool
  * @deprecated 서버 응답(BoardListResponse.canWrite) 우선 사용
  * 폴백 전용: useBoards() 훅에서 API 실패 시만 호출
  */
-export function canWriteBoard(userRole: Role | undefined, boardType: Board): boolean {
+export function canWriteBoard(
+  userRole: Role | undefined,
+  boardType: Board,
+): boolean {
   return hasPermission(userRole, PERMISSIONS.BOARD_WRITE[boardType]);
 }
 
 /**
  * 게시글 수정 권한 (본인 글 또는 운영진)
  */
-export function canEditPost(userRole: Role | undefined, userId: string | undefined, postAuthorId: string): boolean {
+export function canEditPost(
+  userRole: Role | undefined,
+  userId: string | undefined,
+  postAuthorId: string,
+): boolean {
   if (!userRole || !userId) return false;
   // 본인 글
   if (userId === postAuthorId) return true;
@@ -91,7 +110,11 @@ export function canEditPost(userRole: Role | undefined, userId: string | undefin
 /**
  * 게시글 삭제 권한 (본인 글 또는 운영진)
  */
-export function canDeletePost(userRole: Role | undefined, userId: string | undefined, postAuthorId: string): boolean {
+export function canDeletePost(
+  userRole: Role | undefined,
+  userId: string | undefined,
+  postAuthorId: string,
+): boolean {
   return canEditPost(userRole, userId, postAuthorId);
 }
 

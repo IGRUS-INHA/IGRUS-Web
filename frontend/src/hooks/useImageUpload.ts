@@ -1,8 +1,17 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import type { UploadFile, UploadConfig, UploadResult } from '@/types/upload';
-import { UPLOAD_STATUS } from '@/types/upload';
-import { validateFiles, generateUploadId, IMAGE_UPLOAD_CONFIG } from '@/utils/upload';
-import { getPresignedUploadUrl, uploadFileToS3, confirmS3Upload, UPLOAD_PURPOSE } from '@/services/uploadService';
+import { useState, useCallback, useRef, useEffect } from "react";
+import type { UploadFile, UploadConfig, UploadResult } from "@/types/upload";
+import { UPLOAD_STATUS } from "@/types/upload";
+import {
+  validateFiles,
+  generateUploadId,
+  IMAGE_UPLOAD_CONFIG,
+} from "@/utils/upload";
+import {
+  getPresignedUploadUrl,
+  uploadFileToS3,
+  confirmS3Upload,
+  UPLOAD_PURPOSE,
+} from "@/services/uploadService";
 
 interface UseImageUploadOptions {
   config?: UploadConfig;
@@ -18,7 +27,9 @@ interface UseImageUploadReturn {
   uploadAll: () => Promise<UploadResult[]>;
   getUploadResults: () => UploadResult[];
   reset: () => void;
-  setExistingItems: (items: Array<{ objectKey: string; previewUrl: string }>) => void;
+  setExistingItems: (
+    items: Array<{ objectKey: string; previewUrl: string }>,
+  ) => void;
 }
 
 export function useImageUpload(
@@ -40,7 +51,7 @@ export function useImageUpload(
   useEffect(() => {
     return () => {
       filesRef.current.forEach((f) => {
-        if (f.previewUrl.startsWith('blob:')) {
+        if (f.previewUrl.startsWith("blob:")) {
           URL.revokeObjectURL(f.previewUrl);
         }
       });
@@ -89,28 +100,25 @@ export function useImageUpload(
   const removeFile = useCallback((id: string) => {
     setFiles((prev) => {
       const file = prev.find((f) => f.id === id);
-      if (file && file.previewUrl.startsWith('blob:')) {
+      if (file && file.previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(file.previewUrl);
       }
       return prev.filter((f) => f.id !== id);
     });
   }, []);
 
-  const updateFile = useCallback(
-    (id: string, updates: Partial<UploadFile>) => {
-      setFiles((prev) =>
-        prev.map((f) => {
-          if (f.id !== id) return f;
-          const updated = { ...f, ...updates };
-          if (updates.status === UPLOAD_STATUS.UPLOADING) {
-            delete updated.error;
-          }
-          return updated;
-        }),
-      );
-    },
-    [],
-  );
+  const updateFile = useCallback((id: string, updates: Partial<UploadFile>) => {
+    setFiles((prev) =>
+      prev.map((f) => {
+        if (f.id !== id) return f;
+        const updated = { ...f, ...updates };
+        if (updates.status === UPLOAD_STATUS.UPLOADING) {
+          delete updated.error;
+        }
+        return updated;
+      }),
+    );
+  }, []);
 
   const uploadAll = useCallback(async (): Promise<UploadResult[]> => {
     const currentFiles = filesRef.current;
@@ -135,7 +143,7 @@ export function useImageUpload(
     const BACKOFF_BASE_MS = 1000; // 지수 백오프: 1s, 2s, 4s
 
     for (const uploadFile of pendingFiles) {
-      let lastError = '';
+      let lastError = "";
       let succeeded = false;
 
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -180,8 +188,7 @@ export function useImageUpload(
           succeeded = true;
           break;
         } catch (error) {
-          lastError =
-            error instanceof Error ? error.message : '업로드 실패';
+          lastError = error instanceof Error ? error.message : "업로드 실패";
         }
       }
 
@@ -213,7 +220,7 @@ export function useImageUpload(
 
   const reset = useCallback(() => {
     filesRef.current.forEach((f) => {
-      if (f.previewUrl.startsWith('blob:')) {
+      if (f.previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(f.previewUrl);
       }
     });
@@ -224,7 +231,7 @@ export function useImageUpload(
     (items: Array<{ objectKey: string; previewUrl: string }>) => {
       const existingFiles: UploadFile[] = items.map((item) => ({
         id: generateUploadId(),
-        file: new File([], item.objectKey.split('/').pop() ?? 'image'),
+        file: new File([], item.objectKey.split("/").pop() ?? "image"),
         previewUrl: item.previewUrl,
         status: UPLOAD_STATUS.SUCCESS,
         progress: 100,

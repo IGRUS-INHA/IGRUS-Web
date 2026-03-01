@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useUIStore } from '@/stores';
-import { useAuth } from '@/hooks';
-import { hasPermission } from '@/constants/permissions';
-import { ROLE_LABELS } from '@/constants';
-import { FullPageSpinner } from '@/components/ui';
-import type { Role } from '@/types';
+import { useEffect, useRef } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useUIStore } from "@/stores";
+import { useAuth } from "@/hooks";
+import { hasPermission } from "@/constants/permissions";
+import { ROLE_LABELS } from "@/constants";
+import { FullPageSpinner } from "@/components/ui";
+import type { Role } from "@/types";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -38,16 +38,23 @@ export default function ProtectedRoute({
     hasShownToast.current = true;
     const requiredRoleLabel = ROLE_LABELS[minRole!] ?? minRole;
     const currentRoleLabel = user?.role
-      ? ROLE_LABELS[user.role] ?? user.role
-      : '비회원';
+      ? (ROLE_LABELS[user.role] ?? user.role)
+      : "비회원";
 
     addToast({
-      type: 'warning',
-      title: '접근 권한 부족',
+      type: "warning",
+      title: "접근 권한 부족",
       message: `이 페이지는 ${requiredRoleLabel} 이상 권한이 필요합니다. (현재 권한: ${currentRoleLabel})`,
       duration: 5000,
     });
-  }, [isHydrated, isAuthenticated, isPermissionDenied, minRole, user?.role, addToast]);
+  }, [
+    isHydrated,
+    isAuthenticated,
+    isPermissionDenied,
+    minRole,
+    user?.role,
+    addToast,
+  ]);
 
   // hydration 완료 전에는 로딩 스피너 표시
   if (!isHydrated) {

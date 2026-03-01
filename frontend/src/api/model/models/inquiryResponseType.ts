@@ -37,13 +37,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 문의 유형
  */
-export type InquiryResponseType = typeof InquiryResponseType[keyof typeof InquiryResponseType];
-
+export type InquiryResponseType =
+  (typeof InquiryResponseType)[keyof typeof InquiryResponseType];
 
 export const InquiryResponseType = {
-  JOIN: 'JOIN',
-  EVENT: 'EVENT',
-  REPORT: 'REPORT',
-  ACCOUNT: 'ACCOUNT',
-  OTHER: 'OTHER',
+  JOIN: "JOIN",
+  EVENT: "EVENT",
+  REPORT: "REPORT",
+  ACCOUNT: "ACCOUNT",
+  OTHER: "OTHER",
 } as const;

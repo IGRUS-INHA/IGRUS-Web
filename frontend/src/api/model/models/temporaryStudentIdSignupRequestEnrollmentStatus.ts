@@ -37,11 +37,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 재학 상태
  */
-export type TemporaryStudentIdSignupRequestEnrollmentStatus = typeof TemporaryStudentIdSignupRequestEnrollmentStatus[keyof typeof TemporaryStudentIdSignupRequestEnrollmentStatus];
-
+export type TemporaryStudentIdSignupRequestEnrollmentStatus =
+  (typeof TemporaryStudentIdSignupRequestEnrollmentStatus)[keyof typeof TemporaryStudentIdSignupRequestEnrollmentStatus];
 
 export const TemporaryStudentIdSignupRequestEnrollmentStatus = {
-  ENROLLED: 'ENROLLED',
-  GENERAL_LEAVE: 'GENERAL_LEAVE',
-  MILITARY_LEAVE: 'MILITARY_LEAVE',
+  ENROLLED: "ENROLLED",
+  GENERAL_LEAVE: "GENERAL_LEAVE",
+  MILITARY_LEAVE: "MILITARY_LEAVE",
 } as const;

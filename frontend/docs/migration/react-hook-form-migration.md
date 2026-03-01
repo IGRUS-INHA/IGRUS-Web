@@ -9,36 +9,36 @@ RHF 마이그레이션 시 참고하세요.
 
 ### RHF 적용 완료 (6개)
 
-| 파일 | 경로 |
-|------|------|
-| PostEditPage.tsx | `pages/board/` |
-| PostWritePage.tsx | `pages/board/` |
-| WithdrawPage.tsx | `pages/mypage/` |
+| 파일                   | 경로            |
+| ---------------------- | --------------- |
+| PostEditPage.tsx       | `pages/board/`  |
+| PostWritePage.tsx      | `pages/board/`  |
+| WithdrawPage.tsx       | `pages/mypage/` |
 | ChangePasswordPage.tsx | `pages/mypage/` |
-| EventWritePage.tsx | `pages/event/` |
-| EventEditPage.tsx | `pages/event/` |
+| EventWritePage.tsx     | `pages/event/`  |
+| EventEditPage.tsx      | `pages/event/`  |
 
 ### RHF 미적용 (15개)
 
 `<form>`, `onSubmit`, `handleSubmit` 등 폼 관련 코드가 있지만 `useForm`을 사용하지 않는 파일입니다.
 
-| 파일 | 경로 | 우선순위 |
-|------|------|----------|
-| SignupPage.tsx | `pages/auth/` | 높음 |
-| LoginPage.tsx | `pages/auth/` | 높음 |
-| AuthForm.tsx | `components/feature/auth/` | 높음 |
-| VerifyEmailPage.tsx | `pages/auth/` | 높음 |
-| ForgotPasswordPage.tsx | `pages/auth/` | 높음 |
-| ResetPasswordPage.tsx | `pages/auth/` | 높음 |
-| InquiryPage.tsx | `pages/inquiry/` | 높음 |
-| InquiryForm.tsx | `components/feature/inquiry/` | 높음 |
-| CommentSection.tsx | `components/feature/comment/` | 보통 |
-| CommentItem.tsx | `components/feature/comment/` | 보통 |
-| CommentInput.tsx | `components/feature/comment/` | 보통 |
-| ReportModal.tsx | `components/board/` | 보통 |
-| SearchBar.tsx | `components/board/` | 낮음 |
-| UsersTab.tsx | `pages/admin/tabs/` | 낮음 |
-| LoginHistoryTab.tsx | `pages/admin/tabs/` | 낮음 |
+| 파일                   | 경로                          | 우선순위 |
+| ---------------------- | ----------------------------- | -------- |
+| SignupPage.tsx         | `pages/auth/`                 | 높음     |
+| LoginPage.tsx          | `pages/auth/`                 | 높음     |
+| AuthForm.tsx           | `components/feature/auth/`    | 높음     |
+| VerifyEmailPage.tsx    | `pages/auth/`                 | 높음     |
+| ForgotPasswordPage.tsx | `pages/auth/`                 | 높음     |
+| ResetPasswordPage.tsx  | `pages/auth/`                 | 높음     |
+| InquiryPage.tsx        | `pages/inquiry/`              | 높음     |
+| InquiryForm.tsx        | `components/feature/inquiry/` | 높음     |
+| CommentSection.tsx     | `components/feature/comment/` | 보통     |
+| CommentItem.tsx        | `components/feature/comment/` | 보통     |
+| CommentInput.tsx       | `components/feature/comment/` | 보통     |
+| ReportModal.tsx        | `components/board/`           | 보통     |
+| SearchBar.tsx          | `components/board/`           | 낮음     |
+| UsersTab.tsx           | `pages/admin/tabs/`           | 낮음     |
+| LoginHistoryTab.tsx    | `pages/admin/tabs/`           | 낮음     |
 
 ---
 
@@ -86,14 +86,14 @@ SearchBar, UsersTab, LoginHistoryTab
 ### Before (useState 기반)
 
 ```typescript
-const [title, setTitle] = useState('');
-const [content, setContent] = useState('');
-const [error, setError] = useState('');
+const [title, setTitle] = useState("");
+const [content, setContent] = useState("");
+const [error, setError] = useState("");
 
 const handleSubmit = (e: React.FormEvent) => {
   e.preventDefault();
   if (!title) {
-    setError('제목을 입력하세요');
+    setError("제목을 입력하세요");
     return;
   }
   // submit logic
@@ -103,14 +103,18 @@ const handleSubmit = (e: React.FormEvent) => {
 ### After (RHF 기반)
 
 ```typescript
-import { useForm } from 'react-hook-form';
+import { useForm } from "react-hook-form";
 
 interface FormData {
   title: string;
   content: string;
 }
 
-const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+const {
+  register,
+  handleSubmit,
+  formState: { errors },
+} = useForm<FormData>();
 
 const onSubmit = (data: FormData) => {
   // submit logic

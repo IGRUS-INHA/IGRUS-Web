@@ -34,10 +34,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type CreateEventRequestRegistrationType = typeof CreateEventRequestRegistrationType[keyof typeof CreateEventRequestRegistrationType];
-
+export type CreateEventRequestRegistrationType =
+  (typeof CreateEventRequestRegistrationType)[keyof typeof CreateEventRequestRegistrationType];
 
 export const CreateEventRequestRegistrationType = {
-  AUTO_APPROVE: 'AUTO_APPROVE',
-  MANUAL_APPROVE: 'MANUAL_APPROVE',
+  AUTO_APPROVE: "AUTO_APPROVE",
+  MANUAL_APPROVE: "MANUAL_APPROVE",
 } as const;

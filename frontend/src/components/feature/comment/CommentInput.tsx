@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Send } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useUIStore } from '@/stores';
+import { useState } from "react";
+import { Send } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useUIStore } from "@/stores";
 
 interface CommentInputProps {
   value: string;
@@ -22,12 +22,12 @@ export function CommentInput({
   value,
   onChange,
   onSubmit,
-  placeholder = '댓글을 입력하세요...',
+  placeholder = "댓글을 입력하세요...",
   isSubmitting = false,
   autoFocus = false,
 }: CommentInputProps) {
   const { theme } = useUIStore();
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
   const [isAnonymous, setIsAnonymous] = useState(false);
 
   const handleSubmit = () => {
@@ -37,7 +37,7 @@ export function CommentInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
@@ -58,10 +58,10 @@ export function CommentInput({
           disabled={isSubmitting}
           autoFocus={autoFocus}
           className={cn(
-            'w-full rounded-r4 px-s5 py-s3 pr-s7 border focus:outline-none focus:border-primary transition-all',
-            isDark ? 'bg-white/5 border-border' : 'bg-muted/50 border-border',
-            isSubmitting && 'opacity-50 cursor-not-allowed',
-            isOverLimit && 'border-red-500 focus:border-red-500'
+            "w-full rounded-r4 px-s5 py-s3 pr-s7 border focus:outline-none focus:border-primary transition-all",
+            isDark ? "bg-white/5 border-border" : "bg-muted/50 border-border",
+            isSubmitting && "opacity-50 cursor-not-allowed",
+            isOverLimit && "border-red-500 focus:border-red-500",
           )}
         />
         <button
@@ -69,10 +69,10 @@ export function CommentInput({
           type="button"
           disabled={isSubmitting || !value.trim() || isOverLimit}
           className={cn(
-            'absolute right-s2 top-1/2 -translate-y-1/2 p-s2 rounded-r2 transition cursor-pointer',
-            'text-primary hover:bg-primary/10',
+            "absolute right-s2 top-1/2 -translate-y-1/2 p-s2 rounded-r2 transition cursor-pointer",
+            "text-primary hover:bg-primary/10",
             (isSubmitting || !value.trim() || isOverLimit) &&
-              'opacity-50 cursor-not-allowed hover:bg-transparent'
+              "opacity-50 cursor-not-allowed hover:bg-transparent",
           )}
         >
           <Send size={18} />
@@ -93,8 +93,8 @@ export function CommentInput({
 
         <span
           className={cn(
-            'typo-c1',
-            isOverLimit ? 'text-red-500' : 'text-muted-foreground'
+            "typo-c1",
+            isOverLimit ? "text-red-500" : "text-muted-foreground",
           )}
         >
           {remainingChars} / 500

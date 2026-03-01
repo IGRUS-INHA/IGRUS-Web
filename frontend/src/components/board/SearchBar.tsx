@@ -1,8 +1,8 @@
-import { useState, FormEvent, ChangeEvent } from 'react';
-import { Search, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { SEARCH_TYPE, SEARCH_TYPE_LABELS } from '@/constants/board';
+import { useState, FormEvent, ChangeEvent } from "react";
+import { Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SEARCH_TYPE, SEARCH_TYPE_LABELS } from "@/constants/board";
 
 interface SearchBarProps {
   onSearch: (keyword: string, searchType: string) => void;
@@ -18,9 +18,9 @@ interface SearchBarProps {
 export function SearchBar({
   onSearch,
   onClear,
-  initialKeyword = '',
+  initialKeyword = "",
   initialSearchType = SEARCH_TYPE.TITLE_CONTENT,
-  placeholder = '검색어를 입력하세요',
+  placeholder = "검색어를 입력하세요",
 }: SearchBarProps) {
   const [keyword, setKeyword] = useState(initialKeyword);
   const [searchType, setSearchType] = useState(initialSearchType);
@@ -33,7 +33,7 @@ export function SearchBar({
   };
 
   const handleClear = () => {
-    setKeyword('');
+    setKeyword("");
     onClear?.();
   };
 
@@ -98,7 +98,7 @@ interface SimpleSearchBarProps {
  */
 export function SimpleSearchBar({
   onSearch,
-  initialKeyword = '',
+  initialKeyword = "",
 }: SimpleSearchBarProps) {
   const [keyword, setKeyword] = useState(initialKeyword);
 

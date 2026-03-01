@@ -65,8 +65,9 @@ export default function HomePage() {
     useGetPinnedPostList();
   const pinnedPosts = (pinnedResponse?.data ?? []) as PinnedPostListResponse[];
 
-  const { data: eventsResponse, isLoading: isEventsLoading } =
-    useGetEventList({ eventStatus: "UPCOMING" });
+  const { data: eventsResponse, isLoading: isEventsLoading } = useGetEventList({
+    eventStatus: "UPCOMING",
+  });
   const events = ((eventsResponse?.data ?? []) as EventListResponse[]).slice(
     0,
     3,
@@ -262,20 +263,23 @@ function BubbleOrbit() {
     } else {
       bubbles.forEach((b, i) => {
         if (!b) return;
-        const tid = window.setTimeout(() => {
-          b.classList.add("bounced");
-          b.addEventListener(
-            "animationend",
-            () => {
-              b.style.opacity = "1";
-              b.style.transform = "translate(-50%, -50%)";
-              b.classList.remove("bounced");
-              const bst = state.bubbles[i];
-              if (bst) bst.ready = true;
-            },
-            { once: true },
-          );
-        }, 400 + i * 120);
+        const tid = window.setTimeout(
+          () => {
+            b.classList.add("bounced");
+            b.addEventListener(
+              "animationend",
+              () => {
+                b.style.opacity = "1";
+                b.style.transform = "translate(-50%, -50%)";
+                b.classList.remove("bounced");
+                const bst = state.bubbles[i];
+                if (bst) bst.ready = true;
+              },
+              { once: true },
+            );
+          },
+          400 + i * 120,
+        );
         timeouts.push(tid);
       });
     }
@@ -365,9 +369,7 @@ function BubbleOrbit() {
       );
 
       const occupied = new Set(
-        stateRef.current.bubbles
-          .filter((_, j) => j !== i)
-          .map((b) => b.slot),
+        stateRef.current.bubbles.filter((_, j) => j !== i).map((b) => b.slot),
       );
 
       let bestSlot = st.slot;
@@ -376,8 +378,7 @@ function BubbleOrbit() {
       for (let s = 0; s < N; s++) {
         if (occupied.has(s)) continue;
         const sa = stateRef.current.gAngle + s * SLOT_STEP;
-        const normSa =
-          ((sa % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const normSa = ((sa % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         const normCur =
           ((curAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         let diff = Math.abs(normSa - normCur);

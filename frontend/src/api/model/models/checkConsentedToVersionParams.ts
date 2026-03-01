@@ -35,8 +35,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type CheckConsentedToVersionParams = {
-/**
- * 확인할 정책 버전
- */
-version: string;
+  /**
+   * 확인할 정책 버전
+   */
+  version: string;
 };

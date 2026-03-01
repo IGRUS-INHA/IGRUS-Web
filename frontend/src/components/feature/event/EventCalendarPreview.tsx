@@ -1,14 +1,14 @@
-import DatePicker, { registerLocale } from 'react-datepicker';
-import { ko } from 'date-fns/locale';
-import 'react-datepicker/dist/react-datepicker.css';
-import { Calendar } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { formatDateLocal } from '@/utils/event';
-import { cn } from '@/lib/utils';
+import DatePicker, { registerLocale } from "react-datepicker";
+import { ko } from "date-fns/locale";
+import "react-datepicker/dist/react-datepicker.css";
+import { Calendar } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { formatDateLocal } from "@/utils/event";
+import { cn } from "@/lib/utils";
 
-registerLocale('ko', ko);
+registerLocale("ko", ko);
 
-type EditMode = 'registration' | 'event';
+type EditMode = "registration" | "event";
 
 interface EventCalendarPreviewProps {
   eventStartDate: string;
@@ -21,7 +21,7 @@ interface EventCalendarPreviewProps {
 }
 
 function parseDateParts(str: string): [number, number, number] | null {
-  const parts = str.split('-').map(Number);
+  const parts = str.split("-").map(Number);
   const y = parts[0];
   const m = parts[1];
   const d = parts[2];
@@ -40,7 +40,8 @@ function getDateRange(startStr: string, endStr: string): Date[] {
   if (!startStr || !endStr) return [];
   const start = toDate(startStr);
   const end = toDate(endStr);
-  if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) return [];
+  if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime()))
+    return [];
 
   const dates: Date[] = [];
   const current = new Date(start);
@@ -60,36 +61,60 @@ export function EventCalendarPreview({
   onRegistrationDateChange,
   onRegistrationPresetChange,
 }: EventCalendarPreviewProps) {
-  const [mode, setMode] = useState<EditMode>('registration');
+  const [mode, setMode] = useState<EditMode>("registration");
   // 범위 선택 중간 상태 (첫 번째 클릭 후, 두 번째 클릭 전)
   const [selectingStart, setSelectingStart] = useState<Date | null>(null);
 
   // 외부에서 날짜가 변경되면 선택 중간 상태 초기화
   useEffect(() => {
     setSelectingStart(null); // eslint-disable-line react-hooks/set-state-in-effect
-  }, [eventStartDate, eventEndDate, registrationStartDate, registrationEndDate]);
+  }, [
+    eventStartDate,
+    eventEndDate,
+    registrationStartDate,
+    registrationEndDate,
+  ]);
 
   // 활성 범위: 선택 중이면 내부 상태 사용, 아니면 부모 props 사용
-  const committedStart = mode === 'event' ? toDate(eventStartDate) : toDate(registrationStartDate);
-  const committedEnd = mode === 'event' ? toDate(eventEndDate) : toDate(registrationEndDate);
+  const committedStart =
+    mode === "event" ? toDate(eventStartDate) : toDate(registrationStartDate);
+  const committedEnd =
+    mode === "event" ? toDate(eventEndDate) : toDate(registrationEndDate);
   const activeStart = selectingStart ?? committedStart;
   const activeEnd = selectingStart ? null : committedEnd;
 
   // 비활성 범위: 항상 하이라이트로 표시
   const inactiveHighlight = useMemo(() => {
-    if (mode === 'event') {
-      return [{ 'cal-preview-reg': getDateRange(registrationStartDate, registrationEndDate) }];
+    if (mode === "event") {
+      return [
+        {
+          "cal-preview-reg": getDateRange(
+            registrationStartDate,
+            registrationEndDate,
+          ),
+        },
+      ];
     }
-    return [{ 'cal-preview-event': getDateRange(eventStartDate, eventEndDate) }];
-  }, [mode, eventStartDate, eventEndDate, registrationStartDate, registrationEndDate]);
+    return [
+      { "cal-preview-event": getDateRange(eventStartDate, eventEndDate) },
+    ];
+  }, [
+    mode,
+    eventStartDate,
+    eventEndDate,
+    registrationStartDate,
+    registrationEndDate,
+  ]);
 
   const openToDate = useMemo(() => {
-    return toDate(registrationStartDate) ?? toDate(eventStartDate) ?? new Date();
+    return (
+      toDate(registrationStartDate) ?? toDate(eventStartDate) ?? new Date()
+    );
   }, [eventStartDate, registrationStartDate]);
 
   // 신청기간 모드에서 행사 시작일 이전까지만 선택 가능
   const registrationMaxDate = useMemo(() => {
-    if (mode !== 'registration') return undefined;
+    if (mode !== "registration") return undefined;
     return toDate(eventStartDate) ?? undefined;
   }, [mode, eventStartDate]);
 
@@ -105,7 +130,7 @@ export function EventCalendarPreview({
       setSelectingStart(null);
       const startStr = formatDateLocal(start);
       const endStr = formatDateLocal(end);
-      if (mode === 'event') {
+      if (mode === "event") {
         onEventDateChange?.(startStr, endStr);
       } else {
         onRegistrationPresetChange?.();
@@ -129,24 +154,24 @@ export function EventCalendarPreview({
       <div className="flex gap-s1 mb-s3">
         <button
           type="button"
-          onClick={() => handleModeChange('registration')}
+          onClick={() => handleModeChange("registration")}
           className={cn(
-            'flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer',
-            mode === 'registration'
-              ? 'bg-amber-500 text-white'
-              : 'bg-muted/50 text-muted-foreground hover:bg-muted',
+            "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
+            mode === "registration"
+              ? "bg-amber-500 text-white"
+              : "bg-muted/50 text-muted-foreground hover:bg-muted",
           )}
         >
           신청 기간
         </button>
         <button
           type="button"
-          onClick={() => handleModeChange('event')}
+          onClick={() => handleModeChange("event")}
           className={cn(
-            'flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer',
-            mode === 'event'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted/50 text-muted-foreground hover:bg-muted',
+            "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
+            mode === "event"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted/50 text-muted-foreground hover:bg-muted",
           )}
         >
           행사 기간
@@ -154,7 +179,7 @@ export function EventCalendarPreview({
       </div>
 
       {/* Interactive calendar */}
-      <div className={cn('cal-preview-wrapper', `cal-mode-${mode}`)}>
+      <div className={cn("cal-preview-wrapper", `cal-mode-${mode}`)}>
         <DatePicker
           inline
           locale="ko"

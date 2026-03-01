@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { useQueries } from '@tanstack/react-query';
-import { getImageDownloadUrl } from '@/services/uploadService';
+import { useMemo } from "react";
+import { useQueries } from "@tanstack/react-query";
+import { getImageDownloadUrl } from "@/services/uploadService";
 
 /** presigned download URL 캐싱 시간 (50분) — 백엔드 만료 1시간 기준 10분 여유 */
 const STALE_TIME = 50 * 60 * 1000;
@@ -19,10 +19,10 @@ export function useResolvedImageUrls(objectKeys: string[]) {
   const queries = useMemo(
     () =>
       objectKeys.map((key) => ({
-        queryKey: ['/api/v1/storage/download-url', { objectKey: key }] as const,
+        queryKey: ["/api/v1/storage/download-url", { objectKey: key }] as const,
         queryFn: async () => {
           // 이미 URL이면 그대로 반환 (하위 호환)
-          if (key.startsWith('http')) return key;
+          if (key.startsWith("http")) return key;
           return getImageDownloadUrl(key);
         },
         staleTime: STALE_TIME,

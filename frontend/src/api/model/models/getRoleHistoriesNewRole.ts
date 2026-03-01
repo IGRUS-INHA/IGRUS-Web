@@ -34,12 +34,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type GetRoleHistoriesNewRole = typeof GetRoleHistoriesNewRole[keyof typeof GetRoleHistoriesNewRole];
-
+export type GetRoleHistoriesNewRole =
+  (typeof GetRoleHistoriesNewRole)[keyof typeof GetRoleHistoriesNewRole];
 
 export const GetRoleHistoriesNewRole = {
-  ASSOCIATE: 'ASSOCIATE',
-  MEMBER: 'MEMBER',
-  OPERATOR: 'OPERATOR',
-  ADMIN: 'ADMIN',
+  ASSOCIATE: "ASSOCIATE",
+  MEMBER: "MEMBER",
+  OPERATOR: "OPERATOR",
+  ADMIN: "ADMIN",
 } as const;

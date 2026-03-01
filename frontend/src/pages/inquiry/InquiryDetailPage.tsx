@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle,
@@ -7,11 +7,11 @@ import {
   MessageSquare,
   Paperclip,
   FileText,
-} from 'lucide-react';
-import { useGetMyInquiry } from '@/api/model/inquiry/inquiry';
-import type { InquiryResponse } from '@/api/model/models/inquiryResponse';
-import type { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { useGetMyInquiry } from "@/api/model/inquiry/inquiry";
+import type { InquiryResponse } from "@/api/model/models/inquiryResponse";
+import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StatusConfig {
   icon: LucideIcon;
@@ -22,34 +22,34 @@ interface StatusConfig {
 const STATUS_CONFIG: Record<string, StatusConfig> = {
   PENDING: {
     icon: AlertCircle,
-    label: '대기중',
-    className: 'bg-warning/15 text-warning',
+    label: "대기중",
+    className: "bg-warning/15 text-warning",
   },
   IN_PROGRESS: {
     icon: Clock,
-    label: '처리중',
-    className: 'bg-primary/15 text-primary',
+    label: "처리중",
+    className: "bg-primary/15 text-primary",
   },
   COMPLETED: {
     icon: CheckCircle,
-    label: '완료',
-    className: 'bg-success/15 text-success',
+    label: "완료",
+    className: "bg-success/15 text-success",
   },
 };
 
 const formatDate = (dateString?: string): string => {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
 const formatFileSize = (bytes?: number): string => {
-  if (!bytes) return '';
+  if (!bytes) return "";
   if (bytes < 1024) return `${bytes}B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
@@ -66,7 +66,7 @@ export default function InquiryDetailPage() {
   const inquiry = response?.data as InquiryResponse | undefined;
 
   const handleBack = () => {
-    navigate('/inquiry/history');
+    navigate("/inquiry/history");
   };
 
   if (isLoading) {
@@ -80,7 +80,9 @@ export default function InquiryDetailPage() {
   if (!inquiry) {
     return (
       <div className="flex flex-col items-center justify-center py-s8 gap-s4">
-        <p className="typo-b1 text-muted-foreground">문의를 찾을 수 없습니다.</p>
+        <p className="typo-b1 text-muted-foreground">
+          문의를 찾을 수 없습니다.
+        </p>
         <button
           type="button"
           onClick={handleBack}
@@ -92,7 +94,7 @@ export default function InquiryDetailPage() {
     );
   }
 
-  const status = inquiry.status ?? 'PENDING';
+  const status = inquiry.status ?? "PENDING";
   const config: StatusConfig = STATUS_CONFIG[status] ?? STATUS_CONFIG.PENDING!;
   const StatusIcon = config.icon;
 
@@ -125,7 +127,7 @@ export default function InquiryDetailPage() {
           </div>
           <div
             className={cn(
-              'flex shrink-0 items-center gap-s1 rounded-full px-s3 py-s1 typo-c1 font-semibold',
+              "flex shrink-0 items-center gap-s1 rounded-full px-s3 py-s1 typo-c1 font-semibold",
               config.className,
             )}
           >
