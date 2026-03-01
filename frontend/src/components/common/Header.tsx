@@ -72,7 +72,7 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 backdrop-blur-md py-s5 mb-s3 transition-colors ${
+      className={`sticky top-0 backdrop-blur-md pt-s5 transition-colors ${
         sidebarOpen ? "z-30" : "z-40"
       } ${isDark ? "bg-background/80" : "bg-white/80"}`}
     >

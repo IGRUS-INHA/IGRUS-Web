@@ -18,7 +18,7 @@ export function Pagination({
   onPageChange,
   className,
 }: PaginationProps) {
-  if (totalPages <= 1) return undefined;
+  if (totalPages <= 1) return null;
 
   // 표시할 페이지 번호 계산 (최대 5개)
   const getPageNumbers = () => {
@@ -39,6 +39,9 @@ export function Pagination({
   };
 
   const pageNumbers = getPageNumbers();
+  const firstPage = pageNumbers[0];
+  const lastPage = pageNumbers[pageNumbers.length - 1];
+  if (firstPage === undefined || lastPage === undefined) return null;
 
   return (
     <nav className={cn('flex items-center justify-center gap-s1', className)}>
@@ -54,7 +57,7 @@ export function Pagination({
       </Button>
 
       {/* 첫 페이지 */}
-      {pageNumbers[0] > 1 && (
+      {firstPage > 1 && (
         <>
           <Button
             variant={currentPage === 1 ? 'default' : 'outline'}
@@ -64,7 +67,7 @@ export function Pagination({
           >
             1
           </Button>
-          {pageNumbers[0] > 2 && (
+          {firstPage > 2 && (
             <span className="px-s2 text-muted-foreground">...</span>
           )}
         </>
@@ -84,9 +87,9 @@ export function Pagination({
       ))}
 
       {/* 마지막 페이지 */}
-      {pageNumbers[pageNumbers.length - 1] < totalPages && (
+      {lastPage < totalPages && (
         <>
-          {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
+          {lastPage < totalPages - 1 && (
             <span className="px-s2 text-muted-foreground">...</span>
           )}
           <Button

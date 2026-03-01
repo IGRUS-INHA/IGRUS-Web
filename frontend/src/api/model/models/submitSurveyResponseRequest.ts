@@ -33,8 +33,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
+<<<<<<<< HEAD:frontend/src/api/model/models/updateReportStatusRequest.ts
+import type { UpdateReportStatusRequestStatus } from './updateReportStatusRequestStatus';
+
+export interface UpdateReportStatusRequest {
+  status: UpdateReportStatusRequestStatus;
+========
 import type { SubmitAnswerRequest } from './submitAnswerRequest';
 
 export interface SubmitSurveyResponseRequest {
   answers: SubmitAnswerRequest[];
+>>>>>>>> origin/main:frontend/src/api/model/models/submitSurveyResponseRequest.ts
 }

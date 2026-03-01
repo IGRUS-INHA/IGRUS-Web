@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores';
 import type { Toast, ToastType } from '@/types/common';
@@ -29,7 +29,7 @@ export function ToastContainer() {
  */
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const {
-    id,
+    id: _id,
     type = 'default',
     title,
     message,
@@ -59,7 +59,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
     warning: 'text-yellow-600 dark:text-yellow-400',
   };
 
-  const icons: Record<ToastType, JSX.Element | undefined> = {
+  const icons: Record<ToastType, React.ReactNode> = {
     default: undefined,
     success: (
       <svg

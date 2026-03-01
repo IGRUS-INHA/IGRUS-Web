@@ -1,6 +1,6 @@
 # 프론트엔드 컴포넌트 명세
 
-> 최종 업데이트: 2026-02-02
+> 최종 업데이트: 2026-02-27
 
 ## 개요
 
@@ -289,8 +289,59 @@ interface SidebarProps {
 **디렉토리:** `components/feature/inquiry/`
 
 **컴포넌트:**
-- `InquiryForm.jsx`: 문의 폼
+- `InquiryForm.tsx`: 문의 폼 (첨부파일 업로드 지원, 회원/비회원 모두 최대 3개)
 - `InquiryListItem.jsx`: 문의 리스트 아이템
+
+---
+
+### Upload
+
+**디렉토리:** `components/feature/upload/`
+
+**컴포넌트:**
+- `ImageUploadArea.tsx`: 이미지 파일 선택 영역 (클릭 + 드래그 앤 드롭)
+- `ImagePreviewList.tsx`: 선택된 이미지 미리보기 그리드
+
+#### ImageUploadArea
+
+**용도:** 이미지 파일 선택 UI (클릭 또는 드래그 앤 드롭)
+
+**Props:**
+```typescript
+interface ImageUploadAreaProps {
+  onFilesSelected: (files: FileList) => void;
+  maxFiles: number;
+  currentCount: number;
+  accept?: string;       // default: 'image/*'
+  disabled?: boolean;
+  className?: string;
+}
+```
+
+**주요 기능:**
+- 클릭 시 hidden `<input type="file">` 트리거
+- 드래그 앤 드롭 지원 (dragover/drop 이벤트, 드래그 중 시각적 피드백)
+- 현재 파일 수 / 최대 수 표시
+- 최대 수 도달 시 비활성화 + 안내 문구 변경
+
+#### ImagePreviewList
+
+**용도:** 업로드 파일 썸네일 + 상태 표시
+
+**Props:**
+```typescript
+interface ImagePreviewListProps {
+  files: UploadFile[];
+  onRemove: (id: string) => void;
+  className?: string;
+}
+```
+
+**주요 기능:**
+- 반응형 그리드 (모바일 2열, sm 3열, md 4열)
+- 상태별 오버레이: uploading(프로그레스 바), error(에러 아이콘+메시지), success(체크 아이콘)
+- 각 이미지에 제거(X) 버튼 (hover 시 표시)
+- Blob URL 미리보기 사용
 
 ---
 

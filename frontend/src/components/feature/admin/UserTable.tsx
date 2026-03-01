@@ -1,8 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import type { User } from '@/types/entities';
-
-interface UserTableUser extends Partial<User> {
+interface UserTableUser {
   id: string;
   studentId?: string;
   name: string;

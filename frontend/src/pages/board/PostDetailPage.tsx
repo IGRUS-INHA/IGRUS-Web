@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -31,6 +31,7 @@ import { usePermission } from '@/hooks/usePermission';
 import { isForbiddenError, isNotFoundError, isConflictError, isPostAccessDenied, getErrorMessage } from '@/utils/error';
 import { formatRelativeTime } from '@/utils';
 import { myPageKeys } from '@/hooks/queries/useMyPage';
+import { useResolvedImageUrls } from '@/hooks/useResolvedImageUrls';
 
 export default function PostDetailPage() {
   const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
@@ -54,6 +55,10 @@ export default function PostDetailPage() {
   const { data: response, isLoading, error } = isMockMode ? mockQuery : realQuery;
   // client.ts에서 에러 응답을 throw하므로 data는 항상 PostDetailResponse
   const post = response?.data as PostDetailResponse | undefined;
+
+  // 이미지 objectKey → presigned download URL 변환
+  const imageObjectKeys = useMemo(() => post?.imageUrls ?? [], [post?.imageUrls]);
+  const { urls: resolvedImageUrls } = useResolvedImageUrls(imageObjectKeys);
 
   // Local state
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -451,9 +456,9 @@ export default function PostDetailPage() {
 
         {/* Content */}
         <div className={cn('prose max-w-none mb-10', isDark ? 'prose-invert text-muted-foreground' : 'text-muted-foreground')}>
-          {post.imageUrls?.[0] && (
+          {post.imageUrls?.[0] && resolvedImageUrls.get(post.imageUrls[0]) && (
             <div className="my-8 rounded-r4 overflow-hidden aspect-video">
-              <img src={post.imageUrls[0]} alt={post.title} className="w-full h-full object-cover" />
+              <img src={resolvedImageUrls.get(post.imageUrls[0])} alt={post.title} className="w-full h-full object-cover" />
             </div>
           )}
           <div data-color-mode={isDark ? 'dark' : 'light'}>

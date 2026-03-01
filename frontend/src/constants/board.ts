@@ -4,9 +4,9 @@
 
 // 게시판 종류
 export const BOARDS = {
-  NOTICES: 'NOTICES',
-  GENERAL: 'GENERAL',
-  INSIGHT: 'INSIGHT',
+  NOTICES: 'notices',
+  GENERAL: 'general',
+  INSIGHT: 'insight',
 } as const;
 
 // 빌드타임 플래그에 따라 활성화된 게시판 목록
@@ -107,6 +107,7 @@ export const postFormSchema = z.object({
   isAnonymous: z.boolean().optional(),
   isQuestion: z.boolean().optional(),
   isVisibleToAssociate: z.boolean().optional(),
+  imageUrls: z.array(z.string().url()).max(5).optional(),
 });
 
 export type PostFormData = z.infer<typeof postFormSchema>;

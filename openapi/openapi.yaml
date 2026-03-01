@@ -77,12 +77,8 @@ tags:
   description: 계정 상태 변경 감사 이력 조회 API (ADMIN 전용)
 - name: Survey Question Option
   description: 설문 질문 선택지 API
-- name: Guest Inquiry
-  description: 비회원 문의 API
-- name: Member Inquiry
-  description: 회원 문의 API
-- name: Admin Inquiry
-  description: 관리자 문의 관리 API (OPERATOR 이상)
+- name: Inquiry
+  description: 문의 API
 - name: Health
   description: 헬스체크 API
 - name: Event Registration
@@ -344,316 +340,316 @@ components:
   schemas:
     # _common
     PinnedByInfo:
-      $ref: ./schemas/_common.yaml#/PinnedByInfo
+      $ref: './schemas/_common.yaml#/PinnedByInfo'
     AttachmentInfo:
-      $ref: ./schemas/_common.yaml#/AttachmentInfo
+      $ref: './schemas/_common.yaml#/AttachmentInfo'
     AttachmentResponse:
-      $ref: ./schemas/_common.yaml#/AttachmentResponse
+      $ref: './schemas/_common.yaml#/AttachmentResponse'
     AuthorInfo:
-      $ref: ./schemas/_common.yaml#/AuthorInfo
+      $ref: './schemas/_common.yaml#/AuthorInfo'
     PostInfo:
-      $ref: ./schemas/_common.yaml#/PostInfo
+      $ref: './schemas/_common.yaml#/PostInfo'
     PageableObject:
-      $ref: ./schemas/_common.yaml#/PageableObject
+      $ref: './schemas/_common.yaml#/PageableObject'
     SortObject:
-      $ref: ./schemas/_common.yaml#/SortObject
+      $ref: './schemas/_common.yaml#/SortObject'
     Page:
-      $ref: ./schemas/_common.yaml#/Page
+      $ref: './schemas/_common.yaml#/Page'
     ErrorResponse:
-      $ref: ./schemas/_common.yaml#/ErrorResponse
+      $ref: './schemas/_common.yaml#/ErrorResponse'
     EmailNotVerifiedErrorResponse:
-      $ref: ./schemas/_common.yaml#/EmailNotVerifiedErrorResponse
+      $ref: './schemas/_common.yaml#/EmailNotVerifiedErrorResponse'
     AccountRecoverableErrorResponse:
-      $ref: ./schemas/_common.yaml#/AccountRecoverableErrorResponse
+      $ref: './schemas/_common.yaml#/AccountRecoverableErrorResponse'
     # admin
     ChangeUserStatusRequest:
-      $ref: ./schemas/admin.yaml#/ChangeUserStatusRequest
+      $ref: './schemas/admin.yaml#/ChangeUserStatusRequest'
     ChangeUserRoleRequest:
-      $ref: ./schemas/admin.yaml#/ChangeUserRoleRequest
+      $ref: './schemas/admin.yaml#/ChangeUserRoleRequest'
     RegisterSemesterMembersRequest:
-      $ref: ./schemas/admin.yaml#/RegisterSemesterMembersRequest
+      $ref: './schemas/admin.yaml#/RegisterSemesterMembersRequest'
     RegisterSemesterMembersResponse:
-      $ref: ./schemas/admin.yaml#/RegisterSemesterMembersResponse
+      $ref: './schemas/admin.yaml#/RegisterSemesterMembersResponse'
     RejectAssociateRequest:
-      $ref: ./schemas/admin.yaml#/RejectAssociateRequest
+      $ref: './schemas/admin.yaml#/RejectAssociateRequest'
     BulkRejectionRequest:
-      $ref: ./schemas/admin.yaml#/BulkRejectionRequest
+      $ref: './schemas/admin.yaml#/BulkRejectionRequest'
     BulkRejectionResultResponse:
-      $ref: ./schemas/admin.yaml#/BulkRejectionResultResponse
+      $ref: './schemas/admin.yaml#/BulkRejectionResultResponse'
     BulkApprovalRequest:
-      $ref: ./schemas/admin.yaml#/BulkApprovalRequest
+      $ref: './schemas/admin.yaml#/BulkApprovalRequest'
     BulkApprovalResultResponse:
-      $ref: ./schemas/admin.yaml#/BulkApprovalResultResponse
+      $ref: './schemas/admin.yaml#/BulkApprovalResultResponse'
     AdminEditUserInfoRequest:
-      $ref: ./schemas/admin.yaml#/AdminEditUserInfoRequest
+      $ref: './schemas/admin.yaml#/AdminEditUserInfoRequest'
     UpdateReportStatusRequest:
-      $ref: ./schemas/admin.yaml#/UpdateReportStatusRequest
+      $ref: './schemas/admin.yaml#/UpdateReportStatusRequest'
     UserListPageResponse:
-      $ref: ./schemas/admin.yaml#/UserListPageResponse
+      $ref: './schemas/admin.yaml#/UserListPageResponse'
     UserDetailResponse:
-      $ref: ./schemas/admin.yaml#/UserDetailResponse
+      $ref: './schemas/admin.yaml#/UserDetailResponse'
     PageUserRoleHistoryResponse:
-      $ref: ./schemas/admin.yaml#/PageUserRoleHistoryResponse
+      $ref: './schemas/admin.yaml#/PageUserRoleHistoryResponse'
     CandidateMemberResponse:
-      $ref: ./schemas/admin.yaml#/CandidateMemberResponse
+      $ref: './schemas/admin.yaml#/CandidateMemberResponse'
     PageLoginHistoryResponse:
-      $ref: ./schemas/admin.yaml#/PageLoginHistoryResponse
+      $ref: './schemas/admin.yaml#/PageLoginHistoryResponse'
     DashboardStatsResponse:
-      $ref: ./schemas/admin.yaml#/DashboardStatsResponse
+      $ref: './schemas/admin.yaml#/DashboardStatsResponse'
     PageRejectedAssociateInfoResponse:
-      $ref: ./schemas/admin.yaml#/PageRejectedAssociateInfoResponse
+      $ref: './schemas/admin.yaml#/PageRejectedAssociateInfoResponse'
     AssociateInfoPageResponse:
-      $ref: ./schemas/admin.yaml#/AssociateInfoPageResponse
+      $ref: './schemas/admin.yaml#/AssociateInfoPageResponse'
     PageDemotedAssociateInfoResponse:
-      $ref: ./schemas/admin.yaml#/PageDemotedAssociateInfoResponse
+      $ref: './schemas/admin.yaml#/PageDemotedAssociateInfoResponse'
     PageAccountStatusChangeHistoryResponse:
-      $ref: ./schemas/admin.yaml#/PageAccountStatusChangeHistoryResponse
+      $ref: './schemas/admin.yaml#/PageAccountStatusChangeHistoryResponse'
     ForceWithdrawRequest:
-      $ref: ./schemas/admin.yaml#/ForceWithdrawRequest
+      $ref: './schemas/admin.yaml#/ForceWithdrawRequest'
     RemoveSemesterMembersRequest:
-      $ref: ./schemas/admin.yaml#/RemoveSemesterMembersRequest
+      $ref: './schemas/admin.yaml#/RemoveSemesterMembersRequest'
     UserListResponse:
-      $ref: ./schemas/admin.yaml#/UserListResponse
+      $ref: './schemas/admin.yaml#/UserListResponse'
     UserRoleHistoryResponse:
-      $ref: ./schemas/admin.yaml#/UserRoleHistoryResponse
+      $ref: './schemas/admin.yaml#/UserRoleHistoryResponse'
     LoginHistoryResponse:
-      $ref: ./schemas/admin.yaml#/LoginHistoryResponse
+      $ref: './schemas/admin.yaml#/LoginHistoryResponse'
     RejectedAssociateInfoResponse:
-      $ref: ./schemas/admin.yaml#/RejectedAssociateInfoResponse
+      $ref: './schemas/admin.yaml#/RejectedAssociateInfoResponse'
     AssociateInfoResponse:
-      $ref: ./schemas/admin.yaml#/AssociateInfoResponse
+      $ref: './schemas/admin.yaml#/AssociateInfoResponse'
     DemotedAssociateInfoResponse:
-      $ref: ./schemas/admin.yaml#/DemotedAssociateInfoResponse
+      $ref: './schemas/admin.yaml#/DemotedAssociateInfoResponse'
     AccountStatusChangeHistoryResponse:
-      $ref: ./schemas/admin.yaml#/AccountStatusChangeHistoryResponse
+      $ref: './schemas/admin.yaml#/AccountStatusChangeHistoryResponse'
     # auth
     EmailVerificationRequest:
-      $ref: ./schemas/auth.yaml#/EmailVerificationRequest
+      $ref: './schemas/auth.yaml#/EmailVerificationRequest'
     PasswordSignupRequest:
-      $ref: ./schemas/auth.yaml#/PasswordSignupRequest
+      $ref: './schemas/auth.yaml#/PasswordSignupRequest'
     PasswordSignupResponse:
-      $ref: ./schemas/auth.yaml#/PasswordSignupResponse
+      $ref: './schemas/auth.yaml#/PasswordSignupResponse'
     TemporaryStudentIdSignupRequest:
-      $ref: ./schemas/auth.yaml#/TemporaryStudentIdSignupRequest
+      $ref: './schemas/auth.yaml#/TemporaryStudentIdSignupRequest'
     PasswordResetRequest:
-      $ref: ./schemas/auth.yaml#/PasswordResetRequest
+      $ref: './schemas/auth.yaml#/PasswordResetRequest'
     PasswordResetConfirmRequest:
-      $ref: ./schemas/auth.yaml#/PasswordResetConfirmRequest
+      $ref: './schemas/auth.yaml#/PasswordResetConfirmRequest'
     TokenRefreshResponse:
-      $ref: ./schemas/auth.yaml#/TokenRefreshResponse
+      $ref: './schemas/auth.yaml#/TokenRefreshResponse'
     PreSignupVerificationResponse:
-      $ref: ./schemas/auth.yaml#/PreSignupVerificationResponse
+      $ref: './schemas/auth.yaml#/PreSignupVerificationResponse'
     ResendVerificationRequest:
-      $ref: ./schemas/auth.yaml#/ResendVerificationRequest
+      $ref: './schemas/auth.yaml#/ResendVerificationRequest'
     VerificationResendResponse:
-      $ref: ./schemas/auth.yaml#/VerificationResendResponse
+      $ref: './schemas/auth.yaml#/VerificationResendResponse'
     PasswordLoginRequest:
-      $ref: ./schemas/auth.yaml#/PasswordLoginRequest
+      $ref: './schemas/auth.yaml#/PasswordLoginRequest'
     PasswordLoginResponse:
-      $ref: ./schemas/auth.yaml#/PasswordLoginResponse
+      $ref: './schemas/auth.yaml#/PasswordLoginResponse'
     AccountRecoveryRequest:
-      $ref: ./schemas/auth.yaml#/AccountRecoveryRequest
+      $ref: './schemas/auth.yaml#/AccountRecoveryRequest'
     AccountRecoveryResponse:
-      $ref: ./schemas/auth.yaml#/AccountRecoveryResponse
+      $ref: './schemas/auth.yaml#/AccountRecoveryResponse'
     DuplicateCheckResponse:
-      $ref: ./schemas/auth.yaml#/DuplicateCheckResponse
+      $ref: './schemas/auth.yaml#/DuplicateCheckResponse'
     ReRegistrationCheckResult:
-      $ref: ./schemas/auth.yaml#/ReRegistrationCheckResult
+      $ref: './schemas/auth.yaml#/ReRegistrationCheckResult'
     RecoveryEligibilityResponse:
-      $ref: ./schemas/auth.yaml#/RecoveryEligibilityResponse
+      $ref: './schemas/auth.yaml#/RecoveryEligibilityResponse'
     # boards
     UpdatePostRequest:
-      $ref: ./schemas/boards.yaml#/UpdatePostRequest
+      $ref: './schemas/boards.yaml#/UpdatePostRequest'
     PostUpdateResponse:
-      $ref: ./schemas/boards.yaml#/PostUpdateResponse
+      $ref: './schemas/boards.yaml#/PostUpdateResponse'
     CreatePostRequest:
-      $ref: ./schemas/boards.yaml#/CreatePostRequest
+      $ref: './schemas/boards.yaml#/CreatePostRequest'
     PostCreateResponse:
-      $ref: ./schemas/boards.yaml#/PostCreateResponse
+      $ref: './schemas/boards.yaml#/PostCreateResponse'
     BoardListResponse:
-      $ref: ./schemas/boards.yaml#/BoardListResponse
+      $ref: './schemas/boards.yaml#/BoardListResponse'
     BoardDetailResponse:
-      $ref: ./schemas/boards.yaml#/BoardDetailResponse
+      $ref: './schemas/boards.yaml#/BoardDetailResponse'
     PostListPageResponse:
-      $ref: ./schemas/boards.yaml#/PostListPageResponse
+      $ref: './schemas/boards.yaml#/PostListPageResponse'
     PostDetailResponse:
-      $ref: ./schemas/boards.yaml#/PostDetailResponse
+      $ref: './schemas/boards.yaml#/PostDetailResponse'
     PostViewStatsResponse:
-      $ref: ./schemas/boards.yaml#/PostViewStatsResponse
+      $ref: './schemas/boards.yaml#/PostViewStatsResponse'
     PostViewHistoryPageResponse:
-      $ref: ./schemas/boards.yaml#/PostViewHistoryPageResponse
+      $ref: './schemas/boards.yaml#/PostViewHistoryPageResponse'
     PostListResponse:
-      $ref: ./schemas/boards.yaml#/PostListResponse
+      $ref: './schemas/boards.yaml#/PostListResponse'
     PostViewHistoryResponse:
-      $ref: ./schemas/boards.yaml#/PostViewHistoryResponse
+      $ref: './schemas/boards.yaml#/PostViewHistoryResponse'
     # comments
     CreateCommentReportRequest:
-      $ref: ./schemas/comments.yaml#/CreateCommentReportRequest
+      $ref: './schemas/comments.yaml#/CreateCommentReportRequest'
     CommentReportResponse:
-      $ref: ./schemas/comments.yaml#/CommentReportResponse
+      $ref: './schemas/comments.yaml#/CommentReportResponse'
     # events
     UpdateEventRequest:
-      $ref: ./schemas/events.yaml#/UpdateEventRequest
+      $ref: './schemas/events.yaml#/UpdateEventRequest'
     EventDetailResponse:
-      $ref: ./schemas/events.yaml#/EventDetailResponse
+      $ref: './schemas/events.yaml#/EventDetailResponse'
     RegistrationResponse:
-      $ref: ./schemas/events.yaml#/RegistrationResponse
+      $ref: './schemas/events.yaml#/RegistrationResponse'
     CreateEventRequest:
-      $ref: ./schemas/events.yaml#/CreateEventRequest
+      $ref: './schemas/events.yaml#/CreateEventRequest'
     EventCreateResponse:
-      $ref: ./schemas/events.yaml#/EventCreateResponse
+      $ref: './schemas/events.yaml#/EventCreateResponse'
     EventStatusChangeReasonRequest:
-      $ref: ./schemas/events.yaml#/EventStatusChangeReasonRequest
+      $ref: './schemas/events.yaml#/EventStatusChangeReasonRequest'
     MyRegistrationResponse:
-      $ref: ./schemas/events.yaml#/MyRegistrationResponse
+      $ref: './schemas/events.yaml#/MyRegistrationResponse'
     EventListResponse:
-      $ref: ./schemas/events.yaml#/EventListResponse
+      $ref: './schemas/events.yaml#/EventListResponse'
     PageRegistrationListResponse:
-      $ref: ./schemas/events.yaml#/PageRegistrationListResponse
+      $ref: './schemas/events.yaml#/PageRegistrationListResponse'
     RegistrationListResponse:
-      $ref: ./schemas/events.yaml#/RegistrationListResponse
+      $ref: './schemas/events.yaml#/RegistrationListResponse'
     # inquiries
     UpdateInquiryStatusRequest:
-      $ref: ./schemas/inquiries.yaml#/UpdateInquiryStatusRequest
+      $ref: './schemas/inquiries.yaml#/UpdateInquiryStatusRequest'
     UpdateInquiryReplyRequest:
-      $ref: ./schemas/inquiries.yaml#/UpdateInquiryReplyRequest
+      $ref: './schemas/inquiries.yaml#/UpdateInquiryReplyRequest'
     InquiryReplyResponse:
-      $ref: ./schemas/inquiries.yaml#/InquiryReplyResponse
+      $ref: './schemas/inquiries.yaml#/InquiryReplyResponse'
     CreateInquiryReplyRequest:
-      $ref: ./schemas/inquiries.yaml#/CreateInquiryReplyRequest
+      $ref: './schemas/inquiries.yaml#/CreateInquiryReplyRequest'
     CreateInquiryMemoRequest:
-      $ref: ./schemas/inquiries.yaml#/CreateInquiryMemoRequest
+      $ref: './schemas/inquiries.yaml#/CreateInquiryMemoRequest'
     InquiryMemoResponse:
-      $ref: ./schemas/inquiries.yaml#/InquiryMemoResponse
+      $ref: './schemas/inquiries.yaml#/InquiryMemoResponse'
     CreateMemberInquiryRequest:
-      $ref: ./schemas/inquiries.yaml#/CreateMemberInquiryRequest
+      $ref: './schemas/inquiries.yaml#/CreateMemberInquiryRequest'
     InquiryCreateResponse:
-      $ref: ./schemas/inquiries.yaml#/InquiryCreateResponse
+      $ref: './schemas/inquiries.yaml#/InquiryCreateResponse'
     GuestInquiryLookupRequest:
-      $ref: ./schemas/inquiries.yaml#/GuestInquiryLookupRequest
+      $ref: './schemas/inquiries.yaml#/GuestInquiryLookupRequest'
     InquiryResponse:
-      $ref: ./schemas/inquiries.yaml#/InquiryResponse
+      $ref: './schemas/inquiries.yaml#/InquiryResponse'
     CreateGuestInquiryRequest:
-      $ref: ./schemas/inquiries.yaml#/CreateGuestInquiryRequest
+      $ref: './schemas/inquiries.yaml#/CreateGuestInquiryRequest'
     InquiryListPageResponse:
-      $ref: ./schemas/inquiries.yaml#/InquiryListPageResponse
+      $ref: './schemas/inquiries.yaml#/InquiryListPageResponse'
     InquiryDetailResponse:
-      $ref: ./schemas/inquiries.yaml#/InquiryDetailResponse
+      $ref: './schemas/inquiries.yaml#/InquiryDetailResponse'
     InquiryListResponse:
-      $ref: ./schemas/inquiries.yaml#/InquiryListResponse
+      $ref: './schemas/inquiries.yaml#/InquiryListResponse'
     # mypage
     ChangeEmailRequest:
-      $ref: ./schemas/mypage.yaml#/ChangeEmailRequest
+      $ref: './schemas/mypage.yaml#/ChangeEmailRequest'
     UpdateStudentIdRequest:
-      $ref: ./schemas/mypage.yaml#/UpdateStudentIdRequest
+      $ref: './schemas/mypage.yaml#/UpdateStudentIdRequest'
     ChangePhoneNumberRequest:
-      $ref: ./schemas/mypage.yaml#/ChangePhoneNumberRequest
+      $ref: './schemas/mypage.yaml#/ChangePhoneNumberRequest'
     ChangePasswordRequest:
-      $ref: ./schemas/mypage.yaml#/ChangePasswordRequest
+      $ref: './schemas/mypage.yaml#/ChangePasswordRequest'
     LikedPostPageResponse:
-      $ref: ./schemas/mypage.yaml#/LikedPostPageResponse
+      $ref: './schemas/mypage.yaml#/LikedPostPageResponse'
     MyProfileResponse:
-      $ref: ./schemas/mypage.yaml#/MyProfileResponse
+      $ref: './schemas/mypage.yaml#/MyProfileResponse'
     MyPostPageResponse:
-      $ref: ./schemas/mypage.yaml#/MyPostPageResponse
+      $ref: './schemas/mypage.yaml#/MyPostPageResponse'
     MyCommentPageResponse:
-      $ref: ./schemas/mypage.yaml#/MyCommentPageResponse
+      $ref: './schemas/mypage.yaml#/MyCommentPageResponse'
     WithdrawRequest:
-      $ref: ./schemas/mypage.yaml#/WithdrawRequest
+      $ref: './schemas/mypage.yaml#/WithdrawRequest'
     LikedPostResponse:
-      $ref: ./schemas/mypage.yaml#/LikedPostResponse
+      $ref: './schemas/mypage.yaml#/LikedPostResponse'
     MyPostResponse:
-      $ref: ./schemas/mypage.yaml#/MyPostResponse
+      $ref: './schemas/mypage.yaml#/MyPostResponse'
     MyCommentResponse:
-      $ref: ./schemas/mypage.yaml#/MyCommentResponse
+      $ref: './schemas/mypage.yaml#/MyCommentResponse'
     # pinned-posts
     UpdateDisplayOrderRequest:
-      $ref: ./schemas/pinned-posts.yaml#/UpdateDisplayOrderRequest
+      $ref: './schemas/pinned-posts.yaml#/UpdateDisplayOrderRequest'
     PinnedPostDetailResponse:
-      $ref: ./schemas/pinned-posts.yaml#/PinnedPostDetailResponse
+      $ref: './schemas/pinned-posts.yaml#/PinnedPostDetailResponse'
     CreatePinnedPostRequest:
-      $ref: ./schemas/pinned-posts.yaml#/CreatePinnedPostRequest
+      $ref: './schemas/pinned-posts.yaml#/CreatePinnedPostRequest'
     PinnedPostListResponse:
-      $ref: ./schemas/pinned-posts.yaml#/PinnedPostListResponse
+      $ref: './schemas/pinned-posts.yaml#/PinnedPostListResponse'
     # posts
     PostLikeToggleResponse:
-      $ref: ./schemas/posts.yaml#/PostLikeToggleResponse
+      $ref: './schemas/posts.yaml#/PostLikeToggleResponse'
     CreateCommentRequest:
-      $ref: ./schemas/posts.yaml#/CreateCommentRequest
+      $ref: './schemas/posts.yaml#/CreateCommentRequest'
     CommentResponse:
-      $ref: ./schemas/posts.yaml#/CommentResponse
+      $ref: './schemas/posts.yaml#/CommentResponse'
     BookmarkToggleResponse:
-      $ref: ./schemas/posts.yaml#/BookmarkToggleResponse
+      $ref: './schemas/posts.yaml#/BookmarkToggleResponse'
     BookmarkedPostPageResponse:
-      $ref: ./schemas/posts.yaml#/BookmarkedPostPageResponse
+      $ref: './schemas/posts.yaml#/BookmarkedPostPageResponse'
     PostLikeStatusResponse:
-      $ref: ./schemas/posts.yaml#/PostLikeStatusResponse
+      $ref: './schemas/posts.yaml#/PostLikeStatusResponse'
     CommentListResponse:
-      $ref: ./schemas/posts.yaml#/CommentListResponse
+      $ref: './schemas/posts.yaml#/CommentListResponse'
     BookmarkStatusResponse:
-      $ref: ./schemas/posts.yaml#/BookmarkStatusResponse
+      $ref: './schemas/posts.yaml#/BookmarkStatusResponse'
     BookmarkedPostResponse:
-      $ref: ./schemas/posts.yaml#/BookmarkedPostResponse
+      $ref: './schemas/posts.yaml#/BookmarkedPostResponse'
     CommentWithRepliesResponse:
-      $ref: ./schemas/posts.yaml#/CommentWithRepliesResponse
+      $ref: './schemas/posts.yaml#/CommentWithRepliesResponse'
     # privacy
     ConsentCheckResponse:
-      $ref: ./schemas/privacy.yaml#/ConsentCheckResponse
+      $ref: './schemas/privacy.yaml#/ConsentCheckResponse'
     PrivacyConsentResponse:
-      $ref: ./schemas/privacy.yaml#/PrivacyConsentResponse
+      $ref: './schemas/privacy.yaml#/PrivacyConsentResponse'
     PrivacyConsentHistoryResponse:
-      $ref: ./schemas/privacy.yaml#/PrivacyConsentHistoryResponse
+      $ref: './schemas/privacy.yaml#/PrivacyConsentHistoryResponse'
     # semesters
     SemesterSummaryResponse:
-      $ref: ./schemas/semesters.yaml#/SemesterSummaryResponse
+      $ref: './schemas/semesters.yaml#/SemesterSummaryResponse'
     SemesterMemberListResponse:
-      $ref: ./schemas/semesters.yaml#/SemesterMemberListResponse
+      $ref: './schemas/semesters.yaml#/SemesterMemberListResponse'
     # storage
     CreatePresignedUrlRequest:
-      $ref: ./schemas/storage.yaml#/CreatePresignedUrlRequest
+      $ref: './schemas/storage.yaml#/CreatePresignedUrlRequest'
     CreatePresignedUrlResponse:
-      $ref: ./schemas/storage.yaml#/CreatePresignedUrlResponse
+      $ref: './schemas/storage.yaml#/CreatePresignedUrlResponse'
     ConfirmUploadRequest:
-      $ref: ./schemas/storage.yaml#/ConfirmUploadRequest
+      $ref: './schemas/storage.yaml#/ConfirmUploadRequest'
     ConfirmUploadResponse:
-      $ref: ./schemas/storage.yaml#/ConfirmUploadResponse
+      $ref: './schemas/storage.yaml#/ConfirmUploadResponse'
     DownloadUrlResponse:
-      $ref: ./schemas/storage.yaml#/DownloadUrlResponse
+      $ref: './schemas/storage.yaml#/DownloadUrlResponse'
     # surveys
     UpdateSurveyRequest:
-      $ref: ./schemas/surveys.yaml#/UpdateSurveyRequest
+      $ref: './schemas/surveys.yaml#/UpdateSurveyRequest'
     OptionResponse:
-      $ref: ./schemas/surveys.yaml#/OptionResponse
+      $ref: './schemas/surveys.yaml#/OptionResponse'
     QuestionResponse:
-      $ref: ./schemas/surveys.yaml#/QuestionResponse
+      $ref: './schemas/surveys.yaml#/QuestionResponse'
     RowResponse:
-      $ref: ./schemas/surveys.yaml#/RowResponse
+      $ref: './schemas/surveys.yaml#/RowResponse'
     SurveyDetailResponse:
-      $ref: ./schemas/surveys.yaml#/SurveyDetailResponse
+      $ref: './schemas/surveys.yaml#/SurveyDetailResponse'
     SubmitSurveyResponseRequest:
-      $ref: ./schemas/surveys.yaml#/SubmitSurveyResponseRequest
+      $ref: './schemas/surveys.yaml#/SubmitSurveyResponseRequest'
     SurveyResponseDetailResponse:
-      $ref: ./schemas/surveys.yaml#/SurveyResponseDetailResponse
+      $ref: './schemas/surveys.yaml#/SurveyResponseDetailResponse'
     CreateSurveyRequest:
-      $ref: ./schemas/surveys.yaml#/CreateSurveyRequest
+      $ref: './schemas/surveys.yaml#/CreateSurveyRequest'
     CreateQuestionRequest:
-      $ref: ./schemas/surveys.yaml#/CreateQuestionRequest
+      $ref: './schemas/surveys.yaml#/CreateQuestionRequest'
     SaveQuestionRowRequest:
-      $ref: ./schemas/surveys.yaml#/SaveQuestionRowRequest
+      $ref: './schemas/surveys.yaml#/SaveQuestionRowRequest'
     SaveQuestionOptionRequest:
-      $ref: ./schemas/surveys.yaml#/SaveQuestionOptionRequest
+      $ref: './schemas/surveys.yaml#/SaveQuestionOptionRequest'
     UpdateQuestionRequest:
-      $ref: ./schemas/surveys.yaml#/UpdateQuestionRequest
+      $ref: './schemas/surveys.yaml#/UpdateQuestionRequest'
     SurveyListResponse:
-      $ref: ./schemas/surveys.yaml#/SurveyListResponse
+      $ref: './schemas/surveys.yaml#/SurveyListResponse'
     SubmitAnswerRequest:
-      $ref: ./schemas/surveys.yaml#/SubmitAnswerRequest
+      $ref: './schemas/surveys.yaml#/SubmitAnswerRequest'
     AnswerResponse:
-      $ref: ./schemas/surveys.yaml#/AnswerResponse
+      $ref: './schemas/surveys.yaml#/AnswerResponse'
     GridAnswerResponse:
-      $ref: ./schemas/surveys.yaml#/GridAnswerResponse
+      $ref: './schemas/surveys.yaml#/GridAnswerResponse'
     GridAnswerRequest:
-      $ref: ./schemas/surveys.yaml#/GridAnswerRequest
+      $ref: './schemas/surveys.yaml#/GridAnswerRequest'
   securitySchemes:
     BearerAuthentication:
       type: http

@@ -13,7 +13,7 @@ import {
   useRegisterEvent,
   useCancelRegistration,
 } from '@/api/model/event-registration/event-registration';
-import type { GetEventListParams, CreateEventRequest } from '@/api/model/models';
+import type { GetEventListParams } from '@/api/model/models';
 import { myPageKeys } from '@/hooks/queries/useMyPage';
 
 // 쿼리 키 - Orval이 자동으로 생성하지만 invalidation을 위해 정의

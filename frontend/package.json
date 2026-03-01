@@ -9,9 +9,9 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "openapi:bundle": "redocly bundle ../openapi/openapi.yaml -o ../openapi/openapi.bundled.yaml",
     "orval": "orval",
-    "api:generate": "pnpm openapi:bundle && orval"
+    "api:bundle": "redocly bundle ../openapi/openapi.yaml -o ../openapi/bundled.yaml",
+    "api:generate": "pnpm api:bundle && orval"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

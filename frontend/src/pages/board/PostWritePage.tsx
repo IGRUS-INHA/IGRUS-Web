@@ -1,14 +1,19 @@
+import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Image as ImageIcon, Paperclip } from 'lucide-react';
+import { ArrowLeft, Save, Image as ImageIcon } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WysiwygEditor } from '@/components/feature/editor';
+import { ImagePreviewList } from '@/components/feature/upload';
 import { useCreatePost } from '@/api/model/post/post';
 import { useUIStore } from '@/stores';
 import { BOARDS, BOARD_CATEGORIES, POST_OPTIONS, BOARD_LABELS, postFormSchema, type PostFormData } from '@/constants/board';
 import type { BoardType } from '@/types/common';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useImageUpload } from '@/hooks/useImageUpload';
+import { useToast } from '@/hooks/useToast';
+import { IMAGE_UPLOAD_CONFIG } from '@/utils/upload';
 import { isForbiddenError, isBoardWriteDenied, isUnauthorizedError, getErrorMessage } from '@/utils/error';
 
 export default function PostWritePage() {
@@ -17,6 +22,8 @@ export default function PostWritePage() {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
   const isMobile = useIsMobile();
+  const toast = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validBoardType = boardType as BoardType;
 
@@ -31,6 +38,14 @@ export default function PostWritePage() {
   const allowQuestion = (POST_OPTIONS.ALLOW_QUESTION as readonly BoardType[]).includes(validBoardType);
   const allowVisibleToAssociate = validBoardType === BOARDS.NOTICES;
 
+  // Image upload
+  const { files, isUploading, addFiles, removeFile, uploadAll } = useImageUpload({
+    config: IMAGE_UPLOAD_CONFIG,
+    onValidationError: (errors) => {
+      errors.forEach((msg) => toast.error(msg));
+    },
+  });
+
   // Form setup
   const {
     register,
@@ -42,7 +57,7 @@ export default function PostWritePage() {
   } = useForm<PostFormData>({
     resolver: zodResolver(postFormSchema),
     defaultValues: {
-      category: categories[0]?.value || 'general',
+      category: categories?.[0]?.value ?? 'general',
       isAnonymous: false,
       isQuestion: false,
       isVisibleToAssociate: false,
@@ -64,7 +79,22 @@ export default function PostWritePage() {
     navigate(`/board/${validBoardType}`);
   };
 
-  const onSubmit = (data: PostFormData) => {
+  const handleImageButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      addFiles(e.target.files);
+      e.target.value = '';
+    }
+  };
+
+  const onSubmit = async (data: PostFormData) => {
+    // 업로드 대기 중인 파일이 있으면 먼저 업로드
+    const uploadResults = await uploadAll();
+    const imageUrls = uploadResults.map((r) => r.objectKey);
+
     createPost.mutate(
       {
         boardCode: validBoardType,
@@ -74,6 +104,7 @@ export default function PostWritePage() {
           ...(data.isAnonymous !== undefined && { isAnonymous: data.isAnonymous }),
           ...(data.isQuestion !== undefined && { isQuestion: data.isQuestion }),
           ...(data.isVisibleToAssociate !== undefined && { isVisibleToAssociate: data.isVisibleToAssociate }),
+          ...(imageUrls.length > 0 && { imageUrls }),
         },
       },
       {
@@ -105,6 +136,8 @@ export default function PostWritePage() {
     );
   };
 
+  const isBusy = isSubmitting || isUploading;
+
   return (
     <div className="animate-in slide-in-from-bottom-8 duration-300">
       {/* Top Bar */}
@@ -125,11 +158,11 @@ export default function PostWritePage() {
           </span>
           <button
             onClick={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
+            disabled={isBusy}
             type="button"
-            className="bg-[#03A69E] text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-[#028b84] transition shadow-lg shadow-[#03A69E]/20 flex items-center gap-2 disabled:opacity-50"
+            className="bg-[#03A69E] text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-[#028b84] transition shadow-lg shadow-[#03A69E]/20 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
           >
-            <Save size={16} /> 게시하기
+            <Save size={16} /> {isUploading ? '업로드 중...' : '게시하기'}
           </button>
         </div>
       </div>
@@ -238,10 +271,20 @@ export default function PostWritePage() {
             )}
           </div>
 
+          {/* Image Preview */}
+          {files.length > 0 && (
+            <ImagePreviewList
+              files={files}
+              onRemove={removeFile}
+              className="mb-s4"
+            />
+          )}
+
           {/* Bottom Toolbar */}
           <div className={cn('mt-s4 sm:mt-8 pt-s3 sm:pt-4 border-t flex gap-s3 sm:gap-4', isDark ? 'border-white/5' : 'border-gray-100')}>
             <button
               type="button"
+              onClick={handleImageButtonClick}
               className={cn(
                 'p-2 sm:p-3 rounded-lg transition cursor-pointer',
                 isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
@@ -249,21 +292,25 @@ export default function PostWritePage() {
             >
               <ImageIcon size={isMobile ? 20 : 24} />
             </button>
-            <button
-              type="button"
-              className={cn(
-                'p-2 sm:p-3 rounded-lg transition cursor-pointer',
-                isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
+            <div className="ml-auto text-xs text-gray-500 flex items-center gap-s3">
+              {files.length > 0 && (
+                <span>이미지 {files.length}/{IMAGE_UPLOAD_CONFIG.maxFiles}</span>
               )}
-            >
-              <Paperclip size={isMobile ? 20 : 24} />
-            </button>
-            <div className="ml-auto text-xs text-gray-500 flex items-center">
-              {content?.length || 0} 글자
+              <span>{content?.length || 0} 글자</span>
             </div>
           </div>
         </div>
       </form>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileChange}
+        className="hidden"
+      />
     </div>
   );
 }

@@ -26,7 +26,10 @@ import { customFetch } from "@/api/client";
 import { getErrorMessage, hasErrorCode } from "@/utils/error";
 import type { User as UserType } from "@/types/entities";
 import type { MyProfileResponse } from "@/api/model/models/myProfileResponse";
-import type { UpdateProfileRequest } from "@/api/model/models/updateProfileRequest";
+interface UpdateProfileRequest {
+  email?: string;
+  phoneNumber?: string;
+}
 
 interface ProfileHeaderProps {
   user: UserType;
