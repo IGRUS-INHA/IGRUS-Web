@@ -49,8 +49,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetHistories200,
-  GetHistoriesParams
+  GetHistoriesParams,
+  Page
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -65,7 +65,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 계정 상태 변경 감사 이력 조회
  */
 export type getHistoriesResponse200 = {
-  data: GetHistories200
+  data: Page
   status: 200
 }
 

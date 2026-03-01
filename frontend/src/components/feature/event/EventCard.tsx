@@ -1,27 +1,19 @@
 import { Calendar, MapPin, Users, ArrowUpRight } from 'lucide-react';
-import type { Event, EventStatus } from '@/types/entities';
+import type { Event } from '@/types/entities';
 import { formatDate } from '@/utils/date';
 
 const STATUS_STYLES: Record<string, string> = {
-  Open: 'bg-primary text-primary-foreground',
-  OPEN: 'bg-primary text-primary-foreground',
   UPCOMING: 'bg-primary text-primary-foreground',
-  Full: 'bg-warning text-foreground',
-  CLOSED: 'bg-muted text-muted-foreground',
-  Closed: 'bg-muted text-muted-foreground',
-  COMPLETED: 'bg-muted text-muted-foreground',
   ONGOING: 'bg-primary text-primary-foreground',
+  COMPLETED: 'bg-muted text-muted-foreground',
+  CLOSED: 'bg-muted text-muted-foreground',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  Open: '신청 가능',
-  OPEN: '신청 가능',
   UPCOMING: '예정',
-  Full: '마감',
-  CLOSED: '신청 불가',
-  Closed: '신청 불가',
-  COMPLETED: '신청 불가',
   ONGOING: '진행중',
+  COMPLETED: '완료',
+  CLOSED: '마감',
 };
 
 interface EventCardProps {
@@ -29,7 +21,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const isAvailable = event.status === 'Open' || event.status === 'OPEN' || event.status === 'UPCOMING';
+  const isAvailable = event.status === 'UPCOMING' || event.status === 'ONGOING';
 
   return (
     <div className="rounded-r4 overflow-hidden border transition-all hover:scale-[1.01] bg-card border-border shadow-xl shadow-black/5 dark:shadow-none">
@@ -42,7 +34,7 @@ export default function EventCard({ event }: EventCardProps) {
         />
         <div
           className={`absolute top-s4 right-s4 px-s3 py-s1 rounded-full typo-c2 font-bold uppercase tracking-wider ${
-            STATUS_STYLES[event.status] ?? STATUS_STYLES.Closed
+            STATUS_STYLES[event.status] ?? STATUS_STYLES.CLOSED
           }`}
         >
           {STATUS_LABELS[event.status] ?? event.status}

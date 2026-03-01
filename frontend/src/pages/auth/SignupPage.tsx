@@ -29,6 +29,7 @@ import {
   LogIn,
 } from 'lucide-react';
 import { useSignup, useSignupWithTemporaryStudentId, useVerifyPreSignupCode, useSendPreSignupCode } from '@/api/model/password-authentication/password-authentication';
+import type { PasswordSignupRequestEnrollmentStatus } from '@/api/model/models';
 import { majorOptions } from '@/constants/majorOptions';
 import { domainOptions } from '@/constants/domainOptions';
 import { WISH_TITLE, wishOptions, wishToEnum } from '@/constants/wishOptions';
@@ -469,9 +470,9 @@ export default function SignupPage() {
         motivation: data.motivation || undefined,
         gender: data.gender!,
         grade: data.grade!,
-        enrollmentStatus: enrollmentStatusToEnum[data.enrollmentStatus],
-        wishes: data.wishes.map((w) => wishToEnum[w]).filter(Boolean),
-        interests: data.interests.map((i) => interestToEnum[i]).filter(Boolean),
+        enrollmentStatus: (enrollmentStatusToEnum[data.enrollmentStatus] ?? 'ENROLLED') as PasswordSignupRequestEnrollmentStatus,
+        wishes: data.wishes.map((w) => wishToEnum[w]).filter((v): v is NonNullable<typeof v> => Boolean(v)),
+        interests: data.interests.map((i) => interestToEnum[i]).filter((v): v is NonNullable<typeof v> => Boolean(v)),
         customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
         joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
         customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,

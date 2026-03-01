@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, Calendar, MapPin, Users, Save, Image as ImageIcon, ListChecks } from 'lucide-react';
 import { WysiwygEditor } from '@/components/feature/editor';
+import { ImagePreviewList } from '@/components/feature/upload';
 import { LocationSelector, DIRECT_INPUT_VALUE } from '@/components/feature/event/LocationSelector';
 import { RegistrationPeriodSelector } from '@/components/feature/event/RegistrationPeriodSelector';
 import { useCreateEvent } from '@/hooks/queries/useEvents';
@@ -17,6 +18,9 @@ import { combineLocation, formatDateLocal } from '@/utils/event';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores';
 import { isForbiddenError, isEventOperatorRequired, getErrorMessage } from '@/utils/error';
+import { useImageUpload } from '@/hooks/useImageUpload';
+import { useToast } from '@/hooks/useToast';
+import { IMAGE_UPLOAD_CONFIG } from '@/utils/upload';
 
 const eventSchema = z.object({
   title: z.string().min(1, '행사 제목을 입력하세요'),
@@ -58,6 +62,16 @@ export default function EventWritePage() {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
   const { mutate: createEvent, isPending } = useCreateEvent();
+  const toast = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 이미지 업로드 (UI만 — 백엔드 CreateEventRequest에 이미지 필드 없음)
+  const { files, addFiles, removeFile } = useImageUpload({
+    config: IMAGE_UPLOAD_CONFIG,
+    onValidationError: (errors) => {
+      errors.forEach((msg) => toast.error(msg));
+    },
+  });
 
   const {
     register,
@@ -223,10 +237,21 @@ export default function EventWritePage() {
               )}
             </div>
 
+            {/* Image Preview */}
+            {files.length > 0 && (
+              <div className="px-s6 pb-s4">
+                <ImagePreviewList
+                  files={files}
+                  onRemove={removeFile}
+                />
+              </div>
+            )}
+
             {/* Bottom Toolbar */}
             <div className="px-s6 py-s5 border-t border-border flex items-center">
               <button
                 type="button"
+                onClick={() => fileInputRef.current?.click()}
                 className={cn(
                   'p-2 rounded-lg transition cursor-pointer',
                   isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'
@@ -234,6 +259,11 @@ export default function EventWritePage() {
               >
                 <ImageIcon size={20} />
               </button>
+              {files.length > 0 && (
+                <span className="ml-auto text-xs text-muted-foreground">
+                  이미지 {files.length}/{IMAGE_UPLOAD_CONFIG.maxFiles}
+                </span>
+              )}
             </div>
           </div>
 
@@ -391,6 +421,21 @@ export default function EventWritePage() {
           </div>
         </div>
       </form>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            addFiles(e.target.files);
+            e.target.value = '';
+          }
+        }}
+        className="hidden"
+      />
     </div>
   );
 }

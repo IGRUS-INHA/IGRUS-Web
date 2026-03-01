@@ -9,7 +9,13 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ImagePreviewList } from '@/components/feature/upload';
+import { ImageUploadArea } from '@/components/feature/upload';
 import { CreateMemberInquiryRequestType } from '@/api/model/models/createMemberInquiryRequestType';
+import { useImageUpload } from '@/hooks/useImageUpload';
+import { useToast } from '@/hooks/useToast';
+import { INQUIRY_ATTACHMENT_CONFIG } from '@/utils/upload';
+import { getImageDownloadUrl, UPLOAD_PURPOSE } from '@/services/uploadService';
 import { cn } from '@/lib/utils';
 
 const TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -28,6 +34,8 @@ export interface InquiryFormData {
   email?: string;
   name?: string;
   password?: string;
+  /** 첨부파일 */
+  attachments?: Array<{ fileUrl: string; fileName: string; fileSize: number }>;
 }
 
 interface InquiryFormProps {
@@ -43,9 +51,32 @@ export default function InquiryForm({
 }: InquiryFormProps) {
   const isGuest = variant === 'guest';
   const typeOptions = TYPE_OPTIONS;
+  const toast = useToast();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const { files, isUploading, addFiles, removeFile, uploadAll } = useImageUpload({
+    config: INQUIRY_ATTACHMENT_CONFIG,
+    purpose: UPLOAD_PURPOSE.INQUIRY_ATTACHMENT,
+    onValidationError: (errors) => {
+      errors.forEach((msg) => toast.error(msg));
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const uploadResults = await uploadAll();
+
+    // objectKey → presigned download URL 변환 (AttachmentInfo.fileUrl은 https:// 필요)
+    const attachments = uploadResults.length > 0
+      ? await Promise.all(
+          uploadResults.map(async (r) => ({
+            fileUrl: await getImageDownloadUrl(r.objectKey),
+            fileName: r.fileName,
+            fileSize: r.fileSize,
+          })),
+        )
+      : undefined;
+
     const formData = new FormData(e.currentTarget);
     onSubmit?.({
       type: formData.get('type') as string,
@@ -56,6 +87,7 @@ export default function InquiryForm({
         name: formData.get('name') as string,
         password: formData.get('password') as string,
       }),
+      ...(attachments && { attachments }),
     });
   };
 
@@ -157,14 +189,30 @@ export default function InquiryForm({
         />
       </FormField>
 
+      {/* 첨부파일 */}
+      <FormField label="첨부파일 (선택)">
+        <ImageUploadArea
+          onFilesSelected={addFiles}
+          maxFiles={INQUIRY_ATTACHMENT_CONFIG.maxFiles}
+          currentCount={files.length}
+        />
+        {files.length > 0 && (
+          <ImagePreviewList
+            files={files}
+            onRemove={removeFile}
+            className="mt-s3"
+          />
+        )}
+      </FormField>
+
       {/* 제출 */}
       <Button
         type="submit"
-        disabled={loading}
+        disabled={loading || isUploading}
         className="flex w-full items-center justify-center gap-s2 rounded-r3 py-s5 font-bold"
       >
-        {loading ? '제출 중...' : '문의 제출'}
-        {!loading && <Send size={18} />}
+        {isUploading ? '업로드 중...' : loading ? '제출 중...' : '문의 제출'}
+        {!loading && !isUploading && <Send size={18} />}
       </Button>
     </form>
   );

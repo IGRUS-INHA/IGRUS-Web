@@ -21,6 +21,9 @@ export default function InquiryPage() {
           title: data.title,
           content: data.content,
           type: data.type as CreateMemberInquiryRequestType,
+          ...(data.attachments && data.attachments.length > 0 && {
+            attachments: data.attachments,
+          }),
         },
       });
       alert('문의가 제출되었습니다.');
@@ -40,6 +43,9 @@ export default function InquiryPage() {
           email: data.email!,
           name: data.name!,
           password: data.password!,
+          ...(data.attachments && data.attachments.length > 0 && {
+            attachments: data.attachments,
+          }),
         },
       });
       alert('문의가 제출되었습니다. 문의번호와 이메일, 비밀번호로 조회할 수 있습니다.');

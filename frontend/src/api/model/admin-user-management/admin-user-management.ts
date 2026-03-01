@@ -53,15 +53,15 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  ChangeUserRoleBody,
-  ChangeUserStatusBody,
-  EditUserInfoBody,
-  ForceWithdrawUserBody,
-  GetRoleHistories200,
+  AdminEditUserInfoRequest,
+  ChangeUserRoleRequest,
+  ChangeUserStatusRequest,
+  ForceWithdrawRequest,
   GetRoleHistoriesParams,
-  GetUserDetail200,
-  GetUserList200,
-  GetUserListParams
+  GetUserListParams,
+  PageUserRoleHistoryResponse,
+  UserDetailResponse,
+  UserListPageResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -118,7 +118,7 @@ export const getChangeUserStatusUrl = (userId: number,) => {
 }
 
 export const changeUserStatus = async (userId: number,
-    changeUserStatusBody: ChangeUserStatusBody, options?: RequestInit): Promise<changeUserStatusResponse> => {
+    changeUserStatusRequest: ChangeUserStatusRequest, options?: RequestInit): Promise<changeUserStatusResponse> => {
   
   return customFetch<changeUserStatusResponse>(getChangeUserStatusUrl(userId),
   {      
@@ -126,7 +126,7 @@ export const changeUserStatus = async (userId: number,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      changeUserStatusBody,)
+      changeUserStatusRequest,)
   }
 );}
 
@@ -134,8 +134,8 @@ export const changeUserStatus = async (userId: number,
 
 
 export const getChangeUserStatusMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserStatus>>, TError,{userId: number;data: ChangeUserStatusBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof changeUserStatus>>, TError,{userId: number;data: ChangeUserStatusBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserStatus>>, TError,{userId: number;data: ChangeUserStatusRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeUserStatus>>, TError,{userId: number;data: ChangeUserStatusRequest}, TContext> => {
 
 const mutationKey = ['changeUserStatus'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -147,7 +147,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeUserStatus>>, {userId: number;data: ChangeUserStatusBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeUserStatus>>, {userId: number;data: ChangeUserStatusRequest}> = (props) => {
           const {userId,data} = props ?? {};
 
           return  changeUserStatus(userId,data,requestOptions)
@@ -161,18 +161,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ChangeUserStatusMutationResult = NonNullable<Awaited<ReturnType<typeof changeUserStatus>>>
-    export type ChangeUserStatusMutationBody = ChangeUserStatusBody
+    export type ChangeUserStatusMutationBody = ChangeUserStatusRequest
     export type ChangeUserStatusMutationError = void
 
     /**
  * @summary 회원 상태 변경 (정지/해제)
  */
 export const useChangeUserStatus = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserStatus>>, TError,{userId: number;data: ChangeUserStatusBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserStatus>>, TError,{userId: number;data: ChangeUserStatusRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof changeUserStatus>>,
         TError,
-        {userId: number;data: ChangeUserStatusBody},
+        {userId: number;data: ChangeUserStatusRequest},
         TContext
       > => {
       return useMutation(getChangeUserStatusMutationOptions(options), queryClient);
@@ -224,7 +224,7 @@ export const getChangeUserRoleUrl = (userId: number,) => {
 }
 
 export const changeUserRole = async (userId: number,
-    changeUserRoleBody: ChangeUserRoleBody, options?: RequestInit): Promise<changeUserRoleResponse> => {
+    changeUserRoleRequest: ChangeUserRoleRequest, options?: RequestInit): Promise<changeUserRoleResponse> => {
   
   return customFetch<changeUserRoleResponse>(getChangeUserRoleUrl(userId),
   {      
@@ -232,7 +232,7 @@ export const changeUserRole = async (userId: number,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      changeUserRoleBody,)
+      changeUserRoleRequest,)
   }
 );}
 
@@ -240,8 +240,8 @@ export const changeUserRole = async (userId: number,
 
 
 export const getChangeUserRoleMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserRole>>, TError,{userId: number;data: ChangeUserRoleBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof changeUserRole>>, TError,{userId: number;data: ChangeUserRoleBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserRole>>, TError,{userId: number;data: ChangeUserRoleRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeUserRole>>, TError,{userId: number;data: ChangeUserRoleRequest}, TContext> => {
 
 const mutationKey = ['changeUserRole'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -253,7 +253,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeUserRole>>, {userId: number;data: ChangeUserRoleBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeUserRole>>, {userId: number;data: ChangeUserRoleRequest}> = (props) => {
           const {userId,data} = props ?? {};
 
           return  changeUserRole(userId,data,requestOptions)
@@ -267,18 +267,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ChangeUserRoleMutationResult = NonNullable<Awaited<ReturnType<typeof changeUserRole>>>
-    export type ChangeUserRoleMutationBody = ChangeUserRoleBody
+    export type ChangeUserRoleMutationBody = ChangeUserRoleRequest
     export type ChangeUserRoleMutationError = void
 
     /**
  * @summary 회원 권한 변경
  */
 export const useChangeUserRole = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserRole>>, TError,{userId: number;data: ChangeUserRoleBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeUserRole>>, TError,{userId: number;data: ChangeUserRoleRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof changeUserRole>>,
         TError,
-        {userId: number;data: ChangeUserRoleBody},
+        {userId: number;data: ChangeUserRoleRequest},
         TContext
       > => {
       return useMutation(getChangeUserRoleMutationOptions(options), queryClient);
@@ -439,7 +439,7 @@ export const getEditUserInfoUrl = (userId: number,) => {
 }
 
 export const editUserInfo = async (userId: number,
-    editUserInfoBody: EditUserInfoBody, options?: RequestInit): Promise<editUserInfoResponse> => {
+    adminEditUserInfoRequest: AdminEditUserInfoRequest, options?: RequestInit): Promise<editUserInfoResponse> => {
   
   return customFetch<editUserInfoResponse>(getEditUserInfoUrl(userId),
   {      
@@ -447,7 +447,7 @@ export const editUserInfo = async (userId: number,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      editUserInfoBody,)
+      adminEditUserInfoRequest,)
   }
 );}
 
@@ -455,8 +455,8 @@ export const editUserInfo = async (userId: number,
 
 
 export const getEditUserInfoMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editUserInfo>>, TError,{userId: number;data: EditUserInfoBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof editUserInfo>>, TError,{userId: number;data: EditUserInfoBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editUserInfo>>, TError,{userId: number;data: AdminEditUserInfoRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof editUserInfo>>, TError,{userId: number;data: AdminEditUserInfoRequest}, TContext> => {
 
 const mutationKey = ['editUserInfo'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -468,7 +468,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof editUserInfo>>, {userId: number;data: EditUserInfoBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof editUserInfo>>, {userId: number;data: AdminEditUserInfoRequest}> = (props) => {
           const {userId,data} = props ?? {};
 
           return  editUserInfo(userId,data,requestOptions)
@@ -482,18 +482,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type EditUserInfoMutationResult = NonNullable<Awaited<ReturnType<typeof editUserInfo>>>
-    export type EditUserInfoMutationBody = EditUserInfoBody
+    export type EditUserInfoMutationBody = AdminEditUserInfoRequest
     export type EditUserInfoMutationError = void
 
     /**
  * @summary 회원 정보 수정
  */
 export const useEditUserInfo = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editUserInfo>>, TError,{userId: number;data: EditUserInfoBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editUserInfo>>, TError,{userId: number;data: AdminEditUserInfoRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof editUserInfo>>,
         TError,
-        {userId: number;data: EditUserInfoBody},
+        {userId: number;data: AdminEditUserInfoRequest},
         TContext
       > => {
       return useMutation(getEditUserInfoMutationOptions(options), queryClient);
@@ -503,7 +503,7 @@ export const useEditUserInfo = <TError = void,
  * @summary 회원 목록 조회
  */
 export type getUserListResponse200 = {
-  data: GetUserList200
+  data: UserListPageResponse
   status: 200
 }
 
@@ -633,7 +633,7 @@ export function useGetUserList<TData = Awaited<ReturnType<typeof getUserList>>, 
  * @summary 회원 상세 조회
  */
 export type getUserDetailResponse200 = {
-  data: GetUserDetail200
+  data: UserDetailResponse
   status: 200
 }
 
@@ -803,7 +803,7 @@ export const getForceWithdrawUserUrl = (userId: number,) => {
 }
 
 export const forceWithdrawUser = async (userId: number,
-    forceWithdrawUserBody: ForceWithdrawUserBody, options?: RequestInit): Promise<forceWithdrawUserResponse> => {
+    forceWithdrawRequest: ForceWithdrawRequest, options?: RequestInit): Promise<forceWithdrawUserResponse> => {
   
   return customFetch<forceWithdrawUserResponse>(getForceWithdrawUserUrl(userId),
   {      
@@ -811,7 +811,7 @@ export const forceWithdrawUser = async (userId: number,
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      forceWithdrawUserBody,)
+      forceWithdrawRequest,)
   }
 );}
 
@@ -819,8 +819,8 @@ export const forceWithdrawUser = async (userId: number,
 
 
 export const getForceWithdrawUserMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forceWithdrawUser>>, TError,{userId: number;data: ForceWithdrawUserBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof forceWithdrawUser>>, TError,{userId: number;data: ForceWithdrawUserBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forceWithdrawUser>>, TError,{userId: number;data: ForceWithdrawRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof forceWithdrawUser>>, TError,{userId: number;data: ForceWithdrawRequest}, TContext> => {
 
 const mutationKey = ['forceWithdrawUser'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -832,7 +832,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof forceWithdrawUser>>, {userId: number;data: ForceWithdrawUserBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof forceWithdrawUser>>, {userId: number;data: ForceWithdrawRequest}> = (props) => {
           const {userId,data} = props ?? {};
 
           return  forceWithdrawUser(userId,data,requestOptions)
@@ -846,18 +846,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ForceWithdrawUserMutationResult = NonNullable<Awaited<ReturnType<typeof forceWithdrawUser>>>
-    export type ForceWithdrawUserMutationBody = ForceWithdrawUserBody
+    export type ForceWithdrawUserMutationBody = ForceWithdrawRequest
     export type ForceWithdrawUserMutationError = void
 
     /**
  * @summary 회원 강제 탈퇴
  */
 export const useForceWithdrawUser = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forceWithdrawUser>>, TError,{userId: number;data: ForceWithdrawUserBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forceWithdrawUser>>, TError,{userId: number;data: ForceWithdrawRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof forceWithdrawUser>>,
         TError,
-        {userId: number;data: ForceWithdrawUserBody},
+        {userId: number;data: ForceWithdrawRequest},
         TContext
       > => {
       return useMutation(getForceWithdrawUserMutationOptions(options), queryClient);
@@ -867,7 +867,7 @@ export const useForceWithdrawUser = <TError = void,
  * @summary 권한 변경 이력 조회
  */
 export type getRoleHistoriesResponse200 = {
-  data: GetRoleHistories200
+  data: PageUserRoleHistoryResponse
   status: 200
 }
 

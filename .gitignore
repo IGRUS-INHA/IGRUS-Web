@@ -57,3 +57,6 @@ docker-data/
 nul
 
 *.bak
+
+# OpenAPI bundled output
+openapi/bundled.yaml

@@ -49,13 +49,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CheckConsentedToVersion200,
   CheckConsentedToVersionParams,
-  CheckHasConsent200,
-  CheckNeedsReConsent200,
   CheckNeedsReConsentParams,
-  GetConsentHistory200,
-  GetLatestConsent200
+  ConsentCheckResponse,
+  PrivacyConsentHistoryResponse,
+  PrivacyConsentResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -70,7 +68,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 재동의 필요 여부 확인
  */
 export type checkNeedsReConsentResponse200 = {
-  data: CheckNeedsReConsent200
+  data: ConsentCheckResponse
   status: 200
 }
 
@@ -195,7 +193,7 @@ export function useCheckNeedsReConsent<TData = Awaited<ReturnType<typeof checkNe
  * @summary 최신 동의 기록 조회
  */
 export type getLatestConsentResponse200 = {
-  data: GetLatestConsent200
+  data: PrivacyConsentResponse
   status: 200
 }
 
@@ -318,7 +316,7 @@ export function useGetLatestConsent<TData = Awaited<ReturnType<typeof getLatestC
  * @summary 동의 이력 조회
  */
 export type getConsentHistoryResponse200 = {
-  data: GetConsentHistory200
+  data: PrivacyConsentHistoryResponse
   status: 200
 }
 
@@ -436,7 +434,7 @@ export function useGetConsentHistory<TData = Awaited<ReturnType<typeof getConsen
  * @summary 동의 기록 존재 확인
  */
 export type checkHasConsentResponse200 = {
-  data: CheckHasConsent200
+  data: ConsentCheckResponse
   status: 200
 }
 
@@ -554,7 +552,7 @@ export function useCheckHasConsent<TData = Awaited<ReturnType<typeof checkHasCon
  * @summary 특정 버전 동의 확인
  */
 export type checkConsentedToVersionResponse200 = {
-  data: CheckConsentedToVersion200
+  data: ConsentCheckResponse
   status: 200
 }
 

@@ -44,6 +44,9 @@ public class ApiSecurityConfig {
                 // 고정 게시글 목록 조회 (GET만 공개, POST/PUT/DELETE는 인증 필요)
                 .requestMatchers(HttpMethod.GET, "/api/v1/pinned-posts").permitAll()
 
+                // 행사 목록 조회 (GET만 공개, 상세/POST/PUT/DELETE는 인증 필요)
+                .requestMatchers(HttpMethod.GET, "/api/v1/events").permitAll()
+
                 // 학기별 회원 명단 조회 (운영진 이상)
                 .requestMatchers("/api/v1/semesters/**").hasAnyRole("OPERATOR", "ADMIN")
 

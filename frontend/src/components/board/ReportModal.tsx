@@ -1,6 +1,6 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import { REPORT, REPORT_REASON_LABELS } from '@/constants/board';
+import { REPORT_REASON_LABELS } from '@/constants/board';
 
 interface ReportData {
   reason: string;

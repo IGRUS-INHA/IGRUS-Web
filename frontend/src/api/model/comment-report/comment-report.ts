@@ -53,10 +53,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetPendingReports200Item,
-  ReportComment201,
-  ReportCommentBody,
-  UpdateReportStatusBody
+  CommentReportResponse,
+  CreateCommentReportRequest,
+  UpdateReportStatusRequest
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -71,7 +70,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 댓글 신고
  */
 export type reportCommentResponse201 = {
-  data: ReportComment201
+  data: CommentReportResponse
   status: 201
 }
 
@@ -108,7 +107,7 @@ export const getReportCommentUrl = (commentId: number,) => {
 }
 
 export const reportComment = async (commentId: number,
-    reportCommentBody: ReportCommentBody, options?: RequestInit): Promise<reportCommentResponse> => {
+    createCommentReportRequest: CreateCommentReportRequest, options?: RequestInit): Promise<reportCommentResponse> => {
   
   return customFetch<reportCommentResponse>(getReportCommentUrl(commentId),
   {      
@@ -116,7 +115,7 @@ export const reportComment = async (commentId: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      reportCommentBody,)
+      createCommentReportRequest,)
   }
 );}
 
@@ -124,8 +123,8 @@ export const reportComment = async (commentId: number,
 
 
 export const getReportCommentMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: ReportCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: ReportCommentBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: CreateCommentReportRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: CreateCommentReportRequest}, TContext> => {
 
 const mutationKey = ['reportComment'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -137,7 +136,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reportComment>>, {commentId: number;data: ReportCommentBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reportComment>>, {commentId: number;data: CreateCommentReportRequest}> = (props) => {
           const {commentId,data} = props ?? {};
 
           return  reportComment(commentId,data,requestOptions)
@@ -151,18 +150,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReportCommentMutationResult = NonNullable<Awaited<ReturnType<typeof reportComment>>>
-    export type ReportCommentMutationBody = ReportCommentBody
+    export type ReportCommentMutationBody = CreateCommentReportRequest
     export type ReportCommentMutationError = void
 
     /**
  * @summary 댓글 신고
  */
 export const useReportComment = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: ReportCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: CreateCommentReportRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof reportComment>>,
         TError,
-        {commentId: number;data: ReportCommentBody},
+        {commentId: number;data: CreateCommentReportRequest},
         TContext
       > => {
       return useMutation(getReportCommentMutationOptions(options), queryClient);
@@ -214,7 +213,7 @@ export const getUpdateReportStatusUrl = (reportId: number,) => {
 }
 
 export const updateReportStatus = async (reportId: number,
-    updateReportStatusBody: UpdateReportStatusBody, options?: RequestInit): Promise<updateReportStatusResponse> => {
+    updateReportStatusRequest: UpdateReportStatusRequest, options?: RequestInit): Promise<updateReportStatusResponse> => {
   
   return customFetch<updateReportStatusResponse>(getUpdateReportStatusUrl(reportId),
   {      
@@ -222,7 +221,7 @@ export const updateReportStatus = async (reportId: number,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      updateReportStatusBody,)
+      updateReportStatusRequest,)
   }
 );}
 
@@ -230,8 +229,8 @@ export const updateReportStatus = async (reportId: number,
 
 
 export const getUpdateReportStatusMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReportStatus>>, TError,{reportId: number;data: UpdateReportStatusBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateReportStatus>>, TError,{reportId: number;data: UpdateReportStatusBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReportStatus>>, TError,{reportId: number;data: UpdateReportStatusRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateReportStatus>>, TError,{reportId: number;data: UpdateReportStatusRequest}, TContext> => {
 
 const mutationKey = ['updateReportStatus'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -243,7 +242,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateReportStatus>>, {reportId: number;data: UpdateReportStatusBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateReportStatus>>, {reportId: number;data: UpdateReportStatusRequest}> = (props) => {
           const {reportId,data} = props ?? {};
 
           return  updateReportStatus(reportId,data,requestOptions)
@@ -257,18 +256,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateReportStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateReportStatus>>>
-    export type UpdateReportStatusMutationBody = UpdateReportStatusBody
+    export type UpdateReportStatusMutationBody = UpdateReportStatusRequest
     export type UpdateReportStatusMutationError = void
 
     /**
  * @summary 신고 처리 (관리자)
  */
 export const useUpdateReportStatus = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReportStatus>>, TError,{reportId: number;data: UpdateReportStatusBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReportStatus>>, TError,{reportId: number;data: UpdateReportStatusRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateReportStatus>>,
         TError,
-        {reportId: number;data: UpdateReportStatusBody},
+        {reportId: number;data: UpdateReportStatusRequest},
         TContext
       > => {
       return useMutation(getUpdateReportStatusMutationOptions(options), queryClient);
@@ -278,7 +277,7 @@ export const useUpdateReportStatus = <TError = void,
  * @summary 신고 목록 조회 (관리자)
  */
 export type getPendingReportsResponse200 = {
-  data: GetPendingReports200Item[]
+  data: CommentReportResponse[]
   status: 200
 }
 
