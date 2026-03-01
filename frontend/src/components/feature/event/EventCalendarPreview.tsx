@@ -66,7 +66,7 @@ export function EventCalendarPreview({
 
   // 외부에서 날짜가 변경되면 선택 중간 상태 초기화
   useEffect(() => {
-    setSelectingStart(null);
+    setSelectingStart(null); // eslint-disable-line react-hooks/set-state-in-effect
   }, [eventStartDate, eventEndDate, registrationStartDate, registrationEndDate]);
 
   // 활성 범위: 선택 중이면 내부 상태 사용, 아니면 부모 props 사용

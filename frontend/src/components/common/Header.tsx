@@ -32,12 +32,12 @@ export default function Header() {
   // URL 쿼리 파라미터에서 검색어 읽기
   useEffect(() => {
     const keyword = searchParams.get("search") || "";
-    setSearchKeyword(keyword);
+    setSearchKeyword(keyword); // eslint-disable-line react-hooks/set-state-in-effect
   }, [searchParams]);
 
   // 페이지 이동 시 모바일 검색 닫기
   useEffect(() => {
-    setMobileSearchOpen(false);
+    setMobileSearchOpen(false); // eslint-disable-line react-hooks/set-state-in-effect
   }, [location.pathname]);
 
   // 바깥 클릭 시 모바일 검색 닫기

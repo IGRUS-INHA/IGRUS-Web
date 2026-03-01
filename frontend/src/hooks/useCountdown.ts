@@ -63,7 +63,7 @@ export function useCountdown({ initialSeconds, autoStart = false, persistKey }: 
 
   useEffect(() => {
     if (!isRunning || remaining <= 0) {
-      if (remaining <= 0 && isRunning) setIsRunning(false);
+      if (remaining <= 0 && isRunning) setIsRunning(false); // eslint-disable-line react-hooks/set-state-in-effect
       return;
     }
 

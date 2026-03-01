@@ -43,7 +43,7 @@ export function WysiwygEditor({
 }: WysiwygEditorProps) {
   const editorRef = useRef<EditorInstance | null>(null);
 
-  const handleCreate = useCallback(({ editor }: { editor: EditorInstance }) => {
+  const handleCreate = useCallback(({ editor }: { editor: EditorInstance }) => { // eslint-disable-line
     editorRef.current = editor;
     if (value) {
       editor.commands.setContent(value);

@@ -225,7 +225,7 @@ export default function UsersTab() {
                     className="group cursor-pointer hover:bg-muted/20"
                     onClick={() => setExpandedUserIds((prev) => {
                       const next = new Set(prev);
-                      isExpanded ? next.delete(u.userId!) : next.add(u.userId!);
+                      if (isExpanded) { next.delete(u.userId!); } else { next.add(u.userId!); }
                       return next;
                     })}
                   >

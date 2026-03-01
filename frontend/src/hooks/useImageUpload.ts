@@ -31,7 +31,10 @@ export function useImageUpload(
   } = options;
   const [files, setFiles] = useState<UploadFile[]>([]);
   const filesRef = useRef<UploadFile[]>([]);
-  filesRef.current = files;
+
+  useEffect(() => {
+    filesRef.current = files;
+  }, [files]);
 
   // Blob URL cleanup on unmount
   useEffect(() => {
