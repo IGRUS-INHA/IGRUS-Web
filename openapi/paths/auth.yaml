@@ -22,6 +22,7 @@ authPasswordSignup:
         description: 잘못된 요청 (유효성 검증 실패)
       '409':
         description: 중복된 학번, 이메일 또는 전화번호
+    security: []
 authPasswordSignupTemporary:
   post:
     tags:
@@ -46,6 +47,7 @@ authPasswordSignupTemporary:
         description: 잘못된 요청 (유효성 검증 실패, 1~2월이 아닌 경우, 1학년이 아닌 경우)
       '409':
         description: 중복된 이메일 또는 전화번호
+    security: []
 authPasswordResetRequest:
   post:
     tags:
@@ -64,6 +66,7 @@ authPasswordResetRequest:
         description: 요청 처리 완료 (이메일이 등록된 경우 재설정 링크 발송)
       '400':
         description: 잘못된 요청 (학번 형식 오류)
+    security: []
 authPasswordResetConfirm:
   post:
     tags:
@@ -82,6 +85,7 @@ authPasswordResetConfirm:
         description: 비밀번호 재설정 성공
       '400':
         description: 잘못된 요청 (유효성 검증 실패) 또는 유효하지 않은/만료된 토큰
+    security: []
 authPasswordRefresh:
   post:
     tags:
@@ -100,6 +104,7 @@ authPasswordRefresh:
         description: 잘못된 요청 (유효성 검증 실패)
       '401':
         description: 유효하지 않거나 만료된 리프레시 토큰, 또는 토큰 탈취 감지
+    security: []
 authPasswordPreSignupVerifyCode:
   post:
     tags:
@@ -124,6 +129,7 @@ authPasswordPreSignupVerifyCode:
         description: 잘못된 인증 코드 또는 만료된 코드
       '429':
         description: 인증 시도 횟수 초과
+    security: []
 authPasswordPreSignupSendCode:
   post:
     tags:
@@ -148,6 +154,7 @@ authPasswordPreSignupSendCode:
         description: 이미 가입된 이메일
       '429':
         description: 재발송 요청 횟수 초과 (1분 내 재요청 불가)
+    security: []
 authPasswordLogout:
   post:
     tags:
@@ -162,6 +169,7 @@ authPasswordLogout:
         description: 잘못된 요청 (유효성 검증 실패)
       '401':
         description: 유효하지 않은 리프레시 토큰
+    security: []
 authPasswordLogin:
   post:
     tags:
@@ -188,6 +196,7 @@ authPasswordLogin:
         description: 인증 실패 (학번 또는 비밀번호 불일치)
       '403':
         description: 이메일 인증 미완료
+    security: []
 authPasswordAccountRecover:
   post:
     tags:
@@ -212,6 +221,7 @@ authPasswordAccountRecover:
         description: 잘못된 요청 (유효성 검증 실패) 또는 복구 기간 만료
       '401':
         description: 인증 실패 (학번 또는 비밀번호 불일치)
+    security: []
 authPasswordResetValidate:
   get:
     tags:
@@ -231,6 +241,7 @@ authPasswordResetValidate:
         description: 토큰 유효
       '400':
         description: 유효하지 않거나 만료된 토큰
+    security: []
 authPasswordCheckStudentId:
   get:
     tags:
@@ -257,6 +268,7 @@ authPasswordCheckStudentId:
         description: 학번 형식 오류 (8자리 숫자가 아님)
       '409':
         description: 이미 가입된 학번
+    security: []
 authPasswordCheckPhoneNumber:
   get:
     tags:
@@ -283,6 +295,7 @@ authPasswordCheckPhoneNumber:
         description: 전화번호 형식 오류 (XXX-XXXX-XXXX 형식이 아님)
       '409':
         description: 이미 등록된 전화번호
+    security: []
 authPasswordCheckEmail:
   get:
     tags:
@@ -309,6 +322,7 @@ authPasswordCheckEmail:
         description: 이메일 형식 오류
       '409':
         description: 이미 존재하는 이메일
+    security: []
 authPasswordAccountReregistrationCheck:
   get:
     tags:
@@ -334,6 +348,7 @@ authPasswordAccountReregistrationCheck:
               $ref: ../schemas/auth.yaml#/ReRegistrationCheckResult
       '400':
         description: 잘못된 요청 (학번 형식 오류)
+    security: []
 authPasswordAccountRecoveryCheck:
   get:
     tags:
@@ -359,3 +374,4 @@ authPasswordAccountRecoveryCheck:
               $ref: ../schemas/auth.yaml#/RecoveryEligibilityResponse
       '400':
         description: 잘못된 요청 (학번 형식 오류)
+    security: []

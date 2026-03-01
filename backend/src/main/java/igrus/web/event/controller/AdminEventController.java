@@ -1,6 +1,5 @@
 package igrus.web.event.controller;
 
-import igrus.web.common.config.SwaggerConfig;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
@@ -30,7 +29,7 @@ import java.util.List;
  * OPERATOR 이상 권한이 필요합니다.
  */
 @Tag(name = "Admin Event", description = "관리자 행사 관리 API")
-@SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+@SecurityRequirement(name = "BearerAuthentication")
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/admin/events")

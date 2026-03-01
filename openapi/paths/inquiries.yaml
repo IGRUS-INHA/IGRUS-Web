@@ -189,6 +189,7 @@ inquiriesLookup:
         description: 비밀번호 불일치
       '404':
         description: 문의를 찾을 수 없음
+    security: []
 inquiriesGuest:
   post:
     tags:
@@ -211,6 +212,7 @@ inquiriesGuest:
               $ref: ../schemas/inquiries.yaml#/InquiryCreateResponse
       '400':
         description: 잘못된 요청 (유효성 검증 실패)
+    security: []
 inquiries:
   get:
     tags:

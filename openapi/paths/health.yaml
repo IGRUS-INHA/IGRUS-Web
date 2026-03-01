@@ -13,3 +13,4 @@ health:
             schema:
               type: object
               additionalProperties: {}
+    security: []
