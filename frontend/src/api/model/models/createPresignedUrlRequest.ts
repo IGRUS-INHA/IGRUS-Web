@@ -36,8 +36,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 export interface CreatePresignedUrlRequest {
   /**
-   * @minLength 0
+   * @minLength 1
    * @maxLength 255
+   * @pattern .*\S.*
    */
   fileName: string;
   /** @minLength 1 */

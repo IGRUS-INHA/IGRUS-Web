@@ -53,10 +53,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetBookmarkStatus200,
-  GetMyBookmarks200,
-  GetMyBookmarksParams,
-  ToggleBookmark200
+  BookmarkStatusResponse,
+  BookmarkToggleResponse,
+  BookmarkedPostPageResponse,
+  GetMyBookmarksParams
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -71,7 +71,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 북마크 토글
  */
 export type toggleBookmarkResponse200 = {
-  data: ToggleBookmark200
+  data: BookmarkToggleResponse
   status: 200
 }
 
@@ -175,7 +175,7 @@ export const useToggleBookmark = <TError = void,
  * @summary 내 북마크 목록 조회
  */
 export type getMyBookmarksResponse200 = {
-  data: GetMyBookmarks200
+  data: BookmarkedPostPageResponse
   status: 200
 }
 
@@ -300,7 +300,7 @@ export function useGetMyBookmarks<TData = Awaited<ReturnType<typeof getMyBookmar
  * @summary 북마크 상태 조회
  */
 export type getBookmarkStatusResponse200 = {
-  data: GetBookmarkStatus200
+  data: BookmarkStatusResponse
   status: 200
 }
 

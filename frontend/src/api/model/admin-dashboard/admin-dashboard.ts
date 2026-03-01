@@ -49,7 +49,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetDashboardStats200
+  DashboardStatsResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -64,7 +64,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 대시보드 통계 조회
  */
 export type getDashboardStatsResponse200 = {
-  data: GetDashboardStats200
+  data: DashboardStatsResponse
   status: 200
 }
 

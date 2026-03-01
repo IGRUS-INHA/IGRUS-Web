@@ -53,32 +53,29 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CheckEmailDuplicate200,
+  AccountRecoveryRequest,
+  AccountRecoveryResponse,
   CheckEmailDuplicateParams,
-  CheckPhoneNumberDuplicate200,
   CheckPhoneNumberDuplicateParams,
-  CheckReRegistrationEligibility200,
   CheckReRegistrationEligibilityParams,
-  CheckRecoveryEligibility200,
   CheckRecoveryEligibilityParams,
-  CheckStudentIdDuplicate200,
   CheckStudentIdDuplicateParams,
-  ConfirmPasswordResetBody,
-  Login200,
-  LoginBody,
-  RecoverAccount200,
-  RecoverAccountBody,
-  RefreshToken200,
-  RequestPasswordResetBody,
-  SendPreSignupCode200,
-  SendPreSignupCodeBody,
-  Signup201,
-  SignupBody,
-  SignupWithTemporaryStudentId201,
-  SignupWithTemporaryStudentIdBody,
+  DuplicateCheckResponse,
+  EmailVerificationRequest,
+  PasswordLoginRequest,
+  PasswordLoginResponse,
+  PasswordResetConfirmRequest,
+  PasswordResetRequest,
+  PasswordSignupRequest,
+  PasswordSignupResponse,
+  PreSignupVerificationResponse,
+  ReRegistrationCheckResult,
+  RecoveryEligibilityResponse,
+  ResendVerificationRequest,
+  TemporaryStudentIdSignupRequest,
+  TokenRefreshResponse,
   ValidateResetTokenParams,
-  VerifyPreSignupCode200,
-  VerifyPreSignupCodeBody
+  VerificationResendResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -93,7 +90,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 회원가입
  */
 export type signupResponse201 = {
-  data: Signup201
+  data: PasswordSignupResponse
   status: 201
 }
 
@@ -124,7 +121,7 @@ export const getSignupUrl = () => {
   return `/api/v1/auth/password/signup`
 }
 
-export const signup = async (signupBody: SignupBody, options?: RequestInit): Promise<signupResponse> => {
+export const signup = async (passwordSignupRequest: PasswordSignupRequest, options?: RequestInit): Promise<signupResponse> => {
   
   return customFetch<signupResponse>(getSignupUrl(),
   {      
@@ -132,7 +129,7 @@ export const signup = async (signupBody: SignupBody, options?: RequestInit): Pro
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      signupBody,)
+      passwordSignupRequest,)
   }
 );}
 
@@ -140,8 +137,8 @@ export const signup = async (signupBody: SignupBody, options?: RequestInit): Pro
 
 
 export const getSignupMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: SignupBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: SignupBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: PasswordSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: PasswordSignupRequest}, TContext> => {
 
 const mutationKey = ['signup'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -153,7 +150,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signup>>, {data: SignupBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signup>>, {data: PasswordSignupRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  signup(data,requestOptions)
@@ -167,18 +164,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SignupMutationResult = NonNullable<Awaited<ReturnType<typeof signup>>>
-    export type SignupMutationBody = SignupBody
+    export type SignupMutationBody = PasswordSignupRequest
     export type SignupMutationError = void
 
     /**
  * @summary 회원가입
  */
 export const useSignup = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: SignupBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: PasswordSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof signup>>,
         TError,
-        {data: SignupBody},
+        {data: PasswordSignupRequest},
         TContext
       > => {
       return useMutation(getSignupMutationOptions(options), queryClient);
@@ -188,7 +185,7 @@ export const useSignup = <TError = void,
  * @summary 임시 학번 회원가입
  */
 export type signupWithTemporaryStudentIdResponse201 = {
-  data: SignupWithTemporaryStudentId201
+  data: PasswordSignupResponse
   status: 201
 }
 
@@ -219,7 +216,7 @@ export const getSignupWithTemporaryStudentIdUrl = () => {
   return `/api/v1/auth/password/signup/temporary`
 }
 
-export const signupWithTemporaryStudentId = async (signupWithTemporaryStudentIdBody: SignupWithTemporaryStudentIdBody, options?: RequestInit): Promise<signupWithTemporaryStudentIdResponse> => {
+export const signupWithTemporaryStudentId = async (temporaryStudentIdSignupRequest: TemporaryStudentIdSignupRequest, options?: RequestInit): Promise<signupWithTemporaryStudentIdResponse> => {
   
   return customFetch<signupWithTemporaryStudentIdResponse>(getSignupWithTemporaryStudentIdUrl(),
   {      
@@ -227,7 +224,7 @@ export const signupWithTemporaryStudentId = async (signupWithTemporaryStudentIdB
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      signupWithTemporaryStudentIdBody,)
+      temporaryStudentIdSignupRequest,)
   }
 );}
 
@@ -235,8 +232,8 @@ export const signupWithTemporaryStudentId = async (signupWithTemporaryStudentIdB
 
 
 export const getSignupWithTemporaryStudentIdMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: SignupWithTemporaryStudentIdBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: SignupWithTemporaryStudentIdBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: TemporaryStudentIdSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: TemporaryStudentIdSignupRequest}, TContext> => {
 
 const mutationKey = ['signupWithTemporaryStudentId'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -248,7 +245,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, {data: SignupWithTemporaryStudentIdBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, {data: TemporaryStudentIdSignupRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  signupWithTemporaryStudentId(data,requestOptions)
@@ -262,18 +259,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SignupWithTemporaryStudentIdMutationResult = NonNullable<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>>
-    export type SignupWithTemporaryStudentIdMutationBody = SignupWithTemporaryStudentIdBody
+    export type SignupWithTemporaryStudentIdMutationBody = TemporaryStudentIdSignupRequest
     export type SignupWithTemporaryStudentIdMutationError = void
 
     /**
  * @summary 임시 학번 회원가입
  */
 export const useSignupWithTemporaryStudentId = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: SignupWithTemporaryStudentIdBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signupWithTemporaryStudentId>>, TError,{data: TemporaryStudentIdSignupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof signupWithTemporaryStudentId>>,
         TError,
-        {data: SignupWithTemporaryStudentIdBody},
+        {data: TemporaryStudentIdSignupRequest},
         TContext
       > => {
       return useMutation(getSignupWithTemporaryStudentIdMutationOptions(options), queryClient);
@@ -309,7 +306,7 @@ export const getRequestPasswordResetUrl = () => {
   return `/api/v1/auth/password/reset-request`
 }
 
-export const requestPasswordReset = async (requestPasswordResetBody: RequestPasswordResetBody, options?: RequestInit): Promise<requestPasswordResetResponse> => {
+export const requestPasswordReset = async (passwordResetRequest: PasswordResetRequest, options?: RequestInit): Promise<requestPasswordResetResponse> => {
   
   return customFetch<requestPasswordResetResponse>(getRequestPasswordResetUrl(),
   {      
@@ -317,7 +314,7 @@ export const requestPasswordReset = async (requestPasswordResetBody: RequestPass
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      requestPasswordResetBody,)
+      passwordResetRequest,)
   }
 );}
 
@@ -325,8 +322,8 @@ export const requestPasswordReset = async (requestPasswordResetBody: RequestPass
 
 
 export const getRequestPasswordResetMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: RequestPasswordResetBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: RequestPasswordResetBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: PasswordResetRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: PasswordResetRequest}, TContext> => {
 
 const mutationKey = ['requestPasswordReset'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -338,7 +335,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPasswordReset>>, {data: RequestPasswordResetBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPasswordReset>>, {data: PasswordResetRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  requestPasswordReset(data,requestOptions)
@@ -352,18 +349,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RequestPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof requestPasswordReset>>>
-    export type RequestPasswordResetMutationBody = RequestPasswordResetBody
+    export type RequestPasswordResetMutationBody = PasswordResetRequest
     export type RequestPasswordResetMutationError = void
 
     /**
  * @summary 비밀번호 재설정 요청
  */
 export const useRequestPasswordReset = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: RequestPasswordResetBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: PasswordResetRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof requestPasswordReset>>,
         TError,
-        {data: RequestPasswordResetBody},
+        {data: PasswordResetRequest},
         TContext
       > => {
       return useMutation(getRequestPasswordResetMutationOptions(options), queryClient);
@@ -399,7 +396,7 @@ export const getConfirmPasswordResetUrl = () => {
   return `/api/v1/auth/password/reset-confirm`
 }
 
-export const confirmPasswordReset = async (confirmPasswordResetBody: ConfirmPasswordResetBody, options?: RequestInit): Promise<confirmPasswordResetResponse> => {
+export const confirmPasswordReset = async (passwordResetConfirmRequest: PasswordResetConfirmRequest, options?: RequestInit): Promise<confirmPasswordResetResponse> => {
   
   return customFetch<confirmPasswordResetResponse>(getConfirmPasswordResetUrl(),
   {      
@@ -407,7 +404,7 @@ export const confirmPasswordReset = async (confirmPasswordResetBody: ConfirmPass
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      confirmPasswordResetBody,)
+      passwordResetConfirmRequest,)
   }
 );}
 
@@ -415,8 +412,8 @@ export const confirmPasswordReset = async (confirmPasswordResetBody: ConfirmPass
 
 
 export const getConfirmPasswordResetMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: ConfirmPasswordResetBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: ConfirmPasswordResetBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: PasswordResetConfirmRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: PasswordResetConfirmRequest}, TContext> => {
 
 const mutationKey = ['confirmPasswordReset'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -428,7 +425,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmPasswordReset>>, {data: ConfirmPasswordResetBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmPasswordReset>>, {data: PasswordResetConfirmRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  confirmPasswordReset(data,requestOptions)
@@ -442,18 +439,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ConfirmPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof confirmPasswordReset>>>
-    export type ConfirmPasswordResetMutationBody = ConfirmPasswordResetBody
+    export type ConfirmPasswordResetMutationBody = PasswordResetConfirmRequest
     export type ConfirmPasswordResetMutationError = void
 
     /**
  * @summary 비밀번호 재설정 확인
  */
 export const useConfirmPasswordReset = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: ConfirmPasswordResetBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: PasswordResetConfirmRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof confirmPasswordReset>>,
         TError,
-        {data: ConfirmPasswordResetBody},
+        {data: PasswordResetConfirmRequest},
         TContext
       > => {
       return useMutation(getConfirmPasswordResetMutationOptions(options), queryClient);
@@ -463,7 +460,7 @@ export const useConfirmPasswordReset = <TError = void,
  * @summary 토큰 갱신
  */
 export type refreshTokenResponse200 = {
-  data: RefreshToken200
+  data: TokenRefreshResponse
   status: 200
 }
 
@@ -557,7 +554,7 @@ export const useRefreshToken = <TError = void,
  * @summary 사전 이메일 인증 코드 확인
  */
 export type verifyPreSignupCodeResponse200 = {
-  data: VerifyPreSignupCode200
+  data: PreSignupVerificationResponse
   status: 200
 }
 
@@ -588,7 +585,7 @@ export const getVerifyPreSignupCodeUrl = () => {
   return `/api/v1/auth/password/pre-signup/verify-code`
 }
 
-export const verifyPreSignupCode = async (verifyPreSignupCodeBody: VerifyPreSignupCodeBody, options?: RequestInit): Promise<verifyPreSignupCodeResponse> => {
+export const verifyPreSignupCode = async (emailVerificationRequest: EmailVerificationRequest, options?: RequestInit): Promise<verifyPreSignupCodeResponse> => {
   
   return customFetch<verifyPreSignupCodeResponse>(getVerifyPreSignupCodeUrl(),
   {      
@@ -596,7 +593,7 @@ export const verifyPreSignupCode = async (verifyPreSignupCodeBody: VerifyPreSign
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      verifyPreSignupCodeBody,)
+      emailVerificationRequest,)
   }
 );}
 
@@ -604,8 +601,8 @@ export const verifyPreSignupCode = async (verifyPreSignupCodeBody: VerifyPreSign
 
 
 export const getVerifyPreSignupCodeMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: VerifyPreSignupCodeBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: VerifyPreSignupCodeBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: EmailVerificationRequest}, TContext> => {
 
 const mutationKey = ['verifyPreSignupCode'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -617,7 +614,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyPreSignupCode>>, {data: VerifyPreSignupCodeBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyPreSignupCode>>, {data: EmailVerificationRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  verifyPreSignupCode(data,requestOptions)
@@ -631,18 +628,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type VerifyPreSignupCodeMutationResult = NonNullable<Awaited<ReturnType<typeof verifyPreSignupCode>>>
-    export type VerifyPreSignupCodeMutationBody = VerifyPreSignupCodeBody
+    export type VerifyPreSignupCodeMutationBody = EmailVerificationRequest
     export type VerifyPreSignupCodeMutationError = void
 
     /**
  * @summary 사전 이메일 인증 코드 확인
  */
 export const useVerifyPreSignupCode = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: VerifyPreSignupCodeBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyPreSignupCode>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof verifyPreSignupCode>>,
         TError,
-        {data: VerifyPreSignupCodeBody},
+        {data: EmailVerificationRequest},
         TContext
       > => {
       return useMutation(getVerifyPreSignupCodeMutationOptions(options), queryClient);
@@ -652,7 +649,7 @@ export const useVerifyPreSignupCode = <TError = void,
  * @summary 사전 이메일 인증 코드 발송
  */
 export type sendPreSignupCodeResponse200 = {
-  data: SendPreSignupCode200
+  data: VerificationResendResponse
   status: 200
 }
 
@@ -683,7 +680,7 @@ export const getSendPreSignupCodeUrl = () => {
   return `/api/v1/auth/password/pre-signup/send-code`
 }
 
-export const sendPreSignupCode = async (sendPreSignupCodeBody: SendPreSignupCodeBody, options?: RequestInit): Promise<sendPreSignupCodeResponse> => {
+export const sendPreSignupCode = async (resendVerificationRequest: ResendVerificationRequest, options?: RequestInit): Promise<sendPreSignupCodeResponse> => {
   
   return customFetch<sendPreSignupCodeResponse>(getSendPreSignupCodeUrl(),
   {      
@@ -691,7 +688,7 @@ export const sendPreSignupCode = async (sendPreSignupCodeBody: SendPreSignupCode
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      sendPreSignupCodeBody,)
+      resendVerificationRequest,)
   }
 );}
 
@@ -699,8 +696,8 @@ export const sendPreSignupCode = async (sendPreSignupCodeBody: SendPreSignupCode
 
 
 export const getSendPreSignupCodeMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: SendPreSignupCodeBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: SendPreSignupCodeBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: ResendVerificationRequest}, TContext> => {
 
 const mutationKey = ['sendPreSignupCode'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -712,7 +709,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendPreSignupCode>>, {data: SendPreSignupCodeBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendPreSignupCode>>, {data: ResendVerificationRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  sendPreSignupCode(data,requestOptions)
@@ -726,18 +723,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SendPreSignupCodeMutationResult = NonNullable<Awaited<ReturnType<typeof sendPreSignupCode>>>
-    export type SendPreSignupCodeMutationBody = SendPreSignupCodeBody
+    export type SendPreSignupCodeMutationBody = ResendVerificationRequest
     export type SendPreSignupCodeMutationError = void
 
     /**
  * @summary 사전 이메일 인증 코드 발송
  */
 export const useSendPreSignupCode = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: SendPreSignupCodeBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPreSignupCode>>, TError,{data: ResendVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof sendPreSignupCode>>,
         TError,
-        {data: SendPreSignupCodeBody},
+        {data: ResendVerificationRequest},
         TContext
       > => {
       return useMutation(getSendPreSignupCodeMutationOptions(options), queryClient);
@@ -841,7 +838,7 @@ export const useLogout = <TError = void,
  * @summary 로그인
  */
 export type loginResponse200 = {
-  data: Login200
+  data: PasswordLoginResponse
   status: 200
 }
 
@@ -877,7 +874,7 @@ export const getLoginUrl = () => {
   return `/api/v1/auth/password/login`
 }
 
-export const login = async (loginBody: LoginBody, options?: RequestInit): Promise<loginResponse> => {
+export const login = async (passwordLoginRequest: PasswordLoginRequest, options?: RequestInit): Promise<loginResponse> => {
   
   return customFetch<loginResponse>(getLoginUrl(),
   {      
@@ -885,7 +882,7 @@ export const login = async (loginBody: LoginBody, options?: RequestInit): Promis
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      loginBody,)
+      passwordLoginRequest,)
   }
 );}
 
@@ -893,8 +890,8 @@ export const login = async (loginBody: LoginBody, options?: RequestInit): Promis
 
 
 export const getLoginMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PasswordLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PasswordLoginRequest}, TContext> => {
 
 const mutationKey = ['login'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -906,7 +903,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: LoginBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: PasswordLoginRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  login(data,requestOptions)
@@ -920,18 +917,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
-    export type LoginMutationBody = LoginBody
+    export type LoginMutationBody = PasswordLoginRequest
     export type LoginMutationError = void
 
     /**
  * @summary 로그인
  */
 export const useLogin = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: LoginBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: PasswordLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof login>>,
         TError,
-        {data: LoginBody},
+        {data: PasswordLoginRequest},
         TContext
       > => {
       return useMutation(getLoginMutationOptions(options), queryClient);
@@ -941,7 +938,7 @@ export const useLogin = <TError = void,
  * @summary 계정 복구
  */
 export type recoverAccountResponse200 = {
-  data: RecoverAccount200
+  data: AccountRecoveryResponse
   status: 200
 }
 
@@ -972,7 +969,7 @@ export const getRecoverAccountUrl = () => {
   return `/api/v1/auth/password/account/recover`
 }
 
-export const recoverAccount = async (recoverAccountBody: RecoverAccountBody, options?: RequestInit): Promise<recoverAccountResponse> => {
+export const recoverAccount = async (accountRecoveryRequest: AccountRecoveryRequest, options?: RequestInit): Promise<recoverAccountResponse> => {
   
   return customFetch<recoverAccountResponse>(getRecoverAccountUrl(),
   {      
@@ -980,7 +977,7 @@ export const recoverAccount = async (recoverAccountBody: RecoverAccountBody, opt
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      recoverAccountBody,)
+      accountRecoveryRequest,)
   }
 );}
 
@@ -988,8 +985,8 @@ export const recoverAccount = async (recoverAccountBody: RecoverAccountBody, opt
 
 
 export const getRecoverAccountMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: RecoverAccountBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: RecoverAccountBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: AccountRecoveryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: AccountRecoveryRequest}, TContext> => {
 
 const mutationKey = ['recoverAccount'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1001,7 +998,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recoverAccount>>, {data: RecoverAccountBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recoverAccount>>, {data: AccountRecoveryRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  recoverAccount(data,requestOptions)
@@ -1015,18 +1012,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RecoverAccountMutationResult = NonNullable<Awaited<ReturnType<typeof recoverAccount>>>
-    export type RecoverAccountMutationBody = RecoverAccountBody
+    export type RecoverAccountMutationBody = AccountRecoveryRequest
     export type RecoverAccountMutationError = void
 
     /**
  * @summary 계정 복구
  */
 export const useRecoverAccount = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: RecoverAccountBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverAccount>>, TError,{data: AccountRecoveryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof recoverAccount>>,
         TError,
-        {data: RecoverAccountBody},
+        {data: AccountRecoveryRequest},
         TContext
       > => {
       return useMutation(getRecoverAccountMutationOptions(options), queryClient);
@@ -1161,7 +1158,7 @@ export function useValidateResetToken<TData = Awaited<ReturnType<typeof validate
  * @summary 학번 중복 체크
  */
 export type checkStudentIdDuplicateResponse200 = {
-  data: CheckStudentIdDuplicate200
+  data: DuplicateCheckResponse
   status: 200
 }
 
@@ -1291,7 +1288,7 @@ export function useCheckStudentIdDuplicate<TData = Awaited<ReturnType<typeof che
  * @summary 전화번호 중복 체크
  */
 export type checkPhoneNumberDuplicateResponse200 = {
-  data: CheckPhoneNumberDuplicate200
+  data: DuplicateCheckResponse
   status: 200
 }
 
@@ -1421,7 +1418,7 @@ export function useCheckPhoneNumberDuplicate<TData = Awaited<ReturnType<typeof c
  * @summary 이메일 중복 체크
  */
 export type checkEmailDuplicateResponse200 = {
-  data: CheckEmailDuplicate200
+  data: DuplicateCheckResponse
   status: 200
 }
 
@@ -1551,7 +1548,7 @@ export function useCheckEmailDuplicate<TData = Awaited<ReturnType<typeof checkEm
  * @summary 재가입 가능 여부 확인
  */
 export type checkReRegistrationEligibilityResponse200 = {
-  data: CheckReRegistrationEligibility200
+  data: ReRegistrationCheckResult
   status: 200
 }
 
@@ -1676,7 +1673,7 @@ export function useCheckReRegistrationEligibility<TData = Awaited<ReturnType<typ
  * @summary 계정 복구 가능 여부 확인
  */
 export type checkRecoveryEligibilityResponse200 = {
-  data: CheckRecoveryEligibility200
+  data: RecoveryEligibilityResponse
   status: 200
 }
 

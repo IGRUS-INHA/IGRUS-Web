@@ -53,13 +53,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  ConfirmUpload200,
-  ConfirmUploadBody,
-  CreateDownloadUrl200,
+  ConfirmUploadRequest,
+  ConfirmUploadResponse,
   CreateDownloadUrlParams,
-  CreateUploadUrl200,
-  CreateUploadUrlBody,
-  DeleteFileParams
+  CreatePresignedUrlRequest,
+  CreatePresignedUrlResponse,
+  DeleteFileParams,
+  DownloadUrlResponse
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -74,7 +74,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 업로드용 Presigned URL 생성
  */
 export type createUploadUrlResponse200 = {
-  data: CreateUploadUrl200
+  data: CreatePresignedUrlResponse
   status: 200
 }
 
@@ -110,7 +110,7 @@ export const getCreateUploadUrlUrl = () => {
   return `/api/v1/storage/presigned-url`
 }
 
-export const createUploadUrl = async (createUploadUrlBody: CreateUploadUrlBody, options?: RequestInit): Promise<createUploadUrlResponse> => {
+export const createUploadUrl = async (createPresignedUrlRequest: CreatePresignedUrlRequest, options?: RequestInit): Promise<createUploadUrlResponse> => {
   
   return customFetch<createUploadUrlResponse>(getCreateUploadUrlUrl(),
   {      
@@ -118,7 +118,7 @@ export const createUploadUrl = async (createUploadUrlBody: CreateUploadUrlBody, 
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createUploadUrlBody,)
+      createPresignedUrlRequest,)
   }
 );}
 
@@ -126,8 +126,8 @@ export const createUploadUrl = async (createUploadUrlBody: CreateUploadUrlBody, 
 
 
 export const getCreateUploadUrlMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreateUploadUrlBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreateUploadUrlBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreatePresignedUrlRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreatePresignedUrlRequest}, TContext> => {
 
 const mutationKey = ['createUploadUrl'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -139,7 +139,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUploadUrl>>, {data: CreateUploadUrlBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUploadUrl>>, {data: CreatePresignedUrlRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  createUploadUrl(data,requestOptions)
@@ -153,18 +153,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateUploadUrlMutationResult = NonNullable<Awaited<ReturnType<typeof createUploadUrl>>>
-    export type CreateUploadUrlMutationBody = CreateUploadUrlBody
+    export type CreateUploadUrlMutationBody = CreatePresignedUrlRequest
     export type CreateUploadUrlMutationError = void
 
     /**
  * @summary 업로드용 Presigned URL 생성
  */
 export const useCreateUploadUrl = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreateUploadUrlBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreatePresignedUrlRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createUploadUrl>>,
         TError,
-        {data: CreateUploadUrlBody},
+        {data: CreatePresignedUrlRequest},
         TContext
       > => {
       return useMutation(getCreateUploadUrlMutationOptions(options), queryClient);
@@ -174,7 +174,7 @@ export const useCreateUploadUrl = <TError = void,
  * @summary 업로드 완료 확인
  */
 export type confirmUploadResponse200 = {
-  data: ConfirmUpload200
+  data: ConfirmUploadResponse
   status: 200
 }
 
@@ -215,7 +215,7 @@ export const getConfirmUploadUrl = () => {
   return `/api/v1/storage/confirm`
 }
 
-export const confirmUpload = async (confirmUploadBody: ConfirmUploadBody, options?: RequestInit): Promise<confirmUploadResponse> => {
+export const confirmUpload = async (confirmUploadRequest: ConfirmUploadRequest, options?: RequestInit): Promise<confirmUploadResponse> => {
   
   return customFetch<confirmUploadResponse>(getConfirmUploadUrl(),
   {      
@@ -223,7 +223,7 @@ export const confirmUpload = async (confirmUploadBody: ConfirmUploadBody, option
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      confirmUploadBody,)
+      confirmUploadRequest,)
   }
 );}
 
@@ -231,8 +231,8 @@ export const confirmUpload = async (confirmUploadBody: ConfirmUploadBody, option
 
 
 export const getConfirmUploadMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadRequest}, TContext> => {
 
 const mutationKey = ['confirmUpload'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -244,7 +244,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmUpload>>, {data: ConfirmUploadBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmUpload>>, {data: ConfirmUploadRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  confirmUpload(data,requestOptions)
@@ -258,18 +258,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ConfirmUploadMutationResult = NonNullable<Awaited<ReturnType<typeof confirmUpload>>>
-    export type ConfirmUploadMutationBody = ConfirmUploadBody
+    export type ConfirmUploadMutationBody = ConfirmUploadRequest
     export type ConfirmUploadMutationError = void
 
     /**
  * @summary 업로드 완료 확인
  */
 export const useConfirmUpload = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof confirmUpload>>,
         TError,
-        {data: ConfirmUploadBody},
+        {data: ConfirmUploadRequest},
         TContext
       > => {
       return useMutation(getConfirmUploadMutationOptions(options), queryClient);
@@ -279,7 +279,7 @@ export const useConfirmUpload = <TError = void,
  * @summary 다운로드용 Presigned URL 생성
  */
 export type createDownloadUrlResponse200 = {
-  data: CreateDownloadUrl200
+  data: DownloadUrlResponse
   status: 200
 }
 

@@ -53,11 +53,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CreateComment201,
-  CreateCommentBody,
-  CreateReply1201,
-  CreateReply1Body,
-  GetComments200
+  CommentListResponse,
+  CommentResponse,
+  CreateCommentRequest
 } from '.././models';
 
 import { customFetch } from '../../client';
@@ -72,7 +70,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 댓글 목록 조회
  */
 export type getCommentsResponse200 = {
-  data: GetComments200
+  data: CommentListResponse
   status: 200
 }
 
@@ -190,7 +188,7 @@ export function useGetComments<TData = Awaited<ReturnType<typeof getComments>>, 
  * @summary 댓글 작성
  */
 export type createCommentResponse201 = {
-  data: CreateComment201
+  data: CommentResponse
   status: 201
 }
 
@@ -232,7 +230,7 @@ export const getCreateCommentUrl = (postId: number,) => {
 }
 
 export const createComment = async (postId: number,
-    createCommentBody: CreateCommentBody, options?: RequestInit): Promise<createCommentResponse> => {
+    createCommentRequest: CreateCommentRequest, options?: RequestInit): Promise<createCommentResponse> => {
   
   return customFetch<createCommentResponse>(getCreateCommentUrl(postId),
   {      
@@ -240,7 +238,7 @@ export const createComment = async (postId: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createCommentBody,)
+      createCommentRequest,)
   }
 );}
 
@@ -248,8 +246,8 @@ export const createComment = async (postId: number,
 
 
 export const getCreateCommentMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentBody}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentRequest}, TContext> => {
 
 const mutationKey = ['createComment'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -261,7 +259,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createComment>>, {postId: number;data: CreateCommentBody}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createComment>>, {postId: number;data: CreateCommentRequest}> = (props) => {
           const {postId,data} = props ?? {};
 
           return  createComment(postId,data,requestOptions)
@@ -275,18 +273,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateCommentMutationResult = NonNullable<Awaited<ReturnType<typeof createComment>>>
-    export type CreateCommentMutationBody = CreateCommentBody
+    export type CreateCommentMutationBody = CreateCommentRequest
     export type CreateCommentMutationError = void
 
     /**
  * @summary 댓글 작성
  */
 export const useCreateComment = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComment>>, TError,{postId: number;data: CreateCommentRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createComment>>,
         TError,
-        {postId: number;data: CreateCommentBody},
+        {postId: number;data: CreateCommentRequest},
         TContext
       > => {
       return useMutation(getCreateCommentMutationOptions(options), queryClient);
@@ -296,7 +294,7 @@ export const useCreateComment = <TError = void,
  * @summary 대댓글 작성
  */
 export type createReply1Response201 = {
-  data: CreateReply1201
+  data: CommentResponse
   status: 201
 }
 
@@ -340,7 +338,7 @@ export const getCreateReply1Url = (postId: number,
 
 export const createReply1 = async (postId: number,
     commentId: number,
-    createReply1Body: CreateReply1Body, options?: RequestInit): Promise<createReply1Response> => {
+    createCommentRequest: CreateCommentRequest, options?: RequestInit): Promise<createReply1Response> => {
   
   return customFetch<createReply1Response>(getCreateReply1Url(postId,commentId),
   {      
@@ -348,7 +346,7 @@ export const createReply1 = async (postId: number,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      createReply1Body,)
+      createCommentRequest,)
   }
 );}
 
@@ -356,8 +354,8 @@ export const createReply1 = async (postId: number,
 
 
 export const getCreateReply1MutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateReply1Body}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateReply1Body}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateCommentRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateCommentRequest}, TContext> => {
 
 const mutationKey = ['createReply1'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -369,7 +367,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createReply1>>, {postId: number;commentId: number;data: CreateReply1Body}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createReply1>>, {postId: number;commentId: number;data: CreateCommentRequest}> = (props) => {
           const {postId,commentId,data} = props ?? {};
 
           return  createReply1(postId,commentId,data,requestOptions)
@@ -383,18 +381,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateReply1MutationResult = NonNullable<Awaited<ReturnType<typeof createReply1>>>
-    export type CreateReply1MutationBody = CreateReply1Body
+    export type CreateReply1MutationBody = CreateCommentRequest
     export type CreateReply1MutationError = void
 
     /**
  * @summary 대댓글 작성
  */
 export const useCreateReply1 = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateReply1Body}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReply1>>, TError,{postId: number;commentId: number;data: CreateCommentRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createReply1>>,
         TError,
-        {postId: number;commentId: number;data: CreateReply1Body},
+        {postId: number;commentId: number;data: CreateCommentRequest},
         TContext
       > => {
       return useMutation(getCreateReply1MutationOptions(options), queryClient);
