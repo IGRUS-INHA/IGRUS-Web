@@ -1,26 +1,23 @@
 package igrus.web.survey.question.controller;
 
-import igrus.web.common.config.SwaggerConfig;
+import igrus.web.common.util.SecurityUtils;
+import igrus.web.generated.api.SurveyQuestionApi;
+import igrus.web.generated.model.GetSurveyDetail200Response;
+import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInner;
+import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInnerOptionsInner;
+import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInnerRowsInner;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
+import igrus.web.survey.dto.response.SurveyDetailResponse;
+import igrus.web.survey.question.domain.SurveyQuestionType;
 import igrus.web.survey.question.dto.request.CreateQuestionRequest;
 import igrus.web.survey.question.dto.request.UpdateQuestionRequest;
-import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.question.service.SurveyQuestionService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -28,89 +25,135 @@ import java.util.List;
  * 설문 질문 컨트롤러.
  * 설문 질문 CRUD API를 제공합니다.
  */
-@Tag(name = "Survey Question", description = "설문 질문 API")
-@SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/surveys/{surveyId}/questions")
 @RequiredArgsConstructor
-public class SurveyQuestionController {
+public class SurveyQuestionController implements SurveyQuestionApi {
 
     private final SurveyQuestionService surveyQuestionService;
 
-    @Operation(summary = "질문 추가", description = "설문에 새로운 질문을 추가합니다. 운영진 이상 권한 필요.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "질문 추가 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = SurveyDetailResponse.class))),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "설문을 찾을 수 없음")
-    })
-    @PostMapping
-    public ResponseEntity<SurveyDetailResponse> createQuestion(
-            @Parameter(description = "설문 ID") @PathVariable Long surveyId,
-            @Valid @RequestBody CreateQuestionRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetSurveyDetail200Response> createQuestion(
+            Long surveyId,
+            igrus.web.generated.model.CreateQuestionRequest createQuestionRequest
     ) {
-        log.info("질문 추가 요청 - surveyId: {}, userId: {}, title: {}", surveyId, user.userId(), request.title());
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("질문 추가 요청 - surveyId: {}, userId: {}, title: {}", surveyId, user.userId(), createQuestionRequest.getTitle());
+
+        CreateQuestionRequest request = new CreateQuestionRequest(
+                SurveyQuestionType.valueOf(createQuestionRequest.getQuestionType().name()),
+                createQuestionRequest.getTitle(),
+                createQuestionRequest.getDescription(),
+                Boolean.TRUE.equals(createQuestionRequest.getRequired()),
+                createQuestionRequest.getDisplayOrder() != null ? createQuestionRequest.getDisplayOrder() : 0
+        );
+
         SurveyDetailResponse response = surveyQuestionService.createQuestion(surveyId, request, user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapToSurveyDetailResponse(response));
     }
 
-    @Operation(summary = "질문 목록 조회", description = "설문의 질문 목록을 조회합니다. 운영진 이상 권한 필요.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "질문 목록 조회 성공", useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "설문을 찾을 수 없음")
-    })
-    @GetMapping
-    public ResponseEntity<List<SurveyDetailResponse.QuestionResponse>> getQuestionList(
-            @Parameter(description = "설문 ID") @PathVariable Long surveyId,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInner>> getQuestionList(Long surveyId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("질문 목록 조회 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
+
         List<SurveyDetailResponse.QuestionResponse> response = surveyQuestionService.getQuestionList(surveyId, user);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(response.stream()
+                .map(this::mapToQuestionInner)
+                .toList());
     }
 
-    @Operation(summary = "질문 수정", description = "질문을 수정합니다. 모든 공개·응답 상태에서 수정 가능합니다. 운영진 이상 권한 필요.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "질문 수정 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = SurveyDetailResponse.class))),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "질문을 찾을 수 없음")
-    })
-    @PatchMapping("/{questionId}")
-    public ResponseEntity<SurveyDetailResponse> updateQuestion(
-            @Parameter(description = "설문 ID") @PathVariable Long surveyId,
-            @Parameter(description = "질문 ID") @PathVariable Long questionId,
-            @Valid @RequestBody UpdateQuestionRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetSurveyDetail200Response> updateQuestion(
+            Long surveyId,
+            Long questionId,
+            igrus.web.generated.model.CreateQuestionRequest createQuestionRequest
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("질문 수정 요청 - surveyId: {}, questionId: {}, userId: {}", surveyId, questionId, user.userId());
+
+        UpdateQuestionRequest request = new UpdateQuestionRequest(
+                SurveyQuestionType.valueOf(createQuestionRequest.getQuestionType().name()),
+                createQuestionRequest.getTitle(),
+                createQuestionRequest.getDescription(),
+                Boolean.TRUE.equals(createQuestionRequest.getRequired()),
+                createQuestionRequest.getDisplayOrder() != null ? createQuestionRequest.getDisplayOrder() : 0
+        );
+
         SurveyDetailResponse response = surveyQuestionService.updateQuestion(surveyId, questionId, request, user);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(mapToSurveyDetailResponse(response));
     }
 
-    @Operation(summary = "질문 삭제", description = "질문을 삭제합니다. 모든 공개·응답 상태에서 삭제 가능합니다. 운영진 이상 권한 필요.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "질문 삭제 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "질문을 찾을 수 없음")
-    })
-    @DeleteMapping("/{questionId}")
-    public ResponseEntity<Void> deleteQuestion(
-            @Parameter(description = "설문 ID") @PathVariable Long surveyId,
-            @Parameter(description = "질문 ID") @PathVariable Long questionId,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteQuestion(Long surveyId, Long questionId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("질문 삭제 요청 - surveyId: {}, questionId: {}, userId: {}", surveyId, questionId, user.userId());
+
         surveyQuestionService.deleteQuestion(surveyId, questionId, user);
         return ResponseEntity.noContent().build();
+    }
+
+    // === Private helper methods ===
+
+    private GetSurveyDetail200Response mapToSurveyDetailResponse(SurveyDetailResponse response) {
+        return new GetSurveyDetail200Response()
+                .id(response.id())
+                .title(response.title())
+                .description(response.description())
+                .visibility(response.visibility() != null
+                        ? GetSurveyDetail200Response.VisibilityEnum.fromValue(response.visibility().name()) : null)
+                .responseStatus(response.responseStatus() != null
+                        ? GetSurveyDetail200Response.ResponseStatusEnum.fromValue(response.responseStatus().name()) : null)
+                .accessLevel(response.accessLevel() != null
+                        ? GetSurveyDetail200Response.AccessLevelEnum.fromValue(response.accessLevel().name()) : null)
+                .deadline(response.deadline())
+                .createdAt(response.createdAt())
+                .updatedAt(response.updatedAt())
+                .questions(response.questions() != null
+                        ? response.questions().stream()
+                                .map(this::mapToQuestionInner)
+                                .toList()
+                        : List.of());
+    }
+
+    private GetSurveyDetail200ResponseQuestionsInner mapToQuestionInner(SurveyDetailResponse.QuestionResponse q) {
+        return new GetSurveyDetail200ResponseQuestionsInner()
+                .id(q.id())
+                .questionType(q.questionType() != null
+                        ? GetSurveyDetail200ResponseQuestionsInner.QuestionTypeEnum.fromValue(q.questionType().name()) : null)
+                .title(q.title())
+                .description(q.description())
+                .required(q.required())
+                .displayOrder(q.displayOrder())
+                .scaleMin(q.scaleMin())
+                .scaleMax(q.scaleMax())
+                .options(q.options() != null
+                        ? q.options().stream()
+                                .map(this::mapToOptionInner)
+                                .toList()
+                        : List.of())
+                .rows(q.rows() != null
+                        ? q.rows().stream()
+                                .map(this::mapToRowInner)
+                                .toList()
+                        : List.of());
+    }
+
+    private GetSurveyDetail200ResponseQuestionsInnerOptionsInner mapToOptionInner(SurveyDetailResponse.OptionResponse o) {
+        return new GetSurveyDetail200ResponseQuestionsInnerOptionsInner()
+                .id(o.id())
+                .text(o.text())
+                .displayOrder(o.displayOrder());
+    }
+
+    private GetSurveyDetail200ResponseQuestionsInnerRowsInner mapToRowInner(SurveyDetailResponse.RowResponse r) {
+        return new GetSurveyDetail200ResponseQuestionsInnerRowsInner()
+                .id(r.id())
+                .label(r.label())
+                .displayOrder(r.displayOrder());
     }
 }

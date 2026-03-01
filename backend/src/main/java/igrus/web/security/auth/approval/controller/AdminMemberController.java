@@ -1,13 +1,18 @@
 package igrus.web.security.auth.approval.controller;
 
-import igrus.web.common.config.SwaggerConfig;
-import igrus.web.security.auth.approval.dto.request.BulkApprovalRequest;
-import igrus.web.security.auth.approval.dto.request.BulkRejectionRequest;
-import igrus.web.security.auth.approval.dto.request.RejectAssociateRequest;
-import igrus.web.security.auth.approval.dto.response.AssociateInfoPageResponse;
+import igrus.web.common.util.PageResponseMapper;
+import igrus.web.common.util.PageableUtils;
+import igrus.web.common.util.SecurityUtils;
+import igrus.web.generated.api.AdminAssociateApprovalApi;
+import igrus.web.generated.model.ApproveBulk200Response;
+import igrus.web.generated.model.GetDemotedAssociates200Response;
+import igrus.web.generated.model.GetDemotedAssociates200ResponseContentInner;
+import igrus.web.generated.model.GetPendingAssociates200Response;
+import igrus.web.generated.model.GetPendingAssociates200ResponseAssociatesInner;
+import igrus.web.generated.model.GetRejectedAssociates200Response;
+import igrus.web.generated.model.GetRejectedAssociates200ResponseContentInner;
+import igrus.web.generated.model.RejectBulk200Response;
 import igrus.web.security.auth.approval.dto.response.AssociateInfoResponse;
-import igrus.web.security.auth.approval.dto.response.BulkApprovalResultResponse;
-import igrus.web.security.auth.approval.dto.response.BulkRejectionResultResponse;
 import igrus.web.security.auth.approval.dto.response.DemotedAssociateInfoResponse;
 import igrus.web.security.auth.approval.dto.response.RejectedAssociateInfoResponse;
 import igrus.web.security.auth.approval.service.read.GetDemotedAssociatesService;
@@ -18,36 +23,25 @@ import igrus.web.security.auth.approval.service.write.BulkApproveAssociatesServi
 import igrus.web.security.auth.approval.service.write.BulkRejectAssociatesService;
 import igrus.web.security.auth.approval.service.write.RejectAssociateService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
+/**
+ * 관리자 준회원 승인 컨트롤러.
+ * 준회원 승인/거절, 일괄 처리, 거절/강등 목록 조회 API를 제공합니다.
+ */
+@Slf4j
 @RestController
-@RequestMapping("/api/v1/admin/associates")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Admin Associate Approval", description = "관리자 준회원 승인 API (ADMIN 전용)")
-@SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
-public class AdminMemberController {
+public class AdminMemberController implements AdminAssociateApprovalApi {
 
     private final GetPendingAssociatesService getPendingAssociatesService;
     private final GetRejectedAssociatesService getRejectedAssociatesService;
@@ -57,261 +51,186 @@ public class AdminMemberController {
     private final RejectAssociateService rejectAssociateService;
     private final BulkRejectAssociatesService bulkRejectAssociatesService;
 
-    @Operation(
-            summary = "승인 대기 준회원 목록 조회",
-            description = "승인 대기 중인 준회원 목록을 페이지네이션하여 조회합니다. ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "조회 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)"
-            )
-    })
-    @GetMapping("/pending")
-    public ResponseEntity<AssociateInfoPageResponse> getPendingAssociates(
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    @Override
+    public ResponseEntity<GetPendingAssociates200Response> getPendingAssociates(
+            Integer page,
+            Integer size,
+            List<String> sort
     ) {
-        Page<AssociateInfoResponse> page = getPendingAssociatesService.getPendingAssociates(
-                pageable,
-                authenticatedUser.userId()
-        );
-        return ResponseEntity.ok(AssociateInfoPageResponse.from(page));
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        log.info("승인 대기 준회원 목록 조회 요청 - userId: {}, page: {}, size: {}",
+                user.userId(), pageable.getPageNumber(), pageable.getPageSize());
+
+        Page<AssociateInfoResponse> resultPage = getPendingAssociatesService.getPendingAssociates(
+                pageable, user.userId());
+
+        return ResponseEntity.ok(new GetPendingAssociates200Response()
+                .associates(resultPage.getContent().stream()
+                        .map(a -> new GetPendingAssociates200ResponseAssociatesInner()
+                                .userId(a.userId())
+                                .studentId(a.studentId())
+                                .name(a.name())
+                                .department(a.department())
+                                .motivation(a.motivation())
+                                .wishes(a.wishes() != null
+                                        ? a.wishes().stream()
+                                                .map(w -> GetPendingAssociates200ResponseAssociatesInner.WishesEnum.fromValue(w.name()))
+                                                .toList()
+                                        : null)
+                                .createdAt(a.createdAt())
+                                .demoted(a.demoted()))
+                        .toList())
+                .totalElements(resultPage.getTotalElements())
+                .totalPages(resultPage.getTotalPages())
+                .currentPage(resultPage.getNumber())
+                .hasNext(resultPage.hasNext()));
     }
 
-    @Operation(
-            summary = "개별 준회원 승인",
-            description = "특정 준회원을 정회원으로 승인합니다. ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "승인 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "사용자를 찾을 수 없음"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "해당 사용자가 준회원이 아님"
-            )
-    })
-    @PostMapping("/{id}/approve")
-    public ResponseEntity<Void> approveAssociate(
-            @Parameter(description = "승인할 사용자 ID", required = true, example = "1") @PathVariable("id") Long userId,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
-    ) {
-        approveAssociateService.approveAssociate(userId, authenticatedUser.userId());
+    @Override
+    public ResponseEntity<Void> approveAssociate(Long id) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("개별 준회원 승인 요청 - targetUserId: {}, performedBy: {}", id, user.userId());
+
+        approveAssociateService.approveAssociate(id, user.userId());
         return ResponseEntity.ok().build();
     }
 
-    @Operation(
-            summary = "준회원 일괄 승인",
-            description = "여러 준회원을 한 번에 정회원으로 승인합니다. ADMIN 권한이 필요합니다. " +
-                    "일부 사용자 승인이 실패해도 나머지는 정상 처리됩니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "일괄 승인 처리 완료 (부분 성공 가능)"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "승인할 사용자 목록이 비어있음"
-            )
-    })
-    @PostMapping("/approve-batch")
-    public ResponseEntity<BulkApprovalResultResponse> approveBulk(
-            @Valid @RequestBody BulkApprovalRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    @Override
+    public ResponseEntity<ApproveBulk200Response> approveBulk(
+            igrus.web.generated.model.ApproveBulkRequest approveBulkRequest
     ) {
-        int approvedCount = bulkApproveAssociatesService.approveBulk(
-                request.userIds(),
-                authenticatedUser.userId()
-        );
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("준회원 일괄 승인 요청 - count: {}, performedBy: {}",
+                approveBulkRequest.getUserIds().size(), user.userId());
 
-        int totalRequested = request.userIds().size();
+        int approvedCount = bulkApproveAssociatesService.approveBulk(
+                approveBulkRequest.getUserIds(), user.userId());
+
+        int totalRequested = approveBulkRequest.getUserIds().size();
         int failedCount = totalRequested - approvedCount;
 
-        BulkApprovalResultResponse response = new BulkApprovalResultResponse(
-                approvedCount,
-                failedCount,
-                totalRequested
-        );
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new ApproveBulk200Response()
+                .approvedCount(approvedCount)
+                .failedCount(failedCount)
+                .totalRequested(totalRequested));
     }
 
-    @Operation(
-            summary = "개별 준회원 거절",
-            description = "특정 준회원의 가입을 거절합니다. ADMIN 권한이 필요합니다. 거절 사유는 필수입니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "거절 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "해당 사용자가 준회원이 아니거나 이미 처리됨"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "사용자를 찾을 수 없음"
-            )
-    })
-    @PostMapping("/{id}/reject")
+    @Override
     public ResponseEntity<Void> rejectAssociate(
-            @Parameter(description = "거절할 사용자 ID", required = true, example = "1") @PathVariable("id") Long userId,
-            @Valid @RequestBody RejectAssociateRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+            Long id,
+            igrus.web.generated.model.RejectAssociateRequest rejectAssociateRequest
     ) {
-        rejectAssociateService.rejectAssociate(userId, authenticatedUser.userId(), request.reason());
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("개별 준회원 거절 요청 - targetUserId: {}, performedBy: {}", id, user.userId());
+
+        rejectAssociateService.rejectAssociate(id, user.userId(), rejectAssociateRequest.getReason());
         return ResponseEntity.ok().build();
     }
 
-    @Operation(
-            summary = "준회원 일괄 거절",
-            description = "여러 준회원의 가입을 한 번에 거절합니다. ADMIN 권한이 필요합니다. " +
-                    "일부 사용자 거절이 실패해도 나머지는 정상 처리됩니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "일괄 거절 처리 완료 (부분 성공 가능)",
-                    useReturnTypeSchema = true
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "거절할 사용자 목록이 비어있음"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)"
-            )
-    })
-    @PostMapping("/reject-batch")
-    public ResponseEntity<BulkRejectionResultResponse> rejectBulk(
-            @Valid @RequestBody BulkRejectionRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    @Override
+    public ResponseEntity<RejectBulk200Response> rejectBulk(
+            igrus.web.generated.model.RejectBulkRequest rejectBulkRequest
     ) {
-        int rejectedCount = bulkRejectAssociatesService.rejectBulk(
-                request.userIds(),
-                authenticatedUser.userId(),
-                request.reason()
-        );
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("준회원 일괄 거절 요청 - count: {}, performedBy: {}",
+                rejectBulkRequest.getUserIds().size(), user.userId());
 
-        int totalRequested = request.userIds().size();
+        int rejectedCount = bulkRejectAssociatesService.rejectBulk(
+                rejectBulkRequest.getUserIds(), user.userId(), rejectBulkRequest.getReason());
+
+        int totalRequested = rejectBulkRequest.getUserIds().size();
         int failedCount = totalRequested - rejectedCount;
 
-        BulkRejectionResultResponse response = new BulkRejectionResultResponse(
-                rejectedCount,
-                failedCount,
-                totalRequested
-        );
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new RejectBulk200Response()
+                .rejectedCount(rejectedCount)
+                .failedCount(failedCount)
+                .totalRequested(totalRequested));
     }
 
-    @Operation(
-            summary = "거절된 준회원 목록 조회",
-            description = "거절된 준회원 목록을 페이지네이션하여 조회합니다. ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "조회 성공",
-                    useReturnTypeSchema = true
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)"
-            )
-    })
-    @GetMapping("/rejected")
-    public ResponseEntity<Page<RejectedAssociateInfoResponse>> getRejectedAssociates(
-            @ParameterObject @PageableDefault(size = 20, sort = "decidedAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    @Override
+    public ResponseEntity<GetRejectedAssociates200Response> getRejectedAssociates(
+            Integer page,
+            Integer size,
+            List<String> sort
     ) {
-        Page<RejectedAssociateInfoResponse> rejectedAssociates = getRejectedAssociatesService.getRejectedAssociates(
-                pageable,
-                authenticatedUser.userId()
-        );
-        return ResponseEntity.ok(rejectedAssociates);
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        log.info("거절된 준회원 목록 조회 요청 - userId: {}, page: {}, size: {}",
+                user.userId(), pageable.getPageNumber(), pageable.getPageSize());
+
+        Page<RejectedAssociateInfoResponse> resultPage = getRejectedAssociatesService.getRejectedAssociates(
+                pageable, user.userId());
+
+        return ResponseEntity.ok(PageResponseMapper.toSpringPageResponse(
+                resultPage,
+                r -> new GetRejectedAssociates200ResponseContentInner()
+                        .userId(r.userId())
+                        .studentId(r.studentId())
+                        .name(r.name())
+                        .department(r.department())
+                        .motivation(r.motivation())
+                        .wishes(r.wishes() != null
+                                ? r.wishes().stream()
+                                        .map(w -> GetRejectedAssociates200ResponseContentInner.WishesEnum.fromValue(w.name()))
+                                        .toList()
+                                : null)
+                        .createdAt(r.createdAt())
+                        .rejectionReason(r.rejectionReason())
+                        .rejectedAt(r.rejectedAt())
+                        .rejectedBy(r.rejectedBy()),
+                GetRejectedAssociates200Response::new,
+                (resp, content, meta) -> resp
+                        .content(content)
+                        .totalElements(meta.totalElements())
+                        .totalPages(meta.totalPages())
+                        .number(meta.number())
+                        .size(meta.size())
+                        .numberOfElements(meta.numberOfElements())
+                        .first(meta.first())
+                        .last(meta.last())
+                        .empty(meta.empty())
+                        .pageable(meta.pageable())
+                        .sort(meta.sort())
+        ));
     }
 
-    @Operation(
-            summary = "강등된 준회원 목록 조회",
-            description = "정회원에서 준회원으로 강등된 목록을 페이지네이션하여 조회합니다. ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "조회 성공",
-                    useReturnTypeSchema = true
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요 (로그인하지 않음)"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "권한 없음 (ADMIN 권한 필요)"
-            )
-    })
-    @GetMapping("/demoted")
-    public ResponseEntity<Page<DemotedAssociateInfoResponse>> getDemotedAssociates(
-            @ParameterObject @PageableDefault(size = 20, sort = "decidedAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    @Override
+    public ResponseEntity<GetDemotedAssociates200Response> getDemotedAssociates(
+            Integer page,
+            Integer size,
+            List<String> sort
     ) {
-        Page<DemotedAssociateInfoResponse> demotedAssociates = getDemotedAssociatesService.getDemotedAssociates(
-                pageable,
-                authenticatedUser.userId()
-        );
-        return ResponseEntity.ok(demotedAssociates);
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        log.info("강등된 준회원 목록 조회 요청 - userId: {}, page: {}, size: {}",
+                user.userId(), pageable.getPageNumber(), pageable.getPageSize());
+
+        Page<DemotedAssociateInfoResponse> resultPage = getDemotedAssociatesService.getDemotedAssociates(
+                pageable, user.userId());
+
+        return ResponseEntity.ok(PageResponseMapper.toSpringPageResponse(
+                resultPage,
+                d -> new GetDemotedAssociates200ResponseContentInner()
+                        .userId(d.userId())
+                        .studentId(d.studentId())
+                        .name(d.name())
+                        .department(d.department())
+                        .demotedAt(d.demotedAt())
+                        .demotedBy(d.demotedBy()),
+                GetDemotedAssociates200Response::new,
+                (resp, content, meta) -> resp
+                        .content(content)
+                        .totalElements(meta.totalElements())
+                        .totalPages(meta.totalPages())
+                        .number(meta.number())
+                        .size(meta.size())
+                        .numberOfElements(meta.numberOfElements())
+                        .first(meta.first())
+                        .last(meta.last())
+                        .empty(meta.empty())
+                        .pageable(meta.pageable())
+                        .sort(meta.sort())
+        ));
     }
 }

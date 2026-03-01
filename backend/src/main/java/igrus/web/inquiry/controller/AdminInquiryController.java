@@ -1,43 +1,55 @@
 package igrus.web.inquiry.controller;
 
-import igrus.web.common.config.SwaggerConfig;
+import igrus.web.common.util.EnumUtils;
+import igrus.web.common.util.PageableUtils;
+import igrus.web.common.util.SecurityUtils;
 import igrus.web.inquiry.domain.InquiryStatus;
 import igrus.web.inquiry.domain.InquiryType;
-import igrus.web.inquiry.dto.request.*;
-import igrus.web.inquiry.dto.response.*;
-import igrus.web.inquiry.service.manage.*;
+import igrus.web.inquiry.dto.request.CreateInquiryMemoRequest;
+import igrus.web.inquiry.dto.request.CreateInquiryReplyRequest;
+import igrus.web.inquiry.dto.request.UpdateInquiryReplyRequest;
+import igrus.web.inquiry.dto.response.AttachmentResponse;
+import igrus.web.inquiry.dto.response.InquiryDetailResponse;
+import igrus.web.inquiry.dto.response.InquiryListPageResponse;
+import igrus.web.inquiry.dto.response.InquiryListResponse;
+import igrus.web.inquiry.dto.response.InquiryMemoResponse;
+import igrus.web.inquiry.dto.response.InquiryReplyResponse;
+import igrus.web.inquiry.service.manage.CreateInquiryMemoService;
+import igrus.web.inquiry.service.manage.CreateInquiryReplyService;
+import igrus.web.inquiry.service.manage.DeleteInquiryService;
+import igrus.web.inquiry.service.manage.UpdateInquiryReplyService;
+import igrus.web.inquiry.service.manage.UpdateInquiryStatusService;
 import igrus.web.inquiry.service.read.GetAllInquiriesService;
 import igrus.web.inquiry.service.read.GetInquiryDetailService;
+import igrus.web.generated.api.AdminInquiryApi;
+import igrus.web.generated.model.CreateMemo201Response;
+import igrus.web.generated.model.CreateMemoRequest;
+import igrus.web.generated.model.CreateReplyRequest;
+import igrus.web.generated.model.GetAllInquiries200Response;
+import igrus.web.generated.model.GetAllInquiries200ResponseInquiriesInner;
+import igrus.web.generated.model.GetInquiryDetail200Response;
+import igrus.web.generated.model.LookupGuestInquiry200ResponseAttachmentsInner;
+import igrus.web.generated.model.LookupGuestInquiry200ResponseReply;
+import igrus.web.generated.model.UpdateReply200Response;
+import igrus.web.generated.model.UpdateReplyRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.Parameters;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 관리자 문의 컨트롤러.
  * OPERATOR 또는 ADMIN 권한 필요.
  */
 @RestController
-@RequestMapping("/api/v1/inquiries")
 @RequiredArgsConstructor
-@Tag(name = "Inquiry", description = "문의 API")
-public class AdminInquiryController {
+public class AdminInquiryController implements AdminInquiryApi {
 
     private final GetAllInquiriesService getAllInquiriesService;
     private final GetInquiryDetailService getInquiryDetailService;
@@ -47,159 +59,197 @@ public class AdminInquiryController {
     private final CreateInquiryMemoService createInquiryMemoService;
     private final DeleteInquiryService deleteInquiryService;
 
-    @Operation(
-            summary = "전체 문의 목록 조회",
-            description = "관리자가 모든 문의를 조회합니다. 유형과 상태로 필터링할 수 있습니다. OPERATOR 또는 ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음")
-    })
-    @Parameters({
-            @Parameter(name = "type", description = "문의 유형 필터", example = "JOIN"),
-            @Parameter(name = "status", description = "처리 상태 필터", example = "PENDING"),
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    @GetMapping
-    public ResponseEntity<InquiryListPageResponse> getAllInquiries(
-            @RequestParam(required = false) InquiryType type,
-            @RequestParam(required = false) InquiryStatus status,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable
+    public ResponseEntity<GetAllInquiries200Response> getAllInquiries(
+            String type,
+            String status,
+            Integer page,
+            Integer size,
+            List<String> sort
     ) {
-        Page<InquiryListResponse> page = getAllInquiriesService.getAllInquiries(type, status, pageable);
-        return ResponseEntity.ok(InquiryListPageResponse.from(page));
+        InquiryType typeEnum = EnumUtils.fromStringOrNull(InquiryType.class, type);
+        InquiryStatus statusEnum = EnumUtils.fromStringOrNull(InquiryStatus.class, status);
+        Pageable pageable = PageableUtils.of(page, size, sort);
+
+        Page<InquiryListResponse> responsePage = getAllInquiriesService.getAllInquiries(
+                typeEnum, statusEnum, pageable);
+        InquiryListPageResponse pageResponse = InquiryListPageResponse.from(responsePage);
+
+        GetAllInquiries200Response result = new GetAllInquiries200Response()
+                .inquiries(pageResponse.inquiries().stream()
+                        .map(this::mapToInquiriesInner)
+                        .toList())
+                .totalElements(pageResponse.totalElements())
+                .totalPages(pageResponse.totalPages())
+                .currentPage(pageResponse.currentPage())
+                .hasNext(pageResponse.hasNext());
+        return ResponseEntity.ok(result);
     }
 
-    @Operation(
-            summary = "문의 상세 조회 (관리자)",
-            description = "관리자가 특정 문의의 상세 정보(메모 포함)를 조회합니다. OPERATOR 또는 ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "문의를 찾을 수 없음")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    @GetMapping("/{id}")
-    public ResponseEntity<InquiryDetailResponse> getInquiryDetail(
-            @Parameter(description = "문의 ID", required = true) @PathVariable Long id
-    ) {
+    public ResponseEntity<GetInquiryDetail200Response> getInquiryDetail(Long id) {
         InquiryDetailResponse response = getInquiryDetailService.getInquiryDetail(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(mapToInquiryDetail200Response(response));
     }
 
-    @Operation(
-            summary = "문의 상태 변경",
-            description = "관리자가 문의의 처리 상태를 변경합니다. OPERATOR 또는 ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "상태 변경 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "문의를 찾을 수 없음")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    @PutMapping("/{id}/status")
     public ResponseEntity<Void> updateInquiryStatus(
-            @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
-            @Valid @RequestBody UpdateInquiryStatusRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+            Long id,
+            igrus.web.generated.model.UpdateInquiryStatusRequest updateInquiryStatusRequest
     ) {
-        updateInquiryStatusService.updateInquiryStatus(id, request, user.userId());
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest internalRequest =
+                igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest.builder()
+                        .status(InquiryStatus.valueOf(updateInquiryStatusRequest.getStatus().getValue()))
+                        .build();
+        updateInquiryStatusService.updateInquiryStatus(id, internalRequest, user.userId());
         return ResponseEntity.ok().build();
     }
 
-    @Operation(
-            summary = "답변 작성",
-            description = "관리자가 문의에 답변을 작성합니다. 이미 답변이 있는 경우 에러가 발생합니다. OPERATOR 또는 ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "답변 작성 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "문의를 찾을 수 없음"),
-            @ApiResponse(responseCode = "409", description = "이미 답변이 존재함")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    @PostMapping("/{id}/reply")
-    public ResponseEntity<InquiryReplyResponse> createReply(
-            @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
-            @Valid @RequestBody CreateInquiryReplyRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+    public ResponseEntity<UpdateReply200Response> createReply(
+            Long id,
+            CreateReplyRequest createReplyRequest
     ) {
-        InquiryReplyResponse response = createInquiryReplyService.createReply(id, request, user.userId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        CreateInquiryReplyRequest internalRequest = CreateInquiryReplyRequest.builder()
+                .content(createReplyRequest.getContent())
+                .build();
+        InquiryReplyResponse response = createInquiryReplyService.createReply(
+                id, internalRequest, user.userId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new UpdateReply200Response()
+                .id(response.getId())
+                .content(response.getContent())
+                .repliedByName(response.getRepliedByName())
+                .createdAt(response.getCreatedAt()));
     }
 
-    @Operation(
-            summary = "답변 수정",
-            description = "관리자가 기존 답변을 수정합니다. 답변이 없는 경우 에러가 발생합니다. OPERATOR 또는 ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "답변 수정 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "문의 또는 답변을 찾을 수 없음")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    @PutMapping("/{id}/reply")
-    public ResponseEntity<InquiryReplyResponse> updateReply(
-            @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
-            @Valid @RequestBody UpdateInquiryReplyRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+    public ResponseEntity<UpdateReply200Response> updateReply(
+            Long id,
+            UpdateReplyRequest updateReplyRequest
     ) {
-        InquiryReplyResponse response = updateInquiryReplyService.updateReply(id, request, user.userId());
-        return ResponseEntity.ok(response);
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        UpdateInquiryReplyRequest internalRequest = UpdateInquiryReplyRequest.builder()
+                .content(updateReplyRequest.getContent())
+                .build();
+        InquiryReplyResponse response = updateInquiryReplyService.updateReply(
+                id, internalRequest, user.userId());
+        return ResponseEntity.ok(new UpdateReply200Response()
+                .id(response.getId())
+                .content(response.getContent())
+                .repliedByName(response.getRepliedByName())
+                .createdAt(response.getCreatedAt()));
     }
 
-    @Operation(
-            summary = "내부 메모 작성",
-            description = "관리자가 문의에 대한 내부 메모를 작성합니다. 메모는 관리자에게만 보입니다. OPERATOR 또는 ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "메모 작성 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "문의를 찾을 수 없음")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    @PostMapping("/{id}/memo")
-    public ResponseEntity<InquiryMemoResponse> createMemo(
-            @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
-            @Valid @RequestBody CreateInquiryMemoRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+    public ResponseEntity<CreateMemo201Response> createMemo(
+            Long id,
+            CreateMemoRequest createMemoRequest
     ) {
-        InquiryMemoResponse response = createInquiryMemoService.createMemo(id, request, user.userId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        CreateInquiryMemoRequest internalRequest = CreateInquiryMemoRequest.builder()
+                .content(createMemoRequest.getContent())
+                .build();
+        InquiryMemoResponse response = createInquiryMemoService.createMemo(
+                id, internalRequest, user.userId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new CreateMemo201Response()
+                .id(response.getId())
+                .content(response.getContent())
+                .writtenByName(response.getWrittenByName())
+                .createdAt(response.getCreatedAt()));
     }
 
-    @Operation(
-            summary = "문의 삭제",
-            description = "관리자가 문의를 소프트 삭제합니다. OPERATOR 또는 ADMIN 권한이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "문의를 찾을 수 없음")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteInquiry(
-            @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
+    public ResponseEntity<Void> deleteInquiry(Long id) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         deleteInquiryService.deleteInquiry(id, user.userId());
         return ResponseEntity.noContent().build();
+    }
+
+    // ===== 매핑 헬퍼 =====
+
+    private GetAllInquiries200ResponseInquiriesInner mapToInquiriesInner(InquiryListResponse r) {
+        return new GetAllInquiries200ResponseInquiriesInner()
+                .id(r.getId())
+                .inquiryNumber(r.getInquiryNumber())
+                .type(r.getType() != null
+                        ? GetAllInquiries200ResponseInquiriesInner.TypeEnum.fromValue(r.getType().name())
+                        : null)
+                .typeDescription(r.getTypeDescription())
+                .status(r.getStatus() != null
+                        ? GetAllInquiries200ResponseInquiriesInner.StatusEnum.fromValue(r.getStatus().name())
+                        : null)
+                .statusDescription(r.getStatusDescription())
+                .title(r.getTitle())
+                .authorName(r.getAuthorName())
+                .guest(r.isGuest())
+                .hasReply(r.isHasReply())
+                .attachmentCount(r.getAttachmentCount())
+                .createdAt(r.getCreatedAt());
+    }
+
+    private GetInquiryDetail200Response mapToInquiryDetail200Response(InquiryDetailResponse r) {
+        return new GetInquiryDetail200Response()
+                .id(r.getId())
+                .inquiryNumber(r.getInquiryNumber())
+                .type(r.getType() != null
+                        ? GetInquiryDetail200Response.TypeEnum.fromValue(r.getType().name())
+                        : null)
+                .typeDescription(r.getTypeDescription())
+                .status(r.getStatus() != null
+                        ? GetInquiryDetail200Response.StatusEnum.fromValue(r.getStatus().name())
+                        : null)
+                .statusDescription(r.getStatusDescription())
+                .title(r.getTitle())
+                .content(r.getContent())
+                .authorName(r.getAuthorName())
+                .authorEmail(r.getAuthorEmail())
+                .authorUserId(r.getAuthorUserId())
+                .guest(r.isGuest())
+                .attachments(r.getAttachments() != null
+                        ? r.getAttachments().stream()
+                                .map(this::mapToAttachment)
+                                .toList()
+                        : List.of())
+                .reply(r.getReply() != null ? mapToReply(r.getReply()) : null)
+                .memos(r.getMemos() != null
+                        ? r.getMemos().stream()
+                                .map(this::mapToMemo)
+                                .toList()
+                        : List.of())
+                .createdAt(r.getCreatedAt())
+                .updatedAt(r.getUpdatedAt());
+    }
+
+    private LookupGuestInquiry200ResponseAttachmentsInner mapToAttachment(AttachmentResponse a) {
+        return new LookupGuestInquiry200ResponseAttachmentsInner()
+                .id(a.getId())
+                .fileUrl(a.getFileUrl())
+                .fileName(a.getFileName())
+                .fileSize(a.getFileSize());
+    }
+
+    private LookupGuestInquiry200ResponseReply mapToReply(InquiryReplyResponse r) {
+        return new LookupGuestInquiry200ResponseReply()
+                .id(r.getId())
+                .content(r.getContent())
+                .repliedByName(r.getRepliedByName())
+                .createdAt(r.getCreatedAt());
+    }
+
+    private CreateMemo201Response mapToMemo(InquiryMemoResponse m) {
+        return new CreateMemo201Response()
+                .id(m.getId())
+                .content(m.getContent())
+                .writtenByName(m.getWrittenByName())
+                .createdAt(m.getCreatedAt());
     }
 }

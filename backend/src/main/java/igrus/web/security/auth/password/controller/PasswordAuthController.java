@@ -1,9 +1,27 @@
 package igrus.web.security.auth.password.controller;
 
+import igrus.web.common.exception.CommonErrorCode;
+import igrus.web.common.exception.CustomBaseException;
+import igrus.web.common.util.ServletContextUtil;
+import igrus.web.generated.api.PasswordAuthenticationApi;
+import igrus.web.generated.model.CheckReRegistrationEligibility200Response;
+import igrus.web.generated.model.CheckRecoveryEligibility200Response;
+import igrus.web.generated.model.CheckStudentIdDuplicate200Response;
+import igrus.web.generated.model.ConfirmPasswordResetRequest;
+import igrus.web.generated.model.Login200Response;
+import igrus.web.generated.model.LoginRequest;
+import igrus.web.generated.model.RecoverAccount200Response;
+import igrus.web.generated.model.RecoverAccountRequest;
+import igrus.web.generated.model.RefreshToken200Response;
+import igrus.web.generated.model.RequestPasswordResetRequest;
+import igrus.web.generated.model.SendPreSignupCode200Response;
+import igrus.web.generated.model.SendPreSignupCodeRequest;
+import igrus.web.generated.model.Signup201Response;
+import igrus.web.generated.model.SignupRequest;
+import igrus.web.generated.model.SignupWithTemporaryStudentIdRequest;
+import igrus.web.generated.model.VerifyEmailChangeRequest;
+import igrus.web.generated.model.VerifyPreSignupCode200Response;
 import igrus.web.security.auth.common.dto.internal.RecoveryResult;
-import igrus.web.security.auth.common.dto.request.AccountRecoveryRequest;
-import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
-import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
 import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
@@ -15,61 +33,44 @@ import igrus.web.security.auth.common.service.account.ReRegistrationCheckResult;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
+import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordResetConfirmRequest;
-import igrus.web.security.auth.password.dto.request.PasswordResetRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
 import igrus.web.security.auth.password.dto.request.TemporaryStudentIdSignupRequest;
 import igrus.web.security.auth.password.dto.response.DuplicateCheckResponse;
 import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
 import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.dto.response.PreSignupVerificationResponse;
-import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
 import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
 import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
-import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
-import igrus.web.security.auth.password.service.reset.ResetPasswordService;
-import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
 import igrus.web.security.auth.password.service.presignup.PreSignupSendCodeService;
 import igrus.web.security.auth.password.service.presignup.PreSignupVerifyCodeService;
+import igrus.web.security.auth.password.service.reset.RequestPasswordResetService;
+import igrus.web.security.auth.password.service.reset.ResetPasswordService;
+import igrus.web.security.auth.password.service.reset.ValidateResetTokenService;
 import igrus.web.security.auth.password.service.signup.CheckDuplicateService;
 import igrus.web.security.auth.password.service.signup.SignupService;
 import igrus.web.security.auth.password.service.signup.TempStudentIdSignupService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/auth/password")
 @RequiredArgsConstructor
-@Validated
-@Tag(name = "Password Authentication", description = "비밀번호 기반 인증 관련 API")
-public class PasswordAuthController {
+public class PasswordAuthController implements PasswordAuthenticationApi {
 
     private final LoginService loginService;
     private final LogoutService logoutService;
@@ -87,36 +88,18 @@ public class PasswordAuthController {
     private final TempStudentIdSignupService tempStudentIdSignupService;
     private final CookieUtil cookieUtil;
 
-    @Operation(summary = "로그인", description = "학번과 비밀번호로 로그인합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "로그인 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 실패 (학번 또는 비밀번호 불일치)"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "계정 정지 또는 탈퇴 상태"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "이메일 인증 미완료"
-            )
-    })
-    @PostMapping("/login")
-    public ResponseEntity<PasswordLoginResponse> login(
-            @Valid @RequestBody PasswordLoginRequest request,
-            HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
-        String ipAddress = extractIpAddress(httpRequest);
+    @Override
+    public ResponseEntity<Login200Response> login(LoginRequest loginRequest) {
+        HttpServletRequest httpRequest = ServletContextUtil.getCurrentRequest();
+        HttpServletResponse httpResponse = ServletContextUtil.getCurrentResponse();
+
+        String ipAddress = ServletContextUtil.extractIpAddress(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
+
+        PasswordLoginRequest request = new PasswordLoginRequest(
+                loginRequest.getStudentId(),
+                loginRequest.getPassword()
+        );
 
         LoginResult result = loginService.login(request, ipAddress, userAgent);
 
@@ -126,46 +109,21 @@ public class PasswordAuthController {
         );
         httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return ResponseEntity.ok(result.toResponse());
+        PasswordLoginResponse response = result.toResponse();
+        return ResponseEntity.ok(new Login200Response()
+                .accessToken(response.accessToken())
+                .userId(response.userId())
+                .studentId(response.studentId())
+                .name(response.name())
+                .role(Login200Response.RoleEnum.fromValue(response.role().name()))
+                .expiresIn(response.expiresIn()));
     }
 
-    /**
-     * 클라이언트의 실제 IP 주소를 추출합니다.
-     * 프록시/로드밸런서를 고려하여 X-Forwarded-For 헤더를 우선 확인합니다.
-     */
-    private String extractIpAddress(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
+    @Override
+    public ResponseEntity<Void> logout() {
+        HttpServletRequest httpRequest = ServletContextUtil.getCurrentRequest();
+        HttpServletResponse httpResponse = ServletContextUtil.getCurrentResponse();
 
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
-
-        return request.getRemoteAddr();
-    }
-
-    @Operation(summary = "로그아웃", description = "리프레시 토큰을 무효화하여 로그아웃합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "로그아웃 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "유효하지 않은 리프레시 토큰"
-            )
-    })
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
-            HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
         String refreshToken = cookieUtil.getRefreshTokenFromCookies(httpRequest)
                 .orElseThrow(RefreshTokenInvalidException::new);
 
@@ -177,29 +135,11 @@ public class PasswordAuthController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(
-            summary = "토큰 갱신",
-            description = "리프레시 토큰으로 새로운 액세스 토큰을 발급합니다. " +
-                    "토큰 로테이션이 적용되어 매 갱신마다 새 리프레시 토큰이 Set-Cookie로 발급됩니다. " +
-                    "Grace Period(10초) 내 중복 요청 시에는 액세스 토큰만 갱신됩니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "토큰 갱신 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "유효하지 않거나 만료된 리프레시 토큰, 또는 토큰 탈취 감지"
-            )
-    })
-    @PostMapping("/refresh")
-    public ResponseEntity<TokenRefreshResponse> refreshToken(
-            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    @Override
+    public ResponseEntity<RefreshToken200Response> refreshToken() {
+        HttpServletRequest httpRequest = ServletContextUtil.getCurrentRequest();
+        HttpServletResponse httpResponse = ServletContextUtil.getCurrentResponse();
+
         String refreshToken = cookieUtil.getRefreshTokenFromCookies(httpRequest)
                 .orElseThrow(RefreshTokenInvalidException::new);
 
@@ -221,240 +161,181 @@ public class PasswordAuthController {
             httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         }
 
-        return ResponseEntity.ok(result.toResponse());
+        TokenRefreshResponse response = result.toResponse();
+        return ResponseEntity.ok(new RefreshToken200Response()
+                .accessToken(response.accessToken())
+                .expiresIn(response.expiresIn()));
     }
 
-    @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다. 사전 이메일 인증이 완료되어야 합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "회원가입 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패)"
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "중복된 학번, 이메일 또는 전화번호"
-            )
-    })
-    @PostMapping("/signup")
-    public ResponseEntity<PasswordSignupResponse> signup(@Valid @RequestBody PasswordSignupRequest request) {
+    @Override
+    public ResponseEntity<Signup201Response> signup(SignupRequest signupRequest) {
+        validatePrivacyConsent(signupRequest.getPrivacyConsent());
+        PasswordSignupRequest request = new PasswordSignupRequest(
+                signupRequest.getStudentId(),
+                signupRequest.getName(),
+                signupRequest.getEmail(),
+                signupRequest.getPassword(),
+                signupRequest.getPhoneNumber(),
+                signupRequest.getDepartment(),
+                signupRequest.getMotivation(),
+                signupRequest.getWishes() != null
+                        ? signupRequest.getWishes().stream()
+                                .map(w -> igrus.web.user.domain.Wish.valueOf(w.getValue()))
+                                .toList()
+                        : null,
+                signupRequest.getInterests() != null
+                        ? signupRequest.getInterests().stream()
+                                .map(i -> igrus.web.user.domain.Interest.valueOf(i.getValue()))
+                                .toList()
+                        : null,
+                signupRequest.getCustomInterest(),
+                signupRequest.getJoinRoute() != null
+                        ? igrus.web.user.domain.JoinRoute.valueOf(signupRequest.getJoinRoute().getValue()) : null,
+                signupRequest.getCustomJoinRoute(),
+                signupRequest.getGender() != null
+                        ? igrus.web.user.domain.Gender.valueOf(signupRequest.getGender().getValue()) : null,
+                signupRequest.getGrade(),
+                signupRequest.getEnrollmentStatus() != null
+                        ? igrus.web.user.domain.EnrollmentStatus.valueOf(signupRequest.getEnrollmentStatus().getValue()) : null,
+                Boolean.TRUE.equals(signupRequest.getPrivacyConsent()),
+                signupRequest.getVerificationToken()
+        );
+
         PasswordSignupResponse response = signupService.signup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new Signup201Response()
+                .message(response.message())
+                .email(response.email())
+                .temporaryStudentId(response.temporaryStudentId()));
     }
 
-    @Operation(summary = "임시 학번 회원가입", description = "1~2월에 1학년 신입생이 임시 학번으로 회원가입합니다. 사전 이메일 인증이 완료되어야 하며, 임시 학번이 자동 발급되어 이메일로 전송됩니다.")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "회원가입 성공 (임시 학번 발급)"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패, 1~2월이 아닌 경우, 1학년이 아닌 경우)"
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "중복된 이메일 또는 전화번호"
-            )
-    })
-    @PostMapping("/signup/temporary")
-    public ResponseEntity<PasswordSignupResponse> signupWithTemporaryStudentId(
-            @Valid @RequestBody TemporaryStudentIdSignupRequest request) {
+    @Override
+    public ResponseEntity<Signup201Response> signupWithTemporaryStudentId(
+            SignupWithTemporaryStudentIdRequest signupWithTemporaryStudentIdRequest
+    ) {
+        validatePrivacyConsent(signupWithTemporaryStudentIdRequest.getPrivacyConsent());
+        TemporaryStudentIdSignupRequest request = new TemporaryStudentIdSignupRequest(
+                signupWithTemporaryStudentIdRequest.getName(),
+                signupWithTemporaryStudentIdRequest.getEmail(),
+                signupWithTemporaryStudentIdRequest.getPassword(),
+                signupWithTemporaryStudentIdRequest.getPhoneNumber(),
+                signupWithTemporaryStudentIdRequest.getDepartment(),
+                signupWithTemporaryStudentIdRequest.getMotivation(),
+                signupWithTemporaryStudentIdRequest.getWishes() != null
+                        ? signupWithTemporaryStudentIdRequest.getWishes().stream()
+                                .map(w -> igrus.web.user.domain.Wish.valueOf(w.getValue()))
+                                .toList()
+                        : null,
+                signupWithTemporaryStudentIdRequest.getInterests() != null
+                        ? signupWithTemporaryStudentIdRequest.getInterests().stream()
+                                .map(i -> igrus.web.user.domain.Interest.valueOf(i.getValue()))
+                                .toList()
+                        : null,
+                signupWithTemporaryStudentIdRequest.getCustomInterest(),
+                signupWithTemporaryStudentIdRequest.getJoinRoute() != null
+                        ? igrus.web.user.domain.JoinRoute.valueOf(signupWithTemporaryStudentIdRequest.getJoinRoute().getValue()) : null,
+                signupWithTemporaryStudentIdRequest.getCustomJoinRoute(),
+                signupWithTemporaryStudentIdRequest.getGender() != null
+                        ? igrus.web.user.domain.Gender.valueOf(signupWithTemporaryStudentIdRequest.getGender().getValue()) : null,
+                signupWithTemporaryStudentIdRequest.getGrade(),
+                signupWithTemporaryStudentIdRequest.getEnrollmentStatus() != null
+                        ? igrus.web.user.domain.EnrollmentStatus.valueOf(signupWithTemporaryStudentIdRequest.getEnrollmentStatus().getValue()) : null,
+                Boolean.TRUE.equals(signupWithTemporaryStudentIdRequest.getPrivacyConsent()),
+                signupWithTemporaryStudentIdRequest.getVerificationToken()
+        );
+
         PasswordSignupResponse response = tempStudentIdSignupService.signup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new Signup201Response()
+                .message(response.message())
+                .email(response.email())
+                .temporaryStudentId(response.temporaryStudentId()));
     }
 
-    @Operation(
-            summary = "학번 중복 체크",
-            description = "학번의 유효성 검사 및 중복 여부를 확인합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "사용 가능한 학번"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "학번 형식 오류 (8자리 숫자가 아님)"
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "이미 가입된 학번"
-            )
-    })
-    @GetMapping("/check-student-id")
-    public ResponseEntity<DuplicateCheckResponse> checkStudentIdDuplicate(
-            @Parameter(description = "확인할 학번 (8자리 숫자)", example = "12345678", required = true)
-            @RequestParam String studentId) {
+    @Override
+    public ResponseEntity<CheckStudentIdDuplicate200Response> checkStudentIdDuplicate(String studentId) {
         DuplicateCheckResponse response = checkDuplicateService.checkStudentId(studentId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new CheckStudentIdDuplicate200Response()
+                .available(response.available())
+                .message(response.message()));
     }
 
-    @Operation(
-            summary = "이메일 중복 체크",
-            description = "이메일의 유효성 검사 및 중복 여부를 확인합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "사용 가능한 이메일"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "이메일 형식 오류"
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "이미 존재하는 이메일"
-            )
-    })
-    @GetMapping("/check-email")
-    public ResponseEntity<DuplicateCheckResponse> checkEmailDuplicate(
-            @Parameter(description = "확인할 이메일", example = "user@example.com", required = true)
-            @RequestParam String email) {
+    @Override
+    public ResponseEntity<CheckStudentIdDuplicate200Response> checkEmailDuplicate(String email) {
         DuplicateCheckResponse response = checkDuplicateService.checkEmail(email);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new CheckStudentIdDuplicate200Response()
+                .available(response.available())
+                .message(response.message()));
     }
 
-    @Operation(
-            summary = "전화번호 중복 체크",
-            description = "전화번호의 유효성 검사 및 중복 여부를 확인합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "사용 가능한 전화번호"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "전화번호 형식 오류 (XXX-XXXX-XXXX 형식이 아님)"
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "이미 등록된 전화번호"
-            )
-    })
-    @GetMapping("/check-phone-number")
-    public ResponseEntity<DuplicateCheckResponse> checkPhoneNumberDuplicate(
-            @Parameter(description = "확인할 전화번호 (XXX-XXXX-XXXX)", example = "010-1234-5678", required = true)
-            @RequestParam String phoneNumber) {
+    @Override
+    public ResponseEntity<CheckStudentIdDuplicate200Response> checkPhoneNumberDuplicate(String phoneNumber) {
         DuplicateCheckResponse response = checkDuplicateService.checkPhoneNumber(phoneNumber);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new CheckStudentIdDuplicate200Response()
+                .available(response.available())
+                .message(response.message()));
     }
 
-    @Operation(summary = "사전 이메일 인증 코드 발송", description = "회원가입 전 이메일 인증 코드를 발송합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "인증 코드 발송 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "이미 가입된 이메일"
-            ),
-            @ApiResponse(
-                    responseCode = "429",
-                    description = "재발송 요청 횟수 초과 (1분 내 재요청 불가)"
-            )
-    })
-    @PostMapping("/pre-signup/send-code")
-    public ResponseEntity<VerificationResendResponse> sendPreSignupCode(
-            @Valid @RequestBody ResendVerificationRequest request) {
-        return ResponseEntity.ok(preSignupSendCodeService.sendCode(request));
+    @Override
+    public ResponseEntity<SendPreSignupCode200Response> sendPreSignupCode(
+            SendPreSignupCodeRequest sendPreSignupCodeRequest
+    ) {
+        igrus.web.security.auth.common.dto.request.ResendVerificationRequest request =
+                new igrus.web.security.auth.common.dto.request.ResendVerificationRequest(
+                        sendPreSignupCodeRequest.getEmail()
+                );
+
+        VerificationResendResponse response = preSignupSendCodeService.sendCode(request);
+        return ResponseEntity.ok(new SendPreSignupCode200Response()
+                .message(response.message())
+                .email(response.email()));
     }
 
-    @Operation(summary = "사전 이메일 인증 코드 확인", description = "회원가입 전 이메일 인증 코드를 확인합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "이메일 인증 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 인증 코드 또는 만료된 코드"
-            ),
-            @ApiResponse(
-                    responseCode = "429",
-                    description = "인증 시도 횟수 초과"
-            )
-    })
-    @PostMapping("/pre-signup/verify-code")
-    public ResponseEntity<PreSignupVerificationResponse> verifyPreSignupCode(
-            @Valid @RequestBody EmailVerificationRequest request) {
-        return ResponseEntity.ok(preSignupVerifyCodeService.verifyCode(request));
+    @Override
+    public ResponseEntity<VerifyPreSignupCode200Response> verifyPreSignupCode(
+            VerifyEmailChangeRequest verifyEmailChangeRequest
+    ) {
+        igrus.web.security.auth.common.dto.request.EmailVerificationRequest request =
+                new igrus.web.security.auth.common.dto.request.EmailVerificationRequest(
+                        verifyEmailChangeRequest.getEmail(),
+                        verifyEmailChangeRequest.getCode()
+                );
+
+        PreSignupVerificationResponse response = preSignupVerifyCodeService.verifyCode(request);
+        return ResponseEntity.ok(new VerifyPreSignupCode200Response()
+                .message(response.message())
+                .email(response.email())
+                .verified(response.verified())
+                .verificationToken(response.verificationToken()));
     }
 
-    @Operation(
-            summary = "재가입 가능 여부 확인",
-            description = "탈퇴 후 재가입 제한 기간(5일)이 지났는지 확인합니다. 회원가입 전 호출하여 재가입 가능 여부를 확인할 수 있습니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "조회 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (학번 형식 오류)"
-            )
-    })
-    @GetMapping("/account/reregistration-check")
-    public ResponseEntity<ReRegistrationCheckResult> checkReRegistrationEligibility(
-            @Parameter(description = "재가입 가능 여부를 확인할 학번 (8자리 숫자)", example = "12345678", required = true)
-            @RequestParam @Pattern(regexp = "^\\d{8}$", message = "학번은 8자리 숫자여야 합니다") String studentId) {
+    @Override
+    public ResponseEntity<CheckReRegistrationEligibility200Response> checkReRegistrationEligibility(
+            String studentId
+    ) {
         ReRegistrationCheckResult result = checkReRegistrationEligibilityService.checkReRegistrationEligibility(studentId);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(new CheckReRegistrationEligibility200Response()
+                .isEligible(result.isEligible())
+                .isAlreadyRegistered(result.isAlreadyRegistered())
+                .reRegistrationAvailableAt(result.reRegistrationAvailableAt())
+                .message(result.message()));
     }
 
-    @Operation(
-            summary = "계정 복구 가능 여부 확인",
-            description = "탈퇴한 계정의 복구 가능 여부를 확인합니다. 탈퇴 후 5일 이내에는 계정을 복구할 수 있습니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "복구 가능 여부 조회 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (학번 형식 오류)"
-            )
-    })
-    @GetMapping("/account/recovery-check")
-    public ResponseEntity<RecoveryEligibilityResponse> checkRecoveryEligibility(
-            @Parameter(description = "복구 가능 여부를 확인할 학번 (8자리 숫자)", example = "12345678", required = true)
-            @RequestParam @Pattern(regexp = "^\\d{8}$", message = "학번은 8자리 숫자여야 합니다") String studentId) {
+    @Override
+    public ResponseEntity<CheckRecoveryEligibility200Response> checkRecoveryEligibility(String studentId) {
         RecoveryEligibilityResponse response = checkRecoveryEligibilityService.checkRecoveryEligibility(studentId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new CheckRecoveryEligibility200Response()
+                .recoverable(response.recoverable())
+                .recoveryDeadline(response.recoveryDeadline())
+                .message(response.message()));
     }
 
-    @Operation(
-            summary = "계정 복구",
-            description = "탈퇴한 계정을 복구합니다. 탈퇴 후 5일 이내에만 가능하며, 학번과 비밀번호로 인증이 필요합니다. " +
-                    "복구 성공 시 새로운 Access Token과 Refresh Token이 발급됩니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "계정 복구 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패) 또는 복구 기간 만료"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 실패 (학번 또는 비밀번호 불일치)"
-            )
-    })
-    @PostMapping("/account/recover")
-    public ResponseEntity<AccountRecoveryResponse> recoverAccount(
-            @Valid @RequestBody AccountRecoveryRequest request,
-            HttpServletResponse httpResponse) {
-        RecoveryResult result = recoverAccountService.recoverAccount(request.studentId(), request.password());
+    @Override
+    public ResponseEntity<RecoverAccount200Response> recoverAccount(
+            RecoverAccountRequest recoverAccountRequest
+    ) {
+        HttpServletResponse httpResponse = ServletContextUtil.getCurrentResponse();
+
+        RecoveryResult result = recoverAccountService.recoverAccount(
+                recoverAccountRequest.getStudentId(), recoverAccountRequest.getPassword());
 
         ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
                 result.refreshToken(),
@@ -462,68 +343,48 @@ public class PasswordAuthController {
         );
         httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return ResponseEntity.ok(result.toResponse());
+        AccountRecoveryResponse response = result.toResponse();
+        return ResponseEntity.ok(new RecoverAccount200Response()
+                .accessToken(response.accessToken())
+                .userId(response.userId())
+                .studentId(response.studentId())
+                .name(response.name())
+                .role(RecoverAccount200Response.RoleEnum.fromValue(response.role().name()))
+                .expiresIn(response.expiresIn())
+                .message(response.message()));
     }
 
-    @Operation(
-            summary = "비밀번호 재설정 요청",
-            description = "학번을 입력하여 비밀번호 재설정 링크를 이메일로 발송합니다. 보안상 존재하지 않는 학번도 동일한 응답을 반환합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "요청 처리 완료 (이메일이 등록된 경우 재설정 링크 발송)"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (학번 형식 오류)"
-            )
-    })
-    @PostMapping("/reset-request")
-    public ResponseEntity<Void> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
-        requestPasswordResetService.requestPasswordReset(request.studentId());
+    @Override
+    public ResponseEntity<Void> requestPasswordReset(
+            RequestPasswordResetRequest requestPasswordResetRequest
+    ) {
+        requestPasswordResetService.requestPasswordReset(requestPasswordResetRequest.getStudentId());
         return ResponseEntity.ok().build();
     }
 
-    @Operation(
-            summary = "비밀번호 재설정 확인",
-            description = "재설정 토큰과 새 비밀번호를 입력하여 비밀번호를 변경합니다. 비밀번호는 영문 대/소문자, 숫자, 특수문자를 포함한 8자 이상이어야 합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "비밀번호 재설정 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (유효성 검증 실패) 또는 유효하지 않은/만료된 토큰"
-            )
-    })
-    @PostMapping("/reset-confirm")
-    public ResponseEntity<Void> confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
-        resetPasswordService.resetPassword(request.token(), request.newPassword());
+    @Override
+    public ResponseEntity<Void> confirmPasswordReset(
+            ConfirmPasswordResetRequest confirmPasswordResetRequest
+    ) {
+        resetPasswordService.resetPassword(
+                confirmPasswordResetRequest.getToken(),
+                confirmPasswordResetRequest.getNewPassword());
         return ResponseEntity.ok().build();
     }
 
-    @Operation(
-            summary = "비밀번호 재설정 토큰 검증",
-            description = "재설정 토큰의 유효성을 검증합니다. 토큰이 유효하고 만료되지 않았는지 확인합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "토큰 유효"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "유효하지 않거나 만료된 토큰"
-            )
-    })
-    @GetMapping("/reset-validate")
-    public ResponseEntity<Void> validateResetToken(
-            @Parameter(description = "검증할 재설정 토큰", required = true)
-            @RequestParam String token) {
+    @Override
+    public ResponseEntity<Void> validateResetToken(String token) {
         validateResetTokenService.validateResetToken(token);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * OpenAPI 스펙에서 boolean 필드에 대한 {@code @AssertTrue}를 표현할 수 없으므로
+     * 컨트롤러에서 직접 검증한다.
+     */
+    private void validatePrivacyConsent(Boolean privacyConsent) {
+        if (!Boolean.TRUE.equals(privacyConsent)) {
+            throw new CustomBaseException(CommonErrorCode.INVALID_INPUT_VALUE) {};
+        }
     }
 }

@@ -1,12 +1,13 @@
 package igrus.web.community.post.controller;
 
+import igrus.web.common.util.PageableUtils;
+import igrus.web.common.util.SecurityUtils;
 import igrus.web.community.post.dto.request.CreatePostRequest;
 import igrus.web.community.post.dto.request.UpdatePostRequest;
 import igrus.web.community.post.dto.response.PostCreateResponse;
 import igrus.web.community.post.dto.response.PostDetailResponse;
 import igrus.web.community.post.dto.response.PostListPageResponse;
 import igrus.web.community.post.dto.response.PostUpdateResponse;
-import igrus.web.community.post.dto.response.PostViewHistoryPageResponse;
 import igrus.web.community.post.dto.response.PostViewHistoryResponse;
 import igrus.web.community.post.dto.response.PostViewStatsResponse;
 import igrus.web.community.post.service.read.GetPostDetailService;
@@ -16,40 +17,35 @@ import igrus.web.community.post.service.read.GetPostViewStatsService;
 import igrus.web.community.post.service.write.CreatePostService;
 import igrus.web.community.post.service.write.DeletePostService;
 import igrus.web.community.post.service.write.UpdatePostService;
+import igrus.web.generated.api.PostApi;
+import igrus.web.generated.model.CreatePost201Response;
+import igrus.web.generated.model.GetPostDetail200Response;
+import igrus.web.generated.model.GetPostList200Response;
+import igrus.web.generated.model.GetPostList200ResponsePostsInner;
+import igrus.web.generated.model.GetPostViewHistory200Response;
+import igrus.web.generated.model.GetPostViewHistory200ResponseViewHistoryInner;
+import igrus.web.generated.model.GetPostViewStats200Response;
+import igrus.web.generated.model.UpdatePost200Response;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import igrus.web.common.config.SwaggerConfig;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 게시글 컨트롤러.
  * 게시글 작성, 조회, 수정, 삭제 API를 제공합니다.
  */
-@Tag(name = "Post", description = "게시글 API")
-@SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/boards/{boardCode}/posts")
 @RequiredArgsConstructor
-public class PostController {
+public class PostController implements PostApi {
 
     private final CreatePostService createPostService;
     private final UpdatePostService updatePostService;
@@ -59,216 +55,132 @@ public class PostController {
     private final GetPostViewStatsService getPostViewStatsService;
     private final GetPostViewHistoryService getPostViewHistoryService;
 
-    @Operation(
-            summary = "게시글 작성",
-            description = "게시판에 새 게시글을 작성합니다"
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "게시글 작성 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = PostCreateResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (제목 누락, 100자 초과, 이미지 5개 초과 등)"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "쓰기 권한 없음"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "게시판을 찾을 수 없음"
-            ),
-            @ApiResponse(
-                    responseCode = "429",
-                    description = "게시글 작성 제한 초과 (시간당 20회)"
-            )
-    })
-    @PostMapping
-    public ResponseEntity<PostCreateResponse> createPost(
-            @Parameter(description = "게시판 코드", example = "general")
-            @PathVariable String boardCode,
-            @Valid @RequestBody CreatePostRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CreatePost201Response> createPost(
+            String boardCode,
+            igrus.web.generated.model.CreatePostRequest createPostRequest
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 작성 요청 - boardCode: {}, userId: {}, title: {}",
-                boardCode, user.userId(), request.title());
+                boardCode, user.userId(), createPostRequest.getTitle());
 
-        PostCreateResponse response = createPostService.createPost(boardCode, request, user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        CreatePostRequest request = new CreatePostRequest(
+                createPostRequest.getTitle(),
+                createPostRequest.getContent(),
+                Boolean.TRUE.equals(createPostRequest.getIsAnonymous()),
+                Boolean.TRUE.equals(createPostRequest.getIsQuestion()),
+                Boolean.TRUE.equals(createPostRequest.getIsVisibleToAssociate()),
+                createPostRequest.getImageUrls()
+        );
+
+        PostCreateResponse result = createPostService.createPost(boardCode, request, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new CreatePost201Response()
+                .postId(result.postId())
+                .boardCode(result.boardCode())
+                .title(result.title())
+                .createdAt(result.createdAt()));
     }
 
-    @Operation(
-            summary = "게시글 목록 조회",
-            description = "게시판의 게시글 목록을 페이징하여 조회합니다. 키워드 검색 및 질문글 필터링을 지원합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "게시글 목록 조회 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = PostListPageResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "읽기 권한 없음"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "게시판을 찾을 수 없음"
-            )
-    })
-    @GetMapping
-    public ResponseEntity<PostListPageResponse> getPostList(
-            @Parameter(description = "게시판 코드", example = "GENERAL")
-            @PathVariable String boardCode,
-            @Parameter(description = "검색 키워드")
-            @RequestParam(required = false) String keyword,
-            @Parameter(description = "질문글만 조회 여부")
-            @RequestParam(required = false) Boolean questionOnly,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetPostList200Response> getPostList(
+            String boardCode,
+            String keyword,
+            Boolean questionOnly,
+            Integer page,
+            Integer size,
+            List<String> sort
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
         log.info("게시글 목록 조회 요청 - boardCode: {}, keyword: {}, questionOnly: {}, page: {}, size: {}",
                 boardCode, keyword, questionOnly, pageable.getPageNumber(), pageable.getPageSize());
 
-        PostListPageResponse response = getPostListService.getPostList(boardCode, user, keyword, questionOnly, pageable);
-        return ResponseEntity.ok(response);
+        PostListPageResponse result = getPostListService.getPostList(boardCode, user, keyword, questionOnly, pageable);
+
+        return ResponseEntity.ok(new GetPostList200Response()
+                .posts(result.posts().stream()
+                        .map(p -> new GetPostList200ResponsePostsInner()
+                                .postId(p.postId())
+                                .title(p.title())
+                                .authorName(p.authorName())
+                                .isAnonymous(p.isAnonymous())
+                                .isQuestion(p.isQuestion())
+                                .isVisibleToAssociate(p.isVisibleToAssociate())
+                                .viewCount(p.viewCount())
+                                .likeCount(p.likeCount())
+                                .commentCount(p.commentCount())
+                                .bookmarkCount(p.bookmarkCount())
+                                .createdAt(p.createdAt()))
+                        .toList())
+                .totalElements(result.totalElements())
+                .totalPages(result.totalPages())
+                .currentPage(result.currentPage())
+                .hasNext(result.hasNext()));
     }
 
-    @Operation(
-            summary = "게시글 상세 조회",
-            description = "게시글의 상세 정보를 조회합니다. 조회 시 조회수가 1 증가합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "게시글 상세 조회 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = PostDetailResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "읽기 권한 없음"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "게시글을 찾을 수 없음"
-            )
-    })
-    @GetMapping("/{postId}")
-    public ResponseEntity<PostDetailResponse> getPostDetail(
-            @Parameter(description = "게시판 코드", example = "GENERAL")
-            @PathVariable String boardCode,
-            @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long postId,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetPostDetail200Response> getPostDetail(String boardCode, Long postId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 상세 조회 요청 - boardCode: {}, postId: {}, userId: {}",
                 boardCode, postId, user.userId());
 
-        PostDetailResponse response = getPostDetailService.getPostDetail(boardCode, postId, user);
-        return ResponseEntity.ok(response);
+        PostDetailResponse result = getPostDetailService.getPostDetail(boardCode, postId, user);
+        return ResponseEntity.ok(new GetPostDetail200Response()
+                .postId(result.postId())
+                .boardCode(result.boardCode())
+                .title(result.title())
+                .content(result.content())
+                .authorId(result.authorId())
+                .authorName(result.authorName())
+                .isAnonymous(result.isAnonymous())
+                .isQuestion(result.isQuestion())
+                .isVisibleToAssociate(result.isVisibleToAssociate())
+                .viewCount(result.viewCount())
+                .likeCount(result.likeCount())
+                .bookmarkCount(result.bookmarkCount())
+                .commentCount(result.commentCount())
+                .imageUrls(result.imageUrls())
+                .createdAt(result.createdAt())
+                .updatedAt(result.updatedAt())
+                .isAuthor(result.isAuthor())
+                .liked(result.liked())
+                .bookmarked(result.bookmarked()));
     }
 
-    @Operation(
-            summary = "게시글 수정",
-            description = "게시글을 수정합니다. 작성자 본인 또는 관리자만 수정 가능합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "게시글 수정 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = PostUpdateResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (제목 누락, 100자 초과, 이미지 5개 초과 등)"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "수정 권한 없음"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "게시글을 찾을 수 없음"
-            )
-    })
-    @PutMapping("/{postId}")
-    public ResponseEntity<PostUpdateResponse> updatePost(
-            @Parameter(description = "게시판 코드", example = "GENERAL")
-            @PathVariable String boardCode,
-            @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long postId,
-            @Valid @RequestBody UpdatePostRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UpdatePost200Response> updatePost(
+            String boardCode,
+            Long postId,
+            igrus.web.generated.model.UpdatePostRequest updatePostRequest
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 수정 요청 - boardCode: {}, postId: {}, userId: {}, title: {}",
-                boardCode, postId, user.userId(), request.title());
+                boardCode, postId, user.userId(), updatePostRequest.getTitle());
 
-        PostUpdateResponse response = updatePostService.updatePost(boardCode, postId, request, user);
-        return ResponseEntity.ok(response);
+        UpdatePostRequest request = new UpdatePostRequest(
+                updatePostRequest.getTitle(),
+                updatePostRequest.getContent(),
+                Boolean.TRUE.equals(updatePostRequest.getIsQuestion()),
+                Boolean.TRUE.equals(updatePostRequest.getIsVisibleToAssociate()),
+                updatePostRequest.getImageUrls()
+        );
+
+        PostUpdateResponse result = updatePostService.updatePost(boardCode, postId, request, user);
+        return ResponseEntity.ok(new UpdatePost200Response()
+                .postId(result.postId())
+                .boardCode(result.boardCode())
+                .title(result.title())
+                .updatedAt(result.updatedAt()));
     }
 
-    @Operation(
-            summary = "게시글 삭제",
-            description = "게시글을 삭제합니다. 작성자 본인 또는 운영자 이상 권한을 가진 사용자만 삭제 가능합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "204",
-                    description = "게시글 삭제 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "삭제 권한 없음"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "게시글을 찾을 수 없음"
-            )
-    })
-    @DeleteMapping("/{postId}")
-    public ResponseEntity<Void> deletePost(
-            @Parameter(description = "게시판 코드", example = "GENERAL")
-            @PathVariable String boardCode,
-            @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long postId,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deletePost(String boardCode, Long postId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 삭제 요청 - boardCode: {}, postId: {}, userId: {}",
                 boardCode, postId, user.userId());
 
@@ -276,83 +188,46 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(
-            summary = "게시글 조회 통계",
-            description = "게시글의 조회 통계를 조회합니다. OPERATOR 이상만 조회 가능합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "조회 통계 조회 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = PostViewStatsResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "조회 권한 없음 (OPERATOR 이상 필요)"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "게시글을 찾을 수 없음"
-            )
-    })
-    @GetMapping("/{postId}/view-stats")
-    public ResponseEntity<PostViewStatsResponse> getPostViewStats(
-            @Parameter(description = "게시판 코드", example = "GENERAL")
-            @PathVariable String boardCode,
-            @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long postId,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetPostViewStats200Response> getPostViewStats(String boardCode, Long postId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 조회 통계 요청 - boardCode: {}, postId: {}, userId: {}",
                 boardCode, postId, user.userId());
 
-        PostViewStatsResponse response = getPostViewStatsService.getPostViewStats(boardCode, postId, user);
-        return ResponseEntity.ok(response);
+        PostViewStatsResponse result = getPostViewStatsService.getPostViewStats(boardCode, postId, user);
+        return ResponseEntity.ok(new GetPostViewStats200Response()
+                .postId(result.postId())
+                .totalViews(result.totalViews())
+                .uniqueViewers(result.uniqueViewers()));
     }
 
-    @Operation(
-            summary = "게시글 조회 기록 목록",
-            description = "게시글의 조회 기록을 페이징하여 조회합니다. OPERATOR 이상만 조회 가능합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "조회 기록 목록 조회 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "조회 권한 없음 (OPERATOR 이상 필요)"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "게시글을 찾을 수 없음"
-            )
-    })
-    @GetMapping("/{postId}/view-history")
-    public ResponseEntity<PostViewHistoryPageResponse> getPostViewHistory(
-            @Parameter(description = "게시판 코드", example = "GENERAL")
-            @PathVariable String boardCode,
-            @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long postId,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetPostViewHistory200Response> getPostViewHistory(
+            String boardCode,
+            Long postId,
+            Integer page,
+            Integer size,
+            List<String> sort
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
         log.info("게시글 조회 기록 요청 - boardCode: {}, postId: {}, userId: {}, page: {}, size: {}",
                 boardCode, postId, user.userId(), pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<PostViewHistoryResponse> page = getPostViewHistoryService.getPostViewHistory(boardCode, postId, user, pageable);
-        return ResponseEntity.ok(PostViewHistoryPageResponse.from(page));
+        Page<PostViewHistoryResponse> resultPage = getPostViewHistoryService.getPostViewHistory(boardCode, postId, user, pageable);
+        return ResponseEntity.ok(new GetPostViewHistory200Response()
+                .viewHistory(resultPage.getContent().stream()
+                        .map(vh -> new GetPostViewHistory200ResponseViewHistoryInner()
+                                .viewId(vh.viewId())
+                                .viewerId(vh.viewerId())
+                                .viewerName(vh.viewerName())
+                                .viewedAt(vh.viewedAt()))
+                        .toList())
+                .totalElements(resultPage.getTotalElements())
+                .totalPages(resultPage.getTotalPages())
+                .currentPage(resultPage.getNumber())
+                .hasNext(resultPage.hasNext()));
     }
 }
