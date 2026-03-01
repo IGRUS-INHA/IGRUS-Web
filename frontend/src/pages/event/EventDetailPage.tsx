@@ -118,7 +118,7 @@ export default function EventDetailPage() {
 
     setIsMoreMenuOpen(false);
     closeEvent(
-      { eventId: Number(eventId) },
+      { eventId: Number(eventId), data: { reason: '운영진 수동 마감' } },
       {
         onError: (error: unknown) => {
           if (isForbiddenError(error) || isEventOperatorRequired(error)) {
@@ -194,7 +194,7 @@ export default function EventDetailPage() {
   const hasApplied = event.isRegistered ?? false;
   const canApply = user && isOpen && !hasApplied;
   const canCancel = user && hasApplied;
-  const canManage = event.canEdit || event.isAuthor;
+  const canManage = event.canEdit;
 
   // 상태 라벨
   const STATUS_LABELS: Record<string, string> = {
@@ -204,8 +204,8 @@ export default function EventDetailPage() {
     COMPLETED: '신청 불가',
     ONGOING: '진행중',
   };
-  const statusLabel = event.status ? (STATUS_LABELS[event.status] ?? '마감') : (isOpen ? '신청 가능' : '마감');
-  const isActiveStatus = event.status === 'OPEN' || event.status === 'UPCOMING' || event.status === 'ONGOING';
+  const statusLabel = event.eventStatus ? (STATUS_LABELS[event.eventStatus] ?? '마감') : (isOpen ? '신청 가능' : '마감');
+  const isActiveStatus = event.eventStatus === 'UPCOMING' || event.eventStatus === 'ONGOING';
 
   const { date: dateStr, time: timeStr } = formatDateTime(event.eventStartAt);
 
@@ -248,7 +248,7 @@ export default function EventDetailPage() {
                 >
                   <Edit size={16} /> 수정하기
                 </button>
-                {event.status === 'OPEN' && (
+                {event.registrationStatus === 'OPEN' && (
                   <button
                     onClick={handleCloseEvent}
                     type="button"

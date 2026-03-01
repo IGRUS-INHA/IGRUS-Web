@@ -54,7 +54,7 @@ export default function EventListPage() {
   }));
 
   // 필터 변경 핸들러
-  const handleFilterChange = (newStatus: EventFilterStatus) => {
+  const handleFilterChange = (newStatus: string) => {
     const newParams = new URLSearchParams(searchParams);
     if (newStatus === EVENT_FILTER_STATUS.ALL) {
       newParams.delete('status');

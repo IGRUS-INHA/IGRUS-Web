@@ -76,7 +76,7 @@ export function useBoardList() {
 
 // 2. 특정 게시판 조회
 export function useBoardByCode(code: string) {
-  const { data, error, isLoading } = useGetBoardByCode(code, {
+  const { data, error } = useGetBoardByCode(code, {
     query: { enabled: !!code },
   });
   const { user } = useAuth();
@@ -99,7 +99,15 @@ export function useBoardByCode(code: string) {
   }
 
   return {
-    board: transformBoardDetail(data.data),
+    board: data.data ? transformBoardDetail(data.data) : ({
+      code,
+      name: '',
+      description: '',
+      canRead: false,
+      canWrite: false,
+      allowsAnonymous: false,
+      allowsQuestionTag: false,
+    } as BoardDetail),
     isLoading: false,
     error: undefined,
   };

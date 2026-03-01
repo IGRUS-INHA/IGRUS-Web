@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PAGINATION, SORT_TYPE, SEARCH_TYPE } from '@/constants/board';
-import type { SortType, SearchType } from '@/types/common';
 
 interface BoardListParams {
   page: number;

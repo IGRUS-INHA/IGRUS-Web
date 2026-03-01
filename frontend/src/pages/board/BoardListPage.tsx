@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { PenTool } from 'lucide-react';
 import { useGetPostList } from '@/api/model/post/post';
+import type { PostListPageResponse } from '@/api/model/models';
 import PostListItem from '@/components/feature/board/PostListItem';
 import { SortSelect } from '@/components/board/SortSelect';
 import { Pagination } from '@/components/board/Pagination';
@@ -64,8 +65,8 @@ export default function BoardListPage() {
 
   const { data: response, isLoading, error } = isMockMode ? mockQuery : realQuery;
 
-  // Orval 응답 unwrap
-  const data = response?.data;
+  // Orval 응답 unwrap (에러 응답의 data는 void이므로 PostListPageResponse로 캐스트)
+  const data = response?.data as PostListPageResponse | undefined;
 
   // 403 에러 체크 (권한 없음)
   const isForbidden = isBoardReadDenied(error) || isForbiddenError(error);
@@ -143,10 +144,10 @@ export default function BoardListPage() {
       )}
 
       {/* Pagination */}
-      {data && data.totalPages > 1 && (
+      {data && (data.totalPages ?? 0) > 1 && (
         <Pagination
           currentPage={currentPage}
-          totalPages={data.totalPages}
+          totalPages={data.totalPages ?? 0}
           onPageChange={handlePageChange}
           className="mt-s8"
         />

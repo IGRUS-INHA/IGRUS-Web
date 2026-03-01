@@ -95,7 +95,7 @@ export default function EventEditPage() {
 
   // 권한 체크 (권한 없으면 상세 페이지로 리다이렉트)
   useEffect(() => {
-    if (event && !event.canEdit && !event.isAuthor) {
+    if (event && !event.canEdit) {
       navigate(`/events/${eventId}`);
     }
   }, [event, eventId, navigate]);
@@ -120,29 +120,29 @@ export default function EventEditPage() {
 
       const { preset, detail } = parseLocation(event.location || '');
       const detectedPreset = detectRegistrationPreset(
-        eventDateTime.date,
-        regStartDateTime.date,
-        regStartDateTime.time,
-        regEndDateTime.date,
-        regEndDateTime.time,
-        eventDateTime.time,
+        eventDateTime.date ?? '',
+        regStartDateTime.date ?? '',
+        regStartDateTime.time ?? '',
+        regEndDateTime.date ?? '',
+        regEndDateTime.time ?? '',
+        eventDateTime.time ?? '',
       );
 
       reset({
         title: event.title || '',
         description: event.description || '',
-        date: eventDateTime.date,
-        time: eventDateTime.time,
-        endDate: eventEndDateTime.date || eventDateTime.date,
-        endTime: eventEndDateTime.time || eventDateTime.time,
+        date: eventDateTime.date ?? '',
+        time: eventDateTime.time ?? '',
+        endDate: eventEndDateTime.date || eventDateTime.date || '',
+        endTime: eventEndDateTime.time || eventDateTime.time || '',
         locationPreset: preset || DIRECT_INPUT_VALUE,
         locationDetail: detail,
         capacity: event.capacity || 30,
         registrationPreset: detectedPreset,
-        registrationStartDate: regStartDateTime.date,
-        registrationStartTime: regStartDateTime.time,
-        registrationDeadlineDate: regEndDateTime.date,
-        registrationDeadlineTime: regEndDateTime.time,
+        registrationStartDate: regStartDateTime.date ?? '',
+        registrationStartTime: regStartDateTime.time ?? '',
+        registrationDeadlineDate: regEndDateTime.date ?? '',
+        registrationDeadlineTime: regEndDateTime.time ?? '',
       });
 
       isInitialized.current = true;
@@ -347,7 +347,7 @@ export default function EventEditPage() {
                 detail={locationDetail}
                 onPresetChange={(v) => setValue('locationPreset', v)}
                 onDetailChange={(v) => setValue('locationDetail', v)}
-                error={errors.locationPreset?.message}
+                error={errors.locationPreset?.message ?? ''}
               />
             </div>
 

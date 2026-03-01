@@ -89,9 +89,7 @@ export async function confirmS3Upload(objectKey: string): Promise<void> {
   const response = await confirmUpload({ objectKey });
 
   if (response.status !== 200) {
-    throw new Error(
-      `업로드 확인 실패: ${response.data.reason ?? `HTTP ${response.status}`}`,
-    );
+    throw new Error(`업로드 확인 실패: HTTP ${response.status}`);
   }
 }
 

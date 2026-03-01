@@ -76,7 +76,7 @@ export default function PostEditPage() {
   } = useForm<PostFormData>({
     resolver: zodResolver(postFormSchema),
     defaultValues: {
-      category: categories[0]?.value || 'general',
+      category: categories?.[0]?.value ?? 'general',
       isAnonymous: false,
       isQuestion: false,
       isVisibleToAssociate: false,
@@ -91,7 +91,7 @@ export default function PostEditPage() {
       reset({
         title: post.title || '',
         content: post.content || '',
-        category: categories[0]?.value || 'general',
+        category: categories?.[0]?.value ?? 'general',
         isAnonymous: post.isAnonymous || false,
         isQuestion: post.isQuestion || false,
         isVisibleToAssociate: post.isVisibleToAssociate || false,

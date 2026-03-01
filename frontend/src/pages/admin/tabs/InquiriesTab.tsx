@@ -38,8 +38,7 @@ const STATUS_FILTER_OPTIONS: { value: GetAllInquiriesStatus | ''; label: string 
 const STATUS_CHANGE_OPTIONS: { value: UpdateInquiryStatusRequestStatus; label: string }[] = [
   { value: 'PENDING', label: '대기' },
   { value: 'IN_PROGRESS', label: '처리중' },
-  { value: 'ANSWERED', label: '답변완료' },
-  { value: 'CLOSED', label: '종료' },
+  { value: 'COMPLETED', label: '완료' },
 ];
 
 const STATUS_BADGE: Record<string, string> = {

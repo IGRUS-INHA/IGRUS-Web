@@ -256,7 +256,8 @@ function BubbleOrbit() {
         if (!b) return;
         b.style.opacity = "1";
         b.style.transform = "translate(-50%, -50%)";
-        state.bubbles[i].ready = true;
+        const bst = state.bubbles[i];
+        if (bst) bst.ready = true;
       });
     } else {
       bubbles.forEach((b, i) => {
@@ -269,7 +270,8 @@ function BubbleOrbit() {
               b.style.opacity = "1";
               b.style.transform = "translate(-50%, -50%)";
               b.classList.remove("bounced");
-              state.bubbles[i].ready = true;
+              const bst = state.bubbles[i];
+              if (bst) bst.ready = true;
             },
             { once: true },
           );
@@ -313,7 +315,7 @@ function BubbleOrbit() {
     (i: number, e: React.PointerEvent<HTMLDivElement>) => {
       const st = stateRef.current.bubbles[i];
       const el = bubbleRefs.current[i];
-      if (!st.ready || st.isSnapping || !el) return;
+      if (!st || !st.ready || st.isSnapping || !el) return;
 
       st.isDragging = true;
       el.classList.add("dragging");
@@ -334,7 +336,7 @@ function BubbleOrbit() {
   const handlePointerMove = useCallback(
     (i: number, e: React.PointerEvent<HTMLDivElement>) => {
       const drag = dragRef.current;
-      if (!drag || drag.idx !== i || !stateRef.current.bubbles[i].isDragging)
+      if (!drag || drag.idx !== i || !stateRef.current.bubbles[i]?.isDragging)
         return;
       const el = bubbleRefs.current[i];
       if (!el) return;
@@ -348,7 +350,7 @@ function BubbleOrbit() {
     (i: number, e: React.PointerEvent<HTMLDivElement>) => {
       const st = stateRef.current.bubbles[i];
       const el = bubbleRefs.current[i];
-      if (!st.isDragging || !el) return;
+      if (!st || !st.isDragging || !el) return;
 
       st.isDragging = false;
       el.classList.remove("dragging");

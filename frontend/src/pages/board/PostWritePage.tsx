@@ -57,7 +57,7 @@ export default function PostWritePage() {
   } = useForm<PostFormData>({
     resolver: zodResolver(postFormSchema),
     defaultValues: {
-      category: categories[0]?.value || 'general',
+      category: categories?.[0]?.value ?? 'general',
       isAnonymous: false,
       isQuestion: false,
       isVisibleToAssociate: false,
