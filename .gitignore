@@ -23,6 +23,7 @@ backend/build/
 backend/.gradle/
 backend/bin/
 backend/out/
+backend/com/
 backend/*.jar
 backend/*.war
 
@@ -57,3 +58,7 @@ docker-data/
 nul
 
 *.bak
+
+# OpenAPI bundled (generated)
+openapi/openapi.bundled.yaml
+backend/src/main/resources/static/openapi.yaml

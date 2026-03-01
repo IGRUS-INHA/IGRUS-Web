@@ -27,6 +27,7 @@ jobs:
             });
             const backendChanged = files.some(f =>
               (f.filename.startsWith('backend/') && !f.filename.startsWith('backend/docs/')) ||
+               f.filename.startsWith('openapi/') ||
                f.filename === '.github/workflows/backend-ci.yaml' ||
                f.filename === '.github/workflows/flyway-validate/validate-flyway-files.sh'
             );

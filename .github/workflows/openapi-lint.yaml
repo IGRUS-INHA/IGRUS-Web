@@ -1,0 +1,21 @@
+name: OpenAPI Lint
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'openapi/**'
+      - '.github/workflows/openapi-lint.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Lint OpenAPI spec
+        run: npx @redocly/cli@^2.20.0 lint openapi/openapi.yaml
