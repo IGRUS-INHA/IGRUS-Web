@@ -82,6 +82,12 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
 
     private static final String BASE_URL = "/api/v1/boards";
 
+    /**
+     * Gradle bundleOpenApiSpec 태스크가 생성하는 번들 파일 경로.
+     * processResources → bundleOpenApiSpec 의존성으로 test 전에 항상 생성됨.
+     */
+    private static final String BUNDLED_SPEC_PATH = "src/main/resources/static/openapi.yaml";
+
     private User memberUser;
 
     /**
@@ -144,7 +150,7 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
         @Test
         void bundledSpec_CanBeLoaded() {
             // given
-            File specFile = new File("../openapi/openapi.bundled.yaml");
+            File specFile = new File(BUNDLED_SPEC_PATH);
             assertThat(specFile.exists()).as("번들 파일이 존재해야 함").isTrue();
 
             // when
@@ -209,7 +215,7 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
 
         @BeforeEach
         void setUpValidator() {
-            File specFile = new File("../openapi/openapi.bundled.yaml");
+            File specFile = new File(BUNDLED_SPEC_PATH);
             validator = OpenApiInteractionValidator
                     .createForSpecificationUrl(specFile.toURI().toString())
                     .withLevelResolver(createProjectLevelResolver())
@@ -263,7 +269,7 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
         @Test
         void additionalField_AllowedWhenAdditionalPropertiesNotSet() {
             // given
-            File specFile = new File("../openapi/openapi.bundled.yaml");
+            File specFile = new File(BUNDLED_SPEC_PATH);
             OpenApiInteractionValidator validator = OpenApiInteractionValidator
                     .createForSpecificationUrl(specFile.toURI().toString())
                     .withLevelResolver(
@@ -311,7 +317,7 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
         @Test
         void structuralMismatch_ArrayVsObject_NotDetectedInOpenApi31() {
             // given
-            File specFile = new File("../openapi/openapi.bundled.yaml");
+            File specFile = new File(BUNDLED_SPEC_PATH);
             OpenApiInteractionValidator validator = OpenApiInteractionValidator
                     .createForSpecificationUrl(specFile.toURI().toString())
                     .withLevelResolver(
@@ -357,7 +363,7 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
         @Test
         void typeMismatch_BooleanField_NotDetectedInOpenApi31() {
             // given
-            File specFile = new File("../openapi/openapi.bundled.yaml");
+            File specFile = new File(BUNDLED_SPEC_PATH);
             OpenApiInteractionValidator validator = OpenApiInteractionValidator
                     .createForSpecificationUrl(specFile.toURI().toString())
                     .withLevelResolver(
@@ -579,7 +585,7 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
         @Test
         void projectLevelResolver_ValidResponse_Passes() {
             // given
-            File specFile = new File("../openapi/openapi.bundled.yaml");
+            File specFile = new File(BUNDLED_SPEC_PATH);
             OpenApiInteractionValidator validator = OpenApiInteractionValidator
                     .createForSpecificationUrl(specFile.toURI().toString())
                     .withLevelResolver(createProjectLevelResolver())
@@ -604,7 +610,7 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
         @Test
         void securityValidation_IgnoreLevel_PassesWithoutAuth() {
             // given
-            File specFile = new File("../openapi/openapi.bundled.yaml");
+            File specFile = new File(BUNDLED_SPEC_PATH);
             OpenApiInteractionValidator validator = OpenApiInteractionValidator
                     .createForSpecificationUrl(specFile.toURI().toString())
                     .withLevelResolver(createProjectLevelResolver())
@@ -629,7 +635,7 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
         @Test
         void csrfParameter_IsIgnoredByLevelResolver() {
             // given
-            File specFile = new File("../openapi/openapi.bundled.yaml");
+            File specFile = new File(BUNDLED_SPEC_PATH);
             OpenApiInteractionValidator validator = OpenApiInteractionValidator
                     .createForSpecificationUrl(specFile.toURI().toString())
                     .withLevelResolver(createProjectLevelResolver())
@@ -671,7 +677,7 @@ class SwaggerRequestValidatorPocTest extends ServiceIntegrationTestBase {
         void measurePerformance() throws Exception {
             // 1. Validator 초기화 비용 측정
             long initStart = System.nanoTime();
-            File specFile = new File("../openapi/openapi.bundled.yaml");
+            File specFile = new File(BUNDLED_SPEC_PATH);
             OpenApiInteractionValidator validator = OpenApiInteractionValidator
                     .createForSpecificationUrl(specFile.toURI().toString())
                     .withLevelResolver(createProjectLevelResolver())
