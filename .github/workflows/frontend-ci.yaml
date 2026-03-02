@@ -65,6 +65,7 @@ jobs:
       - name: Check and regenerate Orval API client
         run: |
           pnpm api:generate
+          pnpm format
           if [ -n "$(git -C .. status --porcelain frontend/src/api/model openapi/bundled.yaml)" ]; then
             echo "::warning::Orval API client is outdated. Auto-committing regenerated files."
             git -C .. config user.name "github-actions[bot]"
