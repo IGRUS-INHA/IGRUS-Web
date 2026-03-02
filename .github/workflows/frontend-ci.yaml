@@ -5,7 +5,7 @@ on:
     branches: ["main"]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   check-changes:
@@ -26,6 +26,7 @@ jobs:
             });
             const frontendChanged = files.some(f =>
               (f.filename.startsWith('frontend/') && !f.filename.startsWith('frontend/docs/')) ||
+               f.filename.startsWith('openapi/') ||
                f.filename === '.github/workflows/frontend-ci.yaml'
             );
             core.setOutput('frontend', frontendChanged ? 'true' : 'false');
@@ -43,6 +44,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -58,6 +61,20 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Check and regenerate Orval API client
+        run: |
+          pnpm api:generate
+          if [ -n "$(git -C .. status --porcelain frontend/src/api/model openapi/bundled.yaml)" ]; then
+            echo "::warning::Orval API client is outdated. Auto-committing regenerated files."
+            git -C .. config user.name "github-actions[bot]"
+            git -C .. config user.email "github-actions[bot]@users.noreply.github.com"
+            git -C .. add frontend/src/api/model openapi/bundled.yaml
+            git -C .. commit -m "chore(frontend): Orval API 클라이언트 재생성"
+            git -C .. push
+          else
+            echo "Orval API client is up to date."
+          fi
 
       - name: Lint
         run: pnpm lint
@@ -75,3 +92,5 @@ jobs:
           FEATURE_COMMUNITY: 'false'
           FEATURE_SEARCH: 'false'
           FEATURE_PROFILE_EDIT: 'false'
+          FEATURE_EVENTS: 'false'
+          FEATURE_INSTAGRAM: 'false'
