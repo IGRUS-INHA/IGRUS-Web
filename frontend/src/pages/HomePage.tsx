@@ -65,19 +65,24 @@ export default function HomePage() {
     useGetPinnedPostList();
   const pinnedPosts = (pinnedResponse?.data ?? []) as PinnedPostListResponse[];
 
-  const { data: eventsResponse, isLoading: isEventsLoading } = useGetEventList({
-    eventStatus: "UPCOMING",
-  });
+  const { data: eventsResponse, isLoading: isEventsLoading } = useGetEventList(
+    { eventStatus: "UPCOMING" },
+    { query: { enabled: __FEATURE_EVENTS__ } },
+  );
   const events = ((eventsResponse?.data ?? []) as EventListResponse[]).slice(
     0,
     3,
   );
 
+  const showSplit = __FEATURE_EVENTS__ || __FEATURE_INSTAGRAM__;
+
   return (
     <div>
       <HeroSection isAuthenticated={isAuthenticated} />
       <NoticeSection pinnedPosts={pinnedPosts} isLoading={isPinnedLoading} />
-      <SplitSection events={events} isEventsLoading={isEventsLoading} />
+      {showSplit && (
+        <SplitSection events={events} isEventsLoading={isEventsLoading} />
+      )}
     </div>
   );
 }
@@ -510,16 +515,34 @@ function SplitSection({
   events: EventListResponse[];
   isEventsLoading: boolean;
 }) {
+  const bothEnabled = __FEATURE_EVENTS__ && __FEATURE_INSTAGRAM__;
+
   return (
     <section className="pt-s6 pb-s8 border-t border-border">
       <div className="max-w-[1280px] mx-auto px-s6 max-md:px-s4">
-        <div className="grid grid-cols-2 gap-s8 max-lg:grid-cols-1 max-lg:gap-0">
-          <div className="min-w-0">
-            <EventTimeline events={events} isLoading={isEventsLoading} />
-          </div>
-          <div className="min-w-0 max-lg:pt-s8 max-lg:border-t max-lg:border-border">
-            <InstagramFeed />
-          </div>
+        <div
+          className={
+            bothEnabled
+              ? "grid grid-cols-2 gap-s8 max-lg:grid-cols-1 max-lg:gap-0"
+              : ""
+          }
+        >
+          {__FEATURE_EVENTS__ && (
+            <div className="min-w-0">
+              <EventTimeline events={events} isLoading={isEventsLoading} />
+            </div>
+          )}
+          {__FEATURE_INSTAGRAM__ && (
+            <div
+              className={cn(
+                "min-w-0",
+                bothEnabled &&
+                  "max-lg:pt-s8 max-lg:border-t max-lg:border-border",
+              )}
+            >
+              <InstagramFeed />
+            </div>
+          )}
         </div>
       </div>
     </section>
