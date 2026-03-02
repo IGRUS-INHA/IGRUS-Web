@@ -37,14 +37,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 실패 사유 (성공 시 null)
  */
-export type LoginHistoryResponseFailureReason =
-  (typeof LoginHistoryResponseFailureReason)[keyof typeof LoginHistoryResponseFailureReason];
+export type LoginHistoryResponseFailureReason = typeof LoginHistoryResponseFailureReason[keyof typeof LoginHistoryResponseFailureReason];
+
 
 export const LoginHistoryResponseFailureReason = {
-  INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
-  ACCOUNT_LOCKED: "ACCOUNT_LOCKED",
-  ACCOUNT_SUSPENDED: "ACCOUNT_SUSPENDED",
-  ACCOUNT_WITHDRAWN: "ACCOUNT_WITHDRAWN",
-  EMAIL_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
-  ACCOUNT_RECOVERABLE: "ACCOUNT_RECOVERABLE",
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  ACCOUNT_LOCKED: 'ACCOUNT_LOCKED',
+  ACCOUNT_SUSPENDED: 'ACCOUNT_SUSPENDED',
+  ACCOUNT_WITHDRAWN: 'ACCOUNT_WITHDRAWN',
+  EMAIL_NOT_VERIFIED: 'EMAIL_NOT_VERIFIED',
+  ACCOUNT_RECOVERABLE: 'ACCOUNT_RECOVERABLE',
 } as const;

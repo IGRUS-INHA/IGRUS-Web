@@ -34,11 +34,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type EventDetailResponseCloseReason =
-  (typeof EventDetailResponseCloseReason)[keyof typeof EventDetailResponseCloseReason];
+export type EventDetailResponseCloseReason = typeof EventDetailResponseCloseReason[keyof typeof EventDetailResponseCloseReason];
+
 
 export const EventDetailResponseCloseReason = {
-  CAPACITY_FULL: "CAPACITY_FULL",
-  DEADLINE_PASSED: "DEADLINE_PASSED",
-  MANUAL_CLOSE: "MANUAL_CLOSE",
+  CAPACITY_FULL: 'CAPACITY_FULL',
+  DEADLINE_PASSED: 'DEADLINE_PASSED',
+  MANUAL_CLOSE: 'MANUAL_CLOSE',
 } as const;

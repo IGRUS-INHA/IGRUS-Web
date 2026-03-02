@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { CommentResponse } from "./commentResponse";
+import type { CommentResponse } from './commentResponse';
 
 export interface CommentWithRepliesResponse {
   id?: number;

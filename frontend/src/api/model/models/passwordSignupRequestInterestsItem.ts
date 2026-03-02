@@ -34,18 +34,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type PasswordSignupRequestInterestsItem =
-  (typeof PasswordSignupRequestInterestsItem)[keyof typeof PasswordSignupRequestInterestsItem];
+export type PasswordSignupRequestInterestsItem = typeof PasswordSignupRequestInterestsItem[keyof typeof PasswordSignupRequestInterestsItem];
+
 
 export const PasswordSignupRequestInterestsItem = {
-  WEB_FRONTEND: "WEB_FRONTEND",
-  WEB_BACKEND: "WEB_BACKEND",
-  APP: "APP",
-  SECURITY: "SECURITY",
-  UI_UX_DESIGN: "UI_UX_DESIGN",
-  OTHER_DESIGN: "OTHER_DESIGN",
-  AI: "AI",
-  CLOUD: "CLOUD",
-  GAME: "GAME",
-  OTHER: "OTHER",
+  WEB_FRONTEND: 'WEB_FRONTEND',
+  WEB_BACKEND: 'WEB_BACKEND',
+  APP: 'APP',
+  SECURITY: 'SECURITY',
+  UI_UX_DESIGN: 'UI_UX_DESIGN',
+  OTHER_DESIGN: 'OTHER_DESIGN',
+  AI: 'AI',
+  CLOUD: 'CLOUD',
+  GAME: 'GAME',
+  OTHER: 'OTHER',
 } as const;

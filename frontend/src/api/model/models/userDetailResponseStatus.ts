@@ -37,12 +37,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 상태
  */
-export type UserDetailResponseStatus =
-  (typeof UserDetailResponseStatus)[keyof typeof UserDetailResponseStatus];
+export type UserDetailResponseStatus = typeof UserDetailResponseStatus[keyof typeof UserDetailResponseStatus];
+
 
 export const UserDetailResponseStatus = {
-  PENDING_VERIFICATION: "PENDING_VERIFICATION",
-  ACTIVE: "ACTIVE",
-  SUSPENDED: "SUSPENDED",
-  WITHDRAWN: "WITHDRAWN",
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  WITHDRAWN: 'WITHDRAWN',
 } as const;

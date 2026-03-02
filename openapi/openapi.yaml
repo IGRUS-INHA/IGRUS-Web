@@ -55,6 +55,8 @@ tags:
   description: 파일 저장소 API
 - name: Semester Member
   description: 학기별 회원 명단 조회 API (운영진 이상)
+- name: Admin Event
+  description: 관리자 행사 관리 API (OPERATOR 이상)
 - name: Event
   description: 행사 API
 - name: Bookmark
@@ -318,6 +320,14 @@ paths:
     $ref: ./paths/admin.yaml#/adminLoginHistories
   /api/v1/admin/dashboard:
     $ref: ./paths/admin.yaml#/adminDashboard
+  /api/v1/admin/events:
+    $ref: ./paths/events.yaml#/adminEvents
+  /api/v1/admin/events/{eventId}:
+    $ref: ./paths/events.yaml#/adminEventsByEventId
+  /api/v1/admin/events/{eventId}/publish:
+    $ref: ./paths/events.yaml#/adminEventsByEventIdPublish
+  /api/v1/admin/events/{eventId}/unpublish:
+    $ref: ./paths/events.yaml#/adminEventsByEventIdUnpublish
   /api/v1/admin/comment-reports:
     $ref: ./paths/admin.yaml#/adminCommentReports
   /api/v1/admin/associates/rejected:

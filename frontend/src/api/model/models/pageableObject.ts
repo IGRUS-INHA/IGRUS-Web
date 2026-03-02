@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { SortObject } from "./sortObject";
+import type { SortObject } from './sortObject';
 
 export interface PageableObject {
   paged?: boolean;

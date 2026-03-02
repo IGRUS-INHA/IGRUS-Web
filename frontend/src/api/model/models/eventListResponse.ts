@@ -33,9 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { EventListResponseEventStatus } from "./eventListResponseEventStatus";
-import type { EventListResponseRegistrationStatus } from "./eventListResponseRegistrationStatus";
-import type { EventListResponseRegistrationType } from "./eventListResponseRegistrationType";
+import type { EventListResponseEventStatus } from './eventListResponseEventStatus';
+import type { EventListResponseRegistrationStatus } from './eventListResponseRegistrationStatus';
+import type { EventListResponseRegistrationType } from './eventListResponseRegistrationType';
+import type { EventListResponseVisibility } from './eventListResponseVisibility';
 
 export interface EventListResponse {
   id?: number;
@@ -46,6 +47,7 @@ export interface EventListResponse {
   registrationEndAt?: string;
   capacity?: number;
   currentCount?: number;
+  visibility?: EventListResponseVisibility;
   registrationStatus?: EventListResponseRegistrationStatus;
   eventStatus?: EventListResponseEventStatus;
   registrationType?: EventListResponseRegistrationType;

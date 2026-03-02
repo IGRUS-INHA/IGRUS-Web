@@ -532,3 +532,150 @@ myRegistrations:
         description: 인증 필요
     security:
     - BearerAuthentication: []
+adminEvents:
+  get:
+    tags:
+    - Admin Event
+    summary: 관리자 행사 목록 조회
+    description: 관리자용 행사 목록을 조회합니다. visibility, 행사 진행 상태, 등록 상태별 필터링이 가능합니다. OPERATOR 이상 권한 필요.
+    operationId: getAdminEventList
+    parameters:
+    - name: visibility
+      in: query
+      description: 공개 상태 필터 (PUBLISHED, UNPUBLISHED)
+      required: false
+      schema:
+        type: string
+        enum:
+        - UNPUBLISHED
+        - PUBLISHED
+    - name: eventStatus
+      in: query
+      description: 행사 진행 상태 필터 (UPCOMING, ONGOING, COMPLETED, CANCELED)
+      required: false
+      schema:
+        type: string
+        enum:
+        - UPCOMING
+        - ONGOING
+        - COMPLETED
+        - CANCELED
+    - name: registrationStatus
+      in: query
+      description: 등록 상태 필터 (NOT_STARTED, OPEN, CLOSED)
+      required: false
+      schema:
+        type: string
+        enum:
+        - NOT_STARTED
+        - OPEN
+        - CLOSED
+    responses:
+      '200':
+        description: 행사 목록 조회 성공
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../schemas/events.yaml#/EventListResponse
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음
+    security:
+    - BearerAuthentication: []
+adminEventsByEventId:
+  get:
+    tags:
+    - Admin Event
+    summary: 관리자 행사 상세 조회
+    description: 관리자용 행사 상세 정보를 조회합니다. visibility 무관하게 모든 행사를 조회할 수 있습니다. OPERATOR 이상 권한 필요.
+    operationId: getAdminEvent
+    parameters:
+    - name: eventId
+      in: path
+      description: 행사 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    responses:
+      '200':
+        description: 행사 상세 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/events.yaml#/EventDetailResponse
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음
+      '404':
+        description: 행사를 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+adminEventsByEventIdPublish:
+  post:
+    tags:
+    - Admin Event
+    summary: 행사 공개
+    description: 행사를 공개합니다. UNPUBLISHED -> PUBLISHED. body 없이 호출합니다. OPERATOR 이상 권한 필요.
+    operationId: publishEvent
+    parameters:
+    - name: eventId
+      in: path
+      description: 행사 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    responses:
+      '200':
+        description: 행사 공개 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/events.yaml#/EventDetailResponse
+      '400':
+        description: 이미 공개 상태
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음
+      '404':
+        description: 행사를 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+adminEventsByEventIdUnpublish:
+  post:
+    tags:
+    - Admin Event
+    summary: 행사 비공개
+    description: 행사를 비공개로 전환합니다. PUBLISHED -> UNPUBLISHED. 등록 상태가 OPEN이면 자동 마감됩니다. body 없이 호출합니다. OPERATOR 이상 권한 필요.
+    operationId: unpublishEvent
+    parameters:
+    - name: eventId
+      in: path
+      description: 행사 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    responses:
+      '200':
+        description: 행사 비공개 전환 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/events.yaml#/EventDetailResponse
+      '400':
+        description: 이미 비공개 상태
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음
+      '404':
+        description: 행사를 찾을 수 없음
+    security:
+    - BearerAuthentication: []

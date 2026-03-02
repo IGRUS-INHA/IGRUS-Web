@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { SemesterMemberListResponseRole } from "./semesterMemberListResponseRole";
+import type { SemesterMemberListResponseRole } from './semesterMemberListResponseRole';
 
 /**
  * 학기별 회원 목록 응답

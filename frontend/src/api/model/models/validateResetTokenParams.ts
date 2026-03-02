@@ -35,8 +35,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type ValidateResetTokenParams = {
-  /**
-   * 검증할 재설정 토큰
-   */
-  token: string;
+/**
+ * 검증할 재설정 토큰
+ */
+token: string;
 };
