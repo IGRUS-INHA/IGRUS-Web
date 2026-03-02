@@ -4,7 +4,7 @@ import {
   useGetMyLikes1,
   useGetMyBookmarks1,
   useGetMyRegistrations,
-} from '@/api/model/my-page/my-page';
+} from "@/api/model/my-page/my-page";
 import type {
   GetMyPostsParams,
   GetMyLikes1Params,
@@ -13,19 +13,19 @@ import type {
   LikedPostPageResponse,
   BookmarkedPostPageResponse,
   MyRegistrationResponse,
-} from '@/api/model/models';
+} from "@/api/model/models";
 
 // 쿼리 키 - invalidation을 위해 정의
 export const myPageKeys = {
-  all: ['/api/v1/mypage'] as const,
-  profile: () => ['/api/v1/mypage/profile'] as const,
+  all: ["/api/v1/mypage"] as const,
+  profile: () => ["/api/v1/mypage/profile"] as const,
   posts: (params?: GetMyPostsParams) =>
-    ['/api/v1/mypage/posts', ...(params ? [params] : [])] as const,
+    ["/api/v1/mypage/posts", ...(params ? [params] : [])] as const,
   likes: (params?: GetMyLikes1Params) =>
-    ['/api/v1/mypage/likes', ...(params ? [params] : [])] as const,
+    ["/api/v1/mypage/likes", ...(params ? [params] : [])] as const,
   bookmarks: (params?: GetMyBookmarks1Params) =>
-    ['/api/v1/mypage/bookmarks', ...(params ? [params] : [])] as const,
-  registrations: () => ['/api/v1/mypage/registrations'] as const,
+    ["/api/v1/mypage/bookmarks", ...(params ? [params] : [])] as const,
+  registrations: () => ["/api/v1/mypage/registrations"] as const,
 };
 
 // 내 프로필 조회
@@ -39,9 +39,10 @@ export function useMyPosts(params?: GetMyPostsParams) {
   const response = query.data;
 
   // IO boundary: Orval이 Blob으로 생성했지만 실제로는 JSON 응답
-  const pageData = response?.status === 200
-    ? (response.data as unknown as MyPostPageResponse)
-    : undefined;
+  const pageData =
+    response?.status === 200
+      ? (response.data as unknown as MyPostPageResponse)
+      : undefined;
 
   return {
     ...query,
@@ -58,9 +59,10 @@ export function useMyLikes(params?: GetMyLikes1Params) {
   const query = useGetMyLikes1(params);
   const response = query.data;
 
-  const pageData = response?.status === 200
-    ? (response.data as unknown as LikedPostPageResponse)
-    : undefined;
+  const pageData =
+    response?.status === 200
+      ? (response.data as unknown as LikedPostPageResponse)
+      : undefined;
 
   return {
     ...query,
@@ -77,9 +79,10 @@ export function useMyBookmarks(params?: GetMyBookmarks1Params) {
   const query = useGetMyBookmarks1(params);
   const response = query.data;
 
-  const pageData = response?.status === 200
-    ? (response.data as unknown as BookmarkedPostPageResponse)
-    : undefined;
+  const pageData =
+    response?.status === 200
+      ? (response.data as unknown as BookmarkedPostPageResponse)
+      : undefined;
 
   return {
     ...query,
@@ -96,9 +99,10 @@ export function useMyRegistrations() {
   const query = useGetMyRegistrations();
   const response = query.data;
 
-  const registrations = response?.status === 200
-    ? (response.data as unknown as MyRegistrationResponse[])
-    : [];
+  const registrations =
+    response?.status === 200
+      ? (response.data as unknown as MyRegistrationResponse[])
+      : [];
 
   return {
     ...query,

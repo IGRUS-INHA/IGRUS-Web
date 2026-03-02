@@ -1,70 +1,77 @@
-import { createBrowserRouter, type RouteObject } from 'react-router-dom';
-import { Layout, ProtectedRoute } from '@/components/common';
+import { createBrowserRouter, type RouteObject } from "react-router-dom";
+import { Layout, ProtectedRoute } from "@/components/common";
 
 // 페이지
-import HomePage from '@/pages/HomePage';
-import NotFoundPage from '@/pages/NotFoundPage';
+import HomePage from "@/pages/HomePage";
+import NotFoundPage from "@/pages/NotFoundPage";
 
 // 인증
-import LoginPage from '@/pages/auth/LoginPage';
-import SignupPage from '@/pages/auth/SignupPage';
-import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
-import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
+import LoginPage from "@/pages/auth/LoginPage";
+import SignupPage from "@/pages/auth/SignupPage";
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 
 // 게시판
-import BoardListPage from '@/pages/board/BoardListPage';
-import PostDetailPage from '@/pages/board/PostDetailPage';
-import PostWritePage from '@/pages/board/PostWritePage';
-import PostEditPage from '@/pages/board/PostEditPage';
+import BoardListPage from "@/pages/board/BoardListPage";
+import PostDetailPage from "@/pages/board/PostDetailPage";
+import PostWritePage from "@/pages/board/PostWritePage";
+import PostEditPage from "@/pages/board/PostEditPage";
 
 // 행사
-import EventListPage from '@/pages/event/EventListPage';
-import EventDetailPage from '@/pages/event/EventDetailPage';
-import EventWritePage from '@/pages/event/EventWritePage';
-import EventEditPage from '@/pages/event/EventEditPage';
-import EventRegistrationsPage from '@/pages/event/EventRegistrationsPage';
+import EventListPage from "@/pages/event/EventListPage";
+import EventDetailPage from "@/pages/event/EventDetailPage";
+import EventWritePage from "@/pages/event/EventWritePage";
+import EventEditPage from "@/pages/event/EventEditPage";
+import EventRegistrationsPage from "@/pages/event/EventRegistrationsPage";
 
 // 문의
-import InquiryPage from '@/pages/inquiry/InquiryPage';
-import InquiryHistoryPage from '@/pages/inquiry/InquiryHistoryPage';
-import InquiryDetailPage from '@/pages/inquiry/InquiryDetailPage';
-import InquiryLookupPage from '@/pages/inquiry/InquiryLookupPage';
+import InquiryPage from "@/pages/inquiry/InquiryPage";
+import InquiryHistoryPage from "@/pages/inquiry/InquiryHistoryPage";
+import InquiryDetailPage from "@/pages/inquiry/InquiryDetailPage";
+import InquiryLookupPage from "@/pages/inquiry/InquiryLookupPage";
 
 // 법적 페이지
-import { PrivacyPolicyPage, TermsOfServicePage } from '@/pages/legal';
+import { PrivacyPolicyPage, TermsOfServicePage } from "@/pages/legal";
 
 // 마이페이지
-import MyPage from '@/pages/mypage/MyPage';
-import ChangePasswordPage from '@/pages/mypage/ChangePasswordPage';
-import WithdrawPage from '@/pages/mypage/WithdrawPage';
+import MyPage from "@/pages/mypage/MyPage";
+import ChangePasswordPage from "@/pages/mypage/ChangePasswordPage";
+import WithdrawPage from "@/pages/mypage/WithdrawPage";
 
 // 관리자
-import AdminDashboard from '@/pages/admin/AdminDashboard';
+import AdminDashboard from "@/pages/admin/AdminDashboard";
 
 const routes: RouteObject[] = [
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       // 공개 페이지
       { index: true, element: <HomePage /> },
-      { path: 'login', element: <LoginPage /> },
-      { path: 'signup', element: <SignupPage /> },
-      { path: 'forgot-password', element: <ForgotPasswordPage /> },
-      { path: 'reset-password', element: <ResetPasswordPage /> },
-      { path: 'inquiry', element: <InquiryPage /> },
-      { path: 'inquiry/history', element: <InquiryHistoryPage /> },
-      { path: 'inquiry/history/:inquiryId', element: <InquiryDetailPage /> },
-      { path: 'inquiry/lookup', element: <InquiryLookupPage /> },
+      { path: "login", element: <LoginPage /> },
+      { path: "signup", element: <SignupPage /> },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
+      { path: "reset-password", element: <ResetPasswordPage /> },
+      { path: "inquiry", element: <InquiryPage /> },
+      { path: "inquiry/history", element: <InquiryHistoryPage /> },
+      { path: "inquiry/history/:inquiryId", element: <InquiryDetailPage /> },
+      { path: "inquiry/lookup", element: <InquiryLookupPage /> },
 
       // 법적 페이지
-      { path: 'privacy', element: <PrivacyPolicyPage /> },
-      { path: 'terms', element: <TermsOfServicePage /> },
+      { path: "privacy", element: <PrivacyPolicyPage /> },
+      { path: "terms", element: <TermsOfServicePage /> },
 
       // 게시판
-      { path: 'board/:boardType', element: <ProtectedRoute><BoardListPage /></ProtectedRoute> },
       {
-        path: 'board/:boardType/write',
+        path: "board/:boardType",
+        element: (
+          <ProtectedRoute>
+            <BoardListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "board/:boardType/write",
         element: (
           <ProtectedRoute minRole="MEMBER">
             <PostWritePage />
@@ -72,28 +79,49 @@ const routes: RouteObject[] = [
         ),
       },
       {
-        path: 'board/:boardType/:postId/edit',
+        path: "board/:boardType/:postId/edit",
         element: (
           <ProtectedRoute minRole="MEMBER">
             <PostEditPage />
           </ProtectedRoute>
         ),
       },
-      { path: 'board/:boardType/:postId', element: <ProtectedRoute><PostDetailPage /></ProtectedRoute> },
+      {
+        path: "board/:boardType/:postId",
+        element: (
+          <ProtectedRoute>
+            <PostDetailPage />
+          </ProtectedRoute>
+        ),
+      },
 
       // 행사
-      { path: 'events', element: <ProtectedRoute><EventListPage /></ProtectedRoute> },
       {
-        path: 'events/write',
+        path: "events",
+        element: (
+          <ProtectedRoute>
+            <EventListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "events/write",
         element: (
           <ProtectedRoute minRole="OPERATOR">
             <EventWritePage />
           </ProtectedRoute>
         ),
       },
-      { path: 'events/:eventId', element: <ProtectedRoute><EventDetailPage /></ProtectedRoute> },
       {
-        path: 'events/:eventId/edit',
+        path: "events/:eventId",
+        element: (
+          <ProtectedRoute>
+            <EventDetailPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "events/:eventId/edit",
         element: (
           <ProtectedRoute minRole="OPERATOR">
             <EventEditPage />
@@ -101,7 +129,7 @@ const routes: RouteObject[] = [
         ),
       },
       {
-        path: 'events/:eventId/registrations',
+        path: "events/:eventId/registrations",
         element: (
           <ProtectedRoute minRole="OPERATOR">
             <EventRegistrationsPage />
@@ -111,7 +139,7 @@ const routes: RouteObject[] = [
 
       // 마이페이지
       {
-        path: 'mypage/change-password',
+        path: "mypage/change-password",
         element: (
           <ProtectedRoute>
             <ChangePasswordPage />
@@ -119,7 +147,7 @@ const routes: RouteObject[] = [
         ),
       },
       {
-        path: 'mypage/withdraw',
+        path: "mypage/withdraw",
         element: (
           <ProtectedRoute>
             <WithdrawPage />
@@ -127,7 +155,7 @@ const routes: RouteObject[] = [
         ),
       },
       {
-        path: 'mypage/*',
+        path: "mypage/*",
         element: (
           <ProtectedRoute>
             <MyPage />
@@ -137,7 +165,7 @@ const routes: RouteObject[] = [
 
       // 관리자
       {
-        path: 'admin',
+        path: "admin",
         element: (
           <ProtectedRoute minRole="OPERATOR">
             <AdminDashboard />
@@ -145,7 +173,7 @@ const routes: RouteObject[] = [
         ),
       },
       // 404
-      { path: '*', element: <NotFoundPage /> },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ];

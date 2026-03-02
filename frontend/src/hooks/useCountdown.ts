@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 interface UseCountdownOptions {
   /** 카운트다운 시작 시간 (초) */
@@ -40,7 +40,11 @@ function persistEndTime(key: string, seconds: number) {
   sessionStorage.setItem(key, String(Date.now() + seconds * 1000));
 }
 
-export function useCountdown({ initialSeconds, autoStart = false, persistKey }: UseCountdownOptions): UseCountdownReturn {
+export function useCountdown({
+  initialSeconds,
+  autoStart = false,
+  persistKey,
+}: UseCountdownOptions): UseCountdownReturn {
   const [remaining, setRemaining] = useState(() => {
     if (persistKey) {
       const persisted = getPersistedRemaining(persistKey);
@@ -80,7 +84,7 @@ export function useCountdown({ initialSeconds, autoStart = false, persistKey }: 
     return () => clearInterval(timer);
   }, [isRunning, remaining, persistKey]);
 
-  const formatted = `${Math.floor(remaining / 60)}:${(remaining % 60).toString().padStart(2, '0')}`;
+  const formatted = `${Math.floor(remaining / 60)}:${(remaining % 60).toString().padStart(2, "0")}`;
 
   const restart = useCallback(() => {
     if (persistKey) persistEndTime(persistKey, initialSeconds);

@@ -1,8 +1,8 @@
-import { X, AlertCircle, CheckCircle2 } from 'lucide-react';
-import type { UploadFile } from '@/types/upload';
-import { UPLOAD_STATUS } from '@/types/upload';
-import { formatFileSize } from '@/utils/upload';
-import { cn } from '@/lib/utils';
+import { X, AlertCircle, CheckCircle2 } from "lucide-react";
+import type { UploadFile } from "@/types/upload";
+import { UPLOAD_STATUS } from "@/types/upload";
+import { formatFileSize } from "@/utils/upload";
+import { cn } from "@/lib/utils";
 
 interface ImagePreviewListProps {
   files: UploadFile[];
@@ -20,7 +20,7 @@ export default function ImagePreviewList({
   return (
     <div
       className={cn(
-        'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-s3',
+        "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-s3",
         className,
       )}
     >
@@ -66,10 +66,7 @@ export default function ImagePreviewList({
 
           {file.status === UPLOAD_STATUS.SUCCESS && (
             <div className="absolute bottom-s1 left-s1">
-              <CheckCircle2
-                size={16}
-                className="text-green-500 drop-shadow"
-              />
+              <CheckCircle2 size={16} className="text-green-500 drop-shadow" />
             </div>
           )}
 
@@ -88,9 +85,9 @@ export default function ImagePreviewList({
             type="button"
             onClick={() => onRemove(file.id)}
             className={cn(
-              'absolute top-s1 right-s1 rounded-full p-0.5 transition cursor-pointer',
-              'bg-black/50 text-white hover:bg-black/70',
-              'opacity-0 group-hover:opacity-100',
+              "absolute top-s1 right-s1 rounded-full p-0.5 transition cursor-pointer",
+              "bg-black/50 text-white hover:bg-black/70",
+              "opacity-0 group-hover:opacity-100",
             )}
           >
             <X size={14} />

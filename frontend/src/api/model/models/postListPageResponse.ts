@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { PostListResponse } from './postListResponse';
+import type { PostListResponse } from "./postListResponse";
 
 /**
  * 게시글 목록 페이징 응답

@@ -33,10 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { EventDetailResponseCloseReason } from './eventDetailResponseCloseReason';
-import type { EventDetailResponseEventStatus } from './eventDetailResponseEventStatus';
-import type { EventDetailResponseRegistrationStatus } from './eventDetailResponseRegistrationStatus';
-import type { EventDetailResponseRegistrationType } from './eventDetailResponseRegistrationType';
+import type { EventDetailResponseCloseReason } from "./eventDetailResponseCloseReason";
+import type { EventDetailResponseEventStatus } from "./eventDetailResponseEventStatus";
+import type { EventDetailResponseRegistrationStatus } from "./eventDetailResponseRegistrationStatus";
+import type { EventDetailResponseRegistrationType } from "./eventDetailResponseRegistrationType";
 
 export interface EventDetailResponse {
   id?: number;

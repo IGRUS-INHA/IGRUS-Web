@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { User } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useUIStore } from '@/stores';
-import { useCreateReplyMutation } from '@/hooks/queries/useComments';
-import { CommentActions } from './CommentActions';
-import { CommentInput } from './CommentInput';
-import type { CommentWithRepliesResponse } from '@/api/model/models';
-import { getErrorMessage } from '@/utils/error';
+import { useState } from "react";
+import { User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useUIStore } from "@/stores";
+import { useCreateReplyMutation } from "@/hooks/queries/useComments";
+import { CommentActions } from "./CommentActions";
+import { CommentInput } from "./CommentInput";
+import type { CommentWithRepliesResponse } from "@/api/model/models";
+import { getErrorMessage } from "@/utils/error";
 
 interface CommentItemProps {
   comment: CommentWithRepliesResponse;
@@ -22,10 +22,10 @@ interface CommentItemProps {
  */
 export function CommentItem({ comment, postId, level = 0 }: CommentItemProps) {
   const { theme } = useUIStore();
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
 
   const [showReplyInput, setShowReplyInput] = useState(false);
-  const [replyContent, setReplyContent] = useState('');
+  const [replyContent, setReplyContent] = useState("");
 
   const createReply = useCreateReplyMutation();
 
@@ -53,15 +53,15 @@ export function CommentItem({ comment, postId, level = 0 }: CommentItemProps) {
       },
       {
         onSuccess: () => {
-          setReplyContent('');
+          setReplyContent("");
           setShowReplyInput(false);
         },
         onError: (error: unknown) => {
-          console.error('답글 작성 실패:', error);
+          console.error("답글 작성 실패:", error);
           const errorMessage = getErrorMessage(error);
           alert(errorMessage);
         },
-      }
+      },
     );
   };
 
@@ -71,33 +71,35 @@ export function CommentItem({ comment, postId, level = 0 }: CommentItemProps) {
 
   // 작성 시간 포맷팅 (간단한 버전)
   const formatTime = (createdAt?: string) => {
-    if (!createdAt) return '';
+    if (!createdAt) return "";
 
     const date = new Date(createdAt);
     const now = new Date();
     const diff = Math.floor((now.getTime() - date.getTime()) / 1000 / 60);
 
-    if (diff < 1) return '방금 전';
+    if (diff < 1) return "방금 전";
     if (diff < 60) return `${diff}분 전`;
     if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`;
     return `${Math.floor(diff / 1440)}일 전`;
   };
 
   return (
-    <div className={cn('flex gap-s4', level === 1 && 'ml-12')}>
+    <div className={cn("flex gap-s4", level === 1 && "ml-12")}>
       {/* 아바타 */}
       <div
         className={cn(
-          'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0',
-          isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
+          "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0",
+          isDark
+            ? "bg-white/5 text-muted-foreground"
+            : "bg-muted text-muted-foreground",
         )}
       >
         {comment.deleted ? (
           <User size={20} />
         ) : comment.anonymous ? (
-          '익'
+          "익"
         ) : (
-          (comment.authorName?.[0] ?? 'U')
+          (comment.authorName?.[0] ?? "U")
         )}
       </div>
 
@@ -106,10 +108,10 @@ export function CommentItem({ comment, postId, level = 0 }: CommentItemProps) {
         <div className="flex items-center gap-s2 mb-1">
           <span className="font-bold text-sm">
             {comment.deleted
-              ? '알 수 없음'
+              ? "알 수 없음"
               : comment.anonymous
-              ? '익명'
-              : comment.authorName}
+                ? "익명"
+                : comment.authorName}
           </span>
           <span className="text-xs text-muted-foreground">
             {formatTime(comment.createdAt)}
@@ -118,7 +120,9 @@ export function CommentItem({ comment, postId, level = 0 }: CommentItemProps) {
 
         {/* 댓글 내용 */}
         {comment.deleted ? (
-          <p className="text-sm text-muted-foreground italic">삭제된 댓글입니다</p>
+          <p className="text-sm text-muted-foreground italic">
+            삭제된 댓글입니다
+          </p>
         ) : (
           <>
             <p className="text-sm mb-s2">{comment.content}</p>

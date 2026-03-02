@@ -1,9 +1,9 @@
 /** 업로드 상태 */
 export const UPLOAD_STATUS = {
-  PENDING: 'pending',
-  UPLOADING: 'uploading',
-  SUCCESS: 'success',
-  ERROR: 'error',
+  PENDING: "pending",
+  UPLOADING: "uploading",
+  SUCCESS: "success",
+  ERROR: "error",
 } as const;
 
 export type UploadStatus = (typeof UPLOAD_STATUS)[keyof typeof UPLOAD_STATUS];

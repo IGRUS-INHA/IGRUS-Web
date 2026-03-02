@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Search } from 'lucide-react';
-import { EVENT_LOCATIONS } from '@/constants/event';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown, Search } from "lucide-react";
+import { EVENT_LOCATIONS } from "@/constants/event";
+import { cn } from "@/lib/utils";
 
 interface LocationSelectorProps {
   selectedPreset: string;
@@ -11,12 +11,13 @@ interface LocationSelectorProps {
   error?: string;
 }
 
-const DIRECT_INPUT_VALUE = '__direct__';
+const DIRECT_INPUT_VALUE = "__direct__";
 
 function getDetailPlaceholder(preset: string): string {
-  if (preset === '온라인') return '예: Zoom 링크, Discord 등';
-  if (preset === DIRECT_INPUT_VALUE || preset === '') return '장소를 직접 입력하세요';
-  return '예: 208호';
+  if (preset === "온라인") return "예: Zoom 링크, Discord 등";
+  if (preset === DIRECT_INPUT_VALUE || preset === "")
+    return "장소를 직접 입력하세요";
+  return "예: 208호";
 }
 
 export function LocationSelector({
@@ -27,19 +28,22 @@ export function LocationSelector({
   error,
 }: LocationSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 외부 클릭 시 닫기
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const filtered = EVENT_LOCATIONS.filter((loc) =>
@@ -47,18 +51,16 @@ export function LocationSelector({
   );
 
   const displayValue =
-    selectedPreset === DIRECT_INPUT_VALUE
-      ? '직접 입력'
-      : selectedPreset || '';
+    selectedPreset === DIRECT_INPUT_VALUE ? "직접 입력" : selectedPreset || "";
 
   function handleSelect(value: string) {
     onPresetChange(value);
-    onDetailChange('');
-    setSearch('');
+    onDetailChange("");
+    setSearch("");
     setIsOpen(false);
   }
 
-  const showDetail = selectedPreset !== '';
+  const showDetail = selectedPreset !== "";
 
   return (
     <div className="space-y-s3">
@@ -69,24 +71,26 @@ export function LocationSelector({
           onClick={() => {
             setIsOpen(!isOpen);
             if (!isOpen) {
-              setSearch('');
+              setSearch("");
               setTimeout(() => inputRef.current?.focus(), 0);
             }
           }}
           className={cn(
-            'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 text-sm text-left flex items-center justify-between cursor-pointer transition-colors',
-            'focus:outline-none focus:border-primary',
-            isOpen && 'border-primary',
-            error && !selectedPreset && 'border-destructive',
-            selectedPreset ? 'text-foreground border-border' : 'text-muted-foreground border-border',
+            "w-full rounded-r3 px-s4 py-s3 border bg-muted/50 text-sm text-left flex items-center justify-between cursor-pointer transition-colors",
+            "focus:outline-none focus:border-primary",
+            isOpen && "border-primary",
+            error && !selectedPreset && "border-destructive",
+            selectedPreset
+              ? "text-foreground border-border"
+              : "text-muted-foreground border-border",
           )}
         >
-          <span>{displayValue || '장소를 선택하세요'}</span>
+          <span>{displayValue || "장소를 선택하세요"}</span>
           <ChevronDown
             size={16}
             className={cn(
-              'text-muted-foreground transition-transform',
-              isOpen && 'rotate-180',
+              "text-muted-foreground transition-transform",
+              isOpen && "rotate-180",
             )}
           />
         </button>
@@ -114,8 +118,9 @@ export function LocationSelector({
                   type="button"
                   onClick={() => handleSelect(loc)}
                   className={cn(
-                    'w-full text-left px-s4 py-s2 text-sm transition-colors cursor-pointer hover:bg-accent',
-                    selectedPreset === loc && 'bg-primary/5 text-primary font-medium',
+                    "w-full text-left px-s4 py-s2 text-sm transition-colors cursor-pointer hover:bg-accent",
+                    selectedPreset === loc &&
+                      "bg-primary/5 text-primary font-medium",
                   )}
                 >
                   {loc}
@@ -133,8 +138,9 @@ export function LocationSelector({
                 type="button"
                 onClick={() => handleSelect(DIRECT_INPUT_VALUE)}
                 className={cn(
-                  'w-full text-left px-s4 py-s2 text-sm transition-colors cursor-pointer hover:bg-accent border-t border-border',
-                  selectedPreset === DIRECT_INPUT_VALUE && 'bg-primary/5 text-primary font-medium',
+                  "w-full text-left px-s4 py-s2 text-sm transition-colors cursor-pointer hover:bg-accent border-t border-border",
+                  selectedPreset === DIRECT_INPUT_VALUE &&
+                    "bg-primary/5 text-primary font-medium",
                 )}
               >
                 직접 입력
@@ -152,9 +158,12 @@ export function LocationSelector({
           onChange={(e) => onDetailChange(e.target.value)}
           placeholder={getDetailPlaceholder(selectedPreset)}
           className={cn(
-            'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-            'focus:outline-none focus:border-primary',
-            error && selectedPreset === DIRECT_INPUT_VALUE && !detail.trim() && 'border-destructive',
+            "w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm",
+            "focus:outline-none focus:border-primary",
+            error &&
+              selectedPreset === DIRECT_INPUT_VALUE &&
+              !detail.trim() &&
+              "border-destructive",
           )}
         />
       )}

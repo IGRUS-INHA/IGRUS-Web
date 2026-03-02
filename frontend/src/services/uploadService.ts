@@ -1,9 +1,13 @@
-import { createUploadUrl, confirmUpload, createDownloadUrl } from '@/api/model/storage/storage';
+import {
+  createUploadUrl,
+  confirmUpload,
+  createDownloadUrl,
+} from "@/api/model/storage/storage";
 
 /** 업로드 용도 상수 */
 export const UPLOAD_PURPOSE = {
-  POST_IMAGE: 'POST_IMAGE',
-  INQUIRY_ATTACHMENT: 'INQUIRY_ATTACHMENT',
+  POST_IMAGE: "POST_IMAGE",
+  INQUIRY_ATTACHMENT: "INQUIRY_ATTACHMENT",
 } as const;
 
 /**
@@ -31,8 +35,12 @@ export async function getPresignedUploadUrl(
     purpose,
   });
 
-  if (response.status !== 200 || !response.data.presignedUrl || !response.data.objectKey) {
-    throw new Error('Presigned URL 발급에 실패했습니다');
+  if (
+    response.status !== 200 ||
+    !response.data.presignedUrl ||
+    !response.data.objectKey
+  ) {
+    throw new Error("Presigned URL 발급에 실패했습니다");
   }
 
   return {
@@ -52,17 +60,17 @@ export function uploadFileToS3(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('PUT', presignedUrl);
-    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.open("PUT", presignedUrl);
+    xhr.setRequestHeader("Content-Type", file.type);
 
-    xhr.upload.addEventListener('progress', (event) => {
+    xhr.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable && onProgress) {
         const percent = Math.round((event.loaded / event.total) * 100);
         onProgress(percent);
       }
     });
 
-    xhr.addEventListener('load', () => {
+    xhr.addEventListener("load", () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
       } else {
@@ -70,8 +78,8 @@ export function uploadFileToS3(
       }
     });
 
-    xhr.addEventListener('error', () => {
-      reject(new Error('네트워크 오류로 업로드에 실패했습니다'));
+    xhr.addEventListener("error", () => {
+      reject(new Error("네트워크 오류로 업로드에 실패했습니다"));
     });
 
     xhr.send(file);
@@ -105,7 +113,7 @@ export async function getImageDownloadUrl(objectKey: string): Promise<string> {
   const response = await createDownloadUrl({ objectKey });
 
   if (response.status !== 200 || !response.data.presignedUrl) {
-    throw new Error('다운로드 URL 발급에 실패했습니다');
+    throw new Error("다운로드 URL 발급에 실패했습니다");
   }
 
   return response.data.presignedUrl;

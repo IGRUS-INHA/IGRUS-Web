@@ -1,5 +1,5 @@
-import { useUIStore } from '@/stores';
-import type { ToastInput } from '@/types/common';
+import { useUIStore } from "@/stores";
+import type { ToastInput } from "@/types/common";
 
 interface ToastOptions {
   title?: string;
@@ -50,28 +50,28 @@ export function useToast(): UseToastReturn {
      * 기본 토스트
      */
     show: (message: string, options: ToastOptions = {}) => {
-      addToast({ message, type: 'default', ...options });
+      addToast({ message, type: "default", ...options });
     },
 
     /**
      * 성공 토스트
      */
     success: (message: string, options: ToastOptions = {}) => {
-      addToast({ message, type: 'success', ...options });
+      addToast({ message, type: "success", ...options });
     },
 
     /**
      * 에러 토스트
      */
     error: (message: string, options: ToastOptions = {}) => {
-      addToast({ message, type: 'error', ...options });
+      addToast({ message, type: "error", ...options });
     },
 
     /**
      * 경고 토스트
      */
     warning: (message: string, options: ToastOptions = {}) => {
-      addToast({ message, type: 'warning', ...options });
+      addToast({ message, type: "warning", ...options });
     },
 
     /**

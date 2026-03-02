@@ -1,12 +1,30 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { FullPageSpinner } from '@/components/ui';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2, Lock } from 'lucide-react';
-import MarkdownPreview from '@uiw/react-markdown-preview';
-import { useEvent, useApplyEvent, useCancelEventApplication, useDeleteEvent, useCloseEvent } from '@/hooks/queries/useEvents';
-import { registrationKeys } from '@/hooks/queries/useEventRegistrations';
-import { useAuth } from '@/hooks';
-import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate } from "react-router-dom";
+import { FullPageSpinner } from "@/components/ui";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  Users,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Lock,
+} from "lucide-react";
+import MarkdownPreview from "@uiw/react-markdown-preview";
+import {
+  useEvent,
+  useApplyEvent,
+  useCancelEventApplication,
+  useDeleteEvent,
+  useCloseEvent,
+} from "@/hooks/queries/useEvents";
+import { registrationKeys } from "@/hooks/queries/useEventRegistrations";
+import { useAuth } from "@/hooks";
+import { useEffect, useRef, useState } from "react";
 import {
   getErrorMessage,
   isForbiddenError,
@@ -17,9 +35,9 @@ import {
   isEventNotFound,
   isEventOperatorRequired,
   hasErrorCode,
-} from '@/utils/error';
-import { myPageKeys } from '@/hooks/queries/useMyPage';
-import { formatDateTime } from '@/utils/date';
+} from "@/utils/error";
+import { myPageKeys } from "@/hooks/queries/useMyPage";
+import { formatDateTime } from "@/utils/date";
 
 export default function EventDetailPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -27,7 +45,8 @@ export default function EventDetailPage() {
   const queryClient = useQueryClient();
   const { data: eventResponse, isLoading, error } = useEvent(Number(eventId));
   const { mutate: applyEvent, isPending: isApplying } = useApplyEvent();
-  const { mutate: cancelEvent, isPending: isCanceling } = useCancelEventApplication();
+  const { mutate: cancelEvent, isPending: isCanceling } =
+    useCancelEventApplication();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: closeEvent, isPending: isClosing } = useCloseEvent();
   const { user } = useAuth();
@@ -45,14 +64,17 @@ export default function EventDetailPage() {
   // 외부 클릭 감지 (More Menu 닫기)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+      if (
+        moreMenuRef.current &&
+        !moreMenuRef.current.contains(event.target as Node)
+      ) {
         setIsMoreMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -65,28 +87,30 @@ export default function EventDetailPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/events/${eventId}`],
           });
-          void queryClient.invalidateQueries({ queryKey: myPageKeys.registrations() });
+          void queryClient.invalidateQueries({
+            queryKey: myPageKeys.registrations(),
+          });
         },
         onError: (error: unknown) => {
           if (isEventAlreadyRegistered(error)) {
-            alert('이미 신청한 행사입니다.');
+            alert("이미 신청한 행사입니다.");
           } else if (isEventCapacityFull(error)) {
-            alert('정원이 마감되었습니다.');
+            alert("정원이 마감되었습니다.");
           } else if (isEventRegistrationClosed(error)) {
-            alert('신청 기간이 종료되었습니다.');
+            alert("신청 기간이 종료되었습니다.");
           } else if (isForbiddenError(error)) {
-            alert('행사 신청 권한이 없습니다.');
+            alert("행사 신청 권한이 없습니다.");
           } else {
             alert(getErrorMessage(error));
           }
         },
-      }
+      },
     );
   };
 
   const handleCancel = () => {
     if (!eventId) return;
-    if (!confirm('행사 신청을 취소하시겠습니까?')) return;
+    if (!confirm("행사 신청을 취소하시겠습니까?")) return;
 
     cancelEvent(
       { eventId: Number(eventId) },
@@ -95,39 +119,45 @@ export default function EventDetailPage() {
           void queryClient.invalidateQueries({
             queryKey: [`/api/v1/events/${eventId}`],
           });
-          void queryClient.invalidateQueries({ queryKey: myPageKeys.registrations() });
+          void queryClient.invalidateQueries({
+            queryKey: myPageKeys.registrations(),
+          });
         },
         onError: (error: unknown) => {
-          if (hasErrorCode(error, 'EVENT_ALREADY_CANCELED')) {
-            alert('이미 취소된 신청입니다.');
-          } else if (hasErrorCode(error, 'CANCEL_DEADLINE_PASSED')) {
-            alert('취소 가능 기간이 지났습니다.');
+          if (hasErrorCode(error, "EVENT_ALREADY_CANCELED")) {
+            alert("이미 취소된 신청입니다.");
+          } else if (hasErrorCode(error, "CANCEL_DEADLINE_PASSED")) {
+            alert("취소 가능 기간이 지났습니다.");
           } else {
             alert(getErrorMessage(error));
           }
         },
-      }
+      },
     );
   };
 
   const handleCloseEvent = () => {
     if (!eventId) return;
-    if (!window.confirm('행사 신청을 마감하시겠습니까?\n마감 후에는 새로운 신청을 받을 수 없습니다.')) {
+    if (
+      !window.confirm(
+        "행사 신청을 마감하시겠습니까?\n마감 후에는 새로운 신청을 받을 수 없습니다.",
+      )
+    ) {
       return;
     }
 
     setIsMoreMenuOpen(false);
     closeEvent(
-      { eventId: Number(eventId), data: { reason: '운영진 수동 마감' } },
+      { eventId: Number(eventId), data: { reason: "운영진 수동 마감" } },
       {
         onError: (error: unknown) => {
           if (isForbiddenError(error) || isEventOperatorRequired(error)) {
-            alert('행사 마감 권한이 없습니다.');
+            alert("행사 마감 권한이 없습니다.");
           } else {
             alert(getErrorMessage(error));
           }
         },
-      }
+      },
     );
   };
 
@@ -136,7 +166,11 @@ export default function EventDetailPage() {
   };
 
   const handleDelete = () => {
-    if (!window.confirm('이 행사를 삭제하시겠습니까?\n삭제된 행사는 복구할 수 없습니다.')) {
+    if (
+      !window.confirm(
+        "이 행사를 삭제하시겠습니까?\n삭제된 행사는 복구할 수 없습니다.",
+      )
+    ) {
       return;
     }
 
@@ -145,18 +179,18 @@ export default function EventDetailPage() {
       { eventId: Number(eventId) },
       {
         onSuccess: () => {
-          navigate('/events');
+          navigate("/events");
         },
         onError: (error: unknown) => {
           if (isForbiddenError(error) || isEventOperatorRequired(error)) {
-            alert('행사 삭제 권한이 없습니다.');
+            alert("행사 삭제 권한이 없습니다.");
           } else if (isEventNotFound(error)) {
-            alert('이미 삭제된 행사입니다.');
+            alert("이미 삭제된 행사입니다.");
           } else {
             alert(getErrorMessage(error));
           }
         },
-      }
+      },
     );
   };
 
@@ -169,10 +203,12 @@ export default function EventDetailPage() {
   if (isForbidden) {
     return (
       <div className="text-center py-12 space-y-s4">
-        <p className="text-muted-foreground">정회원 승인 후 행사 상세 조회가 가능합니다.</p>
+        <p className="text-muted-foreground">
+          정회원 승인 후 행사 상세 조회가 가능합니다.
+        </p>
         <button
           type="button"
-          onClick={() => navigate('/events')}
+          onClick={() => navigate("/events")}
           className="text-sm text-primary hover:underline cursor-pointer"
         >
           행사 목록으로 돌아가기
@@ -198,23 +234,28 @@ export default function EventDetailPage() {
 
   // 상태 라벨
   const STATUS_LABELS: Record<string, string> = {
-    OPEN: '신청 가능',
-    UPCOMING: '예정',
-    CLOSED: '신청 불가',
-    COMPLETED: '신청 불가',
-    ONGOING: '진행중',
+    OPEN: "신청 가능",
+    UPCOMING: "예정",
+    CLOSED: "신청 불가",
+    COMPLETED: "신청 불가",
+    ONGOING: "진행중",
   };
-  const statusLabel = event.eventStatus ? (STATUS_LABELS[event.eventStatus] ?? '마감') : (isOpen ? '신청 가능' : '마감');
-  const isActiveStatus = event.eventStatus === 'UPCOMING' || event.eventStatus === 'ONGOING';
+  const statusLabel = event.eventStatus
+    ? (STATUS_LABELS[event.eventStatus] ?? "마감")
+    : isOpen
+      ? "신청 가능"
+      : "마감";
+  const isActiveStatus =
+    event.eventStatus === "UPCOMING" || event.eventStatus === "ONGOING";
 
   const { date: dateStr, time: timeStr } = formatDateTime(event.eventStartAt);
 
   // 이미지 목록 (추후 다중 이미지 API 지원 시 교체)
   // TODO: API에서 이미지 배열을 받으면 아래 데모 데이터 교체
   const images = [
-    '/igruslogo2.png',
-    'https://placehold.co/400x400/1a1a2e/e0e0e0?text=Event+Photo+1',
-    'https://placehold.co/400x400/16213e/e0e0e0?text=Event+Photo+2',
+    "/igruslogo2.png",
+    "https://placehold.co/400x400/1a1a2e/e0e0e0?text=Event+Photo+1",
+    "https://placehold.co/400x400/16213e/e0e0e0?text=Event+Photo+2",
   ];
   const hasPrev = currentImageIndex > 0;
   const hasNext = currentImageIndex < images.length - 1;
@@ -225,7 +266,7 @@ export default function EventDetailPage() {
       <div className="flex items-center justify-between mb-s6">
         <button
           type="button"
-          onClick={() => navigate('/events')}
+          onClick={() => navigate("/events")}
           className="flex items-center gap-s2 text-sm font-medium transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
         >
           <ArrowLeft size={18} /> 행사 목록
@@ -248,14 +289,14 @@ export default function EventDetailPage() {
                 >
                   <Edit size={16} /> 수정하기
                 </button>
-                {event.registrationStatus === 'OPEN' && (
+                {event.registrationStatus === "OPEN" && (
                   <button
                     onClick={handleCloseEvent}
                     type="button"
                     disabled={isClosing}
                     className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Lock size={16} /> {isClosing ? '마감 중...' : '신청 마감'}
+                    <Lock size={16} /> {isClosing ? "마감 중..." : "신청 마감"}
                   </button>
                 )}
                 <button
@@ -264,7 +305,7 @@ export default function EventDetailPage() {
                   disabled={isDeleting}
                   className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Trash2 size={16} /> {isDeleting ? '삭제 중...' : '삭제하기'}
+                  <Trash2 size={16} /> {isDeleting ? "삭제 중..." : "삭제하기"}
                 </button>
               </div>
             )}
@@ -285,7 +326,9 @@ export default function EventDetailPage() {
             {/* 상태 뱃지 */}
             <span
               className={`absolute top-s4 left-s4 px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${
-                isActiveStatus ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                isActiveStatus
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {statusLabel}
@@ -315,7 +358,9 @@ export default function EventDetailPage() {
                     <span
                       key={idx}
                       className={`w-1.5 h-1.5 rounded-full transition ${
-                        idx === currentImageIndex ? 'bg-primary' : 'bg-muted-foreground/30'
+                        idx === currentImageIndex
+                          ? "bg-primary"
+                          : "bg-muted-foreground/30"
                       }`}
                     />
                   ))}
@@ -348,13 +393,15 @@ export default function EventDetailPage() {
                   <p className="text-xs text-muted-foreground flex items-center gap-s1">
                     <MapPin size={12} /> 장소
                   </p>
-                  <p className="text-sm font-bold">{event.location || 'TBD'}</p>
+                  <p className="text-sm font-bold">{event.location || "TBD"}</p>
                 </div>
                 <div className="space-y-s1">
                   <p className="text-xs text-muted-foreground flex items-center gap-s1">
                     <Users size={12} /> 정원
                   </p>
-                  <p className="text-sm font-bold">{event.currentCount ?? 0} / {event.capacity ?? 0}</p>
+                  <p className="text-sm font-bold">
+                    {event.currentCount ?? 0} / {event.capacity ?? 0}
+                  </p>
                 </div>
               </div>
             </div>
@@ -368,7 +415,7 @@ export default function EventDetailPage() {
                   disabled={isApplying}
                   className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isApplying ? '신청 중...' : '행사 신청'}
+                  {isApplying ? "신청 중..." : "행사 신청"}
                 </button>
               )}
 
@@ -379,7 +426,7 @@ export default function EventDetailPage() {
                   disabled={isCanceling}
                   className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isCanceling ? '취소 중...' : '신청 취소'}
+                  {isCanceling ? "취소 중..." : "신청 취소"}
                 </button>
               )}
 
@@ -389,7 +436,7 @@ export default function EventDetailPage() {
                   disabled
                   className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-muted text-muted-foreground cursor-not-allowed"
                 >
-                  {hasApplied ? '신청 완료' : '신청 불가'}
+                  {hasApplied ? "신청 완료" : "신청 불가"}
                 </button>
               )}
 
@@ -397,7 +444,9 @@ export default function EventDetailPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    void queryClient.invalidateQueries({ queryKey: registrationKeys.all(Number(eventId)) });
+                    void queryClient.invalidateQueries({
+                      queryKey: registrationKeys.all(Number(eventId)),
+                    });
                     navigate(`/events/${eventId}/registrations`);
                   }}
                   className="w-full py-s3 rounded-r4 font-medium flex items-center justify-center gap-s2 transition-all border border-border text-foreground hover:bg-muted cursor-pointer"
@@ -411,11 +460,18 @@ export default function EventDetailPage() {
 
         {/* 하단: 상세 설명 */}
         <div className="border-t border-border p-s6">
-          <h3 className="text-sm font-bold text-muted-foreground mb-s4">상세 설명</h3>
+          <h3 className="text-sm font-bold text-muted-foreground mb-s4">
+            상세 설명
+          </h3>
           {event.description ? (
-            <MarkdownPreview source={event.description.replace(/\n/g, "  \n")} className="!leading-relaxed" />
+            <MarkdownPreview
+              source={event.description.replace(/\n/g, "  \n")}
+              className="!leading-relaxed"
+            />
           ) : (
-            <p className="text-sm text-muted-foreground">상세 설명이 없습니다.</p>
+            <p className="text-sm text-muted-foreground">
+              상세 설명이 없습니다.
+            </p>
           )}
         </div>
       </div>

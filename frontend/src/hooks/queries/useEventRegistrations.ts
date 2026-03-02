@@ -1,22 +1,26 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetRegistrationList,
   useApproveRegistration,
   useRejectRegistration,
   useRevertRegistration,
-} from '@/api/model/event-registration/event-registration';
-import type { GetRegistrationListParams } from '@/api/model/models';
-import { eventKeys } from '@/hooks/queries/useEvents';
+} from "@/api/model/event-registration/event-registration";
+import type { GetRegistrationListParams } from "@/api/model/models";
+import { eventKeys } from "@/hooks/queries/useEvents";
 
 // 쿼리 키 - 캐시 무효화를 위해 정의
 export const registrationKeys = {
-  all: (eventId: number) => [`/api/v1/events/${eventId}/registrations`] as const,
+  all: (eventId: number) =>
+    [`/api/v1/events/${eventId}/registrations`] as const,
   list: (eventId: number, params?: GetRegistrationListParams) =>
     [...registrationKeys.all(eventId), ...(params ? [params] : [])] as const,
 };
 
 // 신청자 목록 조회
-export function useRegistrationList(eventId: number, params?: GetRegistrationListParams) {
+export function useRegistrationList(
+  eventId: number,
+  params?: GetRegistrationListParams,
+) {
   return useGetRegistrationList(eventId, params);
 }
 
@@ -26,8 +30,12 @@ export function useApproveEventRegistration(eventId: number) {
   return useApproveRegistration({
     mutation: {
       onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: registrationKeys.all(eventId) });
-        void queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) });
+        void queryClient.invalidateQueries({
+          queryKey: registrationKeys.all(eventId),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: eventKeys.detail(eventId),
+        });
       },
     },
   });
@@ -39,8 +47,12 @@ export function useRejectEventRegistration(eventId: number) {
   return useRejectRegistration({
     mutation: {
       onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: registrationKeys.all(eventId) });
-        void queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) });
+        void queryClient.invalidateQueries({
+          queryKey: registrationKeys.all(eventId),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: eventKeys.detail(eventId),
+        });
       },
     },
   });
@@ -52,8 +64,12 @@ export function useRevertEventRegistration(eventId: number) {
   return useRevertRegistration({
     mutation: {
       onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: registrationKeys.all(eventId) });
-        void queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) });
+        void queryClient.invalidateQueries({
+          queryKey: registrationKeys.all(eventId),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: eventKeys.detail(eventId),
+        });
       },
     },
   });
