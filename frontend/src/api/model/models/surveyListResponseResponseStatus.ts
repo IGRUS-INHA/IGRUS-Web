@@ -34,11 +34,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type SurveyListResponseResponseStatus = typeof SurveyListResponseResponseStatus[keyof typeof SurveyListResponseResponseStatus];
-
+export type SurveyListResponseResponseStatus =
+  (typeof SurveyListResponseResponseStatus)[keyof typeof SurveyListResponseResponseStatus];
 
 export const SurveyListResponseResponseStatus = {
-  NOT_STARTED: 'NOT_STARTED',
-  OPEN: 'OPEN',
-  CLOSED: 'CLOSED',
+  NOT_STARTED: "NOT_STARTED",
+  OPEN: "OPEN",
+  CLOSED: "CLOSED",
 } as const;

@@ -1,4 +1,4 @@
-import { useAuth } from './useAuth';
+import { useAuth } from "./useAuth";
 import {
   hasPermission,
   canEditPost,
@@ -9,8 +9,8 @@ import {
   canAccessAdmin,
   canApproveAssociate,
   canChangeRole,
-} from '@/constants/permissions';
-import { ROLES, type RoleOrNull } from '@/types/common';
+} from "@/constants/permissions";
+import { ROLES, type RoleOrNull } from "@/types/common";
 
 interface UsePermissionReturn {
   // 기본 정보

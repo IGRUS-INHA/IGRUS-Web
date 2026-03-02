@@ -1,4 +1,4 @@
-import type { Event, EventRegistration, User } from '@/types/entities';
+import type { Event, EventRegistration, User } from "@/types/entities";
 import {
   EVENT_STATUS,
   REGISTRATION_STATUS,
@@ -7,9 +7,9 @@ import {
   CANCEL_ERROR,
   EVENT_LOCATIONS,
   REGISTRATION_PERIOD_PRESETS,
-} from '@/constants/event';
-import type { RegistrationPeriodPresetValue } from '@/constants/event';
-import { canRegisterEvent } from '@/constants/permissions';
+} from "@/constants/event";
+import type { RegistrationPeriodPresetValue } from "@/constants/event";
+import { canRegisterEvent } from "@/constants/permissions";
 
 interface RegistrationCheckResult {
   canRegister: boolean;
@@ -40,7 +40,7 @@ interface BadgeInfo {
 export function checkCanRegister(
   event: Event,
   user: User | undefined,
-  registration?: EventRegistration
+  registration?: EventRegistration,
 ): RegistrationCheckResult {
   // 로그인 체크
   if (!user) {
@@ -122,7 +122,7 @@ export function willBeWaitlisted(event: Event): boolean {
  */
 export function checkCanCancel(
   event: Event,
-  registration: EventRegistration | undefined
+  registration: EventRegistration | undefined,
 ): CancelCheckResult {
   // 신청 안 함
   if (!registration) {
@@ -153,7 +153,7 @@ export function checkCanCancel(
 
   // 취소 기한 (행사 시작 48시간 전)
   const cancelDeadline = new Date(
-    eventStart.getTime() - EVENT_POLICY.CANCEL_DEADLINE_MS
+    eventStart.getTime() - EVENT_POLICY.CANCEL_DEADLINE_MS,
   );
 
   if (now >= cancelDeadline) {
@@ -209,13 +209,13 @@ export function getAvailability(event: Event): AvailabilityInfo {
 export function getRegistrationBadge(status: string): BadgeInfo {
   switch (status) {
     case REGISTRATION_STATUS.CONFIRMED:
-      return { label: '신청 완료', variant: 'default' };
+      return { label: "신청 완료", variant: "default" };
     case REGISTRATION_STATUS.WAITING:
-      return { label: '대기중', variant: 'secondary' };
+      return { label: "대기중", variant: "secondary" };
     case REGISTRATION_STATUS.CANCELLED:
-      return { label: '취소됨', variant: 'outline' };
+      return { label: "취소됨", variant: "outline" };
     default:
-      return { label: status, variant: 'outline' };
+      return { label: status, variant: "outline" };
   }
 }
 
@@ -226,38 +226,41 @@ export function getEventStatusBadge(event: Event): BadgeInfo {
   const { isFull } = getAvailability(event);
 
   if (event.status === EVENT_STATUS.CLOSED) {
-    return { label: '마감', variant: 'destructive' };
+    return { label: "마감", variant: "destructive" };
   }
   if (event.status === EVENT_STATUS.COMPLETED) {
-    return { label: '종료', variant: 'outline' };
+    return { label: "종료", variant: "outline" };
   }
   if (event.status === EVENT_STATUS.ONGOING) {
-    return { label: '진행중', variant: 'default' };
+    return { label: "진행중", variant: "default" };
   }
   if (isFull) {
-    return { label: '정원 마감', variant: 'secondary' };
+    return { label: "정원 마감", variant: "secondary" };
   }
-  return { label: '신청 가능', variant: 'default' };
+  return { label: "신청 가능", variant: "default" };
 }
 
 /**
  * API location 문자열을 프리셋 + 상세로 분리
  * 긴 프리셋부터 매칭하여 "5호관(5동) 208호" → { preset: '5호관(5동)', detail: '208호' }
  */
-export function parseLocation(location: string): { preset: string; detail: string } {
-  if (!location) return { preset: '', detail: '' };
+export function parseLocation(location: string): {
+  preset: string;
+  detail: string;
+} {
+  if (!location) return { preset: "", detail: "" };
 
   // 긴 문자열부터 매칭 (예: "인하드림센터 2·3관"이 "인하드림센터"보다 먼저 매칭되도록)
   const sorted = [...EVENT_LOCATIONS].sort((a, b) => b.length - a.length);
   for (const loc of sorted) {
     if (location === loc) {
-      return { preset: loc, detail: '' };
+      return { preset: loc, detail: "" };
     }
     if (location.startsWith(`${loc} `)) {
       return { preset: loc, detail: location.slice(loc.length + 1).trim() };
     }
   }
-  return { preset: '', detail: location };
+  return { preset: "", detail: location };
 }
 
 /**
@@ -281,25 +284,41 @@ export function detectRegistrationPreset(
   regEndTime: string,
   eventTime?: string,
 ): RegistrationPeriodPresetValue {
-  if (!eventDate || !regStartDate || !regEndDate) return 'custom';
+  if (!eventDate || !regStartDate || !regEndDate) return "custom";
 
-  const [ey, em, ed] = eventDate.split('-').map(Number);
+  const [ey, em, ed] = eventDate.split("-").map(Number);
 
   for (const preset of REGISTRATION_PERIOD_PRESETS) {
-    if (preset.value === 'custom') continue;
+    if (preset.value === "custom") continue;
 
-    const expectedStart = new Date(ey ?? 0, (em ?? 1) - 1, (ed ?? 1) - preset.startDaysBefore);
-    const expectedEnd = new Date(ey ?? 0, (em ?? 1) - 1, (ed ?? 1) - preset.endDaysBefore);
+    const expectedStart = new Date(
+      ey ?? 0,
+      (em ?? 1) - 1,
+      (ed ?? 1) - preset.startDaysBefore,
+    );
+    const expectedEnd = new Date(
+      ey ?? 0,
+      (em ?? 1) - 1,
+      (ed ?? 1) - preset.endDaysBefore,
+    );
 
     const fmt = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
     // endTimeOffsetHours가 있는 프리셋은 행사 시간 기준 동적 마감 시간
     let expectedEndTime: string = preset.endTime;
-    if ('endTimeOffsetHours' in preset && eventTime) {
-      const timeParts = eventTime.split(':').map(Number);
-      const totalMinutes = Math.max(0, Math.min(23 * 60 + 59, (timeParts[0] ?? 0) * 60 + (timeParts[1] ?? 0) + preset.endTimeOffsetHours * 60));
-      expectedEndTime = `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+    if ("endTimeOffsetHours" in preset && eventTime) {
+      const timeParts = eventTime.split(":").map(Number);
+      const totalMinutes = Math.max(
+        0,
+        Math.min(
+          23 * 60 + 59,
+          (timeParts[0] ?? 0) * 60 +
+            (timeParts[1] ?? 0) +
+            preset.endTimeOffsetHours * 60,
+        ),
+      );
+      expectedEndTime = `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
     }
 
     if (
@@ -312,34 +331,37 @@ export function detectRegistrationPreset(
     }
   }
 
-  return 'custom';
+  return "custom";
 }
 
 /**
  * YYYY-MM-DD 날짜 포맷 헬퍼 (timezone 이슈 방지)
  */
 export function formatDateLocal(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /**
  * HH:MM 시간 포맷 헬퍼
  */
 export function formatTimeLocal(d: Date): string {
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 /**
  * YYYY-MM-DD + HH:MM 문자열을 Date로 파싱
  */
-export function parseDateTimeString(dateStr: string, timeStr: string): Date | null {
+export function parseDateTimeString(
+  dateStr: string,
+  timeStr: string,
+): Date | null {
   if (!dateStr) return null;
-  const parts = dateStr.split('-').map(Number);
+  const parts = dateStr.split("-").map(Number);
   const y = parts[0] ?? 0;
   const m = parts[1] ?? 1;
   const d = parts[2] ?? 1;
   if (timeStr) {
-    const timeParts = timeStr.split(':').map(Number);
+    const timeParts = timeStr.split(":").map(Number);
     const h = timeParts[0] ?? 0;
     const min = timeParts[1] ?? 0;
     return new Date(y, m - 1, d, h, min);
@@ -350,7 +372,9 @@ export function parseDateTimeString(dateStr: string, timeStr: string): Date | nu
 /**
  * DatePicker onChange 값에서 단일 Date 추출
  */
-export function extractDateFromPicker(value: Date | Date[] | null): Date | null {
+export function extractDateFromPicker(
+  value: Date | Date[] | null,
+): Date | null {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }

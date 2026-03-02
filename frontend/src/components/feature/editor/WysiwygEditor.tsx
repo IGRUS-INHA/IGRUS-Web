@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from "react";
 import {
   EditorRoot,
   EditorContent,
@@ -9,13 +9,13 @@ import {
   EditorBubble,
   EditorBubbleItem,
   type EditorInstance,
-} from 'novel';
-import { handleCommandNavigation } from 'novel';
-import { Markdown } from 'tiptap-markdown';
-import { Bold, Italic, Strikethrough, Code } from 'lucide-react';
-import { defaultExtensions } from './extensions';
-import { suggestionItems, slashCommand } from './slash-command';
-import { cn } from '@/lib/utils';
+} from "novel";
+import { handleCommandNavigation } from "novel";
+import { Markdown } from "tiptap-markdown";
+import { Bold, Italic, Strikethrough, Code } from "lucide-react";
+import { defaultExtensions } from "./extensions";
+import { suggestionItems, slashCommand } from "./slash-command";
+import { cn } from "@/lib/utils";
 
 interface WysiwygEditorProps {
   value: string;
@@ -42,18 +42,22 @@ export function WysiwygEditor({
   hasError,
 }: WysiwygEditorProps) {
   const editorRef = useRef<EditorInstance | null>(null);
+  const initialValueRef = useRef(value);
 
-  const handleCreate = useCallback(({ editor }: { editor: EditorInstance }) => {
+  const handleCreate = ({ editor }: { editor: EditorInstance }) => {
     editorRef.current = editor;
-    if (value) {
-      editor.commands.setContent(value);
+    if (initialValueRef.current) {
+      editor.commands.setContent(initialValueRef.current);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  };
 
-  const handleUpdate = useCallback(({ editor }: { editor: EditorInstance }) => {
-    const md = editor.storage.markdown.getMarkdown();
-    onChange(md);
-  }, [onChange]);
+  const handleUpdate = useCallback(
+    ({ editor }: { editor: EditorInstance }) => {
+      const md = editor.storage.markdown.getMarkdown();
+      onChange(md);
+    },
+    [onChange],
+  );
 
   // 외부 value 변경 시 에디터 콘텐츠 동기화 (수정 페이지에서 API 데이터 로드 후 반영)
   useEffect(() => {
@@ -68,8 +72,8 @@ export function WysiwygEditor({
   return (
     <div
       className={cn(
-        'novel-editor rounded-r2 border border-border',
-        hasError && 'border-2 border-destructive',
+        "novel-editor rounded-r2 border border-border",
+        hasError && "border-2 border-destructive",
         className,
       )}
     >
@@ -84,7 +88,8 @@ export function WysiwygEditor({
               keydown: (_view, event) => handleCommandNavigation(event),
             },
             attributes: {
-              class: 'prose prose-lg dark:prose-invert prose-headings:font-bold focus:outline-none max-w-full min-h-[500px] px-s6 py-s5',
+              class:
+                "prose prose-lg dark:prose-invert prose-headings:font-bold focus:outline-none max-w-full min-h-[500px] px-s6 py-s5",
             },
           }}
           className="w-full"
@@ -107,7 +112,9 @@ export function WysiwygEditor({
                   </div>
                   <div>
                     <p className="font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.description}
+                    </p>
                   </div>
                 </EditorCommandItem>
               ))}
@@ -122,7 +129,7 @@ export function WysiwygEditor({
               <button
                 type="button"
                 className={cn(
-                  'p-2 text-muted-foreground hover:text-foreground transition-colors',
+                  "p-2 text-muted-foreground hover:text-foreground transition-colors",
                 )}
               >
                 <Bold size={16} />

@@ -1,16 +1,16 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetComments,
   useCreateComment,
   useCreateReply1,
   useDeleteComment,
   getGetCommentsQueryKey,
-} from '@/api/model/comment/comment';
+} from "@/api/model/comment/comment";
 import {
   useLikeComment,
   useUnlikeComment,
-} from '@/api/model/comment-like/comment-like';
-import { useToast } from '@/hooks/useToast';
+} from "@/api/model/comment-like/comment-like";
+import { useToast } from "@/hooks/useToast";
 
 /**
  * 댓글 조회 훅
@@ -37,16 +37,16 @@ export function useCreateCommentMutation() {
         });
         // 게시글 상세 갱신 (댓글 수 업데이트)
         void queryClient.invalidateQueries({
-          queryKey: ['/api/v1/boards', variables.postId],
+          queryKey: ["/api/v1/boards", variables.postId],
         });
         // 게시글 목록 갱신 (댓글 수 업데이트)
         void queryClient.invalidateQueries({
-          queryKey: ['/api/v1/boards'],
+          queryKey: ["/api/v1/boards"],
         });
-        toast.success('댓글이 작성되었습니다');
+        toast.success("댓글이 작성되었습니다");
       },
       onError: () => {
-        toast.error('댓글 작성에 실패했습니다');
+        toast.error("댓글 작성에 실패했습니다");
       },
     },
   });
@@ -70,16 +70,16 @@ export function useCreateReplyMutation() {
         });
         // 게시글 상세 갱신 (댓글 수 업데이트)
         void queryClient.invalidateQueries({
-          queryKey: ['/api/v1/boards', variables.postId],
+          queryKey: ["/api/v1/boards", variables.postId],
         });
         // 게시글 목록 갱신 (댓글 수 업데이트)
         void queryClient.invalidateQueries({
-          queryKey: ['/api/v1/boards'],
+          queryKey: ["/api/v1/boards"],
         });
-        toast.success('답글이 작성되었습니다');
+        toast.success("답글이 작성되었습니다");
       },
       onError: () => {
-        toast.error('답글 작성에 실패했습니다');
+        toast.error("답글 작성에 실패했습니다");
       },
     },
   });
@@ -103,16 +103,16 @@ export function useDeleteCommentMutation() {
         });
         // 게시글 상세 갱신 (댓글 수 업데이트)
         void queryClient.invalidateQueries({
-          queryKey: ['/api/v1/boards', variables.postId],
+          queryKey: ["/api/v1/boards", variables.postId],
         });
         // 게시글 목록 갱신 (댓글 수 업데이트)
         void queryClient.invalidateQueries({
-          queryKey: ['/api/v1/boards'],
+          queryKey: ["/api/v1/boards"],
         });
-        toast.success('댓글이 삭제되었습니다');
+        toast.success("댓글이 삭제되었습니다");
       },
       onError: () => {
-        toast.error('댓글 삭제에 실패했습니다');
+        toast.error("댓글 삭제에 실패했습니다");
       },
     },
   });
@@ -142,9 +142,9 @@ export function useToggleCommentLike() {
             });
           },
           onError: () => {
-            alert('본인이 작성한 댓글에는 좋아요를 할 수 없습니다.');
+            alert("본인이 작성한 댓글에는 좋아요를 할 수 없습니다.");
           },
-        }
+        },
       );
     },
     isLoading: likeMutation.isPending || unlikeMutation.isPending,

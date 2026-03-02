@@ -5,7 +5,7 @@ import type {
   Event,
   EventDetail,
   Inquiry,
-} from './entities';
+} from "./entities";
 import type {
   Role,
   BoardType,
@@ -13,13 +13,13 @@ import type {
   SearchParams,
   InquiryType,
   EventStatus,
-} from './common';
+} from "./common";
 
 // =============================================================================
 // Fetch Config Types
 // =============================================================================
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export interface FetchConfig {
   url: string;
@@ -259,11 +259,4 @@ export interface UploadMembersRequest {
 // Re-export entity types for convenience
 // =============================================================================
 
-export type {
-  User,
-  Post,
-  PostDetail,
-  Event,
-  EventDetail,
-  Inquiry,
-};
+export type { User, Post, PostDetail, Event, EventDetail, Inquiry };

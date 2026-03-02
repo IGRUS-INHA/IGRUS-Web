@@ -1,5 +1,5 @@
-import { Search, X } from 'lucide-react';
-import { KeyboardEvent } from 'react';
+import { Search, X } from "lucide-react";
+import { KeyboardEvent } from "react";
 
 interface SearchBarProps {
   value: string;
@@ -14,19 +14,19 @@ export default function SearchBar({
   value,
   onChange,
   onSearch,
-  className = '',
-  placeholder = 'Search...',
+  className = "",
+  placeholder = "Search...",
   autoFocus = false,
 }: SearchBarProps) {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       onSearch(value);
     }
   };
 
   const handleClear = () => {
-    onChange('');
-    onSearch('');
+    onChange("");
+    onSearch("");
   };
 
   return (

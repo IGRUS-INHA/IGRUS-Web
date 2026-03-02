@@ -1,6 +1,12 @@
-import { FileText, MessageCircle, UserCheck, HelpCircle, UserPlus } from 'lucide-react';
-import { useGetDashboardStats } from '@/api/model/admin-dashboard/admin-dashboard';
-import StatCard from '@/components/feature/admin/StatCard';
+import {
+  FileText,
+  MessageCircle,
+  UserCheck,
+  HelpCircle,
+  UserPlus,
+} from "lucide-react";
+import { useGetDashboardStats } from "@/api/model/admin-dashboard/admin-dashboard";
+import StatCard from "@/components/feature/admin/StatCard";
 
 export default function DashboardTab() {
   const { data: response, isLoading } = useGetDashboardStats();

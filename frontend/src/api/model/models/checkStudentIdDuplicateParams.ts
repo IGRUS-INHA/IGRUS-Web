@@ -35,8 +35,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type CheckStudentIdDuplicateParams = {
-/**
- * 확인할 학번 (8자리 숫자)
- */
-studentId: string;
+  /**
+   * 확인할 학번 (8자리 숫자)
+   */
+  studentId: string;
 };

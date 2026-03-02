@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom';
-import { useUIStore } from '@/stores';
-import type { Post } from '@/types/entities';
+import { Link } from "react-router-dom";
+import { useUIStore } from "@/stores";
+import type { Post } from "@/types/entities";
 
 interface PostCardProps {
-  post: Pick<Post, 'title' | 'author' | 'date' | 'category'> & {
+  post: Pick<Post, "title" | "author" | "date" | "category"> & {
     image?: string;
     tag?: string;
   };
@@ -12,15 +12,16 @@ interface PostCardProps {
 
 export default function PostCard({ post, linkTo }: PostCardProps) {
   const { theme } = useUIStore();
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
 
-  const authorName = typeof post.author === 'string' ? post.author : post.author.name;
+  const authorName =
+    typeof post.author === "string" ? post.author : post.author.name;
 
   const content = (
     <div className="group cursor-pointer">
       <div
         className={`relative aspect-[4/3] rounded-r4 overflow-hidden mb-s3 transition-colors duration-300 ${
-          isDark ? 'bg-card' : 'bg-muted'
+          isDark ? "bg-card" : "bg-muted"
         }`}
       >
         {post.image && (
@@ -28,7 +29,7 @@ export default function PostCard({ post, linkTo }: PostCardProps) {
             src={post.image}
             alt={post.title}
             className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out ${
-              isDark ? 'opacity-80' : 'opacity-100'
+              isDark ? "opacity-80" : "opacity-100"
             }`}
           />
         )}
@@ -40,8 +41,8 @@ export default function PostCard({ post, linkTo }: PostCardProps) {
         <div
           className={`absolute inset-0 transition-opacity duration-300 ${
             isDark
-              ? 'bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100'
-              : 'bg-black/5 opacity-0 group-hover:opacity-100'
+              ? "bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100"
+              : "bg-black/5 opacity-0 group-hover:opacity-100"
           }`}
         />
       </div>
@@ -58,7 +59,9 @@ export default function PostCard({ post, linkTo }: PostCardProps) {
         </div>
         <span
           className={`typo-c2 border px-s2 py-s1 rounded-full whitespace-nowrap uppercase tracking-widest group-hover:border-primary/50 group-hover:text-primary transition-colors ${
-            isDark ? 'text-muted-foreground border-border' : 'text-muted-foreground border-border'
+            isDark
+              ? "text-muted-foreground border-border"
+              : "text-muted-foreground border-border"
           }`}
         >
           {post.category}

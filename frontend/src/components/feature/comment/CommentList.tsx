@@ -1,5 +1,5 @@
-import { CommentItem } from './CommentItem';
-import type { CommentWithRepliesResponse } from '@/api/model/models';
+import { CommentItem } from "./CommentItem";
+import type { CommentWithRepliesResponse } from "@/api/model/models";
 
 interface CommentListProps {
   comments: CommentWithRepliesResponse[];

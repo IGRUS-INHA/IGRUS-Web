@@ -1,17 +1,17 @@
-import { Outlet, useLocation } from 'react-router-dom';
-import { Menu } from 'lucide-react';
-import { useUIStore } from '@/stores';
-import Sidebar from './Sidebar';
-import Header from './Header';
-import Footer from './Footer';
-import { ToastContainer } from '@/components/ui/toast';
+import { Outlet, useLocation } from "react-router-dom";
+import { Menu } from "lucide-react";
+import { useUIStore } from "@/stores";
+import Sidebar from "./Sidebar";
+import Header from "./Header";
+import Footer from "./Footer";
+import { ToastContainer } from "@/components/ui/toast";
 
 export default function Layout() {
   const location = useLocation();
   const { sidebarOpen, setSidebarOpen, toggleSidebar } = useUIStore();
 
   // 헤더를 숨길 페이지 경로 확인
-  const headerlessPrefixes = ['/login', '/signup', '/inquiry'];
+  const headerlessPrefixes = ["/login", "/signup", "/inquiry"];
   const isHeaderless = headerlessPrefixes.some((prefix) =>
     location.pathname.startsWith(prefix),
   );
@@ -19,10 +19,10 @@ export default function Layout() {
   // 푸터를 표시할 페이지 경로 확인
   const shouldShowFooter = (pathname: string): boolean => {
     return (
-      pathname === '/' ||
-      pathname.startsWith('/board') ||
-      pathname.startsWith('/events') ||
-      pathname.startsWith('/inquiry')
+      pathname === "/" ||
+      pathname.startsWith("/board") ||
+      pathname.startsWith("/events") ||
+      pathname.startsWith("/inquiry")
     );
   };
 
@@ -39,7 +39,9 @@ export default function Layout() {
         {!isHeaderless ? (
           <Header />
         ) : (
-          <div className={`lg:hidden sticky top-0 backdrop-blur-md py-s5 ${sidebarOpen ? 'z-30' : 'z-40'} bg-background/80`}>
+          <div
+            className={`lg:hidden sticky top-0 backdrop-blur-md py-s5 ${sidebarOpen ? "z-30" : "z-40"} bg-background/80`}
+          >
             <div className="w-full px-s4">
               <button
                 onClick={toggleSidebar}

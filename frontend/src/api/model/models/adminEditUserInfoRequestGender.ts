@@ -37,10 +37,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 성별 (null이면 변경하지 않음)
  */
-export type AdminEditUserInfoRequestGender = typeof AdminEditUserInfoRequestGender[keyof typeof AdminEditUserInfoRequestGender];
-
+export type AdminEditUserInfoRequestGender =
+  (typeof AdminEditUserInfoRequestGender)[keyof typeof AdminEditUserInfoRequestGender];
 
 export const AdminEditUserInfoRequestGender = {
-  MALE: 'MALE',
-  FEMALE: 'FEMALE',
+  MALE: "MALE",
+  FEMALE: "FEMALE",
 } as const;

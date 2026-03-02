@@ -1,10 +1,15 @@
-import DatePicker, { registerLocale } from 'react-datepicker';
-import { ko } from 'date-fns/locale';
-import 'react-datepicker/dist/react-datepicker.css';
-import { formatDateLocal, formatTimeLocal, parseDateTimeString, extractDateFromPicker } from '@/utils/event';
-import { cn } from '@/lib/utils';
+import DatePicker, { registerLocale } from "react-datepicker";
+import { ko } from "date-fns/locale";
+import "react-datepicker/dist/react-datepicker.css";
+import {
+  formatDateLocal,
+  formatTimeLocal,
+  parseDateTimeString,
+  extractDateFromPicker,
+} from "@/utils/event";
+import { cn } from "@/lib/utils";
 
-registerLocale('ko', ko);
+registerLocale("ko", ko);
 
 interface EventDateTimePickerProps {
   date: string;
@@ -65,15 +70,17 @@ export function EventDateTimePicker({
           locale="ko"
           placeholderText="시작 날짜와 시간을 선택하세요"
           className={cn(
-            'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-            'focus:outline-none focus:border-primary',
-            hasStartError && 'border-destructive',
+            "w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm",
+            "focus:outline-none focus:border-primary",
+            hasStartError && "border-destructive",
           )}
           wrapperClassName="w-full"
           calendarClassName="event-datepicker"
         />
         {dateError && <p className="typo-c1 text-destructive">{dateError}</p>}
-        {timeError && !dateError && <p className="typo-c1 text-destructive">{timeError}</p>}
+        {timeError && !dateError && (
+          <p className="typo-c1 text-destructive">{timeError}</p>
+        )}
       </div>
 
       {/* 종료 */}
@@ -96,15 +103,19 @@ export function EventDateTimePicker({
           placeholderText="종료 날짜와 시간을 선택하세요"
           {...(startSelected ? { minDate: startSelected } : {})}
           className={cn(
-            'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-            'focus:outline-none focus:border-primary',
-            hasEndError && 'border-destructive',
+            "w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm",
+            "focus:outline-none focus:border-primary",
+            hasEndError && "border-destructive",
           )}
           wrapperClassName="w-full"
           calendarClassName="event-datepicker"
         />
-        {endDateError && <p className="typo-c1 text-destructive">{endDateError}</p>}
-        {endTimeError && !endDateError && <p className="typo-c1 text-destructive">{endTimeError}</p>}
+        {endDateError && (
+          <p className="typo-c1 text-destructive">{endDateError}</p>
+        )}
+        {endTimeError && !endDateError && (
+          <p className="typo-c1 text-destructive">{endTimeError}</p>
+        )}
       </div>
     </div>
   );

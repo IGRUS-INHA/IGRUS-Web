@@ -33,13 +33,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { UserDetailResponseEnrollmentStatus } from './userDetailResponseEnrollmentStatus';
-import type { UserDetailResponseGender } from './userDetailResponseGender';
-import type { UserDetailResponseInterestsItem } from './userDetailResponseInterestsItem';
-import type { UserDetailResponseJoinRoute } from './userDetailResponseJoinRoute';
-import type { UserDetailResponseRole } from './userDetailResponseRole';
-import type { UserDetailResponseStatus } from './userDetailResponseStatus';
-import type { UserDetailResponseWishesItem } from './userDetailResponseWishesItem';
+import type { UserDetailResponseEnrollmentStatus } from "./userDetailResponseEnrollmentStatus";
+import type { UserDetailResponseGender } from "./userDetailResponseGender";
+import type { UserDetailResponseInterestsItem } from "./userDetailResponseInterestsItem";
+import type { UserDetailResponseJoinRoute } from "./userDetailResponseJoinRoute";
+import type { UserDetailResponseRole } from "./userDetailResponseRole";
+import type { UserDetailResponseStatus } from "./userDetailResponseStatus";
+import type { UserDetailResponseWishesItem } from "./userDetailResponseWishesItem";
 
 /**
  * 관리자용 회원 상세 응답

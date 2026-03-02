@@ -17,6 +17,7 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
 **용도:** 일반 사용자 페이지 기본 레이아웃 (2026-02-02 업데이트)
 
 **주요 기능:**
+
 - ✅ **Sidebar 통합** (mass-club-portal 디자인 기반)
   - Desktop: 항상 표시 (sticky 포지션)
   - Mobile/Tablet: 토글 가능 (fixed 포지션, backdrop 포함)
@@ -31,6 +32,7 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
   - 중앙 정렬, 최대 너비 제한 (max-w-7xl)
 
 **레이아웃 구조:**
+
 ```
 ┌─────────────────────────────────────┐
 │ Sidebar (좌측 고정)                  │
@@ -57,6 +59,7 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
 ```
 
 **디자인 특징:**
+
 - Flexbox 레이아웃 (수평: Sidebar + Main)
 - Sidebar
   - Desktop (lg+): `sticky top-0`, 항상 표시
@@ -72,6 +75,7 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
   - 중앙 정렬 컨테이너 (`max-w-7xl mx-auto`)
 
 **사용 예시:**
+
 ```jsx
 <Route element={<Layout />}>
   <Route path="/" element={<HomePage />} />
@@ -80,6 +84,7 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
 ```
 
 **의존성:**
+
 - `react-router-dom`: `Outlet`
 - `@/stores`: `useUIStore` (사이드바 상태 관리)
 - `@/components/common`: `Sidebar`, `Header`
@@ -93,12 +98,14 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
 **용도:** 관리자 페이지 전용 레이아웃
 
 **주요 기능:**
+
 - 관리자 전용 사이드바 네비게이션
 - React Router의 `Outlet`을 통한 하위 페이지 렌더링
 - 관리자 정보 표시
 - 모바일 반응형 사이드바 (토글 가능)
 
 **네비게이션 메뉴:**
+
 - 대시보드 (`/admin`)
 - 회원 관리 (`/admin/users`)
 - 준회원 관리 (`/admin/associates`)
@@ -106,6 +113,7 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
 - 스크랩 관리 (`/admin/scraps`)
 
 **디자인 특징:**
+
 - IGRUS 디자인 시스템 준수
   - Border radius: `rounded-r3` (12px)
   - Primary color: `#03A69E`
@@ -116,6 +124,7 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
   - 로그아웃
 
 **사용 예시:**
+
 ```jsx
 <Route element={<AdminLayout />}>
   <Route path="/admin" element={<AdminDashboard />} />
@@ -127,11 +136,13 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
 ```
 
 **의존성:**
+
 - `react-router-dom`: `Link`, `Outlet`, `useLocation`
 - `@/stores`: `useAuthStore`, `useUIStore`
 - `lucide-react`: 아이콘 컴포넌트
 
 **권한 확인:**
+
 - 사용자 정보는 `useAuthStore`에서 가져옴
 - 관리자 페이지 접근은 `ProtectedRoute`와 함께 사용 권장
 
@@ -144,6 +155,7 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
 **용도:** 메인 애플리케이션 전역 사이드바 (mass-club-portal 디자인 기반)
 
 **주요 기능:**
+
 - **메인 네비게이션**
   - 홈 (`/`)
   - 게시판 (`/board/notices`)
@@ -162,14 +174,16 @@ IGRUS 웹사이트 프론트엔드의 공통 컴포넌트 구조와 명세를 �
   - Mobile/Tablet: fixed, backdrop 포함, 토글 가능
 
 **Props:**
+
 ```typescript
 interface SidebarProps {
-  isOpen: boolean;      // 사이드바 열림 상태
+  isOpen: boolean; // 사이드바 열림 상태
   onClose?: () => void; // 닫기 핸들러
 }
 ```
 
 **디자인 특징:**
+
 - 활성 메뉴 아이템 좌측에 primary 색상 강조선 (`w-1 h-6 bg-primary rounded-r-full`)
 - hover 시 아이콘 색상 primary로 변경
 - 모바일에서는 backdrop과 함께 오버레이 형태로 표시
@@ -177,6 +191,7 @@ interface SidebarProps {
 - 닫기 버튼 (X): 모바일/태블릿에서만 표시 (`lg:hidden`)
 
 **상태 관리:**
+
 - `useUIStore`의 `theme`, `toggleTheme` 사용
 - `useAuthStore`의 `user`, `isAuthenticated` 사용
 - 사이드바 열림/닫힘 상태는 부모 컴포넌트(Layout)에서 관리
@@ -190,6 +205,7 @@ interface SidebarProps {
 **파일 경로:** `components/ui/button.tsx` (TypeScript ✓)
 
 **Variants:**
+
 - `default`: Primary 버튼
 - `secondary`: Secondary 버튼
 - `outline`: 아웃라인 버튼
@@ -197,6 +213,7 @@ interface SidebarProps {
 - `destructive`: 삭제/취소 등 위험한 동작
 
 **Sizes:**
+
 - `sm`: 작은 버튼
 - `md`: 중간 버튼 (기본)
 - `lg`: 큰 버튼
@@ -208,6 +225,7 @@ interface SidebarProps {
 **파일 경로:** `components/ui/input.tsx` (TypeScript ✓)
 
 **특징:**
+
 - IGRUS 디자인 시스템 스타일 적용
 - 포커스 시 primary 색상 border
 - placeholder 색상 자동 조정
@@ -219,6 +237,7 @@ interface SidebarProps {
 **파일 경로:** `components/ui/card.tsx` (TypeScript ✓)
 
 **구성:**
+
 - `Card`: 카드 컨테이너
 - `CardHeader`: 카드 헤더
 - `CardTitle`: 카드 제목
@@ -251,6 +270,7 @@ interface SidebarProps {
 **디렉토리:** `components/feature/admin/`
 
 **컴포넌트:**
+
 - `StatCard.jsx`: 통계 카드 (대시보드용)
 - `UserTable.jsx`: 사용자 테이블 (회원 관리용)
 
@@ -261,6 +281,7 @@ interface SidebarProps {
 **디렉토리:** `components/feature/auth/`
 
 **컴포넌트:**
+
 - `AuthForm.jsx`: 로그인/회원가입 폼
 
 ---
@@ -270,6 +291,7 @@ interface SidebarProps {
 **디렉토리:** `components/feature/board/`
 
 **컴포넌트:**
+
 - `PostCard.jsx`: 게시글 카드
 - `PostListItem.jsx`: 게시글 리스트 아이템
 
@@ -280,6 +302,7 @@ interface SidebarProps {
 **디렉토리:** `components/feature/event/`
 
 **컴포넌트:**
+
 - `EventCard.jsx`: 행사 카드
 
 ---
@@ -289,6 +312,7 @@ interface SidebarProps {
 **디렉토리:** `components/feature/inquiry/`
 
 **컴포넌트:**
+
 - `InquiryForm.tsx`: 문의 폼 (첨부파일 업로드 지원, 회원/비회원 모두 최대 3개)
 - `InquiryListItem.jsx`: 문의 리스트 아이템
 
@@ -299,6 +323,7 @@ interface SidebarProps {
 **디렉토리:** `components/feature/upload/`
 
 **컴포넌트:**
+
 - `ImageUploadArea.tsx`: 이미지 파일 선택 영역 (클릭 + 드래그 앤 드롭)
 - `ImagePreviewList.tsx`: 선택된 이미지 미리보기 그리드
 
@@ -307,18 +332,20 @@ interface SidebarProps {
 **용도:** 이미지 파일 선택 UI (클릭 또는 드래그 앤 드롭)
 
 **Props:**
+
 ```typescript
 interface ImageUploadAreaProps {
   onFilesSelected: (files: FileList) => void;
   maxFiles: number;
   currentCount: number;
-  accept?: string;       // default: 'image/*'
+  accept?: string; // default: 'image/*'
   disabled?: boolean;
   className?: string;
 }
 ```
 
 **주요 기능:**
+
 - 클릭 시 hidden `<input type="file">` 트리거
 - 드래그 앤 드롭 지원 (dragover/drop 이벤트, 드래그 중 시각적 피드백)
 - 현재 파일 수 / 최대 수 표시
@@ -329,6 +356,7 @@ interface ImageUploadAreaProps {
 **용도:** 업로드 파일 썸네일 + 상태 표시
 
 **Props:**
+
 ```typescript
 interface ImagePreviewListProps {
   files: UploadFile[];
@@ -338,6 +366,7 @@ interface ImagePreviewListProps {
 ```
 
 **주요 기능:**
+
 - 반응형 그리드 (모바일 2열, sm 3열, md 4열)
 - 상태별 오버레이: uploading(프로그레스 바), error(에러 아이콘+메시지), success(체크 아이콘)
 - 각 이미지에 제거(X) 버튼 (hover 시 표시)
@@ -350,6 +379,7 @@ interface ImagePreviewListProps {
 **디렉토리:** `components/feature/mypage/`
 
 **컴포넌트:**
+
 - `ProfileHeader.jsx`: 프로필 헤더
 - `ActivityList.jsx`: 활동 내역 리스트
 - `AppliedEventList.jsx`: 신청한 행사 리스트
@@ -361,6 +391,7 @@ interface ImagePreviewListProps {
 **디렉토리:** `components/board/`
 
 **컴포넌트:**
+
 - `Pagination.jsx`: 페이지네이션
 - `SearchBar.jsx`: 검색바
 - `SortSelect.jsx`: 정렬 선택
@@ -373,6 +404,7 @@ interface ImagePreviewListProps {
 **디렉토리:** `components/common/`
 
 **컴포넌트:**
+
 - `Header.tsx`: 헤더 (2026-02-02 업데이트)
 - `Footer.jsx`: 푸터
 - `Layout.tsx`: 기본 레이아웃 (2026-02-02 업데이트)
@@ -388,6 +420,7 @@ interface ImagePreviewListProps {
 **용도:** 상단 고정 헤더 (2026-02-02 업데이트)
 
 **주요 기능:**
+
 - **모바일 메뉴 토글**
   - 햄버거 메뉴 버튼 (`Menu` 아이콘)
   - Desktop에서는 숨김 (`lg:hidden`)
@@ -410,6 +443,7 @@ interface ImagePreviewListProps {
     - 회원가입 버튼 (`hidden sm:inline`으로 반응형)
 
 **디자인 특징:**
+
 - 상단 고정: `border-b bg-background`
 - 컨테이너: `container mx-auto px-4 h-16`
 - Flexbox 레이아웃: `flex items-center justify-between`
@@ -420,10 +454,12 @@ interface ImagePreviewListProps {
   - 회원가입 버튼: 작은 화면에서 숨김 (`hidden sm:inline`)
 
 **상태 관리:**
+
 - `useAuthStore`의 `user`, `isAuthenticated` 사용
 - `useUIStore`의 `toggleSidebar` 사용
 
 **의존성:**
+
 - `react-router-dom`: `Link`
 - `@/stores`: `useAuthStore`, `useUIStore`
 - `@/components/ui/button`: `Button`
@@ -437,6 +473,7 @@ interface ImagePreviewListProps {
 **용도:** 전역 검색 UI (추후 검색 기능 연동 예정)
 
 **주요 기능:**
+
 - 좌측 Search 아이콘 표시
 - Rounded-full 스타일
 - 포커스 시 아이콘 색상 변경 (primary)
@@ -446,19 +483,22 @@ interface ImagePreviewListProps {
   - 포커스 시 lg 이상: `focus:lg:w-80` (320px)
 
 **디자인 특징:**
+
 - Border: `border-border`
 - 배경: `bg-background`
 - 텍스트: `text-foreground`
 - 포커스 border: `focus:border-primary/50`
 
 **Props:**
+
 - `className`: 추가 CSS 클래스 (선택사항)
 
 **사용 예시:**
-```jsx
-import SearchBar from '@/components/common/SearchBar';
 
-<SearchBar className="hidden sm:block" />
+```jsx
+import SearchBar from "@/components/common/SearchBar";
+
+<SearchBar className="hidden sm:block" />;
 ```
 
 ---
@@ -469,24 +509,24 @@ import SearchBar from '@/components/common/SearchBar';
 
 ```javascript
 // UI 컴포넌트
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 // 공통 컴포넌트
-import { Layout, AdminLayout, ProtectedRoute } from '@/components/common';
+import { Layout, AdminLayout, ProtectedRoute } from "@/components/common";
 
 // Store
-import { useAuthStore, useUIStore } from '@/stores';
+import { useAuthStore, useUIStore } from "@/stores";
 ```
 
 ### 상대 경로 사용 금지
 
 ```javascript
 // ❌ Bad
-import Button from '../../components/ui/button';
+import Button from "../../components/ui/button";
 
 // ✅ Good
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 ```
 
 ---

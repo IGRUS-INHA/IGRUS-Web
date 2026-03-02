@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom';
-import { useUIStore } from '@/stores';
-import { MessageCircle, Heart, Bookmark } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import type { PostListResponse } from '@/api/model/models';
-import type { BoardType } from '@/types/common';
+import { Link } from "react-router-dom";
+import { useUIStore } from "@/stores";
+import { MessageCircle, Heart, Bookmark } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import type { PostListResponse } from "@/api/model/models";
+import type { BoardType } from "@/types/common";
 
 interface PostListItemProps {
   post: PostListResponse;
@@ -13,14 +13,14 @@ interface PostListItemProps {
 
 export default function PostListItem({ post, linkTo }: PostListItemProps) {
   const { theme } = useUIStore();
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
 
-  const authorName = post.authorName ?? '익명';
-  const authorInitial = authorName[0] ?? '?';
+  const authorName = post.authorName ?? "익명";
+  const authorInitial = authorName[0] ?? "?";
 
   // 날짜 포맷팅 (ISO → 간단한 형식)
   const formatDate = (isoDate?: string) => {
-    if (!isoDate) return '';
+    if (!isoDate) return "";
     const date = new Date(isoDate);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -33,13 +33,13 @@ export default function PostListItem({ post, linkTo }: PostListItemProps) {
     if (days < 7) {
       return `${days}일 전`;
     }
-    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
   };
 
   const content = (
     <Card
       className={`px-s6 py-s5 rounded-r4 border transition-all hover:border-primary/50 group cursor-pointer ${
-        isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'
+        isDark ? "bg-card border-border" : "bg-card border-border shadow-sm"
       }`}
     >
       <div className="flex justify-between items-start">
@@ -48,7 +48,9 @@ export default function PostListItem({ post, linkTo }: PostListItemProps) {
           {post.isQuestion && (
             <span
               className={`px-s3 py-s1 rounded-full typo-c2 font-bold uppercase tracking-widest ${
-                isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
+                isDark
+                  ? "bg-white/5 text-muted-foreground"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               Q&A
@@ -57,26 +59,32 @@ export default function PostListItem({ post, linkTo }: PostListItemProps) {
           {post.isVisibleToAssociate && (
             <span
               className={`px-s3 py-s1 rounded-full typo-c2 font-bold tracking-widest ${
-                isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
+                isDark
+                  ? "bg-white/5 text-muted-foreground"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               준회원 공개
             </span>
           )}
         </h3>
-        <p className="typo-c1 text-muted-foreground ml-s4 whitespace-nowrap">조회 {post.viewCount ?? 0} · {formatDate(post.createdAt)}</p>
+        <p className="typo-c1 text-muted-foreground ml-s4 whitespace-nowrap">
+          조회 {post.viewCount ?? 0} · {formatDate(post.createdAt)}
+        </p>
       </div>
 
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-s2">
           <div
             className={`w-6 h-6 rounded-full flex items-center justify-center typo-c2 font-bold ${
-              isDark ? 'bg-white/10' : 'bg-muted'
+              isDark ? "bg-white/10" : "bg-muted"
             }`}
           >
             {authorInitial}
           </div>
-          <span className="typo-c1 font-medium text-muted-foreground">{authorName}</span>
+          <span className="typo-c1 font-medium text-muted-foreground">
+            {authorName}
+          </span>
         </div>
 
         <div className="flex items-center gap-s4 text-muted-foreground">

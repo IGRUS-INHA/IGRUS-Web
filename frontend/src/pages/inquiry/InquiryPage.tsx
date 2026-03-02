@@ -1,11 +1,14 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { Clock, Search } from 'lucide-react';
-import { useCreateMemberInquiry, useCreateGuestInquiry } from '@/api/model/inquiry/inquiry';
-import { useAuth } from '@/hooks/useAuth';
-import InquiryForm from '@/components/feature/inquiry/InquiryForm';
-import type { InquiryFormData } from '@/components/feature/inquiry/InquiryForm';
-import type { CreateMemberInquiryRequestType } from '@/api/model/models/createMemberInquiryRequestType';
-import type { CreateGuestInquiryRequestType } from '@/api/model/models/createGuestInquiryRequestType';
+import { Link, useNavigate } from "react-router-dom";
+import { Clock, Search } from "lucide-react";
+import {
+  useCreateMemberInquiry,
+  useCreateGuestInquiry,
+} from "@/api/model/inquiry/inquiry";
+import { useAuth } from "@/hooks/useAuth";
+import InquiryForm from "@/components/feature/inquiry/InquiryForm";
+import type { InquiryFormData } from "@/components/feature/inquiry/InquiryForm";
+import type { CreateMemberInquiryRequestType } from "@/api/model/models/createMemberInquiryRequestType";
+import type { CreateGuestInquiryRequestType } from "@/api/model/models/createGuestInquiryRequestType";
 
 export default function InquiryPage() {
   const navigate = useNavigate();
@@ -21,15 +24,16 @@ export default function InquiryPage() {
           title: data.title,
           content: data.content,
           type: data.type as CreateMemberInquiryRequestType,
-          ...(data.attachments && data.attachments.length > 0 && {
-            attachments: data.attachments,
-          }),
+          ...(data.attachments &&
+            data.attachments.length > 0 && {
+              attachments: data.attachments,
+            }),
         },
       });
-      alert('문의가 제출되었습니다.');
-      navigate('/inquiry/history');
+      alert("문의가 제출되었습니다.");
+      navigate("/inquiry/history");
     } catch {
-      alert('문의 제출에 실패했습니다. 다시 시도해주세요.');
+      alert("문의 제출에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
@@ -43,15 +47,18 @@ export default function InquiryPage() {
           email: data.email!,
           name: data.name!,
           password: data.password!,
-          ...(data.attachments && data.attachments.length > 0 && {
-            attachments: data.attachments,
-          }),
+          ...(data.attachments &&
+            data.attachments.length > 0 && {
+              attachments: data.attachments,
+            }),
         },
       });
-      alert('문의가 제출되었습니다. 문의번호와 이메일, 비밀번호로 조회할 수 있습니다.');
-      navigate('/inquiry/lookup');
+      alert(
+        "문의가 제출되었습니다. 문의번호와 이메일, 비밀번호로 조회할 수 있습니다.",
+      );
+      navigate("/inquiry/lookup");
     } catch {
-      alert('문의 제출에 실패했습니다. 다시 시도해주세요.');
+      alert("문의 제출에 실패했습니다. 다시 시도해주세요.");
     }
   };
 

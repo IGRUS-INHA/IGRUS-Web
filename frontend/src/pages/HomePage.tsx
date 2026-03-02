@@ -65,18 +65,24 @@ export default function HomePage() {
     useGetPinnedPostList();
   const pinnedPosts = (pinnedResponse?.data ?? []) as PinnedPostListResponse[];
 
-  const { data: eventsResponse, isLoading: isEventsLoading } =
-    useGetEventList({ eventStatus: "UPCOMING" });
+  const { data: eventsResponse, isLoading: isEventsLoading } = useGetEventList(
+    { eventStatus: "UPCOMING" },
+    { query: { enabled: __FEATURE_EVENTS__ } },
+  );
   const events = ((eventsResponse?.data ?? []) as EventListResponse[]).slice(
     0,
     3,
   );
 
+  const showSplit = __FEATURE_EVENTS__ || __FEATURE_INSTAGRAM__;
+
   return (
     <div>
       <HeroSection isAuthenticated={isAuthenticated} />
       <NoticeSection pinnedPosts={pinnedPosts} isLoading={isPinnedLoading} />
-      <SplitSection events={events} isEventsLoading={isEventsLoading} />
+      {showSplit && (
+        <SplitSection events={events} isEventsLoading={isEventsLoading} />
+      )}
     </div>
   );
 }
@@ -262,20 +268,23 @@ function BubbleOrbit() {
     } else {
       bubbles.forEach((b, i) => {
         if (!b) return;
-        const tid = window.setTimeout(() => {
-          b.classList.add("bounced");
-          b.addEventListener(
-            "animationend",
-            () => {
-              b.style.opacity = "1";
-              b.style.transform = "translate(-50%, -50%)";
-              b.classList.remove("bounced");
-              const bst = state.bubbles[i];
-              if (bst) bst.ready = true;
-            },
-            { once: true },
-          );
-        }, 400 + i * 120);
+        const tid = window.setTimeout(
+          () => {
+            b.classList.add("bounced");
+            b.addEventListener(
+              "animationend",
+              () => {
+                b.style.opacity = "1";
+                b.style.transform = "translate(-50%, -50%)";
+                b.classList.remove("bounced");
+                const bst = state.bubbles[i];
+                if (bst) bst.ready = true;
+              },
+              { once: true },
+            );
+          },
+          400 + i * 120,
+        );
         timeouts.push(tid);
       });
     }
@@ -365,9 +374,7 @@ function BubbleOrbit() {
       );
 
       const occupied = new Set(
-        stateRef.current.bubbles
-          .filter((_, j) => j !== i)
-          .map((b) => b.slot),
+        stateRef.current.bubbles.filter((_, j) => j !== i).map((b) => b.slot),
       );
 
       let bestSlot = st.slot;
@@ -376,8 +383,7 @@ function BubbleOrbit() {
       for (let s = 0; s < N; s++) {
         if (occupied.has(s)) continue;
         const sa = stateRef.current.gAngle + s * SLOT_STEP;
-        const normSa =
-          ((sa % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const normSa = ((sa % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         const normCur =
           ((curAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         let diff = Math.abs(normSa - normCur);
@@ -509,16 +515,34 @@ function SplitSection({
   events: EventListResponse[];
   isEventsLoading: boolean;
 }) {
+  const bothEnabled = __FEATURE_EVENTS__ && __FEATURE_INSTAGRAM__;
+
   return (
     <section className="pt-s6 pb-s8 border-t border-border">
       <div className="max-w-[1280px] mx-auto px-s6 max-md:px-s4">
-        <div className="grid grid-cols-2 gap-s8 max-lg:grid-cols-1 max-lg:gap-0">
-          <div className="min-w-0">
-            <EventTimeline events={events} isLoading={isEventsLoading} />
-          </div>
-          <div className="min-w-0 max-lg:pt-s8 max-lg:border-t max-lg:border-border">
-            <InstagramFeed />
-          </div>
+        <div
+          className={
+            bothEnabled
+              ? "grid grid-cols-2 gap-s8 max-lg:grid-cols-1 max-lg:gap-0"
+              : ""
+          }
+        >
+          {__FEATURE_EVENTS__ && (
+            <div className="min-w-0">
+              <EventTimeline events={events} isLoading={isEventsLoading} />
+            </div>
+          )}
+          {__FEATURE_INSTAGRAM__ && (
+            <div
+              className={cn(
+                "min-w-0",
+                bothEnabled &&
+                  "max-lg:pt-s8 max-lg:border-t max-lg:border-border",
+              )}
+            >
+              <InstagramFeed />
+            </div>
+          )}
         </div>
       </div>
     </section>

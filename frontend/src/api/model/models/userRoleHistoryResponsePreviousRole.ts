@@ -37,12 +37,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 변경 전 역할
  */
-export type UserRoleHistoryResponsePreviousRole = typeof UserRoleHistoryResponsePreviousRole[keyof typeof UserRoleHistoryResponsePreviousRole];
-
+export type UserRoleHistoryResponsePreviousRole =
+  (typeof UserRoleHistoryResponsePreviousRole)[keyof typeof UserRoleHistoryResponsePreviousRole];
 
 export const UserRoleHistoryResponsePreviousRole = {
-  ASSOCIATE: 'ASSOCIATE',
-  MEMBER: 'MEMBER',
-  OPERATOR: 'OPERATOR',
-  ADMIN: 'ADMIN',
+  ASSOCIATE: "ASSOCIATE",
+  MEMBER: "MEMBER",
+  OPERATOR: "OPERATOR",
+  ADMIN: "ADMIN",
 } as const;

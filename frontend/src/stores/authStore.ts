@@ -1,9 +1,9 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { AuthStore, AuthPersistState } from '@/types/store';
-import type { User } from '@/types/entities';
-import { ROLES, type Role } from '@/types/common';
-import { queryClient } from '@/lib/queryClient';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { AuthStore, AuthPersistState } from "@/types/store";
+import type { User } from "@/types/entities";
+import { ROLES, type Role } from "@/types/common";
+import { queryClient } from "@/lib/queryClient";
 
 const ROLE_ORDER: readonly Role[] = [
   ROLES.ASSOCIATE,
@@ -26,7 +26,7 @@ export const useAuthStore = create<AuthStore>()(
       setAuth: (
         user: User,
         accessToken: string,
-        refreshToken?: string
+        refreshToken?: string,
       ): void => {
         set({
           user,
@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthStore>()(
       logout: (): void => {
         // Access Token만 localStorage에서 제거
         // Refresh Token은 HttpOnly 쿠키로 관리되므로 서버에서 제거
-        localStorage.removeItem('accessToken');
+        localStorage.removeItem("accessToken");
         // TanStack Query 캐시 초기화 (이전 사용자 데이터 잔류 방지)
         queryClient.clear();
         set({
@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthStore>()(
       },
     }),
     {
-      name: 'auth-storage',
+      name: "auth-storage",
       partialize: (state): AuthPersistState => ({
         user: state.user,
         accessToken: state.accessToken,
@@ -80,8 +80,8 @@ export const useAuthStore = create<AuthStore>()(
         refreshToken: undefined,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // hydration 완료 시 isHydrated 플래그 설정 + localStorage 동기화
@@ -90,7 +90,7 @@ useAuthStore.persist.onFinishHydration(() => {
   // Zustand persist → standalone localStorage 동기화 (client.ts가 읽는 키)
   const { accessToken } = useAuthStore.getState();
   if (accessToken) {
-    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem("accessToken", accessToken);
   }
 });
 
@@ -99,6 +99,6 @@ if (useAuthStore.persist.hasHydrated()) {
   useAuthStore.setState({ isHydrated: true });
   const { accessToken } = useAuthStore.getState();
   if (accessToken) {
-    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem("accessToken", accessToken);
   }
 }

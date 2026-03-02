@@ -176,49 +176,61 @@ frontend/src/pages/auth/
 ### LoginPage (`/login`)
 
 **나가는 링크:**
+
 - `/signup` - "Don't have an account? Sign up"
 - `/forgot-password` - "Forgot Password?"
 
 **성공 시 이동:**
+
 - `/` - 로그인 성공 후 홈으로
 
 ### SignupPage (`/signup`)
 
 **나가는 링크:**
+
 - `/login` - "Already have an account? Log in"
 
 **성공 시 이동:**
+
 - `/verify-email?email={email}` - 회원가입 완료 후 이메일 인증
 
 ### VerifyEmailPage (`/verify-email`)
 
 **들어오는 쿼리:**
+
 - `?email={email}` - 인증할 이메일 주소
 
 **나가는 링크:**
+
 - `/signup` - "Back" 버튼
 
 **성공 시 이동:**
+
 - `/login?verified=true` - 인증 완료 후 로그인
 
 ### ForgotPasswordPage (`/forgot-password`)
 
 **나가는 링크:**
+
 - `/login` - "Back" 버튼 또는 "Back to Login"
 
 **성공 시:**
+
 - 페이지 내에서 성공 화면 표시
 - 이메일로 리셋 링크 발송
 
 ### ResetPasswordPage (`/reset-password`)
 
 **들어오는 쿼리:**
+
 - `?token={token}` - 비밀번호 재설정 토큰
 
 **나가는 링크:**
+
 - `/login` - "Back" 버튼
 
 **성공 시 이동:**
+
 - `/login` - 비밀번호 변경 완료 후 로그인
 
 ## 상태 관리 흐름
@@ -246,6 +258,7 @@ frontend/src/pages/auth/
 ```
 
 **사용 페이지:**
+
 - LoginPage: `login()` 액션 호출
 
 ### 로컬 상태 (useState)
@@ -254,26 +267,32 @@ frontend/src/pages/auth/
 
 ```jsx
 // LoginPage
-const [studentId, setStudentId] = useState('');
-const [password, setPassword] = useState('');
+const [studentId, setStudentId] = useState("");
+const [password, setPassword] = useState("");
 const [loading, setLoading] = useState(false);
-const [error, setError] = useState('');
+const [error, setError] = useState("");
 
 // SignupPage
-const [form, setForm] = useState({ studentId, name, email, password, passwordConfirm });
+const [form, setForm] = useState({
+  studentId,
+  name,
+  email,
+  password,
+  passwordConfirm,
+});
 const [agreedToTerms, setAgreedToTerms] = useState(false);
 
 // VerifyEmailPage
-const [verificationCode, setVerificationCode] = useState('');
+const [verificationCode, setVerificationCode] = useState("");
 const [timeLeft, setTimeLeft] = useState(300);
 
 // ForgotPasswordPage
-const [studentId, setStudentId] = useState('');
+const [studentId, setStudentId] = useState("");
 const [success, setSuccess] = useState(false);
 
 // ResetPasswordPage
-const [password, setPassword] = useState('');
-const [passwordConfirm, setPasswordConfirm] = useState('');
+const [password, setPassword] = useState("");
+const [passwordConfirm, setPasswordConfirm] = useState("");
 ```
 
 ## API 호출 시퀀스
@@ -349,16 +368,16 @@ User          ForgotPwPage    API Server    Email       ResetPwPage
 각 페이지는 동일한 에러 처리 패턴을 사용합니다:
 
 ```jsx
-const [error, setError] = useState('');
+const [error, setError] = useState("");
 
 const handleSubmit = async (e) => {
   e.preventDefault();
-  setError(''); // 에러 초기화
+  setError(""); // 에러 초기화
 
   try {
     // 클라이언트 측 유효성 검사
     if (!title.trim()) {
-      setError('Title is required');
+      setError("Title is required");
       return;
     }
 
@@ -366,10 +385,10 @@ const handleSubmit = async (e) => {
     await authApi.someMethod();
 
     // 성공 시 페이지 이동
-    navigate('/next-page');
+    navigate("/next-page");
   } catch (err) {
     // 서버 에러 처리
-    setError(err.response?.data?.message || 'Operation failed');
+    setError(err.response?.data?.message || "Operation failed");
   }
 };
 
@@ -398,7 +417,7 @@ const handleSubmit = async (e) => {
 
   try {
     await authApi.someMethod();
-    navigate('/next-page');
+    navigate("/next-page");
   } catch (err) {
     setError(err.message);
   } finally {
@@ -408,7 +427,7 @@ const handleSubmit = async (e) => {
 
 return (
   <Button type="submit" disabled={loading}>
-    {loading ? 'Loading...' : 'Submit'}
+    {loading ? "Loading..." : "Submit"}
   </Button>
 );
 ```
@@ -433,13 +452,7 @@ Tab 순서:
 HTML5 폼 검증 사용:
 
 ```jsx
-<Input
-  type="email"
-  required
-  minLength={8}
-  maxLength={8}
-  pattern="[0-9]{8}"
-/>
+<Input type="email" required minLength={8} maxLength={8} pattern="[0-9]{8}" />
 ```
 
 ### 에러 메시지
@@ -457,9 +470,7 @@ HTML5 폼 검증 사용:
 
 ```jsx
 <div className="min-h-screen flex items-center justify-center bg-background p-4">
-  <div className="max-w-md w-full">
-    {/* 모바일에서도 읽기 쉬운 크기 */}
-  </div>
+  <div className="max-w-md w-full">{/* 모바일에서도 읽기 쉬운 크기 */}</div>
 </div>
 ```
 
@@ -479,24 +490,28 @@ HTML5 폼 검증 사용:
 ```
 
 - 0.5초 지속
-- 2rem (8 * 0.25rem) 아래에서 시작
+- 2rem (8 \* 0.25rem) 아래에서 시작
 - fade-in 효과 포함
 
 ## 보안 고려사항
 
 ### 1. 토큰 처리
+
 - 쿼리 파라미터로 토큰 전달 (ResetPasswordPage)
 - 이메일로 전달된 토큰 사용
 
 ### 2. 비밀번호 요구사항
+
 - 최소 8자
 - 대소문자 + 숫자 + 특수문자 권장
 
 ### 3. 타이머 제한
+
 - 이메일 인증 코드 5분 제한
 - 만료 후 재발송 가능
 
 ### 4. 에러 메시지
+
 - 보안을 위해 일반적인 메시지 사용
 - 예: "로그인에 실패했습니다" (학번/비밀번호 구분 없음)
 

@@ -6,24 +6,24 @@ import {
   Lock,
   ChevronDown,
   type LucideIcon,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ImagePreviewList } from '@/components/feature/upload';
-import { ImageUploadArea } from '@/components/feature/upload';
-import { CreateMemberInquiryRequestType } from '@/api/model/models/createMemberInquiryRequestType';
-import { useImageUpload } from '@/hooks/useImageUpload';
-import { useToast } from '@/hooks/useToast';
-import { INQUIRY_ATTACHMENT_CONFIG } from '@/utils/upload';
-import { getImageDownloadUrl, UPLOAD_PURPOSE } from '@/services/uploadService';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ImagePreviewList } from "@/components/feature/upload";
+import { ImageUploadArea } from "@/components/feature/upload";
+import { CreateMemberInquiryRequestType } from "@/api/model/models/createMemberInquiryRequestType";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useToast } from "@/hooks/useToast";
+import { INQUIRY_ATTACHMENT_CONFIG } from "@/utils/upload";
+import { getImageDownloadUrl, UPLOAD_PURPOSE } from "@/services/uploadService";
+import { cn } from "@/lib/utils";
 
 const TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: CreateMemberInquiryRequestType.JOIN, label: '가입/입부 문의' },
-  { value: CreateMemberInquiryRequestType.EVENT, label: '행사 참여' },
-  { value: CreateMemberInquiryRequestType.REPORT, label: '신고' },
-  { value: CreateMemberInquiryRequestType.ACCOUNT, label: '계정/설정' },
-  { value: CreateMemberInquiryRequestType.OTHER, label: '기타' },
+  { value: CreateMemberInquiryRequestType.JOIN, label: "가입/입부 문의" },
+  { value: CreateMemberInquiryRequestType.EVENT, label: "행사 참여" },
+  { value: CreateMemberInquiryRequestType.REPORT, label: "신고" },
+  { value: CreateMemberInquiryRequestType.ACCOUNT, label: "계정/설정" },
+  { value: CreateMemberInquiryRequestType.OTHER, label: "기타" },
 ];
 
 export interface InquiryFormData {
@@ -39,27 +39,28 @@ export interface InquiryFormData {
 }
 
 interface InquiryFormProps {
-  variant?: 'member' | 'guest';
+  variant?: "member" | "guest";
   onSubmit?: (data: InquiryFormData) => void;
   loading?: boolean;
 }
 
 export default function InquiryForm({
-  variant = 'member',
+  variant = "member",
   onSubmit,
   loading = false,
 }: InquiryFormProps) {
-  const isGuest = variant === 'guest';
+  const isGuest = variant === "guest";
   const typeOptions = TYPE_OPTIONS;
   const toast = useToast();
 
-  const { files, isUploading, addFiles, removeFile, uploadAll } = useImageUpload({
-    config: INQUIRY_ATTACHMENT_CONFIG,
-    purpose: UPLOAD_PURPOSE.INQUIRY_ATTACHMENT,
-    onValidationError: (errors) => {
-      errors.forEach((msg) => toast.error(msg));
-    },
-  });
+  const { files, isUploading, addFiles, removeFile, uploadAll } =
+    useImageUpload({
+      config: INQUIRY_ATTACHMENT_CONFIG,
+      purpose: UPLOAD_PURPOSE.INQUIRY_ATTACHMENT,
+      onValidationError: (errors) => {
+        errors.forEach((msg) => toast.error(msg));
+      },
+    });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -67,25 +68,26 @@ export default function InquiryForm({
     const uploadResults = await uploadAll();
 
     // objectKey → presigned download URL 변환 (AttachmentInfo.fileUrl은 https:// 필요)
-    const attachments = uploadResults.length > 0
-      ? await Promise.all(
-          uploadResults.map(async (r) => ({
-            fileUrl: await getImageDownloadUrl(r.objectKey),
-            fileName: r.fileName,
-            fileSize: r.fileSize,
-          })),
-        )
-      : undefined;
+    const attachments =
+      uploadResults.length > 0
+        ? await Promise.all(
+            uploadResults.map(async (r) => ({
+              fileUrl: await getImageDownloadUrl(r.objectKey),
+              fileName: r.fileName,
+              fileSize: r.fileSize,
+            })),
+          )
+        : undefined;
 
     const formData = new FormData(e.currentTarget);
     onSubmit?.({
-      type: formData.get('type') as string,
-      title: formData.get('title') as string,
-      content: formData.get('content') as string,
+      type: formData.get("type") as string,
+      title: formData.get("title") as string,
+      content: formData.get("content") as string,
       ...(isGuest && {
-        email: formData.get('email') as string,
-        name: formData.get('name') as string,
-        password: formData.get('password') as string,
+        email: formData.get("email") as string,
+        name: formData.get("name") as string,
+        password: formData.get("password") as string,
       }),
       ...(attachments && { attachments }),
     });
@@ -146,9 +148,9 @@ export default function InquiryForm({
           <select
             name="type"
             className={cn(
-              'w-full h-9 rounded-r2 border border-input bg-transparent pl-10 pr-10 text-sm',
-              'appearance-none cursor-pointer transition-all outline-none',
-              'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
+              "w-full h-9 rounded-r2 border border-input bg-transparent pl-10 pr-10 text-sm",
+              "appearance-none cursor-pointer transition-all outline-none",
+              "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
             )}
           >
             {typeOptions.map((opt) => (
@@ -182,9 +184,9 @@ export default function InquiryForm({
           rows={6}
           placeholder="문의 내용을 상세히 작성해주세요..."
           className={cn(
-            'w-full rounded-r2 border border-input bg-transparent px-s3 py-s2 text-sm',
-            'placeholder:text-muted-foreground resize-none transition-all outline-none',
-            'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
+            "w-full rounded-r2 border border-input bg-transparent px-s3 py-s2 text-sm",
+            "placeholder:text-muted-foreground resize-none transition-all outline-none",
+            "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
           )}
         />
       </FormField>
@@ -211,7 +213,7 @@ export default function InquiryForm({
         disabled={loading || isUploading}
         className="flex w-full items-center justify-center gap-s2 rounded-r3 py-s5 font-bold"
       >
-        {isUploading ? '업로드 중...' : loading ? '제출 중...' : '문의 제출'}
+        {isUploading ? "업로드 중..." : loading ? "제출 중..." : "문의 제출"}
         {!loading && !isUploading && <Send size={18} />}
       </Button>
     </form>

@@ -18,7 +18,7 @@ export interface JwtPayload {
  */
 export function decodeJwt(token: string): JwtPayload | undefined {
   try {
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 3) {
       return undefined;
     }
@@ -28,7 +28,7 @@ export function decodeJwt(token: string): JwtPayload | undefined {
     if (!payload) return undefined;
 
     // Base64Url 디코딩: JWT는 '-', '_' 사용 → 표준 base64로 변환
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
     const decoded = atob(base64);
 
     return JSON.parse(decoded) as JwtPayload;
@@ -45,7 +45,7 @@ export function decodeJwt(token: string): JwtPayload | undefined {
  */
 export function isTokenExpired(
   token: string | undefined,
-  bufferSeconds = 60
+  bufferSeconds = 60,
 ): boolean {
   if (!token) return true;
 

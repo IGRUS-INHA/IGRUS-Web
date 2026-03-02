@@ -1,6 +1,6 @@
-import { useRef, useState, useCallback } from 'react';
-import { ImagePlus } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useRef, useState, useCallback } from "react";
+import { ImagePlus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ImageUploadAreaProps {
   onFilesSelected: (files: FileList) => void;
@@ -15,7 +15,7 @@ export default function ImageUploadArea({
   onFilesSelected,
   maxFiles,
   currentCount,
-  accept = 'image/*',
+  accept = "image/*",
   disabled = false,
   className,
 }: ImageUploadAreaProps) {
@@ -34,7 +34,7 @@ export default function ImageUploadArea({
     if (e.target.files && e.target.files.length > 0) {
       onFilesSelected(e.target.files);
       // input 초기화 (같은 파일 재선택 허용)
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
@@ -74,12 +74,12 @@ export default function ImageUploadArea({
         onDrop={handleDrop}
         disabled={disabled || isFull}
         className={cn(
-          'w-full rounded-r3 border-2 border-dashed p-s5 transition-colors cursor-pointer',
-          'flex flex-col items-center justify-center gap-s2',
-          'disabled:cursor-not-allowed disabled:opacity-50',
+          "w-full rounded-r3 border-2 border-dashed p-s5 transition-colors cursor-pointer",
+          "flex flex-col items-center justify-center gap-s2",
+          "disabled:cursor-not-allowed disabled:opacity-50",
           isDragOver
-            ? 'border-primary bg-primary/5'
-            : 'border-border hover:border-primary/50 hover:bg-muted/50',
+            ? "border-primary bg-primary/5"
+            : "border-border hover:border-primary/50 hover:bg-muted/50",
         )}
       >
         <ImagePlus size={24} className="text-muted-foreground" />

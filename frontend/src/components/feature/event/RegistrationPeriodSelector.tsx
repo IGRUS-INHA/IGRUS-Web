@@ -1,10 +1,15 @@
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { Clock } from 'lucide-react';
-import { REGISTRATION_PERIOD_PRESETS } from '@/constants/event';
-import type { RegistrationPeriodPresetValue } from '@/constants/event';
-import { formatDateLocal, formatTimeLocal, parseDateTimeString, extractDateFromPicker } from '@/utils/event';
-import { cn } from '@/lib/utils';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Clock } from "lucide-react";
+import { REGISTRATION_PERIOD_PRESETS } from "@/constants/event";
+import type { RegistrationPeriodPresetValue } from "@/constants/event";
+import {
+  formatDateLocal,
+  formatTimeLocal,
+  parseDateTimeString,
+  extractDateFromPicker,
+} from "@/utils/event";
+import { cn } from "@/lib/utils";
 
 interface RegistrationPeriodSelectorProps {
   preset: RegistrationPeriodPresetValue;
@@ -34,15 +39,25 @@ export function RegistrationPeriodSelector({
 }: RegistrationPeriodSelectorProps) {
   const pickerClass = (hasError?: boolean) =>
     cn(
-      'w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm',
-      'focus:outline-none focus:border-primary',
-      hasError && 'border-destructive',
+      "w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm",
+      "focus:outline-none focus:border-primary",
+      hasError && "border-destructive",
     );
 
-  const startSelected = parseDateTimeString(registrationStartDate, registrationStartTime);
-  const endSelected = parseDateTimeString(registrationDeadlineDate, registrationDeadlineTime);
-  const hasStartError = !!(errors?.registrationStartDate || errors?.registrationStartTime);
-  const hasEndError = !!(errors?.registrationDeadlineDate || errors?.registrationDeadlineTime);
+  const startSelected = parseDateTimeString(
+    registrationStartDate,
+    registrationStartTime,
+  );
+  const endSelected = parseDateTimeString(
+    registrationDeadlineDate,
+    registrationDeadlineTime,
+  );
+  const hasStartError = !!(
+    errors?.registrationStartDate || errors?.registrationStartTime
+  );
+  const hasEndError = !!(
+    errors?.registrationDeadlineDate || errors?.registrationDeadlineTime
+  );
 
   return (
     <div className="px-s5 py-s5">
@@ -56,22 +71,28 @@ export function RegistrationPeriodSelector({
           <button
             key={p.value}
             type="button"
-            onClick={() => onPresetChange(p.value as RegistrationPeriodPresetValue)}
+            onClick={() =>
+              onPresetChange(p.value as RegistrationPeriodPresetValue)
+            }
             className={cn(
-              'w-full rounded-r3 px-s4 py-s3 border text-left text-sm transition-colors cursor-pointer',
+              "w-full rounded-r3 px-s4 py-s3 border text-left text-sm transition-colors cursor-pointer",
               preset === p.value
-                ? 'border-primary bg-primary/5'
-                : 'border-border bg-muted/50',
+                ? "border-primary bg-primary/5"
+                : "border-border bg-muted/50",
             )}
           >
             <div className="flex items-center gap-s3">
               <div
                 className={cn(
-                  'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0',
-                  preset === p.value ? 'border-primary' : 'border-muted-foreground/40',
+                  "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                  preset === p.value
+                    ? "border-primary"
+                    : "border-muted-foreground/40",
                 )}
               >
-                {preset === p.value && <div className="w-2 h-2 rounded-full bg-primary" />}
+                {preset === p.value && (
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                )}
               </div>
               <div>
                 <p className="font-medium">{p.label}</p>
@@ -83,7 +104,7 @@ export function RegistrationPeriodSelector({
       </div>
 
       {/* 수동 입력 (custom 프리셋만) */}
-      {preset === 'custom' && (
+      {preset === "custom" && (
         <div className="space-y-s3">
           {/* 신청 시작 */}
           <div>
@@ -93,8 +114,8 @@ export function RegistrationPeriodSelector({
               onChange={(value: Date | Date[] | null) => {
                 const d = extractDateFromPicker(value);
                 if (!d) return;
-                onFieldChange('registrationStartDate', formatDateLocal(d));
-                onFieldChange('registrationStartTime', formatTimeLocal(d));
+                onFieldChange("registrationStartDate", formatDateLocal(d));
+                onFieldChange("registrationStartTime", formatTimeLocal(d));
               }}
               showTimeSelect
               timeFormat="HH:mm"
@@ -112,11 +133,12 @@ export function RegistrationPeriodSelector({
                 {errors.registrationStartDate.message}
               </p>
             )}
-            {errors?.registrationStartTime && !errors?.registrationStartDate && (
-              <p className="typo-c1 text-destructive mt-s1">
-                {errors.registrationStartTime.message}
-              </p>
-            )}
+            {errors?.registrationStartTime &&
+              !errors?.registrationStartDate && (
+                <p className="typo-c1 text-destructive mt-s1">
+                  {errors.registrationStartTime.message}
+                </p>
+              )}
           </div>
 
           {/* 신청 마감 */}
@@ -127,8 +149,8 @@ export function RegistrationPeriodSelector({
               onChange={(value: Date | Date[] | null) => {
                 const d = extractDateFromPicker(value);
                 if (!d) return;
-                onFieldChange('registrationDeadlineDate', formatDateLocal(d));
-                onFieldChange('registrationDeadlineTime', formatTimeLocal(d));
+                onFieldChange("registrationDeadlineDate", formatDateLocal(d));
+                onFieldChange("registrationDeadlineTime", formatTimeLocal(d));
               }}
               showTimeSelect
               timeFormat="HH:mm"
@@ -147,11 +169,12 @@ export function RegistrationPeriodSelector({
                 {errors.registrationDeadlineDate.message}
               </p>
             )}
-            {errors?.registrationDeadlineTime && !errors?.registrationDeadlineDate && (
-              <p className="typo-c1 text-destructive mt-s1">
-                {errors.registrationDeadlineTime.message}
-              </p>
-            )}
+            {errors?.registrationDeadlineTime &&
+              !errors?.registrationDeadlineDate && (
+                <p className="typo-c1 text-destructive mt-s1">
+                  {errors.registrationDeadlineTime.message}
+                </p>
+              )}
           </div>
         </div>
       )}

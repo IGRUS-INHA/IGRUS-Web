@@ -1,17 +1,17 @@
-import type { UploadConfig } from '@/types/upload';
+import type { UploadConfig } from "@/types/upload";
 
 /** 게시글 이미지 업로드 설정 */
 export const IMAGE_UPLOAD_CONFIG: UploadConfig = {
   maxFiles: 5,
   maxFileSize: 10 * 1024 * 1024, // 10MB
-  acceptedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  acceptedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
 };
 
 /** 문의 첨부파일 업로드 설정 */
 export const INQUIRY_ATTACHMENT_CONFIG: UploadConfig = {
   maxFiles: 3,
   maxFileSize: 10 * 1024 * 1024, // 10MB
-  acceptedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  acceptedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
 };
 
 export interface FileValidationError {
@@ -44,7 +44,7 @@ export function validateFiles(
     if (!config.acceptedTypes.includes(file.type)) {
       errors.push({
         file,
-        reason: `지원하지 않는 파일 형식입니다: ${file.type || '알 수 없음'}`,
+        reason: `지원하지 않는 파일 형식입니다: ${file.type || "알 수 없음"}`,
       });
     }
 

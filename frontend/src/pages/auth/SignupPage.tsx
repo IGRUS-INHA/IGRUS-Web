@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   User,
   Lock,
   Mail,
   Phone,
-
   Building2,
   FileText,
   Eye,
@@ -27,21 +26,38 @@ import {
   Copy,
   CircleCheck,
   LogIn,
-} from 'lucide-react';
-import { useSignup, useSignupWithTemporaryStudentId, useVerifyPreSignupCode, useSendPreSignupCode } from '@/api/model/password-authentication/password-authentication';
-import type { PasswordSignupRequestEnrollmentStatus } from '@/api/model/models';
-import { majorOptions } from '@/constants/majorOptions';
-import { domainOptions } from '@/constants/domainOptions';
-import { WISH_TITLE, wishOptions, wishToEnum } from '@/constants/wishOptions';
-import { INTEREST_TITLE, interestOptions, interestToEnum } from '@/constants/interestOptions';
-import { JOIN_ROUTE_TITLE, joinRouteOptions, joinRouteToEnum } from '@/constants/joinRouteOptions';
-import { ENROLLMENT_STATUS_TITLE, enrollmentStatusOptions, enrollmentStatusToEnum } from '@/constants/enrollmentStatusOptions';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { formatPhoneNumber } from '@/utils';
-import { getErrorMessage, hasErrorCode } from '@/utils/error';
-import { useSignupDuplicateCheck, useCountdown, useToast } from '@/hooks';
+} from "lucide-react";
+import {
+  useSignup,
+  useSignupWithTemporaryStudentId,
+  useVerifyPreSignupCode,
+  useSendPreSignupCode,
+} from "@/api/model/password-authentication/password-authentication";
+import type { PasswordSignupRequestEnrollmentStatus } from "@/api/model/models";
+import { majorOptions } from "@/constants/majorOptions";
+import { domainOptions } from "@/constants/domainOptions";
+import { WISH_TITLE, wishOptions, wishToEnum } from "@/constants/wishOptions";
+import {
+  INTEREST_TITLE,
+  interestOptions,
+  interestToEnum,
+} from "@/constants/interestOptions";
+import {
+  JOIN_ROUTE_TITLE,
+  joinRouteOptions,
+  joinRouteToEnum,
+} from "@/constants/joinRouteOptions";
+import {
+  ENROLLMENT_STATUS_TITLE,
+  enrollmentStatusOptions,
+  enrollmentStatusToEnum,
+} from "@/constants/enrollmentStatusOptions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { formatPhoneNumber } from "@/utils";
+import { getErrorMessage, hasErrorCode } from "@/utils/error";
+import { useSignupDuplicateCheck, useCountdown, useToast } from "@/hooks";
 
 // --- 임시 학번 기간 체크 ---
 
@@ -56,58 +72,58 @@ const signupSchema = z
   .object({
     studentId: z
       .string()
-      .min(1, '학번을 입력해주세요.')
-      .regex(/^\d{8}$/, '학번은 8자리 숫자여야 합니다.'),
+      .min(1, "학번을 입력해주세요.")
+      .regex(/^\d{8}$/, "학번은 8자리 숫자여야 합니다."),
     name: z
       .string()
-      .min(1, '이름을 입력해주세요.')
-      .max(50, '이름은 50자 이내여야 합니다.'),
+      .min(1, "이름을 입력해주세요.")
+      .max(50, "이름은 50자 이내여야 합니다."),
     gender: z
-      .enum(['MALE', 'FEMALE'], {
-        message: '성별을 선택해주세요.',
+      .enum(["MALE", "FEMALE"], {
+        message: "성별을 선택해주세요.",
       })
       .optional()
-      .refine((v) => v !== undefined, { message: '성별을 선택해주세요.' }),
+      .refine((v) => v !== undefined, { message: "성별을 선택해주세요." }),
     grade: z
-      .number({ message: '학년을 선택해주세요.' })
-      .min(1, '학년을 선택해주세요.')
-      .max(4, '학년은 1~4 사이여야 합니다.')
+      .number({ message: "학년을 선택해주세요." })
+      .min(1, "학년을 선택해주세요.")
+      .max(4, "학년은 1~4 사이여야 합니다.")
       .optional()
-      .refine((v) => v !== undefined, { message: '학년을 선택해주세요.' }),
-    enrollmentStatus: z.string().min(1, '재학/휴학 여부를 선택해주세요.'),
-    emailLocal: z.string().min(1, '이메일 아이디를 입력해주세요.'),
-    emailDomain: z.string().min(1, '도메인을 선택해주세요.'),
+      .refine((v) => v !== undefined, { message: "학년을 선택해주세요." }),
+    enrollmentStatus: z.string().min(1, "재학/휴학 여부를 선택해주세요."),
+    emailLocal: z.string().min(1, "이메일 아이디를 입력해주세요."),
+    emailDomain: z.string().min(1, "도메인을 선택해주세요."),
     customDomain: z.string().optional(),
     phoneNumber: z
       .string()
-      .min(1, '전화번호를 입력해주세요.')
-      .regex(/^\d{3}-\d{4}-\d{4}$/, '올바른 전화번호를 입력해주세요.'),
-    department: z.string().min(1, '학과를 선택해주세요.'),
+      .min(1, "전화번호를 입력해주세요.")
+      .regex(/^\d{3}-\d{4}-\d{4}$/, "올바른 전화번호를 입력해주세요."),
+    department: z.string().min(1, "학과를 선택해주세요."),
     password: z
       .string()
-      .min(8, '비밀번호는 8자 이상이어야 합니다.')
-      .max(72, '비밀번호는 72자 이하여야 합니다.')
+      .min(8, "비밀번호는 8자 이상이어야 합니다.")
+      .max(72, "비밀번호는 72자 이하여야 합니다.")
       .regex(
         /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/,
-        '비밀번호는 영문과 숫자를 포함해야 합니다.',
+        "비밀번호는 영문과 숫자를 포함해야 합니다.",
       ),
-    passwordConfirm: z.string().min(1, '비밀번호 확인을 입력해주세요.'),
-    wishes: z.array(z.string()).min(1, '희망 활동을 1개 이상 선택해주세요.'),
-    interests: z.array(z.string()).min(1, '관심 분야를 1개 이상 선택해주세요.'),
+    passwordConfirm: z.string().min(1, "비밀번호 확인을 입력해주세요."),
+    wishes: z.array(z.string()).min(1, "희망 활동을 1개 이상 선택해주세요."),
+    interests: z.array(z.string()).min(1, "관심 분야를 1개 이상 선택해주세요."),
     customInterest: z.string().optional(),
-    joinRoute: z.string().min(1, '가입 경로를 선택해주세요.'),
+    joinRoute: z.string().min(1, "가입 경로를 선택해주세요."),
     customJoinRoute: z.string().optional(),
     motivation: z.string().optional(),
     privacyConsent: z.literal(true, {
-      message: '개인정보 처리방침에 동의해주세요.',
+      message: "개인정보 처리방침에 동의해주세요.",
     }),
     termsConsent: z.literal(true, {
-      message: '이용약관에 동의해주세요.',
+      message: "이용약관에 동의해주세요.",
     }),
   })
   .refine((data) => data.password === data.passwordConfirm, {
-    message: '비밀번호가 일치하지 않습니다.',
-    path: ['passwordConfirm'],
+    message: "비밀번호가 일치하지 않습니다.",
+    path: ["passwordConfirm"],
   });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -115,17 +131,32 @@ type SignupFormData = z.infer<typeof signupSchema>;
 // --- Step Config ---
 
 const STEPS = [
-  { title: '기본 정보', icon: User },
-  { title: '연락처', icon: Mail },
-  { title: '계정 보안', icon: Lock },
-  { title: '기타', icon: FileText },
+  { title: "기본 정보", icon: User },
+  { title: "연락처", icon: Mail },
+  { title: "계정 보안", icon: Lock },
+  { title: "기타", icon: FileText },
 ] as const;
 
 const STEP_FIELDS: (keyof SignupFormData)[][] = [
-  ['studentId', 'name', 'gender', 'grade', 'enrollmentStatus', 'privacyConsent', 'termsConsent'],
-  ['emailLocal', 'emailDomain', 'customDomain', 'phoneNumber', 'department'],
-  ['password', 'passwordConfirm'],
-  ['wishes', 'interests', 'customInterest', 'joinRoute', 'customJoinRoute', 'motivation'],
+  [
+    "studentId",
+    "name",
+    "gender",
+    "grade",
+    "enrollmentStatus",
+    "privacyConsent",
+    "termsConsent",
+  ],
+  ["emailLocal", "emailDomain", "customDomain", "phoneNumber", "department"],
+  ["password", "passwordConfirm"],
+  [
+    "wishes",
+    "interests",
+    "customInterest",
+    "joinRoute",
+    "customJoinRoute",
+    "motivation",
+  ],
 ];
 
 // --- Component ---
@@ -144,7 +175,9 @@ export default function SignupPage() {
   const [submitted, setSubmitted] = useState(false);
   const [useTempStudentId, setUseTempStudentId] = useState(false);
   const [signupCompleted, setSignupCompleted] = useState(false);
-  const [completedTempStudentId, setCompletedTempStudentId] = useState<string | null>(null);
+  const [completedTempStudentId, setCompletedTempStudentId] = useState<
+    string | null
+  >(null);
   const signupMutation = useSignup();
   const signupTempMutation = useSignupWithTemporaryStudentId();
   const verifyEmailMutation = useVerifyPreSignupCode();
@@ -152,9 +185,9 @@ export default function SignupPage() {
 
   // 이메일 인증 상태
   const [emailVerified, setEmailVerified] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verifiedEmail, setVerifiedEmail] = useState('');
-  const [verificationToken, setVerificationToken] = useState('');
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [verificationToken, setVerificationToken] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
@@ -188,42 +221,42 @@ export default function SignupPage() {
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      studentId: '',
-      name: '',
-      gender: undefined as unknown as 'MALE' | 'FEMALE',
+      studentId: "",
+      name: "",
+      gender: undefined as unknown as "MALE" | "FEMALE",
       grade: undefined as unknown as number,
-      enrollmentStatus: '',
-      emailLocal: '',
-      emailDomain: 'inha.edu',
-      customDomain: '',
-      phoneNumber: '',
-      department: '',
-      password: '',
-      passwordConfirm: '',
+      enrollmentStatus: "",
+      emailLocal: "",
+      emailDomain: "inha.edu",
+      customDomain: "",
+      phoneNumber: "",
+      department: "",
+      password: "",
+      passwordConfirm: "",
       wishes: [],
       interests: [],
-      customInterest: '',
-      joinRoute: '',
-      customJoinRoute: '',
-      motivation: '',
+      customInterest: "",
+      joinRoute: "",
+      customJoinRoute: "",
+      motivation: "",
       privacyConsent: undefined as unknown as true,
       termsConsent: undefined as unknown as true,
     },
-    mode: 'onTouched',
+    mode: "onTouched",
   });
 
-  const watchedPassword = watch('password');
-  const selectedWishes = watch('wishes') ?? [];
-  const selectedInterests = watch('interests') ?? [];
-  const selectedJoinRoute = watch('joinRoute') ?? '';
-  const emailDomain = watch('emailDomain');
-  const emailLocalValue = watch('emailLocal');
-  const customDomainValue = watch('customDomain');
-  const watchedGrade = watch('grade');
+  const watchedPassword = watch("password");
+  const selectedWishes = watch("wishes") ?? [];
+  const selectedInterests = watch("interests") ?? [];
+  const selectedJoinRoute = watch("joinRoute") ?? "";
+  const emailDomain = watch("emailDomain");
+  const emailLocalValue = watch("emailLocal");
+  const customDomainValue = watch("customDomain");
+  const watchedGrade = watch("grade");
 
   const currentFullEmail = useMemo(() => {
-    const domain = emailDomain === 'custom' ? customDomainValue : emailDomain;
-    return emailLocalValue && domain ? `${emailLocalValue}@${domain}` : '';
+    const domain = emailDomain === "custom" ? customDomainValue : emailDomain;
+    return emailLocalValue && domain ? `${emailLocalValue}@${domain}` : "";
   }, [emailLocalValue, emailDomain, customDomainValue]);
 
   // 학년 변경 시 임시 학번 체크 해제
@@ -237,69 +270,84 @@ export default function SignupPage() {
   useEffect(() => {
     if (verifiedEmail && currentFullEmail !== verifiedEmail) {
       setEmailVerified(false);
-      setVerificationCode('');
-      setVerificationToken('');
+      setVerificationCode("");
+      setVerificationToken("");
       setCodeSent(false);
       setVerificationError(undefined);
       codeTimer.stop();
       resendCooldown.stop();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFullEmail, verifiedEmail]);
+  }, [currentFullEmail, verifiedEmail, codeTimer, resendCooldown]);
 
   // 비밀번호 변경 시 비밀번호 확인 필드 재검증
   useEffect(() => {
     if (passwordConfirmTouched) {
-      trigger('passwordConfirm');
+      trigger("passwordConfirm");
     }
   }, [watchedPassword, passwordConfirmTouched, trigger]);
 
   const handleWishToggle = (wish: string) => {
-    const current = getValues('wishes') ?? [];
+    const current = getValues("wishes") ?? [];
     const updated = current.includes(wish)
       ? current.filter((w) => w !== wish)
       : [...current, wish];
-    setValue('wishes', updated);
+    setValue("wishes", updated);
   };
 
   const handleInterestToggle = (interest: string) => {
-    const current = getValues('interests') ?? [];
-    if (interest === '기타') {
-      if (current.includes('기타')) {
-        setValue('interests', current.filter((i) => i !== '기타'));
-        setValue('customInterest', '');
+    const current = getValues("interests") ?? [];
+    if (interest === "기타") {
+      if (current.includes("기타")) {
+        setValue(
+          "interests",
+          current.filter((i) => i !== "기타"),
+        );
+        setValue("customInterest", "");
       } else {
-        setValue('interests', [...current, '기타']);
+        setValue("interests", [...current, "기타"]);
       }
     } else {
       const updated = current.includes(interest)
         ? current.filter((i) => i !== interest)
         : [...current, interest];
-      setValue('interests', updated);
+      setValue("interests", updated);
     }
   };
 
   const handleJoinRouteSelect = (route: string) => {
     if (selectedJoinRoute === route) {
-      setValue('joinRoute', '');
+      setValue("joinRoute", "");
     } else {
-      setValue('joinRoute', route);
+      setValue("joinRoute", route);
     }
-    if (route !== '기타') {
-      setValue('customJoinRoute', '');
+    if (route !== "기타") {
+      setValue("customJoinRoute", "");
     }
   };
 
   // 이메일 중복 체크 통과 시 자동으로 인증 코드 발송
+  // emailCheck.isAvailable 변경 시에만 실행 — 나머지는 가드 조건이므로 ref로 참조
+  const emailVerifiedRef = useRef(emailVerified);
+  emailVerifiedRef.current = emailVerified;
+  const codeSentRef = useRef(codeSent);
+  codeSentRef.current = codeSent;
+  const sendingCodeRef = useRef(sendingCode);
+  sendingCodeRef.current = sendingCode;
+  const handleSendCodeRef = useRef<(() => Promise<void>) | null>(null);
+
   useEffect(() => {
-    if (emailCheck.isAvailable && !emailVerified && !codeSent && !sendingCode) {
-      handleSendCode();
+    if (
+      emailCheck.isAvailable &&
+      !emailVerifiedRef.current &&
+      !codeSentRef.current &&
+      !sendingCodeRef.current
+    ) {
+      handleSendCodeRef.current?.();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emailCheck.isAvailable]);
 
   const handleSendCode = async () => {
-    const valid = await trigger(['emailLocal', 'emailDomain', 'customDomain']);
+    const valid = await trigger(["emailLocal", "emailDomain", "customDomain"]);
     if (!valid) return;
     if (emailVerified && currentFullEmail === verifiedEmail) return;
     if (sendingCode) return;
@@ -319,6 +367,7 @@ export default function SignupPage() {
       setSendingCode(false);
     }
   };
+  handleSendCodeRef.current = handleSendCode;
 
   const handleVerifyCode = async () => {
     setVerifyingCode(true);
@@ -327,18 +376,20 @@ export default function SignupPage() {
       const response = await verifyEmailMutation.mutateAsync({
         data: { email: currentFullEmail, code: verificationCode },
       });
-      const responseData = response.data as unknown as { verificationToken?: string };
-      setVerificationToken(responseData.verificationToken ?? '');
+      const responseData = response.data as unknown as {
+        verificationToken?: string;
+      };
+      setVerificationToken(responseData.verificationToken ?? "");
       setEmailVerified(true);
       setVerifiedEmail(currentFullEmail);
       codeTimer.stop();
     } catch (error) {
-      if (hasErrorCode(error, 'VERIFICATION_CODE_EXPIRED')) {
-        setVerificationError('인증 코드가 만료되었습니다. 재발송해주세요.');
-      } else if (hasErrorCode(error, 'VERIFICATION_ATTEMPTS_EXCEEDED')) {
-        setVerificationError('인증 시도 횟수를 초과했습니다. 재발송해주세요.');
-      } else if (hasErrorCode(error, 'VERIFICATION_CODE_INVALID')) {
-        setVerificationError('인증 코드가 일치하지 않습니다.');
+      if (hasErrorCode(error, "VERIFICATION_CODE_EXPIRED")) {
+        setVerificationError("인증 코드가 만료되었습니다. 재발송해주세요.");
+      } else if (hasErrorCode(error, "VERIFICATION_ATTEMPTS_EXCEEDED")) {
+        setVerificationError("인증 시도 횟수를 초과했습니다. 재발송해주세요.");
+      } else if (hasErrorCode(error, "VERIFICATION_CODE_INVALID")) {
+        setVerificationError("인증 코드가 일치하지 않습니다.");
       } else {
         setVerificationError(getErrorMessage(error));
       }
@@ -356,7 +407,7 @@ export default function SignupPage() {
       });
       resendCooldown.restart();
       codeTimer.restart();
-      setVerificationCode('');
+      setVerificationCode("");
     } catch (error) {
       setVerificationError(getErrorMessage(error));
     } finally {
@@ -365,9 +416,9 @@ export default function SignupPage() {
   };
 
   const handleCopyAccount = async () => {
-    await navigator.clipboard.writeText('토스뱅크 1002-3803-2581');
+    await navigator.clipboard.writeText("토스뱅크 1002-3803-2581");
     setCopied(true);
-    toast.success('클립보드에 복사되었습니다.');
+    toast.success("클립보드에 복사되었습니다.");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -375,33 +426,36 @@ export default function SignupPage() {
     STEP_FIELDS.findIndex((fields) => fields.includes(field));
 
   const composeEmail = () => {
-    const local = getValues('emailLocal');
-    const domain = getValues('emailDomain');
-    const custom = getValues('customDomain');
-    const fullDomain = domain === 'custom' ? custom : domain;
+    const local = getValues("emailLocal");
+    const domain = getValues("emailDomain");
+    const custom = getValues("customDomain");
+    const fullDomain = domain === "custom" ? custom : domain;
     if (local && fullDomain) return `${local}@${fullDomain}`;
-    return '';
+    return "";
   };
 
   const handleNext = async () => {
     const fields = STEP_FIELDS[step] ?? [];
     // 임시 학번 사용 시 studentId 검증 건너뜀
-    const fieldsToValidate = (step === 0 && useTempStudentId)
-      ? fields.filter((f) => f !== 'studentId')
-      : fields;
+    const fieldsToValidate =
+      step === 0 && useTempStudentId
+        ? fields.filter((f) => f !== "studentId")
+        : fields;
     const valid = await trigger(fieldsToValidate);
     if (!valid) return;
 
     // Step 0: 학번 중복 체크 확인 (임시 학번 사용 시 건너뜀)
     if (step === 0 && !useTempStudentId) {
-      const studentIdValue = getValues('studentId');
+      const studentIdValue = getValues("studentId");
       if (/^\d{8}$/.test(studentIdValue)) {
         if (!studentIdCheck.isChecked) {
           checkStudentId(studentIdValue);
           return;
         }
         if (studentIdCheck.isDuplicate) {
-          setError('studentId', { message: studentIdCheck.message ?? '이미 가입된 학번입니다.' });
+          setError("studentId", {
+            message: studentIdCheck.message ?? "이미 가입된 학번입니다.",
+          });
           return;
         }
       }
@@ -416,24 +470,28 @@ export default function SignupPage() {
           return;
         }
         if (emailCheck.isDuplicate) {
-          setError('emailLocal', { message: emailCheck.message ?? '이미 존재하는 이메일입니다.' });
+          setError("emailLocal", {
+            message: emailCheck.message ?? "이미 존재하는 이메일입니다.",
+          });
           return;
         }
       }
 
       if (!emailVerified) {
-        setVerificationError('이메일 인증을 완료해주세요.');
+        setVerificationError("이메일 인증을 완료해주세요.");
         return;
       }
 
-      const phoneValue = getValues('phoneNumber');
+      const phoneValue = getValues("phoneNumber");
       if (/^\d{3}-\d{4}-\d{4}$/.test(phoneValue)) {
         if (!phoneNumberCheck.isChecked) {
           checkPhoneNumber(phoneValue);
           return;
         }
         if (phoneNumberCheck.isDuplicate) {
-          setError('phoneNumber', { message: phoneNumberCheck.message ?? '이미 등록된 전화번호입니다.' });
+          setError("phoneNumber", {
+            message: phoneNumberCheck.message ?? "이미 등록된 전화번호입니다.",
+          });
           return;
         }
       }
@@ -458,7 +516,7 @@ export default function SignupPage() {
     setServerError(undefined);
     try {
       const domain =
-        data.emailDomain === 'custom' ? data.customDomain : data.emailDomain;
+        data.emailDomain === "custom" ? data.customDomain : data.emailDomain;
       const fullEmail = `${data.emailLocal}@${domain}`;
 
       const commonFields = {
@@ -470,12 +528,20 @@ export default function SignupPage() {
         motivation: data.motivation || undefined,
         gender: data.gender!,
         grade: data.grade!,
-        enrollmentStatus: (enrollmentStatusToEnum[data.enrollmentStatus] ?? 'ENROLLED') as PasswordSignupRequestEnrollmentStatus,
-        wishes: data.wishes.map((w) => wishToEnum[w]).filter((v): v is NonNullable<typeof v> => Boolean(v)),
-        interests: data.interests.map((i) => interestToEnum[i]).filter((v): v is NonNullable<typeof v> => Boolean(v)),
-        customInterest: data.interests.includes('기타') ? data.customInterest : undefined,
-        joinRoute: joinRouteToEnum[data.joinRoute] ?? 'OTHER',
-        customJoinRoute: data.joinRoute === '기타' ? data.customJoinRoute : undefined,
+        enrollmentStatus: (enrollmentStatusToEnum[data.enrollmentStatus] ??
+          "ENROLLED") as PasswordSignupRequestEnrollmentStatus,
+        wishes: data.wishes
+          .map((w) => wishToEnum[w])
+          .filter((v): v is NonNullable<typeof v> => Boolean(v)),
+        interests: data.interests
+          .map((i) => interestToEnum[i])
+          .filter((v): v is NonNullable<typeof v> => Boolean(v)),
+        customInterest: data.interests.includes("기타")
+          ? data.customInterest
+          : undefined,
+        joinRoute: joinRouteToEnum[data.joinRoute] ?? "OTHER",
+        customJoinRoute:
+          data.joinRoute === "기타" ? data.customJoinRoute : undefined,
         privacyConsent: data.privacyConsent,
         verificationToken,
       };
@@ -486,7 +552,9 @@ export default function SignupPage() {
           data: commonFields,
         });
 
-        const responseData = result.data as unknown as { temporaryStudentId?: string };
+        const responseData = result.data as unknown as {
+          temporaryStudentId?: string;
+        };
         setCompletedTempStudentId(responseData.temporaryStudentId ?? null);
         setSignupCompleted(true);
       } else {
@@ -501,19 +569,19 @@ export default function SignupPage() {
         setSignupCompleted(true);
       }
     } catch (error: unknown) {
-      if (hasErrorCode(error, 'DUPLICATE_STUDENT_ID')) {
-        setStep(findStepForField('studentId'));
-        setError('studentId', { message: '이미 가입된 학번입니다.' });
-      } else if (hasErrorCode(error, 'DUPLICATE_EMAIL')) {
-        setStep(findStepForField('emailLocal'));
-        setError('emailLocal', { message: '이미 존재하는 이메일입니다.' });
-      } else if (hasErrorCode(error, 'DUPLICATE_PHONE_NUMBER')) {
-        setStep(findStepForField('phoneNumber'));
-        setError('phoneNumber', { message: '이미 등록된 전화번호입니다.' });
-      } else if (hasErrorCode(error, 'TEMP_STUDENT_ID_NOT_AVAILABLE')) {
-        setServerError('임시 학번 발급은 1월~2월에만 가능합니다.');
-      } else if (hasErrorCode(error, 'RE_REGISTRATION_NOT_ALLOWED')) {
-        setServerError('탈퇴 후 재가입 제한 기간(5일)이 지나지 않았습니다.');
+      if (hasErrorCode(error, "DUPLICATE_STUDENT_ID")) {
+        setStep(findStepForField("studentId"));
+        setError("studentId", { message: "이미 가입된 학번입니다." });
+      } else if (hasErrorCode(error, "DUPLICATE_EMAIL")) {
+        setStep(findStepForField("emailLocal"));
+        setError("emailLocal", { message: "이미 존재하는 이메일입니다." });
+      } else if (hasErrorCode(error, "DUPLICATE_PHONE_NUMBER")) {
+        setStep(findStepForField("phoneNumber"));
+        setError("phoneNumber", { message: "이미 등록된 전화번호입니다." });
+      } else if (hasErrorCode(error, "TEMP_STUDENT_ID_NOT_AVAILABLE")) {
+        setServerError("임시 학번 발급은 1월~2월에만 가능합니다.");
+      } else if (hasErrorCode(error, "RE_REGISTRATION_NOT_ALLOWED")) {
+        setServerError("탈퇴 후 재가입 제한 기간(5일)이 지나지 않았습니다.");
       } else {
         setServerError(getErrorMessage(error));
       }
@@ -531,7 +599,10 @@ export default function SignupPage() {
           {/* 완료 아이콘 및 메시지 */}
           <div className="text-center mb-s7">
             <div className="mx-auto w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-s5">
-              <CircleCheck size={36} className="text-green-600 dark:text-green-400" />
+              <CircleCheck
+                size={36}
+                className="text-green-600 dark:text-green-400"
+              />
             </div>
             <h1 className="typo-h2 text-foreground">회원가입 완료!</h1>
             <p className="typo-b2 text-muted-foreground mt-s2">
@@ -550,7 +621,9 @@ export default function SignupPage() {
           {/* 슬랙 안내 섹션 */}
           {slackInviteUrl && (
             <div className="rounded-r4 border bg-card p-s6 shadow-sm mb-s5">
-              <h2 className="typo-h4 text-foreground mb-s4">슬랙 채널에 참여하세요</h2>
+              <h2 className="typo-h4 text-foreground mb-s4">
+                슬랙 채널에 참여하세요
+              </h2>
               <p className="typo-b2 text-muted-foreground mb-s5">
                 IGRUS의 주요 소통은 슬랙에서 이루어집니다.
                 <br />
@@ -573,9 +646,9 @@ export default function SignupPage() {
           {/* 로그인 이동 버튼 */}
           <Button
             type="button"
-            variant={slackInviteUrl ? 'outline' : 'default'}
+            variant={slackInviteUrl ? "outline" : "default"}
             className="w-full cursor-pointer"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate("/login")}
           >
             <LogIn size={16} />
             로그인하러 가기
@@ -605,16 +678,23 @@ export default function SignupPage() {
             </div>
 
             <p className="typo-b2 text-foreground mb-s5">
-              IGRUS의 활동에 참여하기 위해선 회비 <strong>2만원</strong>을 납부해주셔야 합니다.
+              IGRUS의 활동에 참여하기 위해선 회비 <strong>2만원</strong>을
+              납부해주셔야 합니다.
             </p>
 
             <div className="bg-muted/50 border border-border rounded-r2 p-s4 mb-s5 space-y-s2">
               <div className="relative flex flex-col sm:block gap-s1">
-                <span className="text-sm text-muted-foreground shrink-0">입금자명 양식</span>
-                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-baseline sm:justify-center">학번 2자리+이름 (ex. 26김아그)</span>
+                <span className="text-sm text-muted-foreground shrink-0">
+                  입금자명 양식
+                </span>
+                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-baseline sm:justify-center">
+                  학번 2자리+이름 (ex. 26김아그)
+                </span>
               </div>
               <div className="relative flex flex-col sm:block gap-s1">
-                <span className="text-sm text-muted-foreground shrink-0">입금계좌</span>
+                <span className="text-sm text-muted-foreground shrink-0">
+                  입금계좌
+                </span>
                 <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-center sm:justify-center">
                   토스뱅크 1002-3803-2581
                   <button
@@ -623,27 +703,39 @@ export default function SignupPage() {
                     className="inline-flex items-center ml-s2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                     title="계좌번호 복사"
                   >
-                    {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                    {copied ? (
+                      <Check size={14} className="text-green-600" />
+                    ) : (
+                      <Copy size={14} />
+                    )}
                   </button>
                 </span>
               </div>
             </div>
 
             <div className="flex items-start gap-s2 mb-s5 rounded-r2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-s3">
-              <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <AlertTriangle
+                size={16}
+                className="text-amber-600 shrink-0 mt-0.5"
+              />
               <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                입금자명 양식을 지키지 않으실 경우, 회비 납부 명단에서 누락될 수 있습니다.
+                입금자명 양식을 지키지 않으실 경우, 회비 납부 명단에서 누락될 수
+                있습니다.
                 <br />
                 정확한 형식으로 입금해 주시기 바랍니다.
               </p>
             </div>
 
             <div className="flex items-start gap-s2 mb-s5 rounded-r2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-s3">
-              <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <AlertTriangle
+                size={16}
+                className="text-amber-600 shrink-0 mt-0.5"
+              />
               <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
                 입금 후 반드시 회원가입과 이메일 인증까지 완료해 주세요.
                 <br />
-                회원가입 또는 이메일 인증이 완료되지 않으면 가입이 정상 처리되지 않습니다.
+                회원가입 또는 이메일 인증이 완료되지 않으면 가입이 정상 처리되지
+                않습니다.
               </p>
             </div>
 
@@ -670,7 +762,7 @@ export default function SignupPage() {
             </Button>
 
             <p className="text-center text-sm text-muted-foreground mt-s5">
-              이미 계정이 있으신가요?{' '}
+              이미 계정이 있으신가요?{" "}
               <Link
                 to="/login"
                 className="text-primary font-medium hover:underline"
@@ -683,273 +775,385 @@ export default function SignupPage() {
 
         {/* Step Indicator */}
         {feeConfirmed && (
-        <div className="flex items-center justify-between mb-s7 px-s2">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon;
-            const isActive = i === step;
-            const isCompleted = i < step;
+          <div className="flex items-center justify-between mb-s7 px-s2">
+            {STEPS.map((s, i) => {
+              const Icon = s.icon;
+              const isActive = i === step;
+              const isCompleted = i < step;
 
-            return (
-              <div key={s.title} className="flex items-center flex-1 last:flex-none">
-                <div className="flex flex-col items-center gap-s1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isCompleted) setStep(i);
-                    }}
-                    className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2',
-                      isCompleted &&
-                        'bg-primary border-primary text-primary-foreground cursor-pointer hover:bg-primary/90',
-                      isActive && 'border-primary bg-primary/10 text-primary',
-                      !isActive &&
-                        !isCompleted &&
-                        'border-border bg-muted text-muted-foreground',
-                    )}
-                  >
-                    {isCompleted ? <Check size={18} /> : <Icon size={18} />}
-                  </button>
-                  <span
-                    className={cn(
-                      'typo-c1 font-medium whitespace-nowrap',
-                      (isActive || isCompleted) && 'text-primary',
-                      !isActive && !isCompleted && 'text-muted-foreground',
-                    )}
-                  >
-                    {s.title}
-                  </span>
+              return (
+                <div
+                  key={s.title}
+                  className="flex items-center flex-1 last:flex-none"
+                >
+                  <div className="flex flex-col items-center gap-s1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isCompleted) setStep(i);
+                      }}
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2",
+                        isCompleted &&
+                          "bg-primary border-primary text-primary-foreground cursor-pointer hover:bg-primary/90",
+                        isActive && "border-primary bg-primary/10 text-primary",
+                        !isActive &&
+                          !isCompleted &&
+                          "border-border bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {isCompleted ? <Check size={18} /> : <Icon size={18} />}
+                    </button>
+                    <span
+                      className={cn(
+                        "typo-c1 font-medium whitespace-nowrap",
+                        (isActive || isCompleted) && "text-primary",
+                        !isActive && !isCompleted && "text-muted-foreground",
+                      )}
+                    >
+                      {s.title}
+                    </span>
+                  </div>
+
+                  {i < STEPS.length - 1 && (
+                    <div
+                      className={cn(
+                        "flex-1 h-0.5 mx-s2 mt-[-20px] rounded-full transition-colors duration-300",
+                        i < step ? "bg-primary" : "bg-border",
+                      )}
+                    />
+                  )}
                 </div>
-
-                {i < STEPS.length - 1 && (
-                  <div
-                    className={cn(
-                      'flex-1 h-0.5 mx-s2 mt-[-20px] rounded-full transition-colors duration-300',
-                      i < step ? 'bg-primary' : 'bg-border',
-                    )}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
         )}
 
         {/* Form Card */}
         {feeConfirmed && (
-        <div className="rounded-r4 border bg-card p-s6 shadow-sm">
-          {serverError && (
-            <div className="mb-s5 rounded-r2 bg-destructive/10 border border-destructive/20 p-s4 text-sm text-destructive">
-              {serverError}
-            </div>
-          )}
+          <div className="rounded-r4 border bg-card p-s6 shadow-sm">
+            {serverError && (
+              <div className="mb-s5 rounded-r2 bg-destructive/10 border border-destructive/20 p-s4 text-sm text-destructive">
+                {serverError}
+              </div>
+            )}
 
-          <form onSubmit={(e) => e.preventDefault()}>
-            {/* Step 1: 기본 정보 */}
-            <div className={cn('space-y-s4', step !== 0 && 'hidden')}>
-              {!useTempStudentId && (
-                <FormField
-                  label="학번"
-                  error={errors.studentId?.message || (studentIdCheck.isDuplicate ? studentIdCheck.message : undefined)}
-                  success={studentIdCheck.isAvailable ? studentIdCheck.message : undefined}
-                >
+            <form onSubmit={(e) => e.preventDefault()}>
+              {/* Step 1: 기본 정보 */}
+              <div className={cn("space-y-s4", step !== 0 && "hidden")}>
+                {!useTempStudentId && (
+                  <FormField
+                    label="학번"
+                    error={
+                      errors.studentId?.message ||
+                      (studentIdCheck.isDuplicate
+                        ? studentIdCheck.message
+                        : undefined)
+                    }
+                    success={
+                      studentIdCheck.isAvailable
+                        ? studentIdCheck.message
+                        : undefined
+                    }
+                  >
+                    <div className="relative">
+                      <User
+                        size={18}
+                        className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      />
+                      <Input
+                        {...register("studentId", {
+                          onBlur: () => {
+                            const value = getValues("studentId");
+                            if (/^\d{8}$/.test(value)) {
+                              checkStudentId(value);
+                            }
+                          },
+                          onChange: () => {
+                            resetStudentId();
+                          },
+                        })}
+                        placeholder="12345678"
+                        maxLength={8}
+                        className={cn(
+                          "pl-10",
+                          (studentIdCheck.isChecking ||
+                            studentIdCheck.isAvailable) &&
+                            "pr-10",
+                        )}
+                      />
+                      {studentIdCheck.isChecking && (
+                        <Loader2
+                          size={16}
+                          className="absolute right-s3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground"
+                        />
+                      )}
+                      {studentIdCheck.isAvailable &&
+                        !studentIdCheck.isChecking && (
+                          <Check
+                            size={16}
+                            className="absolute right-s3 top-1/2 -translate-y-1/2 text-green-600"
+                          />
+                        )}
+                    </div>
+                  </FormField>
+                )}
+
+                {isTempStudentIdPeriod && (
+                  <label className="flex items-center gap-s3 cursor-pointer group rounded-r2 border border-border p-s3">
+                    <input
+                      type="checkbox"
+                      checked={useTempStudentId}
+                      onChange={(e) => {
+                        setUseTempStudentId(e.target.checked);
+                        if (e.target.checked) {
+                          setValue("studentId", "");
+                          clearErrors("studentId");
+                          resetStudentId();
+                          setValue("grade", 1, { shouldValidate: true });
+                        }
+                      }}
+                      className="cursor-pointer accent-primary"
+                    />
+                    <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                      신입생이라서 아직 학번이 나오지 않았어요
+                    </span>
+                  </label>
+                )}
+
+                {useTempStudentId && (
+                  <div className="flex items-start gap-s2 rounded-r2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-s3">
+                    <Info size={16} className="text-blue-600 shrink-0 mt-0.5" />
+                    <p className="text-sm text-blue-700 dark:text-blue-400">
+                      임시 학번이 자동으로 발급되어 이메일로 전송됩니다.
+                      <br />
+                      학번이 나오면 <strong>마이페이지</strong>에서 실제
+                      학번으로 변경해주세요.
+                    </p>
+                  </div>
+                )}
+
+                <FormField label="이름" error={errors.name?.message}>
                   <div className="relative">
                     <User
                       size={18}
                       className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
                     />
                     <Input
-                      {...register('studentId', {
-                        onBlur: () => {
-                          const value = getValues('studentId');
-                          if (/^\d{8}$/.test(value)) {
-                            checkStudentId(value);
-                          }
-                        },
-                        onChange: () => {
-                          resetStudentId();
-                        },
-                      })}
-                      placeholder="12345678"
-                      maxLength={8}
-                      className={cn('pl-10', (studentIdCheck.isChecking || studentIdCheck.isAvailable) && 'pr-10')}
+                      {...register("name")}
+                      placeholder="홍길동"
+                      className="pl-10"
                     />
-                    {studentIdCheck.isChecking && (
-                      <Loader2 size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
-                    )}
-                    {studentIdCheck.isAvailable && !studentIdCheck.isChecking && (
-                      <Check size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 text-green-600" />
-                    )}
-                  </div>
-                </FormField>
-              )}
-
-              {isTempStudentIdPeriod && (
-                <label className="flex items-center gap-s3 cursor-pointer group rounded-r2 border border-border p-s3">
-                  <input
-                    type="checkbox"
-                    checked={useTempStudentId}
-                    onChange={(e) => {
-                      setUseTempStudentId(e.target.checked);
-                      if (e.target.checked) {
-                        setValue('studentId', '');
-                        clearErrors('studentId');
-                        resetStudentId();
-                        setValue('grade', 1, { shouldValidate: true });
-                      }
-                    }}
-                    className="cursor-pointer accent-primary"
-                  />
-                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                    신입생이라서 아직 학번이 나오지 않았어요
-                  </span>
-                </label>
-              )}
-
-              {useTempStudentId && (
-                <div className="flex items-start gap-s2 rounded-r2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-s3">
-                  <Info size={16} className="text-blue-600 shrink-0 mt-0.5" />
-                  <p className="text-sm text-blue-700 dark:text-blue-400">
-                    임시 학번이 자동으로 발급되어 이메일로 전송됩니다.
-                    <br />
-                    학번이 나오면 <strong>마이페이지</strong>에서 실제 학번으로 변경해주세요.
-                  </p>
-                </div>
-              )}
-
-              <FormField label="이름" error={errors.name?.message}>
-                <div className="relative">
-                  <User
-                    size={18}
-                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <Input
-                    {...register('name')}
-                    placeholder="홍길동"
-                    className="pl-10"
-                  />
-                </div>
-              </FormField>
-
-              <FormField label="성별" error={errors.gender?.message}>
-                <div className="grid grid-cols-2 gap-s3">
-                  {(['MALE', 'FEMALE'] as const).map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() =>
-                        setValue('gender', g, { shouldValidate: true })
-                      }
-                      className={cn(
-                        'h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer',
-                        watch('gender') === g
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-muted border-border text-foreground hover:border-primary/50',
-                      )}
-                    >
-                      {g === 'MALE' ? '남성' : '여성'}
-                    </button>
-                  ))}
-                </div>
-              </FormField>
-
-              <FormField label="학년" error={errors.grade?.message}>
-                <div className="grid grid-cols-4 gap-s2">
-                  {[1, 2, 3, 4].map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() =>
-                        setValue('grade', g, { shouldValidate: true })
-                      }
-                      className={cn(
-                        'h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer',
-                        watch('grade') === g
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-muted border-border text-foreground hover:border-primary/50',
-                      )}
-                    >
-                      {g}학년
-                    </button>
-                  ))}
-                </div>
-              </FormField>
-
-              <FormField label={ENROLLMENT_STATUS_TITLE} error={errors.enrollmentStatus?.message}>
-                <div className="grid grid-cols-3 gap-s2">
-                  {enrollmentStatusOptions.map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() =>
-                        setValue('enrollmentStatus', status, { shouldValidate: true })
-                      }
-                      className={cn(
-                        'h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer',
-                        watch('enrollmentStatus') === status
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-muted border-border text-foreground hover:border-primary/50',
-                      )}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              </FormField>
-
-              <div className="space-y-s3 rounded-r2 border border-border p-s4">
-                <FormField error={errors.privacyConsent?.message}>
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-s3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        {...register('privacyConsent')}
-                        className="cursor-pointer accent-primary"
-                      />
-                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                        개인정보 처리방침에 동의합니다 (필수)
-                      </span>
-                    </label>
-                    <Link to="/privacy" target="_blank" className="text-muted-foreground hover:text-foreground transition-colors">
-                      <ExternalLink size={16} />
-                    </Link>
                   </div>
                 </FormField>
 
-                <FormField error={errors.termsConsent?.message}>
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-s3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        {...register('termsConsent')}
-                        className="cursor-pointer accent-primary"
-                      />
-                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                        이용약관에 동의합니다 (필수)
-                      </span>
-                    </label>
-                    <Link to="/terms" target="_blank" className="text-muted-foreground hover:text-foreground transition-colors">
-                      <ExternalLink size={16} />
-                    </Link>
+                <FormField label="성별" error={errors.gender?.message}>
+                  <div className="grid grid-cols-2 gap-s3">
+                    {(["MALE", "FEMALE"] as const).map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() =>
+                          setValue("gender", g, { shouldValidate: true })
+                        }
+                        className={cn(
+                          "h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer",
+                          watch("gender") === g
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted border-border text-foreground hover:border-primary/50",
+                        )}
+                      >
+                        {g === "MALE" ? "남성" : "여성"}
+                      </button>
+                    ))}
                   </div>
                 </FormField>
+
+                <FormField label="학년" error={errors.grade?.message}>
+                  <div className="grid grid-cols-4 gap-s2">
+                    {[1, 2, 3, 4].map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() =>
+                          setValue("grade", g, { shouldValidate: true })
+                        }
+                        className={cn(
+                          "h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer",
+                          watch("grade") === g
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted border-border text-foreground hover:border-primary/50",
+                        )}
+                      >
+                        {g}학년
+                      </button>
+                    ))}
+                  </div>
+                </FormField>
+
+                <FormField
+                  label={ENROLLMENT_STATUS_TITLE}
+                  error={errors.enrollmentStatus?.message}
+                >
+                  <div className="grid grid-cols-3 gap-s2">
+                    {enrollmentStatusOptions.map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() =>
+                          setValue("enrollmentStatus", status, {
+                            shouldValidate: true,
+                          })
+                        }
+                        className={cn(
+                          "h-10 rounded-r2 border text-sm font-medium transition-all cursor-pointer",
+                          watch("enrollmentStatus") === status
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted border-border text-foreground hover:border-primary/50",
+                        )}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </FormField>
+
+                <div className="space-y-s3 rounded-r2 border border-border p-s4">
+                  <FormField error={errors.privacyConsent?.message}>
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-s3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          {...register("privacyConsent")}
+                          className="cursor-pointer accent-primary"
+                        />
+                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                          개인정보 처리방침에 동의합니다 (필수)
+                        </span>
+                      </label>
+                      <Link
+                        to="/privacy"
+                        target="_blank"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ExternalLink size={16} />
+                      </Link>
+                    </div>
+                  </FormField>
+
+                  <FormField error={errors.termsConsent?.message}>
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-s3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          {...register("termsConsent")}
+                          className="cursor-pointer accent-primary"
+                        />
+                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                          이용약관에 동의합니다 (필수)
+                        </span>
+                      </label>
+                      <Link
+                        to="/terms"
+                        target="_blank"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ExternalLink size={16} />
+                      </Link>
+                    </div>
+                  </FormField>
+                </div>
               </div>
-            </div>
 
-            {/* Step 2: 연락처 & 학과 */}
-            <div className={cn('space-y-s4', step !== 1 && 'hidden')}>
-              <FormField
-                label="이메일"
-                error={errors.emailLocal?.message || errors.customDomain?.message || (emailCheck.isDuplicate ? emailCheck.message : undefined)}
-                success={emailCheck.isAvailable ? emailCheck.message : undefined}
-              >
-                <div className="flex items-center gap-s2">
-                  <div className="relative flex-1">
-                    <Mail
-                      size={18}
-                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    />
+              {/* Step 2: 연락처 & 학과 */}
+              <div className={cn("space-y-s4", step !== 1 && "hidden")}>
+                <FormField
+                  label="이메일"
+                  error={
+                    errors.emailLocal?.message ||
+                    errors.customDomain?.message ||
+                    (emailCheck.isDuplicate ? emailCheck.message : undefined)
+                  }
+                  success={
+                    emailCheck.isAvailable ? emailCheck.message : undefined
+                  }
+                >
+                  <div className="flex items-center gap-s2">
+                    <div className="relative flex-1">
+                      <Mail
+                        size={18}
+                        className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      />
+                      <Input
+                        {...register("emailLocal", {
+                          onBlur: () => {
+                            const fullEmail = composeEmail();
+                            if (fullEmail) checkEmail(fullEmail);
+                          },
+                          onChange: () => {
+                            resetEmail();
+                          },
+                        })}
+                        placeholder="아이디"
+                        disabled={emailVerified}
+                        className="pl-10"
+                      />
+                    </div>
+                    <span className="text-muted-foreground font-bold shrink-0">
+                      @
+                    </span>
+                    <div className="relative flex-1">
+                      <select
+                        {...register("emailDomain", {
+                          onChange: () => {
+                            resetEmail();
+                            // 도메인이 커스텀이 아니고 로컬파트가 있으면 즉시 체크
+                            setTimeout(() => {
+                              const fullEmail = composeEmail();
+                              if (
+                                fullEmail &&
+                                getValues("emailDomain") !== "custom"
+                              ) {
+                                checkEmail(fullEmail);
+                              }
+                            }, 0);
+                          },
+                        })}
+                        disabled={emailVerified}
+                        className={cn(
+                          "w-full h-9 rounded-r2 border border-input bg-background text-foreground px-s3 text-sm",
+                          "appearance-none cursor-pointer transition-all outline-none",
+                          "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
+                        )}
+                      >
+                        {domainOptions.map((d) => (
+                          <option
+                            key={d.value}
+                            value={d.value}
+                            className="bg-background text-foreground"
+                          >
+                            {d.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        size={16}
+                        className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                      />
+                    </div>
+                  </div>
+                  {emailDomain === "custom" && (
                     <Input
-                      {...register('emailLocal', {
+                      {...register("customDomain", {
+                        validate: (value) => {
+                          if (
+                            getValues("emailDomain") === "custom" &&
+                            (!value || value.length === 0)
+                          ) {
+                            return "도메인을 입력해주세요.";
+                          }
+                          return true;
+                        },
                         onBlur: () => {
                           const fullEmail = composeEmail();
                           if (fullEmail) checkEmail(fullEmail);
@@ -958,37 +1162,243 @@ export default function SignupPage() {
                           resetEmail();
                         },
                       })}
-                      placeholder="아이디"
+                      placeholder="도메인 입력 (예: example.com)"
                       disabled={emailVerified}
-                      className="pl-10"
+                      className="mt-s2"
                     />
-                  </div>
-                  <span className="text-muted-foreground font-bold shrink-0">@</span>
-                  <div className="relative flex-1">
-                    <select
-                      {...register('emailDomain', {
-                        onChange: () => {
-                          resetEmail();
-                          // 도메인이 커스텀이 아니고 로컬파트가 있으면 즉시 체크
-                          setTimeout(() => {
-                            const fullEmail = composeEmail();
-                            if (fullEmail && getValues('emailDomain') !== 'custom') {
-                              checkEmail(fullEmail);
+                  )}
+                  {emailCheck.isChecking && (
+                    <div className="flex items-center gap-s1 mt-s1">
+                      <Loader2
+                        size={14}
+                        className="animate-spin text-muted-foreground"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        확인 중...
+                      </span>
+                    </div>
+                  )}
+
+                  {/* 인증 코드 발송 중 (최초) */}
+                  {sendingCode && !codeSent && (
+                    <div className="flex items-center gap-s1 mt-s3">
+                      <Loader2
+                        size={14}
+                        className="animate-spin text-muted-foreground"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        인증 코드 발송 중...
+                      </span>
+                    </div>
+                  )}
+
+                  {/* 최초 발송 실패 시 에러 + 재시도 */}
+                  {!codeSent && !sendingCode && verificationError && (
+                    <div className="mt-s3 space-y-s2">
+                      <p className="text-sm text-destructive">
+                        {verificationError}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleSendCode}
+                        className="text-sm text-primary hover:underline transition cursor-pointer"
+                      >
+                        다시 시도
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 인증 코드 입력 UI */}
+                  {codeSent && !emailVerified && (
+                    <div className="mt-s3 space-y-s3">
+                      <div className="flex items-center gap-s2">
+                        <div className="relative flex-1">
+                          <Key
+                            size={18}
+                            className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                          />
+                          <Input
+                            type="text"
+                            placeholder="6자리 인증 코드"
+                            value={verificationCode}
+                            onChange={(e) =>
+                              setVerificationCode(
+                                e.target.value.replace(/\D/g, "").slice(0, 6),
+                              )
                             }
-                          }, 0);
+                            maxLength={6}
+                            className="pl-10 tracking-widest"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleVerifyCode}
+                          disabled={
+                            verifyingCode ||
+                            verificationCode.length !== 6 ||
+                            codeTimer.isExpired
+                          }
+                          className="shrink-0 cursor-pointer"
+                        >
+                          {verifyingCode ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            "인증 확인"
+                          )}
+                        </Button>
+                      </div>
+
+                      <p className="text-sm text-muted-foreground">
+                        이메일이 오지 않으면 스팸 메일함을 확인해주세요.
+                      </p>
+
+                      <div className="flex items-center gap-s5">
+                        {codeTimer.isRunning && (
+                          <div
+                            className={cn(
+                              "flex items-center gap-s1 text-sm transition-colors",
+                              codeTimer.remaining <= 60
+                                ? "text-destructive"
+                                : codeTimer.remaining <= 180
+                                  ? "text-amber-500"
+                                  : "text-primary",
+                            )}
+                          >
+                            <Clock size={14} />
+                            <span>남은 시간 {codeTimer.formatted}</span>
+                          </div>
+                        )}
+                        {codeTimer.isExpired && (
+                          <p className="text-sm text-destructive">
+                            인증 코드가 만료되었습니다.
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleResendCode}
+                          disabled={sendingCode || !resendCooldown.isExpired}
+                          className="text-sm text-muted-foreground hover:text-primary transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {sendingCode
+                            ? "재발송 중..."
+                            : !resendCooldown.isExpired
+                              ? `재발송 (${resendCooldown.remaining}초)`
+                              : "인증 코드 재발송"}
+                        </button>
+                      </div>
+
+                      {verificationError && (
+                        <p className="text-sm text-destructive">
+                          {verificationError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 인증 완료 */}
+                  {emailVerified && (
+                    <div className="flex items-center gap-s1 mt-s3 text-green-600">
+                      <Check size={16} />
+                      <span className="text-sm font-medium">
+                        이메일 인증이 완료되었습니다
+                      </span>
+                    </div>
+                  )}
+                </FormField>
+
+                <FormField
+                  label="전화번호"
+                  error={
+                    errors.phoneNumber?.message ||
+                    (phoneNumberCheck.isDuplicate
+                      ? phoneNumberCheck.message
+                      : undefined)
+                  }
+                  success={
+                    phoneNumberCheck.isAvailable
+                      ? phoneNumberCheck.message
+                      : undefined
+                  }
+                >
+                  <div className="relative">
+                    <Phone
+                      size={18}
+                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      {...register("phoneNumber", {
+                        onBlur: () => {
+                          const value = getValues("phoneNumber");
+                          if (/^\d{3}-\d{4}-\d{4}$/.test(value)) {
+                            checkPhoneNumber(value);
+                          }
+                        },
+                        onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                          const digits = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 11);
+                          setValue("phoneNumber", formatPhoneNumber(digits));
+                          resetPhoneNumber();
                         },
                       })}
-                      disabled={emailVerified}
+                      placeholder="010-1234-5678"
+                      maxLength={13}
                       className={cn(
-                        'w-full h-9 rounded-r2 border border-input bg-background text-foreground px-s3 text-sm',
-                        'appearance-none cursor-pointer transition-all outline-none',
-                        'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
+                        "pl-10",
+                        (phoneNumberCheck.isChecking ||
+                          phoneNumberCheck.isAvailable) &&
+                          "pr-10",
+                      )}
+                    />
+                    {phoneNumberCheck.isChecking && (
+                      <Loader2
+                        size={16}
+                        className="absolute right-s3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground"
+                      />
+                    )}
+                    {phoneNumberCheck.isAvailable &&
+                      !phoneNumberCheck.isChecking && (
+                        <Check
+                          size={16}
+                          className="absolute right-s3 top-1/2 -translate-y-1/2 text-green-600"
+                        />
+                      )}
+                  </div>
+                </FormField>
+
+                <FormField label="학과" error={errors.department?.message}>
+                  <div className="relative">
+                    <Building2
+                      size={18}
+                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <select
+                      {...register("department")}
+                      className={cn(
+                        "w-full h-9 rounded-r2 border border-input bg-background text-foreground pl-10 pr-10 text-sm",
+                        "appearance-none cursor-pointer transition-all outline-none",
+                        "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
+                        !watch("department") && "text-muted-foreground",
                       )}
                     >
-                      {domainOptions.map((d) => (
-                        <option key={d.value} value={d.value} className="bg-background text-foreground">
-                          {d.label}
-                        </option>
+                      <option
+                        value=""
+                        className="bg-background text-foreground"
+                      >
+                        학과를 선택하세요
+                      </option>
+                      {majorOptions.map((college) => (
+                        <optgroup key={college.title} label={college.title}>
+                          {college.items.map((dept) => (
+                            <option
+                              key={dept.key}
+                              value={dept.value}
+                              className="bg-background text-foreground"
+                            >
+                              {dept.value}
+                            </option>
+                          ))}
+                        </optgroup>
                       ))}
                     </select>
                     <ChevronDown
@@ -996,452 +1406,281 @@ export default function SignupPage() {
                       className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
                     />
                   </div>
-                </div>
-                {emailDomain === 'custom' && (
-                  <Input
-                    {...register('customDomain', {
-                      validate: (value) => {
-                        if (getValues('emailDomain') === 'custom' && (!value || value.length === 0)) {
-                          return '도메인을 입력해주세요.';
-                        }
-                        return true;
-                      },
-                      onBlur: () => {
-                        const fullEmail = composeEmail();
-                        if (fullEmail) checkEmail(fullEmail);
-                      },
-                      onChange: () => {
-                        resetEmail();
-                      },
-                    })}
-                    placeholder="도메인 입력 (예: example.com)"
-                    disabled={emailVerified}
-                    className="mt-s2"
-                  />
-                )}
-                {emailCheck.isChecking && (
-                  <div className="flex items-center gap-s1 mt-s1">
-                    <Loader2 size={14} className="animate-spin text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">확인 중...</span>
-                  </div>
-                )}
-
-                {/* 인증 코드 발송 중 (최초) */}
-                {sendingCode && !codeSent && (
-                  <div className="flex items-center gap-s1 mt-s3">
-                    <Loader2 size={14} className="animate-spin text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">인증 코드 발송 중...</span>
-                  </div>
-                )}
-
-                {/* 최초 발송 실패 시 에러 + 재시도 */}
-                {!codeSent && !sendingCode && verificationError && (
-                  <div className="mt-s3 space-y-s2">
-                    <p className="text-sm text-destructive">{verificationError}</p>
-                    <button type="button" onClick={handleSendCode} className="text-sm text-primary hover:underline transition cursor-pointer">
-                      다시 시도
-                    </button>
-                  </div>
-                )}
-
-                {/* 인증 코드 입력 UI */}
-                {codeSent && !emailVerified && (
-                  <div className="mt-s3 space-y-s3">
-                    <div className="flex items-center gap-s2">
-                      <div className="relative flex-1">
-                        <Key size={18} className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          placeholder="6자리 인증 코드"
-                          value={verificationCode}
-                          onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                          maxLength={6}
-                          className="pl-10 tracking-widest"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={handleVerifyCode}
-                        disabled={verifyingCode || verificationCode.length !== 6 || codeTimer.isExpired}
-                        className="shrink-0 cursor-pointer"
-                      >
-                        {verifyingCode ? <Loader2 size={16} className="animate-spin" /> : '인증 확인'}
-                      </Button>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground">
-                      이메일이 오지 않으면 스팸 메일함을 확인해주세요.
-                    </p>
-
-                    <div className="flex items-center gap-s5">
-                      {codeTimer.isRunning && (
-                        <div className={cn(
-                          'flex items-center gap-s1 text-sm transition-colors',
-                          codeTimer.remaining <= 60 ? 'text-destructive' : codeTimer.remaining <= 180 ? 'text-amber-500' : 'text-primary',
-                        )}>
-                          <Clock size={14} />
-                          <span>남은 시간 {codeTimer.formatted}</span>
-                        </div>
-                      )}
-                      {codeTimer.isExpired && (
-                        <p className="text-sm text-destructive">인증 코드가 만료되었습니다.</p>
-                      )}
-                      <button
-                        type="button"
-                        onClick={handleResendCode}
-                        disabled={sendingCode || !resendCooldown.isExpired}
-                        className="text-sm text-muted-foreground hover:text-primary transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {sendingCode
-                          ? '재발송 중...'
-                          : !resendCooldown.isExpired
-                            ? `재발송 (${resendCooldown.remaining}초)`
-                            : '인증 코드 재발송'}
-                      </button>
-                    </div>
-
-                    {verificationError && (
-                      <p className="text-sm text-destructive">{verificationError}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* 인증 완료 */}
-                {emailVerified && (
-                  <div className="flex items-center gap-s1 mt-s3 text-green-600">
-                    <Check size={16} />
-                    <span className="text-sm font-medium">이메일 인증이 완료되었습니다</span>
-                  </div>
-                )}
-              </FormField>
-
-              <FormField
-                label="전화번호"
-                error={errors.phoneNumber?.message || (phoneNumberCheck.isDuplicate ? phoneNumberCheck.message : undefined)}
-                success={phoneNumberCheck.isAvailable ? phoneNumberCheck.message : undefined}
-              >
-                <div className="relative">
-                  <Phone
-                    size={18}
-                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <Input
-                    {...register('phoneNumber', {
-                      onBlur: () => {
-                        const value = getValues('phoneNumber');
-                        if (/^\d{3}-\d{4}-\d{4}$/.test(value)) {
-                          checkPhoneNumber(value);
-                        }
-                      },
-                      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                        const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-                        setValue('phoneNumber', formatPhoneNumber(digits));
-                        resetPhoneNumber();
-                      },
-                    })}
-                    placeholder="010-1234-5678"
-                    maxLength={13}
-                    className={cn('pl-10', (phoneNumberCheck.isChecking || phoneNumberCheck.isAvailable) && 'pr-10')}
-                  />
-                  {phoneNumberCheck.isChecking && (
-                    <Loader2 size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
-                  )}
-                  {phoneNumberCheck.isAvailable && !phoneNumberCheck.isChecking && (
-                    <Check size={16} className="absolute right-s3 top-1/2 -translate-y-1/2 text-green-600" />
-                  )}
-                </div>
-              </FormField>
-
-              <FormField label="학과" error={errors.department?.message}>
-                <div className="relative">
-                  <Building2
-                    size={18}
-                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <select
-                    {...register('department')}
-                    className={cn(
-                      'w-full h-9 rounded-r2 border border-input bg-background text-foreground pl-10 pr-10 text-sm',
-                      'appearance-none cursor-pointer transition-all outline-none',
-                      'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
-                      !watch('department') && 'text-muted-foreground',
-                    )}
-                  >
-                    <option value="" className="bg-background text-foreground">학과를 선택하세요</option>
-                    {majorOptions.map((college) => (
-                      <optgroup key={college.title} label={college.title}>
-                        {college.items.map((dept) => (
-                          <option key={dept.key} value={dept.value} className="bg-background text-foreground">
-                            {dept.value}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                  />
-                </div>
-              </FormField>
-            </div>
-
-            {/* Step 3: 계정 보안 */}
-            <div className={cn('space-y-s4', step !== 2 && 'hidden')}>
-              <div className="rounded-r2 bg-muted/50 border border-border p-s4">
-                <p className="typo-c1 text-muted-foreground">
-                  비밀번호는{' '}
-                  <strong className="text-foreground">
-                    영문, 숫자를 포함하여 8자 이상
-                  </strong>
-                  으로 설정해주세요.
-                </p>
+                </FormField>
               </div>
 
-              <FormField label="비밀번호" error={errors.password?.message}>
-                <div className="relative">
-                  <Lock
-                    size={18}
-                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <Input
-                    {...register('password')}
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="비밀번호 입력"
-                    className="pl-10 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+              {/* Step 3: 계정 보안 */}
+              <div className={cn("space-y-s4", step !== 2 && "hidden")}>
+                <div className="rounded-r2 bg-muted/50 border border-border p-s4">
+                  <p className="typo-c1 text-muted-foreground">
+                    비밀번호는{" "}
+                    <strong className="text-foreground">
+                      영문, 숫자를 포함하여 8자 이상
+                    </strong>
+                    으로 설정해주세요.
+                  </p>
                 </div>
-              </FormField>
 
-              <FormField
-                label="비밀번호 확인"
-                error={errors.passwordConfirm?.message}
-                success={passwordConfirmTouched && !errors.passwordConfirm && watch('passwordConfirm') ? '비밀번호가 일치합니다.' : undefined}
-              >
-                <div className="relative">
-                  <Lock
-                    size={18}
-                    className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <Input
-                    {...register('passwordConfirm', {
-                      onBlur: () => {
-                        setPasswordConfirmTouched(true);
-                        trigger('passwordConfirm');
-                      },
-                    })}
-                    type={showPasswordConfirm ? 'text' : 'password'}
-                    placeholder="비밀번호 재입력"
-                    className="pl-10 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                    className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    {showPasswordConfirm ? (
-                      <EyeOff size={18} />
-                    ) : (
-                      <Eye size={18} />
-                    )}
-                  </button>
-                </div>
-              </FormField>
-            </div>
-
-            {/* Step 4: 가입 동기 */}
-            <div className={cn('space-y-s4', step !== 3 && 'hidden')}>
-              <FormField label={WISH_TITLE} error={submitted ? errors.wishes?.message : undefined}>
-                <div className="flex flex-wrap gap-s2">
-                  {wishOptions.map((wish) => (
+                <FormField label="비밀번호" error={errors.password?.message}>
+                  <div className="relative">
+                    <Lock
+                      size={18}
+                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      {...register("password")}
+                      type={showPassword ? "text" : "password"}
+                      placeholder="비밀번호 입력"
+                      className="pl-10 pr-10"
+                    />
                     <button
-                      key={wish}
                       type="button"
-                      onClick={() => handleWishToggle(wish)}
-                      className={cn(
-                        'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
-                        selectedWishes.includes(wish)
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'border-border bg-muted text-foreground hover:border-primary/50',
-                      )}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
-                      {wish}
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
-                  ))}
-                </div>
-              </FormField>
+                  </div>
+                </FormField>
 
-              <FormField label={INTEREST_TITLE} error={submitted ? errors.interests?.message : undefined}>
-                <div className="flex flex-wrap gap-s2">
-                  {interestOptions.map((interest) => (
-                    <button
-                      key={interest}
-                      type="button"
-                      onClick={() => handleInterestToggle(interest)}
-                      className={cn(
-                        'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
-                        selectedInterests.includes(interest)
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'border-border bg-muted text-foreground hover:border-primary/50',
-                      )}
-                    >
-                      {interest}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => handleInterestToggle('기타')}
-                    className={cn(
-                      'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
-                      selectedInterests.includes('기타')
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'border-border bg-muted text-foreground hover:border-primary/50',
-                    )}
-                  >
-                    기타
-                  </button>
-                </div>
-                {selectedInterests.includes('기타') && (
-                  <Input
-                    {...register('customInterest')}
-                    placeholder="관심 분야를 입력해주세요"
-                    className="mt-s2"
-                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                  />
-                )}
-              </FormField>
-
-              <FormField label={JOIN_ROUTE_TITLE} error={submitted ? errors.joinRoute?.message : undefined}>
-                <div className="flex flex-wrap gap-s2">
-                  {joinRouteOptions.map((route) => (
-                    <button
-                      key={route}
-                      type="button"
-                      onClick={() => handleJoinRouteSelect(route)}
-                      className={cn(
-                        'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
-                        selectedJoinRoute === route
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'border-border bg-muted text-foreground hover:border-primary/50',
-                      )}
-                    >
-                      {route}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => handleJoinRouteSelect('기타')}
-                    className={cn(
-                      'px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer',
-                      selectedJoinRoute === '기타'
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'border-border bg-muted text-foreground hover:border-primary/50',
-                    )}
-                  >
-                    기타
-                  </button>
-                </div>
-                {selectedJoinRoute === '기타' && (
-                  <Input
-                    {...register('customJoinRoute')}
-                    placeholder="가입 경로를 입력해주세요"
-                    className="mt-s2"
-                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                  />
-                )}
-              </FormField>
-
-              <FormField label="가입 동기 (선택)">
-                <div className="relative">
-                  <FileText
-                    size={18}
-                    className="absolute left-s3 top-s3 text-muted-foreground"
-                  />
-                  <textarea
-                    {...register('motivation')}
-                    placeholder="동아리 가입 동기를 작성해주세요"
-                    rows={4}
-                    className={cn(
-                      'w-full rounded-r2 border border-input bg-transparent pl-10 pr-s3 py-s2 text-sm',
-                      'placeholder:text-muted-foreground resize-none transition-all outline-none',
-                      'focus:border-ring focus:ring-ring/50 focus:ring-[3px]',
-                    )}
-                  />
-                </div>
-              </FormField>
-
-            </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex items-center gap-s3 mt-s6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePrev}
-                className="flex-1 cursor-pointer"
-              >
-                <ChevronLeft size={18} />
-                이전
-              </Button>
-
-              {!isLastStep ? (
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  className="flex-1 cursor-pointer"
+                <FormField
+                  label="비밀번호 확인"
+                  error={errors.passwordConfirm?.message}
+                  success={
+                    passwordConfirmTouched &&
+                    !errors.passwordConfirm &&
+                    watch("passwordConfirm")
+                      ? "비밀번호가 일치합니다."
+                      : undefined
+                  }
                 >
-                  다음
-                  <ChevronRight size={18} />
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    setSubmitted(true);
-                    if (useTempStudentId) {
-                      setValue('studentId', '00000000');
-                    }
-                    handleSubmit(onSubmit)();
-                  }}
-                  className="flex-1 cursor-pointer"
+                  <div className="relative">
+                    <Lock
+                      size={18}
+                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      {...register("passwordConfirm", {
+                        onBlur: () => {
+                          setPasswordConfirmTouched(true);
+                          trigger("passwordConfirm");
+                        },
+                      })}
+                      type={showPasswordConfirm ? "text" : "password"}
+                      placeholder="비밀번호 재입력"
+                      className="pl-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() =>
+                        setShowPasswordConfirm(!showPasswordConfirm)
+                      }
+                      className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      {showPasswordConfirm ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
+                    </button>
+                  </div>
+                </FormField>
+              </div>
+
+              {/* Step 4: 가입 동기 */}
+              <div className={cn("space-y-s4", step !== 3 && "hidden")}>
+                <FormField
+                  label={WISH_TITLE}
+                  error={submitted ? errors.wishes?.message : undefined}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      가입 중...
-                    </>
-                  ) : (
-                    <>
-                      회원가입
-                      <Check size={18} />
-                    </>
+                  <div className="flex flex-wrap gap-s2">
+                    {wishOptions.map((wish) => (
+                      <button
+                        key={wish}
+                        type="button"
+                        onClick={() => handleWishToggle(wish)}
+                        className={cn(
+                          "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
+                          selectedWishes.includes(wish)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border bg-muted text-foreground hover:border-primary/50",
+                        )}
+                      >
+                        {wish}
+                      </button>
+                    ))}
+                  </div>
+                </FormField>
+
+                <FormField
+                  label={INTEREST_TITLE}
+                  error={submitted ? errors.interests?.message : undefined}
+                >
+                  <div className="flex flex-wrap gap-s2">
+                    {interestOptions.map((interest) => (
+                      <button
+                        key={interest}
+                        type="button"
+                        onClick={() => handleInterestToggle(interest)}
+                        className={cn(
+                          "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
+                          selectedInterests.includes(interest)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border bg-muted text-foreground hover:border-primary/50",
+                        )}
+                      >
+                        {interest}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => handleInterestToggle("기타")}
+                      className={cn(
+                        "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
+                        selectedInterests.includes("기타")
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border bg-muted text-foreground hover:border-primary/50",
+                      )}
+                    >
+                      기타
+                    </button>
+                  </div>
+                  {selectedInterests.includes("기타") && (
+                    <Input
+                      {...register("customInterest")}
+                      placeholder="관심 분야를 입력해주세요"
+                      className="mt-s2"
+                      onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+                    />
                   )}
-                </Button>
-              )}
-            </div>
-          </form>
+                </FormField>
 
-          {/* Login Link */}
-          <p className="text-center text-sm text-muted-foreground mt-s5">
-            이미 계정이 있으신가요?{' '}
-            <Link
-              to="/login"
-              className="text-primary font-medium hover:underline"
-            >
-              로그인
-            </Link>
-          </p>
-        </div>
+                <FormField
+                  label={JOIN_ROUTE_TITLE}
+                  error={submitted ? errors.joinRoute?.message : undefined}
+                >
+                  <div className="flex flex-wrap gap-s2">
+                    {joinRouteOptions.map((route) => (
+                      <button
+                        key={route}
+                        type="button"
+                        onClick={() => handleJoinRouteSelect(route)}
+                        className={cn(
+                          "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
+                          selectedJoinRoute === route
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border bg-muted text-foreground hover:border-primary/50",
+                        )}
+                      >
+                        {route}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => handleJoinRouteSelect("기타")}
+                      className={cn(
+                        "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
+                        selectedJoinRoute === "기타"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border bg-muted text-foreground hover:border-primary/50",
+                      )}
+                    >
+                      기타
+                    </button>
+                  </div>
+                  {selectedJoinRoute === "기타" && (
+                    <Input
+                      {...register("customJoinRoute")}
+                      placeholder="가입 경로를 입력해주세요"
+                      className="mt-s2"
+                      onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+                    />
+                  )}
+                </FormField>
+
+                <FormField label="가입 동기 (선택)">
+                  <div className="relative">
+                    <FileText
+                      size={18}
+                      className="absolute left-s3 top-s3 text-muted-foreground"
+                    />
+                    <textarea
+                      {...register("motivation")}
+                      placeholder="동아리 가입 동기를 작성해주세요"
+                      rows={4}
+                      className={cn(
+                        "w-full rounded-r2 border border-input bg-transparent pl-10 pr-s3 py-s2 text-sm",
+                        "placeholder:text-muted-foreground resize-none transition-all outline-none",
+                        "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
+                      )}
+                    />
+                  </div>
+                </FormField>
+              </div>
+
+              {/* Navigation Buttons */}
+              <div className="flex items-center gap-s3 mt-s6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrev}
+                  className="flex-1 cursor-pointer"
+                >
+                  <ChevronLeft size={18} />
+                  이전
+                </Button>
+
+                {!isLastStep ? (
+                  <Button
+                    type="button"
+                    onClick={handleNext}
+                    className="flex-1 cursor-pointer"
+                  >
+                    다음
+                    <ChevronRight size={18} />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      setSubmitted(true);
+                      if (useTempStudentId) {
+                        setValue("studentId", "00000000");
+                      }
+                      handleSubmit(onSubmit)();
+                    }}
+                    className="flex-1 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        가입 중...
+                      </>
+                    ) : (
+                      <>
+                        회원가입
+                        <Check size={18} />
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </form>
+
+            {/* Login Link */}
+            <p className="text-center text-sm text-muted-foreground mt-s5">
+              이미 계정이 있으신가요?{" "}
+              <Link
+                to="/login"
+                className="text-primary font-medium hover:underline"
+              >
+                로그인
+              </Link>
+            </p>
+          </div>
         )}
       </div>
     </div>
@@ -1471,8 +1710,19 @@ function FormField({
         </label>
       )}
       {children}
-      {error && <p className={cn('mt-s3 text-sm', mutedError ? 'text-muted-foreground' : 'text-destructive')}>{error}</p>}
-      {!error && success && <p className="mt-s3 text-sm text-green-600">{success}</p>}
+      {error && (
+        <p
+          className={cn(
+            "mt-s3 text-sm",
+            mutedError ? "text-muted-foreground" : "text-destructive",
+          )}
+        >
+          {error}
+        </p>
+      )}
+      {!error && success && (
+        <p className="mt-s3 text-sm text-green-600">{success}</p>
+      )}
     </div>
   );
 }

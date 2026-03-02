@@ -34,10 +34,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type SurveyDetailResponseVisibility = typeof SurveyDetailResponseVisibility[keyof typeof SurveyDetailResponseVisibility];
-
+export type SurveyDetailResponseVisibility =
+  (typeof SurveyDetailResponseVisibility)[keyof typeof SurveyDetailResponseVisibility];
 
 export const SurveyDetailResponseVisibility = {
-  UNPUBLISHED: 'UNPUBLISHED',
-  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: "UNPUBLISHED",
+  PUBLISHED: "PUBLISHED",
 } as const;

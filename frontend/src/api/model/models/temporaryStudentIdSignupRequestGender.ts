@@ -37,10 +37,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 성별
  */
-export type TemporaryStudentIdSignupRequestGender = typeof TemporaryStudentIdSignupRequestGender[keyof typeof TemporaryStudentIdSignupRequestGender];
-
+export type TemporaryStudentIdSignupRequestGender =
+  (typeof TemporaryStudentIdSignupRequestGender)[keyof typeof TemporaryStudentIdSignupRequestGender];
 
 export const TemporaryStudentIdSignupRequestGender = {
-  MALE: 'MALE',
-  FEMALE: 'FEMALE',
+  MALE: "MALE",
+  FEMALE: "FEMALE",
 } as const;

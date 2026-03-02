@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { Search } from 'lucide-react';
-import { useGetLoginHistories } from '@/api/model/admin-login-history/admin-login-history';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Pagination } from '@/components/board/Pagination';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Search } from "lucide-react";
+import { useGetLoginHistories } from "@/api/model/admin-login-history/admin-login-history";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/board/Pagination";
+import { cn } from "@/lib/utils";
 
 export default function LoginHistoryTab() {
-  const [studentId, setStudentId] = useState('');
-  const [searchStudentId, setSearchStudentId] = useState('');
-  const [successFilter, setSuccessFilter] = useState<'' | 'true' | 'false'>('');
+  const [studentId, setStudentId] = useState("");
+  const [searchStudentId, setSearchStudentId] = useState("");
+  const [successFilter, setSuccessFilter] = useState<"" | "true" | "false">("");
   const [page, setPage] = useState(1);
 
   const { data: response, isLoading } = useGetLoginHistories({
     ...(searchStudentId && { studentId: searchStudentId }),
-    ...(successFilter && { success: successFilter === 'true' }),
+    ...(successFilter && { success: successFilter === "true" }),
     page: page - 1,
     size: 30,
   });
@@ -45,7 +45,10 @@ export default function LoginHistoryTab() {
         <div className="flex flex-col lg:flex-row gap-s4">
           <form onSubmit={handleSearch} className="flex gap-s2 flex-1">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                size={16}
+              />
               <Input
                 placeholder="학번 검색"
                 value={studentId}
@@ -57,7 +60,10 @@ export default function LoginHistoryTab() {
           </form>
           <select
             value={successFilter}
-            onChange={(e) => { setSuccessFilter(e.target.value as '' | 'true' | 'false'); setPage(1); }}
+            onChange={(e) => {
+              setSuccessFilter(e.target.value as "" | "true" | "false");
+              setPage(1);
+            }}
             className="px-s3 py-s2 rounded-r2 border border-border bg-background text-sm"
           >
             <option value="">전체</option>
@@ -81,18 +87,28 @@ export default function LoginHistoryTab() {
           <tbody className="divide-y divide-border">
             {(histories as Record<string, unknown>[]).map((h, idx) => (
               <tr key={idx}>
-                <td className="py-s4 typo-b2 font-medium">{h.studentId as string}</td>
+                <td className="py-s4 typo-b2 font-medium">
+                  {h.studentId as string}
+                </td>
                 <td className="py-s4">
-                  <span className={cn(
-                    'px-2 py-1 rounded-r2 typo-c2 font-bold',
-                    h.success ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
-                  )}>
-                    {h.success ? '성공' : '실패'}
+                  <span
+                    className={cn(
+                      "px-2 py-1 rounded-r2 typo-c2 font-bold",
+                      h.success
+                        ? "bg-success/10 text-success"
+                        : "bg-destructive/10 text-destructive",
+                    )}
+                  >
+                    {h.success ? "성공" : "실패"}
                   </span>
                 </td>
-                <td className="py-s4 typo-b2 text-muted-foreground font-mono">{h.ipAddress as string}</td>
+                <td className="py-s4 typo-b2 text-muted-foreground font-mono">
+                  {h.ipAddress as string}
+                </td>
                 <td className="py-s4 typo-b2 text-muted-foreground">
-                  {h.loginAt ? new Date(h.loginAt as string).toLocaleString('ko-KR') : '-'}
+                  {h.loginAt
+                    ? new Date(h.loginAt as string).toLocaleString("ko-KR")
+                    : "-"}
                 </td>
               </tr>
             ))}
@@ -100,11 +116,17 @@ export default function LoginHistoryTab() {
         </table>
 
         {histories.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">로그인 이력이 없습니다.</div>
+          <div className="text-center py-12 text-muted-foreground">
+            로그인 이력이 없습니다.
+          </div>
         )}
       </Card>
 
-      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

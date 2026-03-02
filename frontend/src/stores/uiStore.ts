@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { UIStore, UIPersistState } from '@/types/store';
-import type { Toast, ToastInput, Theme } from '@/types/common';
-import { THEME } from '@/types/common';
+import type { ReactNode } from "react";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { UIStore, UIPersistState } from "@/types/store";
+import type { Toast, ToastInput, Theme } from "@/types/common";
+import { THEME } from "@/types/common";
 
 export const useUIStore = create<UIStore>()(
   persist(
@@ -47,30 +47,30 @@ export const useUIStore = create<UIStore>()(
           const newTheme =
             state.theme === THEME.LIGHT ? THEME.DARK : THEME.LIGHT;
           if (newTheme === THEME.DARK) {
-            document.documentElement.classList.add('dark');
+            document.documentElement.classList.add("dark");
           } else {
-            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.remove("dark");
           }
           return { theme: newTheme };
         });
       },
       setTheme: (theme: Theme) => {
         if (theme === THEME.DARK) {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add("dark");
         } else {
-          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.remove("dark");
         }
         set({ theme });
       },
     }),
     {
-      name: 'ui-storage',
+      name: "ui-storage",
       partialize: (state): UIPersistState => ({ theme: state.theme }),
       onRehydrateStorage: () => (state) => {
         if (state?.theme === THEME.DARK) {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add("dark");
         }
       },
-    }
-  )
+    },
+  ),
 );
