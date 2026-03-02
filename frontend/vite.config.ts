@@ -24,6 +24,8 @@ export default defineConfig(({ mode }) => {
       __FEATURE_COMMUNITY__: env.FEATURE_COMMUNITY !== "false",
       __FEATURE_SEARCH__: env.FEATURE_SEARCH !== "false",
       __FEATURE_PROFILE_EDIT__: env.FEATURE_PROFILE_EDIT !== "false",
+      __FEATURE_EVENTS__: env.FEATURE_EVENTS !== "false",
+      __FEATURE_INSTAGRAM__: env.FEATURE_INSTAGRAM !== "false",
     },
     server: {
       proxy: {
