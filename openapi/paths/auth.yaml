@@ -256,6 +256,7 @@ authPasswordCheckStudentId:
       required: true
       schema:
         type: string
+        pattern: '^\d{8}$'
       example: 12345678
     responses:
       '200':

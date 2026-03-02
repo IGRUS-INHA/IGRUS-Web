@@ -72,7 +72,8 @@ public class OpenApiValidationConfig implements WebMvcConfigurer {
      */
     @Bean
     public OpenApiValidationFilter openApiValidationFilter() {
-        return new OpenApiValidationFilter(true, true);
+        boolean enabled = (validationInterceptor != null);
+        return new OpenApiValidationFilter(enabled, enabled);
     }
 
     @Override

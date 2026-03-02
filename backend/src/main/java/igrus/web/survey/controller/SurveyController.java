@@ -1,5 +1,6 @@
 package igrus.web.survey.controller;
 
+import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.SurveyApi;
 import igrus.web.generated.model.GetSurveyDetail200Response;
@@ -48,7 +49,7 @@ public class SurveyController implements SurveyApi {
                 updateSurveyRequest.getTitle(),
                 updateSurveyRequest.getDescription(),
                 updateSurveyRequest.getAccessLevel() != null
-                        ? SurveyAccessLevel.valueOf(updateSurveyRequest.getAccessLevel().getValue()) : null,
+                        ? EnumUtils.fromStringOrNull(SurveyAccessLevel.class, updateSurveyRequest.getAccessLevel().getValue()) : null,
                 updateSurveyRequest.getDeadline()
         );
 
@@ -89,7 +90,7 @@ public class SurveyController implements SurveyApi {
                 updateSurveyRequest.getTitle(),
                 updateSurveyRequest.getDescription(),
                 updateSurveyRequest.getAccessLevel() != null
-                        ? SurveyAccessLevel.valueOf(updateSurveyRequest.getAccessLevel().getValue()) : null,
+                        ? EnumUtils.fromStringOrNull(SurveyAccessLevel.class, updateSurveyRequest.getAccessLevel().getValue()) : null,
                 updateSurveyRequest.getDeadline()
         );
 

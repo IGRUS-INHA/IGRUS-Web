@@ -55,7 +55,7 @@ public class EventController implements EventApi {
                 createEventRequest.getRegistrationStartAt(),
                 createEventRequest.getRegistrationEndAt(),
                 createEventRequest.getCapacity(),
-                igrus.web.event.domain.EventRegistrationType.valueOf(
+                EnumUtils.fromStringOrNull(igrus.web.event.domain.EventRegistrationType.class,
                         createEventRequest.getRegistrationType().getValue())
         );
 
@@ -67,7 +67,6 @@ public class EventController implements EventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<GetEventList200ResponseInner>> getEventList(
             String eventStatus,
             String registrationStatus

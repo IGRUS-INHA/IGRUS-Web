@@ -103,7 +103,7 @@ public class AdminInquiryController implements AdminInquiryApi {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest internalRequest =
                 igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest.builder()
-                        .status(InquiryStatus.valueOf(updateInquiryStatusRequest.getStatus().getValue()))
+                        .status(EnumUtils.fromStringOrNull(InquiryStatus.class, updateInquiryStatusRequest.getStatus().getValue()))
                         .build();
         updateInquiryStatusService.updateInquiryStatus(id, internalRequest, user.userId());
         return ResponseEntity.ok().build();

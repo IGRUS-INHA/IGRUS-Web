@@ -194,7 +194,7 @@ public class AdminUserController implements AdminUserManagementApi {
         log.info("회원 권한 변경 요청 - targetUserId: {}, newRole: {}, performedBy: {}",
                 userId, changeUserRoleRequest.getRole(), user.userId());
 
-        UserRole newRole = UserRole.valueOf(changeUserRoleRequest.getRole().name());
+        UserRole newRole = EnumUtils.fromStringOrNull(UserRole.class, changeUserRoleRequest.getRole().name());
         changeUserRoleService.changeUserRole(userId, newRole, user.userId());
         return ResponseEntity.noContent().build();
     }
@@ -211,7 +211,7 @@ public class AdminUserController implements AdminUserManagementApi {
 
         igrus.web.admin.user.dto.ChangeUserStatusRequest internalRequest =
                 new igrus.web.admin.user.dto.ChangeUserStatusRequest(
-                        igrus.web.admin.user.dto.ChangeUserStatusRequest.Action.valueOf(
+                        EnumUtils.fromStringOrNull(igrus.web.admin.user.dto.ChangeUserStatusRequest.Action.class,
                                 changeUserStatusRequest.getAction().name()),
                         changeUserStatusRequest.getReason(),
                         changeUserStatusRequest.getSuspendedUntil()
@@ -260,24 +260,24 @@ public class AdminUserController implements AdminUserManagementApi {
                 editUserInfoRequest.getPhoneNumber(),
                 editUserInfoRequest.getDepartment(),
                 editUserInfoRequest.getGender() != null
-                        ? Gender.valueOf(editUserInfoRequest.getGender().name()) : null,
+                        ? EnumUtils.fromStringOrNull(Gender.class, editUserInfoRequest.getGender().name()) : null,
                 editUserInfoRequest.getGrade(),
                 editUserInfoRequest.getEnrollmentStatus() != null
-                        ? EnrollmentStatus.valueOf(editUserInfoRequest.getEnrollmentStatus().name()) : null,
+                        ? EnumUtils.fromStringOrNull(EnrollmentStatus.class, editUserInfoRequest.getEnrollmentStatus().name()) : null,
                 editUserInfoRequest.getMotivation(),
                 editUserInfoRequest.getWishes() != null
                         ? editUserInfoRequest.getWishes().stream()
-                                .map(w -> Wish.valueOf(w.name()))
+                                .map(w -> EnumUtils.fromStringOrNull(Wish.class, w.name()))
                                 .toList()
                         : null,
                 editUserInfoRequest.getInterests() != null
                         ? editUserInfoRequest.getInterests().stream()
-                                .map(i -> Interest.valueOf(i.name()))
+                                .map(i -> EnumUtils.fromStringOrNull(Interest.class, i.name()))
                                 .toList()
                         : null,
                 editUserInfoRequest.getCustomInterest(),
                 editUserInfoRequest.getJoinRoute() != null
-                        ? JoinRoute.valueOf(editUserInfoRequest.getJoinRoute().name()) : null,
+                        ? EnumUtils.fromStringOrNull(JoinRoute.class, editUserInfoRequest.getJoinRoute().name()) : null,
                 editUserInfoRequest.getCustomJoinRoute()
         );
 

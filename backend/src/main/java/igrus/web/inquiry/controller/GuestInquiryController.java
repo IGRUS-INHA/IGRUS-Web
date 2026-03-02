@@ -1,5 +1,6 @@
 package igrus.web.inquiry.controller;
 
+import igrus.web.common.util.EnumUtils;
 import igrus.web.inquiry.domain.InquiryType;
 import igrus.web.inquiry.dto.request.AttachmentInfo;
 import igrus.web.inquiry.dto.request.CreateGuestInquiryRequest;
@@ -39,7 +40,7 @@ public class GuestInquiryController implements GuestInquiryApi {
             igrus.web.generated.model.CreateGuestInquiryRequest createGuestInquiryRequest
     ) {
         CreateGuestInquiryRequest internalRequest = CreateGuestInquiryRequest.builder()
-                .type(InquiryType.valueOf(createGuestInquiryRequest.getType().getValue()))
+                .type(EnumUtils.fromStringOrNull(InquiryType.class, createGuestInquiryRequest.getType().getValue()))
                 .title(createGuestInquiryRequest.getTitle())
                 .content(createGuestInquiryRequest.getContent())
                 .email(createGuestInquiryRequest.getEmail())

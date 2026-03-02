@@ -33,7 +33,7 @@ public final class EnumUtils {
         try {
             return Enum.valueOf(enumType, value);
         } catch (IllegalArgumentException e) {
-            throw new InvalidEnumValueException();
+            throw new InvalidEnumValueException(enumType.getSimpleName(), value);
         }
     }
 }

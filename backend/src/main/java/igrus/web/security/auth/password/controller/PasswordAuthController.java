@@ -2,6 +2,7 @@ package igrus.web.security.auth.password.controller;
 
 import igrus.web.common.exception.CommonErrorCode;
 import igrus.web.common.exception.CustomBaseException;
+import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.ServletContextUtil;
 import igrus.web.generated.api.PasswordAuthenticationApi;
 import igrus.web.generated.model.CheckReRegistrationEligibility200Response;
@@ -180,23 +181,23 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
                 signupRequest.getMotivation(),
                 signupRequest.getWishes() != null
                         ? signupRequest.getWishes().stream()
-                                .map(w -> igrus.web.user.domain.Wish.valueOf(w.getValue()))
+                                .map(w -> EnumUtils.fromStringOrNull(igrus.web.user.domain.Wish.class, w.getValue()))
                                 .toList()
                         : null,
                 signupRequest.getInterests() != null
                         ? signupRequest.getInterests().stream()
-                                .map(i -> igrus.web.user.domain.Interest.valueOf(i.getValue()))
+                                .map(i -> EnumUtils.fromStringOrNull(igrus.web.user.domain.Interest.class, i.getValue()))
                                 .toList()
                         : null,
                 signupRequest.getCustomInterest(),
                 signupRequest.getJoinRoute() != null
-                        ? igrus.web.user.domain.JoinRoute.valueOf(signupRequest.getJoinRoute().getValue()) : null,
+                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.JoinRoute.class, signupRequest.getJoinRoute().getValue()) : null,
                 signupRequest.getCustomJoinRoute(),
                 signupRequest.getGender() != null
-                        ? igrus.web.user.domain.Gender.valueOf(signupRequest.getGender().getValue()) : null,
+                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.Gender.class, signupRequest.getGender().getValue()) : null,
                 signupRequest.getGrade(),
                 signupRequest.getEnrollmentStatus() != null
-                        ? igrus.web.user.domain.EnrollmentStatus.valueOf(signupRequest.getEnrollmentStatus().getValue()) : null,
+                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.EnrollmentStatus.class, signupRequest.getEnrollmentStatus().getValue()) : null,
                 Boolean.TRUE.equals(signupRequest.getPrivacyConsent()),
                 signupRequest.getVerificationToken()
         );
@@ -222,23 +223,23 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
                 signupWithTemporaryStudentIdRequest.getMotivation(),
                 signupWithTemporaryStudentIdRequest.getWishes() != null
                         ? signupWithTemporaryStudentIdRequest.getWishes().stream()
-                                .map(w -> igrus.web.user.domain.Wish.valueOf(w.getValue()))
+                                .map(w -> EnumUtils.fromStringOrNull(igrus.web.user.domain.Wish.class, w.getValue()))
                                 .toList()
                         : null,
                 signupWithTemporaryStudentIdRequest.getInterests() != null
                         ? signupWithTemporaryStudentIdRequest.getInterests().stream()
-                                .map(i -> igrus.web.user.domain.Interest.valueOf(i.getValue()))
+                                .map(i -> EnumUtils.fromStringOrNull(igrus.web.user.domain.Interest.class, i.getValue()))
                                 .toList()
                         : null,
                 signupWithTemporaryStudentIdRequest.getCustomInterest(),
                 signupWithTemporaryStudentIdRequest.getJoinRoute() != null
-                        ? igrus.web.user.domain.JoinRoute.valueOf(signupWithTemporaryStudentIdRequest.getJoinRoute().getValue()) : null,
+                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.JoinRoute.class, signupWithTemporaryStudentIdRequest.getJoinRoute().getValue()) : null,
                 signupWithTemporaryStudentIdRequest.getCustomJoinRoute(),
                 signupWithTemporaryStudentIdRequest.getGender() != null
-                        ? igrus.web.user.domain.Gender.valueOf(signupWithTemporaryStudentIdRequest.getGender().getValue()) : null,
+                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.Gender.class, signupWithTemporaryStudentIdRequest.getGender().getValue()) : null,
                 signupWithTemporaryStudentIdRequest.getGrade(),
                 signupWithTemporaryStudentIdRequest.getEnrollmentStatus() != null
-                        ? igrus.web.user.domain.EnrollmentStatus.valueOf(signupWithTemporaryStudentIdRequest.getEnrollmentStatus().getValue()) : null,
+                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.EnrollmentStatus.class, signupWithTemporaryStudentIdRequest.getEnrollmentStatus().getValue()) : null,
                 Boolean.TRUE.equals(signupWithTemporaryStudentIdRequest.getPrivacyConsent()),
                 signupWithTemporaryStudentIdRequest.getVerificationToken()
         );

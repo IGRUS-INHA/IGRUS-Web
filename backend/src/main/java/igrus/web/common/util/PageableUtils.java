@@ -1,5 +1,6 @@
 package igrus.web.common.util;
 
+import igrus.web.common.exception.InvalidPageParameterException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -25,6 +26,13 @@ public final class PageableUtils {
     public static Pageable of(Integer page, Integer size, List<String> sort) {
         int pageNum = (page != null) ? page : 0;
         int pageSize = (size != null) ? size : 20;
+
+        if (pageNum < 0) {
+            throw new InvalidPageParameterException("page는 0 이상이어야 합니다: " + pageNum);
+        }
+        if (pageSize < 1) {
+            throw new InvalidPageParameterException("size는 1 이상이어야 합니다: " + pageSize);
+        }
 
         if (sort == null || sort.isEmpty()) {
             return PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));

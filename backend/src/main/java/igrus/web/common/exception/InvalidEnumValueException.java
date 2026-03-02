@@ -11,4 +11,9 @@ public class InvalidEnumValueException extends CustomBaseException {
     public InvalidEnumValueException() {
         super(CommonErrorCode.INVALID_TYPE_VALUE);
     }
+
+    public InvalidEnumValueException(String fieldName, String rejectedValue) {
+        super(CommonErrorCode.INVALID_TYPE_VALUE,
+                String.format("유효하지 않은 값입니다: field='%s', value='%s'", fieldName, rejectedValue));
+    }
 }

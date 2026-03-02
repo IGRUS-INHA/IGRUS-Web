@@ -1,5 +1,6 @@
 package igrus.web.community.board.controller;
 
+import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.community.board.dto.response.BoardDetailResponse;
 import igrus.web.community.board.dto.response.BoardListResponse;
@@ -36,7 +37,7 @@ public class BoardController implements BoardApi {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시판 목록 조회 요청 - userId: {}, role: {}", user.userId(), user.role());
 
-        UserRole role = UserRole.valueOf(user.role());
+        UserRole role = EnumUtils.fromStringOrNull(UserRole.class, user.role());
         List<BoardListResponse> boards = getBoardListService.getBoardList(role);
 
         List<GetBoardList200ResponseInner> response = boards.stream()
@@ -57,7 +58,7 @@ public class BoardController implements BoardApi {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시판 상세 조회 요청 - code: {}, userId: {}, role: {}", code, user.userId(), user.role());
 
-        UserRole role = UserRole.valueOf(user.role());
+        UserRole role = EnumUtils.fromStringOrNull(UserRole.class, user.role());
         BoardDetailResponse board = getBoardByCodeService.getBoardByCode(code, role);
 
         GetBoardByCode200Response response = new GetBoardByCode200Response()

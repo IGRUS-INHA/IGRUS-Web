@@ -45,18 +45,13 @@ class PasswordAuthControllerDuplicateCheckTest extends PasswordAuthControllerTes
         }
 
         @Test
-        @DisplayName("학번 형식 오류 - 400 반환")
+        @DisplayName("학번 형식 오류 - 400 반환 (@Pattern 검증)")
         void checkStudentId_WhenInvalidFormat_Returns400() throws Exception {
-            // given
-            given(checkDuplicateService.checkStudentId("1234"))
-                    .willThrow(new InvalidStudentIdException("1234"));
-
-            // when & then
+            // when & then — @Pattern(regexp="^\\d{8}$") 검증에 의해 서비스 호출 전 400 반환
             mockMvc.perform(get(CHECK_STUDENT_ID_URL)
                             .param("studentId", "1234"))
                     .andDo(print())
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(UserErrorCode.INVALID_STUDENT_ID.getCode()));
+                    .andExpect(status().isBadRequest());
         }
 
         @Test

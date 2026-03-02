@@ -1,5 +1,6 @@
 package igrus.web.survey.question.controller;
 
+import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.SurveyQuestionApi;
 import igrus.web.generated.model.GetSurveyDetail200Response;
@@ -42,7 +43,7 @@ public class SurveyQuestionController implements SurveyQuestionApi {
         log.info("질문 추가 요청 - surveyId: {}, userId: {}, title: {}", surveyId, user.userId(), createQuestionRequest.getTitle());
 
         CreateQuestionRequest request = new CreateQuestionRequest(
-                SurveyQuestionType.valueOf(createQuestionRequest.getQuestionType().name()),
+                EnumUtils.fromStringOrNull(SurveyQuestionType.class, createQuestionRequest.getQuestionType().name()),
                 createQuestionRequest.getTitle(),
                 createQuestionRequest.getDescription(),
                 Boolean.TRUE.equals(createQuestionRequest.getRequired()),
@@ -76,7 +77,7 @@ public class SurveyQuestionController implements SurveyQuestionApi {
         log.info("질문 수정 요청 - surveyId: {}, questionId: {}, userId: {}", surveyId, questionId, user.userId());
 
         UpdateQuestionRequest request = new UpdateQuestionRequest(
-                SurveyQuestionType.valueOf(createQuestionRequest.getQuestionType().name()),
+                EnumUtils.fromStringOrNull(SurveyQuestionType.class, createQuestionRequest.getQuestionType().name()),
                 createQuestionRequest.getTitle(),
                 createQuestionRequest.getDescription(),
                 Boolean.TRUE.equals(createQuestionRequest.getRequired()),

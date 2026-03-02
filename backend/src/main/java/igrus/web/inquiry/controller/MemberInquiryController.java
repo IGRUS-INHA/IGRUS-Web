@@ -1,5 +1,6 @@
 package igrus.web.inquiry.controller;
 
+import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.PageableUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.inquiry.domain.InquiryType;
@@ -52,7 +53,7 @@ public class MemberInquiryController implements MemberInquiryApi {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
 
         CreateMemberInquiryRequest internalRequest = CreateMemberInquiryRequest.builder()
-                .type(InquiryType.valueOf(createMemberInquiryRequest.getType().getValue()))
+                .type(EnumUtils.fromStringOrNull(InquiryType.class, createMemberInquiryRequest.getType().getValue()))
                 .title(createMemberInquiryRequest.getTitle())
                 .content(createMemberInquiryRequest.getContent())
                 .attachments(createMemberInquiryRequest.getAttachments() != null

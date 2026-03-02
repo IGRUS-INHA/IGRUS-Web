@@ -1,5 +1,6 @@
 package igrus.web.community.comment.controller;
 
+import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.community.comment.domain.ReportStatus;
 import igrus.web.community.comment.dto.request.CreateCommentReportRequest;
@@ -68,7 +69,7 @@ public class CommentReportController implements CommentReportApi {
         log.info("신고 처리 요청 - reportId: {}, status: {}, userId: {}",
                 reportId, updateReportStatusRequest.getStatus(), user.userId());
 
-        ReportStatus status = ReportStatus.valueOf(updateReportStatusRequest.getStatus().getValue());
+        ReportStatus status = EnumUtils.fromStringOrNull(ReportStatus.class, updateReportStatusRequest.getStatus().getValue());
         igrus.web.community.comment.dto.request.UpdateReportStatusRequest internalRequest =
                 new igrus.web.community.comment.dto.request.UpdateReportStatusRequest(status);
 
