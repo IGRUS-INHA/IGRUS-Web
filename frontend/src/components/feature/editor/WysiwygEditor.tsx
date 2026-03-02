@@ -42,14 +42,14 @@ export function WysiwygEditor({
   hasError,
 }: WysiwygEditorProps) {
   const editorRef = useRef<EditorInstance | null>(null);
+  const initialValueRef = useRef(value);
 
-  const handleCreate = useCallback(({ editor }: { editor: EditorInstance }) => {
-    // eslint-disable-line
+  const handleCreate = ({ editor }: { editor: EditorInstance }) => {
     editorRef.current = editor;
-    if (value) {
-      editor.commands.setContent(value);
+    if (initialValueRef.current) {
+      editor.commands.setContent(initialValueRef.current);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  };
 
   const handleUpdate = useCallback(
     ({ editor }: { editor: EditorInstance }) => {

@@ -67,7 +67,7 @@ export function EventCalendarPreview({
 
   // 외부에서 날짜가 변경되면 선택 중간 상태 초기화
   useEffect(() => {
-    setSelectingStart(null); // eslint-disable-line react-hooks/set-state-in-effect
+    setSelectingStart(null);
   }, [
     eventStartDate,
     eventEndDate,

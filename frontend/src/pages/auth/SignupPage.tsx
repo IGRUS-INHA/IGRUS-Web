@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -277,8 +277,7 @@ export default function SignupPage() {
       codeTimer.stop();
       resendCooldown.stop();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFullEmail, verifiedEmail]);
+  }, [currentFullEmail, verifiedEmail, codeTimer, resendCooldown]);
 
   // 비밀번호 변경 시 비밀번호 확인 필드 재검증
   useEffect(() => {
@@ -327,11 +326,24 @@ export default function SignupPage() {
   };
 
   // 이메일 중복 체크 통과 시 자동으로 인증 코드 발송
+  // emailCheck.isAvailable 변경 시에만 실행 — 나머지는 가드 조건이므로 ref로 참조
+  const emailVerifiedRef = useRef(emailVerified);
+  emailVerifiedRef.current = emailVerified;
+  const codeSentRef = useRef(codeSent);
+  codeSentRef.current = codeSent;
+  const sendingCodeRef = useRef(sendingCode);
+  sendingCodeRef.current = sendingCode;
+  const handleSendCodeRef = useRef<() => Promise<void>>();
+
   useEffect(() => {
-    if (emailCheck.isAvailable && !emailVerified && !codeSent && !sendingCode) {
-      handleSendCode();
+    if (
+      emailCheck.isAvailable &&
+      !emailVerifiedRef.current &&
+      !codeSentRef.current &&
+      !sendingCodeRef.current
+    ) {
+      handleSendCodeRef.current?.();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emailCheck.isAvailable]);
 
   const handleSendCode = async () => {
@@ -355,6 +367,7 @@ export default function SignupPage() {
       setSendingCode(false);
     }
   };
+  handleSendCodeRef.current = handleSendCode;
 
   const handleVerifyCode = async () => {
     setVerifyingCode(true);

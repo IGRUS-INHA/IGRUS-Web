@@ -61,7 +61,7 @@ export default function BoardListPage() {
 
   // 검색어가 변경되면 첫 페이지로 이동
   useEffect(() => {
-    setCurrentPage(1); // eslint-disable-line react-hooks/set-state-in-effect
+    setCurrentPage(1);
   }, [searchKeyword]);
 
   // Fetch posts (Mock 또는 실제 API)

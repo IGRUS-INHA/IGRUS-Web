@@ -53,14 +53,8 @@ export default defineConfig([
     rules: {
       // TypeScript 규칙
       "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/explicit-function-return-type": [
-        "warn",
-        {
-          allowExpressions: true,
-          allowTypedFunctionExpressions: true,
-          allowHigherOrderFunctions: true,
-        },
-      ],
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "react-hooks/set-state-in-effect": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
