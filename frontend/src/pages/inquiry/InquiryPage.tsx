@@ -1,9 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Clock, Search } from "lucide-react";
-import {
-  useCreateMemberInquiry,
-  useCreateGuestInquiry,
-} from "@/api/model/inquiry/inquiry";
+import { useCreateMemberInquiry } from "@/api/model/member-inquiry/member-inquiry";
+import { useCreateGuestInquiry } from "@/api/model/guest-inquiry/guest-inquiry";
 import { useAuth } from "@/hooks/useAuth";
 import InquiryForm from "@/components/feature/inquiry/InquiryForm";
 import type { InquiryFormData } from "@/components/feature/inquiry/InquiryForm";

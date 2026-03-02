@@ -51,8 +51,9 @@ export interface PasswordSignupRequest {
   studentId: string;
   /**
    * 사용자 이름
-   * @minLength 0
+   * @minLength 1
    * @maxLength 50
+   * @pattern .*\S.*
    */
   name: string;
   /**
@@ -75,8 +76,9 @@ export interface PasswordSignupRequest {
   phoneNumber: string;
   /**
    * 학과명
-   * @minLength 0
+   * @minLength 1
    * @maxLength 50
+   * @pattern .*\S.*
    */
   department: string;
   /** 동아리 가입 동기 */
@@ -116,7 +118,7 @@ export interface PasswordSignupRequest {
   grade: number;
   /** 재학 상태 */
   enrollmentStatus: PasswordSignupRequestEnrollmentStatus;
-  /** 개인정보 처리방침 동의 여부 */
+  /** 개인정보 처리방침 동의 여부 (반드시 true여야 함) */
   privacyConsent: boolean;
   /**
    * 이메일 인증 토큰 (사전 인증 완료 시 발급)

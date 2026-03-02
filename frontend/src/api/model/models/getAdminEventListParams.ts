@@ -33,21 +33,21 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
+import type { GetAdminEventListEventStatus } from "./getAdminEventListEventStatus";
+import type { GetAdminEventListRegistrationStatus } from "./getAdminEventListRegistrationStatus";
+import type { GetAdminEventListVisibility } from "./getAdminEventListVisibility";
 
-/**
- * 비밀번호 기반 로그인 요청
- */
-export interface PasswordLoginRequest {
+export type GetAdminEventListParams = {
   /**
-   * 학번 (8자리 숫자)
-   * @minLength 1
-   * @pattern ^\d{8}$
+   * 공개 상태 필터 (PUBLISHED, UNPUBLISHED)
    */
-  studentId: string;
+  visibility?: GetAdminEventListVisibility;
   /**
-   * 비밀번호
-   * @minLength 1
-   * @pattern .*\S.*
+   * 행사 진행 상태 필터 (UPCOMING, ONGOING, COMPLETED, CANCELED)
    */
-  password: string;
-}
+  eventStatus?: GetAdminEventListEventStatus;
+  /**
+   * 등록 상태 필터 (NOT_STARTED, OPEN, CLOSED)
+   */
+  registrationStatus?: GetAdminEventListRegistrationStatus;
+};

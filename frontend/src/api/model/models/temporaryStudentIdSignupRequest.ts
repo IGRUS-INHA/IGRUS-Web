@@ -45,8 +45,9 @@ import type { TemporaryStudentIdSignupRequestWishesItem } from "./temporaryStude
 export interface TemporaryStudentIdSignupRequest {
   /**
    * 사용자 이름
-   * @minLength 0
+   * @minLength 1
    * @maxLength 50
+   * @pattern .*\S.*
    */
   name: string;
   /**
@@ -69,8 +70,9 @@ export interface TemporaryStudentIdSignupRequest {
   phoneNumber: string;
   /**
    * 학과명
-   * @minLength 0
+   * @minLength 1
    * @maxLength 50
+   * @pattern .*\S.*
    */
   department: string;
   /** 동아리 가입 동기 */

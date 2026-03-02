@@ -34,20 +34,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-/**
- * 비밀번호 기반 로그인 요청
- */
-export interface PasswordLoginRequest {
-  /**
-   * 학번 (8자리 숫자)
-   * @minLength 1
-   * @pattern ^\d{8}$
-   */
-  studentId: string;
-  /**
-   * 비밀번호
-   * @minLength 1
-   * @pattern .*\S.*
-   */
-  password: string;
-}
+export type AdminEventListResponseRegistrationStatus =
+  (typeof AdminEventListResponseRegistrationStatus)[keyof typeof AdminEventListResponseRegistrationStatus];
+
+export const AdminEventListResponseRegistrationStatus = {
+  NOT_STARTED: "NOT_STARTED",
+  OPEN: "OPEN",
+  CLOSED: "CLOSED",
+} as const;

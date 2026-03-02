@@ -40,7 +40,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 export interface ForceWithdrawRequest {
   /**
    * 강제 탈퇴 사유
-   * @minLength 0
+   * @minLength 1
    * @maxLength 500
    */
   reason: string;

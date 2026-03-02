@@ -8,7 +8,7 @@ import {
   Paperclip,
   FileText,
 } from "lucide-react";
-import { useGetMyInquiry } from "@/api/model/inquiry/inquiry";
+import { useGetMyInquiry } from "@/api/model/member-inquiry/member-inquiry";
 import type { InquiryResponse } from "@/api/model/models/inquiryResponse";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";

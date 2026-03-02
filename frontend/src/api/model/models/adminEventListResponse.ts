@@ -33,21 +33,27 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
+import type { AdminEventListResponseEventStatus } from "./adminEventListResponseEventStatus";
+import type { AdminEventListResponseRegistrationStatus } from "./adminEventListResponseRegistrationStatus";
+import type { AdminEventListResponseRegistrationType } from "./adminEventListResponseRegistrationType";
+import type { AdminEventListResponseVisibility } from "./adminEventListResponseVisibility";
 
 /**
- * 비밀번호 기반 로그인 요청
+ * 관리자용 행사 목록 응답 (visibility 포함)
  */
-export interface PasswordLoginRequest {
-  /**
-   * 학번 (8자리 숫자)
-   * @minLength 1
-   * @pattern ^\d{8}$
-   */
-  studentId: string;
-  /**
-   * 비밀번호
-   * @minLength 1
-   * @pattern .*\S.*
-   */
-  password: string;
+export interface AdminEventListResponse {
+  id?: number;
+  title?: string;
+  location?: string;
+  eventStartAt?: string;
+  eventEndAt?: string;
+  registrationEndAt?: string;
+  capacity?: number;
+  currentCount?: number;
+  registrationStatus?: AdminEventListResponseRegistrationStatus;
+  eventStatus?: AdminEventListResponseEventStatus;
+  registrationType?: AdminEventListResponseRegistrationType;
+  isRegistrable?: boolean;
+  /** 공개 상태 */
+  visibility?: AdminEventListResponseVisibility;
 }

@@ -69,6 +69,11 @@ EventDetailResponse:
     currentCount:
       type: integer
       format: int32
+    visibility:
+      type: string
+      enum:
+      - UNPUBLISHED
+      - PUBLISHED
     registrationStatus:
       type: string
       enum:
@@ -235,6 +240,11 @@ EventListResponse:
     currentCount:
       type: integer
       format: int32
+    visibility:
+      type: string
+      enum:
+      - UNPUBLISHED
+      - PUBLISHED
     registrationStatus:
       type: string
       enum:
