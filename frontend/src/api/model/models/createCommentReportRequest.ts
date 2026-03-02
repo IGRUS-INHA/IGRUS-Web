@@ -34,11 +34,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-<<<<<<<< HEAD:frontend/src/api/model/models/eventStatusChangeReasonRequest.ts
-export interface EventStatusChangeReasonRequest {
-========
 export interface CreateCommentReportRequest {
->>>>>>>> origin/main:frontend/src/api/model/models/createCommentReportRequest.ts
   /** @minLength 1 */
   reason: string;
 }
