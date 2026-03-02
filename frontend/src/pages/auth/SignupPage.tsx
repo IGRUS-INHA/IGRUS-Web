@@ -333,7 +333,7 @@ export default function SignupPage() {
   codeSentRef.current = codeSent;
   const sendingCodeRef = useRef(sendingCode);
   sendingCodeRef.current = sendingCode;
-  const handleSendCodeRef = useRef<() => Promise<void>>();
+  const handleSendCodeRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     if (
