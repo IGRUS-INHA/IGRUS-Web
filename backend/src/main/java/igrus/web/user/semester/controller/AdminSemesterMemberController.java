@@ -1,94 +1,73 @@
 package igrus.web.user.semester.controller;
 
-import igrus.web.common.config.SwaggerConfig;
-import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import igrus.web.user.semester.dto.request.RegisterSemesterMembersRequest;
-import igrus.web.user.semester.dto.request.RemoveSemesterMembersRequest;
+import igrus.web.generated.api.AdminSemesterMemberApi;
+import igrus.web.generated.model.GetCandidateMembers200ResponseInner;
+import igrus.web.generated.model.RegisterMembers200Response;
+import igrus.web.generated.model.RegisterMembersRequest;
+import igrus.web.generated.model.RemoveMembersRequest;
 import igrus.web.user.semester.dto.response.CandidateMemberResponse;
 import igrus.web.user.semester.dto.response.RegisterSemesterMembersResponse;
 import igrus.web.user.semester.service.read.GetCandidateMembersService;
 import igrus.web.user.semester.service.write.RegisterSemesterMembersService;
 import igrus.web.user.semester.service.write.RemoveSemesterMembersService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/admin/semesters")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Admin Semester Member", description = "학기별 회원 관리 API (ADMIN 전용)")
-@SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
-public class AdminSemesterMemberController {
+public class AdminSemesterMemberController implements AdminSemesterMemberApi {
 
     private final GetCandidateMembersService getCandidateMembersService;
     private final RegisterSemesterMembersService registerSemesterMembersService;
     private final RemoveSemesterMembersService removeSemesterMembersService;
 
-    @Operation(summary = "등록 후보 회원 목록 조회",
-            description = "특정 학기에 등록 가능한 회원 목록을 조회합니다. ASSOCIATE 이상 + ACTIVE 상태 회원이 대상입니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 연도 또는 학기"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 권한 필요)")
-    })
-    @GetMapping("/{year}/{semester}/candidates")
-    public ResponseEntity<List<CandidateMemberResponse>> getCandidateMembers(
-            @Parameter(description = "연도", example = "2026") @PathVariable int year,
-            @Parameter(description = "학기 (1 또는 2)", example = "1") @PathVariable int semester,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
-    ) {
-        List<CandidateMemberResponse> candidates = getCandidateMembersService.getCandidateMembers(year, semester);
-        return ResponseEntity.ok(candidates);
-    }
+    @Override
+    public ResponseEntity<List<GetCandidateMembers200ResponseInner>> getCandidateMembers(
+            Integer year, Integer semester) {
+        List<CandidateMemberResponse> candidates =
+                getCandidateMembersService.getCandidateMembers(year, semester);
 
-    @Operation(summary = "회원 일괄 등록",
-            description = "선택된 회원들을 특정 학기에 일괄 등록합니다. 이미 등록된 회원은 건너뜁니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "등록 완료"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (빈 목록, 잘못된 연도/학기)"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 권한 필요)")
-    })
-    @PostMapping("/{year}/{semester}/members")
-    public ResponseEntity<RegisterSemesterMembersResponse> registerMembers(
-            @Parameter(description = "연도", example = "2026") @PathVariable int year,
-            @Parameter(description = "학기 (1 또는 2)", example = "1") @PathVariable int semester,
-            @Valid @RequestBody RegisterSemesterMembersRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
-    ) {
-        RegisterSemesterMembersResponse response = registerSemesterMembersService.registerMembers(year, semester, request.userIds());
+        List<GetCandidateMembers200ResponseInner> response = candidates.stream()
+                .map(c -> new GetCandidateMembers200ResponseInner()
+                        .userId(c.userId())
+                        .studentId(c.studentId())
+                        .name(c.name())
+                        .department(c.department())
+                        .role(GetCandidateMembers200ResponseInner.RoleEnum.fromValue(c.role().name()))
+                        .alreadyRegistered(c.alreadyRegistered())
+                        .motivation(c.motivation())
+                        .wishes(c.wishes().stream()
+                                .map(w -> GetCandidateMembers200ResponseInner.WishesEnum.fromValue(w.name()))
+                                .toList()))
+                .toList();
+
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "회원 일괄 제외",
-            description = "선택된 회원들을 특정 학기에서 일괄 제외합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "제외 완료"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (빈 목록, 잘못된 연도/학기)"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 권한 필요)")
-    })
-    @DeleteMapping("/{year}/{semester}/members")
+    @Override
+    public ResponseEntity<RegisterMembers200Response> registerMembers(
+            Integer year, Integer semester, RegisterMembersRequest registerMembersRequest) {
+        RegisterSemesterMembersResponse internal =
+                registerSemesterMembersService.registerMembers(year, semester, registerMembersRequest.getUserIds());
+
+        RegisterMembers200Response response = new RegisterMembers200Response()
+                .registeredCount(internal.registeredCount())
+                .skippedCount(internal.skippedCount())
+                .totalRequested(internal.totalRequested());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
     public ResponseEntity<Integer> removeMembers(
-            @Parameter(description = "연도", example = "2026") @PathVariable int year,
-            @Parameter(description = "학기 (1 또는 2)", example = "1") @PathVariable int semester,
-            @Valid @RequestBody RemoveSemesterMembersRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
-    ) {
-        int removedCount = removeSemesterMembersService.removeMembers(year, semester, request.userIds());
+            Integer year, Integer semester, RemoveMembersRequest removeMembersRequest) {
+        int removedCount = removeSemesterMembersService.removeMembers(
+                year, semester, removeMembersRequest.getUserIds());
         return ResponseEntity.ok(removedCount);
     }
 }

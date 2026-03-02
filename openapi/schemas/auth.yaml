@@ -32,7 +32,8 @@ PasswordSignupRequest:
       description: 사용자 이름
       example: 홍길동
       maxLength: 50
-      minLength: 0
+      minLength: 1
+      pattern: .*\S.*
     email:
       type: string
       format: email
@@ -58,7 +59,8 @@ PasswordSignupRequest:
       description: 학과명
       example: 컴퓨터공학과
       maxLength: 50
-      minLength: 0
+      minLength: 1
+      pattern: .*\S.*
     motivation:
       type: string
       description: 동아리 가입 동기
@@ -145,7 +147,7 @@ PasswordSignupRequest:
       example: ENROLLED
     privacyConsent:
       type: boolean
-      description: 개인정보 처리방침 동의 여부
+      description: 개인정보 처리방침 동의 여부 (반드시 true여야 함)
       example: true
     verificationToken:
       type: string
@@ -191,7 +193,8 @@ TemporaryStudentIdSignupRequest:
       description: 사용자 이름
       example: 홍길동
       maxLength: 50
-      minLength: 0
+      minLength: 1
+      pattern: .*\S.*
     email:
       type: string
       format: email
@@ -217,7 +220,8 @@ TemporaryStudentIdSignupRequest:
       description: 학과명
       example: 컴퓨터공학과
       maxLength: 50
-      minLength: 0
+      minLength: 1
+      pattern: .*\S.*
     motivation:
       type: string
       description: 동아리 가입 동기
@@ -429,6 +433,7 @@ PasswordLoginRequest:
       description: 비밀번호
       example: Password1!
       minLength: 1
+      pattern: .*\S.*
   required:
   - password
   - studentId

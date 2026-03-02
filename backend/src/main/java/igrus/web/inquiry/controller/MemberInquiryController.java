@@ -1,105 +1,174 @@
 package igrus.web.inquiry.controller;
 
-import igrus.web.common.config.SwaggerConfig;
+import igrus.web.common.util.EnumUtils;
+import igrus.web.common.util.PageableUtils;
+import igrus.web.common.util.SecurityUtils;
+import igrus.web.inquiry.domain.InquiryType;
+import igrus.web.inquiry.dto.request.AttachmentInfo;
 import igrus.web.inquiry.dto.request.CreateMemberInquiryRequest;
+import igrus.web.inquiry.dto.response.AttachmentResponse;
 import igrus.web.inquiry.dto.response.InquiryCreateResponse;
 import igrus.web.inquiry.dto.response.InquiryListPageResponse;
 import igrus.web.inquiry.dto.response.InquiryListResponse;
+import igrus.web.inquiry.dto.response.InquiryReplyResponse;
 import igrus.web.inquiry.dto.response.InquiryResponse;
 import igrus.web.inquiry.service.create.CreateMemberInquiryService;
 import igrus.web.inquiry.service.read.GetMyInquiriesService;
 import igrus.web.inquiry.service.read.GetMyInquiryService;
+import igrus.web.generated.api.MemberInquiryApi;
+import igrus.web.generated.model.CreateMemberInquiry201Response;
+import igrus.web.generated.model.GetAllInquiries200Response;
+import igrus.web.generated.model.GetAllInquiries200ResponseInquiriesInner;
+import igrus.web.generated.model.LookupGuestInquiry200Response;
+import igrus.web.generated.model.LookupGuestInquiry200ResponseAttachmentsInner;
+import igrus.web.generated.model.LookupGuestInquiry200ResponseReply;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 회원 문의 컨트롤러.
  * 인증된 사용자 전용 API.
  */
 @RestController
-@RequestMapping("/api/v1/inquiries")
 @RequiredArgsConstructor
-@Tag(name = "Inquiry", description = "문의 API")
-public class MemberInquiryController {
+public class MemberInquiryController implements MemberInquiryApi {
 
     private final CreateMemberInquiryService createMemberInquiryService;
     private final GetMyInquiriesService getMyInquiriesService;
     private final GetMyInquiryService getMyInquiryService;
 
-    @Operation(
-            summary = "회원 문의 작성",
-            description = "로그인한 회원이 문의를 작성합니다. JWT 인증이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "문의 생성 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (유효성 검증 실패)"),
-            @ApiResponse(responseCode = "401", description = "인증 필요")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/member")
-    public ResponseEntity<InquiryCreateResponse> createMemberInquiry(
-            @Valid @RequestBody CreateMemberInquiryRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+    public ResponseEntity<CreateMemberInquiry201Response> createMemberInquiry(
+            igrus.web.generated.model.CreateMemberInquiryRequest createMemberInquiryRequest
     ) {
-        InquiryCreateResponse response = createMemberInquiryService.createMemberInquiry(request, user.userId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+
+        CreateMemberInquiryRequest internalRequest = CreateMemberInquiryRequest.builder()
+                .type(EnumUtils.fromStringOrNull(InquiryType.class, createMemberInquiryRequest.getType().getValue()))
+                .title(createMemberInquiryRequest.getTitle())
+                .content(createMemberInquiryRequest.getContent())
+                .attachments(createMemberInquiryRequest.getAttachments() != null
+                        ? createMemberInquiryRequest.getAttachments().stream()
+                                .map(a -> AttachmentInfo.builder()
+                                        .fileUrl(a.getFileUrl())
+                                        .fileName(a.getFileName())
+                                        .fileSize(a.getFileSize())
+                                        .build())
+                                .toList()
+                        : null)
+                .build();
+
+        InquiryCreateResponse response = createMemberInquiryService.createMemberInquiry(
+                internalRequest, user.userId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new CreateMemberInquiry201Response()
+                .id(response.getId())
+                .inquiryNumber(response.getInquiryNumber())
+                .message(response.getMessage()));
     }
 
-    @Operation(
-            summary = "내 문의 목록 조회",
-            description = "로그인한 회원의 문의 목록을 조회합니다. JWT 인증이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/my")
-    public ResponseEntity<InquiryListPageResponse> getMyInquiries(
-            @AuthenticationPrincipal AuthenticatedUser user,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable
+    public ResponseEntity<GetAllInquiries200Response> getMyInquiries(
+            Integer page,
+            Integer size,
+            List<String> sort
     ) {
-        Page<InquiryListResponse> page = getMyInquiriesService.getMyInquiries(user.userId(), pageable);
-        return ResponseEntity.ok(InquiryListPageResponse.from(page));
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        Page<InquiryListResponse> responsePage = getMyInquiriesService.getMyInquiries(
+                user.userId(), pageable);
+        InquiryListPageResponse pageResponse = InquiryListPageResponse.from(responsePage);
+
+        GetAllInquiries200Response result = new GetAllInquiries200Response()
+                .inquiries(pageResponse.inquiries().stream()
+                        .map(this::mapToInquiriesInner)
+                        .toList())
+                .totalElements(pageResponse.totalElements())
+                .totalPages(pageResponse.totalPages())
+                .currentPage(pageResponse.currentPage())
+                .hasNext(pageResponse.hasNext());
+        return ResponseEntity.ok(result);
     }
 
-    @Operation(
-            summary = "내 문의 상세 조회",
-            description = "로그인한 회원의 특정 문의 상세 정보를 조회합니다. JWT 인증이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "404", description = "문의를 찾을 수 없음")
-    })
-    @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
+    @Override
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/my/{id}")
-    public ResponseEntity<InquiryResponse> getMyInquiry(
-            @Parameter(description = "문의 ID", required = true) @PathVariable Long id,
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
+    public ResponseEntity<LookupGuestInquiry200Response> getMyInquiry(Long id) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         InquiryResponse response = getMyInquiryService.getMyInquiry(id, user.userId());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(mapToLookupGuestInquiry200Response(response));
+    }
+
+    // ===== 매핑 헬퍼 =====
+
+    private GetAllInquiries200ResponseInquiriesInner mapToInquiriesInner(InquiryListResponse r) {
+        return new GetAllInquiries200ResponseInquiriesInner()
+                .id(r.getId())
+                .inquiryNumber(r.getInquiryNumber())
+                .type(r.getType() != null
+                        ? GetAllInquiries200ResponseInquiriesInner.TypeEnum.fromValue(r.getType().name())
+                        : null)
+                .typeDescription(r.getTypeDescription())
+                .status(r.getStatus() != null
+                        ? GetAllInquiries200ResponseInquiriesInner.StatusEnum.fromValue(r.getStatus().name())
+                        : null)
+                .statusDescription(r.getStatusDescription())
+                .title(r.getTitle())
+                .authorName(r.getAuthorName())
+                .guest(r.isGuest())
+                .hasReply(r.isHasReply())
+                .attachmentCount(r.getAttachmentCount())
+                .createdAt(r.getCreatedAt());
+    }
+
+    private LookupGuestInquiry200Response mapToLookupGuestInquiry200Response(InquiryResponse r) {
+        return new LookupGuestInquiry200Response()
+                .id(r.getId())
+                .inquiryNumber(r.getInquiryNumber())
+                .type(r.getType() != null
+                        ? LookupGuestInquiry200Response.TypeEnum.fromValue(r.getType().name())
+                        : null)
+                .typeDescription(r.getTypeDescription())
+                .status(r.getStatus() != null
+                        ? LookupGuestInquiry200Response.StatusEnum.fromValue(r.getStatus().name())
+                        : null)
+                .statusDescription(r.getStatusDescription())
+                .title(r.getTitle())
+                .content(r.getContent())
+                .authorName(r.getAuthorName())
+                .authorEmail(r.getAuthorEmail())
+                .guest(r.isGuest())
+                .attachments(r.getAttachments() != null
+                        ? r.getAttachments().stream()
+                                .map(this::mapToAttachment)
+                                .toList()
+                        : List.of())
+                .reply(r.getReply() != null ? mapToReply(r.getReply()) : null)
+                .createdAt(r.getCreatedAt())
+                .updatedAt(r.getUpdatedAt());
+    }
+
+    private LookupGuestInquiry200ResponseAttachmentsInner mapToAttachment(AttachmentResponse a) {
+        return new LookupGuestInquiry200ResponseAttachmentsInner()
+                .id(a.getId())
+                .fileUrl(a.getFileUrl())
+                .fileName(a.getFileName())
+                .fileSize(a.getFileSize());
+    }
+
+    private LookupGuestInquiry200ResponseReply mapToReply(InquiryReplyResponse r) {
+        return new LookupGuestInquiry200ResponseReply()
+                .id(r.getId())
+                .content(r.getContent())
+                .repliedByName(r.getRepliedByName())
+                .createdAt(r.getCreatedAt());
     }
 }

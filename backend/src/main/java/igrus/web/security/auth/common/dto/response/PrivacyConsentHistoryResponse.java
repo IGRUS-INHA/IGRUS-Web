@@ -1,19 +1,14 @@
 package igrus.web.security.auth.common.dto.response;
 
 import igrus.web.security.auth.common.domain.PrivacyConsent;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
-@Schema(description = "개인정보 동의 이력 응답")
 public record PrivacyConsentHistoryResponse(
-        @Schema(description = "사용자 ID", example = "1")
         Long userId,
 
-        @Schema(description = "동의 이력 목록 (최신순)")
         List<PrivacyConsentResponse> consents,
 
-        @Schema(description = "총 동의 횟수", example = "3")
         int totalCount
 ) {
 

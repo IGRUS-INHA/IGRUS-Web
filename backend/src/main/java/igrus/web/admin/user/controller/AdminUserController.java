@@ -1,11 +1,7 @@
 package igrus.web.admin.user.controller;
 
 import igrus.web.admin.user.dto.AdminEditUserInfoRequest;
-import igrus.web.admin.user.dto.ChangeUserRoleRequest;
-import igrus.web.admin.user.dto.ChangeUserStatusRequest;
-import igrus.web.admin.user.dto.ForceWithdrawRequest;
 import igrus.web.admin.user.dto.UserDetailResponse;
-import igrus.web.admin.user.dto.UserListPageResponse;
 import igrus.web.admin.user.dto.UserListResponse;
 import igrus.web.admin.user.dto.UserRoleHistoryResponse;
 import igrus.web.admin.user.service.AdminEditUserInfoService;
@@ -16,47 +12,44 @@ import igrus.web.admin.user.service.ForceWithdrawService;
 import igrus.web.admin.user.service.GetUserDetailService;
 import igrus.web.admin.user.service.GetUserListService;
 import igrus.web.admin.user.service.GetUserRoleHistoryService;
+import igrus.web.common.util.EnumUtils;
+import igrus.web.common.util.PageResponseMapper;
+import igrus.web.common.util.PageableUtils;
+import igrus.web.common.util.SecurityUtils;
+import igrus.web.generated.api.AdminUserManagementApi;
+import igrus.web.generated.model.GetRoleHistories200Response;
+import igrus.web.generated.model.GetRoleHistories200ResponseContentInner;
+import igrus.web.generated.model.GetUserDetail200Response;
+import igrus.web.generated.model.GetUserList200Response;
+import igrus.web.generated.model.GetUserList200ResponseUsersInner;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
-import igrus.web.common.config.SwaggerConfig;
+import igrus.web.user.domain.EnrollmentStatus;
+import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.Interest;
+import igrus.web.user.domain.JoinRoute;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import igrus.web.user.domain.Wish;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import jakarta.validation.Valid;
-import java.time.Instant;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
+import java.util.List;
+
+/**
+ * 관리자 회원 관리 컨트롤러.
+ * 회원 목록/상세 조회, 권한/상태 변경, 강제 탈퇴/활성화, 정보 수정 API를 제공합니다.
+ */
+@Slf4j
 @RestController
-@RequestMapping("/api/v1/admin/users")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-@Tag(name = "Admin User Management", description = "관리자 회원 관리 API (OPERATOR 이상, 권한 변경은 ADMIN 전용)")
-@SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
-public class AdminUserController {
+public class AdminUserController implements AdminUserManagementApi {
 
     private final GetUserListService getUserListService;
     private final GetUserDetailService getUserDetailService;
@@ -67,180 +60,228 @@ public class AdminUserController {
     private final AdminEditUserInfoService adminEditUserInfoService;
     private final GetUserRoleHistoryService getUserRoleHistoryService;
 
-    @Operation(
-            summary = "권한 변경 이력 조회",
-            description = "권한 변경 이력을 조회합니다. 사용자, 역할, 변경자, 날짜 범위로 필터링 가능합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (날짜 범위 역전 등)"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
-    })
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/role-histories")
-    public ResponseEntity<Page<UserRoleHistoryResponse>> getRoleHistories(
-            @Parameter(description = "대상 사용자 ID") @RequestParam(required = false) Long userId,
-            @Parameter(description = "변경 전 역할 필터") @RequestParam(required = false) UserRole previousRole,
-            @Parameter(description = "변경 후 역할 필터") @RequestParam(required = false) UserRole newRole,
-            @Parameter(description = "변경자 ID 필터") @RequestParam(required = false) Long changedBy,
-            @Parameter(description = "시작 일시") @RequestParam(required = false) Instant startDate,
-            @Parameter(description = "종료 일시") @RequestParam(required = false) Instant endDate,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    public ResponseEntity<GetRoleHistories200Response> getRoleHistories(
+            Long userId,
+            String previousRole,
+            String newRole,
+            Long changedBy,
+            Instant startDate,
+            Instant endDate,
+            Integer page,
+            Integer size,
+            List<String> sort
     ) {
-        return ResponseEntity.ok(getUserRoleHistoryService.getUserRoleHistories(
-                userId, previousRole, newRole, changedBy, startDate, endDate, pageable));
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        log.info("권한 변경 이력 조회 요청 - userId: {}, previousRole: {}, newRole: {}, changedBy: {}, page: {}, size: {}",
+                userId, previousRole, newRole, changedBy, pageable.getPageNumber(), pageable.getPageSize());
+
+        UserRole prevRole = EnumUtils.fromStringOrNull(UserRole.class, previousRole);
+        UserRole nextRole = EnumUtils.fromStringOrNull(UserRole.class, newRole);
+
+        Page<UserRoleHistoryResponse> resultPage = getUserRoleHistoryService.getUserRoleHistories(
+                userId, prevRole, nextRole, changedBy, startDate, endDate, pageable);
+
+        return ResponseEntity.ok(PageResponseMapper.toSpringPageResponse(
+                resultPage,
+                h -> new GetRoleHistories200ResponseContentInner()
+                        .id(h.id())
+                        .userId(h.userId())
+                        .userName(h.userName())
+                        .studentId(h.studentId())
+                        .previousRole(h.previousRole() != null
+                                ? GetRoleHistories200ResponseContentInner.PreviousRoleEnum.fromValue(h.previousRole().name()) : null)
+                        .newRole(h.newRole() != null
+                                ? GetRoleHistories200ResponseContentInner.NewRoleEnum.fromValue(h.newRole().name()) : null)
+                        .reason(h.reason())
+                        .changedBy(h.changedBy())
+                        .changedAt(h.changedAt()),
+                GetRoleHistories200Response::new,
+                (r, content, meta) -> r
+                        .content(content)
+                        .totalElements(meta.totalElements())
+                        .totalPages(meta.totalPages())
+                        .number(meta.number())
+                        .size(meta.size())
+                        .numberOfElements(meta.numberOfElements())
+                        .first(meta.first())
+                        .last(meta.last())
+                        .empty(meta.empty())
+                        .pageable(meta.pageable())
+                        .sort(meta.sort())
+        ));
     }
 
-    @Operation(
-            summary = "회원 목록 조회",
-            description = "회원 목록을 조회합니다. 검색어, 역할, 상태로 필터링 가능합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-            description = "조회 성공",
-    content = @Content(schema = @Schema(implementation = UserListPageResponse.class))
-            ),
-    @ApiResponse(responseCode = "401", description = "인증 필요"),
-    @ApiResponse(responseCode = "403", description = "권한 없음 (OPERATOR 이상 필요)")
-    })
-    @GetMapping
-    public ResponseEntity<UserListPageResponse> getUserList(
-            @Parameter(description = "검색어 (이름 또는 학번)") @RequestParam(required = false) String keyword,
-            @Parameter(description = "역할 필터") @RequestParam(required = false) UserRole role,
-            @Parameter(description = "상태 필터") @RequestParam(required = false) UserStatus status,
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    @Override
+    public ResponseEntity<GetUserList200Response> getUserList(
+            String keyword,
+            String role,
+            String status,
+            Integer page,
+            Integer size,
+            List<String> sort
     ) {
-        Page<UserListResponse> page = getUserListService.getUserList(keyword, role, status, pageable);
-        return ResponseEntity.ok(UserListPageResponse.from(page));
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        log.info("회원 목록 조회 요청 - keyword: {}, role: {}, status: {}, page: {}, size: {}",
+                keyword, role, status, pageable.getPageNumber(), pageable.getPageSize());
+
+        UserRole userRole = EnumUtils.fromStringOrNull(UserRole.class, role);
+        UserStatus userStatus = EnumUtils.fromStringOrNull(UserStatus.class, status);
+
+        Page<UserListResponse> resultPage = getUserListService.getUserList(keyword, userRole, userStatus, pageable);
+        return ResponseEntity.ok(new GetUserList200Response()
+                .users(resultPage.getContent().stream()
+                        .map(u -> new GetUserList200ResponseUsersInner()
+                                .userId(u.userId())
+                                .studentId(u.studentId())
+                                .name(u.name())
+                                .email(u.email())
+                                .role(GetUserList200ResponseUsersInner.RoleEnum.fromValue(u.role().name()))
+                                .status(GetUserList200ResponseUsersInner.StatusEnum.fromValue(u.status().name()))
+                                .createdAt(u.createdAt()))
+                        .toList())
+                .totalElements(resultPage.getTotalElements())
+                .totalPages(resultPage.getTotalPages())
+                .currentPage(resultPage.getNumber())
+                .hasNext(resultPage.hasNext()));
     }
 
-    @Operation(
-            summary = "회원 상세 조회",
-            description = "특정 회원의 상세 정보를 조회합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = UserDetailResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (OPERATOR 이상 필요)"),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
-    })
-    @GetMapping("/{userId}")
-    public ResponseEntity<UserDetailResponse> getUserDetail(
-            @Parameter(description = "사용자 ID") @PathVariable Long userId
-    ) {
-        return ResponseEntity.ok(getUserDetailService.getUserDetail(userId));
+    @Override
+    public ResponseEntity<GetUserDetail200Response> getUserDetail(Long userId) {
+        log.info("회원 상세 조회 요청 - userId: {}", userId);
+
+        UserDetailResponse result = getUserDetailService.getUserDetail(userId);
+        return ResponseEntity.ok(new GetUserDetail200Response()
+                .userId(result.userId())
+                .studentId(result.studentId())
+                .name(result.name())
+                .email(result.email())
+                .phoneNumber(result.phoneNumber())
+                .department(result.department())
+                .motivation(result.motivation())
+                .wishes(result.wishes() != null
+                        ? result.wishes().stream()
+                                .map(w -> GetUserDetail200Response.WishesEnum.fromValue(w.name()))
+                                .toList()
+                        : null)
+                .interests(result.interests() != null
+                        ? result.interests().stream()
+                                .map(i -> GetUserDetail200Response.InterestsEnum.fromValue(i.name()))
+                                .toList()
+                        : null)
+                .customInterest(result.customInterest())
+                .joinRoute(result.joinRoute() != null
+                        ? GetUserDetail200Response.JoinRouteEnum.fromValue(result.joinRoute().name()) : null)
+                .customJoinRoute(result.customJoinRoute())
+                .gender(result.gender() != null
+                        ? GetUserDetail200Response.GenderEnum.fromValue(result.gender().name()) : null)
+                .grade(result.grade())
+                .enrollmentStatus(result.enrollmentStatus() != null
+                        ? GetUserDetail200Response.EnrollmentStatusEnum.fromValue(result.enrollmentStatus().name()) : null)
+                .role(GetUserDetail200Response.RoleEnum.fromValue(result.role().name()))
+                .status(GetUserDetail200Response.StatusEnum.fromValue(result.status().name()))
+                .createdAt(result.createdAt()));
     }
 
-    @Operation(
-            summary = "회원 권한 변경",
-            description = "회원의 권한을 변경합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "변경 성공"),
-            @ApiResponse(responseCode = "400", description = "자기 자신 권한 변경, 동일 역할 변경, 또는 마지막 ADMIN 권한 변경 시도"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
-    })
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{userId}/role")
     public ResponseEntity<Void> changeUserRole(
-            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
-            @Valid @RequestBody ChangeUserRoleRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+            Long userId,
+            igrus.web.generated.model.ChangeUserRoleRequest changeUserRoleRequest
     ) {
-        changeUserRoleService.changeUserRole(userId, request.role(), authenticatedUser.userId());
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("회원 권한 변경 요청 - targetUserId: {}, newRole: {}, performedBy: {}",
+                userId, changeUserRoleRequest.getRole(), user.userId());
+
+        UserRole newRole = EnumUtils.fromStringOrNull(UserRole.class, changeUserRoleRequest.getRole().name());
+        changeUserRoleService.changeUserRole(userId, newRole, user.userId());
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(
-            summary = "회원 상태 변경 (정지/해제)",
-            description = "회원을 정지하거나 정지를 해제합니다. SUSPEND: 사유와 종료일 필수. LIFT: 활성 정지가 있어야 합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "상태 변경 성공"),
-            @ApiResponse(responseCode = "400", description = "자기 자신 상태 변경 / 사유 미입력 / 종료일 미입력 / 이미 정지 / 해제할 정지 없음"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
-    })
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{userId}/status")
     public ResponseEntity<Void> changeUserStatus(
-            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
-            @Valid @RequestBody ChangeUserStatusRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+            Long userId,
+            igrus.web.generated.model.ChangeUserStatusRequest changeUserStatusRequest
     ) {
-        changeUserStatusService.changeUserStatus(userId, request, authenticatedUser.userId());
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("회원 상태 변경 요청 - targetUserId: {}, action: {}, performedBy: {}",
+                userId, changeUserStatusRequest.getAction(), user.userId());
+
+        igrus.web.admin.user.dto.ChangeUserStatusRequest internalRequest =
+                new igrus.web.admin.user.dto.ChangeUserStatusRequest(
+                        EnumUtils.fromStringOrNull(igrus.web.admin.user.dto.ChangeUserStatusRequest.Action.class,
+                                changeUserStatusRequest.getAction().name()),
+                        changeUserStatusRequest.getReason(),
+                        changeUserStatusRequest.getSuspendedUntil()
+                );
+
+        changeUserStatusService.changeUserStatus(userId, internalRequest, user.userId());
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(
-            summary = "회원 강제 탈퇴",
-            description = "관리자가 회원을 강제 탈퇴시킵니다. 사유 입력 필수."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "강제 탈퇴 성공"),
-            @ApiResponse(responseCode = "400", description = "자기 자신 강제 탈퇴 / 마지막 ADMIN 강제 탈퇴 시도"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
-    })
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{userId}")
     public ResponseEntity<Void> forceWithdrawUser(
-            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
-            @Valid @RequestBody ForceWithdrawRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+            Long userId,
+            igrus.web.generated.model.ForceWithdrawUserRequest forceWithdrawUserRequest
     ) {
-        forceWithdrawService.forceWithdraw(userId, request.reason(), authenticatedUser.userId());
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("회원 강제 탈퇴 요청 - targetUserId: {}, performedBy: {}", userId, user.userId());
+
+        forceWithdrawService.forceWithdraw(userId, forceWithdrawUserRequest.getReason(), user.userId());
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(
-            summary = "회원 강제 활성화 (이메일 인증 우회)",
-            description = "이메일 인증 대기(PENDING_VERIFICATION) 상태의 회원을 강제로 활성화합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "강제 활성화 성공"),
-            @ApiResponse(responseCode = "400", description = "이메일 인증 대기 상태가 아님"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
-    })
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/{userId}/force-activate")
-    public ResponseEntity<Void> forceActivateUser(
-            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
-    ) {
-        forceActivateService.forceActivate(userId, authenticatedUser.userId());
+    public ResponseEntity<Void> forceActivateUser(Long userId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("회원 강제 활성화 요청 - targetUserId: {}, performedBy: {}", userId, user.userId());
+
+        forceActivateService.forceActivate(userId, user.userId());
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(
-            summary = "회원 정보 수정",
-            description = "관리자가 회원의 프로필 정보를 수정합니다. null 필드는 기존 값을 유지합니다. 학번, 역할, 상태, 비밀번호는 별도 API를 사용하세요."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "정보 수정 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 입력값"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)"),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
-            @ApiResponse(responseCode = "409", description = "이메일 또는 전화번호 중복")
-    })
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/{userId}/info")
     public ResponseEntity<Void> editUserInfo(
-            @Parameter(description = "대상 사용자 ID") @PathVariable Long userId,
-            @Valid @RequestBody AdminEditUserInfoRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+            Long userId,
+            igrus.web.generated.model.EditUserInfoRequest editUserInfoRequest
     ) {
-        adminEditUserInfoService.editUserInfo(userId, request, authenticatedUser.userId());
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("회원 정보 수정 요청 - targetUserId: {}, performedBy: {}", userId, user.userId());
+
+        AdminEditUserInfoRequest internalRequest = new AdminEditUserInfoRequest(
+                editUserInfoRequest.getStudentId(),
+                editUserInfoRequest.getEmail(),
+                editUserInfoRequest.getName(),
+                editUserInfoRequest.getPhoneNumber(),
+                editUserInfoRequest.getDepartment(),
+                editUserInfoRequest.getGender() != null
+                        ? EnumUtils.fromStringOrNull(Gender.class, editUserInfoRequest.getGender().name()) : null,
+                editUserInfoRequest.getGrade(),
+                editUserInfoRequest.getEnrollmentStatus() != null
+                        ? EnumUtils.fromStringOrNull(EnrollmentStatus.class, editUserInfoRequest.getEnrollmentStatus().name()) : null,
+                editUserInfoRequest.getMotivation(),
+                editUserInfoRequest.getWishes() != null
+                        ? editUserInfoRequest.getWishes().stream()
+                                .map(w -> EnumUtils.fromStringOrNull(Wish.class, w.name()))
+                                .toList()
+                        : null,
+                editUserInfoRequest.getInterests() != null
+                        ? editUserInfoRequest.getInterests().stream()
+                                .map(i -> EnumUtils.fromStringOrNull(Interest.class, i.name()))
+                                .toList()
+                        : null,
+                editUserInfoRequest.getCustomInterest(),
+                editUserInfoRequest.getJoinRoute() != null
+                        ? EnumUtils.fromStringOrNull(JoinRoute.class, editUserInfoRequest.getJoinRoute().name()) : null,
+                editUserInfoRequest.getCustomJoinRoute()
+        );
+
+        adminEditUserInfoService.editUserInfo(userId, internalRequest, user.userId());
         return ResponseEntity.noContent().build();
     }
 }

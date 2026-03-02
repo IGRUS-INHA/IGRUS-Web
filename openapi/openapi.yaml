@@ -55,6 +55,8 @@ tags:
   description: 파일 저장소 API
 - name: Semester Member
   description: 학기별 회원 명단 조회 API (운영진 이상)
+- name: Admin Event
+  description: 관리자 행사 관리 API (OPERATOR 이상)
 - name: Event
   description: 행사 API
 - name: Bookmark
@@ -77,8 +79,12 @@ tags:
   description: 계정 상태 변경 감사 이력 조회 API (ADMIN 전용)
 - name: Survey Question Option
   description: 설문 질문 선택지 API
-- name: Inquiry
-  description: 문의 API
+- name: Admin Inquiry
+  description: 관리자 문의 관리 API
+- name: Member Inquiry
+  description: 회원 문의 API
+- name: Guest Inquiry
+  description: 비회원 문의 API
 - name: Health
   description: 헬스체크 API
 - name: Event Registration
@@ -318,6 +324,14 @@ paths:
     $ref: ./paths/admin.yaml#/adminLoginHistories
   /api/v1/admin/dashboard:
     $ref: ./paths/admin.yaml#/adminDashboard
+  /api/v1/admin/events:
+    $ref: ./paths/events.yaml#/adminEvents
+  /api/v1/admin/events/{eventId}:
+    $ref: ./paths/events.yaml#/adminEventsByEventId
+  /api/v1/admin/events/{eventId}/publish:
+    $ref: ./paths/events.yaml#/adminEventsByEventIdPublish
+  /api/v1/admin/events/{eventId}/unpublish:
+    $ref: ./paths/events.yaml#/adminEventsByEventIdUnpublish
   /api/v1/admin/comment-reports:
     $ref: ./paths/admin.yaml#/adminCommentReports
   /api/v1/admin/associates/rejected:
@@ -502,6 +516,10 @@ components:
       $ref: './schemas/events.yaml#/EventStatusChangeReasonRequest'
     MyRegistrationResponse:
       $ref: './schemas/events.yaml#/MyRegistrationResponse'
+    AdminEventListResponse:
+      $ref: './schemas/events.yaml#/AdminEventListResponse'
+    AdminEventDetailResponse:
+      $ref: './schemas/events.yaml#/AdminEventDetailResponse'
     EventListResponse:
       $ref: './schemas/events.yaml#/EventListResponse'
     PageRegistrationListResponse:

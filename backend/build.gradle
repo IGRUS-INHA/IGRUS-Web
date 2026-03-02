@@ -37,8 +37,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.retry:spring-retry:2.0.11'
 	implementation 'org.springframework:spring-aspects'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
 	implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
 
 	// JSON structured logging (production)
 	implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
@@ -62,6 +62,9 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	// OpenAPI 응답 검증 (swagger-request-validator)
+	implementation 'com.atlassian.oai:swagger-request-validator-spring-webmvc:2.46.0'
+	testImplementation 'com.atlassian.oai:swagger-request-validator-mockmvc:2.46.0'
 	testRuntimeOnly 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -92,6 +95,19 @@ sourceSets {
 			srcDir "${layout.buildDirectory.get()}/generated/openapi/src/main/java"
 		}
 	}
+}
+
+tasks.register('bundleOpenApiSpec', Exec) {
+	workingDir "${rootProject.projectDir}/.."
+	def isWindows = System.getProperty('os.name').toLowerCase().contains('windows')
+	def npxCmd = isWindows ? 'npx.cmd' : 'npx'
+	commandLine npxCmd, '@redocly/cli', 'bundle',
+		'openapi/openapi.yaml', '-o',
+		'backend/src/main/resources/static/openapi.yaml'
+}
+
+tasks.named('processResources') {
+	dependsOn 'bundleOpenApiSpec'
 }
 
 tasks.named('compileJava') {

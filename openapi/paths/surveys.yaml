@@ -364,6 +364,7 @@ surveysBySurveyIdResponsesAnonymous:
         description: 비회원 응답이 허용되지 않는 설문
       '404':
         description: 설문을 찾을 수 없음
+    security: []
 surveysBySurveyIdQuestions:
   get:
     tags:

@@ -259,7 +259,7 @@ public class UserService {
 2. `./gradlew openApiGenerate`로 인터페이스/모델 재생성
 3. 백엔드 컨트롤러가 새 인터페이스에 맞게 구현
 4. `./gradlew test`로 전체 테스트 통과 확인
-5. 프론트엔드 `pnpm orval`로 API 클라이언트 재생성
+5. 프론트엔드 `pnpm api:generate`로 API 클라이언트 재생성 (OpenAPI 번들링 + Orval 코드 생성)
 
 ##### 컨트롤러 작성 규칙
 - 생성된 인터페이스를 `implements` (예: `StorageApi`, `BoardApi`)
@@ -284,10 +284,13 @@ public class StorageController implements StorageApi {
 }
 ```
 
-##### 마이그레이션 중 참고 (임시)
-- SpringDoc은 아직 마이그레이션이 진행 중인 컨트롤러를 위해 유지됨
-- 마이그레이션 완료된 컨트롤러에서는 Swagger 어노테이션을 제거할 것
-- 모든 컨트롤러 마이그레이션 완료 후 SpringDoc 의존성 제거 예정
+##### Swagger UI
+- SpringDoc은 Swagger UI 제공 목적으로만 사용 (어노테이션 스캔은 비활성화)
+- `springdoc.api-docs.enabled: false`로 코드 기반 스펙 생성을 차단
+- `springdoc.swagger-ui.url: /openapi.yaml`로 번들된 스펙 파일을 직접 참조
+- Gradle `bundleOpenApiSpec` 태스크가 Redocly CLI로 멀티파일 스펙을 번들링하여 `static/openapi.yaml`에 출력
+- 프로덕션(`application-prod.yml`)에서는 `springdoc.swagger-ui.enabled: false`로 비활성화
+- 로컬/스테이징: `http://localhost:8080/swagger-ui/index.html`로 접속
 
 ### 12. SOLID 원칙 준수
 - SRP(Single Responsibility Principle): 단일 책임 원칙

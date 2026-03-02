@@ -31,7 +31,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Access Token이 만료되면 Refresh Token을 사용하여 새로운 Access Token을 발급받아야 합니다.
 - Refresh Token도 만료되면 다시 로그인해야 합니다.
 
- * OpenAPI spec version: ec724ff
+ * OpenAPI spec version: acd4c9c
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
@@ -210,17 +210,17 @@ export type updateReplyResponse200 = {
 };
 
 export type updateReplyResponse401 = {
-  data: void;
+  data: InquiryReplyResponse;
   status: 401;
 };
 
 export type updateReplyResponse403 = {
-  data: void;
+  data: InquiryReplyResponse;
   status: 403;
 };
 
 export type updateReplyResponse404 = {
-  data: void;
+  data: InquiryReplyResponse;
   status: 404;
 };
 
@@ -257,7 +257,7 @@ export const updateReply = async (
 };
 
 export const getUpdateReplyMutationOptions = <
-  TError = void,
+  TError = InquiryReplyResponse,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -298,12 +298,15 @@ export type UpdateReplyMutationResult = NonNullable<
   Awaited<ReturnType<typeof updateReply>>
 >;
 export type UpdateReplyMutationBody = UpdateInquiryReplyRequest;
-export type UpdateReplyMutationError = void;
+export type UpdateReplyMutationError = InquiryReplyResponse;
 
 /**
  * @summary 답변 수정
  */
-export const useUpdateReply = <TError = void, TContext = unknown>(
+export const useUpdateReply = <
+  TError = InquiryReplyResponse,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof updateReply>>,
@@ -332,22 +335,22 @@ export type createReplyResponse201 = {
 };
 
 export type createReplyResponse401 = {
-  data: void;
+  data: InquiryReplyResponse;
   status: 401;
 };
 
 export type createReplyResponse403 = {
-  data: void;
+  data: InquiryReplyResponse;
   status: 403;
 };
 
 export type createReplyResponse404 = {
-  data: void;
+  data: InquiryReplyResponse;
   status: 404;
 };
 
 export type createReplyResponse409 = {
-  data: void;
+  data: InquiryReplyResponse;
   status: 409;
 };
 
@@ -385,7 +388,7 @@ export const createReply = async (
 };
 
 export const getCreateReplyMutationOptions = <
-  TError = void,
+  TError = InquiryReplyResponse,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -426,12 +429,15 @@ export type CreateReplyMutationResult = NonNullable<
   Awaited<ReturnType<typeof createReply>>
 >;
 export type CreateReplyMutationBody = CreateInquiryReplyRequest;
-export type CreateReplyMutationError = void;
+export type CreateReplyMutationError = InquiryReplyResponse;
 
 /**
  * @summary 답변 작성
  */
-export const useCreateReply = <TError = void, TContext = unknown>(
+export const useCreateReply = <
+  TError = InquiryReplyResponse,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof createReply>>,
@@ -460,17 +466,17 @@ export type createMemoResponse201 = {
 };
 
 export type createMemoResponse401 = {
-  data: void;
+  data: InquiryMemoResponse;
   status: 401;
 };
 
 export type createMemoResponse403 = {
-  data: void;
+  data: InquiryMemoResponse;
   status: 403;
 };
 
 export type createMemoResponse404 = {
-  data: void;
+  data: InquiryMemoResponse;
   status: 404;
 };
 
@@ -507,7 +513,7 @@ export const createMemo = async (
 };
 
 export const getCreateMemoMutationOptions = <
-  TError = void,
+  TError = InquiryMemoResponse,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -548,12 +554,12 @@ export type CreateMemoMutationResult = NonNullable<
   Awaited<ReturnType<typeof createMemo>>
 >;
 export type CreateMemoMutationBody = CreateInquiryMemoRequest;
-export type CreateMemoMutationError = void;
+export type CreateMemoMutationError = InquiryMemoResponse;
 
 /**
  * @summary 내부 메모 작성
  */
-export const useCreateMemo = <TError = void, TContext = unknown>(
+export const useCreateMemo = <TError = InquiryMemoResponse, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof createMemo>>,
@@ -582,12 +588,12 @@ export type createMemberInquiryResponse201 = {
 };
 
 export type createMemberInquiryResponse400 = {
-  data: void;
+  data: InquiryCreateResponse;
   status: 400;
 };
 
 export type createMemberInquiryResponse401 = {
-  data: void;
+  data: InquiryCreateResponse;
   status: 401;
 };
 
@@ -623,7 +629,7 @@ export const createMemberInquiry = async (
 };
 
 export const getCreateMemberInquiryMutationOptions = <
-  TError = void,
+  TError = InquiryCreateResponse,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -664,12 +670,15 @@ export type CreateMemberInquiryMutationResult = NonNullable<
   Awaited<ReturnType<typeof createMemberInquiry>>
 >;
 export type CreateMemberInquiryMutationBody = CreateMemberInquiryRequest;
-export type CreateMemberInquiryMutationError = void;
+export type CreateMemberInquiryMutationError = InquiryCreateResponse;
 
 /**
  * @summary 회원 문의 작성
  */
-export const useCreateMemberInquiry = <TError = void, TContext = unknown>(
+export const useCreateMemberInquiry = <
+  TError = InquiryCreateResponse,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof createMemberInquiry>>,
@@ -701,12 +710,12 @@ export type lookupGuestInquiryResponse200 = {
 };
 
 export type lookupGuestInquiryResponse401 = {
-  data: void;
+  data: InquiryResponse;
   status: 401;
 };
 
 export type lookupGuestInquiryResponse404 = {
-  data: void;
+  data: InquiryResponse;
   status: 404;
 };
 
@@ -742,7 +751,7 @@ export const lookupGuestInquiry = async (
 };
 
 export const getLookupGuestInquiryMutationOptions = <
-  TError = void,
+  TError = InquiryResponse,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -783,12 +792,15 @@ export type LookupGuestInquiryMutationResult = NonNullable<
   Awaited<ReturnType<typeof lookupGuestInquiry>>
 >;
 export type LookupGuestInquiryMutationBody = GuestInquiryLookupRequest;
-export type LookupGuestInquiryMutationError = void;
+export type LookupGuestInquiryMutationError = InquiryResponse;
 
 /**
  * @summary 비회원 문의 조회
  */
-export const useLookupGuestInquiry = <TError = void, TContext = unknown>(
+export const useLookupGuestInquiry = <
+  TError = InquiryResponse,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof lookupGuestInquiry>>,
@@ -820,7 +832,7 @@ export type createGuestInquiryResponse201 = {
 };
 
 export type createGuestInquiryResponse400 = {
-  data: void;
+  data: InquiryCreateResponse;
   status: 400;
 };
 
@@ -853,7 +865,7 @@ export const createGuestInquiry = async (
 };
 
 export const getCreateGuestInquiryMutationOptions = <
-  TError = void,
+  TError = InquiryCreateResponse,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -894,12 +906,15 @@ export type CreateGuestInquiryMutationResult = NonNullable<
   Awaited<ReturnType<typeof createGuestInquiry>>
 >;
 export type CreateGuestInquiryMutationBody = CreateGuestInquiryRequest;
-export type CreateGuestInquiryMutationError = void;
+export type CreateGuestInquiryMutationError = InquiryCreateResponse;
 
 /**
  * @summary 비회원 문의 작성
  */
-export const useCreateGuestInquiry = <TError = void, TContext = unknown>(
+export const useCreateGuestInquiry = <
+  TError = InquiryCreateResponse,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof createGuestInquiry>>,
@@ -931,12 +946,12 @@ export type getAllInquiriesResponse200 = {
 };
 
 export type getAllInquiriesResponse401 = {
-  data: void;
+  data: InquiryListPageResponse;
   status: 401;
 };
 
 export type getAllInquiriesResponse403 = {
-  data: void;
+  data: InquiryListPageResponse;
   status: 403;
 };
 
@@ -986,7 +1001,7 @@ export const getGetAllInquiriesQueryKey = (params?: GetAllInquiriesParams) => {
 
 export const getGetAllInquiriesQueryOptions = <
   TData = Awaited<ReturnType<typeof getAllInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params?: GetAllInquiriesParams,
   options?: {
@@ -1018,11 +1033,11 @@ export const getGetAllInquiriesQueryOptions = <
 export type GetAllInquiriesQueryResult = NonNullable<
   Awaited<ReturnType<typeof getAllInquiries>>
 >;
-export type GetAllInquiriesQueryError = void;
+export type GetAllInquiriesQueryError = InquiryListPageResponse;
 
 export function useGetAllInquiries<
   TData = Awaited<ReturnType<typeof getAllInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params: undefined | GetAllInquiriesParams,
   options: {
@@ -1049,7 +1064,7 @@ export function useGetAllInquiries<
 };
 export function useGetAllInquiries<
   TData = Awaited<ReturnType<typeof getAllInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params?: GetAllInquiriesParams,
   options?: {
@@ -1076,7 +1091,7 @@ export function useGetAllInquiries<
 };
 export function useGetAllInquiries<
   TData = Awaited<ReturnType<typeof getAllInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params?: GetAllInquiriesParams,
   options?: {
@@ -1099,7 +1114,7 @@ export function useGetAllInquiries<
 
 export function useGetAllInquiries<
   TData = Awaited<ReturnType<typeof getAllInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params?: GetAllInquiriesParams,
   options?: {
@@ -1136,17 +1151,17 @@ export type getInquiryDetailResponse200 = {
 };
 
 export type getInquiryDetailResponse401 = {
-  data: void;
+  data: InquiryDetailResponse;
   status: 401;
 };
 
 export type getInquiryDetailResponse403 = {
-  data: void;
+  data: InquiryDetailResponse;
   status: 403;
 };
 
 export type getInquiryDetailResponse404 = {
-  data: void;
+  data: InquiryDetailResponse;
   status: 404;
 };
 
@@ -1185,7 +1200,7 @@ export const getGetInquiryDetailQueryKey = (id: number) => {
 
 export const getGetInquiryDetailQueryOptions = <
   TData = Awaited<ReturnType<typeof getInquiryDetail>>,
-  TError = void,
+  TError = InquiryDetailResponse,
 >(
   id: number,
   options?: {
@@ -1222,11 +1237,11 @@ export const getGetInquiryDetailQueryOptions = <
 export type GetInquiryDetailQueryResult = NonNullable<
   Awaited<ReturnType<typeof getInquiryDetail>>
 >;
-export type GetInquiryDetailQueryError = void;
+export type GetInquiryDetailQueryError = InquiryDetailResponse;
 
 export function useGetInquiryDetail<
   TData = Awaited<ReturnType<typeof getInquiryDetail>>,
-  TError = void,
+  TError = InquiryDetailResponse,
 >(
   id: number,
   options: {
@@ -1253,7 +1268,7 @@ export function useGetInquiryDetail<
 };
 export function useGetInquiryDetail<
   TData = Awaited<ReturnType<typeof getInquiryDetail>>,
-  TError = void,
+  TError = InquiryDetailResponse,
 >(
   id: number,
   options?: {
@@ -1280,7 +1295,7 @@ export function useGetInquiryDetail<
 };
 export function useGetInquiryDetail<
   TData = Awaited<ReturnType<typeof getInquiryDetail>>,
-  TError = void,
+  TError = InquiryDetailResponse,
 >(
   id: number,
   options?: {
@@ -1303,7 +1318,7 @@ export function useGetInquiryDetail<
 
 export function useGetInquiryDetail<
   TData = Awaited<ReturnType<typeof getInquiryDetail>>,
-  TError = void,
+  TError = InquiryDetailResponse,
 >(
   id: number,
   options?: {
@@ -1459,7 +1474,7 @@ export type getMyInquiriesResponse200 = {
 };
 
 export type getMyInquiriesResponse401 = {
-  data: void;
+  data: InquiryListPageResponse;
   status: 401;
 };
 
@@ -1506,7 +1521,7 @@ export const getGetMyInquiriesQueryKey = (params?: GetMyInquiriesParams) => {
 
 export const getGetMyInquiriesQueryOptions = <
   TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params?: GetMyInquiriesParams,
   options?: {
@@ -1534,11 +1549,11 @@ export const getGetMyInquiriesQueryOptions = <
 export type GetMyInquiriesQueryResult = NonNullable<
   Awaited<ReturnType<typeof getMyInquiries>>
 >;
-export type GetMyInquiriesQueryError = void;
+export type GetMyInquiriesQueryError = InquiryListPageResponse;
 
 export function useGetMyInquiries<
   TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params: undefined | GetMyInquiriesParams,
   options: {
@@ -1561,7 +1576,7 @@ export function useGetMyInquiries<
 };
 export function useGetMyInquiries<
   TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params?: GetMyInquiriesParams,
   options?: {
@@ -1584,7 +1599,7 @@ export function useGetMyInquiries<
 };
 export function useGetMyInquiries<
   TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params?: GetMyInquiriesParams,
   options?: {
@@ -1603,7 +1618,7 @@ export function useGetMyInquiries<
 
 export function useGetMyInquiries<
   TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
+  TError = InquiryListPageResponse,
 >(
   params?: GetMyInquiriesParams,
   options?: {
@@ -1636,12 +1651,12 @@ export type getMyInquiryResponse200 = {
 };
 
 export type getMyInquiryResponse401 = {
-  data: void;
+  data: InquiryResponse;
   status: 401;
 };
 
 export type getMyInquiryResponse404 = {
-  data: void;
+  data: InquiryResponse;
   status: 404;
 };
 
@@ -1679,7 +1694,7 @@ export const getGetMyInquiryQueryKey = (id: number) => {
 
 export const getGetMyInquiryQueryOptions = <
   TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
+  TError = InquiryResponse,
 >(
   id: number,
   options?: {
@@ -1712,11 +1727,11 @@ export const getGetMyInquiryQueryOptions = <
 export type GetMyInquiryQueryResult = NonNullable<
   Awaited<ReturnType<typeof getMyInquiry>>
 >;
-export type GetMyInquiryQueryError = void;
+export type GetMyInquiryQueryError = InquiryResponse;
 
 export function useGetMyInquiry<
   TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
+  TError = InquiryResponse,
 >(
   id: number,
   options: {
@@ -1739,7 +1754,7 @@ export function useGetMyInquiry<
 };
 export function useGetMyInquiry<
   TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
+  TError = InquiryResponse,
 >(
   id: number,
   options?: {
@@ -1762,7 +1777,7 @@ export function useGetMyInquiry<
 };
 export function useGetMyInquiry<
   TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
+  TError = InquiryResponse,
 >(
   id: number,
   options?: {
@@ -1781,7 +1796,7 @@ export function useGetMyInquiry<
 
 export function useGetMyInquiry<
   TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
+  TError = InquiryResponse,
 >(
   id: number,
   options?: {

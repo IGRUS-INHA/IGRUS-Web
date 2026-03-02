@@ -17,16 +17,15 @@ public class PublicResourceSecurityConfig {
     @Order(2)
     public SecurityFilterChain publicResourceSecurityFilterChain(HttpSecurity http) throws Exception {
 
-        // Swagger 및 공개 리소스 경로 담당
+        // 공개 리소스 경로 담당
         http.securityMatcher(
                 "/",
                 "/index.html",
                 "/favicon.svg",
+                "/webjars/**",
                 "/swagger-ui/**",
                 "/swagger-ui.html",
-                "/v3/api-docs/**",
-                "/swagger-resources/**",
-                "/webjars/**"
+                "/openapi.yaml"
         );
 
         // 모든 요청 허용 (인증 불필요)

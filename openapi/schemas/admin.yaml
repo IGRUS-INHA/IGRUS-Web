@@ -80,7 +80,7 @@ RejectAssociateRequest:
       description: 거절 사유
       example: 가입 동기가 불충분합니다.
       maxLength: 255
-      minLength: 0
+      minLength: 1
   required:
   - reason
 BulkRejectionRequest:
@@ -687,7 +687,7 @@ ForceWithdrawRequest:
       description: 강제 탈퇴 사유
       example: 동아리 규정 위반
       maxLength: 500
-      minLength: 0
+      minLength: 1
   required:
   - reason
 RemoveSemesterMembersRequest:

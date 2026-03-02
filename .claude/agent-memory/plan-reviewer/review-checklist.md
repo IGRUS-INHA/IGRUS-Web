@@ -37,3 +37,15 @@
 - [ ] Documentation update task included (root CLAUDE.md requirement)
 - [ ] Swagger/OpenAPI annotations mentioned
 - [ ] Orval compatibility considered
+
+## Dependency Management
+- [ ] New dependencies use correct Gradle scope (implementation vs testImplementation vs runtimeOnly)
+- [ ] Dev/test-only libraries not added as `implementation` without justification
+- [ ] Transitive dependency conflicts checked (jackson, swagger-parser, etc.)
+
+## Test Infrastructure
+- [ ] No new `@ActiveProfiles` in test subclasses (context caching rules)
+- [ ] No new `@Import` in test subclasses
+- [ ] No new `@MockitoBean` in test subclasses (use TestExternalServiceConfig instead)
+- [ ] Runtime Filter/Interceptor additions to `test` profile analyzed for context caching impact
+- [ ] Prod profile tests feasible without requiring production DB or services
