@@ -34,13 +34,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type RegistrationListResponseStatus = typeof RegistrationListResponseStatus[keyof typeof RegistrationListResponseStatus];
-
+export type RegistrationListResponseStatus =
+  (typeof RegistrationListResponseStatus)[keyof typeof RegistrationListResponseStatus];
 
 export const RegistrationListResponseStatus = {
-  REGISTERED: 'REGISTERED',
-  WAITING: 'WAITING',
-  APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED',
-  CANCELED: 'CANCELED',
+  REGISTERED: "REGISTERED",
+  WAITING: "WAITING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  CANCELED: "CANCELED",
 } as const;

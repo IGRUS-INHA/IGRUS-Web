@@ -37,11 +37,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 변경할 문의 상태
  */
-export type UpdateInquiryStatusRequestStatus = typeof UpdateInquiryStatusRequestStatus[keyof typeof UpdateInquiryStatusRequestStatus];
-
+export type UpdateInquiryStatusRequestStatus =
+  (typeof UpdateInquiryStatusRequestStatus)[keyof typeof UpdateInquiryStatusRequestStatus];
 
 export const UpdateInquiryStatusRequestStatus = {
-  PENDING: 'PENDING',
-  IN_PROGRESS: 'IN_PROGRESS',
-  COMPLETED: 'COMPLETED',
+  PENDING: "PENDING",
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
 } as const;

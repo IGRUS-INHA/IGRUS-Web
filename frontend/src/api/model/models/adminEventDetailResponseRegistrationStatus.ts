@@ -34,11 +34,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type AdminEventDetailResponseRegistrationStatus = typeof AdminEventDetailResponseRegistrationStatus[keyof typeof AdminEventDetailResponseRegistrationStatus];
-
+export type AdminEventDetailResponseRegistrationStatus =
+  (typeof AdminEventDetailResponseRegistrationStatus)[keyof typeof AdminEventDetailResponseRegistrationStatus];
 
 export const AdminEventDetailResponseRegistrationStatus = {
-  NOT_STARTED: 'NOT_STARTED',
-  OPEN: 'OPEN',
-  CLOSED: 'CLOSED',
+  NOT_STARTED: "NOT_STARTED",
+  OPEN: "OPEN",
+  CLOSED: "CLOSED",
 } as const;

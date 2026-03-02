@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { ErrorResponse } from './errorResponse';
+import type { ErrorResponse } from "./errorResponse";
 
 /**
  * 복구 가능한 탈퇴 계정 에러 응답. 클라이언트가 복구 플로우로 이동할 수 있도록 추가 정보를 포함합니다.

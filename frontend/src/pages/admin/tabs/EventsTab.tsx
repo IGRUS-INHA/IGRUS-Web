@@ -57,13 +57,19 @@ const REG_STATUS_LABEL: Record<string, string> = {
 
 // -- 필터 옵션 --
 
-const VISIBILITY_OPTIONS: { value: "" | GetAdminEventListVisibility; label: string }[] = [
+const VISIBILITY_OPTIONS: {
+  value: "" | GetAdminEventListVisibility;
+  label: string;
+}[] = [
   { value: "", label: "전체 공개상태" },
   { value: "PUBLISHED", label: "공개" },
   { value: "UNPUBLISHED", label: "비공개" },
 ];
 
-const EVENT_STATUS_OPTIONS: { value: "" | GetAdminEventListEventStatus; label: string }[] = [
+const EVENT_STATUS_OPTIONS: {
+  value: "" | GetAdminEventListEventStatus;
+  label: string;
+}[] = [
   { value: "", label: "전체 행사상태" },
   { value: "UPCOMING", label: "예정" },
   { value: "ONGOING", label: "진행중" },
@@ -71,7 +77,10 @@ const EVENT_STATUS_OPTIONS: { value: "" | GetAdminEventListEventStatus; label: s
   { value: "CANCELED", label: "취소됨" },
 ];
 
-const REG_STATUS_OPTIONS: { value: "" | GetAdminEventListRegistrationStatus; label: string }[] = [
+const REG_STATUS_OPTIONS: {
+  value: "" | GetAdminEventListRegistrationStatus;
+  label: string;
+}[] = [
   { value: "", label: "전체 등록상태" },
   { value: "NOT_STARTED", label: "대기" },
   { value: "OPEN", label: "모집중" },
@@ -125,10 +134,23 @@ function ReasonDialog({
 
 // -- Badge 컴포넌트 --
 
-function Badge({ value, map, labelMap }: { value?: string; map: Record<string, string>; labelMap: Record<string, string> }) {
+function Badge({
+  value,
+  map,
+  labelMap,
+}: {
+  value?: string;
+  map: Record<string, string>;
+  labelMap: Record<string, string>;
+}) {
   if (!value) return <span className="text-muted-foreground">-</span>;
   return (
-    <span className={cn("px-2 py-1 rounded-r2 typo-c2 font-bold whitespace-nowrap", map[value] ?? "bg-muted text-muted-foreground")}>
+    <span
+      className={cn(
+        "px-2 py-1 rounded-r2 typo-c2 font-bold whitespace-nowrap",
+        map[value] ?? "bg-muted text-muted-foreground",
+      )}
+    >
       {labelMap[value] ?? value}
     </span>
   );
@@ -141,9 +163,15 @@ export default function EventsTab() {
   const addToast = useUIStore((s) => s.addToast);
 
   // 필터 상태
-  const [visibility, setVisibility] = useState<"" | GetAdminEventListVisibility>("");
-  const [eventStatus, setEventStatus] = useState<"" | GetAdminEventListEventStatus>("");
-  const [regStatus, setRegStatus] = useState<"" | GetAdminEventListRegistrationStatus>("");
+  const [visibility, setVisibility] = useState<
+    "" | GetAdminEventListVisibility
+  >("");
+  const [eventStatus, setEventStatus] = useState<
+    "" | GetAdminEventListEventStatus
+  >("");
+  const [regStatus, setRegStatus] = useState<
+    "" | GetAdminEventListRegistrationStatus
+  >("");
 
   // 사유 입력 다이얼로그 상태
   const [reasonDialog, setReasonDialog] = useState<{
@@ -161,7 +189,8 @@ export default function EventsTab() {
     ...(regStatus && { registrationStatus: regStatus }),
   });
 
-  const events: AdminEventListResponse[] = response?.status === 200 ? response.data : [];
+  const events: AdminEventListResponse[] =
+    response?.status === 200 ? response.data : [];
 
   // 쿼리 무효화 헬퍼
   const invalidateAll = () => {
@@ -177,7 +206,8 @@ export default function EventsTab() {
         addToast({ type: "success", message: "행사가 공개되었습니다." });
         invalidateAll();
       },
-      onError: () => addToast({ type: "error", message: "공개 처리에 실패했습니다." }),
+      onError: () =>
+        addToast({ type: "error", message: "공개 처리에 실패했습니다." }),
     },
   });
 
@@ -187,7 +217,8 @@ export default function EventsTab() {
         addToast({ type: "success", message: "행사가 비공개 처리되었습니다." });
         invalidateAll();
       },
-      onError: () => addToast({ type: "error", message: "비공개 처리에 실패했습니다." }),
+      onError: () =>
+        addToast({ type: "error", message: "비공개 처리에 실패했습니다." }),
     },
   });
 
@@ -197,7 +228,8 @@ export default function EventsTab() {
         addToast({ type: "success", message: "등록이 마감되었습니다." });
         invalidateAll();
       },
-      onError: () => addToast({ type: "error", message: "등록 마감에 실패했습니다." }),
+      onError: () =>
+        addToast({ type: "error", message: "등록 마감에 실패했습니다." }),
     },
   });
 
@@ -207,7 +239,8 @@ export default function EventsTab() {
         addToast({ type: "success", message: "등록이 재오픈되었습니다." });
         invalidateAll();
       },
-      onError: () => addToast({ type: "error", message: "등록 재오픈에 실패했습니다." }),
+      onError: () =>
+        addToast({ type: "error", message: "등록 재오픈에 실패했습니다." }),
     },
   });
 
@@ -217,7 +250,8 @@ export default function EventsTab() {
         addToast({ type: "success", message: "행사가 취소되었습니다." });
         invalidateAll();
       },
-      onError: () => addToast({ type: "error", message: "행사 취소에 실패했습니다." }),
+      onError: () =>
+        addToast({ type: "error", message: "행사 취소에 실패했습니다." }),
     },
   });
 
@@ -227,11 +261,18 @@ export default function EventsTab() {
         addToast({ type: "success", message: "행사가 재활성화되었습니다." });
         invalidateAll();
       },
-      onError: () => addToast({ type: "error", message: "행사 재활성화에 실패했습니다." }),
+      onError: () =>
+        addToast({ type: "error", message: "행사 재활성화에 실패했습니다." }),
     },
   });
 
-  const isMutating = isPublishing || isUnpublishing || isClosingEvent || isReopening || isCancelingEvent || isReactivating;
+  const isMutating =
+    isPublishing ||
+    isUnpublishing ||
+    isClosingEvent ||
+    isReopening ||
+    isCancelingEvent ||
+    isReactivating;
 
   // -- 액션 핸들러 --
 
@@ -286,7 +327,11 @@ export default function EventsTab() {
   // -- 행별 액션 버튼 결정 --
 
   function getActions(ev: AdminEventListResponse) {
-    const actions: { label: string; onClick: () => void; variant?: "destructive" | "default" }[] = [];
+    const actions: {
+      label: string;
+      onClick: () => void;
+      variant?: "destructive" | "default";
+    }[] = [];
     const id = ev.id;
     if (!id) return actions;
 
@@ -310,7 +355,11 @@ export default function EventsTab() {
 
     // 행사 취소/재활성화
     if (ev.eventStatus === "UPCOMING" || ev.eventStatus === "ONGOING") {
-      actions.push({ label: "행사 취소", onClick: () => handleCancel(id), variant: "destructive" });
+      actions.push({
+        label: "행사 취소",
+        onClick: () => handleCancel(id),
+        variant: "destructive",
+      });
     }
     if (ev.eventStatus === "CANCELED") {
       actions.push({ label: "재활성화", onClick: () => handleReactivate(id) });
@@ -340,16 +389,22 @@ export default function EventsTab() {
             className="px-s3 py-s2 rounded-r2 border border-border bg-background text-sm"
           >
             {VISIBILITY_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
           <select
             value={eventStatus}
-            onChange={(e) => setEventStatus(e.target.value as typeof eventStatus)}
+            onChange={(e) =>
+              setEventStatus(e.target.value as typeof eventStatus)
+            }
             className="px-s3 py-s2 rounded-r2 border border-border bg-background text-sm"
           >
             {EVENT_STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
           <select
@@ -358,7 +413,9 @@ export default function EventsTab() {
             className="px-s3 py-s2 rounded-r2 border border-border bg-background text-sm"
           >
             {REG_STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -379,8 +436,12 @@ export default function EventsTab() {
               <th className="pb-s4 pt-s4 px-s3 font-bold">행사상태</th>
               <th className="pb-s4 pt-s4 px-s3 font-bold">등록상태</th>
               <th className="pb-s4 pt-s4 px-s3 font-bold">인원</th>
-              <th className="pb-s4 pt-s4 px-s3 font-bold hidden lg:table-cell">행사 일시</th>
-              <th className="pb-s4 pt-s4 px-s3 font-bold hidden lg:table-cell">등록 마감</th>
+              <th className="pb-s4 pt-s4 px-s3 font-bold hidden lg:table-cell">
+                행사 일시
+              </th>
+              <th className="pb-s4 pt-s4 px-s3 font-bold hidden lg:table-cell">
+                등록 마감
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -395,14 +456,21 @@ export default function EventsTab() {
                     "group cursor-pointer transition-colors",
                     isExpanded ? "bg-muted/30" : "hover:bg-muted/20",
                   )}
-                  onClick={() => setExpandedId(isExpanded ? null : (ev.id ?? null))}
+                  onClick={() =>
+                    setExpandedId(isExpanded ? null : (ev.id ?? null))
+                  }
                 >
                   <td className="py-s3 px-s3 text-left">
                     <div>
-                      <p className="font-medium text-sm truncate max-w-[200px]">{ev.title}</p>
+                      <p className="font-medium text-sm truncate max-w-[200px]">
+                        {ev.title}
+                      </p>
                       {/* 확장 시 액션 버튼 */}
                       {isExpanded && actions.length > 0 && (
-                        <div className="flex flex-wrap gap-s2 mt-s2" onClick={(e) => e.stopPropagation()}>
+                        <div
+                          className="flex flex-wrap gap-s2 mt-s2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {actions.map((action) => (
                             <button
                               key={action.label}
@@ -424,13 +492,25 @@ export default function EventsTab() {
                     </div>
                   </td>
                   <td className="py-s3 px-s3">
-                    <Badge value={ev.visibility} map={VISIBILITY_BADGE} labelMap={VISIBILITY_LABEL} />
+                    <Badge
+                      value={ev.visibility}
+                      map={VISIBILITY_BADGE}
+                      labelMap={VISIBILITY_LABEL}
+                    />
                   </td>
                   <td className="py-s3 px-s3">
-                    <Badge value={ev.eventStatus} map={EVENT_STATUS_BADGE} labelMap={EVENT_STATUS_LABEL} />
+                    <Badge
+                      value={ev.eventStatus}
+                      map={EVENT_STATUS_BADGE}
+                      labelMap={EVENT_STATUS_LABEL}
+                    />
                   </td>
                   <td className="py-s3 px-s3">
-                    <Badge value={ev.registrationStatus} map={REG_STATUS_BADGE} labelMap={REG_STATUS_LABEL} />
+                    <Badge
+                      value={ev.registrationStatus}
+                      map={REG_STATUS_BADGE}
+                      labelMap={REG_STATUS_LABEL}
+                    />
                   </td>
                   <td className="py-s3 px-s3 text-sm">
                     {ev.currentCount ?? 0}/{ev.capacity ?? 0}

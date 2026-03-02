@@ -33,10 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -49,362 +46,491 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 import type {
   CandidateMemberResponse,
   RegisterSemesterMembersRequest,
   RegisterSemesterMembersResponse,
-  RemoveSemesterMembersRequest
-} from '.././models';
+  RemoveSemesterMembersRequest,
+} from ".././models";
 
-import { customFetch } from '../../client';
-
+import { customFetch } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 /**
  * 선택된 회원들을 특정 학기에 일괄 등록합니다. 이미 등록된 회원은 건너뜁니다.
  * @summary 회원 일괄 등록
  */
 export type registerMembersResponse200 = {
-  data: RegisterSemesterMembersResponse
-  status: 200
-}
+  data: RegisterSemesterMembersResponse;
+  status: 200;
+};
 
 export type registerMembersResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type registerMembersResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type registerMembersResponse403 = {
-  data: void
-  status: 403
-}
-    
-export type registerMembersResponseSuccess = (registerMembersResponse200) & {
-  headers: Headers;
-};
-export type registerMembersResponseError = (registerMembersResponse400 | registerMembersResponse401 | registerMembersResponse403) & {
-  headers: Headers;
+  data: void;
+  status: 403;
 };
 
-export type registerMembersResponse = (registerMembersResponseSuccess | registerMembersResponseError)
+export type registerMembersResponseSuccess = registerMembersResponse200 & {
+  headers: Headers;
+};
+export type registerMembersResponseError = (
+  | registerMembersResponse400
+  | registerMembersResponse401
+  | registerMembersResponse403
+) & {
+  headers: Headers;
+};
 
-export const getRegisterMembersUrl = (year: number,
-    semester: number,) => {
+export type registerMembersResponse =
+  | registerMembersResponseSuccess
+  | registerMembersResponseError;
 
+export const getRegisterMembersUrl = (year: number, semester: number) => {
+  return `/api/v1/admin/semesters/${year}/${semester}/members`;
+};
 
-  
+export const registerMembers = async (
+  year: number,
+  semester: number,
+  registerSemesterMembersRequest: RegisterSemesterMembersRequest,
+  options?: RequestInit,
+): Promise<registerMembersResponse> => {
+  return customFetch<registerMembersResponse>(
+    getRegisterMembersUrl(year, semester),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(registerSemesterMembersRequest),
+    },
+  );
+};
 
-  return `/api/v1/admin/semesters/${year}/${semester}/members`
-}
+export const getRegisterMembersMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof registerMembers>>,
+    TError,
+    { year: number; semester: number; data: RegisterSemesterMembersRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof registerMembers>>,
+  TError,
+  { year: number; semester: number; data: RegisterSemesterMembersRequest },
+  TContext
+> => {
+  const mutationKey = ["registerMembers"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-export const registerMembers = async (year: number,
-    semester: number,
-    registerSemesterMembersRequest: RegisterSemesterMembersRequest, options?: RequestInit): Promise<registerMembersResponse> => {
-  
-  return customFetch<registerMembersResponse>(getRegisterMembersUrl(year,semester),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      registerSemesterMembersRequest,)
-  }
-);}
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof registerMembers>>,
+    { year: number; semester: number; data: RegisterSemesterMembersRequest }
+  > = (props) => {
+    const { year, semester, data } = props ?? {};
 
+    return registerMembers(year, semester, data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type RegisterMembersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof registerMembers>>
+>;
+export type RegisterMembersMutationBody = RegisterSemesterMembersRequest;
+export type RegisterMembersMutationError = void;
 
-export const getRegisterMembersMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMembers>>, TError,{year: number;semester: number;data: RegisterSemesterMembersRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof registerMembers>>, TError,{year: number;semester: number;data: RegisterSemesterMembersRequest}, TContext> => {
-
-const mutationKey = ['registerMembers'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerMembers>>, {year: number;semester: number;data: RegisterSemesterMembersRequest}> = (props) => {
-          const {year,semester,data} = props ?? {};
-
-          return  registerMembers(year,semester,data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RegisterMembersMutationResult = NonNullable<Awaited<ReturnType<typeof registerMembers>>>
-    export type RegisterMembersMutationBody = RegisterSemesterMembersRequest
-    export type RegisterMembersMutationError = void
-
-    /**
+/**
  * @summary 회원 일괄 등록
  */
-export const useRegisterMembers = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMembers>>, TError,{year: number;semester: number;data: RegisterSemesterMembersRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof registerMembers>>,
-        TError,
-        {year: number;semester: number;data: RegisterSemesterMembersRequest},
-        TContext
-      > => {
-      return useMutation(getRegisterMembersMutationOptions(options), queryClient);
-    }
-    /**
+export const useRegisterMembers = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof registerMembers>>,
+      TError,
+      { year: number; semester: number; data: RegisterSemesterMembersRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof registerMembers>>,
+  TError,
+  { year: number; semester: number; data: RegisterSemesterMembersRequest },
+  TContext
+> => {
+  return useMutation(getRegisterMembersMutationOptions(options), queryClient);
+};
+/**
  * 선택된 회원들을 특정 학기에서 일괄 제외합니다.
  * @summary 회원 일괄 제외
  */
 export type removeMembersResponse200 = {
-  data: number
-  status: 200
-}
+  data: number;
+  status: 200;
+};
 
 export type removeMembersResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type removeMembersResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type removeMembersResponse403 = {
-  data: void
-  status: 403
-}
-    
-export type removeMembersResponseSuccess = (removeMembersResponse200) & {
-  headers: Headers;
-};
-export type removeMembersResponseError = (removeMembersResponse400 | removeMembersResponse401 | removeMembersResponse403) & {
-  headers: Headers;
+  data: void;
+  status: 403;
 };
 
-export type removeMembersResponse = (removeMembersResponseSuccess | removeMembersResponseError)
+export type removeMembersResponseSuccess = removeMembersResponse200 & {
+  headers: Headers;
+};
+export type removeMembersResponseError = (
+  | removeMembersResponse400
+  | removeMembersResponse401
+  | removeMembersResponse403
+) & {
+  headers: Headers;
+};
 
-export const getRemoveMembersUrl = (year: number,
-    semester: number,) => {
+export type removeMembersResponse =
+  | removeMembersResponseSuccess
+  | removeMembersResponseError;
 
+export const getRemoveMembersUrl = (year: number, semester: number) => {
+  return `/api/v1/admin/semesters/${year}/${semester}/members`;
+};
 
-  
+export const removeMembers = async (
+  year: number,
+  semester: number,
+  removeSemesterMembersRequest: RemoveSemesterMembersRequest,
+  options?: RequestInit,
+): Promise<removeMembersResponse> => {
+  return customFetch<removeMembersResponse>(
+    getRemoveMembersUrl(year, semester),
+    {
+      ...options,
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(removeSemesterMembersRequest),
+    },
+  );
+};
 
-  return `/api/v1/admin/semesters/${year}/${semester}/members`
-}
+export const getRemoveMembersMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeMembers>>,
+    TError,
+    { year: number; semester: number; data: RemoveSemesterMembersRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeMembers>>,
+  TError,
+  { year: number; semester: number; data: RemoveSemesterMembersRequest },
+  TContext
+> => {
+  const mutationKey = ["removeMembers"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-export const removeMembers = async (year: number,
-    semester: number,
-    removeSemesterMembersRequest: RemoveSemesterMembersRequest, options?: RequestInit): Promise<removeMembersResponse> => {
-  
-  return customFetch<removeMembersResponse>(getRemoveMembersUrl(year,semester),
-  {      
-    ...options,
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      removeSemesterMembersRequest,)
-  }
-);}
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeMembers>>,
+    { year: number; semester: number; data: RemoveSemesterMembersRequest }
+  > = (props) => {
+    const { year, semester, data } = props ?? {};
 
+    return removeMembers(year, semester, data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type RemoveMembersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeMembers>>
+>;
+export type RemoveMembersMutationBody = RemoveSemesterMembersRequest;
+export type RemoveMembersMutationError = void;
 
-export const getRemoveMembersMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMembers>>, TError,{year: number;semester: number;data: RemoveSemesterMembersRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof removeMembers>>, TError,{year: number;semester: number;data: RemoveSemesterMembersRequest}, TContext> => {
-
-const mutationKey = ['removeMembers'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeMembers>>, {year: number;semester: number;data: RemoveSemesterMembersRequest}> = (props) => {
-          const {year,semester,data} = props ?? {};
-
-          return  removeMembers(year,semester,data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RemoveMembersMutationResult = NonNullable<Awaited<ReturnType<typeof removeMembers>>>
-    export type RemoveMembersMutationBody = RemoveSemesterMembersRequest
-    export type RemoveMembersMutationError = void
-
-    /**
+/**
  * @summary 회원 일괄 제외
  */
-export const useRemoveMembers = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMembers>>, TError,{year: number;semester: number;data: RemoveSemesterMembersRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof removeMembers>>,
-        TError,
-        {year: number;semester: number;data: RemoveSemesterMembersRequest},
-        TContext
-      > => {
-      return useMutation(getRemoveMembersMutationOptions(options), queryClient);
-    }
-    /**
+export const useRemoveMembers = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeMembers>>,
+      TError,
+      { year: number; semester: number; data: RemoveSemesterMembersRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeMembers>>,
+  TError,
+  { year: number; semester: number; data: RemoveSemesterMembersRequest },
+  TContext
+> => {
+  return useMutation(getRemoveMembersMutationOptions(options), queryClient);
+};
+/**
  * 특정 학기에 등록 가능한 회원 목록을 조회합니다. ASSOCIATE 이상 + ACTIVE 상태 회원이 대상입니다.
  * @summary 등록 후보 회원 목록 조회
  */
 export type getCandidateMembersResponse200 = {
-  data: CandidateMemberResponse[]
-  status: 200
-}
+  data: CandidateMemberResponse[];
+  status: 200;
+};
 
 export type getCandidateMembersResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type getCandidateMembersResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type getCandidateMembersResponse403 = {
-  data: void
-  status: 403
-}
-    
-export type getCandidateMembersResponseSuccess = (getCandidateMembersResponse200) & {
-  headers: Headers;
-};
-export type getCandidateMembersResponseError = (getCandidateMembersResponse400 | getCandidateMembersResponse401 | getCandidateMembersResponse403) & {
-  headers: Headers;
+  data: void;
+  status: 403;
 };
 
-export type getCandidateMembersResponse = (getCandidateMembersResponseSuccess | getCandidateMembersResponseError)
+export type getCandidateMembersResponseSuccess =
+  getCandidateMembersResponse200 & {
+    headers: Headers;
+  };
+export type getCandidateMembersResponseError = (
+  | getCandidateMembersResponse400
+  | getCandidateMembersResponse401
+  | getCandidateMembersResponse403
+) & {
+  headers: Headers;
+};
 
-export const getGetCandidateMembersUrl = (year: number,
-    semester: number,) => {
+export type getCandidateMembersResponse =
+  | getCandidateMembersResponseSuccess
+  | getCandidateMembersResponseError;
 
+export const getGetCandidateMembersUrl = (year: number, semester: number) => {
+  return `/api/v1/admin/semesters/${year}/${semester}/candidates`;
+};
 
-  
+export const getCandidateMembers = async (
+  year: number,
+  semester: number,
+  options?: RequestInit,
+): Promise<getCandidateMembersResponse> => {
+  return customFetch<getCandidateMembersResponse>(
+    getGetCandidateMembersUrl(year, semester),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
 
-  return `/api/v1/admin/semesters/${year}/${semester}/candidates`
-}
-
-export const getCandidateMembers = async (year: number,
-    semester: number, options?: RequestInit): Promise<getCandidateMembersResponse> => {
-  
-  return customFetch<getCandidateMembersResponse>(getGetCandidateMembersUrl(year,semester),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
-
-
-
-export const getGetCandidateMembersQueryKey = (year: number,
-    semester: number,) => {
-    return [
-    `/api/v1/admin/semesters/${year}/${semester}/candidates`
-    ] as const;
-    }
-
-    
-export const getGetCandidateMembersQueryOptions = <TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(year: number,
-    semester: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetCandidateMembersQueryKey = (
+  year: number,
+  semester: number,
 ) => {
+  return [`/api/v1/admin/semesters/${year}/${semester}/candidates`] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getGetCandidateMembersQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCandidateMembers>>,
+  TError = void,
+>(
+  year: number,
+  semester: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCandidateMembers>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetCandidateMembersQueryKey(year,semester);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCandidateMembersQueryKey(year, semester);
 
-  
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCandidateMembers>>
+  > = ({ signal }) =>
+    getCandidateMembers(year, semester, { signal, ...requestOptions });
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCandidateMembers>>> = ({ signal }) => getCandidateMembers(year,semester, { signal, ...requestOptions });
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(year && semester),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCandidateMembers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-      
+export type GetCandidateMembersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCandidateMembers>>
+>;
+export type GetCandidateMembersQueryError = void;
 
-      
-
-   return  { queryKey, queryFn, enabled: !!(year && semester), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetCandidateMembersQueryResult = NonNullable<Awaited<ReturnType<typeof getCandidateMembers>>>
-export type GetCandidateMembersQueryError = void
-
-
-export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(
- year: number,
-    semester: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>> & Pick<
+export function useGetCandidateMembers<
+  TData = Awaited<ReturnType<typeof getCandidateMembers>>,
+  TError = void,
+>(
+  year: number,
+  semester: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCandidateMembers>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCandidateMembers>>,
           TError,
           Awaited<ReturnType<typeof getCandidateMembers>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(
- year: number,
-    semester: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCandidateMembers<
+  TData = Awaited<ReturnType<typeof getCandidateMembers>>,
+  TError = void,
+>(
+  year: number,
+  semester: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCandidateMembers>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCandidateMembers>>,
           TError,
           Awaited<ReturnType<typeof getCandidateMembers>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(
- year: number,
-    semester: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCandidateMembers<
+  TData = Awaited<ReturnType<typeof getCandidateMembers>>,
+  TError = void,
+>(
+  year: number,
+  semester: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCandidateMembers>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary 등록 후보 회원 목록 조회
  */
 
-export function useGetCandidateMembers<TData = Awaited<ReturnType<typeof getCandidateMembers>>, TError = void>(
- year: number,
-    semester: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateMembers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetCandidateMembers<
+  TData = Awaited<ReturnType<typeof getCandidateMembers>>,
+  TError = void,
+>(
+  year: number,
+  semester: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCandidateMembers>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetCandidateMembersQueryOptions(
+    year,
+    semester,
+    options,
+  );
 
-  const queryOptions = getGetCandidateMembersQueryOptions(year,semester,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
-

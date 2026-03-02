@@ -37,11 +37,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 재학 상태
  */
-export type PasswordSignupRequestEnrollmentStatus = typeof PasswordSignupRequestEnrollmentStatus[keyof typeof PasswordSignupRequestEnrollmentStatus];
-
+export type PasswordSignupRequestEnrollmentStatus =
+  (typeof PasswordSignupRequestEnrollmentStatus)[keyof typeof PasswordSignupRequestEnrollmentStatus];
 
 export const PasswordSignupRequestEnrollmentStatus = {
-  ENROLLED: 'ENROLLED',
-  GENERAL_LEAVE: 'GENERAL_LEAVE',
-  MILITARY_LEAVE: 'MILITARY_LEAVE',
+  ENROLLED: "ENROLLED",
+  GENERAL_LEAVE: "GENERAL_LEAVE",
+  MILITARY_LEAVE: "MILITARY_LEAVE",
 } as const;
