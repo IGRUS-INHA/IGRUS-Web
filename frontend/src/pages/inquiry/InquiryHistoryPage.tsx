@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PenLine, Inbox } from "lucide-react";
-import { useGetMyInquiries } from "@/api/model/inquiry/inquiry";
+import { useGetMyInquiries } from "@/api/model/member-inquiry/member-inquiry";
 import type { InquiryListPageResponse } from "@/api/model/models/inquiryListPageResponse";
 import InquiryListItem from "@/components/feature/inquiry/InquiryListItem";
 

@@ -38,6 +38,6 @@ export type GetAdminEventListVisibility = typeof GetAdminEventListVisibility[key
 
 
 export const GetAdminEventListVisibility = {
-  UNPUBLISHED: 'UNPUBLISHED',
   PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
 } as const;

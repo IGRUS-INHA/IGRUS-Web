@@ -584,11 +584,19 @@ pnpm format   # Prettier 포맷팅
 
 - 백엔드 OpenAPI 스펙 기반으로 API 클라이언트 자동 생성
 - `orval.config.ts`에 설정
-- 백엔드 API 변경 시 Orval 재생성 필요
+- 백엔드 API 변경 시 재생성 필요
 
 ```bash
-pnpm orval
+pnpm api:generate   # OpenAPI 번들링 + Orval 코드 생성 (권장)
+pnpm openapi:bundle # OpenAPI 번들링만 실행
+pnpm orval          # Orval 코드 생성만 실행 (번들 파일이 이미 있을 때)
 ```
+
+### 번들링 파이프라인
+
+- `@redocly/cli`가 멀티파일 OpenAPI 스펙(`openapi/openapi.yaml`)을 단일 파일(`openapi/openapi.bundled.yaml`)로 번들링
+- Orval은 번들된 파일을 입력으로 사용하여 `components/schemas`의 스키마 이름과 일치하는 TypeScript 타입을 생성
+- 번들 파일은 gitignore 대상이므로 커밋하지 않음
 
 ## 5.3 환경 변수
 

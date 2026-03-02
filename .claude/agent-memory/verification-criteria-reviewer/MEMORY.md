@@ -10,8 +10,10 @@
 - `docs/criteria/inquiry-verification-criteria.md` — 문의 (Status: Review Completed, 가장 완성도 높음)
 - `docs/criteria/event/event-verification-criteria.md` — 행사 (Status: Draft)
 - `docs/criteria/event/event-registration-verification-criteria.md` — 행사 신청 (Status: Draft)
+- `docs/criteria/event/survey-event-registration-verification-criteria.md` — 설문 연동 행사 신청 (Status: Draft, 구현 전, 2026-03-02 1라운드 리뷰)
 - `docs/criteria/user/signup/*.md` — 회원가입 세부 (Status: Implemented)
 - `docs/criteria/storage/image-presigned-url-verification-criteria.md` — S3 Presigned URL (Status: Draft, 구현 전)
+- `docs/criteria/survey/survey-criteria-v1.md` — 설문 (Status: Draft, 구현 전)
 
 ## QA Wiki 10개 영역 (문서에서 사용하는 매핑 관례)
 문서 섹션 번호와 Wiki 실제 번호가 다름. 아래는 문서가 사용하는 관례:
@@ -40,10 +42,17 @@
 3. 상태 다이어그램의 상태와 감사 이력 필드 목록 불일치
 4. 멱등성 관련 정책이 섹션 간 충돌 (외부 의존성 섹션 vs 입력 검증 섹션)
 5. 구현 전 문서에서 테스트 전략이 "구현 후 작성" 수준에 머묾
-6. `(현재 구현 일치)`와 `(구현 예정)` 레이블이 같은 항목에 혼재 또는 잘못 표기되는 패턴 (event-verification-criteria.md EVT-INV-11, EVT-INV-14에서 발견)
-7. 비연동 케이스 열거가 불완전하여 구현자가 추론 부담을 지는 패턴 (EVT-INV-20: COMPLETED/CANCELED 행사 unpublish 케이스 누락)
-8. 검증 방식이 "A 또는 B"로 미확정 기술되어 예외 타입 불일치 유발 가능 (EVT 4-3절 publish/unpublish 권한 검증 방식)
-9. 이력 엔티티의 nullable 필드 컬럼 스키마 미명시 패턴 (EventStatusChangeHistory.reason nullable 여부 미정)
+6. 교차 도메인 참조 불변조건 번호 오류 (예: 설문 INV-09는 "PUBLISHED+OPEN" 조건인데 교차 문서가 "응답 존재만으로 충분"이라고 기술하며 불일치 발생)
+7. 설계 결정 미확정(TBD) 사항이 다른 불변조건에 직접 영향을 주는 경우 (예: HTTP 상태코드 400 vs 409 불일치)
+
+## 설문 연동 행사 신청 도메인 특이사항 (2라운드 리뷰까지 반영, 2026-03-02)
+- 핵심 설계: Event.surveyId(Long, 약한 참조) → 두 도메인 FK 없이 서비스 레벨에서 참조 무결성 관리
+- 2라운드 기준 PASS. Round 1 심각 2건 + 주의 7건 모두 해결됨.
+- 잔존 주의 사항:
+  - [신규-주의-01] SEVT-INV-10에서 UNPUBLISHED+CLOSED 허용 경로가 완전히 설명되지 않음 — visibility를 검증 제외하는 근거로 INV-20을 인용하지만, "기존 응답이 존재할 수 있는 경로(한때 PUBLISHED+OPEN이었다가 비공개 전환)"가 명시되지 않음. SEVT-INV-06과의 역할 분리 설명도 미흡.
+  - [신규-주의-02] SEVT-INV-05 정책 A/B와 DECISION-01의 명시적 연결 및 확정 표시 누락
+- 설문 INV-09(PUBLISHED+OPEN에서만 응답 가능)와 SEVT-INV-10(responseStatus != NOT_STARTED이면 신청 가능)은 역할이 다름 — INV-09는 "응답 제출 가능 여부", SEVT-INV-10은 "신청 가능 여부(기존 응답 유효 여부)". 두 조건이 적용되는 시점이 다르므로 모순 아님.
+- HTTP 상태코드: SurveyResponseRequiredException=400, SurveyNotReadyException=400 — 프로젝트 관례(도메인 상태 위반=400) 명시됨.
 
 ## 잘 작성된 패턴 (참조용)
 - inquiry-verification-criteria.md: 테스트 클래스명, 테스트 수, 커버 상태까지 구체적으로 기술한 모범 사례

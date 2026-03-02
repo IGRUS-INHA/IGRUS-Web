@@ -1,52 +1,83 @@
 package igrus.web.survey.response.controller;
 
+import igrus.web.generated.api.SurveyAnonymousResponseApi;
+import igrus.web.generated.model.GetMyResponse200Response;
+import igrus.web.generated.model.GetMyResponse200ResponseAnswersInner;
+import igrus.web.generated.model.GetMyResponse200ResponseAnswersInnerGridAnswersInner;
+import igrus.web.generated.model.UpdateMyResponseRequest;
+import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import igrus.web.survey.response.dto.request.SubmitSurveyResponseRequest;
 import igrus.web.survey.response.dto.response.SurveyResponseDetailResponse;
 import igrus.web.survey.response.service.SurveyResponseService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 비회원(익명) 설문 응답 컨트롤러.
  * PUBLIC 설문에 대한 비회원 응답 API를 제공합니다.
  * 인증 없이 접근 가능합니다.
  */
-@Tag(name = "Survey Anonymous Response", description = "비회원 설문 응답 API")
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/surveys/{surveyId}/responses/anonymous")
 @RequiredArgsConstructor
-public class SurveyAnonymousResponseController {
+public class SurveyAnonymousResponseController implements SurveyAnonymousResponseApi {
 
     private final SurveyResponseService surveyResponseService;
 
-    @Operation(summary = "비회원 설문 응답 제출", description = "비회원이 PUBLIC 설문에 응답을 제출합니다. 인증 없이 접근 가능합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "응답 제출 성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = SurveyResponseDetailResponse.class))),
-            @ApiResponse(responseCode = "400", description = "응답 유효성 검증 실패 또는 응답 불가 상태"),
-            @ApiResponse(responseCode = "403", description = "비회원 응답이 허용되지 않는 설문"),
-            @ApiResponse(responseCode = "404", description = "설문을 찾을 수 없음")
-    })
-    @PostMapping
-    public ResponseEntity<SurveyResponseDetailResponse> submitAnonymousResponse(
-            @Parameter(description = "설문 ID") @PathVariable Long surveyId,
-            @Valid @RequestBody SubmitSurveyResponseRequest request
-    ) {
+    @Override
+    public ResponseEntity<GetMyResponse200Response> submitAnonymousResponse(
+            Long surveyId, UpdateMyResponseRequest updateMyResponseRequest) {
         log.info("비회원 설문 응답 제출 요청 - surveyId: {}", surveyId);
-        SurveyResponseDetailResponse response = surveyResponseService.submitAnonymousResponse(surveyId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        SubmitSurveyResponseRequest internalRequest = mapToInternalRequest(updateMyResponseRequest);
+        SurveyResponseDetailResponse result = surveyResponseService.submitAnonymousResponse(surveyId, internalRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(result));
+    }
+
+    private SubmitSurveyResponseRequest mapToInternalRequest(UpdateMyResponseRequest request) {
+        List<SubmitAnswerRequest> answers = request.getAnswers().stream()
+                .map(a -> new SubmitAnswerRequest(
+                        a.getQuestionId(),
+                        a.getTextValue(),
+                        a.getSelectedOptionIds(),
+                        a.getNumericValue(),
+                        a.getGridAnswers() != null
+                                ? a.getGridAnswers().stream()
+                                .map(g -> new SubmitAnswerRequest.GridAnswerRequest(
+                                        g.getRowId(),
+                                        g.getSelectedOptionIds()))
+                                .toList()
+                                : null))
+                .toList();
+        return new SubmitSurveyResponseRequest(answers);
+    }
+
+    private GetMyResponse200Response mapToResponse(SurveyResponseDetailResponse result) {
+        return new GetMyResponse200Response()
+                .responseId(result.responseId())
+                .surveyId(result.surveyId())
+                .userId(result.userId())
+                .answers(result.answers().stream()
+                        .map(a -> new GetMyResponse200ResponseAnswersInner()
+                                .questionId(a.questionId())
+                                .questionType(GetMyResponse200ResponseAnswersInner.QuestionTypeEnum.fromValue(
+                                        a.questionType().name()))
+                                .textValue(a.textValue())
+                                .selectedOptionIds(a.selectedOptionIds())
+                                .numericValue(a.numericValue())
+                                .gridAnswers(a.gridAnswers() != null
+                                        ? a.gridAnswers().stream()
+                                        .map(g -> new GetMyResponse200ResponseAnswersInnerGridAnswersInner()
+                                                .rowId(g.rowId())
+                                                .selectedOptionIds(g.selectedOptionIds()))
+                                        .toList()
+                                        : null))
+                        .toList())
+                .createdAt(result.createdAt());
     }
 }

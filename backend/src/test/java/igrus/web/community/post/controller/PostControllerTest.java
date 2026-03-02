@@ -10,6 +10,7 @@ import igrus.web.community.post.dto.request.UpdatePostRequest;
 import igrus.web.community.board.repository.BoardPermissionRepository;
 import igrus.web.community.board.repository.BoardRepository;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
@@ -185,7 +186,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                 mockMvc.perform(get(BASE_URL + "/general/posts")
                                 .with(withAuth(memberUser))
                                 .with(csrf()))
-                        .andExpect(status().isOk());
+                        .andExpect(status().isOk())
+                        .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
             });
         }
     }
@@ -215,7 +217,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.postId").isNumber());
+                    .andExpect(jsonPath("$.postId").isNumber())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("BRD-021: 준회원이 비공개 공지 미표시")
@@ -232,7 +235,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.posts[0].title").value("준회원 공개 공지"));
+                    .andExpect(jsonPath("$.posts[0].title").value("준회원 공개 공지"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("BRD-022: 정회원이 모든 공지 조회")
@@ -248,7 +252,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(2));
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 
@@ -271,7 +276,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.posts[0].title").value("테스트 제목입니다"));
+                    .andExpect(jsonPath("$.posts[0].title").value("테스트 제목입니다"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("BRD-031: 내용 검색")
@@ -289,7 +295,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.posts[0].title").value("제목1"));
+                    .andExpect(jsonPath("$.posts[0].title").value("제목1"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("BRD-032: 제목+내용 검색")
@@ -307,7 +314,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(2));
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("BRD-033: 검색 결과 없음")
@@ -324,7 +332,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(0))
-                    .andExpect(jsonPath("$.posts").isEmpty());
+                    .andExpect(jsonPath("$.posts").isEmpty())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 
@@ -348,7 +357,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.posts.length()").value(20))
                     .andExpect(jsonPath("$.totalElements").value(30))
-                    .andExpect(jsonPath("$.hasNext").value(true));
+                    .andExpect(jsonPath("$.hasNext").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("BRD-041: 페이지 이동 - 2페이지")
@@ -367,7 +377,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.posts.length()").value(20))
-                    .andExpect(jsonPath("$.currentPage").value(1));
+                    .andExpect(jsonPath("$.currentPage").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("BRD-042: 최신순 정렬")
@@ -386,7 +397,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.posts[0].title").value("세번째 게시글"))
                     .andExpect(jsonPath("$.posts[1].title").value("두번째 게시글"))
-                    .andExpect(jsonPath("$.posts[2].title").value("첫번째 게시글"));
+                    .andExpect(jsonPath("$.posts[2].title").value("첫번째 게시글"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 
@@ -409,7 +421,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(2));
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 
@@ -439,7 +452,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.postId").isNumber())
-                    .andExpect(jsonPath("$.title").value("테스트 제목"));
+                    .andExpect(jsonPath("$.title").value("테스트 제목"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("게시글 상세 조회 성공")
@@ -456,7 +470,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.postId").value(post.getId()))
                     .andExpect(jsonPath("$.title").value("테스트 제목"))
-                    .andExpect(jsonPath("$.content").value("테스트 내용"));
+                    .andExpect(jsonPath("$.content").value("테스트 내용"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("존재하지 않는 게시글 조회 시 404")
@@ -601,7 +616,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.title").value("상세 조회 테스트"))
                     .andExpect(jsonPath("$.content").value("상세 조회 내용"))
                     .andExpect(jsonPath("$.authorName").isNotEmpty())
-                    .andExpect(jsonPath("$.viewCount").isNumber());
+                    .andExpect(jsonPath("$.viewCount").isNumber())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("PST-021: 조회수 자동 증가")
@@ -616,7 +632,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                             .with(withAuth(memberUser))
                             .with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.viewCount").value(initialViewCount + 1));
+                    .andExpect(jsonPath("$.viewCount").value(initialViewCount + 1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("PST-022: 익명 게시글 작성자 비노출")
@@ -633,7 +650,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.authorName").value("익명"))
                     .andExpect(jsonPath("$.authorId").isEmpty())
-                    .andExpect(jsonPath("$.isAnonymous").value(true));
+                    .andExpect(jsonPath("$.isAnonymous").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("PST-023: 삭제된 게시글 접근")
@@ -668,7 +686,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.posts[0].title").value("세번째"))
                     .andExpect(jsonPath("$.posts[1].title").value("두번째"))
-                    .andExpect(jsonPath("$.posts[2].title").value("첫번째"));
+                    .andExpect(jsonPath("$.posts[2].title").value("첫번째"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("PST-025: 게시글 목록 기본 20개")
@@ -687,7 +706,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.posts.length()").value(20))
                     .andExpect(jsonPath("$.totalElements").value(25))
-                    .andExpect(jsonPath("$.hasNext").value(true));
+                    .andExpect(jsonPath("$.hasNext").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("PST-026: 게시글 상세 이미지 로드")
@@ -721,7 +741,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.imageUrls").isArray())
-                    .andExpect(jsonPath("$.imageUrls.length()").value(2));
+                    .andExpect(jsonPath("$.imageUrls.length()").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 
@@ -808,14 +829,16 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
-                    .andExpect(status().isCreated());
+                    .andExpect(status().isCreated())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
 
             // 준회원이 조회 가능한지 확인
             mockMvc.perform(get(BASE_URL + "/notices/posts")
                             .with(withAuth(associateUser))
                             .with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(1));
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("PST-053: 정회원 공지사항 작성 불가")
@@ -861,7 +884,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(2));
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("PST-071: 질문만 필터")
@@ -879,7 +903,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(2));
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("PST-072: 검색 결과 정렬")
@@ -899,7 +924,8 @@ class PostControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.posts[0].title").value("검색 세번째"))
                     .andExpect(jsonPath("$.posts[1].title").value("검색 두번째"))
-                    .andExpect(jsonPath("$.posts[2].title").value("검색 첫번째"));
+                    .andExpect(jsonPath("$.posts[2].title").value("검색 첫번째"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 }

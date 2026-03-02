@@ -79,8 +79,12 @@ tags:
   description: 계정 상태 변경 감사 이력 조회 API (ADMIN 전용)
 - name: Survey Question Option
   description: 설문 질문 선택지 API
-- name: Inquiry
-  description: 문의 API
+- name: Admin Inquiry
+  description: 관리자 문의 관리 API
+- name: Member Inquiry
+  description: 회원 문의 API
+- name: Guest Inquiry
+  description: 비회원 문의 API
 - name: Health
   description: 헬스체크 API
 - name: Event Registration
@@ -512,6 +516,10 @@ components:
       $ref: './schemas/events.yaml#/EventStatusChangeReasonRequest'
     MyRegistrationResponse:
       $ref: './schemas/events.yaml#/MyRegistrationResponse'
+    AdminEventListResponse:
+      $ref: './schemas/events.yaml#/AdminEventListResponse'
+    AdminEventDetailResponse:
+      $ref: './schemas/events.yaml#/AdminEventDetailResponse'
     EventListResponse:
       $ref: './schemas/events.yaml#/EventListResponse'
     PageRegistrationListResponse:

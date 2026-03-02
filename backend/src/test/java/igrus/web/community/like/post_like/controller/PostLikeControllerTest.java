@@ -9,6 +9,7 @@ import igrus.web.community.like.post_like.domain.PostLike;
 import igrus.web.community.like.post_like.repository.PostLikeRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
@@ -132,7 +133,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.liked").value(true))
-                    .andExpect(jsonPath("$.likeCount").value(1));
+                    .andExpect(jsonPath("$.likeCount").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-002: 게시글 좋아요 취소 성공")
@@ -148,7 +150,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.liked").value(false))
-                    .andExpect(jsonPath("$.likeCount").value(0));
+                    .andExpect(jsonPath("$.likeCount").value(0))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-003: 본인 게시글 좋아요 가능")
@@ -160,7 +163,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.liked").value(true));
+                    .andExpect(jsonPath("$.liked").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-006: 좋아요 토글 반복 (중복 호출 시 토글 동작)")
@@ -171,21 +175,24 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                             .with(withAuth(memberUser2))
                             .with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.liked").value(true));
+                    .andExpect(jsonPath("$.liked").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
 
             // 두번째 호출: 좋아요 취소
             mockMvc.perform(post("/api/v1/posts/" + post.getId() + "/likes")
                             .with(withAuth(memberUser2))
                             .with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.liked").value(false));
+                    .andExpect(jsonPath("$.liked").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
 
             // 세번째 호출: 다시 좋아요 추가
             mockMvc.perform(post("/api/v1/posts/" + post.getId() + "/likes")
                             .with(withAuth(memberUser2))
                             .with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.liked").value(true));
+                    .andExpect(jsonPath("$.liked").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-040: 삭제된 게시글 좋아요 시 410 Gone")
@@ -245,7 +252,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.liked").value(true))
-                    .andExpect(jsonPath("$.likeCount").value(1));
+                    .andExpect(jsonPath("$.likeCount").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("좋아요 상태 조회 - liked=false")
@@ -258,7 +266,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.liked").value(false))
-                    .andExpect(jsonPath("$.likeCount").value(0));
+                    .andExpect(jsonPath("$.likeCount").value(0))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("존재하지 않는 게시글 상태 조회 시 404 Not Found")
@@ -294,7 +303,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(2))
                     .andExpect(jsonPath("$.posts").isArray())
-                    .andExpect(jsonPath("$.posts.length()").value(2));
+                    .andExpect(jsonPath("$.posts.length()").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-032: 좋아요 목록 페이지네이션")
@@ -315,7 +325,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(25))
                     .andExpect(jsonPath("$.posts.length()").value(20))
-                    .andExpect(jsonPath("$.totalPages").value(2));
+                    .andExpect(jsonPath("$.totalPages").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-034: 빈 좋아요 목록 조회")
@@ -328,7 +339,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(0))
-                    .andExpect(jsonPath("$.posts").isEmpty());
+                    .andExpect(jsonPath("$.posts").isEmpty())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-090: 삭제된 게시글은 좋아요 목록에서 제외")
@@ -352,7 +364,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(0))
-                    .andExpect(jsonPath("$.posts").isEmpty());
+                    .andExpect(jsonPath("$.posts").isEmpty())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("준회원 좋아요 목록 조회 시 200 OK (빈 목록)")
@@ -364,7 +377,8 @@ class PostLikeControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(0));
+                    .andExpect(jsonPath("$.totalElements").value(0))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 }

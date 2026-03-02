@@ -410,20 +410,13 @@ export type getEventListResponse200 = {
   data: EventListResponse[]
   status: 200
 }
-
-export type getEventListResponse401 = {
-  data: void
-  status: 401
-}
     
 export type getEventListResponseSuccess = (getEventListResponse200) & {
   headers: Headers;
 };
-export type getEventListResponseError = (getEventListResponse401) & {
-  headers: Headers;
-};
+;
 
-export type getEventListResponse = (getEventListResponseSuccess | getEventListResponseError)
+export type getEventListResponse = (getEventListResponseSuccess)
 
 export const getGetEventListUrl = (params?: GetEventListParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -462,7 +455,7 @@ export const getGetEventListQueryKey = (params?: GetEventListParams,) => {
     }
 
     
-export const getGetEventListQueryOptions = <TData = Awaited<ReturnType<typeof getEventList>>, TError = void>(params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetEventListQueryOptions = <TData = Awaited<ReturnType<typeof getEventList>>, TError = unknown>(params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -481,10 +474,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetEventListQueryResult = NonNullable<Awaited<ReturnType<typeof getEventList>>>
-export type GetEventListQueryError = void
+export type GetEventListQueryError = unknown
 
 
-export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = void>(
+export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = unknown>(
  params: undefined |  GetEventListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventList>>,
@@ -494,7 +487,7 @@ export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = void>(
+export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = unknown>(
  params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventList>>,
@@ -504,7 +497,7 @@ export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = void>(
+export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = unknown>(
  params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -512,7 +505,7 @@ export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>
  * @summary 행사 목록 조회
  */
 
-export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = void>(
+export function useGetEventList<TData = Awaited<ReturnType<typeof getEventList>>, TError = unknown>(
  params?: GetEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

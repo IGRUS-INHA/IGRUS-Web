@@ -13,7 +13,7 @@ import {
   useCancelEvent,
   useReactivateEvent,
 } from "@/api/model/event/event";
-import type { EventListResponse } from "@/api/model/models";
+import type { AdminEventListResponse } from "@/api/model/models";
 import type { GetAdminEventListVisibility } from "@/api/model/models/getAdminEventListVisibility";
 import type { GetAdminEventListEventStatus } from "@/api/model/models/getAdminEventListEventStatus";
 import type { GetAdminEventListRegistrationStatus } from "@/api/model/models/getAdminEventListRegistrationStatus";
@@ -161,7 +161,7 @@ export default function EventsTab() {
     ...(regStatus && { registrationStatus: regStatus }),
   });
 
-  const events: EventListResponse[] = response?.status === 200 ? response.data : [];
+  const events: AdminEventListResponse[] = response?.status === 200 ? response.data : [];
 
   // 쿼리 무효화 헬퍼
   const invalidateAll = () => {
@@ -285,7 +285,7 @@ export default function EventsTab() {
 
   // -- 행별 액션 버튼 결정 --
 
-  function getActions(ev: EventListResponse) {
+  function getActions(ev: AdminEventListResponse) {
     const actions: { label: string; onClick: () => void; variant?: "destructive" | "default" }[] = [];
     const id = ev.id;
     if (!id) return actions;

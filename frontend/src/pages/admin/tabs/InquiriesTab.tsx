@@ -7,7 +7,7 @@ import {
   useUpdateReply,
   useCreateMemo,
   useDeleteInquiry,
-} from "@/api/model/inquiry/inquiry";
+} from "@/api/model/admin-inquiry/admin-inquiry";
 import type { GetAllInquiriesType } from "@/api/model/models/getAllInquiriesType";
 import type { GetAllInquiriesStatus } from "@/api/model/models/getAllInquiriesStatus";
 import type { UpdateInquiryStatusRequestStatus } from "@/api/model/models/updateInquiryStatusRequestStatus";

@@ -47,6 +47,7 @@ export interface PasswordLoginRequest {
   /**
    * 비밀번호
    * @minLength 1
+   * @pattern .*\S.*
    */
   password: string;
 }

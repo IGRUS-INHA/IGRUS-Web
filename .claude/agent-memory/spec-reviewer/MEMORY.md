@@ -102,26 +102,78 @@
 4. Forbidden state transition tests may need architectural interpretation (TC-025: same-key re-upload impossible by design)
 5. Boundary tests for time-based queries: strict less-than vs less-than-or-equal matters
 
-## Event Domain Test Reviews
+## OpenAPI Runtime Validation Reviews
 
-### Round 1: TASK-013~021 (Unit Tests) - FAIL (2026-02-28)
-- 50 new tests across 7 tasks
-- Critical: TASK-015 missing "already same state -> exception" service tests; TASK-021 missing cancelRegistration after unpublish
-- Mock limitation: service tests can't verify newValue in audit events without doAnswer state simulation
-- Pattern: task plan numbered items must have 1:1 test mapping -- always count and compare
+### Round 1: TASK-202/221 (Phase C Infrastructure) - FAIL (2026-03-02)
+- R1 Critical issues (2):
+  1. LevelResolver creation logic duplicated in OpenApiValidatorUtil(test) and OpenApiValidationConfig(main)
+  2. Validator creation logic (spec loading, LevelResolver) also duplicated in both classes
+- R1 Recommended issues (2):
+  1. No graceful degradation in OpenApiValidationConfig constructor -- spec file missing = context failure
+  2. LoggingValidationReportHandler.hasErrors() only catches ERROR, not WARN-only scenarios
 
-### Round 2: TASK-013~021 (Unit Tests) - PASS (2026-02-28)
-- All 5 R1 issues (2 critical + 3 recommended) resolved
-- Key fix patterns:
-  1. Same-state exception: doThrow on mock + assertThatThrownBy (service level)
-  2. cancelRegistration visibility-independent: separate test with UNPUBLISHED mock event
-  3. newValue verification: thenReturn chaining (.thenReturn(UNPUBLISHED).thenReturn(PUBLISHED)) to simulate state change
-  4. OPEN auto-close at service level: verify(mockEvent).unpublish() (domain test handles actual state assertion)
-  5. registrationStatus solo filter: straightforward Repository mock verification
+### Round 2: TASK-202/221 (Phase C Infrastructure) - PASS (2026-03-02)
+- All R1 issues resolved via OpenApiValidatorFactory extraction:
+  1. createProjectLevelResolver() -- single source of truth for LevelResolver
+  2. createValidator() -- single source of truth for Validator creation (spec loading + LevelResolver)
+  3. graceful degradation: try-catch in Config constructor, interceptor=null on failure, WARN log
+  4. hasWarnings() method added to LoggingValidationReportHandler for WARN-only scenarios
+- Key architecture after R2:
+  - OpenApiValidatorFactory (src/main): utility class with static methods, SPEC_FILE_PATH constant
+  - OpenApiValidatorUtil (src/test): delegates to Factory, adds singleton (volatile+DCL) + matchesOpenApiSpec()
+  - OpenApiValidationConfig (src/main): delegates to Factory, @Profile+@ConditionalOnProperty dual gate
+- R2 Recommended (non-blocking):
+  1. SPEC_FILE_PATH is package-private, could be private
+  2. Filter Bean always created even when Interceptor is null (graceful degradation edge case)
 
-### Event Domain Test Checklist
-1. Same-state transitions must be tested at BOTH domain level (actual exception) AND service level (doThrow mock)
-2. Visibility-independent operations (cancel, approve, revert) need explicit UNPUBLISHED event tests
-3. Audit event newValue: use thenReturn chaining on mock to simulate pre/post state
-4. Service-level tests for domain state changes: verify domain method call, not final state (state tested in domain tests)
-5. Multi-axis filtering: test each axis independently + at least one cross-axis combination
+### Infrastructure Layer Checklist
+1. Singleton pattern for expensive validator initialization (volatile + DCL or Holder pattern)
+2. @Profile + @ConditionalOnProperty dual gating for gradual rollout
+3. LevelResolver settings must match across test util and runtime config -- use shared factory
+4. ValidationReportHandler must NOT throw exceptions (WARN log only per task plan)
+5. Spec file path must be relative from backend/ working directory
+6. Common logic between src/main and src/test MUST be in src/main shared factory (not duplicated)
+7. Graceful degradation: heavy initialization in @Configuration constructor must be try-catch guarded
+
+## OpenAPI Contract-First Migration Reviews
+
+### Group 7 R1: TASK-020/060/070 - PASS (2026-03-02)
+- 41 endpoints (16+12+13) fully migrated across 3 controllers
+- Key verified patterns:
+  1. ServletContextUtil usage in PasswordAuthController (login/logout/refresh/recoverAccount)
+  2. PUBLIC_PATHS covers /api/v1/auth/password/** -- no @PreAuthorize needed for auth endpoints
+  3. operationId collision suffix: getMyLikes1, getMyBookmarks1 in MyPageController
+  4. SurveyApi createSurvey uses generated UpdateSurveyRequest (schema reuse by openapi-generator)
+  5. All MyPage/Survey methods have @PreAuthorize("isAuthenticated()") matching original @AuthenticationPrincipal
+
+### Contract-First Migration Checklist
+1. @Override count must match interface method count exactly
+2. No residual Swagger annotations (@Tag, @Operation, @ApiResponse, @Parameter, @SecurityRequirement)
+3. No residual Spring MVC annotations (@RequestMapping, @GetMapping, etc.) -- interface provides these
+4. @PreAuthorize maintained: absent = public API (verify via SecurityPaths), present = auth required
+5. SecurityUtils.requireCurrentUser() replaces @AuthenticationPrincipal in every authenticated method
+6. PageableUtils.of(page, size, sort) replaces @ParameterObject Pageable in paginated methods
+7. operationId suffix (_1, _2) in method names when same endpoint appears in multiple tags
+8. Generated model DTO <-> internal DTO mapping via inline or helper methods
+9. HttpServletRequest/Response accessed via ServletContextUtil when interface lacks Servlet params
+10. @Validated on class level removed (generated interface already has @Validated)
+
+## OpenAPI Runtime Validation Phase D Reviews
+
+### Round 1: TASK-210/211/222 (Phase D Tests + Filter) - FAIL (2026-03-02)
+- TASK-210: All 7 TC-210 test cases fully covered across 7 community controller test files
+- TASK-211: All 5 TC-211 test cases covered. getUserDetail 2 cases excluded (spec defect: joinRoute nullable missing)
+- TASK-222: 4/5 TC covered (TC-221-01, TC-221-02, TC-222-01, TC-222-02). TC-221-03 NOT implemented
+- R1 Critical issues (2):
+  1. TC-221-03 (schema mismatch detection test) not implemented -- Filter's core purpose unverified
+  2. TASK-222 violates task plan's "ControllerIntegrationTestBase inheritance" rule -- uses independent context with @SpringBootTest, @ActiveProfiles, @Import, @TestPropertySource
+- R1 Recommended issues (2):
+  1. getUserDetail spec fix (joinRoute nullable) needs tracked follow-up TASK
+  2. cleanupDatabase() duplicated between OpenApiValidationFilterTest and ServiceIntegrationTestBase
+
+### Phase D Checklist
+1. matchesOpenApiSpec() must be on ALL 2xx responses (not error responses)
+2. When spec defects prevent validation, document with code comment AND checklist issue log
+3. TC-221-03 (failure detection) is critical -- happy-path-only Filter tests are insufficient
+4. Independent test contexts (@TestPropertySource) that conflict with task plan rules must be documented/approved
+5. cleanupDatabase() duplication risk -- when tables change, must sync both copies

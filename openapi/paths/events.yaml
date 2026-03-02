@@ -218,10 +218,8 @@ events:
               type: array
               items:
                 $ref: ../schemas/events.yaml#/EventListResponse
-      '401':
-        description: 인증 필요
     security:
-    - BearerAuthentication: []
+    - {}
   post:
     tags:
     - Event
@@ -512,26 +510,6 @@ eventsByEventIdCancel:
         description: 권한 없음
     security:
     - BearerAuthentication: []
-myRegistrations:
-  get:
-    tags:
-    - Event Registration
-    summary: 내 신청 목록 조회
-    description: 내가 신청한 행사 목록을 조회합니다.
-    operationId: getMyRegistrations_1
-    responses:
-      '200':
-        description: 조회 성공
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: ../schemas/events.yaml#/MyRegistrationResponse
-      '401':
-        description: 인증 필요
-    security:
-    - BearerAuthentication: []
 adminEvents:
   get:
     tags:
@@ -547,8 +525,8 @@ adminEvents:
       schema:
         type: string
         enum:
-        - UNPUBLISHED
         - PUBLISHED
+        - UNPUBLISHED
     - name: eventStatus
       in: query
       description: 행사 진행 상태 필터 (UPCOMING, ONGOING, COMPLETED, CANCELED)
@@ -578,7 +556,7 @@ adminEvents:
             schema:
               type: array
               items:
-                $ref: ../schemas/events.yaml#/EventListResponse
+                $ref: ../schemas/events.yaml#/AdminEventListResponse
       '401':
         description: 인증 필요
       '403':
@@ -606,7 +584,7 @@ adminEventsByEventId:
         content:
           application/json:
             schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
+              $ref: ../schemas/events.yaml#/AdminEventDetailResponse
       '401':
         description: 인증 필요
       '403':
@@ -636,7 +614,7 @@ adminEventsByEventIdPublish:
         content:
           application/json:
             schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
+              $ref: ../schemas/events.yaml#/AdminEventDetailResponse
       '400':
         description: 이미 공개 상태
       '401':
@@ -668,7 +646,7 @@ adminEventsByEventIdUnpublish:
         content:
           application/json:
             schema:
-              $ref: ../schemas/events.yaml#/EventDetailResponse
+              $ref: ../schemas/events.yaml#/AdminEventDetailResponse
       '400':
         description: 이미 비공개 상태
       '401':
@@ -677,5 +655,25 @@ adminEventsByEventIdUnpublish:
         description: 권한 없음
       '404':
         description: 행사를 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+myRegistrations:
+  get:
+    tags:
+    - Event Registration
+    summary: 내 신청 목록 조회
+    description: 내가 신청한 행사 목록을 조회합니다.
+    operationId: getMyRegistrations_1
+    responses:
+      '200':
+        description: 조회 성공
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: ../schemas/events.yaml#/MyRegistrationResponse
+      '401':
+        description: 인증 필요
     security:
     - BearerAuthentication: []

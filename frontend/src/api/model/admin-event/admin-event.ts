@@ -53,8 +53,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  EventDetailResponse,
-  EventListResponse,
+  AdminEventDetailResponse,
+  AdminEventListResponse,
   GetAdminEventListParams
 } from '.././models';
 
@@ -70,7 +70,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 관리자 행사 목록 조회
  */
 export type getAdminEventListResponse200 = {
-  data: EventListResponse[]
+  data: AdminEventListResponse[]
   status: 200
 }
 
@@ -200,7 +200,7 @@ export function useGetAdminEventList<TData = Awaited<ReturnType<typeof getAdminE
  * @summary 관리자 행사 상세 조회
  */
 export type getAdminEventResponse200 = {
-  data: EventDetailResponse
+  data: AdminEventDetailResponse
   status: 200
 }
 
@@ -328,7 +328,7 @@ export function useGetAdminEvent<TData = Awaited<ReturnType<typeof getAdminEvent
  * @summary 행사 공개
  */
 export type publishEventResponse200 = {
-  data: EventDetailResponse
+  data: AdminEventDetailResponse
   status: 200
 }
 
@@ -432,7 +432,7 @@ export const usePublishEvent = <TError = void,
  * @summary 행사 비공개
  */
 export type unpublishEventResponse200 = {
-  data: EventDetailResponse
+  data: AdminEventDetailResponse
   status: 200
 }
 
