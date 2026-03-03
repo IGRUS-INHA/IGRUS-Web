@@ -186,6 +186,21 @@ public class Survey extends SoftDeletableEntity {
         openResponse();
     }
 
+    /**
+     * 마감일 기반 상태 전이를 수행합니다. (Lazy Evaluation)
+     * OPEN 상태에서 마감일이 경과했으면 자동으로 CLOSED로 전환합니다.
+     * 이미 CLOSED이거나 NOT_STARTED이면 아무 동작도 하지 않습니다. (멱등)
+     *
+     * @param now 현재 시각
+     */
+    public void updateStatusIfNeeded(Instant now) {
+        if (this.responseStatus == SurveyResponseStatus.OPEN
+                && this.deadline != null
+                && now.isAfter(this.deadline)) {
+            closeResponse();
+        }
+    }
+
     // === 수정 메서드 ===
 
     /**
@@ -274,6 +289,7 @@ public class Survey extends SoftDeletableEntity {
     public boolean isAcceptingResponses() {
         return this.visibility == SurveyVisibility.PUBLISHED
                 && this.responseStatus == SurveyResponseStatus.OPEN
-                && this.trashedAt == null;
+                && this.trashedAt == null
+                && (this.deadline == null || !Instant.now().isAfter(this.deadline));
     }
 }

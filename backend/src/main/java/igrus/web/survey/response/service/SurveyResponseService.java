@@ -21,6 +21,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -56,6 +57,7 @@ public class SurveyResponseService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalse(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         if (!survey.isAcceptingResponses()) {
             throw new SurveyNotAcceptingResponsesException();
@@ -94,6 +96,7 @@ public class SurveyResponseService {
                                                                  SubmitSurveyResponseRequest request) {
         Survey survey = surveyRepository.findByIdAndDeletedFalse(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         if (survey.getAccessLevel() != SurveyAccessLevel.PUBLIC) {
             throw new SurveyAnonymousNotAllowedException();
@@ -129,6 +132,7 @@ public class SurveyResponseService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalse(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         if (!survey.isAcceptingResponses()) {
             throw new SurveyNotAcceptingResponsesException();
