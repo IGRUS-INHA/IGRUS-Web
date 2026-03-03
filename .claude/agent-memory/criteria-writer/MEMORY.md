@@ -74,9 +74,26 @@
 - COMPLETED/CANCELED events always have registrationStatus=CLOSED (cross-axis invariant), so unpublish has no registration side-effect
 - Publish/unpublish auth: SecurityConfig URL rule only (no service-level validateOperatorPermission), unlike Survey which uses service-level check
 
+## Key Design Decisions (Event-Image Integration)
+- posterImageObjectKey: nullable String (VARCHAR 500), no FK to file_metadata (weak reference, same as surveyId)
+- Only COMPLETED status FileMetadata can be referenced by Event
+- Object Key prefix `events/` for event images (enforced by ObjectKeyGenerator purpose param)
+- No auto-delete of old images on change or event soft-delete (manual cleanup by operator)
+- EventFileReferenceChecker: new FileReferenceChecker implementation, checks non-deleted events
+- Soft-deleted events excluded from reference integrity checks (file can be deleted)
+- Single poster image field (not multi-image); future expansion via separate event_images table
+- Cross-domain invariant ID prefix: EVT-IMG-INV-{NN}; Security prefix: SEC-EVT-IMG-{NN}
+- DB column: event_poster_image_object_key VARCHAR(500) NULL
+- Image editability follows EVT-INV-07 (COMPLETED eventStatus blocks all edits including image)
+
 ## Review Feedback Patterns
 - Always verify actual source code before marking "(현재 구현 일치)" -- check enum values, entity fields, method existence
 - "(구현 예정)" and "(신규 구현 필요)" must be consistently used; prefer "(신규 구현 필요)" for clarity
 - When a feature crosses existing + new code, split the "관련 코드" section into separate `(현재 구현 일치)` and `**(신규 구현 필요)**` lines
 - Test coverage table: existing items affected by new features should be "부분 커버 ({feature} 미검증)"
 - Cross-axis invariant implications must be explicitly stated (e.g., COMPLETED->registrationStatus always CLOSED)
+- **Cross-document reference rule**: When referencing another doc's invariant (e.g., EVT-INV-07), verify the invariant actually covers the new field. If not, define an independent rule and add [ACTION REQUIRED] to update the other doc after implementation.
+- **DECISION cross-referencing**: Every section affected by a DECISION must reference it by ID (DECISION-01, not just "DECISION"). DECISION table must list all affected sections ("영향 범위").
+- **RBAC asymmetry**: ASSOCIATE can access event list (200 OK) but NOT event detail (403, SEC-EVT-01). When new fields are added to response DTOs, explicitly state the list vs detail exposure policy.
+- **Security reference accuracy**: STOR-INV-06 = upload restriction (unauthenticated), SEC-STOR-04 = download URL restriction (unauthenticated). Do not confuse upload vs download references.
+- **Input domain DECISION linkage**: When an input value's expected result depends on an unresolved DECISION, the input domain table must say "DECISION-XX에 따라 다름" instead of a definitive result.

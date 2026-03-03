@@ -30,7 +30,7 @@
 - Exception classes extend `CustomBaseException`
 
 ### Flyway Migration
-- Latest version as of 2026-03-02: V45 (V45__create_file_metadata_table.sql)
+- Latest version as of 2026-03-02: V46 (V46__add_event_visibility_column.sql)
 - Version conflict check is essential before committing (backend CLAUDE.md rule 17)
 
 ### OpenAPI Generator Config (Verified from build.gradle)
@@ -114,6 +114,7 @@
 - Round 1: FAIL (2 Critical: SurveyResponseService.submitResponse() isAcceptingResponses() conflicts with SEVT-INV-10 + delegation method undecided, survey CLOSED state + surveyAnswers included behavior undefined violating survey INV-09)
 - 6 Recommended: DECISION-01 unconfirmed, registerEvent() signature strategy undecided, SEC-SEVT-05 integration test coverage, documentation task missing, frontend test plan absent, requestBody required:false not specified
 - Round 2: PASS (Both Critical resolved. submitResponse() replaced with SurveyAnswerValidator.validate() + SurveyResponseRepository.save(). 8-branch decision matrix added for responseStatus x surveyAnswers x existingResponse. 6 Recommended: pseudocode SurveyResponse.create() signature mismatch, createAnswers() reuse strategy undefined, DECISION-01 confirmation inconsistency, documentation TASK missing, frontend test plan absent, registerEvent() signature overload vs extend undecided)
+- Round 3: FAIL (3 Critical: Flyway V46 version conflict, createAnswers() reuse strategy still undefined, DTO modification plan incompatible with contract-first architecture)
 
 ### Gradle Dependency Scope Awareness
 - `implementation` scope includes dependency in production JAR

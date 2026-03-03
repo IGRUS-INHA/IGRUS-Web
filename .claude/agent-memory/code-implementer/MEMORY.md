@@ -28,7 +28,7 @@
 - Boolean defaults: `DEFAULT FALSE`
 - FK added separately with `ALTER TABLE ... ADD CONSTRAINT`
 - ENGINE=InnoDB, CHARSET=utf8mb4, COLLATE=utf8mb4_unicode_ci
-- Latest version: V41 (file_metadata table)
+- Latest version: V47 (add_survey_id_to_events)
 
 ### Config Pattern
 - `Clock` Bean already exists in `ClockConfig` (Asia/Seoul timezone)
@@ -92,6 +92,18 @@
 - `User.create()` signature: (studentId, name, email, phone, dept, motivation, wishes, gender, grade, enrollmentStatus, interests, customInterest, joinRoute, customJoinRoute) -- NO UserRole param
 - Call `user.changeRole(role)` separately after create
 - Bean name verification: `applicationContext.containsBean("beanMethodName")` instead of type-based check
+
+### Signature Change Propagation
+- When adding fields to record DTOs (e.g., `CreateEventRequest`, `UpdateEventRequest`), ALL call sites must be updated: controllers, services, tests, and integration tests
+- `replace_all` on constructor patterns must be carefully scoped: `isEqualTo(EnumType.VALUE)` can match `EnumType.VALUE);` pattern and get corrupted (e.g., `isEqualTo(EnumType.VALUE, null)`)
+- Controller DTO mapping from generated model to internal DTO requires updating when internal DTO changes
+- After OpenAPI spec changes, must `rm -rf build/generated/openapi/` then `./gradlew openApiGenerate` to force regeneration
+- `@InjectMocks` in unit tests: when adding new dependencies to a service, must add corresponding `@Mock` field in test class
+
+### Cross-Domain Weak Reference Pattern
+- Use `Long surveyId` field (not `@ManyToOne`) for cross-domain FK references
+- Validation in service layer: `repository.findByIdAndDeletedFalse()` + check `trashedAt != null`
+- Exception from referenced domain's package (e.g., `SurveyNotFoundException` from `igrus.web.survey.exception`)
 
 ## File Paths
 - ErrorCode interface: `backend/src/main/java/igrus/web/common/exception/ErrorCode.java`

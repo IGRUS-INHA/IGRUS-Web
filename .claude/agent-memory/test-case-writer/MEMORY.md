@@ -32,7 +32,19 @@
 - `docs/criteria/storage/image-presigned-url-verification-criteria.md`
 - `docs/criteria/event/event-verification-criteria.md`
 - `docs/criteria/event/event-registration-verification-criteria.md`
+- `docs/criteria/event/survey-event-registration-verification-criteria.md`
 - `docs/criteria/inquiry-verification-criteria.md`
 - `docs/criteria/verification-criteria.md` (회원가입/승인/강등)
 - `docs/criteria/user/signup/interests-join-route-verification-criteria.md`
 - `docs/criteria/user/signup/temporary-student-id-verification-criteria.md`
+
+## 테스트 케이스 문서 목록 (작성 완료)
+- `docs/test-case/storage/image-presigned-url-test-cases.md` (62개 TC)
+- `docs/test-case/event/survey-event-registration-test-cases.md` (72개 TC)
+
+## 교차 도메인 테스트 케이스 패턴 (설문-행사 연동)
+- 불변조건 ID: `SEVT-INV-XX`, 보안: `SEC-SEVT-XX`
+- 교차 도메인 매트릭스: 행사 3축(visibility+registrationStatus+eventStatus) x 설문 2축(visibility+responseStatus)
+- 통합 API 원자성 검증: 트랜잭션 롤백 시 양쪽 모두 롤백 확인이 핵심
+- 검증 순서가 TC 설계에 중요: 권한(1) > 중복(3) > 등록상태(4) > 설문(6) > 정원(8)
+- 기존 불변조건 보존(회귀 테스트)을 별도 TC로 반드시 포함

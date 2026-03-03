@@ -4,9 +4,9 @@
 | 항목 | 값 |
 |------|---|
 | 생성일 | 2026-03-02 |
-| 최종 업데이트 | 2026-03-02 (전체 완료) |
+| 최종 업데이트 | 2026-03-03 |
 | 작업 계획 문서 | `c:\dev\IGRUS-Web\docs\feature\openapi-contract-first\runtime-validation-task-plan.md` |
-| 전체 상태 | COMPLETED (TASK-212, TASK-213 BLOCKED 제외) |
+| 전체 상태 | COMPLETE (전체 TASK 완료) |
 
 ## 작업 진행 현황
 
@@ -65,19 +65,48 @@
 
 ---
 
-### 보류: 마이그레이션 미완료로 실행 불가
-| TASK-ID | 작업명 | 선행 마이그레이션 | 상태 |
-|---------|--------|-----------------|------|
-| TASK-212 | 행사 도메인 통합 테스트에 OpenAPI 응답 스키마 검증 추가 | TASK-040~041 (PENDING) | BLOCKED |
-| TASK-213 | 테스트 미존재 컨트롤러에 대한 최소 응답 검증 스모크 테스트 작성 | 전체 마이그레이션 | BLOCKED |
+### 그룹 6: Phase D 보완 - 행사 도메인 검증
+| TASK-ID | 작업명 | 구현 상태 | 리뷰 상태 | 파일 | 비고 |
+|---------|--------|----------|----------|------|------|
+| TASK-212 | 행사 도메인 통합 테스트에 OpenAPI 응답 스키마 검증 추가 | DONE | PASS | `EventControllerIntegrationTest.java`, `EventRegistrationControllerIntegrationTest.java`, `openapi/schemas/events.yaml` | TC-212-01 (4개 테스트), TC-212-02 (2개 테스트) 전부 PASS. closeReason nullable 스펙 수정 포함 |
+
+**그룹 상태**: PASS
+**리뷰 이력**: R1 양쪽 PASS (spec: PASS, code: PASS)
+
+---
+
+### 그룹 7: Phase E - 미존재 테스트 스모크 작성
+| TASK-ID | 작업명 | 구현 상태 | 리뷰 상태 | 파일 | 비고 |
+|---------|--------|----------|----------|------|------|
+| TASK-213 | 테스트 미존재 컨트롤러에 대한 최소 응답 검증 스모크 테스트 작성 | DONE | PASS | 15개 스모크 테스트 파일 (아래 목록 참조) | 15개 컨트롤러 x 18개 테스트 메서드, 전체 PASS |
+
+**생성된 파일 목록**:
+- `backend/src/test/java/igrus/web/community/pinnedpost/controller/PinnedPostControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/security/auth/password/controller/PasswordAuthControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/inquiry/controller/AdminInquiryControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/inquiry/controller/GuestInquiryControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/inquiry/controller/MemberInquiryControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/user/mypage/controller/MyPageControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/survey/controller/SurveyControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/survey/question/controller/SurveyQuestionControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/survey/question/controller/SurveyQuestionOptionControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/survey/question/controller/SurveyQuestionRowControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/survey/response/controller/SurveyResponseControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/survey/response/controller/SurveyAnonymousResponseControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/security/auth/common/controller/PrivacyConsentControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/user/semester/controller/SemesterMemberControllerSmokeTest.java`
+- `backend/src/test/java/igrus/web/user/semester/controller/AdminSemesterMemberControllerSmokeTest.java`
+
+**그룹 상태**: PASS
+**리뷰 이력**: R1 양쪽 PASS (spec: PASS, code: PASS)
 
 ---
 
 ## 검증 기준 충족 현황
 | ID | 설명 | 관련 TASK | 상태 |
 |----|------|----------|:----:|
-| CR-201 | 기존 통합 테스트 컨트롤러(14개)에서 OpenAPI 응답 스키마 검증 추가 및 통과 | TASK-210~212 | ⏳ |
-| CR-202 | 통합 테스트 미존재 컨트롤러(15개)에 최소 1개 이상 스모크 테스트 존재 | TASK-213 | ⬜ |
+| CR-201 | 기존 통합 테스트 컨트롤러(14개)에서 OpenAPI 응답 스키마 검증 추가 및 통과 | TASK-210~212 | ✅ |
+| CR-202 | 통합 테스트 미존재 컨트롤러(15개)에 최소 1개 이상 스모크 테스트 존재 | TASK-213 | ✅ |
 | CR-203 | dev/test 프로필에서 OpenApiValidationFilter 활성화 | TASK-221, TASK-222 | ✅ |
 | CR-204 | prod 프로필에서 OpenApiValidationFilter 비활성화 (성능 무영향) | TASK-221 | ✅ |
 | CR-205 | CI에서 ./gradlew test 실행 시 응답 검증 테스트 자동 포함 | TASK-230 | ✅ |
@@ -103,6 +132,23 @@
 | TC-221-03 | 스키마 불일치 시 로그 경고 또는 에러 반환 확인 | TASK-222 | ✅ |
 | TC-222-01 | Filter 활성화 상태에서 정상 요청/응답 흐름 검증 | TASK-222 | ✅ |
 | TC-222-02 | Filter 활성화 상태에서 다수 엔드포인트 순차 호출 | TASK-222 | ✅ |
+| TC-212-01 | EventController GET /events 응답 스키마 검증 | TASK-212 | ✅ |
+| TC-212-02 | EventRegistrationController GET /events/{id}/registrations 응답 스키마 검증 | TASK-212 | ✅ |
+| TC-213-01 | PinnedPostController GET /pinned-posts 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-02 | PasswordAuthController POST /login, GET /check-student-id 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-03 | MyPageController GET /mypage/profile, GET /mypage/posts 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-04 | AdminInquiryController GET /inquiries 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-05 | GuestInquiryController POST /inquiries/guest 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-06 | MemberInquiryController GET /inquiries/my 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-08 | SurveyController GET /surveys 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-09 | SurveyQuestionController GET /surveys/{id}/questions 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-10 | SurveyQuestionOptionController GET /questions/{id}/options 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-11 | SurveyQuestionRowController GET /questions/{id}/rows 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-12 | SurveyResponseController POST /surveys/{id}/responses 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-13 | SurveyAnonymousResponseController POST /responses/anonymous 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-14 | PrivacyConsentController GET /consent/history, GET /consent/check 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-15a | SemesterMemberController GET /semesters 응답 스키마 검증 | TASK-213 | ✅ |
+| TC-213-15b | AdminSemesterMemberController GET /admin/semesters/{y}/{s}/candidates 응답 스키마 검증 | TASK-213 | ✅ |
 
 ## 이슈 로그
 | # | 라운드 | 그룹 | 심각도 | 리뷰어 | 설명 | 해결 |
@@ -116,3 +162,5 @@
 | 7 | R1 | 그룹4 | 🔴 | spec-reviewer | TASK-222 컨텍스트 캐싱 규칙 위반: 작업 계획이 'ControllerIntegrationTestBase를 상속하여 기존 테스트 컨텍스트를 재사용한다'고 규정하나, 실제 구현은 독립 컨텍스트(@TestPropertySource) 사용 | R2에서 해결. 독립 컨텍스트 사용 유지하되, 클래스 Javadoc에 (1) Filter enabled=true 필요 사유, (2) @TestPropertySource 불가피성, (3) 컨텍스트 캐싱 규칙 위반 인지 및 기존 테스트 무영향 설명을 상세 문서화 |
 | 8 | R1 | 그룹4 | 🟡 | code-reviewer | cleanupDatabase() 메서드가 OpenApiValidationFilterTest에 중복 정의됨 | 독립 컨텍스트 사용으로 베이스 클래스 상속 불가하여 불가피한 중복. 현행 유지 |
 | 9 | R1 | 그룹4 | 🟡 | code-reviewer | withAuth() 헬퍼가 13개 테스트 파일에 반복됨 | 기존 패턴 유지 (테스트 독립성) |
+| 10 | - | 그룹6 | 🟡 | code-implementer | `EventDetailResponse.closeReason`과 `AdminEventDetailResponse.closeReason`에 `nullable: true` 누락. 등록 미마감 행사에서 closeReason이 null이어서 OpenAPI 검증 실패 | TASK-212에서 해결. `openapi/schemas/events.yaml`에 `nullable: true` 추가 |
+| 11 | - | 그룹6 | ℹ️ | code-implementer | INT-031 기존 테스트(ASSOCIATE 행사 신청 403) 실패: `feat/survey-event-registration` 브랜치의 설문-행사 연결 기능 구현 도중 발생한 기존 이슈 (500 반환). TASK-212 변경과 무관 | 별도 이슈. TASK-212 범위 외 |
