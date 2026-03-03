@@ -34,6 +34,7 @@ import java.time.Instant;
  * @param updatedAt           수정일시
  * @param canEdit             현재 사용자가 수정 가능한지 여부
  * @param isRegistered        현재 사용자가 신청했는지 여부
+ * @param surveyId            연결된 설문 ID (null이면 설문 미연결)
  */
 public record EventDetailResponse(
         Long id,
@@ -56,7 +57,8 @@ public record EventDetailResponse(
         Instant createdAt,
         Instant updatedAt,
         boolean canEdit,
-        boolean isRegistered
+        boolean isRegistered,
+        Long surveyId
 ) {
     /**
      * Event 엔티티로부터 EventDetailResponse를 생성합니다.
@@ -89,7 +91,8 @@ public record EventDetailResponse(
                 event.getCreatedAt(),
                 event.getUpdatedAt(),
                 canEdit,
-                isRegistered
+                isRegistered,
+                event.getSurveyId()
         );
     }
 

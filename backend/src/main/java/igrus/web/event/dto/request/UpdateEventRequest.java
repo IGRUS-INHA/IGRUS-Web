@@ -45,6 +45,8 @@ public record UpdateEventRequest(
 
         @NotNull(message = "정원을 입력해 주세요")
         @Min(value = 1, message = "정원은 1명 이상이어야 합니다")
-        Integer capacity
+        Integer capacity,
+
+        Long surveyId
 ) {
 }

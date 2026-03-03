@@ -51,6 +51,8 @@ public record CreateEventRequest(
         Integer capacity,
 
         @NotNull(message = "신청 방식은 필수입니다")
-        EventRegistrationType registrationType
+        EventRegistrationType registrationType,
+
+        Long surveyId
 ) {
 }
