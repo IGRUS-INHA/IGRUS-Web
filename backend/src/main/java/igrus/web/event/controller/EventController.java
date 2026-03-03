@@ -56,14 +56,16 @@ public class EventController implements EventApi {
                 createEventRequest.getRegistrationEndAt(),
                 createEventRequest.getCapacity(),
                 EnumUtils.fromStringOrNull(igrus.web.event.domain.EventRegistrationType.class,
-                        createEventRequest.getRegistrationType().getValue())
+                        createEventRequest.getRegistrationType().getValue()),
+                createEventRequest.getSurveyId()
         );
 
         EventCreateResponse result = eventService.createEvent(request, user.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(new CreateEvent201Response()
                 .id(result.id())
                 .title(result.title())
-                .createdAt(result.createdAt()));
+                .createdAt(result.createdAt())
+                .surveyId(result.surveyId()));
     }
 
     @Override
@@ -111,7 +113,8 @@ public class EventController implements EventApi {
                 updateEventRequest.getEventEndAt(),
                 updateEventRequest.getRegistrationStartAt(),
                 updateEventRequest.getRegistrationEndAt(),
-                updateEventRequest.getCapacity()
+                updateEventRequest.getCapacity(),
+                updateEventRequest.getSurveyId()
         );
 
         EventDetailResponse response = eventService.updateEvent(eventId, request, user.userId());
@@ -216,7 +219,8 @@ public class EventController implements EventApi {
                 .createdAt(r.createdAt())
                 .updatedAt(r.updatedAt())
                 .canEdit(r.canEdit())
-                .isRegistered(r.isRegistered());
+                .isRegistered(r.isRegistered())
+                .surveyId(r.surveyId());
     }
 
     private GetEventList200ResponseInner mapToEventListResponseInner(EventListResponse r) {
@@ -240,6 +244,7 @@ public class EventController implements EventApi {
                         ? GetEventList200ResponseInner.RegistrationTypeEnum.fromValue(
                                 r.registrationType().name())
                         : null)
-                .isRegistrable(r.isRegistrable());
+                .isRegistrable(r.isRegistrable())
+                .surveyId(r.surveyId());
     }
 }

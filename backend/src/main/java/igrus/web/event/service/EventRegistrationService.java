@@ -22,13 +22,26 @@ import igrus.web.event.exception.InvalidRegistrationStatusException;
 import igrus.web.event.exception.NotManualApproveEventException;
 import igrus.web.event.exception.EventTimeOverlapException;
 import igrus.web.event.exception.OperatorPermissionRequiredException;
+import igrus.web.event.exception.SurveyNotReadyException;
+import igrus.web.event.exception.SurveyResponseRequiredException;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventRegistrationRepository;
+import igrus.web.survey.domain.Survey;
+import igrus.web.survey.domain.SurveyResponseStatus;
+import igrus.web.survey.exception.SurveyNotFoundException;
+import igrus.web.survey.repository.SurveyRepository;
+import igrus.web.survey.response.domain.SurveyResponse;
+import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
+import igrus.web.survey.response.exception.SurveyResponseDuplicateException;
+import igrus.web.survey.response.repository.SurveyResponseRepository;
+import igrus.web.survey.response.service.SurveyAnswerFactory;
+import igrus.web.survey.response.service.SurveyAnswerValidator;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,9 +78,17 @@ public class EventRegistrationService {
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
     private final UserRepository userRepository;
+    private final SurveyRepository surveyRepository;
+    private final SurveyResponseRepository surveyResponseRepository;
+    private final SurveyAnswerValidator surveyAnswerValidator;
+    private final SurveyAnswerFactory surveyAnswerFactory;
 
     /**
      * 행사에 신청합니다.
+     *
+     * <p>설문 연결 행사(event.surveyId != null)인 경우 {@link #registerEventWithSurvey}로 위임하여
+     * 설문 응답 저장과 행사 신청을 단일 트랜잭션으로 원자적으로 처리합니다.
+     * 설문 미연결 행사(event.surveyId == null)인 경우 기존 로직 그대로 실행합니다.</p>
      *
      * <p>검증 항목:</p>
      * <ul>
@@ -76,12 +97,14 @@ public class EventRegistrationService {
      *   <li>등록 상태가 OPEN이어야 함</li>
      *   <li>신청 기간 내여야 함</li>
      *   <li>정원이 남아있어야 함 (선착순의 경우)</li>
+     *   <li>설문 연결 행사: 설문 상태 검증 + 설문 응답 필수 (SEVT-INV-06, 10, 11)</li>
      * </ul>
      *
      * <p>동시성 제어: 원자적 UPDATE 방식 사용</p>
      *
-     * @param eventId 행사 ID
-     * @param userId  신청자 ID
+     * @param eventId       행사 ID
+     * @param userId        신청자 ID
+     * @param surveyAnswers 설문 응답 데이터 (설문 미연결 행사에서는 무시됨, null 허용)
      * @return 신청 결과 응답 DTO
      * @throws EventNotFoundException               행사를 찾을 수 없는 경우
      * @throws UserNotFoundException                사용자를 찾을 수 없는 경우
@@ -91,8 +114,12 @@ public class EventRegistrationService {
      * @throws EventNotOpenException                등록 상태가 OPEN이 아닌 경우
      * @throws EventNotInRegistrationPeriodException 신청 기간이 아닌 경우
      * @throws EventCapacityFullException           정원이 초과된 경우 (선착순)
+     * @throws SurveyResponseRequiredException      설문 응답이 필요한데 존재하지 않는 경우
+     * @throws SurveyNotReadyException              설문이 NOT_STARTED 상태인 경우
+     * @throws SurveyNotFoundException              설문이 삭제되었거나 휴지통에 있는 경우
      */
-    public RegistrationResponse registerEvent(Long eventId, Long userId) {
+    public RegistrationResponse registerEvent(Long eventId, Long userId,
+                                               List<SubmitAnswerRequest> surveyAnswers) {
         // 1. 행사 조회 (락 없이)
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
@@ -125,6 +152,13 @@ public class EventRegistrationService {
 
         // 7. 신청 기간 확인
         validateRegistrationPeriod(event);
+
+        // SEVT-INV-07: 설문 연결 행사 분기
+        if (event.hasSurvey()) {
+            return registerEventWithSurvey(event, user, surveyAnswers);
+        }
+
+        // === 설문 미연결 행사: 기존 로직 그대로 ===
 
         // 8. 다른 행사와 시간 겹침 확인
         validateNoTimeOverlap(userId, event);
@@ -459,8 +493,105 @@ public class EventRegistrationService {
     }
 
     /**
+     * 설문 연결 행사에 대한 신청을 처리합니다.
+     * 설문 응답 저장과 행사 신청을 단일 트랜잭션으로 원자적으로 처리합니다.
+     *
+     * <p>설문 상태별 surveyAnswers 처리 분기 매트릭스:</p>
+     * <ul>
+     *   <li>#1: OPEN + surveyAnswers 포함 -> 새 응답 저장 + 신청 진행</li>
+     *   <li>#2: OPEN + surveyAnswers 미포함 + 기존 응답 있음 -> 기존 응답으로 신청 진행</li>
+     *   <li>#3: OPEN + surveyAnswers 미포함 + 기존 응답 없음 -> 실패</li>
+     *   <li>#4: CLOSED + surveyAnswers 포함 + 기존 응답 없음 -> 실패</li>
+     *   <li>#5: CLOSED + surveyAnswers 포함 + 기존 응답 있음 -> surveyAnswers 무시, 기존 응답으로 진행</li>
+     *   <li>#6: CLOSED + surveyAnswers 미포함 + 기존 응답 있음 -> 기존 응답으로 신청 진행</li>
+     *   <li>#7: CLOSED + surveyAnswers 미포함 + 기존 응답 없음 -> 실패</li>
+     *   <li>#8: NOT_STARTED -> validateSurveyState()에서 이미 차단</li>
+     * </ul>
+     *
+     * @param event         행사 (surveyId != null)
+     * @param user          신청자
+     * @param surveyAnswers 설문 응답 데이터 (null 허용)
+     * @return 신청 결과 응답 DTO
+     * @throws SurveyNotFoundException         설문이 삭제되었거나 휴지통에 있는 경우
+     * @throws SurveyNotReadyException         설문이 NOT_STARTED 상태인 경우
+     * @throws SurveyResponseRequiredException 설문 응답이 필요한데 존재하지 않는 경우
+     * @throws EventCapacityFullException      정원이 초과된 경우 (선착순)
+     */
+    private RegistrationResponse registerEventWithSurvey(Event event, User user,
+                                                          List<SubmitAnswerRequest> surveyAnswers) {
+        Long eventId = event.getId();
+
+        // 8. 설문 상태 검증 (SEVT-INV-10, 11)
+        Survey survey = surveyRepository.findById(event.getSurveyId())
+                .orElseThrow(SurveyNotFoundException::new);
+        validateSurveyState(survey, eventId, user.getId());
+
+        // 9. 설문 응답 처리 (SEVT-INV-06) -- 분기 매트릭스 적용
+        boolean hasExistingResponse = surveyResponseRepository
+                .existsBySurveyIdAndUserId(event.getSurveyId(), user.getId());
+
+        if (surveyAnswers != null && !surveyAnswers.isEmpty()) {
+            // surveyAnswers 포함된 요청
+            if (survey.getResponseStatus() == SurveyResponseStatus.OPEN) {
+                // #1: OPEN + surveyAnswers 있음 -> 새 응답 저장
+                surveyAnswerValidator.validate(survey, surveyAnswers);
+                SurveyResponse response = SurveyResponse.create(survey, user);
+                surveyAnswerFactory.createAnswers(response, survey, surveyAnswers);
+                try {
+                    surveyResponseRepository.save(response);
+                } catch (DataIntegrityViolationException e) {
+                    throw new SurveyResponseDuplicateException();
+                }
+            } else if (survey.getResponseStatus() == SurveyResponseStatus.CLOSED) {
+                if (hasExistingResponse) {
+                    // #5: CLOSED + surveyAnswers 있음 + 기존 응답 있음 -> surveyAnswers 무시, 기존 응답으로 진행
+                    log.debug("설문 CLOSED 상태 - 제공된 surveyAnswers 무시, 기존 응답으로 진행 - surveyId: {}, userId: {}",
+                            survey.getId(), user.getId());
+                } else {
+                    // #4: CLOSED + surveyAnswers 있음 + 기존 응답 없음 -> 실패
+                    log.info("행사 신청 거부 - eventId: {}, userId: {}, 사유: 설문 응답 미존재 (surveyId: {})",
+                            eventId, user.getId(), event.getSurveyId());
+                    throw new SurveyResponseRequiredException();
+                }
+            }
+        } else {
+            // surveyAnswers 미포함된 요청
+            if (!hasExistingResponse) {
+                // #3, #7: 기존 응답 없음 -> 실패
+                log.info("행사 신청 거부 - eventId: {}, userId: {}, 사유: 설문 응답 미존재 (surveyId: {})",
+                        eventId, user.getId(), event.getSurveyId());
+                throw new SurveyResponseRequiredException();
+            }
+            // #2, #6: 기존 응답 있음 -> 진행
+        }
+
+        // 설문 응답 확인 완료 로그 (TASK-015)
+        log.debug("설문 응답 확인 완료 - eventId: {}, userId: {}, surveyId: {}",
+                eventId, user.getId(), event.getSurveyId());
+
+        // 10. 다른 행사와 시간 겹침 확인
+        validateNoTimeOverlap(user.getId(), event);
+
+        // 11. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
+        if (event.isAutoApprove()) {
+            int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
+            if (updated == 0) {
+                throw new EventCapacityFullException();
+            }
+            updateEventStatusAfterIncrement(eventId);
+        }
+
+        // 12. 신청 생성 및 저장
+        EventRegistration registration = EventRegistration.create(event, user);
+        EventRegistration savedRegistration = eventRegistrationRepository.save(registration);
+
+        return RegistrationResponse.from(savedRegistration);
+    }
+
+    /**
      * 재신청을 처리합니다.
      * 취소된 신청만 재신청 가능합니다.
+     * 설문 연결 행사인 경우 현재 event.surveyId 기준으로 설문 응답 존재 여부를 검증합니다 (SEVT-INV-06).
      *
      * @param registration 기존 신청 기록
      * @param event        행사
@@ -469,6 +600,9 @@ public class EventRegistrationService {
      * @throws AlreadyRegisteredException       취소 상태가 아닌 경우
      * @throws EventNotOpenException            등록 상태가 OPEN이 아닌 경우
      * @throws EventCapacityFullException       정원 초과인 경우
+     * @throws SurveyResponseRequiredException  설문 응답이 필요한데 존재하지 않는 경우
+     * @throws SurveyNotFoundException          설문이 삭제되었거나 휴지통에 있는 경우
+     * @throws SurveyNotReadyException          설문이 NOT_STARTED 상태인 경우
      */
     private RegistrationResponse handleReRegistration(EventRegistration registration, Event event, Long eventId) {
         // 취소 상태가 아니면 이미 신청 중
@@ -481,6 +615,28 @@ public class EventRegistrationService {
 
         // 신청 기간 확인
         validateRegistrationPeriod(event);
+
+        // 설문 검증 (SEVT-INV-06: 재신청 시에도 현재 event.surveyId 기준으로 검증)
+        if (event.hasSurvey()) {
+            Long userId = registration.getUser().getId();
+
+            // 설문 상태 검증
+            Survey survey = surveyRepository.findById(event.getSurveyId())
+                    .orElseThrow(SurveyNotFoundException::new);
+            validateSurveyState(survey, eventId, userId);
+
+            // 설문 응답 존재 확인
+            boolean hasExistingResponse = surveyResponseRepository
+                    .existsBySurveyIdAndUserId(event.getSurveyId(), userId);
+            if (!hasExistingResponse) {
+                log.info("행사 신청 거부 - eventId: {}, userId: {}, 사유: 설문 응답 미존재 (surveyId: {})",
+                        eventId, userId, event.getSurveyId());
+                throw new SurveyResponseRequiredException();
+            }
+
+            log.debug("설문 응답 확인 완료 - eventId: {}, userId: {}, surveyId: {}",
+                    eventId, userId, event.getSurveyId());
+        }
 
         // 다른 행사와 시간 겹침 확인
         validateNoTimeOverlap(registration.getUser().getId(), event);
@@ -577,6 +733,44 @@ public class EventRegistrationService {
             return;
         }
         event.reopenIfNeeded(Instant.now());
+    }
+
+    /**
+     * 설문 상태를 검증합니다.
+     * 설문 연동 행사 신청 시, 설문이 유효하고 응답 수집이 가능한 상태인지 확인합니다.
+     *
+     * <p>검증 항목:</p>
+     * <ul>
+     *   <li>설문이 존재하고 삭제되지 않았는지 (deleted == false)</li>
+     *   <li>설문이 휴지통에 있지 않은지 (trashedAt == null)</li>
+     *   <li>설문 응답 상태가 NOT_STARTED가 아닌지 (OPEN 또는 CLOSED)</li>
+     * </ul>
+     *
+     * <p>DECISION-03(A): responseStatus != NOT_STARTED만 검증. visibility는 검증 대상 아님</p>
+     *
+     * @param survey  검증할 설문 (null 가능)
+     * @param eventId 행사 ID (로깅용)
+     * @param userId  사용자 ID (로깅용)
+     * @throws SurveyNotFoundException  설문이 null이거나, 삭제되었거나, 휴지통에 있는 경우
+     * @throws SurveyNotReadyException  설문 응답 상태가 NOT_STARTED인 경우
+     * @see igrus.web.survey.domain.SurveyResponseStatus
+     */
+    private void validateSurveyState(Survey survey, Long eventId, Long userId) {
+        if (survey == null || survey.isDeleted()) {
+            log.warn("행사 신청 거부 - eventId: {}, userId: {}, 사유: 연결된 설문이 삭제됨 (surveyId: {})",
+                    eventId, userId, survey != null ? survey.getId() : "null");
+            throw new SurveyNotFoundException();
+        }
+        if (survey.getTrashedAt() != null) {
+            log.warn("행사 신청 거부 - eventId: {}, userId: {}, 사유: 연결된 설문이 삭제됨 (surveyId: {})",
+                    eventId, userId, survey.getId());
+            throw new SurveyNotFoundException();
+        }
+        if (survey.getResponseStatus() == SurveyResponseStatus.NOT_STARTED) {
+            log.info("행사 신청 거부 - eventId: {}, userId: {}, 사유: 설문 미시작 (surveyId: {}, responseStatus: NOT_STARTED)",
+                    eventId, userId, survey.getId());
+            throw new SurveyNotReadyException();
+        }
     }
 
 }
