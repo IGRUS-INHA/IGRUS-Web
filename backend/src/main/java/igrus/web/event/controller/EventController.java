@@ -216,7 +216,10 @@ public class EventController implements EventApi {
                 .createdAt(r.createdAt())
                 .updatedAt(r.updatedAt())
                 .canEdit(r.canEdit())
-                .isRegistered(r.isRegistered());
+                .isRegistered(r.isRegistered())
+                .visibility(r.visibility() != null
+                        ? GetEvent200Response.VisibilityEnum.fromValue(r.visibility().name())
+                        : null);
     }
 
     private GetEventList200ResponseInner mapToEventListResponseInner(EventListResponse r) {
@@ -240,6 +243,9 @@ public class EventController implements EventApi {
                         ? GetEventList200ResponseInner.RegistrationTypeEnum.fromValue(
                                 r.registrationType().name())
                         : null)
-                .isRegistrable(r.isRegistrable());
+                .isRegistrable(r.isRegistrable())
+                .visibility(r.visibility() != null
+                        ? GetEventList200ResponseInner.VisibilityEnum.fromValue(r.visibility().name())
+                        : null);
     }
 }
