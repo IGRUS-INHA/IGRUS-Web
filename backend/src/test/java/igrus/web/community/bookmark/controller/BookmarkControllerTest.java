@@ -9,6 +9,7 @@ import igrus.web.community.bookmark.domain.Bookmark;
 import igrus.web.community.bookmark.repository.BookmarkRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
@@ -128,7 +129,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.bookmarked").value(true));
+                    .andExpect(jsonPath("$.bookmarked").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-011: 북마크 취소 성공")
@@ -143,7 +145,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.bookmarked").value(false));
+                    .andExpect(jsonPath("$.bookmarked").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-013: 북마크 토글 반복 (중복 호출 시 토글 동작)")
@@ -154,21 +157,24 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                             .with(withAuth(memberUser2))
                             .with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.bookmarked").value(true));
+                    .andExpect(jsonPath("$.bookmarked").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
 
             // 두번째 호출: 북마크 취소
             mockMvc.perform(post("/api/v1/posts/" + post.getId() + "/bookmarks")
                             .with(withAuth(memberUser2))
                             .with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.bookmarked").value(false));
+                    .andExpect(jsonPath("$.bookmarked").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
 
             // 세번째 호출: 다시 북마크 추가
             mockMvc.perform(post("/api/v1/posts/" + post.getId() + "/bookmarks")
                             .with(withAuth(memberUser2))
                             .with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.bookmarked").value(true));
+                    .andExpect(jsonPath("$.bookmarked").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-041: 삭제된 게시글 북마크 시 410 Gone")
@@ -227,7 +233,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.bookmarked").value(true));
+                    .andExpect(jsonPath("$.bookmarked").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("북마크 상태 조회 - bookmarked=false")
@@ -239,7 +246,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.bookmarked").value(false));
+                    .andExpect(jsonPath("$.bookmarked").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("존재하지 않는 게시글 상태 조회 시 404 Not Found")
@@ -275,7 +283,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(2))
                     .andExpect(jsonPath("$.posts").isArray())
-                    .andExpect(jsonPath("$.posts.length()").value(2));
+                    .andExpect(jsonPath("$.posts.length()").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-022: 북마크 목록 페이지네이션")
@@ -296,7 +305,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(25))
                     .andExpect(jsonPath("$.posts.length()").value(20))
-                    .andExpect(jsonPath("$.totalPages").value(2));
+                    .andExpect(jsonPath("$.totalPages").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-024: 빈 북마크 목록 조회")
@@ -309,7 +319,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(0))
-                    .andExpect(jsonPath("$.posts").isEmpty());
+                    .andExpect(jsonPath("$.posts").isEmpty())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("LKB-091: 삭제된 게시글은 북마크 목록에서 제외")
@@ -327,7 +338,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(0))
-                    .andExpect(jsonPath("$.posts").isEmpty());
+                    .andExpect(jsonPath("$.posts").isEmpty())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("준회원 북마크 목록 조회 시 200 OK (빈 목록)")
@@ -339,7 +351,8 @@ class BookmarkControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(0));
+                    .andExpect(jsonPath("$.totalElements").value(0))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 }

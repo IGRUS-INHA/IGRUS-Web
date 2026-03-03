@@ -3,5 +3,5 @@ export {
   useGetMyInquiries,
   useGetMyInquiry,
   useCreateMemberInquiry,
-  useCreateGuestInquiry,
-} from '@/api/model/inquiry/inquiry';
+} from "@/api/model/member-inquiry/member-inquiry";
+export { useCreateGuestInquiry } from "@/api/model/guest-inquiry/guest-inquiry";

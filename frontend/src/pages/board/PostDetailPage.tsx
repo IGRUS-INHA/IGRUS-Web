@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Heart,
@@ -11,49 +11,73 @@ import {
   Trash2,
   Pin,
   PinOff,
-} from 'lucide-react';
-import { useGetPostDetail, useDeletePost } from '@/api/model/post/post';
-import { useCreatePinnedPost, useDeletePinnedPost, useGetPinnedPostList } from '@/api/model/pinned-post/pinned-post';
-import type { PinnedPostListResponse } from '@/api/model/models';
-import { useToggleLike } from '@/api/model/post-like/post-like';
-import { useToggleBookmark, useGetBookmarkStatus } from '@/api/model/bookmark/bookmark';
-import { useUIStore } from '@/stores';
-import { useQueryClient } from '@tanstack/react-query';
-import { Card } from '@/components/ui/card';
-import { CommentSection } from '@/components/feature/comment';
-import type { BoardType } from '@/types/common';
-import type { PostDetailResponse } from '@/api/model/models';
-import { cn } from '@/lib/utils';
-import MarkdownPreview from '@uiw/react-markdown-preview';
-import { useMockData } from '@/hooks/useMockData';
-import { useMockPostDetail } from '@/hooks/queries/useMockPosts';
-import { usePermission } from '@/hooks/usePermission';
-import { isForbiddenError, isNotFoundError, isConflictError, isPostAccessDenied, getErrorMessage } from '@/utils/error';
-import { formatRelativeTime } from '@/utils';
-import { myPageKeys } from '@/hooks/queries/useMyPage';
+} from "lucide-react";
+import { useGetPostDetail, useDeletePost } from "@/api/model/post/post";
+import {
+  useCreatePinnedPost,
+  useDeletePinnedPost,
+  useGetPinnedPostList,
+} from "@/api/model/pinned-post/pinned-post";
+import type { PinnedPostListResponse } from "@/api/model/models";
+import { useToggleLike } from "@/api/model/post-like/post-like";
+import {
+  useToggleBookmark,
+  useGetBookmarkStatus,
+} from "@/api/model/bookmark/bookmark";
+import { useUIStore } from "@/stores";
+import { useQueryClient } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
+import { CommentSection } from "@/components/feature/comment";
+import type { BoardType } from "@/types/common";
+import type { PostDetailResponse } from "@/api/model/models";
+import { cn } from "@/lib/utils";
+import MarkdownPreview from "@uiw/react-markdown-preview";
+import { useMockData } from "@/hooks/useMockData";
+import { useMockPostDetail } from "@/hooks/queries/useMockPosts";
+import { usePermission } from "@/hooks/usePermission";
+import {
+  isForbiddenError,
+  isNotFoundError,
+  isConflictError,
+  isPostAccessDenied,
+  getErrorMessage,
+} from "@/utils/error";
+import { formatRelativeTime } from "@/utils";
+import { myPageKeys } from "@/hooks/queries/useMyPage";
+import { useResolvedImageUrls } from "@/hooks/useResolvedImageUrls";
 
 export default function PostDetailPage() {
-  const { boardType, postId } = useParams<{ boardType: BoardType; postId: string }>();
+  const { boardType, postId } = useParams<{
+    boardType: BoardType;
+    postId: string;
+  }>();
   const navigate = useNavigate();
   const { theme } = useUIStore();
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
   const isMockMode = useMockData();
   const { isAuthenticated, isOperator } = usePermission();
   const canManagePins = isOperator();
 
   // Fetch post data (Mock 또는 실제 API)
-  const realQuery = useGetPostDetail(
-    boardType as string,
-    Number(postId),
-    {
-      query: { enabled: !isMockMode },
-    }
-  );
+  const realQuery = useGetPostDetail(boardType as string, Number(postId), {
+    query: { enabled: !isMockMode },
+  });
   const mockQuery = useMockPostDetail(boardType as string, Number(postId));
 
-  const { data: response, isLoading, error } = isMockMode ? mockQuery : realQuery;
+  const {
+    data: response,
+    isLoading,
+    error,
+  } = isMockMode ? mockQuery : realQuery;
   // client.ts에서 에러 응답을 throw하므로 data는 항상 PostDetailResponse
   const post = response?.data as PostDetailResponse | undefined;
+
+  // 이미지 objectKey → presigned download URL 변환
+  const imageObjectKeys = useMemo(
+    () => post?.imageUrls ?? [],
+    [post?.imageUrls],
+  );
+  const { urls: resolvedImageUrls } = useResolvedImageUrls(imageObjectKeys);
 
   // Local state
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -70,9 +94,12 @@ export default function PostDetailPage() {
   const deletePinnedPost = useDeletePinnedPost();
 
   // Bookmark status query (로그인한 경우에만 조회)
-  const { data: bookmarkStatusResponse } = useGetBookmarkStatus(Number(postId), {
-    query: { enabled: !isMockMode && !!postId && isAuthenticated },
-  });
+  const { data: bookmarkStatusResponse } = useGetBookmarkStatus(
+    Number(postId),
+    {
+      query: { enabled: !isMockMode && !!postId && isAuthenticated },
+    },
+  );
   const isBookmarked = bookmarkStatusResponse?.data?.bookmarked ?? false;
 
   // 고정 게시글 상태 조회
@@ -86,14 +113,17 @@ export default function PostDetailPage() {
   // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+      if (
+        moreMenuRef.current &&
+        !moreMenuRef.current.contains(event.target as Node)
+      ) {
         setIsMoreMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -104,8 +134,8 @@ export default function PostDetailPage() {
 
     // 로그인하지 않은 경우 로그인 페이지로 이동
     if (!isAuthenticated) {
-      alert('로그인이 필요한 기능입니다.');
-      navigate('/login');
+      alert("로그인이 필요한 기능입니다.");
+      navigate("/login");
       return;
     }
 
@@ -120,7 +150,7 @@ export default function PostDetailPage() {
           // 마이페이지 좋아요 목록 새로고침
           void queryClient.invalidateQueries({ queryKey: myPageKeys.likes() });
         },
-      }
+      },
     );
   };
 
@@ -130,8 +160,8 @@ export default function PostDetailPage() {
 
     // 로그인하지 않은 경우 로그인 페이지로 이동
     if (!isAuthenticated) {
-      alert('로그인이 필요한 기능입니다.');
-      navigate('/login');
+      alert("로그인이 필요한 기능입니다.");
+      navigate("/login");
       return;
     }
 
@@ -146,14 +176,16 @@ export default function PostDetailPage() {
             queryKey: [`/api/v1/boards/${boardType}/posts/${post.postId}`],
           });
           // 마이페이지 스크랩 목록 새로고침
-          void queryClient.invalidateQueries({ queryKey: myPageKeys.bookmarks() });
+          void queryClient.invalidateQueries({
+            queryKey: myPageKeys.bookmarks(),
+          });
         },
-      }
+      },
     );
   };
 
   const handleReport = () => {
-    alert('이 게시글을 신고했습니다.');
+    alert("이 게시글을 신고했습니다.");
     setIsMoreMenuOpen(false);
     // TODO: Implement report API call
   };
@@ -164,7 +196,11 @@ export default function PostDetailPage() {
   };
 
   const handleDelete = () => {
-    if (!window.confirm('이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다.')) {
+    if (
+      !window.confirm(
+        "이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다.",
+      )
+    ) {
       return;
     }
 
@@ -179,26 +215,28 @@ export default function PostDetailPage() {
             queryKey: [`/api/v1/boards/${boardType}/posts`],
           });
           void queryClient.invalidateQueries({
-            queryKey: ['/api/v1/pinned-posts'],
+            queryKey: ["/api/v1/pinned-posts"],
           });
           // 마이페이지 게시글/좋아요/스크랩 목록 새로고침
           void queryClient.invalidateQueries({ queryKey: myPageKeys.posts() });
           void queryClient.invalidateQueries({ queryKey: myPageKeys.likes() });
-          void queryClient.invalidateQueries({ queryKey: myPageKeys.bookmarks() });
+          void queryClient.invalidateQueries({
+            queryKey: myPageKeys.bookmarks(),
+          });
           navigate(`/board/${boardType}`);
         },
         onError: (error: unknown) => {
-          let errorMessage = '게시글 삭제에 실패했습니다.';
+          let errorMessage = "게시글 삭제에 실패했습니다.";
           if (isForbiddenError(error)) {
-            errorMessage = '삭제 권한이 없습니다.';
+            errorMessage = "삭제 권한이 없습니다.";
           } else if (isNotFoundError(error)) {
-            errorMessage = '게시글을 찾을 수 없습니다.';
+            errorMessage = "게시글을 찾을 수 없습니다.";
           } else {
             errorMessage = getErrorMessage(error);
           }
           alert(errorMessage);
         },
-      }
+      },
     );
     setIsMoreMenuOpen(false);
   };
@@ -207,51 +245,56 @@ export default function PostDetailPage() {
     if (!post?.postId) return;
 
     if (isPinned) {
-      if (!window.confirm('게시글 고정을 해제하시겠습니까?')) return;
+      if (!window.confirm("게시글 고정을 해제하시겠습니까?")) return;
       if (!pinnedInfo?.id) return;
       deletePinnedPost.mutate(
         { id: pinnedInfo.id },
         {
           onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ['/api/v1/pinned-posts'] });
-            alert('게시글 고정이 해제되었습니다.');
+            void queryClient.invalidateQueries({
+              queryKey: ["/api/v1/pinned-posts"],
+            });
+            alert("게시글 고정이 해제되었습니다.");
           },
           onError: (error: unknown) => {
-            let errorMessage = '고정 해제에 실패했습니다.';
+            let errorMessage = "고정 해제에 실패했습니다.";
             if (isForbiddenError(error)) {
-              errorMessage = '고정을 해제할 권한이 없습니다.';
+              errorMessage = "고정을 해제할 권한이 없습니다.";
             } else if (isNotFoundError(error)) {
-              errorMessage = '고정 게시글을 찾을 수 없습니다.';
+              errorMessage = "고정 게시글을 찾을 수 없습니다.";
             } else {
               errorMessage = getErrorMessage(error);
             }
             alert(errorMessage);
           },
-        }
+        },
       );
     } else {
-      if (!window.confirm('이 게시글을 메인 페이지에 고정하시겠습니까?')) return;
+      if (!window.confirm("이 게시글을 메인 페이지에 고정하시겠습니까?"))
+        return;
       createPinnedPost.mutate(
         { data: { postId: post.postId, displayOrder: pinnedPosts.length + 1 } },
         {
           onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ['/api/v1/pinned-posts'] });
-            alert('게시글이 고정되었습니다.');
+            void queryClient.invalidateQueries({
+              queryKey: ["/api/v1/pinned-posts"],
+            });
+            alert("게시글이 고정되었습니다.");
           },
           onError: (error: unknown) => {
-            let errorMessage = '게시글 고정에 실패했습니다.';
+            let errorMessage = "게시글 고정에 실패했습니다.";
             if (isForbiddenError(error)) {
-              errorMessage = '게시글을 고정할 권한이 없습니다.';
+              errorMessage = "게시글을 고정할 권한이 없습니다.";
             } else if (isConflictError(error)) {
-              errorMessage = '이미 고정된 게시글입니다.';
+              errorMessage = "이미 고정된 게시글입니다.";
             } else if (isNotFoundError(error)) {
-              errorMessage = '게시글을 찾을 수 없습니다.';
+              errorMessage = "게시글을 찾을 수 없습니다.";
             } else {
               errorMessage = getErrorMessage(error);
             }
             alert(errorMessage);
           },
-        }
+        },
       );
     }
     setIsMoreMenuOpen(false);
@@ -262,9 +305,9 @@ export default function PostDetailPage() {
   };
 
   const handleCommentClick = () => {
-    const input = document.getElementById('comment-input') as HTMLInputElement;
+    const input = document.getElementById("comment-input") as HTMLInputElement;
     if (input) {
-      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      input.scrollIntoView({ behavior: "smooth", block: "center" });
       setTimeout(() => {
         input.focus();
       }, 300);
@@ -282,7 +325,9 @@ export default function PostDetailPage() {
   if (isPostAccessDenied(error)) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-s4">
-        <p className="text-muted-foreground">정회원 승인 후 게시글 열람이 가능합니다.</p>
+        <p className="text-muted-foreground">
+          정회원 승인 후 게시글 열람이 가능합니다.
+        </p>
         <button
           type="button"
           onClick={handleBack}
@@ -309,7 +354,7 @@ export default function PostDetailPage() {
     );
   }
 
-  const authorName = post.authorName ?? 'Unknown';
+  const authorName = post.authorName ?? "Unknown";
   const authorInitial = authorName[0];
 
   return (
@@ -319,8 +364,10 @@ export default function PostDetailPage() {
         onClick={handleBack}
         type="button"
         className={cn(
-          'mb-s6 flex items-center gap-s2 text-sm font-bold transition-colors cursor-pointer',
-          isDark ? 'text-muted-foreground hover:text-foreground' : 'text-muted-foreground hover:text-foreground'
+          "mb-s6 flex items-center gap-s2 text-sm font-bold transition-colors cursor-pointer",
+          isDark
+            ? "text-muted-foreground hover:text-foreground"
+            : "text-muted-foreground hover:text-foreground",
         )}
       >
         <ArrowLeft size={18} /> 목록으로
@@ -329,8 +376,8 @@ export default function PostDetailPage() {
       {/* Main Post Card */}
       <article
         className={cn(
-          'p-s8 md:p-12 rounded-[2.5rem] border mb-s8 relative',
-          isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'
+          "p-s8 md:p-12 rounded-[2.5rem] border mb-s8 relative",
+          isDark ? "bg-card border-border" : "bg-card border-border shadow-sm",
         )}
       >
         {/* Header */}
@@ -339,8 +386,10 @@ export default function PostDetailPage() {
             <div className="flex items-center gap-s2">
               <span
                 className={cn(
-                  'px-s4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest',
-                  isDark ? 'bg-primary/10 text-primary' : 'bg-primary/10 text-primary'
+                  "px-s4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest",
+                  isDark
+                    ? "bg-primary/10 text-primary"
+                    : "bg-primary/10 text-primary",
                 )}
               >
                 {post.boardCode}
@@ -348,8 +397,10 @@ export default function PostDetailPage() {
               {post.isVisibleToAssociate && (
                 <span
                   className={cn(
-                    'px-s4 py-1.5 rounded-full text-xs font-bold tracking-widest',
-                    isDark ? 'bg-white/5 text-muted-foreground' : 'bg-muted text-muted-foreground'
+                    "px-s4 py-1.5 rounded-full text-xs font-bold tracking-widest",
+                    isDark
+                      ? "bg-white/5 text-muted-foreground"
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   준회원 공개
@@ -363,10 +414,10 @@ export default function PostDetailPage() {
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
                 type="button"
                 className={cn(
-                  'p-s2 rounded-full transition cursor-pointer',
+                  "p-s2 rounded-full transition cursor-pointer",
                   isDark
-                    ? 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    ? "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 <MoreHorizontal size={20} />
@@ -375,8 +426,8 @@ export default function PostDetailPage() {
               {isMoreMenuOpen && (
                 <div
                   className={cn(
-                    'absolute right-0 top-full mt-2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200',
-                    'bg-popover border-border'
+                    "absolute right-0 top-full mt-2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200",
+                    "bg-popover border-border",
                   )}
                 >
                   {canManagePins && (
@@ -384,14 +435,20 @@ export default function PostDetailPage() {
                       onClick={handleTogglePin}
                       type="button"
                       className={cn(
-                        'w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer',
-                        isDark ? 'text-foreground hover:bg-white/5' : 'text-foreground hover:bg-muted'
+                        "w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer",
+                        isDark
+                          ? "text-foreground hover:bg-white/5"
+                          : "text-foreground hover:bg-muted",
                       )}
                     >
                       {isPinned ? (
-                        <><PinOff size={16} /> 고정 해제</>
+                        <>
+                          <PinOff size={16} /> 고정 해제
+                        </>
                       ) : (
-                        <><Pin size={16} /> 고정하기</>
+                        <>
+                          <Pin size={16} /> 고정하기
+                        </>
                       )}
                     </button>
                   )}
@@ -402,8 +459,10 @@ export default function PostDetailPage() {
                         onClick={handleEdit}
                         type="button"
                         className={cn(
-                          'w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer',
-                          isDark ? 'text-foreground hover:bg-white/5' : 'text-foreground hover:bg-muted'
+                          "w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer",
+                          isDark
+                            ? "text-foreground hover:bg-white/5"
+                            : "text-foreground hover:bg-muted",
                         )}
                       >
                         <Edit size={16} /> 수정하기
@@ -431,33 +490,52 @@ export default function PostDetailPage() {
             </div>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold leading-tight">{post.title}</h1>
+          <h1 className="text-3xl md:text-4xl font-bold leading-tight">
+            {post.title}
+          </h1>
 
           <div className="flex items-center gap-s3">
             <div
               className={cn(
-                'w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg',
-                isDark ? 'bg-white/10' : 'bg-muted'
+                "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg",
+                isDark ? "bg-white/10" : "bg-muted",
               )}
             >
               {authorInitial}
             </div>
             <div className="flex flex-col gap-s1">
               <p className="text-sm font-bold">{authorName}</p>
-              <p className="text-xs text-muted-foreground">조회 {post.viewCount ?? 0} · {post.createdAt ? formatRelativeTime(post.createdAt) : ''}</p>
+              <p className="text-xs text-muted-foreground">
+                조회 {post.viewCount ?? 0} ·{" "}
+                {post.createdAt ? formatRelativeTime(post.createdAt) : ""}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className={cn('prose max-w-none mb-10', isDark ? 'prose-invert text-muted-foreground' : 'text-muted-foreground')}>
-          {post.imageUrls?.[0] && (
+        <div
+          className={cn(
+            "prose max-w-none mb-10",
+            isDark
+              ? "prose-invert text-muted-foreground"
+              : "text-muted-foreground",
+          )}
+        >
+          {post.imageUrls?.[0] && resolvedImageUrls.get(post.imageUrls[0]) && (
             <div className="my-8 rounded-r4 overflow-hidden aspect-video">
-              <img src={post.imageUrls[0]} alt={post.title} className="w-full h-full object-cover" />
+              <img
+                src={resolvedImageUrls.get(post.imageUrls[0])}
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
             </div>
           )}
-          <div data-color-mode={isDark ? 'dark' : 'light'}>
-            <MarkdownPreview source={post.content?.replace(/\n/g, "  \n") ?? ""} className="!text-lg !leading-relaxed" />
+          <div data-color-mode={isDark ? "dark" : "light"}>
+            <MarkdownPreview
+              source={post.content?.replace(/\n/g, "  \n") ?? ""}
+              className="!text-lg !leading-relaxed"
+            />
           </div>
         </div>
 
@@ -467,15 +545,15 @@ export default function PostDetailPage() {
             onClick={handleLike}
             type="button"
             className={cn(
-              'flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer',
+              "flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer",
               post.liked
-                ? 'bg-red-500/10 text-red-500'
+                ? "bg-red-500/10 text-red-500"
                 : isDark
-                  ? 'bg-white/5 text-muted-foreground hover:bg-white/10'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  ? "bg-white/5 text-muted-foreground hover:bg-white/10"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80",
             )}
           >
-            <Heart size={20} className={post.liked ? 'fill-current' : ''} />
+            <Heart size={20} className={post.liked ? "fill-current" : ""} />
             {post.likeCount ?? 0}
           </button>
 
@@ -483,27 +561,32 @@ export default function PostDetailPage() {
             onClick={handleCommentClick}
             type="button"
             className={cn(
-              'flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer',
-              isDark ? 'bg-white/5 text-muted-foreground hover:bg-white/10' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              "flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer",
+              isDark
+                ? "bg-white/5 text-muted-foreground hover:bg-white/10"
+                : "bg-muted text-muted-foreground hover:bg-muted/80",
             )}
           >
             <MessageCircle size={20} />
-            {(post && 'commentCount' in post ? post.commentCount : 0) ?? 0}
+            {(post && "commentCount" in post ? post.commentCount : 0) ?? 0}
           </button>
 
           <button
             onClick={handleScrap}
             type="button"
             className={cn(
-              'flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer',
+              "flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer",
               isBookmarked
-                ? 'bg-primary/10 text-primary'
+                ? "bg-primary/10 text-primary"
                 : isDark
-                  ? 'bg-white/5 text-muted-foreground hover:bg-white/10'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  ? "bg-white/5 text-muted-foreground hover:bg-white/10"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80",
             )}
           >
-            <Bookmark size={20} className={isBookmarked ? 'fill-current' : ''} />
+            <Bookmark
+              size={20}
+              className={isBookmarked ? "fill-current" : ""}
+            />
             {post.bookmarkCount ?? 0}
           </button>
         </div>
@@ -512,8 +595,8 @@ export default function PostDetailPage() {
       {/* Comments Section */}
       <Card
         className={cn(
-          'p-s8 rounded-[2.5rem] border',
-          isDark ? 'bg-card border-border' : 'bg-card border-border shadow-sm'
+          "p-s8 rounded-[2.5rem] border",
+          isDark ? "bg-card border-border" : "bg-card border-border shadow-sm",
         )}
       >
         <CommentSection postId={Number(postId)} />

@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
+  readonly VITE_MOCK_UPLOAD_URL?: string;
 }
 
 interface ImportMeta {
@@ -12,3 +13,5 @@ interface ImportMeta {
 declare const __FEATURE_COMMUNITY__: boolean;
 declare const __FEATURE_SEARCH__: boolean;
 declare const __FEATURE_PROFILE_EDIT__: boolean;
+declare const __FEATURE_EVENTS__: boolean;
+declare const __FEATURE_INSTAGRAM__: boolean;

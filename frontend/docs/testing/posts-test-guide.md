@@ -5,6 +5,7 @@
 이 문서는 게시판(Posts) 시스템의 E2E 테스트를 Playwright로 작성할 때 참고할 수 있는 가이드입니다.
 
 **테스트 대상 기능**:
+
 - 게시글 목록 조회 (페이지네이션)
 - 게시글 상세 조회
 - 게시글 작성 (로그인 필수)
@@ -26,7 +27,7 @@
 **파일**: `e2e/pages/BoardListPage.ts`
 
 ```typescript
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator } from "@playwright/test";
 
 export class BoardListPage {
   readonly page: Page;
@@ -51,7 +52,7 @@ export class BoardListPage {
   // Actions
   readonly writeButton: Locator;
 
-  constructor(page: Page, boardType: 'notices' | 'free' | 'qna' = 'notices') {
+  constructor(page: Page, boardType: "notices" | "free" | "qna" = "notices") {
     this.page = page;
     this.boardType = boardType;
 
@@ -62,23 +63,24 @@ export class BoardListPage {
 
     // Pagination
     this.paginationContainer = page.locator('[data-testid="pagination"]');
-    this.pageButtons = this.paginationContainer.locator('button');
-    this.nextButton = page.getByRole('button', { name: /다음|Next/ });
-    this.prevButton = page.getByRole('button', { name: /이전|Previous/ });
+    this.pageButtons = this.paginationContainer.locator("button");
+    this.nextButton = page.getByRole("button", { name: /다음|Next/ });
+    this.prevButton = page.getByRole("button", { name: /이전|Previous/ });
 
     // Search & Sort
     this.searchInput = page.getByPlaceholder(/검색/);
-    this.searchButton = page.getByRole('button', { name: /검색/ });
+    this.searchButton = page.getByRole("button", { name: /검색/ });
     this.sortSelect = page.locator('select[name="sort"]');
 
     // Actions
-    this.writeButton = page.getByRole('button', { name: /글쓰기|작성/ });
+    this.writeButton = page.getByRole("button", { name: /글쓰기|작성/ });
   }
 
   async goto(page: number = 0) {
-    const url = page > 0
-      ? `/board/${this.boardType}?page=${page}`
-      : `/board/${this.boardType}`;
+    const url =
+      page > 0
+        ? `/board/${this.boardType}?page=${page}`
+        : `/board/${this.boardType}`;
     await this.page.goto(url);
   }
 
@@ -122,7 +124,7 @@ export class BoardListPage {
 **파일**: `e2e/pages/PostDetailPage.ts`
 
 ```typescript
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator } from "@playwright/test";
 
 export class PostDetailPage {
   readonly page: Page;
@@ -155,15 +157,15 @@ export class PostDetailPage {
     this.postDate = page.locator('[data-testid="post-date"]');
 
     // Actions
-    this.likeButton = page.getByRole('button', { name: /좋아요/ });
+    this.likeButton = page.getByRole("button", { name: /좋아요/ });
     this.likeCount = page.locator('[data-testid="like-count"]');
-    this.editButton = page.getByRole('button', { name: /수정/ });
-    this.deleteButton = page.getByRole('button', { name: /삭제/ });
-    this.backButton = page.getByRole('button', { name: /목록|뒤로/ });
+    this.editButton = page.getByRole("button", { name: /수정/ });
+    this.deleteButton = page.getByRole("button", { name: /삭제/ });
+    this.backButton = page.getByRole("button", { name: /목록|뒤로/ });
 
     // Comments
     this.commentInput = page.getByPlaceholder(/댓글을 입력/);
-    this.commentSubmitButton = page.getByRole('button', { name: /댓글 작성/ });
+    this.commentSubmitButton = page.getByRole("button", { name: /댓글 작성/ });
     this.commentItems = page.locator('[data-testid="comment-item"]');
   }
 
@@ -177,7 +179,7 @@ export class PostDetailPage {
 
   async getLikeCount() {
     const text = await this.likeCount.textContent();
-    return parseInt(text || '0', 10);
+    return parseInt(text || "0", 10);
   }
 
   async clickEdit() {
@@ -208,7 +210,7 @@ export class PostDetailPage {
 **파일**: `e2e/pages/PostWritePage.ts`
 
 ```typescript
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator } from "@playwright/test";
 
 export class PostWritePage {
   readonly page: Page;
@@ -223,8 +225,8 @@ export class PostWritePage {
 
     this.titleInput = page.getByPlaceholder(/제목/);
     this.contentTextarea = page.getByPlaceholder(/내용/);
-    this.submitButton = page.getByRole('button', { name: /작성|등록/ });
-    this.cancelButton = page.getByRole('button', { name: /취소/ });
+    this.submitButton = page.getByRole("button", { name: /작성|등록/ });
+    this.cancelButton = page.getByRole("button", { name: /취소/ });
   }
 
   async goto(boardType: string) {
@@ -273,93 +275,93 @@ export function generateUniquePost() {
 **파일**: `e2e/posts/post-list.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { BoardListPage } from '../pages/BoardListPage';
-import { waitForApiResponse } from '../utils/apiHelpers';
+import { test, expect } from "@playwright/test";
+import { BoardListPage } from "../pages/BoardListPage";
+import { waitForApiResponse } from "../utils/apiHelpers";
 
-test.describe('게시글 목록 조회', () => {
-  test('공지사항 게시판 접속', async ({ page }) => {
-    const boardListPage = new BoardListPage(page, 'notices');
+test.describe("게시글 목록 조회", () => {
+  test("공지사항 게시판 접속", async ({ page }) => {
+    const boardListPage = new BoardListPage(page, "notices");
     await boardListPage.goto();
 
     // API 응답 대기
     const response = await page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/boards/notices/posts') &&
-        response.status() === 200
+        response.url().includes("/api/v1/boards/notices/posts") &&
+        response.status() === 200,
     );
 
     // 응답 확인
     const responseBody = await response.json();
-    expect(responseBody).toHaveProperty('content');
-    expect(responseBody).toHaveProperty('totalElements');
+    expect(responseBody).toHaveProperty("content");
+    expect(responseBody).toHaveProperty("totalElements");
 
     // 게시글 목록 표시 확인
     const postCount = await boardListPage.getPostCount();
     expect(postCount).toBeGreaterThanOrEqual(0);
   });
 
-  test('페이지네이션', async ({ page }) => {
-    const boardListPage = new BoardListPage(page, 'notices');
+  test("페이지네이션", async ({ page }) => {
+    const boardListPage = new BoardListPage(page, "notices");
     await boardListPage.goto();
 
     // 첫 페이지 로드 대기
     await page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/boards/notices/posts?page=0') &&
-        response.status() === 200
+        response.url().includes("/api/v1/boards/notices/posts?page=0") &&
+        response.status() === 200,
     );
 
     // 2페이지로 이동
     const nextPagePromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/boards/notices/posts?page=1') &&
-        response.status() === 200
+        response.url().includes("/api/v1/boards/notices/posts?page=1") &&
+        response.status() === 200,
     );
 
     await boardListPage.goToNextPage();
     await nextPagePromise;
 
     // URL에 page 파라미터 확인
-    expect(page.url()).toContain('page=1');
+    expect(page.url()).toContain("page=1");
   });
 
-  test('검색', async ({ page }) => {
-    const boardListPage = new BoardListPage(page, 'notices');
+  test("검색", async ({ page }) => {
+    const boardListPage = new BoardListPage(page, "notices");
     await boardListPage.goto();
 
     // 검색어 입력 및 검색
     const searchPromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/boards/notices/posts') &&
-        response.url().includes('search=테스트') &&
-        response.status() === 200
+        response.url().includes("/api/v1/boards/notices/posts") &&
+        response.url().includes("search=테스트") &&
+        response.status() === 200,
     );
 
-    await boardListPage.search('테스트');
+    await boardListPage.search("테스트");
     await searchPromise;
 
     // URL에 search 파라미터 확인
-    expect(page.url()).toContain('search=테스트');
+    expect(page.url()).toContain("search=테스트");
   });
 
-  test('정렬', async ({ page }) => {
-    const boardListPage = new BoardListPage(page, 'notices');
+  test("정렬", async ({ page }) => {
+    const boardListPage = new BoardListPage(page, "notices");
     await boardListPage.goto();
 
     // 정렬 옵션 변경
     const sortPromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/boards/notices/posts') &&
-        response.url().includes('sort=likes') &&
-        response.status() === 200
+        response.url().includes("/api/v1/boards/notices/posts") &&
+        response.url().includes("sort=likes") &&
+        response.status() === 200,
     );
 
-    await boardListPage.sortBy('likes');
+    await boardListPage.sortBy("likes");
     await sortPromise;
 
     // URL에 sort 파라미터 확인
-    expect(page.url()).toContain('sort=likes');
+    expect(page.url()).toContain("sort=likes");
   });
 });
 ```
@@ -369,27 +371,27 @@ test.describe('게시글 목록 조회', () => {
 **파일**: `e2e/posts/post-detail.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { BoardListPage } from '../pages/BoardListPage';
-import { PostDetailPage } from '../pages/PostDetailPage';
+import { test, expect } from "@playwright/test";
+import { BoardListPage } from "../pages/BoardListPage";
+import { PostDetailPage } from "../pages/PostDetailPage";
 
-test.describe('게시글 상세 조회', () => {
-  test('게시글 클릭하여 상세 페이지 이동', async ({ page }) => {
-    const boardListPage = new BoardListPage(page, 'notices');
+test.describe("게시글 상세 조회", () => {
+  test("게시글 클릭하여 상세 페이지 이동", async ({ page }) => {
+    const boardListPage = new BoardListPage(page, "notices");
     await boardListPage.goto();
 
     // 목록 로드 대기
     await page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/boards/notices/posts') &&
-        response.status() === 200
+        response.url().includes("/api/v1/boards/notices/posts") &&
+        response.status() === 200,
     );
 
     // 첫 번째 게시글 클릭
     const detailPromise = page.waitForResponse(
       (response) =>
         response.url().match(/\/api\/v1\/boards\/notices\/posts\/\d+$/) &&
-        response.status() === 200
+        response.status() === 200,
     );
 
     await boardListPage.clickPost(0);
@@ -397,10 +399,10 @@ test.describe('게시글 상세 조회', () => {
 
     // 응답 확인
     const responseBody = await response.json();
-    expect(responseBody).toHaveProperty('id');
-    expect(responseBody).toHaveProperty('title');
-    expect(responseBody).toHaveProperty('content');
-    expect(responseBody).toHaveProperty('author');
+    expect(responseBody).toHaveProperty("id");
+    expect(responseBody).toHaveProperty("title");
+    expect(responseBody).toHaveProperty("content");
+    expect(responseBody).toHaveProperty("author");
 
     // 상세 페이지 요소 확인
     const postDetailPage = new PostDetailPage(page);
@@ -409,8 +411,8 @@ test.describe('게시글 상세 조회', () => {
     await expect(postDetailPage.postAuthor).toBeVisible();
   });
 
-  test('좋아요 토글', async ({ page }) => {
-    const boardListPage = new BoardListPage(page, 'notices');
+  test("좋아요 토글", async ({ page }) => {
+    const boardListPage = new BoardListPage(page, "notices");
     const postDetailPage = new PostDetailPage(page);
 
     await boardListPage.goto();
@@ -418,8 +420,8 @@ test.describe('게시글 상세 조회', () => {
     // 게시글 상세 페이지로 이동
     await page.waitForResponse(
       (response) =>
-        response.url().includes('/api/v1/boards/notices/posts') &&
-        response.status() === 200
+        response.url().includes("/api/v1/boards/notices/posts") &&
+        response.status() === 200,
     );
     await boardListPage.clickPost(0);
 
@@ -427,7 +429,7 @@ test.describe('게시글 상세 조회', () => {
     await page.waitForResponse(
       (response) =>
         response.url().match(/\/api\/v1\/boards\/notices\/posts\/\d+$/) &&
-        response.status() === 200
+        response.status() === 200,
     );
 
     // 현재 좋아요 수 확인
@@ -437,7 +439,7 @@ test.describe('게시글 상세 조회', () => {
     const likePromise = page.waitForResponse(
       (response) =>
         response.url().match(/\/api\/v1\/posts\/\d+\/likes$/) &&
-        response.status() === 200
+        response.status() === 200,
     );
 
     await postDetailPage.toggleLike();
@@ -455,25 +457,25 @@ test.describe('게시글 상세 조회', () => {
 **파일**: `e2e/posts/post-create.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { LoginPage } from '../pages/LoginPage';
-import { BoardListPage } from '../pages/BoardListPage';
-import { PostWritePage } from '../pages/PostWritePage';
-import { PostDetailPage } from '../pages/PostDetailPage';
-import { EXISTING_USER, generateUniquePost } from '../utils/testData';
-import { waitForApiResponse } from '../utils/apiHelpers';
+import { test, expect } from "@playwright/test";
+import { LoginPage } from "../pages/LoginPage";
+import { BoardListPage } from "../pages/BoardListPage";
+import { PostWritePage } from "../pages/PostWritePage";
+import { PostDetailPage } from "../pages/PostDetailPage";
+import { EXISTING_USER, generateUniquePost } from "../utils/testData";
+import { waitForApiResponse } from "../utils/apiHelpers";
 
-test.describe('게시글 작성', () => {
+test.describe("게시글 작성", () => {
   test.beforeEach(async ({ page }) => {
     // 로그인 필수
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.login(EXISTING_USER.studentId, EXISTING_USER.password);
-    await waitForApiResponse(page, '/api/v1/auth/password/login', 200);
+    await waitForApiResponse(page, "/api/v1/auth/password/login", 200);
   });
 
-  test('새 게시글 작성', async ({ page }) => {
-    const boardListPage = new BoardListPage(page, 'notices');
+  test("새 게시글 작성", async ({ page }) => {
+    const boardListPage = new BoardListPage(page, "notices");
     const postWritePage = new PostWritePage(page);
     const postDetailPage = new PostDetailPage(page);
     const postData = generateUniquePost();
@@ -491,13 +493,17 @@ test.describe('게시글 작성', () => {
     await postWritePage.fillPost(postData);
 
     // 제출
-    const createPromise = waitForApiResponse(page, '/api/v1/boards/notices/posts', 201);
+    const createPromise = waitForApiResponse(
+      page,
+      "/api/v1/boards/notices/posts",
+      201,
+    );
     await postWritePage.submit();
 
     // API 응답 확인
     const response = await createPromise;
     const responseBody = await response.json();
-    expect(responseBody).toHaveProperty('id');
+    expect(responseBody).toHaveProperty("id");
 
     // 상세 페이지로 리다이렉트 확인
     await expect(page).toHaveURL(/\/board\/notices\/\d+/);
@@ -507,13 +513,13 @@ test.describe('게시글 작성', () => {
     expect(displayedTitle).toContain(postData.title);
   });
 
-  test('로그인하지 않고 글쓰기 시도', async ({ page }) => {
+  test("로그인하지 않고 글쓰기 시도", async ({ page }) => {
     // 로그아웃 (beforeEach에서 로그인한 상태를 해제)
     await page.evaluate(() => {
       localStorage.clear();
     });
 
-    const boardListPage = new BoardListPage(page, 'notices');
+    const boardListPage = new BoardListPage(page, "notices");
     await boardListPage.goto();
 
     // 글쓰기 버튼 클릭
@@ -530,28 +536,28 @@ test.describe('게시글 작성', () => {
 **파일**: `e2e/posts/post-edit-delete.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { LoginPage } from '../pages/LoginPage';
-import { PostDetailPage } from '../pages/PostDetailPage';
-import { PostWritePage } from '../pages/PostWritePage';
-import { EXISTING_USER } from '../utils/testData';
-import { waitForApiResponse } from '../utils/apiHelpers';
+import { test, expect } from "@playwright/test";
+import { LoginPage } from "../pages/LoginPage";
+import { PostDetailPage } from "../pages/PostDetailPage";
+import { PostWritePage } from "../pages/PostWritePage";
+import { EXISTING_USER } from "../utils/testData";
+import { waitForApiResponse } from "../utils/apiHelpers";
 
-test.describe('게시글 수정/삭제', () => {
+test.describe("게시글 수정/삭제", () => {
   test.beforeEach(async ({ page }) => {
     // 로그인 필수
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.login(EXISTING_USER.studentId, EXISTING_USER.password);
-    await waitForApiResponse(page, '/api/v1/auth/password/login', 200);
+    await waitForApiResponse(page, "/api/v1/auth/password/login", 200);
   });
 
-  test('내가 작성한 게시글 수정', async ({ page }) => {
+  test("내가 작성한 게시글 수정", async ({ page }) => {
     const postDetailPage = new PostDetailPage(page);
     const postWritePage = new PostWritePage(page);
 
     // 내가 작성한 게시글로 이동 (postId는 실제 테스트 데이터에 맞게 조정)
-    await postDetailPage.goto('notices', 123);
+    await postDetailPage.goto("notices", 123);
 
     // 수정 버튼 표시 확인 (내가 작성한 게시글만 표시됨)
     await expect(postDetailPage.editButton).toBeVisible();
@@ -563,10 +569,14 @@ test.describe('게시글 수정/삭제', () => {
     await expect(page).toHaveURL(/\/board\/notices\/123\/edit/);
 
     // 수정 폼 작성
-    await postWritePage.titleInput.fill('수정된 제목');
+    await postWritePage.titleInput.fill("수정된 제목");
 
     // 제출
-    const updatePromise = waitForApiResponse(page, '/api/v1/boards/notices/posts/123', 200);
+    const updatePromise = waitForApiResponse(
+      page,
+      "/api/v1/boards/notices/posts/123",
+      200,
+    );
     await postWritePage.submit();
     await updatePromise;
 
@@ -575,26 +585,30 @@ test.describe('게시글 수정/삭제', () => {
 
     // 수정된 내용 확인
     const updatedTitle = await postDetailPage.postTitle.textContent();
-    expect(updatedTitle).toContain('수정된 제목');
+    expect(updatedTitle).toContain("수정된 제목");
   });
 
-  test('내가 작성한 게시글 삭제', async ({ page }) => {
+  test("내가 작성한 게시글 삭제", async ({ page }) => {
     const postDetailPage = new PostDetailPage(page);
 
     // 내가 작성한 게시글로 이동
-    await postDetailPage.goto('notices', 123);
+    await postDetailPage.goto("notices", 123);
 
     // 삭제 버튼 표시 확인
     await expect(postDetailPage.deleteButton).toBeVisible();
 
     // 삭제 확인 대화상자 처리
-    page.on('dialog', async (dialog) => {
-      expect(dialog.message()).toContain('삭제하시겠습니까');
+    page.on("dialog", async (dialog) => {
+      expect(dialog.message()).toContain("삭제하시겠습니까");
       await dialog.accept();
     });
 
     // 삭제 버튼 클릭
-    const deletePromise = waitForApiResponse(page, '/api/v1/boards/notices/posts/123', 200);
+    const deletePromise = waitForApiResponse(
+      page,
+      "/api/v1/boards/notices/posts/123",
+      200,
+    );
     await postDetailPage.clickDelete();
     await deletePromise;
 
@@ -611,6 +625,7 @@ test.describe('게시글 수정/삭제', () => {
 ### 준비 단계
 
 1. **개발 서버 실행**
+
    ```bash
    cd frontend
    npm run dev
@@ -625,6 +640,7 @@ test.describe('게시글 수정/삭제', () => {
 ### Test 4: 게시판 (Posts)
 
 #### 4.1 게시글 목록 조회
+
 **시나리오**: 공지사항 게시판 접속
 
 1. 브라우저에서 `/board/notices` 접속
@@ -654,6 +670,7 @@ test.describe('게시글 수정/삭제', () => {
      ```
 
 #### 4.2 페이지네이션
+
 **시나리오**: 페이지 이동
 
 1. 2페이지 클릭
@@ -665,6 +682,7 @@ test.describe('게시글 수정/삭제', () => {
    - Status: 200 OK
 
 #### 4.3 게시글 상세 조회
+
 **시나리오**: 게시글 클릭
 
 1. 게시글 클릭
@@ -694,6 +712,7 @@ test.describe('게시글 수정/삭제', () => {
      ```
 
 #### 4.3.1 게시글 상세 페이지 - 더 메뉴 팝업 테스트
+
 **시나리오**: 더 메뉴 팝업의 디자인 시스템 토큰 적용 확인
 
 1. `/board/general/:postId` 접속
@@ -715,6 +734,7 @@ test.describe('게시글 수정/삭제', () => {
    - `bg-[#252525]` 같은 하드코딩된 클래스 없어야 함
 
 #### 4.4 좋아요 토글
+
 **시나리오**: 좋아요 버튼 클릭
 
 1. 게시글 상세 페이지에서 좋아요 버튼 클릭
@@ -737,6 +757,7 @@ test.describe('게시글 수정/삭제', () => {
    - React Query 캐시 업데이트 확인
 
 #### 4.5 게시글 작성
+
 **시나리오**: 새 게시글 작성 (로그인 필수)
 
 1. "글쓰기" 버튼 클릭
@@ -770,6 +791,7 @@ test.describe('게시글 수정/삭제', () => {
      ```
 
 #### 4.6 게시글 수정
+
 **시나리오**: 내가 작성한 게시글 수정
 
 1. 내가 작성한 게시글 상세 페이지에서 "수정" 버튼 클릭
@@ -785,6 +807,7 @@ test.describe('게시글 수정/삭제', () => {
    - Status: 200 OK
 
 #### 4.7 게시글 삭제
+
 **시나리오**: 내가 작성한 게시글 삭제
 
 1. 내가 작성한 게시글 상세 페이지에서 "삭제" 버튼 클릭
@@ -799,6 +822,7 @@ test.describe('게시글 수정/삭제', () => {
    - Status: 200 OK 또는 204 No Content
 
 #### 4.8 검색
+
 **시나리오**: 게시글 검색
 
 1. 검색창에 키워드 입력 (예: "테스트")
@@ -811,6 +835,7 @@ test.describe('게시글 수정/삭제', () => {
    - Status: 200 OK
 
 #### 4.9 정렬
+
 **시나리오**: 정렬 옵션 변경
 
 1. 정렬 선택 박스에서 "좋아요순" 선택
@@ -859,9 +884,9 @@ npx playwright test e2e/posts --headed
 
 ```typescript
 // 수정/삭제 버튼은 본인 게시글에만 표시
-test('본인이 작성하지 않은 게시글', async ({ page }) => {
+test("본인이 작성하지 않은 게시글", async ({ page }) => {
   const postDetailPage = new PostDetailPage(page);
-  await postDetailPage.goto('notices', 456); // 다른 사람이 작성한 게시글
+  await postDetailPage.goto("notices", 456); // 다른 사람이 작성한 게시글
 
   // 수정/삭제 버튼이 표시되지 않아야 함
   await expect(postDetailPage.editButton).not.toBeVisible();
@@ -880,8 +905,7 @@ await postDetailPage.toggleLike();
 // 401 Unauthorized 또는 로그인 페이지로 리다이렉트
 await page.waitForResponse(
   (response) =>
-    response.url().includes('/api/v1/posts/') &&
-    response.status() === 401
+    response.url().includes("/api/v1/posts/") && response.status() === 401,
 );
 ```
 
@@ -909,7 +933,7 @@ API의 페이지 번호는 0부터 시작하지만, UI에서는 1부터 표시:
 ```typescript
 test.afterAll(async ({ request }) => {
   // 테스트 게시글 삭제 (백엔드에 삭제 API 필요)
-  await request.delete('/api/v1/test/posts/cleanup');
+  await request.delete("/api/v1/test/posts/cleanup");
 });
 ```
 

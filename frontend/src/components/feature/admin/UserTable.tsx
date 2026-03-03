@@ -1,8 +1,6 @@
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import type { User } from '@/types/entities';
-
-interface UserTableUser extends Partial<User> {
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+interface UserTableUser {
   id: string;
   studentId?: string;
   name: string;
@@ -20,7 +18,7 @@ interface UserTableProps {
 
 export default function UserTable({
   users = [],
-  title = '부원 관리',
+  title = "부원 관리",
   onExport,
   onViewAll,
   onEdit,
@@ -31,12 +29,19 @@ export default function UserTable({
         <h3 className="typo-h3">{title}</h3>
         <div className="flex gap-s3">
           {onViewAll && (
-            <Button variant="outline" className="rounded-r3 typo-c1 font-bold" onClick={onViewAll}>
+            <Button
+              variant="outline"
+              className="rounded-r3 typo-c1 font-bold"
+              onClick={onViewAll}
+            >
               전체 보기
             </Button>
           )}
           {onExport && (
-            <Button className="rounded-r3 typo-c1 font-bold shadow-lg shadow-primary/20" onClick={onExport}>
+            <Button
+              className="rounded-r3 typo-c1 font-bold shadow-lg shadow-primary/20"
+              onClick={onExport}
+            >
               CSV 내보내기
             </Button>
           )}
@@ -57,20 +62,24 @@ export default function UserTable({
           <tbody className="divide-y divide-border">
             {users.map((user) => (
               <tr key={user.id} className="group">
-                <td className="py-s4 typo-b2 font-medium">{user.studentId ?? user.id}</td>
+                <td className="py-s4 typo-b2 font-medium">
+                  {user.studentId ?? user.id}
+                </td>
                 <td className="py-s4 typo-b2 font-bold">{user.name}</td>
                 <td className="py-s4">
                   <span
                     className={`px-2 py-1 rounded-r2 typo-c2 font-bold ${
-                      user.status === 'Active'
-                        ? 'bg-success/10 text-success'
-                        : 'bg-destructive/10 text-destructive'
+                      user.status === "Active"
+                        ? "bg-success/10 text-success"
+                        : "bg-destructive/10 text-destructive"
                     }`}
                   >
-                    {user.status === 'Active' ? '활성' : '정지'}
+                    {user.status === "Active" ? "활성" : "정지"}
                   </span>
                 </td>
-                <td className="py-s4 typo-b2 text-muted-foreground">{user.role}</td>
+                <td className="py-s4 typo-b2 text-muted-foreground">
+                  {user.role}
+                </td>
                 <td className="py-s4 text-right">
                   <button
                     type="button"

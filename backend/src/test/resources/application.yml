@@ -26,9 +26,10 @@ logging:
   level:
     igrus.web.storage: INFO
 
-springdoc:
-  server-url: localhost:8080
-  
+openapi:
+  validation:
+    filter:
+      enabled: false
 
 app:
   version:

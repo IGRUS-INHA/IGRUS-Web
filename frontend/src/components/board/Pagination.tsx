@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PaginationProps {
   currentPage: number;
@@ -18,14 +18,14 @@ export function Pagination({
   onPageChange,
   className,
 }: PaginationProps) {
-  if (totalPages <= 1) return undefined;
+  if (totalPages <= 1) return null;
 
   // 표시할 페이지 번호 계산 (최대 5개)
   const getPageNumbers = () => {
     const pages: number[] = [];
     const maxVisible = 5;
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let end = Math.min(totalPages, start + maxVisible - 1);
+    const end = Math.min(totalPages, start + maxVisible - 1);
 
     // 끝에서 시작점 재조정
     if (end - start + 1 < maxVisible) {
@@ -39,9 +39,12 @@ export function Pagination({
   };
 
   const pageNumbers = getPageNumbers();
+  const firstPage = pageNumbers[0];
+  const lastPage = pageNumbers[pageNumbers.length - 1];
+  if (firstPage === undefined || lastPage === undefined) return null;
 
   return (
-    <nav className={cn('flex items-center justify-center gap-s1', className)}>
+    <nav className={cn("flex items-center justify-center gap-s1", className)}>
       {/* 이전 페이지 */}
       <Button
         variant="outline"
@@ -54,17 +57,17 @@ export function Pagination({
       </Button>
 
       {/* 첫 페이지 */}
-      {pageNumbers[0] > 1 && (
+      {firstPage > 1 && (
         <>
           <Button
-            variant={currentPage === 1 ? 'default' : 'outline'}
+            variant={currentPage === 1 ? "default" : "outline"}
             size="sm"
             onClick={() => onPageChange(1)}
             className="h-8 w-8 p-0"
           >
             1
           </Button>
-          {pageNumbers[0] > 2 && (
+          {firstPage > 2 && (
             <span className="px-s2 text-muted-foreground">...</span>
           )}
         </>
@@ -74,7 +77,7 @@ export function Pagination({
       {pageNumbers.map((page) => (
         <Button
           key={page}
-          variant={currentPage === page ? 'default' : 'outline'}
+          variant={currentPage === page ? "default" : "outline"}
           size="sm"
           onClick={() => onPageChange(page)}
           className="h-8 w-8 p-0"
@@ -84,13 +87,13 @@ export function Pagination({
       ))}
 
       {/* 마지막 페이지 */}
-      {pageNumbers[pageNumbers.length - 1] < totalPages && (
+      {lastPage < totalPages && (
         <>
-          {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
+          {lastPage < totalPages - 1 && (
             <span className="px-s2 text-muted-foreground">...</span>
           )}
           <Button
-            variant={currentPage === totalPages ? 'default' : 'outline'}
+            variant={currentPage === totalPages ? "default" : "outline"}
             size="sm"
             onClick={() => onPageChange(totalPages)}
             className="h-8 w-8 p-0"

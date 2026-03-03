@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 import {
   useCheckStudentIdDuplicate,
   useCheckEmailDuplicate,
   useCheckPhoneNumberDuplicate,
-} from '@/api/model/password-authentication/password-authentication';
-import { hasErrorCode, getErrorMessage } from '@/utils/error';
+} from "@/api/model/password-authentication/password-authentication";
+import { hasErrorCode, getErrorMessage } from "@/utils/error";
 
 interface DuplicateCheckStatus {
   isChecking: boolean;
@@ -35,9 +35,9 @@ const INITIAL_STATUS: DuplicateCheckStatus = {
 };
 
 export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
-  const [studentIdToCheck, setStudentIdToCheck] = useState('');
-  const [emailToCheck, setEmailToCheck] = useState('');
-  const [phoneNumberToCheck, setPhoneNumberToCheck] = useState('');
+  const [studentIdToCheck, setStudentIdToCheck] = useState("");
+  const [emailToCheck, setEmailToCheck] = useState("");
+  const [phoneNumberToCheck, setPhoneNumberToCheck] = useState("");
 
   const studentIdQuery = useCheckStudentIdDuplicate(
     { studentId: studentIdToCheck },
@@ -55,7 +55,7 @@ export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
     { email: emailToCheck },
     {
       query: {
-        enabled: emailToCheck.length > 0 && emailToCheck.includes('@'),
+        enabled: emailToCheck.length > 0 && emailToCheck.includes("@"),
         retry: false,
         staleTime: 0,
         gcTime: 0,
@@ -76,22 +76,28 @@ export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
   );
 
   const studentIdEnabled = /^\d{8}$/.test(studentIdToCheck);
-  const emailEnabled = emailToCheck.length > 0 && emailToCheck.includes('@');
+  const emailEnabled = emailToCheck.length > 0 && emailToCheck.includes("@");
   const phoneNumberEnabled = /^\d{3}-\d{4}-\d{4}$/.test(phoneNumberToCheck);
+
+  // Orval이 에러 타입을 void로 생성하므로 unknown으로 캐스팅
+  const studentIdError = studentIdQuery.error as unknown;
+  const emailError = emailQuery.error as unknown;
+  const phoneNumberError = phoneNumberQuery.error as unknown;
 
   const studentIdStatus: DuplicateCheckStatus = !studentIdEnabled
     ? INITIAL_STATUS
     : {
         isChecking: studentIdQuery.isFetching,
         isAvailable:
-          studentIdQuery.isSuccess && studentIdQuery.data?.data?.available === true,
+          studentIdQuery.isSuccess &&
+          studentIdQuery.data?.data?.available === true,
         isDuplicate:
-          hasErrorCode(studentIdQuery.error, 'DUPLICATE_STUDENT_ID') ||
-          hasErrorCode(studentIdQuery.error, 'INVALID_STUDENT_ID'),
+          hasErrorCode(studentIdError, "DUPLICATE_STUDENT_ID") ||
+          hasErrorCode(studentIdError, "INVALID_STUDENT_ID"),
         message: studentIdQuery.isSuccess
-          ? '사용 가능한 학번입니다.'
-          : studentIdQuery.error
-            ? getErrorMessage(studentIdQuery.error)
+          ? "사용 가능한 학번입니다."
+          : studentIdError
+            ? getErrorMessage(studentIdError)
             : undefined,
         isChecked: studentIdQuery.isSuccess || studentIdQuery.isError,
       };
@@ -103,12 +109,12 @@ export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
         isAvailable:
           emailQuery.isSuccess && emailQuery.data?.data?.available === true,
         isDuplicate:
-          hasErrorCode(emailQuery.error, 'DUPLICATE_EMAIL') ||
-          hasErrorCode(emailQuery.error, 'INVALID_EMAIL_FORMAT'),
+          hasErrorCode(emailError, "DUPLICATE_EMAIL") ||
+          hasErrorCode(emailError, "INVALID_EMAIL_FORMAT"),
         message: emailQuery.isSuccess
-          ? '사용 가능한 이메일입니다.'
-          : emailQuery.error
-            ? getErrorMessage(emailQuery.error)
+          ? "사용 가능한 이메일입니다."
+          : emailError
+            ? getErrorMessage(emailError)
             : undefined,
         isChecked: emailQuery.isSuccess || emailQuery.isError,
       };
@@ -118,14 +124,15 @@ export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
     : {
         isChecking: phoneNumberQuery.isFetching,
         isAvailable:
-          phoneNumberQuery.isSuccess && phoneNumberQuery.data?.data?.available === true,
+          phoneNumberQuery.isSuccess &&
+          phoneNumberQuery.data?.data?.available === true,
         isDuplicate:
-          hasErrorCode(phoneNumberQuery.error, 'DUPLICATE_PHONE_NUMBER') ||
-          hasErrorCode(phoneNumberQuery.error, 'INVALID_PHONE_NUMBER_FORMAT'),
+          hasErrorCode(phoneNumberError, "DUPLICATE_PHONE_NUMBER") ||
+          hasErrorCode(phoneNumberError, "INVALID_PHONE_NUMBER_FORMAT"),
         message: phoneNumberQuery.isSuccess
-          ? '사용 가능한 전화번호입니다.'
-          : phoneNumberQuery.error
-            ? getErrorMessage(phoneNumberQuery.error)
+          ? "사용 가능한 전화번호입니다."
+          : phoneNumberError
+            ? getErrorMessage(phoneNumberError)
             : undefined,
         isChecked: phoneNumberQuery.isSuccess || phoneNumberQuery.isError,
       };
@@ -143,15 +150,15 @@ export function useSignupDuplicateCheck(): UseSignupDuplicateCheckReturn {
   }, []);
 
   const resetStudentId = useCallback(() => {
-    setStudentIdToCheck('');
+    setStudentIdToCheck("");
   }, []);
 
   const resetEmail = useCallback(() => {
-    setEmailToCheck('');
+    setEmailToCheck("");
   }, []);
 
   const resetPhoneNumber = useCallback(() => {
-    setPhoneNumberToCheck('');
+    setPhoneNumberToCheck("");
   }, []);
 
   return {

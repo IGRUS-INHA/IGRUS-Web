@@ -6,7 +6,7 @@ import type {
   RegistrationStatus,
   InquiryStatus,
   InquiryType,
-} from './common';
+} from "./common";
 
 // Re-export common types
 export type {

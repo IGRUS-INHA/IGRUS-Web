@@ -35,8 +35,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type CheckEmailDuplicateParams = {
-/**
- * 확인할 이메일
- */
-email: string;
+  /**
+   * 확인할 이메일
+   */
+  email: string;
 };

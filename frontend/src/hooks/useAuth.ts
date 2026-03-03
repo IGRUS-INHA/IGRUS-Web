@@ -1,5 +1,5 @@
-import { useAuthStore } from '@/stores';
-import type { User } from '@/types/entities';
+import { useAuthStore } from "@/stores";
+import type { User } from "@/types/entities";
 
 interface UseAuthReturn {
   // 인증 상태
@@ -27,9 +27,9 @@ export function useAuth(): UseAuthReturn {
     isHydrated: store.isHydrated,
     login: store.setAuth,
     logout: store.logout,
-    isAdmin: store.user?.role === 'ADMIN',
-    isOperator: store.user?.role === 'OPERATOR',
-    isMember: store.user?.role === 'MEMBER',
-    isAssociate: store.user?.role === 'ASSOCIATE',
+    isAdmin: store.user?.role === "ADMIN",
+    isOperator: store.user?.role === "OPERATOR",
+    isMember: store.user?.role === "MEMBER",
+    isAssociate: store.user?.role === "ASSOCIATE",
   };
 }

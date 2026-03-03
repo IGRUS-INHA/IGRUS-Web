@@ -1,8 +1,11 @@
-import { Heart, MessageCircle, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { usePermission } from '@/hooks/usePermission';
-import { useDeleteCommentMutation, useToggleCommentLike } from '@/hooks/queries/useComments';
-import type { CommentWithRepliesResponse } from '@/api/model/models';
+import { Heart, MessageCircle, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { usePermission } from "@/hooks/usePermission";
+import {
+  useDeleteCommentMutation,
+  useToggleCommentLike,
+} from "@/hooks/queries/useComments";
+import type { CommentWithRepliesResponse } from "@/api/model/models";
 
 interface CommentActionsProps {
   comment: CommentWithRepliesResponse;
@@ -22,7 +25,8 @@ export function CommentActions({
 }: CommentActionsProps) {
   const { userId, isAdmin, isOperator } = usePermission();
   const deleteComment = useDeleteCommentMutation();
-  const { toggle: toggleLike, isLoading: isLikeLoading } = useToggleCommentLike();
+  const { toggle: toggleLike, isLoading: isLikeLoading } =
+    useToggleCommentLike();
 
   // 삭제 권한 체크: 본인 또는 관리자/운영자
   const canDelete =
@@ -35,7 +39,7 @@ export function CommentActions({
 
   const handleDelete = () => {
     // 반드시 confirm으로 사용자 확인
-    if (!window.confirm('정말 삭제하시겠습니까?')) {
+    if (!window.confirm("정말 삭제하시겠습니까?")) {
       return;
     }
 
@@ -53,14 +57,14 @@ export function CommentActions({
         onClick={handleLike}
         disabled={isLikeLoading}
         className={cn(
-          'flex items-center gap-s2 transition-colors cursor-pointer',
+          "flex items-center gap-s2 transition-colors cursor-pointer",
           comment.likedByMe
-            ? 'text-primary fill-current'
-            : 'hover:text-primary',
-          isLikeLoading && 'opacity-50 cursor-not-allowed'
+            ? "text-primary fill-current"
+            : "hover:text-primary",
+          isLikeLoading && "opacity-50 cursor-not-allowed",
         )}
       >
-        <Heart size={16} className={cn(comment.likedByMe && 'fill-current')} />
+        <Heart size={16} className={cn(comment.likedByMe && "fill-current")} />
         <span className="typo-c1">{comment.likeCount ?? 0}</span>
       </button>
 
@@ -83,8 +87,8 @@ export function CommentActions({
           onClick={handleDelete}
           disabled={deleteComment.isPending}
           className={cn(
-            'flex items-center gap-s2 hover:text-red-500 transition-colors cursor-pointer',
-            deleteComment.isPending && 'opacity-50 cursor-not-allowed'
+            "flex items-center gap-s2 hover:text-red-500 transition-colors cursor-pointer",
+            deleteComment.isPending && "opacity-50 cursor-not-allowed",
           )}
         >
           <Trash2 size={16} />

@@ -33,10 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -49,448 +46,567 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 import type {
-  CreatePinnedPost201,
-  CreatePinnedPostBody,
-  GetPinnedPostList200Item,
-  UpdateDisplayOrder200,
-  UpdateDisplayOrderBody
-} from '.././models';
+  CreatePinnedPostRequest,
+  PinnedPostDetailResponse,
+  PinnedPostListResponse,
+  UpdateDisplayOrderRequest,
+} from ".././models";
 
-import { customFetch } from '../../client';
-
+import { customFetch } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 /**
  * 고정 게시글의 표시 순서를 변경합니다. OPERATOR 이상만 가능합니다.
  * @summary 고정 게시글 표시 순서 변경
  */
 export type updateDisplayOrderResponse200 = {
-  data: UpdateDisplayOrder200
-  status: 200
-}
+  data: PinnedPostDetailResponse;
+  status: 200;
+};
 
 export type updateDisplayOrderResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type updateDisplayOrderResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type updateDisplayOrderResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type updateDisplayOrderResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type updateDisplayOrderResponseSuccess = (updateDisplayOrderResponse200) & {
-  headers: Headers;
-};
-export type updateDisplayOrderResponseError = (updateDisplayOrderResponse400 | updateDisplayOrderResponse401 | updateDisplayOrderResponse403 | updateDisplayOrderResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type updateDisplayOrderResponse = (updateDisplayOrderResponseSuccess | updateDisplayOrderResponseError)
+export type updateDisplayOrderResponseSuccess =
+  updateDisplayOrderResponse200 & {
+    headers: Headers;
+  };
+export type updateDisplayOrderResponseError = (
+  | updateDisplayOrderResponse400
+  | updateDisplayOrderResponse401
+  | updateDisplayOrderResponse403
+  | updateDisplayOrderResponse404
+) & {
+  headers: Headers;
+};
 
-export const getUpdateDisplayOrderUrl = (id: number,) => {
+export type updateDisplayOrderResponse =
+  | updateDisplayOrderResponseSuccess
+  | updateDisplayOrderResponseError;
 
+export const getUpdateDisplayOrderUrl = (id: number) => {
+  return `/api/v1/pinned-posts/${id}/display-order`;
+};
 
-  
-
-  return `/api/v1/pinned-posts/${id}/display-order`
-}
-
-export const updateDisplayOrder = async (id: number,
-    updateDisplayOrderBody: UpdateDisplayOrderBody, options?: RequestInit): Promise<updateDisplayOrderResponse> => {
-  
-  return customFetch<updateDisplayOrderResponse>(getUpdateDisplayOrderUrl(id),
-  {      
+export const updateDisplayOrder = async (
+  id: number,
+  updateDisplayOrderRequest: UpdateDisplayOrderRequest,
+  options?: RequestInit,
+): Promise<updateDisplayOrderResponse> => {
+  return customFetch<updateDisplayOrderResponse>(getUpdateDisplayOrderUrl(id), {
     ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      updateDisplayOrderBody,)
-  }
-);}
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateDisplayOrderRequest),
+  });
+};
 
+export const getUpdateDisplayOrderMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateDisplayOrder>>,
+    TError,
+    { id: number; data: UpdateDisplayOrderRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateDisplayOrder>>,
+  TError,
+  { id: number; data: UpdateDisplayOrderRequest },
+  TContext
+> => {
+  const mutationKey = ["updateDisplayOrder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateDisplayOrder>>,
+    { id: number; data: UpdateDisplayOrderRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return updateDisplayOrder(id, data, requestOptions);
+  };
 
-export const getUpdateDisplayOrderMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDisplayOrder>>, TError,{id: number;data: UpdateDisplayOrderBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateDisplayOrder>>, TError,{id: number;data: UpdateDisplayOrderBody}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['updateDisplayOrder'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type UpdateDisplayOrderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateDisplayOrder>>
+>;
+export type UpdateDisplayOrderMutationBody = UpdateDisplayOrderRequest;
+export type UpdateDisplayOrderMutationError = void;
 
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDisplayOrder>>, {id: number;data: UpdateDisplayOrderBody}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  updateDisplayOrder(id,data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateDisplayOrderMutationResult = NonNullable<Awaited<ReturnType<typeof updateDisplayOrder>>>
-    export type UpdateDisplayOrderMutationBody = UpdateDisplayOrderBody
-    export type UpdateDisplayOrderMutationError = void
-
-    /**
+/**
  * @summary 고정 게시글 표시 순서 변경
  */
-export const useUpdateDisplayOrder = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDisplayOrder>>, TError,{id: number;data: UpdateDisplayOrderBody}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateDisplayOrder>>,
-        TError,
-        {id: number;data: UpdateDisplayOrderBody},
-        TContext
-      > => {
-      return useMutation(getUpdateDisplayOrderMutationOptions(options), queryClient);
-    }
-    /**
+export const useUpdateDisplayOrder = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateDisplayOrder>>,
+      TError,
+      { id: number; data: UpdateDisplayOrderRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateDisplayOrder>>,
+  TError,
+  { id: number; data: UpdateDisplayOrderRequest },
+  TContext
+> => {
+  return useMutation(
+    getUpdateDisplayOrderMutationOptions(options),
+    queryClient,
+  );
+};
+/**
  * 메인 페이지에 고정된 모든 게시글을 표시 순서대로 조회합니다.
  * @summary 고정 게시글 목록 조회
  */
 export type getPinnedPostListResponse200 = {
-  data: GetPinnedPostList200Item[]
-  status: 200
-}
-    
-export type getPinnedPostListResponseSuccess = (getPinnedPostListResponse200) & {
+  data: PinnedPostListResponse[];
+  status: 200;
+};
+
+export type getPinnedPostListResponseSuccess = getPinnedPostListResponse200 & {
   headers: Headers;
 };
-;
-
-export type getPinnedPostListResponse = (getPinnedPostListResponseSuccess)
+export type getPinnedPostListResponse = getPinnedPostListResponseSuccess;
 
 export const getGetPinnedPostListUrl = () => {
+  return `/api/v1/pinned-posts`;
+};
 
-
-  
-
-  return `/api/v1/pinned-posts`
-}
-
-export const getPinnedPostList = async ( options?: RequestInit): Promise<getPinnedPostListResponse> => {
-  
-  return customFetch<getPinnedPostListResponse>(getGetPinnedPostListUrl(),
-  {      
+export const getPinnedPostList = async (
+  options?: RequestInit,
+): Promise<getPinnedPostListResponse> => {
+  return customFetch<getPinnedPostListResponse>(getGetPinnedPostListUrl(), {
     ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
-
-
+    method: "GET",
+  });
+};
 
 export const getGetPinnedPostListQueryKey = () => {
-    return [
-    `/api/v1/pinned-posts`
-    ] as const;
-    }
+  return [`/api/v1/pinned-posts`] as const;
+};
 
-    
-export const getGetPinnedPostListQueryOptions = <TData = Awaited<ReturnType<typeof getPinnedPostList>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPinnedPostList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
-) => {
+export const getGetPinnedPostListQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPinnedPostList>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getPinnedPostList>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetPinnedPostListQueryKey();
 
-  const queryKey =  queryOptions?.queryKey ?? getGetPinnedPostListQueryKey();
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPinnedPostList>>
+  > = ({ signal }) => getPinnedPostList({ signal, ...requestOptions });
 
-  
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPinnedPostList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPinnedPostList>>> = ({ signal }) => getPinnedPostList({ signal, ...requestOptions });
+export type GetPinnedPostListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPinnedPostList>>
+>;
+export type GetPinnedPostListQueryError = unknown;
 
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPinnedPostList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetPinnedPostListQueryResult = NonNullable<Awaited<ReturnType<typeof getPinnedPostList>>>
-export type GetPinnedPostListQueryError = unknown
-
-
-export function useGetPinnedPostList<TData = Awaited<ReturnType<typeof getPinnedPostList>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPinnedPostList>>, TError, TData>> & Pick<
+export function useGetPinnedPostList<
+  TData = Awaited<ReturnType<typeof getPinnedPostList>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPinnedPostList>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPinnedPostList>>,
           TError,
           Awaited<ReturnType<typeof getPinnedPostList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPinnedPostList<TData = Awaited<ReturnType<typeof getPinnedPostList>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPinnedPostList>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPinnedPostList<
+  TData = Awaited<ReturnType<typeof getPinnedPostList>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPinnedPostList>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPinnedPostList>>,
           TError,
           Awaited<ReturnType<typeof getPinnedPostList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPinnedPostList<TData = Awaited<ReturnType<typeof getPinnedPostList>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPinnedPostList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPinnedPostList<
+  TData = Awaited<ReturnType<typeof getPinnedPostList>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPinnedPostList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary 고정 게시글 목록 조회
  */
 
-export function useGetPinnedPostList<TData = Awaited<ReturnType<typeof getPinnedPostList>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPinnedPostList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetPinnedPostList<
+  TData = Awaited<ReturnType<typeof getPinnedPostList>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPinnedPostList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetPinnedPostListQueryOptions(options);
 
-  const queryOptions = getGetPinnedPostListQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
 
 /**
  * 게시글을 메인 페이지에 고정합니다. OPERATOR 이상만 가능합니다.
  * @summary 게시글 고정
  */
 export type createPinnedPostResponse201 = {
-  data: CreatePinnedPost201
-  status: 201
-}
+  data: PinnedPostDetailResponse;
+  status: 201;
+};
 
 export type createPinnedPostResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type createPinnedPostResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type createPinnedPostResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type createPinnedPostResponse404 = {
-  data: void
-  status: 404
-}
+  data: void;
+  status: 404;
+};
 
 export type createPinnedPostResponse409 = {
-  data: void
-  status: 409
-}
-    
-export type createPinnedPostResponseSuccess = (createPinnedPostResponse201) & {
+  data: void;
+  status: 409;
+};
+
+export type createPinnedPostResponseSuccess = createPinnedPostResponse201 & {
   headers: Headers;
 };
-export type createPinnedPostResponseError = (createPinnedPostResponse400 | createPinnedPostResponse401 | createPinnedPostResponse403 | createPinnedPostResponse404 | createPinnedPostResponse409) & {
+export type createPinnedPostResponseError = (
+  | createPinnedPostResponse400
+  | createPinnedPostResponse401
+  | createPinnedPostResponse403
+  | createPinnedPostResponse404
+  | createPinnedPostResponse409
+) & {
   headers: Headers;
 };
 
-export type createPinnedPostResponse = (createPinnedPostResponseSuccess | createPinnedPostResponseError)
+export type createPinnedPostResponse =
+  | createPinnedPostResponseSuccess
+  | createPinnedPostResponseError;
 
 export const getCreatePinnedPostUrl = () => {
+  return `/api/v1/pinned-posts`;
+};
 
-
-  
-
-  return `/api/v1/pinned-posts`
-}
-
-export const createPinnedPost = async (createPinnedPostBody: CreatePinnedPostBody, options?: RequestInit): Promise<createPinnedPostResponse> => {
-  
-  return customFetch<createPinnedPostResponse>(getCreatePinnedPostUrl(),
-  {      
+export const createPinnedPost = async (
+  createPinnedPostRequest: CreatePinnedPostRequest,
+  options?: RequestInit,
+): Promise<createPinnedPostResponse> => {
+  return customFetch<createPinnedPostResponse>(getCreatePinnedPostUrl(), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      createPinnedPostBody,)
-  }
-);}
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createPinnedPostRequest),
+  });
+};
 
+export const getCreatePinnedPostMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPinnedPost>>,
+    TError,
+    { data: CreatePinnedPostRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createPinnedPost>>,
+  TError,
+  { data: CreatePinnedPostRequest },
+  TContext
+> => {
+  const mutationKey = ["createPinnedPost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createPinnedPost>>,
+    { data: CreatePinnedPostRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return createPinnedPost(data, requestOptions);
+  };
 
-export const getCreatePinnedPostMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPinnedPost>>, TError,{data: CreatePinnedPostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createPinnedPost>>, TError,{data: CreatePinnedPostBody}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['createPinnedPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type CreatePinnedPostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPinnedPost>>
+>;
+export type CreatePinnedPostMutationBody = CreatePinnedPostRequest;
+export type CreatePinnedPostMutationError = void;
 
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPinnedPost>>, {data: CreatePinnedPostBody}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createPinnedPost(data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreatePinnedPostMutationResult = NonNullable<Awaited<ReturnType<typeof createPinnedPost>>>
-    export type CreatePinnedPostMutationBody = CreatePinnedPostBody
-    export type CreatePinnedPostMutationError = void
-
-    /**
+/**
  * @summary 게시글 고정
  */
-export const useCreatePinnedPost = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPinnedPost>>, TError,{data: CreatePinnedPostBody}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createPinnedPost>>,
-        TError,
-        {data: CreatePinnedPostBody},
-        TContext
-      > => {
-      return useMutation(getCreatePinnedPostMutationOptions(options), queryClient);
-    }
-    /**
+export const useCreatePinnedPost = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createPinnedPost>>,
+      TError,
+      { data: CreatePinnedPostRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createPinnedPost>>,
+  TError,
+  { data: CreatePinnedPostRequest },
+  TContext
+> => {
+  return useMutation(getCreatePinnedPostMutationOptions(options), queryClient);
+};
+/**
  * 게시글 고정을 해제합니다. OPERATOR 이상만 가능합니다.
  * @summary 게시글 고정 해제
  */
 export type deletePinnedPostResponse204 = {
-  data: void
-  status: 204
-}
+  data: void;
+  status: 204;
+};
 
 export type deletePinnedPostResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type deletePinnedPostResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type deletePinnedPostResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type deletePinnedPostResponseSuccess = (deletePinnedPostResponse204) & {
-  headers: Headers;
-};
-export type deletePinnedPostResponseError = (deletePinnedPostResponse401 | deletePinnedPostResponse403 | deletePinnedPostResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type deletePinnedPostResponse = (deletePinnedPostResponseSuccess | deletePinnedPostResponseError)
+export type deletePinnedPostResponseSuccess = deletePinnedPostResponse204 & {
+  headers: Headers;
+};
+export type deletePinnedPostResponseError = (
+  | deletePinnedPostResponse401
+  | deletePinnedPostResponse403
+  | deletePinnedPostResponse404
+) & {
+  headers: Headers;
+};
 
-export const getDeletePinnedPostUrl = (id: number,) => {
+export type deletePinnedPostResponse =
+  | deletePinnedPostResponseSuccess
+  | deletePinnedPostResponseError;
 
+export const getDeletePinnedPostUrl = (id: number) => {
+  return `/api/v1/pinned-posts/${id}`;
+};
 
-  
-
-  return `/api/v1/pinned-posts/${id}`
-}
-
-export const deletePinnedPost = async (id: number, options?: RequestInit): Promise<deletePinnedPostResponse> => {
-  
-  return customFetch<deletePinnedPostResponse>(getDeletePinnedPostUrl(id),
-  {      
+export const deletePinnedPost = async (
+  id: number,
+  options?: RequestInit,
+): Promise<deletePinnedPostResponse> => {
+  return customFetch<deletePinnedPostResponse>(getDeletePinnedPostUrl(id), {
     ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
+    method: "DELETE",
+  });
+};
 
+export const getDeletePinnedPostMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deletePinnedPost>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deletePinnedPost>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deletePinnedPost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deletePinnedPost>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
 
+    return deletePinnedPost(id, requestOptions);
+  };
 
-export const getDeletePinnedPostMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePinnedPost>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deletePinnedPost>>, TError,{id: number}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['deletePinnedPost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type DeletePinnedPostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deletePinnedPost>>
+>;
 
-      
+export type DeletePinnedPostMutationError = void;
 
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePinnedPost>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
-
-          return  deletePinnedPost(id,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeletePinnedPostMutationResult = NonNullable<Awaited<ReturnType<typeof deletePinnedPost>>>
-    
-    export type DeletePinnedPostMutationError = void
-
-    /**
+/**
  * @summary 게시글 고정 해제
  */
-export const useDeletePinnedPost = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePinnedPost>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deletePinnedPost>>,
-        TError,
-        {id: number},
-        TContext
-      > => {
-      return useMutation(getDeletePinnedPostMutationOptions(options), queryClient);
-    }
-    
+export const useDeletePinnedPost = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deletePinnedPost>>,
+      TError,
+      { id: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deletePinnedPost>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeletePinnedPostMutationOptions(options), queryClient);
+};

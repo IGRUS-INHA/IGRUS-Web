@@ -33,127 +33,149 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import {
-  useMutation
-} from '@tanstack/react-query';
+import { useMutation } from "@tanstack/react-query";
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
-  UseMutationResult
-} from '@tanstack/react-query';
+  UseMutationResult,
+} from "@tanstack/react-query";
 
 import type {
-  SubmitAnonymousResponse201,
-  SubmitAnonymousResponseBody
-} from '.././models';
+  SubmitSurveyResponseRequest,
+  SurveyResponseDetailResponse,
+} from ".././models";
 
-import { customFetch } from '../../client';
-
+import { customFetch } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 /**
  * 비회원이 PUBLIC 설문에 응답을 제출합니다. 인증 없이 접근 가능합니다.
  * @summary 비회원 설문 응답 제출
  */
 export type submitAnonymousResponseResponse201 = {
-  data: SubmitAnonymousResponse201
-  status: 201
-}
+  data: SurveyResponseDetailResponse;
+  status: 201;
+};
 
 export type submitAnonymousResponseResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type submitAnonymousResponseResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type submitAnonymousResponseResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type submitAnonymousResponseResponseSuccess = (submitAnonymousResponseResponse201) & {
-  headers: Headers;
-};
-export type submitAnonymousResponseResponseError = (submitAnonymousResponseResponse400 | submitAnonymousResponseResponse403 | submitAnonymousResponseResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type submitAnonymousResponseResponse = (submitAnonymousResponseResponseSuccess | submitAnonymousResponseResponseError)
+export type submitAnonymousResponseResponseSuccess =
+  submitAnonymousResponseResponse201 & {
+    headers: Headers;
+  };
+export type submitAnonymousResponseResponseError = (
+  | submitAnonymousResponseResponse400
+  | submitAnonymousResponseResponse403
+  | submitAnonymousResponseResponse404
+) & {
+  headers: Headers;
+};
 
-export const getSubmitAnonymousResponseUrl = (surveyId: number,) => {
+export type submitAnonymousResponseResponse =
+  | submitAnonymousResponseResponseSuccess
+  | submitAnonymousResponseResponseError;
 
+export const getSubmitAnonymousResponseUrl = (surveyId: number) => {
+  return `/api/v1/surveys/${surveyId}/responses/anonymous`;
+};
 
-  
+export const submitAnonymousResponse = async (
+  surveyId: number,
+  submitSurveyResponseRequest: SubmitSurveyResponseRequest,
+  options?: RequestInit,
+): Promise<submitAnonymousResponseResponse> => {
+  return customFetch<submitAnonymousResponseResponse>(
+    getSubmitAnonymousResponseUrl(surveyId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(submitSurveyResponseRequest),
+    },
+  );
+};
 
-  return `/api/v1/surveys/${surveyId}/responses/anonymous`
-}
+export const getSubmitAnonymousResponseMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitAnonymousResponse>>,
+    TError,
+    { surveyId: number; data: SubmitSurveyResponseRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitAnonymousResponse>>,
+  TError,
+  { surveyId: number; data: SubmitSurveyResponseRequest },
+  TContext
+> => {
+  const mutationKey = ["submitAnonymousResponse"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-export const submitAnonymousResponse = async (surveyId: number,
-    submitAnonymousResponseBody: SubmitAnonymousResponseBody, options?: RequestInit): Promise<submitAnonymousResponseResponse> => {
-  
-  return customFetch<submitAnonymousResponseResponse>(getSubmitAnonymousResponseUrl(surveyId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      submitAnonymousResponseBody,)
-  }
-);}
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitAnonymousResponse>>,
+    { surveyId: number; data: SubmitSurveyResponseRequest }
+  > = (props) => {
+    const { surveyId, data } = props ?? {};
 
+    return submitAnonymousResponse(surveyId, data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type SubmitAnonymousResponseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitAnonymousResponse>>
+>;
+export type SubmitAnonymousResponseMutationBody = SubmitSurveyResponseRequest;
+export type SubmitAnonymousResponseMutationError = void;
 
-export const getSubmitAnonymousResponseMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitAnonymousResponse>>, TError,{surveyId: number;data: SubmitAnonymousResponseBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof submitAnonymousResponse>>, TError,{surveyId: number;data: SubmitAnonymousResponseBody}, TContext> => {
-
-const mutationKey = ['submitAnonymousResponse'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitAnonymousResponse>>, {surveyId: number;data: SubmitAnonymousResponseBody}> = (props) => {
-          const {surveyId,data} = props ?? {};
-
-          return  submitAnonymousResponse(surveyId,data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SubmitAnonymousResponseMutationResult = NonNullable<Awaited<ReturnType<typeof submitAnonymousResponse>>>
-    export type SubmitAnonymousResponseMutationBody = SubmitAnonymousResponseBody
-    export type SubmitAnonymousResponseMutationError = void
-
-    /**
+/**
  * @summary 비회원 설문 응답 제출
  */
-export const useSubmitAnonymousResponse = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitAnonymousResponse>>, TError,{surveyId: number;data: SubmitAnonymousResponseBody}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof submitAnonymousResponse>>,
-        TError,
-        {surveyId: number;data: SubmitAnonymousResponseBody},
-        TContext
-      > => {
-      return useMutation(getSubmitAnonymousResponseMutationOptions(options), queryClient);
-    }
-    
+export const useSubmitAnonymousResponse = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof submitAnonymousResponse>>,
+      TError,
+      { surveyId: number; data: SubmitSurveyResponseRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof submitAnonymousResponse>>,
+  TError,
+  { surveyId: number; data: SubmitSurveyResponseRequest },
+  TContext
+> => {
+  return useMutation(
+    getSubmitAnonymousResponseMutationOptions(options),
+    queryClient,
+  );
+};

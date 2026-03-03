@@ -1,6 +1,7 @@
 package igrus.web.user.mypage.controller;
 
-import igrus.web.common.config.SwaggerConfig;
+import igrus.web.common.util.PageableUtils;
+import igrus.web.common.util.SecurityUtils;
 import igrus.web.community.bookmark.dto.response.BookmarkedPostPageResponse;
 import igrus.web.community.bookmark.dto.response.BookmarkedPostResponse;
 import igrus.web.community.bookmark.service.read.GetMyBookmarksService;
@@ -9,6 +10,17 @@ import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
 import igrus.web.community.like.post_like.service.read.GetMyLikedPostsService;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.service.EventRegistrationService;
+import igrus.web.generated.api.MyPageApi;
+import igrus.web.generated.model.GetMyBookmarks200Response;
+import igrus.web.generated.model.GetMyBookmarks200ResponsePostsInner;
+import igrus.web.generated.model.GetMyComments200Response;
+import igrus.web.generated.model.GetMyComments200ResponseCommentsInner;
+import igrus.web.generated.model.GetMyLikes200Response;
+import igrus.web.generated.model.GetMyLikes200ResponsePostsInner;
+import igrus.web.generated.model.GetMyPosts200Response;
+import igrus.web.generated.model.GetMyPosts200ResponsePostsInner;
+import igrus.web.generated.model.GetMyProfile200Response;
+import igrus.web.generated.model.GetMyRegistrations200ResponseInner;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.user.mypage.dto.request.ChangeEmailRequest;
@@ -30,24 +42,13 @@ import igrus.web.user.mypage.service.write.UpdateStudentIdService;
 import igrus.web.user.mypage.service.write.VerifyEmailChangeService;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.service.WithdrawService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -55,13 +56,10 @@ import java.util.List;
  * 마이페이지 컨트롤러.
  * 프로필 조회/수정, 비밀번호 변경, 내 활동 조회 API를 제공합니다.
  */
-@Tag(name = "MyPage", description = "마이페이지 API")
-@SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/mypage")
 @RequiredArgsConstructor
-public class MyPageController {
+public class MyPageController implements MyPageApi {
 
     private final GetMyProfileService getMyProfileService;
     private final GetMyPostsService getMyPostsService;
@@ -78,247 +76,267 @@ public class MyPageController {
 
     // === 프로필 ===
 
-    @Operation(summary = "내 프로필 조회", description = "로그인한 사용자의 프로필 정보를 조회합니다")
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "프로필 조회 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = MyProfileResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "사용자를 찾을 수 없음"
-            )
-    })
-    @GetMapping("/profile")
-    public ResponseEntity<MyProfileResponse> getMyProfile(
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetMyProfile200Response> getMyProfile() {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         MyProfileResponse response = getMyProfileService.getMyProfile(user.userId());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new GetMyProfile200Response()
+                .studentId(response.studentId())
+                .name(response.name())
+                .email(response.email())
+                .phoneNumber(response.phoneNumber())
+                .department(response.department())
+                .role(response.role() != null
+                        ? GetMyProfile200Response.RoleEnum.fromValue(response.role().name()) : null)
+                .createdAt(response.createdAt())
+                .hasTemporaryStudentId(response.hasTemporaryStudentId()));
     }
 
     // === 이메일 변경 ===
 
-    @Operation(summary = "이메일 변경 요청", description = "비밀번호 확인 후 새 이메일로 인증 코드를 발송합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "인증 코드 발송 성공"),
-            @ApiResponse(responseCode = "400", description = "현재 이메일과 동일"),
-            @ApiResponse(responseCode = "401", description = "비밀번호 불일치 또는 인증 필요"),
-            @ApiResponse(responseCode = "409", description = "이메일 중복")
-    })
-    @PostMapping("/email/change-request")
+    @Override
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> requestEmailChange(
-            @Valid @RequestBody ChangeEmailRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+            igrus.web.generated.model.RequestEmailChangeRequest requestEmailChangeRequest
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        ChangeEmailRequest request = new ChangeEmailRequest(
+                requestEmailChangeRequest.getPassword(),
+                requestEmailChangeRequest.getNewEmail()
+        );
         changeEmailService.changeEmail(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "이메일 변경 인증", description = "인증 코드를 확인하고 이메일을 변경합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "이메일 변경 성공"),
-            @ApiResponse(responseCode = "400", description = "인증 코드 만료"),
-            @ApiResponse(responseCode = "401", description = "인증 코드 불일치 또는 인증 필요"),
-            @ApiResponse(responseCode = "409", description = "이메일 중복"),
-            @ApiResponse(responseCode = "429", description = "인증 시도 횟수 초과")
-    })
-    @PostMapping("/email/verify")
+    @Override
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> verifyEmailChange(
-            @Valid @RequestBody EmailVerificationRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+            igrus.web.generated.model.VerifyEmailChangeRequest verifyEmailChangeRequest
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        EmailVerificationRequest request = new EmailVerificationRequest(
+                verifyEmailChangeRequest.getEmail(),
+                verifyEmailChangeRequest.getCode()
+        );
         verifyEmailChangeService.verifyAndChangeEmail(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 
     // === 전화번호 변경 ===
 
-    @Operation(summary = "전화번호 변경", description = "비밀번호 확인 후 전화번호를 변경합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "전화번호 변경 성공"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "현재 전화번호와 동일하거나 유효하지 않은 형식"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "비밀번호 불일치 또는 인증 필요"
-            ),
-            @ApiResponse(responseCode = "409", description = "전화번호 중복")
-    })
-    @PatchMapping("/phone")
+    @Override
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePhoneNumber(
-            @Valid @RequestBody ChangePhoneNumberRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+            igrus.web.generated.model.ChangePhoneNumberRequest changePhoneNumberRequest
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        ChangePhoneNumberRequest request = new ChangePhoneNumberRequest(
+                changePhoneNumberRequest.getPassword(),
+                changePhoneNumberRequest.getNewPhoneNumber()
+        );
         changePhoneNumberService.changePhoneNumber(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 
-    // === 학번 변경 (임시 학번 → 실제 학번) ===
+    // === 학번 변경 (임시 학번 -> 실제 학번) ===
 
-    @Operation(summary = "학번 변경", description = "임시 학번을 실제 학번으로 변경합니다. 임시 학번 사용자만 가능합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "학번 변경 성공"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "임시 학번이 아닌 경우, 학번 형식 오류, 또는 99로 시작하는 학번"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "비밀번호 불일치 또는 인증 필요"
-            ),
-            @ApiResponse(responseCode = "409", description = "학번 중복")
-    })
-    @PatchMapping("/student-id")
+    @Override
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateStudentId(
-            @Valid @RequestBody UpdateStudentIdRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+            igrus.web.generated.model.UpdateStudentIdRequest updateStudentIdRequest
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        UpdateStudentIdRequest request = new UpdateStudentIdRequest(
+                updateStudentIdRequest.getPassword(),
+                updateStudentIdRequest.getNewStudentId()
+        );
         updateStudentIdService.updateStudentId(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 
     // === 비밀번호 변경 ===
 
-    @Operation(summary = "비밀번호 변경", description = "현재 비밀번호 확인 후 새 비밀번호로 변경합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "새 비밀번호 형식 오류 또는 현재 비밀번호와 동일"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "현재 비밀번호 불일치 또는 인증 필요"
-            )
-    })
-    @PatchMapping("/password")
+    @Override
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changeMyPassword(
-            @Valid @RequestBody ChangePasswordRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+            igrus.web.generated.model.ChangeMyPasswordRequest changeMyPasswordRequest
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        ChangePasswordRequest request = new ChangePasswordRequest(
+                changeMyPasswordRequest.getCurrentPassword(),
+                changeMyPasswordRequest.getNewPassword()
+        );
         changeMyPasswordService.changePassword(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 
     // === 회원 탈퇴 ===
 
-    @Operation(summary = "회원 탈퇴", description = "비밀번호 확인 후 회원 탈퇴를 진행합니다. 탈퇴 후 5일 이내 복구 가능합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 입력값"
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "비밀번호 불일치 또는 인증 필요"
-            )
-    })
-    @DeleteMapping("/account")
+    @Override
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> withdraw(
-            @Valid @RequestBody WithdrawRequest request,
-            @AuthenticationPrincipal AuthenticatedUser user
+            igrus.web.generated.model.WithdrawRequest withdrawRequest
     ) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        WithdrawRequest request = new WithdrawRequest(
+                withdrawRequest.getPassword(),
+                withdrawRequest.getReason()
+        );
         withdrawService.withdraw(user.userId(), request);
         return ResponseEntity.ok().build();
     }
 
     // === 내 활동 조회 ===
 
-    @Operation(summary = "내 게시글 목록 조회", description = "내가 작성한 게시글 목록을 페이징하여 조회합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            )
-    })
-    @GetMapping("/posts")
-    public ResponseEntity<MyPostPageResponse> getMyPosts(
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetMyPosts200Response> getMyPosts(
+            Integer page, Integer size, List<String> sort
     ) {
-        Page<MyPostResponse> page = getMyPostsService.getMyPosts(user.userId(), pageable);
-        return ResponseEntity.ok(MyPostPageResponse.from(page));
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        Page<MyPostResponse> postPage = getMyPostsService.getMyPosts(user.userId(), pageable);
+        MyPostPageResponse pageResponse = MyPostPageResponse.from(postPage);
+
+        return ResponseEntity.ok(new GetMyPosts200Response()
+                .posts(pageResponse.posts().stream()
+                        .map(this::mapToMyPostInner)
+                        .toList())
+                .totalElements(pageResponse.totalElements())
+                .totalPages(pageResponse.totalPages())
+                .currentPage(pageResponse.currentPage())
+                .hasNext(pageResponse.hasNext()));
     }
 
-    @Operation(summary = "내 댓글 목록 조회", description = "내가 작성한 댓글 목록을 페이징하여 조회합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공"),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            )
-    })
-    @GetMapping("/comments")
-    public ResponseEntity<MyCommentPageResponse> getMyComments(
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetMyComments200Response> getMyComments(
+            Integer page, Integer size, List<String> sort
     ) {
-        Page<MyCommentResponse> page = getMyCommentsService.getMyComments(user.userId(), pageable);
-        return ResponseEntity.ok(MyCommentPageResponse.from(page));
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        Page<MyCommentResponse> commentPage = getMyCommentsService.getMyComments(user.userId(), pageable);
+        MyCommentPageResponse pageResponse = MyCommentPageResponse.from(commentPage);
+
+        return ResponseEntity.ok(new GetMyComments200Response()
+                .comments(pageResponse.comments().stream()
+                        .map(this::mapToMyCommentInner)
+                        .toList())
+                .totalElements(pageResponse.totalElements())
+                .totalPages(pageResponse.totalPages())
+                .currentPage(pageResponse.currentPage())
+                .hasNext(pageResponse.hasNext()));
     }
 
-    @Operation(summary = "내 행사 신청 목록 조회", description = "내가 신청한 행사 목록을 조회합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "행사 신청 목록 조회 성공"),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            )
-    })
-    @GetMapping("/registrations")
-    public ResponseEntity<List<MyRegistrationResponse>> getMyRegistrations(
-            @AuthenticationPrincipal AuthenticatedUser user
-    ) {
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<GetMyRegistrations200ResponseInner>> getMyRegistrations() {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         List<MyRegistrationResponse> response = eventRegistrationService.getMyRegistrations(user.userId());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(response.stream()
+                .map(this::mapToMyRegistrationInner)
+                .toList());
     }
 
-    @Operation(summary = "좋아요한 게시글 목록 조회", description = "내가 좋아요한 게시글 목록을 페이징하여 조회합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "좋아요한 게시글 목록 조회 성공"),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            )
-    })
-    @GetMapping("/likes")
-    public ResponseEntity<LikedPostPageResponse> getMyLikes(
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetMyLikes200Response> getMyLikes1(
+            Integer page, Integer size, List<String> sort
     ) {
-        Page<LikedPostResponse> page = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
-        return ResponseEntity.ok(LikedPostPageResponse.from(page));
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        Page<LikedPostResponse> likePage = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
+        LikedPostPageResponse pageResponse = LikedPostPageResponse.from(likePage);
+
+        return ResponseEntity.ok(new GetMyLikes200Response()
+                .posts(pageResponse.posts().stream()
+                        .map(this::mapToLikedPostInner)
+                        .toList())
+                .totalElements(pageResponse.totalElements())
+                .totalPages(pageResponse.totalPages())
+                .currentPage(pageResponse.currentPage())
+                .hasNext(pageResponse.hasNext()));
     }
 
-    @Operation(summary = "북마크한 게시글 목록 조회", description = "내가 북마크한 게시글 목록을 페이징하여 조회합니다")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "북마크한 게시글 목록 조회 성공"),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증 필요"
-            )
-    })
-    @GetMapping("/bookmarks")
-    public ResponseEntity<BookmarkedPostPageResponse> getMyBookmarks(
-            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser user
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GetMyBookmarks200Response> getMyBookmarks1(
+            Integer page, Integer size, List<String> sort
     ) {
-        Page<BookmarkedPostResponse> page = getMyBookmarksService.getMyBookmarks(user.userId(), pageable);
-        return ResponseEntity.ok(BookmarkedPostPageResponse.from(page));
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        Pageable pageable = PageableUtils.of(page, size, sort);
+        Page<BookmarkedPostResponse> bookmarkPage = getMyBookmarksService.getMyBookmarks(user.userId(), pageable);
+        BookmarkedPostPageResponse pageResponse = BookmarkedPostPageResponse.from(bookmarkPage);
+
+        return ResponseEntity.ok(new GetMyBookmarks200Response()
+                .posts(pageResponse.posts().stream()
+                        .map(this::mapToBookmarkedPostInner)
+                        .toList())
+                .totalElements(pageResponse.totalElements())
+                .totalPages(pageResponse.totalPages())
+                .currentPage(pageResponse.currentPage())
+                .hasNext(pageResponse.hasNext()));
     }
 
+    // === Private helper methods ===
+
+    private GetMyPosts200ResponsePostsInner mapToMyPostInner(MyPostResponse p) {
+        return new GetMyPosts200ResponsePostsInner()
+                .id(p.id())
+                .boardCode(p.boardCode())
+                .boardName(p.boardName())
+                .title(p.title())
+                .viewCount(p.viewCount())
+                .likeCount(p.likeCount())
+                .isAnonymous(p.isAnonymous())
+                .createdAt(p.createdAt());
+    }
+
+    private GetMyComments200ResponseCommentsInner mapToMyCommentInner(MyCommentResponse c) {
+        return new GetMyComments200ResponseCommentsInner()
+                .id(c.id())
+                .postId(c.postId())
+                .postTitle(c.postTitle())
+                .content(c.content())
+                .isAnonymous(c.isAnonymous())
+                .isReply(c.isReply())
+                .createdAt(c.createdAt());
+    }
+
+    private GetMyRegistrations200ResponseInner mapToMyRegistrationInner(MyRegistrationResponse r) {
+        return new GetMyRegistrations200ResponseInner()
+                .registrationId(r.registrationId())
+                .eventId(r.eventId())
+                .eventTitle(r.eventTitle())
+                .eventStartAt(r.eventStartAt())
+                .status(r.status() != null
+                        ? GetMyRegistrations200ResponseInner.StatusEnum.fromValue(r.status().name()) : null)
+                .registeredAt(r.registeredAt());
+    }
+
+    private GetMyLikes200ResponsePostsInner mapToLikedPostInner(LikedPostResponse p) {
+        return new GetMyLikes200ResponsePostsInner()
+                .postId(p.postId())
+                .title(p.title())
+                .boardCode(p.boardCode())
+                .boardName(p.boardName())
+                .authorName(p.authorName())
+                .likeCount(p.likeCount())
+                .createdAt(p.createdAt())
+                .isDeleted(p.isDeleted())
+                .deletedMessage(p.deletedMessage());
+    }
+
+    private GetMyBookmarks200ResponsePostsInner mapToBookmarkedPostInner(BookmarkedPostResponse p) {
+        return new GetMyBookmarks200ResponsePostsInner()
+                .postId(p.postId())
+                .title(p.title())
+                .boardCode(p.boardCode())
+                .boardName(p.boardName())
+                .authorName(p.authorName())
+                .createdAt(p.createdAt())
+                .isDeleted(p.isDeleted())
+                .deletedMessage(p.deletedMessage());
+    }
 }

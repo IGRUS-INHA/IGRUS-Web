@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import type { User } from './entities';
-import type { Theme, Toast, ToastInput } from './common';
+import type { ReactNode } from "react";
+import type { User } from "./entities";
+import type { Theme, Toast, ToastInput } from "./common";
 
 // =============================================================================
 // Auth Store Types

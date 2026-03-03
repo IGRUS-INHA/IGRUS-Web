@@ -3,6 +3,7 @@
 기존 Axios 스타일 에러 처리에서 ApiError 기반 에러 처리로 점진적으로 마이그레이션하는 가이드입니다.
 
 ## 목차
+
 - [마이그레이션 개요](#마이그레이션-개요)
 - [우선순위](#우선순위)
 - [Before/After 코드 예시](#beforeafter-코드-예시)
@@ -24,11 +25,13 @@
 ### 마이그레이션 전략
 
 **Phase 1 (완료):**
+
 - ✅ types/error.ts 생성 (ApiError 클래스)
 - ✅ utils/error.ts 리팩토링 (45개 헬퍼 함수, 148개 에러 코드 매핑)
 - ✅ client.ts 수정 (ApiError 사용, default 코드 생성)
 
 **Phase 2 (완료):**
+
 - ✅ BoardListPage: `(error as any).response?.status` → `isBoardReadDenied() || isForbiddenError()`
 - ✅ PostDetailPage: `error.message?.includes('403')` → `isForbiddenError()`, `isNotFoundError()`
 - ✅ PostWritePage: 메시지 기반 체크 → `isForbiddenError()`, `isBoardWriteDenied()`, `isUnauthorizedError()`
@@ -37,6 +40,7 @@
 - ✅ CommentItem: `error?.message` 직접 접근 → `getErrorMessage()`
 
 **Phase 3 (진행 중):**
+
 - ⬜ 인증 페이지 (LoginPage, SignupPage, ForgotPasswordPage 등)
 - ✅ EventDetailPage: query `(error as any).response?.status` → `isForbiddenError() || isEventAccessDenied()`, mutation별 에러 코드 분기 추가
 - ✅ EventWritePage: 에러 무시 → `isForbiddenError() || isEventOperatorRequired()`, `getErrorMessage()`
@@ -47,9 +51,11 @@
 - ⬜ 관리자 페이지 (AdminDashboard 등)
 
 **Phase 4 (향후):**
+
 - ⬜ 기타 공통 컴포넌트
 
 **Phase 5 (향후):**
+
 - ⬜ 글로벌 에러 핸들러 도입 (QueryClient `defaultOptions.mutations.onError`)
 
 ---
@@ -59,11 +65,13 @@
 ### 1순위: 게시판 도메인 (완료)
 
 **이유:**
+
 - 가장 많이 사용되는 기능
 - 다양한 에러 케이스 포함
 - 사용자 경험에 직접적 영향
 
 **마이그레이션 완료 파일:**
+
 - ✅ frontend/src/pages/board/BoardListPage.tsx
 - ✅ frontend/src/pages/board/PostDetailPage.tsx
 - ✅ frontend/src/pages/board/PostWritePage.tsx
@@ -74,11 +82,13 @@
 ### 2순위: 인증 도메인 (향후)
 
 **이유:**
+
 - 사용자 접근 첫 단계
 - 명확한 에러 코드 (INVALID_CREDENTIALS, EMAIL_NOT_VERIFIED 등)
 - 테스트 용이
 
 **마이그레이션 대상 파일:**
+
 - frontend/src/pages/auth/LoginPage.tsx
 - frontend/src/pages/auth/SignupPage.tsx
 - frontend/src/pages/auth/ForgotPasswordPage.tsx
@@ -89,10 +99,12 @@
 ### 3순위: 행사 도메인 (완료)
 
 **이유:**
+
 - 복잡한 에러 케이스 (정원 마감, 신청 기간, 권한 등)
 - 행사별 에러 처리 로직 통일 필요
 
 **마이그레이션 완료 파일:**
+
 - ✅ frontend/src/pages/event/EventDetailPage.tsx
 - ✅ frontend/src/pages/event/EventWritePage.tsx
 - ✅ frontend/src/pages/event/EventEditPage.tsx
@@ -101,6 +113,7 @@
 ### 4순위: 기타 도메인 (향후)
 
 **마이그레이션 대상:**
+
 - 문의 페이지 (InquiryPage)
 - 마이페이지 (MyPage)
 - 관리자 페이지 (AdminDashboard)
@@ -108,6 +121,7 @@
 ### 5순위: 컴포넌트 (향후)
 
 **마이그레이션 대상:**
+
 - 댓글 컴포넌트 (CommentSection, CommentActions 등)
 - 공통 컴포넌트 (에러 바운더리 등)
 
@@ -118,18 +132,20 @@
 ### 예시 1: 에러 체크 로직 (게시판 권한)
 
 **Before:**
+
 ```typescript
 // ❌ 타입 안정성 낮음, 중복 코드
-const isForbidden = error && (
-  (error as any).code === 'BOARD_READ_DENIED' ||
-  (error as Error).message?.includes('권한이 없습니다')
-);
+const isForbidden =
+  error &&
+  ((error as any).code === "BOARD_READ_DENIED" ||
+    (error as Error).message?.includes("권한이 없습니다"));
 ```
 
 **After:**
+
 ```typescript
 // ✅ 타입 안정성 높음, 재사용 가능
-import { isBoardReadDenied } from '@/utils/error';
+import { isBoardReadDenied } from "@/utils/error";
 
 const isForbidden = isBoardReadDenied(error);
 ```
@@ -137,105 +153,122 @@ const isForbidden = isBoardReadDenied(error);
 ### 예시 2: 에러 처리 콜백 (게시글 작성)
 
 **Before:**
+
 ```typescript
 // ❌ any 타입, 메시지 기반 체크
 onError: (error: any) => {
-  let errorMessage = '게시글 작성에 실패했습니다.';
+  let errorMessage = "게시글 작성에 실패했습니다.";
 
   if (error.message) {
     errorMessage = error.message;
   }
 
-  if (error.message?.includes('403') || error.message?.includes('권한')) {
-    errorMessage = '❌ 권한이 없습니다.\n\n로그인 후 다시 시도하거나,\n게시판 작성 권한을 확인해주세요.';
+  if (error.message?.includes("403") || error.message?.includes("권한")) {
+    errorMessage =
+      "❌ 권한이 없습니다.\n\n로그인 후 다시 시도하거나,\n게시판 작성 권한을 확인해주세요.";
   }
 
-  if (error.message?.includes('401') || error.message?.includes('인증')) {
-    errorMessage = '❌ 로그인이 필요합니다.';
+  if (error.message?.includes("401") || error.message?.includes("인증")) {
+    errorMessage = "❌ 로그인이 필요합니다.";
     alert(errorMessage);
-    navigate('/login');
+    navigate("/login");
     return;
   }
 
   alert(errorMessage);
-}
+};
 ```
 
 **After:**
+
 ```typescript
 // ✅ unknown 타입, 헬퍼 함수 사용
-import { isForbiddenError, isUnauthorizedError, getErrorMessage } from '@/utils/error';
+import {
+  isForbiddenError,
+  isUnauthorizedError,
+  getErrorMessage,
+} from "@/utils/error";
 
 onError: (error: unknown) => {
-  let errorMessage = '게시글 작성에 실패했습니다.';
+  let errorMessage = "게시글 작성에 실패했습니다.";
 
   if (isForbiddenError(error)) {
-    errorMessage = '❌ 권한이 없습니다.\n\n로그인 후 다시 시도하거나,\n게시판 작성 권한을 확인해주세요.';
+    errorMessage =
+      "❌ 권한이 없습니다.\n\n로그인 후 다시 시도하거나,\n게시판 작성 권한을 확인해주세요.";
   } else if (isUnauthorizedError(error)) {
-    errorMessage = '❌ 로그인이 필요합니다.';
+    errorMessage = "❌ 로그인이 필요합니다.";
     alert(errorMessage);
-    navigate('/login');
+    navigate("/login");
     return;
   } else {
     errorMessage = getErrorMessage(error);
   }
 
   alert(errorMessage);
-}
+};
 ```
 
 ### 예시 3: 에러 처리 콜백 (게시글 삭제)
 
 **Before:**
+
 ```typescript
 // ❌ any 타입, 메시지 포함 여부 체크
 onError: (error: any) => {
-  let errorMessage = '게시글 삭제에 실패했습니다.';
-  if (error.message?.includes('403')) errorMessage = '삭제 권한이 없습니다.';
-  else if (error.message?.includes('404')) errorMessage = '게시글을 찾을 수 없습니다.';
+  let errorMessage = "게시글 삭제에 실패했습니다.";
+  if (error.message?.includes("403")) errorMessage = "삭제 권한이 없습니다.";
+  else if (error.message?.includes("404"))
+    errorMessage = "게시글을 찾을 수 없습니다.";
   alert(errorMessage);
-}
+};
 ```
 
 **After:**
+
 ```typescript
 // ✅ unknown 타입, HTTP 상태 기반 체크
-import { isForbiddenError, isNotFoundError, getErrorMessage } from '@/utils/error';
+import {
+  isForbiddenError,
+  isNotFoundError,
+  getErrorMessage,
+} from "@/utils/error";
 
 onError: (error: unknown) => {
-  let errorMessage = '게시글 삭제에 실패했습니다.';
+  let errorMessage = "게시글 삭제에 실패했습니다.";
 
   if (isForbiddenError(error)) {
-    errorMessage = '삭제 권한이 없습니다.';
+    errorMessage = "삭제 권한이 없습니다.";
   } else if (isNotFoundError(error)) {
-    errorMessage = '게시글을 찾을 수 없습니다.';
+    errorMessage = "게시글을 찾을 수 없습니다.";
   } else {
     errorMessage = getErrorMessage(error);
   }
 
   alert(errorMessage);
-}
+};
 ```
 
 ### 예시 4: 로그인 에러 처리 (향후 마이그레이션)
 
 **Before:**
+
 ```typescript
 // LoginPage.tsx (현재 상태 - 향후 마이그레이션 필요)
 onError: (error: any) => {
-  if (error.message?.includes('INVALID_CREDENTIALS')) {
-    setError('학번 또는 비밀번호가 올바르지 않습니다.');
-  } else if (error.message?.includes('EMAIL_NOT_VERIFIED')) {
-    setError('이메일 인증이 필요합니다.');
-  } else if (error.message?.includes('ACCOUNT_SUSPENDED')) {
-    setError('정지된 계정입니다.');
+  if (error.message?.includes("INVALID_CREDENTIALS")) {
+    setError("학번 또는 비밀번호가 올바르지 않습니다.");
+  } else if (error.message?.includes("EMAIL_NOT_VERIFIED")) {
+    setError("이메일 인증이 필요합니다.");
+  } else if (error.message?.includes("ACCOUNT_SUSPENDED")) {
+    setError("정지된 계정입니다.");
   } else {
-    setError('로그인에 실패했습니다.');
+    setError("로그인에 실패했습니다.");
   }
-}
+};
 ```
 
 **After (향후):**
+
 ```typescript
 // ✅ 헬퍼 함수 사용
 import {
@@ -243,19 +276,19 @@ import {
   isEmailNotVerified,
   isAccountSuspended,
   getErrorMessage,
-} from '@/utils/error';
+} from "@/utils/error";
 
 onError: (error: unknown) => {
   if (isInvalidCredentials(error)) {
-    setError('학번 또는 비밀번호가 올바르지 않습니다.');
+    setError("학번 또는 비밀번호가 올바르지 않습니다.");
   } else if (isEmailNotVerified(error)) {
-    setError('이메일 인증이 필요합니다.');
+    setError("이메일 인증이 필요합니다.");
   } else if (isAccountSuspended(error)) {
-    setError('정지된 계정입니다.');
+    setError("정지된 계정입니다.");
   } else {
     setError(getErrorMessage(error));
   }
-}
+};
 ```
 
 ---
@@ -265,12 +298,14 @@ onError: (error: unknown) => {
 ### 1. 파일 선택
 
 **마이그레이션 대상 파일 선택 기준:**
+
 - [ ] `error.message?.includes()` 패턴 사용
 - [ ] `(error as any)` 타입 단언 사용
 - [ ] `(error as Error)` 타입 단언 사용
 - [ ] 에러 처리 로직이 중복됨
 
 **검색 명령:**
+
 ```bash
 # 마이그레이션 대상 파일 찾기
 cd frontend/src
@@ -282,12 +317,19 @@ grep -r "error as Error" . --include="*.tsx" --include="*.ts"
 ### 2. 파일 수정
 
 **단계별 작업:**
+
 1. [ ] Import 추가
+
    ```typescript
-   import { isForbiddenError, isNotFoundError, getErrorMessage } from '@/utils/error';
+   import {
+     isForbiddenError,
+     isNotFoundError,
+     getErrorMessage,
+   } from "@/utils/error";
    ```
 
 2. [ ] 에러 타입 변경
+
    ```typescript
    // Before
    onError: (error: any) => {
@@ -297,6 +339,7 @@ grep -r "error as Error" . --include="*.tsx" --include="*.ts"
    ```
 
 3. [ ] 에러 체크 로직 교체
+
    ```typescript
    // Before
    if (error.message?.includes('403'))
@@ -306,9 +349,10 @@ grep -r "error as Error" . --include="*.tsx" --include="*.ts"
    ```
 
 4. [ ] 에러 메시지 추출
+
    ```typescript
    // Before
-   const message = error.message || '오류가 발생했습니다.';
+   const message = error.message || "오류가 발생했습니다.";
 
    // After
    const message = getErrorMessage(error);
@@ -317,6 +361,7 @@ grep -r "error as Error" . --include="*.tsx" --include="*.ts"
 ### 3. 테스트
 
 **확인 사항:**
+
 - [ ] TypeScript 컴파일 에러 없음
 - [ ] 기존 동작 유지 (에러 메시지 동일)
 - [ ] UI 동작 동일 (로그아웃, 리다이렉트 등)
@@ -325,6 +370,7 @@ grep -r "error as Error" . --include="*.tsx" --include="*.ts"
 ### 4. 커밋
 
 **커밋 메시지 형식:**
+
 ```
 refactor(frontend): 에러 처리 마이그레이션 - [도메인명]
 
@@ -333,6 +379,7 @@ refactor(frontend): 에러 처리 마이그레이션 - [도메인명]
 ```
 
 **예시:**
+
 ```
 refactor(frontend): 에러 처리 마이그레이션 - 인증
 
@@ -347,12 +394,14 @@ refactor(frontend): 에러 처리 마이그레이션 - 인증
 ### 1. 기존 동작 유지
 
 **절대 변경하면 안 되는 것:**
+
 - ❌ 에러 메시지 내용 변경
 - ❌ 로그아웃 시점 변경
 - ❌ 리다이렉트 동작 변경
 - ❌ UI 표시 방식 변경
 
 **변경 가능한 것:**
+
 - ✅ 에러 체크 방식 (메시지 → 헬퍼 함수)
 - ✅ 타입 (any → unknown)
 - ✅ 타입 단언 제거
@@ -360,6 +409,7 @@ refactor(frontend): 에러 처리 마이그레이션 - 인증
 ### 2. 하위 호환성
 
 **ApiError는 Error를 상속하므로 하위 호환성 유지:**
+
 ```typescript
 // 기존 코드는 그대로 동작
 if (error instanceof Error) {
@@ -372,11 +422,13 @@ if (error instanceof Error) {
 ### 3. 점진적 마이그레이션
 
 **규칙:**
+
 - 새 기능 개발 시: 무조건 새 방식 사용
 - 버그 수정 시: 해당 파일 마이그레이션
 - 리팩토링 세션: 도메인별로 일괄 마이그레이션
 
 **우선순위:**
+
 1. 새 기능 개발
 2. 버그 수정
 3. 리팩토링
@@ -384,20 +436,22 @@ if (error instanceof Error) {
 ### 4. 에러 로깅
 
 **마이그레이션 후 에러 로깅 추가 권장:**
+
 ```typescript
 onError: (error: unknown) => {
   // 디버깅용 에러 정보 로깅
-  console.error('Error occurred:', getErrorInfo(error));
+  console.error("Error occurred:", getErrorInfo(error));
 
   // 사용자에게 표시할 메시지
   const message = getErrorMessage(error);
   alert(message);
-}
+};
 ```
 
 ### 5. 테스트 필수
 
 **마이그레이션 후 반드시 테스트:**
+
 - TypeScript 컴파일
 - 빌드 테스트
 - 수동 주요 시나리오 테스트
@@ -410,6 +464,7 @@ onError: (error: unknown) => {
 ### 인증 도메인 (향후)
 
 **사용할 헬퍼 함수:**
+
 - `isInvalidCredentials(error)` - 잘못된 인증 정보
 - `isEmailNotVerified(error)` - 이메일 미인증
 - `isAccountSuspended(error)` - 계정 정지
@@ -418,6 +473,7 @@ onError: (error: unknown) => {
 - `isTokenExpired(error)` - 토큰 만료
 
 **마이그레이션 대상 파일:**
+
 1. LoginPage.tsx - 로그인 에러 처리
 2. SignupPage.tsx - 회원가입 에러 처리
 3. ForgotPasswordPage.tsx - 비밀번호 찾기 에러
@@ -427,6 +483,7 @@ onError: (error: unknown) => {
 ### 행사 도메인 (향후)
 
 **사용할 헬퍼 함수:**
+
 - `isEventNotFound(error)` - 행사 없음
 - `isEventAccessDenied(error)` - 행사 접근 권한 없음
 - `isEventAlreadyRegistered(error)` - 이미 신청한 행사
@@ -435,6 +492,7 @@ onError: (error: unknown) => {
 - `isEventOperatorRequired(error)` - 행사 운영자 권한 필요
 
 **마이그레이션 대상 파일:**
+
 1. EventListPage.tsx - 행사 목록
 2. EventDetailPage.tsx - 행사 상세
 3. EventWritePage.tsx - 행사 작성
@@ -443,11 +501,13 @@ onError: (error: unknown) => {
 ### 문의 도메인 (향후)
 
 **사용할 헬퍼 함수:**
+
 - `hasErrorCode(error, 'INQUIRY_NOT_FOUND')` - 문의 없음
 - `hasErrorCode(error, 'INQUIRY_ACCESS_DENIED')` - 문의 접근 권한 없음
 - `hasErrorCode(error, 'INQUIRY_ALREADY_REPLIED')` - 이미 답변된 문의
 
 **마이그레이션 대상 파일:**
+
 1. InquiryPage.tsx - 문의하기
 
 ---
@@ -523,8 +583,8 @@ Layer 2에 글로벌 핸들러를 추가하여 **공통 에러는 한 곳에서 
 **수정 파일:** `frontend/src/lib/queryClient.ts`
 
 ```typescript
-import { QueryClient } from '@tanstack/react-query';
-import { isServerError, getErrorMessage } from '@/utils/error';
+import { QueryClient } from "@tanstack/react-query";
+import { isServerError, getErrorMessage } from "@/utils/error";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -540,7 +600,7 @@ export const queryClient = new QueryClient({
         // 5xx 서버 에러는 글로벌에서 일괄 처리
         if (isServerError(error)) {
           // TODO: toast 시스템 도입 후 toast.error()로 교체
-          console.error('[Global Error]', getErrorMessage(error));
+          console.error("[Global Error]", getErrorMessage(error));
         }
       },
     },
@@ -555,9 +615,11 @@ export const queryClient = new QueryClient({
 글로벌 핸들러가 처리하는 에러(500 등)를 각 페이지 `onError`에서 제거한다.
 
 **제거 대상 패턴:**
+
 - 서버 에러 메시지 표시 (글로벌에서 처리)
 
 **유지 대상 패턴 (페이지 고유 에러):**
+
 - `isForbiddenError` → 페이지마다 다른 메시지 필요
 - `isNotFoundError` → 페이지마다 다른 리다이렉트/메시지 필요
 - `isBoardWriteDenied` → 게시판별 권한 안내 메시지
@@ -568,6 +630,7 @@ export const queryClient = new QueryClient({
 따라서 **페이지별 `isUnauthorizedError` 체크 + `/login` 리다이렉트는 중복**이며, 글로벌 핸들러 도입 후 제거할 수 있다.
 
 **제거 대상 파일:**
+
 - PostWritePage.tsx: `isUnauthorizedError` 분기 제거
 - PostEditPage.tsx: `isUnauthorizedError` 분기 제거
 

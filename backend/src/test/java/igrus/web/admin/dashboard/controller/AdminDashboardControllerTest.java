@@ -1,5 +1,6 @@
 package igrus.web.admin.dashboard.controller;
 
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
@@ -76,7 +77,8 @@ class AdminDashboardControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.todayCommentCount").exists())
                     .andExpect(jsonPath("$.weeklyApprovedMemberCount").exists())
                     .andExpect(jsonPath("$.pendingInquiryCount").exists())
-                    .andExpect(jsonPath("$.pendingAssociateCount").exists());
+                    .andExpect(jsonPath("$.pendingAssociateCount").exists())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test

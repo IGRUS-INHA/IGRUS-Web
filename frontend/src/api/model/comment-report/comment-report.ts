@@ -33,10 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -49,350 +46,457 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 import type {
-  GetPendingReports200Item,
-  ReportComment201,
-  ReportCommentBody,
-  UpdateReportStatusBody
-} from '.././models';
+  CommentReportResponse,
+  CreateCommentReportRequest,
+  UpdateReportStatusRequest,
+} from ".././models";
 
-import { customFetch } from '../../client';
-
+import { customFetch } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 /**
  * 댓글을 신고합니다. 동일 사용자가 동일 댓글을 중복 신고할 수 없습니다.
  * @summary 댓글 신고
  */
 export type reportCommentResponse201 = {
-  data: ReportComment201
-  status: 201
-}
+  data: CommentReportResponse;
+  status: 201;
+};
 
 export type reportCommentResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type reportCommentResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type reportCommentResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type reportCommentResponseSuccess = (reportCommentResponse201) & {
-  headers: Headers;
-};
-export type reportCommentResponseError = (reportCommentResponse400 | reportCommentResponse401 | reportCommentResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type reportCommentResponse = (reportCommentResponseSuccess | reportCommentResponseError)
+export type reportCommentResponseSuccess = reportCommentResponse201 & {
+  headers: Headers;
+};
+export type reportCommentResponseError = (
+  | reportCommentResponse400
+  | reportCommentResponse401
+  | reportCommentResponse404
+) & {
+  headers: Headers;
+};
 
-export const getReportCommentUrl = (commentId: number,) => {
+export type reportCommentResponse =
+  | reportCommentResponseSuccess
+  | reportCommentResponseError;
 
+export const getReportCommentUrl = (commentId: number) => {
+  return `/api/v1/comments/${commentId}/reports`;
+};
 
-  
-
-  return `/api/v1/comments/${commentId}/reports`
-}
-
-export const reportComment = async (commentId: number,
-    reportCommentBody: ReportCommentBody, options?: RequestInit): Promise<reportCommentResponse> => {
-  
-  return customFetch<reportCommentResponse>(getReportCommentUrl(commentId),
-  {      
+export const reportComment = async (
+  commentId: number,
+  createCommentReportRequest: CreateCommentReportRequest,
+  options?: RequestInit,
+): Promise<reportCommentResponse> => {
+  return customFetch<reportCommentResponse>(getReportCommentUrl(commentId), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      reportCommentBody,)
-  }
-);}
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCommentReportRequest),
+  });
+};
 
+export const getReportCommentMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reportComment>>,
+    TError,
+    { commentId: number; data: CreateCommentReportRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reportComment>>,
+  TError,
+  { commentId: number; data: CreateCommentReportRequest },
+  TContext
+> => {
+  const mutationKey = ["reportComment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reportComment>>,
+    { commentId: number; data: CreateCommentReportRequest }
+  > = (props) => {
+    const { commentId, data } = props ?? {};
 
+    return reportComment(commentId, data, requestOptions);
+  };
 
-export const getReportCommentMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: ReportCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: ReportCommentBody}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['reportComment'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type ReportCommentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof reportComment>>
+>;
+export type ReportCommentMutationBody = CreateCommentReportRequest;
+export type ReportCommentMutationError = void;
 
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reportComment>>, {commentId: number;data: ReportCommentBody}> = (props) => {
-          const {commentId,data} = props ?? {};
-
-          return  reportComment(commentId,data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReportCommentMutationResult = NonNullable<Awaited<ReturnType<typeof reportComment>>>
-    export type ReportCommentMutationBody = ReportCommentBody
-    export type ReportCommentMutationError = void
-
-    /**
+/**
  * @summary 댓글 신고
  */
-export const useReportComment = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportComment>>, TError,{commentId: number;data: ReportCommentBody}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof reportComment>>,
-        TError,
-        {commentId: number;data: ReportCommentBody},
-        TContext
-      > => {
-      return useMutation(getReportCommentMutationOptions(options), queryClient);
-    }
-    /**
+export const useReportComment = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof reportComment>>,
+      TError,
+      { commentId: number; data: CreateCommentReportRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof reportComment>>,
+  TError,
+  { commentId: number; data: CreateCommentReportRequest },
+  TContext
+> => {
+  return useMutation(getReportCommentMutationOptions(options), queryClient);
+};
+/**
  * 신고를 처리합니다 (승인/반려). OPERATOR 이상 권한이 필요합니다.
  * @summary 신고 처리 (관리자)
  */
 export type updateReportStatusResponse204 = {
-  data: void
-  status: 204
-}
+  data: void;
+  status: 204;
+};
 
 export type updateReportStatusResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type updateReportStatusResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type updateReportStatusResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type updateReportStatusResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type updateReportStatusResponseSuccess = (updateReportStatusResponse204) & {
-  headers: Headers;
-};
-export type updateReportStatusResponseError = (updateReportStatusResponse400 | updateReportStatusResponse401 | updateReportStatusResponse403 | updateReportStatusResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type updateReportStatusResponse = (updateReportStatusResponseSuccess | updateReportStatusResponseError)
+export type updateReportStatusResponseSuccess =
+  updateReportStatusResponse204 & {
+    headers: Headers;
+  };
+export type updateReportStatusResponseError = (
+  | updateReportStatusResponse400
+  | updateReportStatusResponse401
+  | updateReportStatusResponse403
+  | updateReportStatusResponse404
+) & {
+  headers: Headers;
+};
 
-export const getUpdateReportStatusUrl = (reportId: number,) => {
+export type updateReportStatusResponse =
+  | updateReportStatusResponseSuccess
+  | updateReportStatusResponseError;
 
+export const getUpdateReportStatusUrl = (reportId: number) => {
+  return `/api/v1/admin/comment-reports/${reportId}`;
+};
 
-  
+export const updateReportStatus = async (
+  reportId: number,
+  updateReportStatusRequest: UpdateReportStatusRequest,
+  options?: RequestInit,
+): Promise<updateReportStatusResponse> => {
+  return customFetch<updateReportStatusResponse>(
+    getUpdateReportStatusUrl(reportId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateReportStatusRequest),
+    },
+  );
+};
 
-  return `/api/v1/admin/comment-reports/${reportId}`
-}
+export const getUpdateReportStatusMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateReportStatus>>,
+    TError,
+    { reportId: number; data: UpdateReportStatusRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateReportStatus>>,
+  TError,
+  { reportId: number; data: UpdateReportStatusRequest },
+  TContext
+> => {
+  const mutationKey = ["updateReportStatus"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-export const updateReportStatus = async (reportId: number,
-    updateReportStatusBody: UpdateReportStatusBody, options?: RequestInit): Promise<updateReportStatusResponse> => {
-  
-  return customFetch<updateReportStatusResponse>(getUpdateReportStatusUrl(reportId),
-  {      
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      updateReportStatusBody,)
-  }
-);}
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateReportStatus>>,
+    { reportId: number; data: UpdateReportStatusRequest }
+  > = (props) => {
+    const { reportId, data } = props ?? {};
 
+    return updateReportStatus(reportId, data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type UpdateReportStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateReportStatus>>
+>;
+export type UpdateReportStatusMutationBody = UpdateReportStatusRequest;
+export type UpdateReportStatusMutationError = void;
 
-export const getUpdateReportStatusMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReportStatus>>, TError,{reportId: number;data: UpdateReportStatusBody}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateReportStatus>>, TError,{reportId: number;data: UpdateReportStatusBody}, TContext> => {
-
-const mutationKey = ['updateReportStatus'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateReportStatus>>, {reportId: number;data: UpdateReportStatusBody}> = (props) => {
-          const {reportId,data} = props ?? {};
-
-          return  updateReportStatus(reportId,data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateReportStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateReportStatus>>>
-    export type UpdateReportStatusMutationBody = UpdateReportStatusBody
-    export type UpdateReportStatusMutationError = void
-
-    /**
+/**
  * @summary 신고 처리 (관리자)
  */
-export const useUpdateReportStatus = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReportStatus>>, TError,{reportId: number;data: UpdateReportStatusBody}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateReportStatus>>,
-        TError,
-        {reportId: number;data: UpdateReportStatusBody},
-        TContext
-      > => {
-      return useMutation(getUpdateReportStatusMutationOptions(options), queryClient);
-    }
-    /**
+export const useUpdateReportStatus = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateReportStatus>>,
+      TError,
+      { reportId: number; data: UpdateReportStatusRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateReportStatus>>,
+  TError,
+  { reportId: number; data: UpdateReportStatusRequest },
+  TContext
+> => {
+  return useMutation(
+    getUpdateReportStatusMutationOptions(options),
+    queryClient,
+  );
+};
+/**
  * 대기 중인 신고 목록을 조회합니다. OPERATOR 이상 권한이 필요합니다.
  * @summary 신고 목록 조회 (관리자)
  */
 export type getPendingReportsResponse200 = {
-  data: GetPendingReports200Item[]
-  status: 200
-}
+  data: CommentReportResponse[];
+  status: 200;
+};
 
 export type getPendingReportsResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type getPendingReportsResponse403 = {
-  data: void
-  status: 403
-}
-    
-export type getPendingReportsResponseSuccess = (getPendingReportsResponse200) & {
+  data: void;
+  status: 403;
+};
+
+export type getPendingReportsResponseSuccess = getPendingReportsResponse200 & {
   headers: Headers;
 };
-export type getPendingReportsResponseError = (getPendingReportsResponse401 | getPendingReportsResponse403) & {
+export type getPendingReportsResponseError = (
+  | getPendingReportsResponse401
+  | getPendingReportsResponse403
+) & {
   headers: Headers;
 };
 
-export type getPendingReportsResponse = (getPendingReportsResponseSuccess | getPendingReportsResponseError)
+export type getPendingReportsResponse =
+  | getPendingReportsResponseSuccess
+  | getPendingReportsResponseError;
 
 export const getGetPendingReportsUrl = () => {
+  return `/api/v1/admin/comment-reports`;
+};
 
-
-  
-
-  return `/api/v1/admin/comment-reports`
-}
-
-export const getPendingReports = async ( options?: RequestInit): Promise<getPendingReportsResponse> => {
-  
-  return customFetch<getPendingReportsResponse>(getGetPendingReportsUrl(),
-  {      
+export const getPendingReports = async (
+  options?: RequestInit,
+): Promise<getPendingReportsResponse> => {
+  return customFetch<getPendingReportsResponse>(getGetPendingReportsUrl(), {
     ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
-
-
+    method: "GET",
+  });
+};
 
 export const getGetPendingReportsQueryKey = () => {
-    return [
-    `/api/v1/admin/comment-reports`
-    ] as const;
-    }
+  return [`/api/v1/admin/comment-reports`] as const;
+};
 
-    
-export const getGetPendingReportsQueryOptions = <TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
-) => {
+export const getGetPendingReportsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPendingReports>>,
+  TError = void,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getPendingReports>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetPendingReportsQueryKey();
 
-  const queryKey =  queryOptions?.queryKey ?? getGetPendingReportsQueryKey();
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPendingReports>>
+  > = ({ signal }) => getPendingReports({ signal, ...requestOptions });
 
-  
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPendingReports>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPendingReports>>> = ({ signal }) => getPendingReports({ signal, ...requestOptions });
+export type GetPendingReportsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPendingReports>>
+>;
+export type GetPendingReportsQueryError = void;
 
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetPendingReportsQueryResult = NonNullable<Awaited<ReturnType<typeof getPendingReports>>>
-export type GetPendingReportsQueryError = void
-
-
-export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>> & Pick<
+export function useGetPendingReports<
+  TData = Awaited<ReturnType<typeof getPendingReports>>,
+  TError = void,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPendingReports>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPendingReports>>,
           TError,
           Awaited<ReturnType<typeof getPendingReports>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPendingReports<
+  TData = Awaited<ReturnType<typeof getPendingReports>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPendingReports>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPendingReports>>,
           TError,
           Awaited<ReturnType<typeof getPendingReports>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPendingReports<
+  TData = Awaited<ReturnType<typeof getPendingReports>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPendingReports>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary 신고 목록 조회 (관리자)
  */
 
-export function useGetPendingReports<TData = Awaited<ReturnType<typeof getPendingReports>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPendingReports>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetPendingReports<
+  TData = Awaited<ReturnType<typeof getPendingReports>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPendingReports>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetPendingReportsQueryOptions(options);
 
-  const queryOptions = getGetPendingReportsQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
-

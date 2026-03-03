@@ -1,18 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { PenTool } from 'lucide-react';
-import { useGetPostList } from '@/api/model/post/post';
-import PostListItem from '@/components/feature/board/PostListItem';
-import { SortSelect } from '@/components/board/SortSelect';
-import { Pagination } from '@/components/board/Pagination';
-import { Button } from '@/components/ui/button';
-import { BOARDS, BOARD_LABELS, SORT_TYPE, PAGINATION, ENABLED_BOARDS } from '@/constants/board';
-import type { BoardType } from '@/types/common';
-import { cn } from '@/lib/utils';
-import { useMockData } from '@/hooks/useMockData';
-import { useMockPostList } from '@/hooks/queries/useMockPosts';
-import { useBoardByCode } from '@/hooks/useBoards';
-import { isBoardReadDenied, isForbiddenError } from '@/utils/error';
+import { useState, useEffect } from "react";
+import {
+  useParams,
+  useNavigate,
+  Link,
+  useSearchParams,
+} from "react-router-dom";
+import { PenTool } from "lucide-react";
+import { useGetPostList } from "@/api/model/post/post";
+import type { PostListPageResponse } from "@/api/model/models";
+import PostListItem from "@/components/feature/board/PostListItem";
+import { SortSelect } from "@/components/board/SortSelect";
+import { Pagination } from "@/components/board/Pagination";
+import { Button } from "@/components/ui/button";
+import {
+  BOARDS,
+  BOARD_LABELS,
+  SORT_TYPE,
+  PAGINATION,
+  ENABLED_BOARDS,
+} from "@/constants/board";
+import type { BoardType } from "@/types/common";
+import { cn } from "@/lib/utils";
+import { useMockData } from "@/hooks/useMockData";
+import { useMockPostList } from "@/hooks/queries/useMockPosts";
+import { useBoardByCode } from "@/hooks/useBoards";
+import { isBoardReadDenied, isForbiddenError } from "@/utils/error";
 
 export default function BoardListPage() {
   const { boardType } = useParams<{ boardType: BoardType }>();
@@ -21,20 +33,23 @@ export default function BoardListPage() {
 
   // State
   const [sortType, setSortType] = useState<string>(SORT_TYPE.LATEST);
-  const [currentPage, setCurrentPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const [currentPage, setCurrentPage] = useState<number>(
+    PAGINATION.DEFAULT_PAGE,
+  );
 
   // URL 쿼리 파라미터에서 검색어 읽기
-  const searchKeyword = searchParams.get('search');
+  const searchKeyword = searchParams.get("search");
 
   // Validate boardType
-  const validBoardType = boardType && Object.values(BOARDS).includes(boardType as BoardType)
-    ? (boardType as BoardType)
-    : BOARDS.NOTICES;
+  const validBoardType =
+    boardType && Object.values(BOARDS).includes(boardType as BoardType)
+      ? (boardType as BoardType)
+      : BOARDS.NOTICES;
 
   // 비활성화된 게시판 접근 시 notices로 리다이렉트
   useEffect(() => {
     if (!ENABLED_BOARDS.includes(validBoardType)) {
-      navigate('/board/NOTICES', { replace: true });
+      navigate("/board/NOTICES", { replace: true });
     }
   }, [validBoardType, navigate]);
 
@@ -50,22 +65,30 @@ export default function BoardListPage() {
   }, [searchKeyword]);
 
   // Fetch posts (Mock 또는 실제 API)
-  const realQuery = useGetPostList(validBoardType, {
-    ...(searchKeyword && { keyword: searchKeyword }),
-    page: currentPage - 1, // Orval은 0-based pagination
-    size: PAGINATION.DEFAULT_SIZE,
-  }, {
-    query: {
-      enabled: !isMockMode,
-      refetchOnMount: 'always', // 페이지 마운트 시 항상 새로운 데이터 가져오기
+  const realQuery = useGetPostList(
+    validBoardType,
+    {
+      ...(searchKeyword && { keyword: searchKeyword }),
+      page: currentPage - 1, // Orval은 0-based pagination
+      size: PAGINATION.DEFAULT_SIZE,
     },
-  });
+    {
+      query: {
+        enabled: !isMockMode,
+        refetchOnMount: "always", // 페이지 마운트 시 항상 새로운 데이터 가져오기
+      },
+    },
+  );
   const mockQuery = useMockPostList(validBoardType);
 
-  const { data: response, isLoading, error } = isMockMode ? mockQuery : realQuery;
+  const {
+    data: response,
+    isLoading,
+    error,
+  } = isMockMode ? mockQuery : realQuery;
 
-  // Orval 응답 unwrap
-  const data = response?.data;
+  // Orval 응답 unwrap (에러 응답의 data는 void이므로 PostListPageResponse로 캐스트)
+  const data = response?.data as PostListPageResponse | undefined;
 
   // 403 에러 체크 (권한 없음)
   const isForbidden = isBoardReadDenied(error) || isForbiddenError(error);
@@ -87,25 +110,42 @@ export default function BoardListPage() {
   return (
     <div className="space-y-s8 animate-in fade-in duration-300">
       {/* Header with Tabs and Write Button */}
-      <div className={cn('flex border-b border-border pb-s4', __FEATURE_COMMUNITY__ ? 'flex-col md:flex-row md:justify-between md:items-center gap-s3' : 'flex-row justify-between items-center')}>
-        <div className={cn('flex gap-s4 overflow-x-auto md:justify-start', __FEATURE_COMMUNITY__ ? 'justify-center' : 'justify-start')}>
+      <div
+        className={cn(
+          "flex border-b border-border pb-s4",
+          __FEATURE_COMMUNITY__
+            ? "flex-col md:flex-row md:justify-between md:items-center gap-s3"
+            : "flex-row justify-between items-center",
+        )}
+      >
+        <div
+          className={cn(
+            "flex gap-s4 overflow-x-auto md:justify-start",
+            __FEATURE_COMMUNITY__ ? "justify-center" : "justify-start",
+          )}
+        >
           {ENABLED_BOARDS.map((tab) => (
             <button
               key={tab}
               onClick={() => navigate(`/board/${tab}`)}
               type="button"
               className={cn(
-                'px-s5 py-s2 rounded-full text-sm font-bold transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer',
+                "px-s5 py-s2 rounded-full text-sm font-bold transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer",
                 validBoardType === tab
-                  ? 'bg-primary text-primary-foreground shadow-lg'
-                  : 'text-muted-foreground hover:bg-muted'
+                  ? "bg-primary text-primary-foreground shadow-lg"
+                  : "text-muted-foreground hover:bg-muted",
               )}
             >
               {BOARD_LABELS[tab]}
             </button>
           ))}
         </div>
-        <div className={cn('flex items-center gap-s4', __FEATURE_COMMUNITY__ ? 'self-start md:self-auto' : 'self-auto')}>
+        <div
+          className={cn(
+            "flex items-center gap-s4",
+            __FEATURE_COMMUNITY__ ? "self-start md:self-auto" : "self-auto",
+          )}
+        >
           <SortSelect value={sortType} onChange={handleSortChange} />
           {board.canWrite && (
             <Button
@@ -113,7 +153,8 @@ export default function BoardListPage() {
               type="button"
               className="flex items-center justify-center gap-s2 rounded-full h-9 px-4 py-2 min-w-[100px]"
             >
-              <PenTool size={14} /> <span className="hidden sm:inline">글쓰기</span>
+              <PenTool size={14} />{" "}
+              <span className="hidden sm:inline">글쓰기</span>
             </Button>
           )}
         </div>
@@ -126,7 +167,9 @@ export default function BoardListPage() {
         </div>
       ) : isForbidden ? (
         <div className="flex flex-col items-center justify-center py-12 gap-s4">
-          <p className="text-muted-foreground">정회원 승인 후 게시판 이용이 가능합니다.</p>
+          <p className="text-muted-foreground">
+            정회원 승인 후 게시판 이용이 가능합니다.
+          </p>
         </div>
       ) : !data?.posts || data.posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 gap-s4">
@@ -135,7 +178,10 @@ export default function BoardListPage() {
       ) : (
         <div className="flex flex-col gap-s4">
           {data.posts.map((post) => (
-            <Link key={post.postId} to={`/board/${validBoardType}/${post.postId}`}>
+            <Link
+              key={post.postId}
+              to={`/board/${validBoardType}/${post.postId}`}
+            >
               <PostListItem post={post} boardType={validBoardType} />
             </Link>
           ))}
@@ -143,10 +189,10 @@ export default function BoardListPage() {
       )}
 
       {/* Pagination */}
-      {data && data.totalPages > 1 && (
+      {data && (data.totalPages ?? 0) > 1 && (
         <Pagination
           currentPage={currentPage}
-          totalPages={data.totalPages}
+          totalPages={data.totalPages ?? 0}
           onPageChange={handlePageChange}
           className="mt-s8"
         />

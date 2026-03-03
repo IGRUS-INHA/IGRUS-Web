@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { cn } from '@/lib/utils';
-import { useUIStore } from '@/stores';
-import type { Toast, ToastType } from '@/types/common';
+import React, { useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { useUIStore } from "@/stores";
+import type { Toast, ToastType } from "@/types/common";
 
 const TOAST_DURATION = 3000;
 
@@ -29,8 +29,8 @@ export function ToastContainer() {
  */
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const {
-    id,
-    type = 'default',
+    id: _id,
+    type = "default",
     title,
     message,
     duration = TOAST_DURATION,
@@ -44,22 +44,22 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   }, [duration, onClose]);
 
   const variants: Record<ToastType, string> = {
-    default: 'bg-background border',
+    default: "bg-background border",
     success:
-      'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800',
-    error: 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800',
+      "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800",
+    error: "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800",
     warning:
-      'bg-yellow-50 border-yellow-200 dark:bg-yellow-950 dark:border-yellow-800',
+      "bg-yellow-50 border-yellow-200 dark:bg-yellow-950 dark:border-yellow-800",
   };
 
   const iconColors: Record<ToastType, string> = {
-    default: 'text-foreground',
-    success: 'text-green-600 dark:text-green-400',
-    error: 'text-red-600 dark:text-red-400',
-    warning: 'text-yellow-600 dark:text-yellow-400',
+    default: "text-foreground",
+    success: "text-green-600 dark:text-green-400",
+    error: "text-red-600 dark:text-red-400",
+    warning: "text-yellow-600 dark:text-yellow-400",
   };
 
-  const icons: Record<ToastType, JSX.Element | undefined> = {
+  const icons: Record<ToastType, React.ReactNode> = {
     default: undefined,
     success: (
       <svg
@@ -111,13 +111,13 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   return (
     <div
       className={cn(
-        'flex items-start gap-s3 rounded-r2 border p-s4 shadow-lg animate-in slide-in-from-right-full',
-        'min-w-[150px] max-w-[200px] sm:min-w-[300px] sm:max-w-[400px]',
-        variants[type]
+        "flex items-start gap-s3 rounded-r2 border p-s4 shadow-lg animate-in slide-in-from-right-full",
+        "min-w-[150px] max-w-[200px] sm:min-w-[300px] sm:max-w-[400px]",
+        variants[type],
       )}
     >
       {icons[type] && (
-        <span className={cn('flex-shrink-0', iconColors[type])}>
+        <span className={cn("flex-shrink-0", iconColors[type])}>
           {icons[type]}
         </span>
       )}

@@ -1,36 +1,71 @@
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-} from 'recharts';
-import type { PieLabelRenderProps } from 'recharts';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import type { ChartDataItem } from '@/utils/chart';
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
+import type { PieLabelRenderProps } from "recharts";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import type { ChartDataItem } from "@/utils/chart";
 
 interface RegistrationChartProps {
   title: string;
   totalCount: number;
   data: ChartDataItem[];
-  type: 'pie' | 'bar';
+  type: "pie" | "bar";
 }
 
 const RADIAN = Math.PI / 180;
 
 function PieLabel(props: PieLabelRenderProps) {
   const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
-  if (typeof cx !== 'number' || typeof cy !== 'number' || typeof midAngle !== 'number'
-    || typeof innerRadius !== 'number' || typeof outerRadius !== 'number' || typeof percent !== 'number') return null;
+  if (
+    typeof cx !== "number" ||
+    typeof cy !== "number" ||
+    typeof midAngle !== "number" ||
+    typeof innerRadius !== "number" ||
+    typeof outerRadius !== "number" ||
+    typeof percent !== "number"
+  )
+    return null;
   if (percent < 0.05) return null;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
   return (
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={600}>
+    <text
+      x={x}
+      y={y}
+      fill="white"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight={600}
+    >
       {`${(percent * 100).toFixed(0)}%`}
     </text>
   );
 }
 
-function ChartLegend({ data, totalCount }: { data: ChartDataItem[]; totalCount: number }) {
+function ChartLegend({
+  data,
+  totalCount,
+}: {
+  data: ChartDataItem[];
+  totalCount: number;
+}) {
   return (
     <div className="flex flex-col gap-s2">
       {data.map((entry) => (
@@ -49,7 +84,13 @@ function ChartLegend({ data, totalCount }: { data: ChartDataItem[]; totalCount: 
   );
 }
 
-function PieChartContent({ data, totalCount }: { data: ChartDataItem[]; totalCount: number }) {
+function PieChartContent({
+  data,
+  totalCount,
+}: {
+  data: ChartDataItem[];
+  totalCount: number;
+}) {
   return (
     <div className="flex flex-col sm:flex-row items-center gap-s5">
       <div className="w-44 h-44 flex-shrink-0">
@@ -69,12 +110,12 @@ function PieChartContent({ data, totalCount }: { data: ChartDataItem[]; totalCou
               ))}
             </Pie>
             <Tooltip
-              formatter={(value) => [`${value}명`, '']}
+              formatter={(value) => [`${value}명`, ""]}
               contentStyle={{
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-card)',
-                color: 'var(--color-card-foreground)',
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                backgroundColor: "var(--color-card)",
+                color: "var(--color-card-foreground)",
               }}
             />
           </PieChart>
@@ -85,7 +126,13 @@ function PieChartContent({ data, totalCount }: { data: ChartDataItem[]; totalCou
   );
 }
 
-function BarChartContent({ data, totalCount }: { data: ChartDataItem[]; totalCount: number }) {
+function BarChartContent({
+  data,
+  totalCount,
+}: {
+  data: ChartDataItem[];
+  totalCount: number;
+}) {
   const isHorizontal = data.length > 4;
   const chartHeight = isHorizontal ? Math.max(160, data.length * 36) : 180;
 
@@ -93,22 +140,36 @@ function BarChartContent({ data, totalCount }: { data: ChartDataItem[]; totalCou
     return (
       <div style={{ height: chartHeight }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ left: 0, right: 24, top: 4, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
-            <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }} />
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ left: 0, right: 24, top: 4, bottom: 4 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="var(--color-border)"
+              horizontal={false}
+            />
+            <XAxis
+              type="number"
+              tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+            />
             <YAxis
               type="category"
               dataKey="name"
               width={90}
-              tick={{ fontSize: 11, fill: 'var(--color-foreground)' }}
+              tick={{ fontSize: 11, fill: "var(--color-foreground)" }}
             />
             <Tooltip
-              formatter={(value) => [`${value}명 (${Math.round((Number(value) / totalCount) * 100)}%)`, '']}
+              formatter={(value) => [
+                `${value}명 (${Math.round((Number(value) / totalCount) * 100)}%)`,
+                "",
+              ]}
               contentStyle={{
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-card)',
-                color: 'var(--color-card-foreground)',
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                backgroundColor: "var(--color-card)",
+                color: "var(--color-card-foreground)",
               }}
             />
             <Bar dataKey="value" radius={[0, 4, 4, 0]}>
@@ -125,17 +186,33 @@ function BarChartContent({ data, totalCount }: { data: ChartDataItem[]; totalCou
   return (
     <div style={{ height: chartHeight }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ left: -16, right: 8, top: 4, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--color-foreground)' }} />
-          <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }} allowDecimals={false} />
+        <BarChart
+          data={data}
+          margin={{ left: -16, right: 8, top: 4, bottom: 4 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="var(--color-border)"
+            vertical={false}
+          />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 11, fill: "var(--color-foreground)" }}
+          />
+          <YAxis
+            tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+            allowDecimals={false}
+          />
           <Tooltip
-            formatter={(value) => [`${value}명 (${Math.round((Number(value) / totalCount) * 100)}%)`, '']}
+            formatter={(value) => [
+              `${value}명 (${Math.round((Number(value) / totalCount) * 100)}%)`,
+              "",
+            ]}
             contentStyle={{
-              borderRadius: '8px',
-              border: '1px solid var(--color-border)',
-              backgroundColor: 'var(--color-card)',
-              color: 'var(--color-card-foreground)',
+              borderRadius: "8px",
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-card)",
+              color: "var(--color-card-foreground)",
             }}
           />
           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -149,7 +226,12 @@ function BarChartContent({ data, totalCount }: { data: ChartDataItem[]; totalCou
   );
 }
 
-export default function RegistrationChart({ title, totalCount, data, type }: RegistrationChartProps) {
+export default function RegistrationChart({
+  title,
+  totalCount,
+  data,
+  type,
+}: RegistrationChartProps) {
   if (data.length === 0) return null;
 
   return (
@@ -159,10 +241,11 @@ export default function RegistrationChart({ title, totalCount, data, type }: Reg
         <CardDescription>응답 {totalCount}개</CardDescription>
       </CardHeader>
       <CardContent>
-        {type === 'pie'
-          ? <PieChartContent data={data} totalCount={totalCount} />
-          : <BarChartContent data={data} totalCount={totalCount} />
-        }
+        {type === "pie" ? (
+          <PieChartContent data={data} totalCount={totalCount} />
+        ) : (
+          <BarChartContent data={data} totalCount={totalCount} />
+        )}
       </CardContent>
     </Card>
   );

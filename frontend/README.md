@@ -38,12 +38,12 @@ http://localhost:5173 에서 확인
 
 ## 스크립트
 
-| 명령어 | 설명 |
-|--------|------|
-| `pnpm dev` | 개발 서버 실행 |
-| `pnpm build` | 프로덕션 빌드 |
-| `pnpm preview` | 빌드 결과 미리보기 |
-| `pnpm orval` | API 클라이언트 생성 |
+| 명령어         | 설명                |
+| -------------- | ------------------- |
+| `pnpm dev`     | 개발 서버 실행      |
+| `pnpm build`   | 프로덕션 빌드       |
+| `pnpm preview` | 빌드 결과 미리보기  |
+| `pnpm orval`   | API 클라이언트 생성 |
 
 ## Orval (API 클라이언트 생성)
 
@@ -54,6 +54,7 @@ http://localhost:5173 에서 확인
 1. **백엔드 서버 실행** (OpenAPI 스펙 제공 필요)
 
 2. **Orval 실행**
+
    ```bash
    pnpm orval
    ```

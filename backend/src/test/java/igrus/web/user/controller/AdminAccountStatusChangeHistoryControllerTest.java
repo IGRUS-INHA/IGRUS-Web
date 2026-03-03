@@ -1,5 +1,6 @@
 package igrus.web.user.controller;
 
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.AccountChangeType;
@@ -105,7 +106,8 @@ class AdminAccountStatusChangeHistoryControllerTest extends ServiceIntegrationTe
                     .andExpect(jsonPath("$.totalElements").value(1))
                     .andExpect(jsonPath("$.content[0].changeType").value("APPROVAL"))
                     .andExpect(jsonPath("$.content[0].previousValue").value("ASSOCIATE"))
-                    .andExpect(jsonPath("$.content[0].newValue").value("MEMBER"));
+                    .andExpect(jsonPath("$.content[0].newValue").value("MEMBER"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -122,7 +124,8 @@ class AdminAccountStatusChangeHistoryControllerTest extends ServiceIntegrationTe
                             .param("userId", targetUser.getId().toString()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(1));
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -140,7 +143,8 @@ class AdminAccountStatusChangeHistoryControllerTest extends ServiceIntegrationTe
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.content[0].changeType").value("SUSPENSION"));
+                    .andExpect(jsonPath("$.content[0].changeType").value("SUSPENSION"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -152,7 +156,8 @@ class AdminAccountStatusChangeHistoryControllerTest extends ServiceIntegrationTe
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(0))
-                    .andExpect(jsonPath("$.content").isEmpty());
+                    .andExpect(jsonPath("$.content").isEmpty())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 

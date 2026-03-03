@@ -1,6 +1,6 @@
-import { useState, FormEvent, ChangeEvent } from 'react';
-import { Button } from '@/components/ui/button';
-import { REPORT, REPORT_REASON_LABELS } from '@/constants/board';
+import { useState, FormEvent, ChangeEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { REPORT_REASON_LABELS } from "@/constants/board";
 
 interface ReportData {
   reason: string;
@@ -21,10 +21,10 @@ export function ReportModal({
   isOpen,
   onClose,
   onSubmit,
-  targetType = '게시글',
+  targetType = "게시글",
 }: ReportModalProps) {
-  const [reason, setReason] = useState('');
-  const [detail, setDetail] = useState('');
+  const [reason, setReason] = useState("");
+  const [detail, setDetail] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return undefined;
@@ -37,8 +37,8 @@ export function ReportModal({
     try {
       await onSubmit({ reason, detail });
       onClose();
-      setReason('');
-      setDetail('');
+      setReason("");
+      setDetail("");
     } finally {
       setLoading(false);
     }
@@ -104,7 +104,7 @@ export function ReportModal({
               취소
             </Button>
             <Button type="submit" disabled={!reason || loading}>
-              {loading ? '신고 중...' : '신고하기'}
+              {loading ? "신고 중..." : "신고하기"}
             </Button>
           </div>
         </form>

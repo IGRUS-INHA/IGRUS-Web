@@ -34,6 +34,23 @@
 - Orphan cleanup: any resource with async lifecycle needs cleanup policy
 - Reference integrity: deletion must check for dependent entities
 
+## Cross-Domain Criteria Patterns
+- When two independent domains are connected, use **weak reference** (Long ID, no FK) to preserve soft delete compatibility
+- Cross-domain invariants use `SEVT-INV-{NN}` prefix pattern (Survey-Event)
+- Prerequisite vs Continuous condition distinction: survey response is a **gate** (checked once at registration), not an **invariant** (not continuously enforced after registration)
+- Single-direction dependency: Event -> Survey (Event reads Survey, Survey doesn't know Event exists)
+- Transaction separation: separate Tx for each domain operation (response submit vs event registration)
+- State cross-constraints: when domains have independent FSMs, document the cross-matrix of valid combinations
+- DECISION table pattern: list unresolved design decisions with options and recommendations for implementer
+
+## Key Design Decisions (Event-Survey Linking)
+- Event.surveyId: nullable Long, no JPA @ManyToOne, no FK constraint (weak reference)
+- Survey response is gate-condition only: checked at registration time, not continuously enforced
+- Survey reuse: one survey can be linked to multiple events (1:N)
+- Survey state check at registration: responseStatus != NOT_STARTED (not PUBLISHED+OPEN required)
+- Existing registrations preserved when survey is changed/removed/deleted
+- Survey domain code unchanged -- only Event domain services modified
+
 ## Key Design Decisions (Storage Domain)
 - UPLOADING state: frontend-only, not stored in DB. DB states: REQUESTED/CONFIRMING/COMPLETED/FAILED/EXPIRED
 - Image access: single policy (no public/private distinction). Authenticated users (ASSOCIATE+) can download all images

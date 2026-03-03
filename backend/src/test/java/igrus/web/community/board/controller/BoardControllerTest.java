@@ -5,6 +5,7 @@ import igrus.web.community.board.domain.BoardCode;
 import igrus.web.community.board.domain.BoardPermission;
 import igrus.web.community.board.repository.BoardPermissionRepository;
 import igrus.web.community.board.repository.BoardRepository;
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.community.exception.CommunityErrorCode;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
@@ -120,7 +121,8 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$[1].code").value("GENERAL"))
                     .andExpect(jsonPath("$[1].name").value("자유게시판"))
                     .andExpect(jsonPath("$[2].code").value("INSIGHT"))
-                    .andExpect(jsonPath("$[2].name").value("정보공유"));
+                    .andExpect(jsonPath("$[2].name").value("정보공유"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("준회원이 게시판 목록 조회 시 모든 게시판 반환 (canRead로 권한 구분)")
@@ -139,7 +141,8 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$[1].code").value("GENERAL"))
                     .andExpect(jsonPath("$[1].canRead").value(false))
                     .andExpect(jsonPath("$[2].code").value("INSIGHT"))
-                    .andExpect(jsonPath("$[2].canRead").value(false));
+                    .andExpect(jsonPath("$[2].canRead").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("비인증 사용자가 접근 시 401 Unauthorized")
@@ -173,7 +176,8 @@ class BoardControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.allowsAnonymous").value(true))
                     .andExpect(jsonPath("$.allowsQuestionTag").value(true))
                     .andExpect(jsonPath("$.canRead").value(true))
-                    .andExpect(jsonPath("$.canWrite").value(true));
+                    .andExpect(jsonPath("$.canWrite").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("존재하지 않는 코드로 조회 시 404 Not Found")

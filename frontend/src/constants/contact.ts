@@ -6,31 +6,31 @@
  */
 
 export const CLUB_INFO = {
-  name: 'IGRUS',
-  fullName: '인하대학교 IT 동아리',
-  description: '인하대학교의 IT 동아리입니다.',
+  name: "IGRUS",
+  fullName: "인하대학교 IT 동아리",
+  description: "인하대학교의 IT 동아리입니다.",
   // TODO: 실제 동아리 방 주소로 교체 필요
-  address: '인천광역시 미추홀구 인하로 100, 5호관 동쪽 지하 003',
+  address: "인천광역시 미추홀구 인하로 100, 5호관 동쪽 지하 003",
   // TODO: 실제 이메일 주소로 교체 필요
-  phone1: '회장 구주원 : 010-6587-7550',
+  phone1: "회장 구주원 : 010-6587-7550",
   // TODO: 실제 전화번호로 교체 필요
-  phone2: '부회장 신연우 : 010-2290-3343',
+  phone2: "부회장 신연우 : 010-2290-3343",
 } as const;
 
 export const SNS_LINKS = {
   // TODO: 실제 인스타그램 URL로 교체 필요
-  instagram: 'https://www.instagram.com/igrus_inha',
+  instagram: "https://www.instagram.com/igrus_inha",
   // TODO: 실제 블로그 URL로 교체 필요
   // blog: 'https://blog.igrus.club',
 } as const;
 
 export const FOOTER_QUICK_LINKS = [
-  { label: '게시판', path: '/board/notices' },
-  { label: '행사', path: '/events' },
-  { label: '문의', path: '/inquiry' },
+  { label: "게시판", path: "/board/notices" },
+  { label: "행사", path: "/events" },
+  { label: "문의", path: "/inquiry" },
 ] as const;
 
 export const FOOTER_LEGAL_LINKS = [
-  { label: '개인정보처리방침', path: '/privacy' },
-  { label: '이용약관', path: '/terms' },
+  { label: "개인정보처리방침", path: "/privacy" },
+  { label: "이용약관", path: "/terms" },
 ] as const;

@@ -11,6 +11,7 @@ import igrus.web.community.comment.dto.request.CreateCommentRequest;
 import igrus.web.community.comment.repository.CommentRepository;
 import igrus.web.community.post.domain.Post;
 import igrus.web.community.post.repository.PostRepository;
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
@@ -170,7 +171,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.postId").value(generalPost.getId()))
                     .andExpect(jsonPath("$.content").value("테스트 댓글입니다."))
                     .andExpect(jsonPath("$.anonymous").value(false))
-                    .andExpect(jsonPath("$.authorName").isNotEmpty());
+                    .andExpect(jsonPath("$.authorName").isNotEmpty())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-002: 익명 댓글 작성 성공 (자유게시판)")
@@ -189,7 +191,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.anonymous").value(true))
                     .andExpect(jsonPath("$.authorName").value("익명"))
-                    .andExpect(jsonPath("$.authorId").doesNotExist());
+                    .andExpect(jsonPath("$.authorId").doesNotExist())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-003: 정보공유 게시판에서 익명 옵션 시 400 Bad Request")
@@ -240,7 +243,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.content").value(maxContent));
+                    .andExpect(jsonPath("$.content").value(maxContent))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-006: 빈 내용 댓글 작성 시 400 Bad Request")
@@ -318,7 +322,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").isNumber())
                     .andExpect(jsonPath("$.parentCommentId").value(parentComment.getId()))
-                    .andExpect(jsonPath("$.content").value("대댓글입니다."));
+                    .andExpect(jsonPath("$.content").value("대댓글입니다."))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-011: 대댓글에 대댓글 작성 시 400 Bad Request")
@@ -355,7 +360,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.anonymous").value(true))
-                    .andExpect(jsonPath("$.authorName").value("익명"));
+                    .andExpect(jsonPath("$.authorName").value("익명"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-013: 대댓글 501자 작성 시 400 Bad Request")
@@ -414,7 +420,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.totalCount").value(3))
                     .andExpect(jsonPath("$.comments").isArray())
                     .andExpect(jsonPath("$.comments.length()").value(2))
-                    .andExpect(jsonPath("$.comments[0].replies").isArray());
+                    .andExpect(jsonPath("$.comments[0].replies").isArray())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-021: 삭제된 댓글 '삭제된 댓글입니다' 표시")
@@ -432,7 +439,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.comments[0].content").value("삭제된 댓글입니다"))
-                    .andExpect(jsonPath("$.comments[0].deleted").value(true));
+                    .andExpect(jsonPath("$.comments[0].deleted").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-022: 삭제된 댓글의 대댓글 유지")
@@ -453,7 +461,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.comments[0].content").value("삭제된 댓글입니다"))
                     .andExpect(jsonPath("$.comments[0].deleted").value(true))
                     .andExpect(jsonPath("$.comments[0].replies[0].content").value("대댓글은 유지"))
-                    .andExpect(jsonPath("$.comments[0].replies[0].deleted").value(false));
+                    .andExpect(jsonPath("$.comments[0].replies[0].deleted").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-023: 댓글 등록순 정렬")
@@ -472,7 +481,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.comments[0].content").value("첫번째 댓글"))
                     .andExpect(jsonPath("$.comments[1].content").value("두번째 댓글"))
-                    .andExpect(jsonPath("$.comments[2].content").value("세번째 댓글"));
+                    .andExpect(jsonPath("$.comments[2].content").value("세번째 댓글"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-025: 익명 댓글 작성자 비노출")
@@ -490,7 +500,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(jsonPath("$.comments[0].content").value("익명 댓글"))
                     .andExpect(jsonPath("$.comments[0].anonymous").value(true))
                     .andExpect(jsonPath("$.comments[0].authorName").value("익명"))
-                    .andExpect(jsonPath("$.comments[0].authorId").doesNotExist());
+                    .andExpect(jsonPath("$.comments[0].authorId").doesNotExist())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("빈 댓글 목록 조회")
@@ -503,7 +514,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalCount").value(0))
-                    .andExpect(jsonPath("$.comments").isEmpty());
+                    .andExpect(jsonPath("$.comments").isEmpty())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 
@@ -530,7 +542,8 @@ class CommentControllerTest extends ServiceIntegrationTestBase {
                             .with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.comments[0].content").value("삭제된 댓글입니다"))
-                    .andExpect(jsonPath("$.comments[0].deleted").value(true));
+                    .andExpect(jsonPath("$.comments[0].deleted").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @DisplayName("CMT-033: 타인 댓글 삭제 시 403 Forbidden")

@@ -11,6 +11,10 @@ spring:
 
 springdoc:
   default-produces-media-type: application/json
+  api-docs:
+    enabled: false
+  swagger-ui:
+    url: /openapi.yaml
 
 app:
   version:

@@ -78,6 +78,19 @@
 
 ---
 
+### 그룹 6: Frontend Stub (백엔드 연동 전 UI 구현)
+| TASK-ID | 작업명 | 구현 상태 | 리뷰 상태 | 파일 | 비고 |
+|---------|--------|----------|----------|------|------|
+| TASK-024 (stub) | useImageUpload 훅 (스텁 서비스 기반) | DONE | - | `frontend/src/hooks/useImageUpload.ts`, `frontend/src/services/uploadService.ts`, `frontend/src/types/upload.ts`, `frontend/src/utils/upload.ts` | 클라이언트 검증, XHR 업로드, 진행률, 재시도(최대 2회) 구현. Presigned URL은 스텁 — `VITE_MOCK_UPLOAD_URL` 환경변수 사용 또는 백엔드 API 교체 필요 |
+| TASK-026 (stub) | ImageUploadArea + ImagePreviewList 컴포넌트 | DONE | - | `frontend/src/components/feature/upload/ImageUploadArea.tsx`, `ImagePreviewList.tsx`, `index.ts` | 드래그앤드롭, 미리보기, 상태 오버레이(진행바/에러/완료) |
+| - | 게시판 작성/수정 페이지 연동 | DONE | - | `frontend/src/pages/board/PostWritePage.tsx`, `PostEditPage.tsx` | 최대 5장, 수정 페이지에서 기존 이미지 로드 + 새 이미지 추가 |
+| - | 문의하기 폼 연동 | DONE | - | `frontend/src/components/feature/inquiry/InquiryForm.tsx`, `frontend/src/pages/inquiry/InquiryPage.tsx` | 최대 3개, 회원/비회원 모두 지원 |
+| - | 행사 작성 페이지 연동 (UI만) | DONE | - | `frontend/src/pages/event/EventWritePage.tsx` | 파일 선택 + 미리보기만 동작, 폼 제출 시 이미지 미전송 (CreateEventRequest에 이미지 필드 없음) |
+
+**그룹 상태**: DONE (백엔드 API 연동은 TASK-023 Orval 생성 후 uploadService.ts 교체 필요)
+
+---
+
 ## 검증 기준 충족 현황
 | ID | 설명 | 관련 TASK | 상태 |
 |----|------|----------|:----:|

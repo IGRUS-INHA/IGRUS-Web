@@ -1,5 +1,6 @@
 package igrus.web.security.auth.common.controller;
 
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.security.auth.common.domain.LoginFailureReason;
@@ -114,7 +115,8 @@ class AdminLoginHistoryControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content").isArray())
-                    .andExpect(jsonPath("$.totalElements").value(2));
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -133,7 +135,8 @@ class AdminLoginHistoryControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
                     .andExpect(jsonPath("$.content[0].studentId").value("20200001"))
-                    .andExpect(jsonPath("$.content[0].success").value(true));
+                    .andExpect(jsonPath("$.content[0].success").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -152,7 +155,8 @@ class AdminLoginHistoryControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
                     .andExpect(jsonPath("$.content[0].success").value(false))
-                    .andExpect(jsonPath("$.content[0].failureReason").value("INVALID_CREDENTIALS"));
+                    .andExpect(jsonPath("$.content[0].failureReason").value("INVALID_CREDENTIALS"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -170,7 +174,8 @@ class AdminLoginHistoryControllerTest extends ServiceIntegrationTestBase {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
-                    .andExpect(jsonPath("$.content[0].ipAddress").value(TEST_IP_2));
+                    .andExpect(jsonPath("$.content[0].ipAddress").value(TEST_IP_2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -198,7 +203,8 @@ class AdminLoginHistoryControllerTest extends ServiceIntegrationTestBase {
                             .param("endDate", endDate.toString()))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalElements").value(1));
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -219,7 +225,8 @@ class AdminLoginHistoryControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.totalElements").value(1))
                     .andExpect(jsonPath("$.content[0].studentId").value("20200001"))
-                    .andExpect(jsonPath("$.content[0].success").value(false));
+                    .andExpect(jsonPath("$.content[0].success").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -240,7 +247,8 @@ class AdminLoginHistoryControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content.length()").value(2))
                     .andExpect(jsonPath("$.totalElements").value(3))
-                    .andExpect(jsonPath("$.totalPages").value(2));
+                    .andExpect(jsonPath("$.totalPages").value(2))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
 
         @Test
@@ -254,7 +262,8 @@ class AdminLoginHistoryControllerTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content").isArray())
                     .andExpect(jsonPath("$.content").isEmpty())
-                    .andExpect(jsonPath("$.totalElements").value(0));
+                    .andExpect(jsonPath("$.totalElements").value(0))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }
 

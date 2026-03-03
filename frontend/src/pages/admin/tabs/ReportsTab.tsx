@@ -1,9 +1,12 @@
-import { useGetPendingReports, useUpdateReportStatus } from '@/api/model/comment-report/comment-report';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useUIStore } from '@/stores';
-import { cn } from '@/lib/utils';
-import { useQueryClient } from '@tanstack/react-query';
+import {
+  useGetPendingReports,
+  useUpdateReportStatus,
+} from "@/api/model/comment-report/comment-report";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useUIStore } from "@/stores";
+import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ReportsTab() {
   const addToast = useUIStore((s) => s.addToast);
@@ -14,11 +17,13 @@ export default function ReportsTab() {
   const { mutate: updateStatus, isPending } = useUpdateReportStatus({
     mutation: {
       onSuccess: () => {
-        addToast({ type: 'success', message: '신고 처리 완료' });
-        queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/comment-reports'] });
+        addToast({ type: "success", message: "신고 처리 완료" });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/v1/admin/comment-reports"],
+        });
       },
       onError: () => {
-        addToast({ type: 'error', message: '신고 처리 실패' });
+        addToast({ type: "error", message: "신고 처리 실패" });
       },
     },
   });
@@ -51,28 +56,49 @@ export default function ReportsTab() {
           {reports.map((r) => (
             <tr key={r.id}>
               <td className="py-s4 typo-b2 font-medium">{r.id}</td>
-              <td className="py-s4 typo-b2 max-w-[200px] truncate">{r.commentContent}</td>
-              <td className="py-s4 typo-b2 text-muted-foreground">{r.reporterName}</td>
-              <td className="py-s4 typo-b2 text-muted-foreground max-w-[150px] truncate">{r.reason}</td>
+              <td className="py-s4 typo-b2 max-w-[200px] truncate">
+                {r.commentContent}
+              </td>
+              <td className="py-s4 typo-b2 text-muted-foreground">
+                {r.reporterName}
+              </td>
+              <td className="py-s4 typo-b2 text-muted-foreground max-w-[150px] truncate">
+                {r.reason}
+              </td>
               <td className="py-s4">
-                <span className={cn(
-                  'px-2 py-1 rounded-r2 typo-c2 font-bold',
-                  r.status === 'PENDING' ? 'bg-warning/10 text-warning'
-                    : r.status === 'RESOLVED' ? 'bg-success/10 text-success'
-                    : 'bg-muted text-muted-foreground'
-                )}>
-                  {r.status === 'PENDING' ? '대기' : r.status === 'RESOLVED' ? '처리됨' : '기각'}
+                <span
+                  className={cn(
+                    "px-2 py-1 rounded-r2 typo-c2 font-bold",
+                    r.status === "PENDING"
+                      ? "bg-warning/10 text-warning"
+                      : r.status === "RESOLVED"
+                        ? "bg-success/10 text-success"
+                        : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {r.status === "PENDING"
+                    ? "대기"
+                    : r.status === "RESOLVED"
+                      ? "처리됨"
+                      : "기각"}
                 </span>
               </td>
               <td className="py-s4 typo-b2 text-muted-foreground">
-                {r.createdAt ? new Date(r.createdAt).toLocaleDateString('ko-KR') : '-'}
+                {r.createdAt
+                  ? new Date(r.createdAt).toLocaleDateString("ko-KR")
+                  : "-"}
               </td>
               <td className="py-s4 text-right">
-                {r.status === 'PENDING' && (
+                {r.status === "PENDING" && (
                   <div className="flex gap-s2 justify-end">
                     <Button
                       size="xs"
-                      onClick={() => updateStatus({ reportId: r.id!, data: { status: 'RESOLVED' } })}
+                      onClick={() =>
+                        updateStatus({
+                          reportId: r.id!,
+                          data: { status: "RESOLVED" },
+                        })
+                      }
                       disabled={isPending}
                     >
                       처리
@@ -80,7 +106,12 @@ export default function ReportsTab() {
                     <Button
                       size="xs"
                       variant="outline"
-                      onClick={() => updateStatus({ reportId: r.id!, data: { status: 'DISMISSED' } })}
+                      onClick={() =>
+                        updateStatus({
+                          reportId: r.id!,
+                          data: { status: "DISMISSED" },
+                        })
+                      }
                       disabled={isPending}
                     >
                       기각
@@ -94,7 +125,9 @@ export default function ReportsTab() {
       </table>
 
       {reports.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">대기 중인 신고가 없습니다.</div>
+        <div className="text-center py-12 text-muted-foreground">
+          대기 중인 신고가 없습니다.
+        </div>
       )}
     </Card>
   );
