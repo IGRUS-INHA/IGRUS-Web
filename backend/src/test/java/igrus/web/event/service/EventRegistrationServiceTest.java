@@ -1727,22 +1727,12 @@ class EventRegistrationServiceTest {
             verify(eventRegistrationRepository).save(any(EventRegistration.class));
         }
 
-        // --- TC-015: OPEN + 기존 응답 존재 + surveyAnswers 포함 -> surveyAnswers 무시 (#1 기존 응답 우선) ---
+        // --- TC-015: CLOSED + 기존 응답 존재 + surveyAnswers 포함 -> surveyAnswers 무시 (#5) ---
 
         @Test
         @DisplayName("[TC-015] 설문 CLOSED, 기존 응답 존재, surveyAnswers 포함 -- surveyAnswers 무시, 기존 응답으로 신청")
-        void registerWithSurvey_OpenExistingResponseWithAnswers_IgnoresNewAnswers() {
-            // given: OPEN + existingResponse=true => hasExistingResponse 분기에서 기존 응답 사용
-            // 실제 코드 분기: surveyAnswers가 있고 OPEN이면 새 응답 저장 시도
-            // 하지만 hasExistingResponse가 true면 DataIntegrityViolation (중복)
-            // 실제 코드를 보면: OPEN + surveyAnswers 있음 => 무조건 save 시도 (#1)
-            // 기존 응답이 있으면 DataIntegrityViolationException -> SurveyResponseDuplicateException
-            // 따라서 TC-015의 기대 결과에 맞추려면 CLOSED 상태에서 테스트해야 함
-            // 코드 재확인: OPEN 상태에서는 항상 새 응답 저장 시도. TC-015는 CLOSED 기준
-            // TC-015 사전 조건: "사용자가 해당 설문에 이미 응답 완료" + OPEN
-            // 실제 코드: OPEN+답변있음 => validate+save. 중복이면 예외.
-            // 하지만 코드에서 existsBySurveyIdAndUserId 체크 후 분기하지 않음 (OPEN에서)
-            // => TC-015는 CLOSED 상태에서의 시나리오로 매핑됨 (#5)
+        void registerWithSurvey_ClosedExistingResponseWithAnswers_IgnoresNewAnswers() {
+            // given: CLOSED + existingResponse=true + surveyAnswers present => #5: 기존 응답으로 진행, surveyAnswers 무시
             Event event = createSurveyLinkedEvent(EventRegistrationType.AUTO_APPROVE);
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(event));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
@@ -1763,6 +1753,62 @@ class EventRegistrationServiceTest {
             assertThat(response).isNotNull();
             verify(surveyResponseRepository, never()).save(any());
             verify(eventRegistrationRepository).save(any(EventRegistration.class));
+        }
+
+        // --- OPEN + 기존 응답 존재 + surveyAnswers 포함 -> 중복 제약조건 -> SurveyResponseDuplicateException ---
+
+        @Test
+        @DisplayName("설문 OPEN, 기존 응답 존재, surveyAnswers 포함 -- 중복 제약조건 위반 시 SurveyResponseDuplicateException")
+        void registerWithSurvey_OpenExistingResponseWithAnswers_ThrowsDuplicateOnConstraint() {
+            // given
+            Event event = createSurveyLinkedEvent(EventRegistrationType.AUTO_APPROVE);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(event));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            setupSurveyOpen();
+            when(surveyResponseRepository.existsBySurveyIdAndUserId(SURVEY_ID, USER_ID)).thenReturn(false);
+            // save 시 중복 제약조건 위반
+            org.hibernate.exception.ConstraintViolationException hibernateEx =
+                    new org.hibernate.exception.ConstraintViolationException(
+                            "duplicate", null, "uk_survey_responses_survey_user");
+            when(surveyResponseRepository.save(any(SurveyResponse.class)))
+                    .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate", hibernateEx));
+
+            List<SubmitAnswerRequest> answers = List.of(
+                    new SubmitAnswerRequest(1L, "답변", null, null, null)
+            );
+
+            // when/then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID, answers))
+                    .isInstanceOf(igrus.web.survey.response.exception.SurveyResponseDuplicateException.class);
+            verify(eventRegistrationRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("설문 OPEN, surveyAnswers 포함 -- 비-중복 DB 에러 시 원본 DataIntegrityViolationException 전파")
+        void registerWithSurvey_OpenWithAnswers_NonDuplicateConstraint_Rethrows() {
+            // given
+            Event event = createSurveyLinkedEvent(EventRegistrationType.AUTO_APPROVE);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(event));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            setupSurveyOpen();
+            when(surveyResponseRepository.existsBySurveyIdAndUserId(SURVEY_ID, USER_ID)).thenReturn(false);
+            // save 시 다른 제약조건 위반 (NOT NULL 등)
+            org.hibernate.exception.ConstraintViolationException hibernateEx =
+                    new org.hibernate.exception.ConstraintViolationException(
+                            "not null", null, "some_other_constraint");
+            when(surveyResponseRepository.save(any(SurveyResponse.class)))
+                    .thenThrow(new org.springframework.dao.DataIntegrityViolationException("not null", hibernateEx));
+
+            List<SubmitAnswerRequest> answers = List.of(
+                    new SubmitAnswerRequest(1L, "답변", null, null, null)
+            );
+
+            // when/then: 원본 예외가 전파되어야 함
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID, answers))
+                    .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+            verify(eventRegistrationRepository, never()).save(any());
         }
 
         // --- TC-016: OPEN + 미응답 + surveyAnswers 미포함 -> SurveyResponseRequiredException (#3) ---
@@ -2381,6 +2427,48 @@ class EventRegistrationServiceTest {
             // when/then
             assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null))
                     .isInstanceOf(SurveyResponseRequiredException.class);
+        }
+
+        @Test
+        @DisplayName("[TC-050] 취소 후 재신청 시 OPEN 설문 + surveyAnswers + 기존 응답 없음 → 새 응답 저장 후 성공")
+        void reRegister_OpenSurveyWithAnswersNoExisting_SavesNewResponseAndSucceeds() {
+            // given
+            Event event = createSurveyLinkedEvent(EventRegistrationType.AUTO_APPROVE);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(event));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+
+            EventRegistration canceledReg = mock(EventRegistration.class);
+            when(canceledReg.isCanceled()).thenReturn(true);
+            when(canceledReg.getUser()).thenReturn(regularMember);
+            when(canceledReg.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
+            when(canceledReg.getRegisteredAt()).thenReturn(Instant.now());
+            when(canceledReg.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
+                    .thenReturn(Optional.of(canceledReg));
+
+            Survey mockSurvey = mock(Survey.class);
+            when(mockSurvey.getResponseStatus()).thenReturn(SurveyResponseStatus.OPEN);
+            when(mockSurvey.isDeleted()).thenReturn(false);
+            when(mockSurvey.getTrashedAt()).thenReturn(null);
+            when(surveyRepository.findById(SURVEY_ID)).thenReturn(Optional.of(mockSurvey));
+            when(surveyResponseRepository.existsBySurveyIdAndUserId(SURVEY_ID, USER_ID)).thenReturn(false);
+
+            List<SubmitAnswerRequest> surveyAnswers = List.of(
+                    new SubmitAnswerRequest(1L, "답변", null, null, null)
+            );
+
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
+            when(eventRegistrationRepository.save(any())).thenReturn(canceledReg);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, USER_ID, surveyAnswers);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(surveyAnswerValidator).validate(mockSurvey, surveyAnswers);
+            verify(surveyAnswerFactory).createAnswers(any(SurveyResponse.class), eq(mockSurvey), eq(surveyAnswers));
+            verify(surveyResponseRepository).save(any(SurveyResponse.class));
+            verify(canceledReg).reRegister();
         }
 
         @Test
