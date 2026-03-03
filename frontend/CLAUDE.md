@@ -18,7 +18,7 @@ IGRUS Web 프론트엔드 - React + Vite 기반 SPA
 
 - **절대로 개발 서버 실행 금지** (`pnpm dev` 등 금지)
 - **패키지 매니저는 pnpm 고정**
-- **코드 포맷팅/타입 체크 명령 실행 금지** (`pnpm format`, `pnpm lint`, `pnpm tsc --noEmit` 등 금지 - VSCode에서 자동 처리)
+- **개발 중 불필요한 타입 체크/포맷 실행 금지** (VSCode에서 자동 처리) — 단, **커밋 전에는 반드시 실행** (아래 1.3 참조)
 - **절대로 백엔드 파일을 수정하지 않는다. 읽기만 한다.** (backend/ 디렉토리 내의 모든 파일은 읽기 전용)
 
 ## 1.3 Git 커밋 규칙
@@ -29,11 +29,14 @@ IGRUS Web 프론트엔드 - React + Vite 기반 SPA
 
 **커밋 프로세스:**
 
-1. `git status`, `git diff`로 변경사항 확인
-2. 커밋 메시지 초안 작성
-3. **사용자에게 커밋 메시지 확인 요청 (필수)**
-4. 사용자 승인 후 `git add` 및 `git commit` 실행
-5. `git status`로 커밋 완료 확인
+1. **포맷팅 & 린팅 실행 (필수)**
+   - `pnpm format` — Prettier 포맷팅
+   - `pnpm lint` — ESLint 검사 (에러 있으면 수정 후 재실행)
+2. `git status`, `git diff`로 변경사항 확인
+3. 커밋 메시지 초안 작성
+4. **사용자에게 커밋 메시지 확인 요청 (필수)**
+5. 사용자 승인 후 `git add` 및 `git commit` 실행
+6. `git status`로 커밋 완료 확인
 
 ## 1.4 GitHub 이슈/PR 생성 규칙
 

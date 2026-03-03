@@ -499,21 +499,10 @@ export type getEventListResponse200 = {
   status: 200;
 };
 
-export type getEventListResponse401 = {
-  data: void;
-  status: 401;
-};
-
 export type getEventListResponseSuccess = getEventListResponse200 & {
   headers: Headers;
 };
-export type getEventListResponseError = getEventListResponse401 & {
-  headers: Headers;
-};
-
-export type getEventListResponse =
-  | getEventListResponseSuccess
-  | getEventListResponseError;
+export type getEventListResponse = getEventListResponseSuccess;
 
 export const getGetEventListUrl = (params?: GetEventListParams) => {
   const normalizedParams = new URLSearchParams();
@@ -547,7 +536,7 @@ export const getGetEventListQueryKey = (params?: GetEventListParams) => {
 
 export const getGetEventListQueryOptions = <
   TData = Awaited<ReturnType<typeof getEventList>>,
-  TError = void,
+  TError = unknown,
 >(
   params?: GetEventListParams,
   options?: {
@@ -575,11 +564,11 @@ export const getGetEventListQueryOptions = <
 export type GetEventListQueryResult = NonNullable<
   Awaited<ReturnType<typeof getEventList>>
 >;
-export type GetEventListQueryError = void;
+export type GetEventListQueryError = unknown;
 
 export function useGetEventList<
   TData = Awaited<ReturnType<typeof getEventList>>,
-  TError = void,
+  TError = unknown,
 >(
   params: undefined | GetEventListParams,
   options: {
@@ -602,7 +591,7 @@ export function useGetEventList<
 };
 export function useGetEventList<
   TData = Awaited<ReturnType<typeof getEventList>>,
-  TError = void,
+  TError = unknown,
 >(
   params?: GetEventListParams,
   options?: {
@@ -625,7 +614,7 @@ export function useGetEventList<
 };
 export function useGetEventList<
   TData = Awaited<ReturnType<typeof getEventList>>,
-  TError = void,
+  TError = unknown,
 >(
   params?: GetEventListParams,
   options?: {
@@ -644,7 +633,7 @@ export function useGetEventList<
 
 export function useGetEventList<
   TData = Awaited<ReturnType<typeof getEventList>>,
-  TError = void,
+  TError = unknown,
 >(
   params?: GetEventListParams,
   options?: {

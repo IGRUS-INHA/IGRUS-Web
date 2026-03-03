@@ -93,11 +93,12 @@ refactor(api): 유저 서비스 코드 정리
 
 **커밋 전 반드시 사용자에게 커밋 메시지 확인 받을 것**
 
-1. `git status`, `git diff`로 변경사항 확인
-2. 커밋 메시지 초안 작성
-3. **사용자에게 커밋 메시지 확인 요청 (필수)**
-4. 사용자 승인 후 `git add` 및 `git commit` 실행
-5. `git status`로 커밋 완료 확인
+1. **포맷팅 & 린팅 실행 (필수)** — 프론트엔드 변경 시 `cd frontend && pnpm format && pnpm lint`
+2. `git status`, `git diff`로 변경사항 확인
+3. 커밋 메시지 초안 작성
+4. **사용자에게 커밋 메시지 확인 요청 (필수)**
+5. 사용자 승인 후 `git add` 및 `git commit` 실행
+6. `git status`로 커밋 완료 확인
 
 **중요:** 사용자 승인 없이 절대 커밋하지 말 것
 

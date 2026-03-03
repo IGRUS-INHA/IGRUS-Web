@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useLookupGuestInquiry } from "@/api/model/inquiry/inquiry";
+import { useLookupGuestInquiry } from "@/api/model/guest-inquiry/guest-inquiry";
 import type { InquiryResponse } from "@/api/model/models/inquiryResponse";
 import { cn } from "@/lib/utils";
 

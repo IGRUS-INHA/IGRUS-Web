@@ -33,13 +33,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { EventDetailResponseCloseReason } from "./eventDetailResponseCloseReason";
-import type { EventDetailResponseEventStatus } from "./eventDetailResponseEventStatus";
-import type { EventDetailResponseRegistrationStatus } from "./eventDetailResponseRegistrationStatus";
-import type { EventDetailResponseRegistrationType } from "./eventDetailResponseRegistrationType";
-import type { EventDetailResponseVisibility } from "./eventDetailResponseVisibility";
+import type { AdminEventDetailResponseCloseReason } from "./adminEventDetailResponseCloseReason";
+import type { AdminEventDetailResponseEventStatus } from "./adminEventDetailResponseEventStatus";
+import type { AdminEventDetailResponseRegistrationStatus } from "./adminEventDetailResponseRegistrationStatus";
+import type { AdminEventDetailResponseRegistrationType } from "./adminEventDetailResponseRegistrationType";
+import type { AdminEventDetailResponseVisibility } from "./adminEventDetailResponseVisibility";
 
-export interface EventDetailResponse {
+/**
+ * 관리자용 행사 상세 응답 (visibility 포함)
+ */
+export interface AdminEventDetailResponse {
   id?: number;
   title?: string;
   description?: string;
@@ -51,14 +54,15 @@ export interface EventDetailResponse {
   registrationEndAt?: string;
   capacity?: number;
   currentCount?: number;
-  visibility?: EventDetailResponseVisibility;
-  registrationStatus?: EventDetailResponseRegistrationStatus;
-  eventStatus?: EventDetailResponseEventStatus;
-  closeReason?: EventDetailResponseCloseReason;
-  registrationType?: EventDetailResponseRegistrationType;
+  registrationStatus?: AdminEventDetailResponseRegistrationStatus;
+  eventStatus?: AdminEventDetailResponseEventStatus;
+  closeReason?: AdminEventDetailResponseCloseReason;
+  registrationType?: AdminEventDetailResponseRegistrationType;
   isRegistrable?: boolean;
   createdAt?: string;
   updatedAt?: string;
   canEdit?: boolean;
   isRegistered?: boolean;
+  /** 공개 상태 */
+  visibility?: AdminEventDetailResponseVisibility;
 }

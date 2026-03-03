@@ -36,7 +36,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 export interface CreatePostRequest {
   /**
-   * @minLength 0
+   * @minLength 1
    * @maxLength 100
    */
   title: string;

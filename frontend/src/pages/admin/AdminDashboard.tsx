@@ -8,6 +8,7 @@ import {
   Flag,
   History,
   GraduationCap,
+  CalendarDays,
 } from "lucide-react";
 import DashboardTab from "./tabs/DashboardTab";
 import UsersTab from "./tabs/UsersTab";
@@ -16,11 +17,13 @@ import InquiriesTab from "./tabs/InquiriesTab";
 import ReportsTab from "./tabs/ReportsTab";
 import LoginHistoryTab from "./tabs/LoginHistoryTab";
 import SemestersTab from "./tabs/SemestersTab";
+import EventsTab from "./tabs/EventsTab";
 
 const TABS = [
   { key: "dashboard", label: "대시보드", icon: LayoutDashboard },
   { key: "users", label: "회원 관리", icon: Users },
   { key: "associates", label: "준회원 승인", icon: UserCheck },
+  { key: "events", label: "행사 관리", icon: CalendarDays },
   { key: "inquiries", label: "문의 관리", icon: MessageSquare },
   { key: "reports", label: "댓글 신고", icon: Flag },
   { key: "login-history", label: "로그인 이력", icon: History },
@@ -33,6 +36,7 @@ const TAB_COMPONENTS: Record<TabKey, React.ComponentType> = {
   dashboard: DashboardTab,
   users: UsersTab,
   associates: AssociatesTab,
+  events: EventsTab,
   inquiries: InquiriesTab,
   reports: ReportsTab,
   "login-history": LoginHistoryTab,
