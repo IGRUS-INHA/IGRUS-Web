@@ -41,6 +41,7 @@ import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -120,6 +121,8 @@ public class EventRegistrationService {
      */
     public RegistrationResponse registerEvent(Long eventId, Long userId,
                                                List<SubmitAnswerRequest> surveyAnswers) {
+        List<SubmitAnswerRequest> answers = surveyAnswers != null ? surveyAnswers : List.of();
+
         // 1. 행사 조회 (락 없이)
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
@@ -144,7 +147,7 @@ public class EventRegistrationService {
         // 5. 기존 신청 기록 확인 (재신청 여부 판단)
         var existingRegistration = eventRegistrationRepository.findByEventIdAndUserId(eventId, userId);
         if (existingRegistration.isPresent()) {
-            return handleReRegistration(existingRegistration.get(), event, eventId);
+            return handleReRegistration(existingRegistration.get(), event, eventId, answers);
         }
 
         // 6. 등록 상태 확인 (OPEN 상태인지)
@@ -155,7 +158,7 @@ public class EventRegistrationService {
 
         // SEVT-INV-07: 설문 연결 행사 분기
         if (event.hasSurvey()) {
-            return registerEventWithSurvey(event, user, surveyAnswers);
+            return registerEventWithSurvey(event, user, answers);
         }
 
         // === 설문 미연결 행사: 기존 로직 그대로 ===
@@ -530,7 +533,7 @@ public class EventRegistrationService {
         boolean hasExistingResponse = surveyResponseRepository
                 .existsBySurveyIdAndUserId(event.getSurveyId(), user.getId());
 
-        if (surveyAnswers != null && !surveyAnswers.isEmpty()) {
+        if (!surveyAnswers.isEmpty()) {
             // surveyAnswers 포함된 요청
             if (survey.getResponseStatus() == SurveyResponseStatus.OPEN) {
                 // #1: OPEN + surveyAnswers 있음 -> 새 응답 저장
@@ -540,7 +543,10 @@ public class EventRegistrationService {
                 try {
                     surveyResponseRepository.save(response);
                 } catch (DataIntegrityViolationException e) {
-                    throw new SurveyResponseDuplicateException();
+                    if (isDuplicateSurveyResponse(e)) {
+                        throw new SurveyResponseDuplicateException();
+                    }
+                    throw e;
                 }
             } else if (survey.getResponseStatus() == SurveyResponseStatus.CLOSED) {
                 if (hasExistingResponse) {
@@ -604,7 +610,8 @@ public class EventRegistrationService {
      * @throws SurveyNotFoundException          설문이 삭제되었거나 휴지통에 있는 경우
      * @throws SurveyNotReadyException          설문이 NOT_STARTED 상태인 경우
      */
-    private RegistrationResponse handleReRegistration(EventRegistration registration, Event event, Long eventId) {
+    private RegistrationResponse handleReRegistration(EventRegistration registration, Event event, Long eventId,
+                                                       List<SubmitAnswerRequest> surveyAnswers) {
         // 취소 상태가 아니면 이미 신청 중
         if (!registration.isCanceled()) {
             throw new AlreadyRegisteredException();
@@ -628,11 +635,30 @@ public class EventRegistrationService {
             // 설문 응답 존재 확인
             boolean hasExistingResponse = surveyResponseRepository
                     .existsBySurveyIdAndUserId(event.getSurveyId(), userId);
+
             if (!hasExistingResponse) {
-                log.info("행사 신청 거부 - eventId: {}, userId: {}, 사유: 설문 응답 미존재 (surveyId: {})",
-                        eventId, userId, event.getSurveyId());
-                throw new SurveyResponseRequiredException();
+                // 기존 응답 없음: surveyAnswers로 새 응답 저장 시도
+                if (!surveyAnswers.isEmpty()
+                        && survey.getResponseStatus() == SurveyResponseStatus.OPEN) {
+                    surveyAnswerValidator.validate(survey, surveyAnswers);
+                    User user = registration.getUser();
+                    SurveyResponse response = SurveyResponse.create(survey, user);
+                    surveyAnswerFactory.createAnswers(response, survey, surveyAnswers);
+                    try {
+                        surveyResponseRepository.save(response);
+                    } catch (DataIntegrityViolationException e) {
+                        if (isDuplicateSurveyResponse(e)) {
+                            throw new SurveyResponseDuplicateException();
+                        }
+                        throw e;
+                    }
+                } else {
+                    log.info("행사 재신청 거부 - eventId: {}, userId: {}, 사유: 설문 응답 미존재 (surveyId: {})",
+                            eventId, userId, event.getSurveyId());
+                    throw new SurveyResponseRequiredException();
+                }
             }
+            // 기존 응답 있음: 그대로 진행
 
             log.debug("설문 응답 확인 완료 - eventId: {}, userId: {}, surveyId: {}",
                     eventId, userId, event.getSurveyId());
@@ -771,6 +797,15 @@ public class EventRegistrationService {
                     eventId, userId, survey.getId());
             throw new SurveyNotReadyException();
         }
+    }
+
+    private static final String SURVEY_RESPONSE_UNIQUE_CONSTRAINT = "uk_survey_responses_survey_user";
+
+    private boolean isDuplicateSurveyResponse(DataIntegrityViolationException e) {
+        if (e.getCause() instanceof ConstraintViolationException cve) {
+            return SURVEY_RESPONSE_UNIQUE_CONSTRAINT.equals(cve.getConstraintName());
+        }
+        return false;
     }
 
 }

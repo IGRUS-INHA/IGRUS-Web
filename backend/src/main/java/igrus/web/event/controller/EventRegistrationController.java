@@ -26,7 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -146,11 +145,11 @@ public class EventRegistrationController implements EventRegistrationApi {
 
     /**
      * Generated 모델의 RegisterEventRequest에서 서비스 내부 DTO인 SubmitAnswerRequest 목록으로 변환합니다.
-     * 요청 본문이 없거나 surveyAnswers가 비어있으면 null을 반환합니다.
+     * 요청 본문이 없거나 surveyAnswers가 비어있으면 빈 리스트를 반환합니다.
      */
     private List<SubmitAnswerRequest> mapToSubmitAnswerRequests(RegisterEventRequest request) {
         if (request == null || request.getSurveyAnswers() == null || request.getSurveyAnswers().isEmpty()) {
-            return null;
+            return List.of();
         }
         return request.getSurveyAnswers().stream()
                 .map(this::mapToSubmitAnswerRequest)

@@ -15,6 +15,7 @@ import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,7 +78,10 @@ public class SurveyResponseService {
         try {
             savedResponse = surveyResponseRepository.save(response);
         } catch (DataIntegrityViolationException e) {
-            throw new SurveyResponseDuplicateException();
+            if (isDuplicateSurveyResponse(e)) {
+                throw new SurveyResponseDuplicateException();
+            }
+            throw e;
         }
 
         log.info("설문 응답 제출 - surveyId: {}, userId: {}", surveyId, user.getId());
@@ -185,5 +189,14 @@ public class SurveyResponseService {
         if (!allowed) {
             throw new SurveyResponseAccessDeniedException();
         }
+    }
+
+    private static final String SURVEY_RESPONSE_UNIQUE_CONSTRAINT = "uk_survey_responses_survey_user";
+
+    private boolean isDuplicateSurveyResponse(DataIntegrityViolationException e) {
+        if (e.getCause() instanceof ConstraintViolationException cve) {
+            return SURVEY_RESPONSE_UNIQUE_CONSTRAINT.equals(cve.getConstraintName());
+        }
+        return false;
     }
 }
