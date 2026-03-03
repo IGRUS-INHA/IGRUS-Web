@@ -48,6 +48,10 @@
 8. 표의 "분류" 컬럼이 미확정 DECISION에 따라 달라지는데 고정값("무효")으로 기재 — DECISION 확정 전에는 "미결"로 표기해야 함
 9. 교차 문서 액션 아이템(ACTION REQUIRED)이 대상 문서에 GAP 항목으로 등록되지 않아 추적 불가
 10. 구현 전 문서의 산출물(OpenAPI 스펙 등) 미반영 상태를 문서 내에서 명시하지 않아 현재 상태 파악 불가
+11. 서비스 레벨 중복 검증만 기술하고 DB 레벨 UNIQUE 제약을 부록 DDL에서도 누락 — 동시성 취약점 (EGRP-INV-01 패턴)
+12. DECISION으로 등록되지 않은 미확정 정책이 불변조건 주의사항에 묻혀 있음 ("DECISION 필요"라는 표현이 DECISION 표가 아닌 본문에 산재)
+13. 불변조건 본문과 입력 도메인 분할 섹션(3절)에 중복으로 기술된 검증 로직이 불변조건 본문에서는 빠지는 패턴 (예: 수정 시 자기 자신 제외)
+14. DECISION 표를 신설하더라도 "권장안" 컬럼으로만 운영하면 불변조건 본문의 "~에 따라 다름: 권장안(A)" 표현이 남아 구현 기준 불명확 — DECISION 표의 컬럼명을 "결정(확정)"으로 바꾸고 불변조건 본문도 확정 언어로 교체해야 함
 
 ## 설문 연동 행사 신청 도메인 특이사항 (3라운드 리뷰 반영, 2026-03-02)
 - 핵심 설계: Event.surveyId(Long, 약한 참조) → 두 도메인 FK 없이 서비스 레벨에서 참조 무결성 관리
@@ -77,6 +81,22 @@
 - inquiry-verification-criteria.md: 테스트 클래스명, 테스트 수, 커버 상태까지 구체적으로 기술한 모범 사례
 - event-verification-criteria.md: GAP 항목을 기존/신규로 나눠 추적, "해결됨" 상태 업데이트 관례
 - 3자 시스템 경계 ASCII 다이어그램 + 단계별 번호와 API 흐름 표 대응 방식 (storage 문서의 강점)
+
+## 행사 그룹(EventGroup) 도메인 특이사항 (2라운드 FAIL, 2026-03-03)
+- 핵심 설계: Event.groupId(Long, nullable, FK 없음) — DECISION-01(C) 약한 참조, surveyId 패턴과 동일
+- 1라운드 심각 4건 모두 해소: DB 유니크 제약(Generated Column), DECISION-07/08/09 신설, 수정 시 자기 자신 제외 명시, PUT 근거 명시
+- 2라운드 심각 1건: DECISION 표 전체가 "권장안" 상태 — 불변조건 본문이 미확정 DECISION 참조하는 구조적 모순 지속
+  → "DECISION-07에 따라 다름: 권장안 (A)" 표현이 남아있어 구현자가 확정 여부 판단 불가
+  → 수정 방향: "권장안" 컬럼을 "결정(확정)"으로 변경 + 불변조건 본문의 미확정 언어를 확정 언어로 교체
+- 2라운드 주의 5건:
+  1. SoftDeletableEntity.restore() EventGroup 복원 정책 미언급 (복원 불가 명시 또는 재연결 정책 필요)
+  2. eventCount 조회 시 N+1 문제 — 그룹 목록에 COUNT 서브쿼리 또는 DTO Projection 전략 미명시
+  3. EVT-INV-07과 groupId 수정 분리 정책 교차 언급 없음
+  4. DECISION-07 멱등 응답 시 감사 로그 및 응답 본문 형식 미정의
+  5. EventGroupDetailResponse에 updatedBy(최종 수정자) 필드 누락 여부 미결정
+- DECISION-10(C) 전체 반환, DECISION-11(B) 인증 필수, DECISION-09(A) PUT 확정 — 모두 권장안으로만 표시
+- DB 레벨 조건부 유니크 제약: Generated Column 방식 DDL 상세 기술 (이 프로젝트 첫 사례)
+- EGRP-INV-08 @Modifying(flushAutomatically=true, clearAutomatically=true) 주의사항 명시됨 (잘 작성된 부분)
 
 ## Presigned URL 도메인 특이사항 (2026-02-26 리뷰)
 - 핵심 아키텍처: Frontend → Backend(URL발급) → S3(직접 PUT) → Backend(완료확인)

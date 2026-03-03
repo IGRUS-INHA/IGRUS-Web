@@ -24,6 +24,8 @@
 - [ ] Downstream service impact analyzed (all callers of affected repository methods checked)
 - [ ] When adding access control (visibility, permissions), ALL services querying the domain are updated
 - [ ] Design decisions finalized (no "A or B" without resolution)
+- [ ] OpenAPI schema changes to Admin*Response require AdminController mapping helper updates
+- [ ] @SQLRestriction presence verified per entity (Event has it, FileMetadata does NOT)
 
 ## Test Coverage
 - [ ] Backend unit tests planned

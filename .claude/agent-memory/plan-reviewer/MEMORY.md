@@ -30,7 +30,7 @@
 - Exception classes extend `CustomBaseException`
 
 ### Flyway Migration
-- Latest version as of 2026-03-02: V46 (V46__add_event_visibility_column.sql)
+- Latest version as of 2026-03-03: V47 (V47__add_survey_id_to_events.sql)
 - Version conflict check is essential before committing (backend CLAUDE.md rule 17)
 
 ### OpenAPI Generator Config (Verified from build.gradle)
@@ -116,10 +116,19 @@
 - Round 2: PASS (Both Critical resolved. submitResponse() replaced with SurveyAnswerValidator.validate() + SurveyResponseRepository.save(). 8-branch decision matrix added for responseStatus x surveyAnswers x existingResponse. 6 Recommended: pseudocode SurveyResponse.create() signature mismatch, createAnswers() reuse strategy undefined, DECISION-01 confirmation inconsistency, documentation TASK missing, frontend test plan absent, registerEvent() signature overload vs extend undecided)
 - Round 3: FAIL (3 Critical: Flyway V46 version conflict, createAnswers() reuse strategy still undefined, DTO modification plan incompatible with contract-first architecture)
 
+### Event-Image Integration: event-image-integration-task-plan.md
+- Round 1: FAIL (2 Critical: API paths missing /api/v1/ prefix in all 3 docs, AdminEventController mapping helpers not listed in integration points table)
+- 6 Recommended: TASK-003 repository method name inconsistency, cross-doc API path sync, TASK-011 @SQLRestriction description inaccurate for FileMetadata, TC-022 duplicated in TASK-017, frontend test plan absent, TASK-005 exception design "or" alternative
+- Round 2: PASS (Both Critical resolved. Task plan API paths fixed to /api/v1/, disclaimer added for cross-doc path differences. TASK-022 added for AdminEventController mapping helpers with correct dependency graph. 6 Recommended: cross-doc API path sync still pending, TASK-003 method name inconsistency, TASK-011 @SQLRestriction description still inaccurate for FileMetadata, TASK-005 "or" alternative still present, frontend test plan absent, TC-022 dual API in single TC)
+
 ### Gradle Dependency Scope Awareness
 - `implementation` scope includes dependency in production JAR
 - Libraries only used in dev/test should prefer `testImplementation` or conditional inclusion
 - Plans adding dev-only tools via `implementation` should explicitly justify the production footprint
+
+## Frequently Missed Integration Points
+- OpenAPI spec changes to Admin*Response schemas require matching updates to AdminController mapping helpers
+- FileMetadata entity does NOT have @SQLRestriction (unlike Event entity) -- plans should not claim @SQLRestriction filtering for FileMetadata queries
 
 ## Review Checklist Additions
 - [See review-checklist.md for detailed checklist](./review-checklist.md)

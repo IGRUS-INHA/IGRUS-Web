@@ -43,7 +43,7 @@
 - `CustomBaseException` -> 도메인별 커스텀 예외
 
 ### Flyway 마이그레이션
-- 최신 버전: V45 (2026-03-02 기준, create_file_metadata_table)
+- 최신 버전: V47 (2026-03-03 기준, add_survey_id_to_events)
 - 형식: `V{N}__{description}.sql`
 
 ### 빌드 의존성 (build.gradle)
@@ -96,16 +96,30 @@
 - Event, EventRegistration
 - 미존재: PinnedPost, PasswordAuth, AdminInquiry, Guest/MemberInquiry, MyPage, Survey*, Privacy, Semester*
 
-### Event-Survey 연동 관련 코드 구조
-- `Event.java`: 2축 상태 모델 (registrationStatus + eventStatus), SoftDeletableEntity 상속
-- `Event.create()`: 정적 팩토리, surveyId 필드 아직 없음 (추가 필요)
-- `Event.update()`: COMPLETED 차단, ONGOING 부분 수정 제한
+### Event 관련 코드 구조 (최신)
+- `Event.java`: 3축 상태 모델 (visibility + registrationStatus + eventStatus), SoftDeletableEntity 상속
+- `Event.create()`: 정적 팩토리, surveyId 필드 포함. posterImageObjectKey 아직 없음 (이미지 연계에서 추가 예정)
+- `Event.update()`: COMPLETED 차단, ONGOING 부분 수정 제한 (eventStartAt, registrationStartAt 변경 차단)
+- `EventVisibility`: PUBLISHED/UNPUBLISHED 양방향 전이 (visibility 작업 완료)
+- `EventRepository`: @SQLRestriction 자동 필터링, 공개 API(findByVisibilityAndFilters), 관리자 API(findAllByAdminFilters)
+- 약한 참조 패턴: Event.surveyId (Long, FK 없음), 향후 Event.posterImageObjectKey (String, FK 없음)
 - `EventRegistrationService.registerEvent()`: 검증 순서 — 권한 > Lazy Eval > 중복(재신청) > OPEN > 기간 > 시간겹침 > 정원
 - `EventRegistrationService.handleReRegistration()`: 취소 상태만 재신청 가능
 - `SurveyResponseService.submitResponse()`: AuthenticatedUser 파라미터, accessLevel 검증 포함
 - `SurveyAnswerValidator`: 설문 응답 유효성 검증 (질문 유형별)
 - `SurveyResponseRepository.existsBySurveyIdAndUserId()`: 기존 응답 존재 확인 메서드 이미 존재
 - `Survey.isAcceptingResponses()`: PUBLISHED + OPEN 상태 확인 메서드
+
+### Storage 모듈 구조 (이미지 연계 참조)
+- `FileReferenceChecker` 인터페이스: `isReferenced(String objectKey)` -> boolean
+- `FileDeleteService`: `List<FileReferenceChecker>`를 주입받아 순회, 참조 시 `FileReferenceExistsException` (409)
+- `FileMetadataRepository`: `findByObjectKeyAndDeletedFalse()`, `existsByObjectKeyAndDeletedFalse()`
+- `FileUploadStatus` enum: REQUESTED, CONFIRMING, COMPLETED, FAILED, EXPIRED
+- `FileMetadata`: @SQLRestriction 적용, objectKey max=500
+
+### Event 작업 계획 문서
+- Visibility 기능: `docs/feature/event/task-plan.md` (TASK-001~021)
+- 이미지 연계: `docs/feature/event/event-image-integration-task-plan.md` (TASK-001~021)
 
 ### 출력 형식 규칙
 - 파일 경로 출력: 마지막 줄에 `생성된 파일: {절대 경로}` 또는 `수정된 파일: {절대 경로}`
