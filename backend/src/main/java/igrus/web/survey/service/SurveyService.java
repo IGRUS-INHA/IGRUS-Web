@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -90,6 +91,7 @@ public class SurveyService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         survey.update(
                 request.title(),
@@ -114,6 +116,7 @@ public class SurveyService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
         survey.trash();
     }
 
@@ -156,7 +159,6 @@ public class SurveyService {
      * @param authenticatedUser 인증된 사용자 정보
      * @return 설문 상세 응답
      */
-    @Transactional(readOnly = true)
     public SurveyDetailResponse getSurveyDetail(Long surveyId, AuthenticatedUser authenticatedUser) {
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new UserNotFoundException(authenticatedUser.userId()));
@@ -164,6 +166,7 @@ public class SurveyService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
         return SurveyDetailResponse.from(survey);
     }
 
@@ -173,13 +176,15 @@ public class SurveyService {
      * @param authenticatedUser 인증된 사용자 정보
      * @return 설문 목록 응답
      */
-    @Transactional(readOnly = true)
     public List<SurveyListResponse> getSurveyList(AuthenticatedUser authenticatedUser) {
         User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new UserNotFoundException(authenticatedUser.userId()));
         validateOperatorPermission(user);
 
-        return surveyRepository.findByDeletedFalseAndTrashedAtIsNull().stream()
+        Instant now = Instant.now();
+        List<Survey> surveys = surveyRepository.findByDeletedFalseAndTrashedAtIsNull();
+        surveys.forEach(s -> s.updateStatusIfNeeded(now));
+        return surveys.stream()
                 .map(SurveyListResponse::from)
                 .toList();
     }
@@ -218,6 +223,7 @@ public class SurveyService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         validatePublishPreConditions(survey);
         survey.publish();
@@ -240,6 +246,7 @@ public class SurveyService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         survey.unpublish();
 
@@ -261,6 +268,7 @@ public class SurveyService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         survey.openResponse();
 
@@ -281,6 +289,7 @@ public class SurveyService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         survey.closeResponse();
 
@@ -303,6 +312,7 @@ public class SurveyService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         validatePublishPreConditions(survey);
         survey.publishAndOpen();

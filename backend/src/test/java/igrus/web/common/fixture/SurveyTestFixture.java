@@ -110,6 +110,20 @@ public final class SurveyTestFixture {
         return survey;
     }
 
+    /**
+     * PUBLISHED + OPEN + 마감일 경과 상태의 설문을 생성합니다.
+     * Lazy evaluation 테스트용: updateStatusIfNeeded() 호출 전에는 OPEN 상태입니다.
+     *
+     * @return 마감일 경과된 OPEN 설문
+     */
+    public static Survey createOpenSurveyWithExpiredDeadline() {
+        Survey survey = Survey.create(DEFAULT_SURVEY_TITLE, DEFAULT_SURVEY_DESCRIPTION,
+                SurveyAccessLevel.PUBLIC, Instant.now().minusSeconds(3600));
+        ReflectionTestUtils.setField(survey, "visibility", SurveyVisibility.PUBLISHED);
+        ReflectionTestUtils.setField(survey, "responseStatus", SurveyResponseStatus.OPEN);
+        return survey;
+    }
+
     // ==================== SurveyQuestion 생성 (publish 검증용) ====================
 
     /**

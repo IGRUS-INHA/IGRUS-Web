@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -63,6 +64,7 @@ public class SurveyQuestionService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         long count = questionRepository.countBySurveyIdAndDeletedFalse(surveyId);
         if (count >= MAX_QUESTIONS) {
@@ -102,6 +104,7 @@ public class SurveyQuestionService {
 
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        survey.updateStatusIfNeeded(Instant.now());
 
         SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));

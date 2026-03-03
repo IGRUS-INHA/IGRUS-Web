@@ -255,6 +255,25 @@ class SurveyResponseServiceTest {
             assertThat(result).isNotNull();
         }
 
+        @DisplayName("deadline 경과 OPEN 설문 응답 시 lazy eval로 마감 후 거부")
+        @Test
+        void submitResponse_ExpiredDeadline_ThrowsException() {
+            // given
+            Survey survey = withId(createOpenSurveyWithExpiredDeadline(), DEFAULT_SURVEY_ID);
+
+            given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
+            given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
+
+            SubmitSurveyResponseRequest request = new SubmitSurveyResponseRequest(List.of(
+                    new SubmitAnswerRequest(100L, "답변", null, null, null)
+            ));
+
+            // when & then
+            assertThatThrownBy(() -> surveyResponseService.submitResponse(
+                    DEFAULT_SURVEY_ID, request, memberAuth))
+                    .isInstanceOf(SurveyNotAcceptingResponsesException.class);
+        }
+
         @DisplayName("필수 질문 누락 제출 시 Validator 예외 전파")
         @Test
         void submitResponse_MissingRequiredQuestion_ThrowsException() {
@@ -353,6 +372,25 @@ class SurveyResponseServiceTest {
                     .isInstanceOf(SurveyAnonymousNotAllowedException.class);
         }
 
+        @DisplayName("deadline 경과 PUBLIC 설문에 비회원 응답 시 lazy eval로 마감 후 거부")
+        @Test
+        void submitAnonymousResponse_ExpiredDeadline_ThrowsException() {
+            // given
+            Survey survey = withId(createOpenSurveyWithExpiredDeadline(), DEFAULT_SURVEY_ID);
+            // createOpenSurveyWithExpiredDeadline은 기본 PUBLIC
+
+            given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
+
+            SubmitSurveyResponseRequest request = new SubmitSurveyResponseRequest(List.of(
+                    new SubmitAnswerRequest(100L, "답변", null, null, null)
+            ));
+
+            // when & then
+            assertThatThrownBy(() -> surveyResponseService.submitAnonymousResponse(
+                    DEFAULT_SURVEY_ID, request))
+                    .isInstanceOf(SurveyNotAcceptingResponsesException.class);
+        }
+
         @DisplayName("CLOSED PUBLIC 설문에 비회원 응답 거부")
         @Test
         void submitAnonymousResponse_ClosedPublicSurvey_ThrowsException() {
@@ -419,6 +457,25 @@ class SurveyResponseServiceTest {
         void updateMyResponse_ClosedSurvey_ThrowsException() {
             // given
             Survey survey = withId(createClosedSurvey(), DEFAULT_SURVEY_ID);
+
+            given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
+            given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
+
+            SubmitSurveyResponseRequest request = new SubmitSurveyResponseRequest(List.of(
+                    new SubmitAnswerRequest(100L, "수정", null, null, null)
+            ));
+
+            // when & then
+            assertThatThrownBy(() -> surveyResponseService.updateMyResponse(
+                    DEFAULT_SURVEY_ID, request, memberAuth))
+                    .isInstanceOf(SurveyNotAcceptingResponsesException.class);
+        }
+
+        @DisplayName("deadline 경과 OPEN 설문에서 응답 수정 시 lazy eval로 마감 후 거부")
+        @Test
+        void updateMyResponse_ExpiredDeadline_ThrowsException() {
+            // given
+            Survey survey = withId(createOpenSurveyWithExpiredDeadline(), DEFAULT_SURVEY_ID);
 
             given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
             given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID)).willReturn(Optional.of(survey));
