@@ -5,7 +5,6 @@ import igrus.web.survey.domain.SurveyResponseStatus;
 import igrus.web.survey.domain.SurveyVisibility;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,13 +84,4 @@ public interface SurveyRepository extends JpaRepository<Survey, Long> {
     List<Survey> findByVisibilityAndResponseStatusAndDeletedFalseAndTrashedAtIsNull(
             SurveyVisibility visibility, SurveyResponseStatus responseStatus);
 
-    /**
-     * 마감일이 경과한 OPEN 상태의 활성 설문을 조회합니다. (자동 마감 스케줄러용)
-     *
-     * @param responseStatus 응답 수집 상태 (OPEN)
-     * @param deadline       기준 시각 (현재 시각)
-     * @return 마감 대상 설문 목록
-     */
-    List<Survey> findByResponseStatusAndDeletedFalseAndTrashedAtIsNullAndDeadlineBefore(
-            SurveyResponseStatus responseStatus, Instant deadline);
 }
