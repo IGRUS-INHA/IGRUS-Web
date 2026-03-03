@@ -29,8 +29,8 @@ public enum EventErrorCode implements ErrorCode {
     EVENT_REGISTRATION_NOT_REOPENABLE(400, "등록을 재오픈할 수 없습니다"),
     EVENT_REOPEN_REASON_REQUIRED(400, "재오픈 사유는 필수입니다"),
     EVENT_NOT_DELETABLE(400, "신청자가 있는 행사는 삭제할 수 없습니다"),
-    SURVEY_RESPONSE_REQUIRED(400, "설문 응답이 필요합니다"),
-    SURVEY_NOT_READY(400, "설문이 아직 시작되지 않았습니다");
+    EVENT_SURVEY_RESPONSE_REQUIRED(400, "설문 응답이 필요합니다"),
+    EVENT_SURVEY_NOT_READY(400, "설문이 아직 시작되지 않았습니다");
 
     private final int status;
     private final String message;

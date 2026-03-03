@@ -8,10 +8,10 @@ import igrus.web.common.exception.CustomBaseException;
 public class SurveyResponseRequiredException extends CustomBaseException {
 
     public SurveyResponseRequiredException() {
-        super(EventErrorCode.SURVEY_RESPONSE_REQUIRED);
+        super(EventErrorCode.EVENT_SURVEY_RESPONSE_REQUIRED);
     }
 
     public SurveyResponseRequiredException(String message) {
-        super(EventErrorCode.SURVEY_RESPONSE_REQUIRED, message);
+        super(EventErrorCode.EVENT_SURVEY_RESPONSE_REQUIRED, message);
     }
 }

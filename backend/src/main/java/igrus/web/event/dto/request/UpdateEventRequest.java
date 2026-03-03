@@ -3,6 +3,7 @@ package igrus.web.event.dto.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
@@ -47,6 +48,7 @@ public record UpdateEventRequest(
         @Min(value = 1, message = "정원은 1명 이상이어야 합니다")
         Integer capacity,
 
+        @Positive(message = "설문 ID는 양수여야 합니다")
         Long surveyId
 ) {
 }

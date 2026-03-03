@@ -238,6 +238,14 @@ public class EventService {
         Long previousSurveyId = event.getSurveyId();
         if (!Objects.equals(previousSurveyId, request.surveyId())) {
             log.info("행사 수정 - eventId: {}, surveyId 변경: {} -> {}", eventId, previousSurveyId, request.surveyId());
+
+            boolean hasActiveRegistrants = eventRegistrationRepository
+                    .existsByEventIdAndStatusIn(eventId, ACTIVE_REGISTRATION_STATUSES);
+            if (hasActiveRegistrants) {
+                log.warn("행사 수정 경고 - eventId: {}, surveyId 변경 시 활성 신청자 존재. "
+                                + "기존 신청자의 설문 응답은 이전 설문({})에 연결되어 있음",
+                        eventId, previousSurveyId);
+            }
         }
 
         // 8. 행사 수정 (도메인 메서드 호출)

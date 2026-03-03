@@ -5,6 +5,7 @@ import igrus.web.survey.question.domain.*;
 import igrus.web.survey.response.domain.*;
 import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
  * SurveyResponseService에서 추출된 답변 생성 로직을 독립 컴포넌트로 분리하여,
  * EventRegistrationService 등 다른 서비스에서도 재사용할 수 있도록 한다.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SurveyAnswerFactory {
@@ -31,6 +33,8 @@ public class SurveyAnswerFactory {
         for (SubmitAnswerRequest answerReq : answers) {
             SurveyQuestion question = questionMap.get(answerReq.questionId());
             if (question == null) {
+                log.warn("설문 답변 생성 시 질문을 찾을 수 없음 - questionId: {}, surveyId: {}",
+                        answerReq.questionId(), survey.getId());
                 continue;
             }
 
@@ -49,6 +53,8 @@ public class SurveyAnswerFactory {
                     }
                 }
                 case "GRID" -> createGridAnswers(response, question, answerReq);
+                default -> log.warn("인식되지 않은 질문 카테고리 - category: {}, questionId: {}, surveyId: {}",
+                        category, question.getId(), survey.getId());
             }
         }
     }

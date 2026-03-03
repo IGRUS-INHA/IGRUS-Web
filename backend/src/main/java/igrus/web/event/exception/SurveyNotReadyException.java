@@ -8,10 +8,10 @@ import igrus.web.common.exception.CustomBaseException;
 public class SurveyNotReadyException extends CustomBaseException {
 
     public SurveyNotReadyException() {
-        super(EventErrorCode.SURVEY_NOT_READY);
+        super(EventErrorCode.EVENT_SURVEY_NOT_READY);
     }
 
     public SurveyNotReadyException(String message) {
-        super(EventErrorCode.SURVEY_NOT_READY, message);
+        super(EventErrorCode.EVENT_SURVEY_NOT_READY, message);
     }
 }
