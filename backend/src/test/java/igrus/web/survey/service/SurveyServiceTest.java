@@ -23,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -606,6 +607,23 @@ class SurveyServiceTest {
             assertThatThrownBy(() -> surveyService.getSurveyDetail(DEFAULT_SURVEY_ID, memberAuth))
                     .isInstanceOf(SurveyAccessDeniedException.class);
         }
+
+        @DisplayName("deadline 경과 OPEN 설문 조회 시 responseStatus가 CLOSED로 반환")
+        @Test
+        void getSurveyDetail_ExpiredDeadline_ReturnsClosedStatus() {
+            // given
+            Survey survey = withId(createOpenSurveyWithExpiredDeadline(), DEFAULT_SURVEY_ID);
+
+            given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
+            given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
+                    .willReturn(Optional.of(survey));
+
+            // when
+            SurveyDetailResponse response = surveyService.getSurveyDetail(DEFAULT_SURVEY_ID, operatorAuth);
+
+            // then
+            assertThat(response.responseStatus()).isEqualTo(SurveyResponseStatus.CLOSED);
+        }
     }
 
     // ==================== 설문 목록 조회 ====================
@@ -654,6 +672,28 @@ class SurveyServiceTest {
             // when & then
             assertThatThrownBy(() -> surveyService.getSurveyList(memberAuth))
                     .isInstanceOf(SurveyAccessDeniedException.class);
+        }
+
+        @DisplayName("deadline 경과 OPEN 설문 포함 목록 조회 시 해당 설문 CLOSED로 반환")
+        @Test
+        void getSurveyList_WithExpiredDeadline_ReturnsClosedStatus() {
+            // given
+            Survey normalSurvey = createSurveyWithId(10L);
+            Survey expiredSurvey = withId(createOpenSurveyWithExpiredDeadline(), 11L);
+
+            given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
+            given(surveyRepository.findByDeletedFalseAndTrashedAtIsNull())
+                    .willReturn(List.of(normalSurvey, expiredSurvey));
+
+            // when
+            List<SurveyListResponse> result = surveyService.getSurveyList(operatorAuth);
+
+            // then
+            assertThat(result).hasSize(2);
+            SurveyListResponse expired = result.stream()
+                    .filter(s -> s.id().equals(11L))
+                    .findFirst().orElseThrow();
+            assertThat(expired.responseStatus()).isEqualTo(SurveyResponseStatus.CLOSED);
         }
     }
 

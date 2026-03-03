@@ -393,6 +393,80 @@ class SurveyTest {
     }
 
     @Nested
+    @DisplayName("Lazy Evaluation - updateStatusIfNeeded")
+    class UpdateStatusIfNeeded {
+
+        @DisplayName("OPEN + deadline 경과 → CLOSED 전환")
+        @Test
+        void updateStatusIfNeeded_OpenWithExpiredDeadline_TransitionsToClosed() {
+            // given
+            Survey survey = createOpenSurveyWithExpiredDeadline();
+
+            // when
+            survey.updateStatusIfNeeded(Instant.now());
+
+            // then
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.CLOSED);
+        }
+
+        @DisplayName("OPEN + deadline null → OPEN 유지")
+        @Test
+        void updateStatusIfNeeded_OpenWithNullDeadline_RemainsOpen() {
+            // given
+            Survey survey = createPublishedAndOpenSurvey();
+            // deadline은 null (기본)
+
+            // when
+            survey.updateStatusIfNeeded(Instant.now());
+
+            // then
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
+        }
+
+        @DisplayName("OPEN + deadline 미래 → OPEN 유지")
+        @Test
+        void updateStatusIfNeeded_OpenWithFutureDeadline_RemainsOpen() {
+            // given
+            Survey survey = createPublishedAndOpenSurvey();
+            ReflectionTestUtils.setField(survey, "deadline", Instant.now().plusSeconds(86400));
+
+            // when
+            survey.updateStatusIfNeeded(Instant.now());
+
+            // then
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
+        }
+
+        @DisplayName("CLOSED + deadline 경과 → CLOSED 유지 (멱등)")
+        @Test
+        void updateStatusIfNeeded_ClosedWithExpiredDeadline_RemainsClosed() {
+            // given
+            Survey survey = createClosedSurvey();
+            ReflectionTestUtils.setField(survey, "deadline", Instant.now().minusSeconds(3600));
+
+            // when
+            survey.updateStatusIfNeeded(Instant.now());
+
+            // then
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.CLOSED);
+        }
+
+        @DisplayName("NOT_STARTED + deadline 경과 → NOT_STARTED 유지")
+        @Test
+        void updateStatusIfNeeded_NotStartedWithExpiredDeadline_RemainsNotStarted() {
+            // given
+            Survey survey = createPublishedSurvey();
+            ReflectionTestUtils.setField(survey, "deadline", Instant.now().minusSeconds(3600));
+
+            // when
+            survey.updateStatusIfNeeded(Instant.now());
+
+            // then
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.NOT_STARTED);
+        }
+    }
+
+    @Nested
     @DisplayName("수정")
     class Update {
 
@@ -658,6 +732,13 @@ class SurveyTest {
         @Test
         void isAcceptingResponses_WhenPublishedNotStarted_ReturnsFalse() {
             Survey survey = createPublishedSurvey();
+            assertThat(survey.isAcceptingResponses()).isFalse();
+        }
+
+        @DisplayName("isAcceptingResponses: PUBLISHED+OPEN이지만 deadline 경과 → false (안전망)")
+        @Test
+        void isAcceptingResponses_WhenOpenButDeadlinePassed_ReturnsFalse() {
+            Survey survey = createOpenSurveyWithExpiredDeadline();
             assertThat(survey.isAcceptingResponses()).isFalse();
         }
     }
