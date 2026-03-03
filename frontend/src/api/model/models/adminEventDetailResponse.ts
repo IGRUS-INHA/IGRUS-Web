@@ -56,6 +56,7 @@ export interface AdminEventDetailResponse {
   currentCount?: number;
   registrationStatus?: AdminEventDetailResponseRegistrationStatus;
   eventStatus?: AdminEventDetailResponseEventStatus;
+  /** @nullable */
   closeReason?: AdminEventDetailResponseCloseReason;
   registrationType?: AdminEventDetailResponseRegistrationType;
   isRegistrable?: boolean;
@@ -65,4 +66,9 @@ export interface AdminEventDetailResponse {
   isRegistered?: boolean;
   /** 공개 상태 */
   visibility?: AdminEventDetailResponseVisibility;
+  /**
+   * 연결된 설문 ID (null이면 설문 미연결)
+   * @nullable
+   */
+  surveyId?: number | null;
 }

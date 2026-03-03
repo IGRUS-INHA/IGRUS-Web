@@ -33,16 +33,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
+import type { SubmitAnswerRequest } from "./submitAnswerRequest";
 
 /**
- * @nullable
+ * 행사 신청 요청. 설문 연결 행사의 경우 surveyAnswers를 포함하여 설문 응답과 행사 신청을 원자적으로 처리합니다.
  */
-export type AdminEventDetailResponseCloseReason =
-  | (typeof AdminEventDetailResponseCloseReason)[keyof typeof AdminEventDetailResponseCloseReason]
-  | null;
-
-export const AdminEventDetailResponseCloseReason = {
-  CAPACITY_FULL: "CAPACITY_FULL",
-  DEADLINE_PASSED: "DEADLINE_PASSED",
-  MANUAL_CLOSE: "MANUAL_CLOSE",
-} as const;
+export interface RegisterEventRequest {
+  /**
+   * 설문 응답 배열. 설문 연결 행사 신청 시 설문 응답을 포함합니다. 이미 응답한 경우 생략 가능합니다.
+   * @nullable
+   */
+  surveyAnswers?: SubmitAnswerRequest[] | null;
+}

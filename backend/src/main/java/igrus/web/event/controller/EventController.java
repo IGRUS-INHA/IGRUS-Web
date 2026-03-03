@@ -203,6 +203,9 @@ public class EventController implements EventApi {
                 .registrationEndAt(r.registrationEndAt())
                 .capacity(r.capacity())
                 .currentCount(r.currentCount())
+                .visibility(r.visibility() != null
+                        ? GetEvent200Response.VisibilityEnum.fromValue(r.visibility().name())
+                        : null)
                 .registrationStatus(r.registrationStatus() != null
                         ? GetEvent200Response.RegistrationStatusEnum.fromValue(r.registrationStatus().name())
                         : null)
@@ -233,6 +236,9 @@ public class EventController implements EventApi {
                 .registrationEndAt(r.registrationEndAt())
                 .capacity(r.capacity())
                 .currentCount(r.currentCount())
+                .visibility(r.visibility() != null
+                        ? GetEventList200ResponseInner.VisibilityEnum.fromValue(r.visibility().name())
+                        : null)
                 .registrationStatus(r.registrationStatus() != null
                         ? GetEventList200ResponseInner.RegistrationStatusEnum.fromValue(
                                 r.registrationStatus().name())

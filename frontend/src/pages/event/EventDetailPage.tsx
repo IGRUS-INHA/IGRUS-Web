@@ -81,7 +81,7 @@ export default function EventDetailPage() {
   const handleApply = () => {
     if (!eventId) return;
     applyEvent(
-      { eventId: Number(eventId) },
+      { eventId: Number(eventId), data: {} },
       {
         onSuccess: () => {
           void queryClient.invalidateQueries({
