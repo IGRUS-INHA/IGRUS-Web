@@ -85,7 +85,8 @@ class AdminEventControllerSecurityTest extends ServiceIntegrationTestBase {
                     now.minus(1, ChronoUnit.DAYS),
                     now.plus(6, ChronoUnit.DAYS),
                     10,
-                    EventRegistrationType.AUTO_APPROVE
+                    EventRegistrationType.AUTO_APPROVE,
+            null
             );
             event.publish();
             return eventRepository.save(event);
@@ -103,7 +104,8 @@ class AdminEventControllerSecurityTest extends ServiceIntegrationTestBase {
                     now.minus(1, ChronoUnit.DAYS),
                     now.plus(6, ChronoUnit.DAYS),
                     10,
-                    EventRegistrationType.AUTO_APPROVE
+                    EventRegistrationType.AUTO_APPROVE,
+            null
             );
             return eventRepository.save(event);
         });

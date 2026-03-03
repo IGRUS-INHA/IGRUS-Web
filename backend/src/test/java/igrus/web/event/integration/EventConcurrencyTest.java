@@ -84,7 +84,8 @@ class EventConcurrencyTest extends ServiceIntegrationTestBase {
                     now.minus(1, ChronoUnit.DAYS),
                     now.plus(6, ChronoUnit.DAYS),
                     capacity,
-                    type
+                    type,
+                    null
             );
             event.publish();
             event.openRegistration();
@@ -117,7 +118,7 @@ class EventConcurrencyTest extends ServiceIntegrationTestBase {
                 readyLatch.countDown();
                 try {
                     startLatch.await();
-                    eventRegistrationService.registerEvent(event.getId(), user.getId());
+                    eventRegistrationService.registerEvent(event.getId(), user.getId(), null);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failCount.incrementAndGet();
@@ -164,7 +165,7 @@ class EventConcurrencyTest extends ServiceIntegrationTestBase {
                 readyLatch.countDown();
                 try {
                     startLatch.await();
-                    eventRegistrationService.registerEvent(event.getId(), user.getId());
+                    eventRegistrationService.registerEvent(event.getId(), user.getId(), null);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failCount.incrementAndGet();
@@ -198,7 +199,7 @@ class EventConcurrencyTest extends ServiceIntegrationTestBase {
         // given: capacity=10, 9명 사전 신청
         Event event = createAndSaveOpenEvent(10, EventRegistrationType.AUTO_APPROVE);
         for (int i = 0; i < 9; i++) {
-            eventRegistrationService.registerEvent(event.getId(), members.get(i).getId());
+            eventRegistrationService.registerEvent(event.getId(), members.get(i).getId(), null);
         }
 
         // 동시 실행: 1명 취소 (member at index 0) + 2명 신규 신청 (members at index 9, 10)
@@ -228,7 +229,7 @@ class EventConcurrencyTest extends ServiceIntegrationTestBase {
                 readyLatch.countDown();
                 try {
                     startLatch.await();
-                    eventRegistrationService.registerEvent(event.getId(), user.getId());
+                    eventRegistrationService.registerEvent(event.getId(), user.getId(), null);
                 } catch (Exception e) {
                     // 정원 초과 실패는 예상 가능
                 }
@@ -256,8 +257,8 @@ class EventConcurrencyTest extends ServiceIntegrationTestBase {
     void concurrentApproval_Capacity1_2Waiting_ExactlyOneApproved() throws Exception {
         // given: MANUAL_APPROVE 행사, capacity=1, 2명 신청 (WAITING 상태)
         Event event = createAndSaveOpenEvent(1, EventRegistrationType.MANUAL_APPROVE);
-        eventRegistrationService.registerEvent(event.getId(), members.get(0).getId());
-        eventRegistrationService.registerEvent(event.getId(), members.get(1).getId());
+        eventRegistrationService.registerEvent(event.getId(), members.get(0).getId(), null);
+        eventRegistrationService.registerEvent(event.getId(), members.get(1).getId(), null);
 
         // 신청 ID 조회
         EventRegistration reg1 = eventRegistrationRepository
