@@ -62,6 +62,9 @@ class SurveyResponseServiceTest {
     @Spy
     private SurveyAnswerValidator answerValidator;
 
+    @Spy
+    private SurveyAnswerFactory surveyAnswerFactory;
+
     @InjectMocks
     private SurveyResponseService surveyResponseService;
 
