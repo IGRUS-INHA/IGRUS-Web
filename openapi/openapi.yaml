@@ -93,6 +93,10 @@ tags:
   description: 비밀번호 기반 인증 관련 API
 - name: MyPage
   description: 마이페이지 API
+- name: Survey Form
+  description: 설문 양식 조회 API (응답자용)
+- name: Survey Anonymous Form
+  description: 비회원 설문 양식 조회 API
 - name: Survey
   description: 설문 API
 - name: Comment Like
@@ -144,6 +148,10 @@ paths:
     $ref: ./paths/surveys.yaml#/surveysBySurveyIdOpen
   /api/v1/surveys/{surveyId}/close:
     $ref: ./paths/surveys.yaml#/surveysBySurveyIdClose
+  /api/v1/surveys/{surveyId}/form:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdForm
+  /api/v1/surveys/{surveyId}/form/anonymous:
+    $ref: ./paths/surveys.yaml#/surveysBySurveyIdFormAnonymous
   /api/v1/storage/presigned-url:
     $ref: ./paths/storage.yaml#/storagePresignedUrl
   /api/v1/storage/confirm:

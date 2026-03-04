@@ -15,7 +15,8 @@ public final class SecurityPaths {
             "/api/privacy/policy",       // 개인정보 처리방침
             "/api/v1/inquiries/guest",   // 문의 작성 (비로그인 가능)
             "/api/v1/inquiries/lookup",  // 비회원 문의 조회
-            "/api/v1/surveys/*/responses/anonymous"  // 비회원 설문 응답
+            "/api/v1/surveys/*/responses/anonymous",  // 비회원 설문 응답
+            "/api/v1/surveys/*/form/anonymous"  // 비회원 설문 양식 조회
     };
 
     /**

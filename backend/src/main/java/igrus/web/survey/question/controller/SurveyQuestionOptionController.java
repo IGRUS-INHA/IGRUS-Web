@@ -28,7 +28,7 @@ public class SurveyQuestionOptionController implements SurveyQuestionOptionApi {
     private final SurveyQuestionOptionService surveyQuestionOptionService;
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerOptionsInner>> createOption(
             Long surveyId,
             Long questionId,
@@ -47,7 +47,7 @@ public class SurveyQuestionOptionController implements SurveyQuestionOptionApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerOptionsInner>> getOptionList(
             Long surveyId,
             Long questionId
@@ -60,7 +60,7 @@ public class SurveyQuestionOptionController implements SurveyQuestionOptionApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerOptionsInner>> updateOption(
             Long surveyId,
             Long questionId,
@@ -80,7 +80,7 @@ public class SurveyQuestionOptionController implements SurveyQuestionOptionApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<Void> deleteOption(Long surveyId, Long questionId, Long optionId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("선택지 삭제 요청 - surveyId: {}, questionId: {}, optionId: {}, userId: {}", surveyId, questionId, optionId, user.userId());

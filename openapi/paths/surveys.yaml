@@ -23,7 +23,7 @@ surveysBySurveyId:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -60,7 +60,7 @@ surveysBySurveyId:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -87,7 +87,7 @@ surveysBySurveyId:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -174,7 +174,7 @@ surveys:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
     security:
     - BearerAuthentication: []
   post:
@@ -201,7 +201,7 @@ surveys:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
     security:
     - BearerAuthentication: []
 surveysBySurveyIdUnpublish:
@@ -231,7 +231,7 @@ surveysBySurveyIdUnpublish:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -259,7 +259,7 @@ surveysBySurveyIdTrash:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -285,7 +285,7 @@ surveysBySurveyIdRestore:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -392,7 +392,7 @@ surveysBySurveyIdQuestions:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -429,7 +429,7 @@ surveysBySurveyIdQuestions:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -468,7 +468,7 @@ surveysBySurveyIdQuestionsByQuestionIdRows:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문 또는 질문을 찾을 수 없음
     security:
@@ -514,7 +514,7 @@ surveysBySurveyIdQuestionsByQuestionIdRows:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문 또는 질문을 찾을 수 없음
     security:
@@ -553,7 +553,7 @@ surveysBySurveyIdQuestionsByQuestionIdOptions:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문 또는 질문을 찾을 수 없음
     security:
@@ -599,7 +599,7 @@ surveysBySurveyIdQuestionsByQuestionIdOptions:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문 또는 질문을 찾을 수 없음
     security:
@@ -631,7 +631,7 @@ surveysBySurveyIdPublish:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -663,7 +663,7 @@ surveysBySurveyIdPublishAndOpen:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -695,7 +695,7 @@ surveysBySurveyIdOpen:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -727,7 +727,7 @@ surveysBySurveyIdClose:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 설문을 찾을 수 없음
     security:
@@ -760,7 +760,7 @@ surveysBySurveyIdQuestionsByQuestionId:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 질문을 찾을 수 없음
     security:
@@ -804,7 +804,7 @@ surveysBySurveyIdQuestionsByQuestionId:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 질문을 찾을 수 없음
     security:
@@ -844,7 +844,7 @@ surveysBySurveyIdQuestionsByQuestionIdRowsByRowId:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 행을 찾을 수 없음
     security:
@@ -897,7 +897,7 @@ surveysBySurveyIdQuestionsByQuestionIdRowsByRowId:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 행을 찾을 수 없음
     security:
@@ -937,7 +937,7 @@ surveysBySurveyIdQuestionsByQuestionIdOptionsByOptionId:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 선택지를 찾을 수 없음
     security:
@@ -990,11 +990,74 @@ surveysBySurveyIdQuestionsByQuestionIdOptionsByOptionId:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
       '404':
         description: 선택지를 찾을 수 없음
     security:
     - BearerAuthentication: []
+surveysBySurveyIdForm:
+  get:
+    tags:
+    - Survey Form
+    summary: 설문 양식 조회 (회원용)
+    description: 응답자가 설문 양식(질문·선택지·행)을 조회합니다. PUBLISHED + OPEN 상태이며 accessLevel 조건을
+      충족해야 합니다. 인증 필요.
+    operationId: getSurveyForm
+    parameters:
+    - name: surveyId
+      in: path
+      description: 설문 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    responses:
+      '200':
+        description: 설문 양식 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
+      '400':
+        description: 응답 불가 상태 (미공개, 마감 등)
+      '401':
+        description: 인증 필요
+      '403':
+        description: 응답 권한 없음 (accessLevel 미충족)
+      '404':
+        description: 설문을 찾을 수 없음
+    security:
+    - BearerAuthentication: []
+surveysBySurveyIdFormAnonymous:
+  get:
+    tags:
+    - Survey Anonymous Form
+    summary: 설문 양식 조회 (비회원용)
+    description: 비회원이 PUBLIC 설문의 양식(질문·선택지·행)을 조회합니다. PUBLIC + PUBLISHED + OPEN 상태에서만
+      조회 가능합니다. 인증 불필요.
+    operationId: getAnonymousSurveyForm
+    parameters:
+    - name: surveyId
+      in: path
+      description: 설문 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    responses:
+      '200':
+        description: 설문 양식 조회 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/surveys.yaml#/SurveyDetailResponse
+      '400':
+        description: 응답 불가 상태 (미공개, 마감 등)
+      '403':
+        description: 비회원 응답이 허용되지 않는 설문
+      '404':
+        description: 설문을 찾을 수 없음
+    security: []
 surveysTrash:
   get:
     tags:
@@ -1014,6 +1077,6 @@ surveysTrash:
       '401':
         description: 인증 필요
       '403':
-        description: 권한 없음
+        description: 권한 없음 (OPERATOR 이상 필요)
     security:
     - BearerAuthentication: []
