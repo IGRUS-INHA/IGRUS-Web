@@ -37,10 +37,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 공개 상태
  */
-export type AdminEventDetailResponseVisibility =
-  (typeof AdminEventDetailResponseVisibility)[keyof typeof AdminEventDetailResponseVisibility];
+export type AdminEventDetailResponseVisibility = typeof AdminEventDetailResponseVisibility[keyof typeof AdminEventDetailResponseVisibility];
+
 
 export const AdminEventDetailResponseVisibility = {
-  PUBLISHED: "PUBLISHED",
-  UNPUBLISHED: "UNPUBLISHED",
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
 } as const;

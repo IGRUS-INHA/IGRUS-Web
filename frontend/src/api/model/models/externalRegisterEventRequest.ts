@@ -33,20 +33,42 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
+import type { SubmitAnswerRequest } from './submitAnswerRequest';
 
-export type GetMyBookmarks1Params = {
 /**
- * 페이지 번호 (0부터 시작)
- * @minimum 0
+ * 외부인(비회원) 행사 신청 요청.
+학번과 전화번호 각각 동일 행사 내 중복 신청을 방지합니다.
+설문 연결 행사의 경우 surveyAnswers를 포함하여 설문 응답과 행사 신청을 원자적으로 처리합니다.
+
  */
-page?: number;
-/**
- * 페이지당 항목 수
- * @minimum 1
- */
-size?: number;
-/**
- * 정렬 조건. 여러 정렬은 sort를 여러 번 지정합니다. (sort=createdAt,DESC&sort=id,ASC)
- */
-sort?: string[];
-};
+export interface ExternalRegisterEventRequest {
+  /**
+   * 신청자 이름
+   * @minLength 1
+   * @maxLength 50
+   */
+  name: string;
+  /**
+   * 신청자 학번 (중복 방지 식별자)
+   * @minLength 1
+   * @maxLength 20
+   */
+  studentId: string;
+  /**
+   * 신청자 연락처 (중복 방지 식별자)
+   * @minLength 1
+   * @maxLength 20
+   */
+  phone: string;
+  /**
+   * 신청자 학과
+   * @minLength 1
+   * @maxLength 100
+   */
+  department: string;
+  /**
+   * 설문 응답 배열. 설문 연결 행사 신청 시 설문 응답을 포함합니다.
+   * @nullable
+   */
+  surveyAnswers?: SubmitAnswerRequest[] | null;
+}

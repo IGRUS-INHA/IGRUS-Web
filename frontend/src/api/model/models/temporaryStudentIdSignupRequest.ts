@@ -33,11 +33,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { TemporaryStudentIdSignupRequestEnrollmentStatus } from "./temporaryStudentIdSignupRequestEnrollmentStatus";
-import type { TemporaryStudentIdSignupRequestGender } from "./temporaryStudentIdSignupRequestGender";
-import type { TemporaryStudentIdSignupRequestInterestsItem } from "./temporaryStudentIdSignupRequestInterestsItem";
-import type { TemporaryStudentIdSignupRequestJoinRoute } from "./temporaryStudentIdSignupRequestJoinRoute";
-import type { TemporaryStudentIdSignupRequestWishesItem } from "./temporaryStudentIdSignupRequestWishesItem";
+import type { TemporaryStudentIdSignupRequestEnrollmentStatus } from './temporaryStudentIdSignupRequestEnrollmentStatus';
+import type { TemporaryStudentIdSignupRequestGender } from './temporaryStudentIdSignupRequestGender';
+import type { TemporaryStudentIdSignupRequestInterestsItem } from './temporaryStudentIdSignupRequestInterestsItem';
+import type { TemporaryStudentIdSignupRequestJoinRoute } from './temporaryStudentIdSignupRequestJoinRoute';
+import type { TemporaryStudentIdSignupRequestWishesItem } from './temporaryStudentIdSignupRequestWishesItem';
 
 /**
  * 임시 학번 회원가입 요청 (1~2월, 1학년 신입생 전용)

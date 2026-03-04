@@ -33,9 +33,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { PageableObject } from "./pageableObject";
-import type { SortObject } from "./sortObject";
-import type { UserRoleHistoryResponse } from "./userRoleHistoryResponse";
+import type { PageableObject } from './pageableObject';
+import type { SortObject } from './sortObject';
+import type { UserRoleHistoryResponse } from './userRoleHistoryResponse';
 
 export interface PageUserRoleHistoryResponse {
   totalElements?: number;

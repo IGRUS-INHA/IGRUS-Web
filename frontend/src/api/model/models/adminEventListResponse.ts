@@ -33,10 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AdminEventListResponseEventStatus } from "./adminEventListResponseEventStatus";
-import type { AdminEventListResponseRegistrationStatus } from "./adminEventListResponseRegistrationStatus";
-import type { AdminEventListResponseRegistrationType } from "./adminEventListResponseRegistrationType";
-import type { AdminEventListResponseVisibility } from "./adminEventListResponseVisibility";
+import type { AdminEventListResponseEventStatus } from './adminEventListResponseEventStatus';
+import type { AdminEventListResponseRegistrationStatus } from './adminEventListResponseRegistrationStatus';
+import type { AdminEventListResponseRegistrationType } from './adminEventListResponseRegistrationType';
+import type { AdminEventListResponseVisibility } from './adminEventListResponseVisibility';
 
 /**
  * 관리자용 행사 목록 응답 (visibility 포함)
@@ -61,4 +61,6 @@ export interface AdminEventListResponse {
    * @nullable
    */
   surveyId?: number | null;
+  /** 외부인(비회원) 신청 허용 여부 */
+  allowExternal?: boolean;
 }

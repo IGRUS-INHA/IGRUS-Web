@@ -33,8 +33,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AnswerResponseQuestionType } from "./answerResponseQuestionType";
-import type { GridAnswerResponse } from "./gridAnswerResponse";
+import type { AnswerResponseQuestionType } from './answerResponseQuestionType';
+import type { GridAnswerResponse } from './gridAnswerResponse';
 
 export interface AnswerResponse {
   questionId?: number;

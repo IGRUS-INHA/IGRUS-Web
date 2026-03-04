@@ -33,9 +33,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AccountStatusChangeHistoryResponse } from "./accountStatusChangeHistoryResponse";
-import type { PageableObject } from "./pageableObject";
-import type { SortObject } from "./sortObject";
+import type { AccountStatusChangeHistoryResponse } from './accountStatusChangeHistoryResponse';
+import type { PageableObject } from './pageableObject';
+import type { SortObject } from './sortObject';
 
 export interface PageAccountStatusChangeHistoryResponse {
   totalElements?: number;

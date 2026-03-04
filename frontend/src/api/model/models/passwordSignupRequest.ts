@@ -33,11 +33,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { PasswordSignupRequestEnrollmentStatus } from "./passwordSignupRequestEnrollmentStatus";
-import type { PasswordSignupRequestGender } from "./passwordSignupRequestGender";
-import type { PasswordSignupRequestInterestsItem } from "./passwordSignupRequestInterestsItem";
-import type { PasswordSignupRequestJoinRoute } from "./passwordSignupRequestJoinRoute";
-import type { PasswordSignupRequestWishesItem } from "./passwordSignupRequestWishesItem";
+import type { PasswordSignupRequestEnrollmentStatus } from './passwordSignupRequestEnrollmentStatus';
+import type { PasswordSignupRequestGender } from './passwordSignupRequestGender';
+import type { PasswordSignupRequestInterestsItem } from './passwordSignupRequestInterestsItem';
+import type { PasswordSignupRequestJoinRoute } from './passwordSignupRequestJoinRoute';
+import type { PasswordSignupRequestWishesItem } from './passwordSignupRequestWishesItem';
 
 /**
  * 비밀번호 기반 회원가입 요청

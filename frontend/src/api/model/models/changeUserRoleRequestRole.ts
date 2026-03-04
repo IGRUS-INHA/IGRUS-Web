@@ -37,12 +37,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 변경할 역할
  */
-export type ChangeUserRoleRequestRole =
-  (typeof ChangeUserRoleRequestRole)[keyof typeof ChangeUserRoleRequestRole];
+export type ChangeUserRoleRequestRole = typeof ChangeUserRoleRequestRole[keyof typeof ChangeUserRoleRequestRole];
+
 
 export const ChangeUserRoleRequestRole = {
-  ASSOCIATE: "ASSOCIATE",
-  MEMBER: "MEMBER",
-  OPERATOR: "OPERATOR",
-  ADMIN: "ADMIN",
+  ASSOCIATE: 'ASSOCIATE',
+  MEMBER: 'MEMBER',
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
 } as const;

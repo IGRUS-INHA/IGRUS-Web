@@ -35,9 +35,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type CheckRecoveryEligibilityParams = {
-  /**
-   * 복구 가능 여부를 확인할 학번 (8자리 숫자)
-   * @pattern ^\d{8}$
-   */
-  studentId: string;
+/**
+ * 복구 가능 여부를 확인할 학번 (8자리 숫자)
+ * @pattern ^\d{8}$
+ */
+studentId: string;
 };

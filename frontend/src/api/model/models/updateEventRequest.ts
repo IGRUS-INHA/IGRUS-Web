@@ -58,4 +58,6 @@ export interface UpdateEventRequest {
    * @nullable
    */
   surveyId?: number | null;
+  /** 외부인(비회원) 신청 허용 여부 */
+  allowExternal?: boolean;
 }

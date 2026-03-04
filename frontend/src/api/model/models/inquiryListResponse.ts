@@ -33,8 +33,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { InquiryListResponseStatus } from "./inquiryListResponseStatus";
-import type { InquiryListResponseType } from "./inquiryListResponseType";
+import type { InquiryListResponseStatus } from './inquiryListResponseStatus';
+import type { InquiryListResponseType } from './inquiryListResponseType';
 
 /**
  * 문의 목록 응답

@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { RejectedAssociateInfoResponseWishesItem } from "./rejectedAssociateInfoResponseWishesItem";
+import type { RejectedAssociateInfoResponseWishesItem } from './rejectedAssociateInfoResponseWishesItem';
 
 /**
  * 거절된 준회원 정보 응답

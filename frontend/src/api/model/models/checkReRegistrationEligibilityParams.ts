@@ -35,9 +35,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type CheckReRegistrationEligibilityParams = {
-  /**
-   * 재가입 가능 여부를 확인할 학번 (8자리 숫자)
-   * @pattern ^\d{8}$
-   */
-  studentId: string;
+/**
+ * 재가입 가능 여부를 확인할 학번 (8자리 숫자)
+ * @pattern ^\d{8}$
+ */
+studentId: string;
 };

@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { LoginHistoryResponseFailureReason } from "./loginHistoryResponseFailureReason";
+import type { LoginHistoryResponseFailureReason } from './loginHistoryResponseFailureReason';
 
 /**
  * 로그인 이력 응답

@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { CreateEventRequestRegistrationType } from "./createEventRequestRegistrationType";
+import type { CreateEventRequestRegistrationType } from './createEventRequestRegistrationType';
 
 export interface CreateEventRequest {
   /**
@@ -60,4 +60,6 @@ export interface CreateEventRequest {
    * @nullable
    */
   surveyId?: number | null;
+  /** 외부인(비회원) 신청 허용 여부 */
+  allowExternal?: boolean;
 }

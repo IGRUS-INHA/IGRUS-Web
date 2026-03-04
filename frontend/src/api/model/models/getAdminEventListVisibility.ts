@@ -34,10 +34,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type GetAdminEventListVisibility =
-  (typeof GetAdminEventListVisibility)[keyof typeof GetAdminEventListVisibility];
+export type GetAdminEventListVisibility = typeof GetAdminEventListVisibility[keyof typeof GetAdminEventListVisibility];
+
 
 export const GetAdminEventListVisibility = {
-  PUBLISHED: "PUBLISHED",
-  UNPUBLISHED: "UNPUBLISHED",
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
 } as const;
