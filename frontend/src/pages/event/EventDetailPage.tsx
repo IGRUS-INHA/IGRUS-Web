@@ -13,15 +13,32 @@ import {
   Edit,
   Trash2,
   Lock,
+  Eye,
+  EyeOff,
+  LockOpen,
+  XCircle,
+  RotateCcw,
 } from "lucide-react";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import {
   useEvent,
+  useAdminEvent,
   useApplyEvent,
   useCancelEventApplication,
   useDeleteEvent,
   useCloseEvent,
+  eventKeys,
+  adminEventKeys,
 } from "@/hooks/queries/useEvents";
+import {
+  useCancelEvent,
+  useReactivateEvent,
+  useReopenRegistration,
+} from "@/api/model/event/event";
+import {
+  usePublishEvent,
+  useUnpublishEvent,
+} from "@/api/model/admin-event/admin-event";
 import { registrationKeys } from "@/hooks/queries/useEventRegistrations";
 import { useAuth } from "@/hooks";
 import { useEffect, useRef, useState } from "react";
@@ -37,35 +54,122 @@ import {
   hasErrorCode,
 } from "@/utils/error";
 import { formatDateTime } from "@/utils/date";
+import {
+  EVENT_STATUS_BADGE,
+  EVENT_STATUS_LABEL,
+  REG_STATUS_BADGE,
+  REG_STATUS_LABEL,
+  VISIBILITY_BADGE,
+  VISIBILITY_LABEL,
+} from "@/constants/eventStatus";
+import ReasonDialog from "@/components/feature/event/ReasonDialog";
 
 export default function EventDetailPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: eventResponse, isLoading, error } = useEvent(Number(eventId));
+  const { user } = useAuth();
+  const isOperator = user?.role === "OPERATOR" || user?.role === "ADMIN";
+  const numericEventId = Number(eventId);
+
+  // OPERATOR+는 admin API로 비공개 행사도 조회 가능
+  const publicQuery = useEvent(numericEventId, !isOperator);
+  const adminQuery = useAdminEvent(numericEventId, isOperator);
+  const {
+    data: eventResponse,
+    isLoading,
+    error,
+  } = isOperator ? adminQuery : publicQuery;
+
   const { mutate: applyEvent, isPending: isApplying } = useApplyEvent();
-  const { mutate: cancelEvent, isPending: isCanceling } =
+  const { mutate: cancelRegistration, isPending: isCanceling } =
     useCancelEventApplication();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: closeEvent, isPending: isClosing } = useCloseEvent();
-  const { user } = useAuth();
+
+  // 쿼리 무효화 헬퍼
+  const invalidateEvent = () => {
+    if (!eventId) return;
+    void queryClient.invalidateQueries({
+      queryKey: eventKeys.detail(Number(eventId)),
+    });
+    void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    void queryClient.invalidateQueries({
+      queryKey: adminEventKeys.detail(Number(eventId)),
+    });
+    void queryClient.invalidateQueries({ queryKey: adminEventKeys.lists() });
+  };
+
+  // 관리 mutation 훅
+  const { mutate: publishEvent, isPending: isPublishing } = usePublishEvent({
+    mutation: {
+      onSuccess: invalidateEvent,
+      onError: () => alert("공개 처리에 실패했습니다."),
+    },
+  });
+
+  const { mutate: unpublishEvent, isPending: isUnpublishing } =
+    useUnpublishEvent({
+      mutation: {
+        onSuccess: invalidateEvent,
+        onError: () => alert("비공개 처리에 실패했습니다."),
+      },
+    });
+
+  const { mutate: cancelEvent, isPending: isCancelingEvent } = useCancelEvent({
+    mutation: {
+      onSuccess: invalidateEvent,
+      onError: () => alert("행사 취소에 실패했습니다."),
+    },
+  });
+
+  const { mutate: reactivateEvent, isPending: isReactivating } =
+    useReactivateEvent({
+      mutation: {
+        onSuccess: invalidateEvent,
+        onError: () => alert("행사 재활성화에 실패했습니다."),
+      },
+    });
+
+  const { mutate: reopenRegistration, isPending: isReopening } =
+    useReopenRegistration({
+      mutation: {
+        onSuccess: invalidateEvent,
+        onError: () => alert("등록 재오픈에 실패했습니다."),
+      },
+    });
+
+  const isMutating =
+    isPublishing ||
+    isUnpublishing ||
+    isClosing ||
+    isReopening ||
+    isCancelingEvent ||
+    isReactivating ||
+    isDeleting;
 
   // API 응답 데이터 추출
   const event = eventResponse?.data;
 
-  // 이미지 캐러셀 상태 (추후 다중 이미지 지원용)
+  // 이미지 캐러셀 상태
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // More Menu 상태
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
+  // ReasonDialog 상태
+  const [reasonDialog, setReasonDialog] = useState<{
+    title: string;
+    onConfirm: (reason: string) => void;
+  } | null>(null);
+
   // 외부 클릭 감지 (More Menu 닫기)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         moreMenuRef.current &&
-        !moreMenuRef.current.contains(event.target as Node)
+        !moreMenuRef.current.contains(e.target as Node)
       ) {
         setIsMoreMenuOpen(false);
       }
@@ -76,6 +180,8 @@ export default function EventDetailPage() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // -- 사용자 액션 핸들러 --
 
   const handleApply = () => {
     if (!eventId) return;
@@ -103,11 +209,20 @@ export default function EventDetailPage() {
     );
   };
 
-  const handleCancel = () => {
+  const handleCancelRegistration = () => {
     if (!eventId) return;
-    if (!confirm("행사 신청을 취소하시겠습니까?")) return;
 
-    cancelEvent(
+    const isReregistrationBlocked =
+      event?.closeReason === "DEADLINE_PASSED" ||
+      event?.closeReason === "MANUAL_CLOSE";
+
+    const message = isReregistrationBlocked
+      ? "신청을 취소하면 재신청이 불가능합니다. 정말 취소하시겠습니까?"
+      : "행사 신청을 취소하시겠습니까?";
+
+    if (!confirm(message)) return;
+
+    cancelRegistration(
       { eventId: Number(eventId) },
       {
         onError: (error: unknown) => {
@@ -115,41 +230,92 @@ export default function EventDetailPage() {
             alert("이미 취소된 신청입니다.");
           } else if (hasErrorCode(error, "CANCEL_DEADLINE_PASSED")) {
             alert("취소 가능 기간이 지났습니다.");
+          } else if (hasErrorCode(error, "EVENT_NOT_CANCELABLE")) {
+            alert("취소된 행사의 신청은 취소할 수 없습니다.");
           } else {
             alert(getErrorMessage(error));
           }
         },
       },
     );
+  };
+
+  // -- 관리 액션 핸들러 --
+
+  const handleEdit = () => {
+    setIsMoreMenuOpen(false);
+    navigate(`/events/${eventId}/edit`);
+  };
+
+  const handlePublish = () => {
+    if (!eventId) return;
+    setIsMoreMenuOpen(false);
+    publishEvent({ eventId: Number(eventId) });
+  };
+
+  const handleUnpublish = () => {
+    if (!eventId) return;
+    setIsMoreMenuOpen(false);
+    unpublishEvent({ eventId: Number(eventId) });
   };
 
   const handleCloseEvent = () => {
     if (!eventId) return;
-    if (
-      !window.confirm(
-        "행사 신청을 마감하시겠습니까?\n마감 후에는 새로운 신청을 받을 수 없습니다.",
-      )
-    ) {
-      return;
-    }
-
     setIsMoreMenuOpen(false);
-    closeEvent(
-      { eventId: Number(eventId), data: { reason: "운영진 수동 마감" } },
-      {
-        onError: (error: unknown) => {
-          if (isForbiddenError(error) || isEventOperatorRequired(error)) {
-            alert("행사 마감 권한이 없습니다.");
-          } else {
-            alert(getErrorMessage(error));
-          }
-        },
+    setReasonDialog({
+      title: "모집 마감 사유",
+      onConfirm: (reason) => {
+        closeEvent(
+          { eventId: Number(eventId), data: { reason } },
+          {
+            onError: (error: unknown) => {
+              if (isForbiddenError(error) || isEventOperatorRequired(error)) {
+                alert("행사 마감 권한이 없습니다.");
+              } else {
+                alert(getErrorMessage(error));
+              }
+            },
+          },
+        );
+        setReasonDialog(null);
       },
-    );
+    });
   };
 
-  const handleEdit = () => {
-    navigate(`/events/${eventId}/edit`);
+  const handleReopenRegistration = () => {
+    if (!eventId) return;
+    setIsMoreMenuOpen(false);
+    setReasonDialog({
+      title: "모집 재오픈 사유",
+      onConfirm: (reason) => {
+        reopenRegistration({ eventId: Number(eventId), data: { reason } });
+        setReasonDialog(null);
+      },
+    });
+  };
+
+  const handleCancelEvent = () => {
+    if (!eventId) return;
+    setIsMoreMenuOpen(false);
+    setReasonDialog({
+      title: "행사 취소 사유",
+      onConfirm: (reason) => {
+        cancelEvent({ eventId: Number(eventId), data: { reason } });
+        setReasonDialog(null);
+      },
+    });
+  };
+
+  const handleReactivate = () => {
+    if (!eventId) return;
+    setIsMoreMenuOpen(false);
+    setReasonDialog({
+      title: "행사 재활성화 사유",
+      onConfirm: (reason) => {
+        reactivateEvent({ eventId: Number(eventId), data: { reason } });
+        setReasonDialog(null);
+      },
+    });
   };
 
   const handleDelete = () => {
@@ -169,7 +335,12 @@ export default function EventDetailPage() {
           navigate("/events");
         },
         onError: (error: unknown) => {
-          if (isForbiddenError(error) || isEventOperatorRequired(error)) {
+          if (hasErrorCode(error, "EVENT_NOT_DELETABLE")) {
+            alert("신청자가 있는 행사는 삭제할 수 없습니다.");
+          } else if (
+            isForbiddenError(error) ||
+            isEventOperatorRequired(error)
+          ) {
             alert("행사 삭제 권한이 없습니다.");
           } else if (isEventNotFound(error)) {
             alert("이미 삭제된 행사입니다.");
@@ -215,25 +386,40 @@ export default function EventDetailPage() {
   // 상태 확인
   const isOpen = event.isRegistrable ?? false;
   const hasApplied = event.isRegistered ?? false;
-  const canApply = user && isOpen && !hasApplied;
-  const canCancel = user && hasApplied;
+  const isUnpublished = event.visibility === "UNPUBLISHED";
+  const canApply = user && isOpen && !hasApplied && !isUnpublished;
+  // CANCELED 상태의 행사는 신청 취소 불가 (백엔드: EventRegistrationService.cancelRegistration)
+  const canCancel = user && hasApplied && event.eventStatus !== "CANCELED";
   const canManage = event.canEdit;
+  const hasRegistrants = (event.currentCount ?? 0) > 0;
 
-  // 상태 라벨
-  const STATUS_LABELS: Record<string, string> = {
-    OPEN: "신청 가능",
-    UPCOMING: "예정",
-    CLOSED: "신청 불가",
-    COMPLETED: "신청 불가",
-    ONGOING: "진행중",
-  };
-  const statusLabel = event.eventStatus
-    ? (STATUS_LABELS[event.eventStatus] ?? "마감")
-    : isOpen
-      ? "신청 가능"
-      : "마감";
-  const isActiveStatus =
-    event.eventStatus === "UPCOMING" || event.eventStatus === "ONGOING";
+  // 2축 상태 배지 (EventCard와 동일 로직)
+  const regStatus = event.registrationStatus;
+  // COMPLETED 또는 CANCELED → 종료 상태 (모집 배지 숨김, 수정/신청취소 불가)
+  const isEventEnded =
+    event.eventStatus === "COMPLETED" || event.eventStatus === "CANCELED";
+  const isUpcomingWithRegStatus =
+    event.eventStatus === "UPCOMING" &&
+    (regStatus === "NOT_STARTED" || regStatus === "OPEN");
+
+  const showEventStatus = !isUpcomingWithRegStatus;
+  const eventStatusBadge = event.eventStatus
+    ? (EVENT_STATUS_BADGE[event.eventStatus] ??
+      "bg-muted text-muted-foreground")
+    : "bg-muted text-muted-foreground";
+  const eventStatusLabel = event.eventStatus
+    ? (EVENT_STATUS_LABEL[event.eventStatus] ?? event.eventStatus)
+    : "알 수 없음";
+
+  const showRegStatus =
+    isUpcomingWithRegStatus ||
+    (!isEventEnded &&
+      regStatus &&
+      (regStatus === "OPEN" || regStatus === "CLOSED"));
+  const regStatusBadge =
+    showRegStatus && regStatus ? REG_STATUS_BADGE[regStatus] : null;
+  const regStatusLabel =
+    showRegStatus && regStatus ? REG_STATUS_LABEL[regStatus] : null;
 
   const { date: dateStr, time: timeStr } = formatDateTime(event.eventStartAt);
 
@@ -246,6 +432,20 @@ export default function EventDetailPage() {
   ];
   const hasPrev = currentImageIndex > 0;
   const hasNext = currentImageIndex < images.length - 1;
+
+  // 더보기 메뉴 항목 구성
+  // COMPLETED 또는 CANCELED는 수정 불가 (백엔드: Event.update)
+  const isCanceled = event.eventStatus === "CANCELED";
+  const showEdit = !isCanceled;
+  const showPublish = event.visibility === "UNPUBLISHED";
+  const showUnpublish = event.visibility === "PUBLISHED";
+  const showClose = event.registrationStatus === "OPEN";
+  const showReopen =
+    event.registrationStatus === "CLOSED" &&
+    (event.eventStatus === "UPCOMING" || event.eventStatus === "ONGOING");
+  const showCancelEvent =
+    event.eventStatus === "UPCOMING" || event.eventStatus === "ONGOING";
+  const showReactivate = event.eventStatus === "CANCELED";
 
   return (
     <div className="animate-in slide-in-from-right-8 duration-300 max-w-4xl mx-auto">
@@ -269,30 +469,99 @@ export default function EventDetailPage() {
             </button>
             {isMoreMenuOpen && (
               <div className="absolute right-0 top-full mt-s2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200 bg-popover border-border">
-                <button
-                  onClick={handleEdit}
-                  type="button"
-                  className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted"
-                >
-                  <Edit size={16} /> 수정하기
-                </button>
-                {event.registrationStatus === "OPEN" && (
+                {/* 일반 관리 영역 */}
+                {showEdit && (
+                  <button
+                    onClick={handleEdit}
+                    type="button"
+                    className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted"
+                  >
+                    <Edit size={16} /> 수정하기
+                  </button>
+                )}
+
+                {showPublish && (
+                  <button
+                    onClick={handlePublish}
+                    type="button"
+                    disabled={isMutating}
+                    className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Eye size={16} /> 공개
+                  </button>
+                )}
+
+                {showUnpublish && (
+                  <button
+                    onClick={handleUnpublish}
+                    type="button"
+                    disabled={isMutating}
+                    className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <EyeOff size={16} /> 비공개
+                  </button>
+                )}
+
+                {showClose && (
                   <button
                     onClick={handleCloseEvent}
                     type="button"
-                    disabled={isClosing}
-                    className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isMutating}
+                    className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Lock size={16} /> {isClosing ? "마감 중..." : "신청 마감"}
+                    <Lock size={16} /> 모집 마감
                   </button>
                 )}
+
+                {showReopen && (
+                  <button
+                    onClick={handleReopenRegistration}
+                    type="button"
+                    disabled={isMutating}
+                    className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <LockOpen size={16} /> 모집 재오픈
+                  </button>
+                )}
+
+                {/* 구분선 */}
+                <div className="border-t border-border my-1" />
+
+                {/* 파괴적 액션 영역 */}
+                {showCancelEvent && (
+                  <button
+                    onClick={handleCancelEvent}
+                    type="button"
+                    disabled={isMutating}
+                    className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <XCircle size={16} /> 행사 취소
+                  </button>
+                )}
+
+                {showReactivate && (
+                  <button
+                    onClick={handleReactivate}
+                    type="button"
+                    disabled={isMutating}
+                    className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RotateCcw size={16} /> 행사 재활성화
+                  </button>
+                )}
+
                 <button
                   onClick={handleDelete}
                   type="button"
-                  disabled={isDeleting}
+                  disabled={isDeleting || hasRegistrants}
+                  title={
+                    hasRegistrants
+                      ? "신청자가 있는 행사는 삭제할 수 없습니다"
+                      : undefined
+                  }
                   className="w-full text-left px-s4 py-s3 text-sm font-medium text-destructive hover:bg-destructive/10 flex items-center gap-s2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Trash2 size={16} /> {isDeleting ? "삭제 중..." : "삭제하기"}
+                  <Trash2 size={16} /> 삭제하기
                 </button>
               </div>
             )}
@@ -310,16 +579,30 @@ export default function EventDetailPage() {
               alt={event.title}
               className="w-[200px] h-[200px] object-contain"
             />
-            {/* 상태 뱃지 */}
-            <span
-              className={`absolute top-s4 left-s4 px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${
-                isActiveStatus
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {statusLabel}
-            </span>
+            {/* 상태 뱃지 (EventCard와 동일 로직) */}
+            <div className="absolute top-s4 left-s4 flex gap-s2">
+              {event.visibility === "UNPUBLISHED" && (
+                <span
+                  className={`px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${VISIBILITY_BADGE["UNPUBLISHED"]}`}
+                >
+                  {VISIBILITY_LABEL["UNPUBLISHED"]}
+                </span>
+              )}
+              {showEventStatus && (
+                <span
+                  className={`px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${eventStatusBadge}`}
+                >
+                  {eventStatusLabel}
+                </span>
+              )}
+              {regStatusLabel && (
+                <span
+                  className={`px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${regStatusBadge}`}
+                >
+                  {regStatusLabel}
+                </span>
+              )}
+            </div>
             {/* 캐러셀 화살표 */}
             {images.length > 1 && (
               <>
@@ -409,7 +692,7 @@ export default function EventDetailPage() {
               {canCancel && (
                 <button
                   type="button"
-                  onClick={handleCancel}
+                  onClick={handleCancelRegistration}
                   disabled={isCanceling}
                   className="w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -462,6 +745,15 @@ export default function EventDetailPage() {
           )}
         </div>
       </div>
+
+      {/* 사유 입력 다이얼로그 */}
+      {reasonDialog && (
+        <ReasonDialog
+          title={reasonDialog.title}
+          onConfirm={reasonDialog.onConfirm}
+          onCancel={() => setReasonDialog(null)}
+        />
+      )}
     </div>
   );
 }

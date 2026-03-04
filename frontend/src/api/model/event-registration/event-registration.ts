@@ -827,6 +827,11 @@ export type cancelRegistrationResponse200 = {
   status: 200;
 };
 
+export type cancelRegistrationResponse400 = {
+  data: void;
+  status: 400;
+};
+
 export type cancelRegistrationResponse401 = {
   data: void;
   status: 401;
@@ -842,6 +847,7 @@ export type cancelRegistrationResponseSuccess =
     headers: Headers;
   };
 export type cancelRegistrationResponseError = (
+  | cancelRegistrationResponse400
   | cancelRegistrationResponse401
   | cancelRegistrationResponse404
 ) & {

@@ -644,13 +644,13 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("[INT-015] CANCELED 수정→재활성화 E2E")
-        void canceledEvent_Update_ThenReactivate() {
+        @DisplayName("[INT-015] CANCELED 상태에서 수정 시도 시 예외 발생")
+        void canceledEvent_Update_ThrowsException() {
             // given: 행사 취소
             Event event = createAndSaveAutoApproveEvent();
             eventService.cancelEvent(event.getId(), operator.getId(), "취소 테스트");
 
-            // when: 취소 상태에서 날짜 수정 (DB 저장 시 나노초 손실 방지를 위해 밀리초로 절삭)
+            // when: 취소 상태에서 수정 시도
             Event current = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
             Instant newEventStart = Instant.now().plus(10, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS);
             Instant newEventEnd = Instant.now().plus(11, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS);
@@ -662,16 +662,10 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     current.getCapacity(),
                     null
             );
-            eventService.updateEvent(event.getId(), request, operator.getId());
 
-            // when: 재활성화
-            eventService.reactivateEvent(event.getId(), operator.getId(), "재활성화 테스트");
-
-            // then: 수정된 날짜 기반 Lazy Evaluation 정상 동작
-            Event reactivated = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
-            reactivated.updateStatusIfNeeded(Instant.now());
-            assertThat(reactivated.getEventStatus()).isEqualTo(EventStatus.UPCOMING);
-            assertThat(reactivated.getEventStartAt()).isEqualTo(newEventStart);
+            // then: 예외 발생
+            assertThatThrownBy(() -> eventService.updateEvent(event.getId(), request, operator.getId()))
+                    .isInstanceOf(EventNotEditableException.class);
         }
 
         @Test

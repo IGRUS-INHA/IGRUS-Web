@@ -905,19 +905,16 @@ class EventTest {
         }
 
         @Test
-        @DisplayName("[EVT-109] CANCELED 상태에서 전체 필드 수정 성공")
-        void update_WhenCanceled_AllFieldsSuccess() {
+        @DisplayName("[EVT-109] CANCELED 상태에서 수정 시도 시 예외 발생")
+        void update_WhenCanceled_ThrowsException() {
             Event event = createTestEvent();
             event.cancel();
             Instant newEventStart = EVENT_START_AT.plus(1, ChronoUnit.DAYS);
             Instant newEventEnd = EVENT_END_AT.plus(2, ChronoUnit.DAYS);
 
-            event.update("새 제목", "새 설명", "새 장소",
-                    newEventStart, newEventEnd, REGISTRATION_START_AT, REGISTRATION_END_AT, 50, null);
-
-            assertThat(event.getTitle()).isEqualTo("새 제목");
-            assertThat(event.getEventStartAt()).isEqualTo(newEventStart);
-            assertThat(event.getEventStatus()).isEqualTo(EventStatus.CANCELED);
+            assertThatThrownBy(() -> event.update("새 제목", "새 설명", "새 장소",
+                    newEventStart, newEventEnd, REGISTRATION_START_AT, REGISTRATION_END_AT, 50, null))
+                    .isInstanceOf(EventNotEditableException.class);
         }
 
         @Test
@@ -1640,8 +1637,8 @@ class EventTest {
         }
 
         @Test
-        @DisplayName("[TC-011] CANCELED 상태 행사에서 설문 해제 성공 (100 -> null)")
-        void update_CanceledEvent_SurveyIdRemovalSucceeds() {
+        @DisplayName("[TC-011] CANCELED 상태 행사에서 설문 변경 시 수정 불가 예외")
+        void update_CanceledEvent_SurveyIdChangeThrowsException() {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
@@ -1649,12 +1646,10 @@ class EventTest {
             event.openRegistration();
             event.cancel();
 
-            event.update(TITLE, DESCRIPTION, LOCATION,
+            assertThatThrownBy(() -> event.update(TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    CAPACITY, null);
-
-            assertThat(event.getSurveyId()).isNull();
-            assertThat(event.hasSurvey()).isFalse();
+                    CAPACITY, null))
+                    .isInstanceOf(EventNotEditableException.class);
         }
 
         @Test
