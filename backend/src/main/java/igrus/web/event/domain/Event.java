@@ -467,8 +467,8 @@ public class Event extends SoftDeletableEntity {
      * EVT-INV-07: 상태별 수정 정책
      * - UPCOMING: 전체 필드 수정 가능
      * - ONGOING: 부분 수정 (eventStartAt, registrationStartAt 변경 차단)
-     * - CANCELED: 전체 필드 수정 가능
      * - COMPLETED: 수정 불가
+     * - CANCELED: 수정 불가
      *
      * @throws EventNotEditableException    수정 불가능한 상태인 경우
      * @throws InvalidEventCapacityException 정원이 1 미만인 경우
@@ -477,8 +477,8 @@ public class Event extends SoftDeletableEntity {
                        Instant eventStartAt, Instant eventEndAt,
                        Instant registrationStartAt, Instant registrationEndAt,
                        Integer capacity) {
-        // COMPLETED는 수정 불가
-        if (this.eventStatus == EventStatus.COMPLETED) {
+        // COMPLETED 또는 CANCELED는 수정 불가
+        if (this.eventStatus == EventStatus.COMPLETED || this.eventStatus == EventStatus.CANCELED) {
             throw new EventNotEditableException(this.eventStatus);
         }
 

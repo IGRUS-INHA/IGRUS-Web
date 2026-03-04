@@ -65,6 +65,8 @@ export default function InquiryForm({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    const form = e.currentTarget;
+
     const uploadResults = await uploadAll();
 
     // objectKey → presigned download URL 변환 (AttachmentInfo.fileUrl은 https:// 필요)
@@ -79,7 +81,7 @@ export default function InquiryForm({
           )
         : undefined;
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(form);
     onSubmit?.({
       type: formData.get("type") as string,
       title: formData.get("title") as string,

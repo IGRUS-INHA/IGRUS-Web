@@ -1,27 +1,46 @@
-import { Calendar, MapPin, Users, ArrowUpRight } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
 import type { Event } from "@/types/entities";
 import { formatDate } from "@/utils/date";
-
-const STATUS_STYLES: Record<string, string> = {
-  UPCOMING: "bg-primary text-primary-foreground",
-  ONGOING: "bg-primary text-primary-foreground",
-  COMPLETED: "bg-muted text-muted-foreground",
-  CLOSED: "bg-muted text-muted-foreground",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  UPCOMING: "예정",
-  ONGOING: "진행중",
-  COMPLETED: "완료",
-  CLOSED: "마감",
-};
+import {
+  EVENT_STATUS_BADGE,
+  EVENT_STATUS_LABEL,
+  REG_STATUS_BADGE,
+  REG_STATUS_LABEL,
+  VISIBILITY_BADGE,
+  VISIBILITY_LABEL,
+} from "@/constants/eventStatus";
 
 interface EventCardProps {
   event: Event;
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const isAvailable = event.status === "UPCOMING" || event.status === "ONGOING";
+  const regStatus = event.registrationStatus;
+  // COMPLETED 또는 CANCELED → 종료 상태 (모집 배지 숨김, 수정/신청취소 불가)
+  const isEventEnded =
+    event.status === "COMPLETED" || event.status === "CANCELED";
+
+  // UPCOMING + 모집 상태 있음 → 모집 상태만 표시 (행사 상태 배지 숨김)
+  const isUpcomingWithRegStatus =
+    event.status === "UPCOMING" &&
+    (regStatus === "NOT_STARTED" || regStatus === "OPEN");
+
+  const showEventStatus = !isUpcomingWithRegStatus;
+  const eventStatusBadge =
+    EVENT_STATUS_BADGE[event.status] ?? "bg-muted text-muted-foreground";
+  const eventStatusLabel = EVENT_STATUS_LABEL[event.status] ?? event.status;
+
+  const showRegStatus =
+    isUpcomingWithRegStatus ||
+    (!isEventEnded &&
+      regStatus &&
+      (regStatus === "OPEN" || regStatus === "CLOSED"));
+  const regStatusBadge =
+    showRegStatus && regStatus ? REG_STATUS_BADGE[regStatus] : null;
+  const regStatusLabel =
+    showRegStatus && regStatus ? REG_STATUS_LABEL[regStatus] : null;
+
+  const isUnpublished = event.visibility === "UNPUBLISHED";
 
   return (
     <div className="rounded-r4 overflow-hidden border transition-all hover:scale-[1.01] bg-card border-border shadow-xl shadow-black/5 dark:shadow-none">
@@ -35,19 +54,35 @@ export default function EventCard({ event }: EventCardProps) {
               : "absolute inset-0 m-auto h-40 w-40 object-contain"
           }
         />
-        <div
-          className={`absolute top-s4 right-s4 px-s3 py-s1 rounded-full typo-c2 font-bold uppercase tracking-wider ${
-            STATUS_STYLES[event.status] ?? STATUS_STYLES.CLOSED
-          }`}
-        >
-          {STATUS_LABELS[event.status] ?? event.status}
+        <div className="absolute top-s4 left-s4 flex gap-s2">
+          {isUnpublished && (
+            <span
+              className={`px-s3 py-s1 rounded-full typo-c2 font-bold tracking-wider ${VISIBILITY_BADGE["UNPUBLISHED"]}`}
+            >
+              {VISIBILITY_LABEL["UNPUBLISHED"]}
+            </span>
+          )}
+          {showEventStatus && (
+            <span
+              className={`px-s3 py-s1 rounded-full typo-c2 font-bold tracking-wider ${eventStatusBadge}`}
+            >
+              {eventStatusLabel}
+            </span>
+          )}
+          {regStatusLabel && (
+            <span
+              className={`px-s3 py-s1 rounded-full typo-c2 font-bold tracking-wider ${regStatusBadge}`}
+            >
+              {regStatusLabel}
+            </span>
+          )}
         </div>
       </div>
 
       <div className="p-s6">
         <h3 className="text-2xl font-bold mb-s4">{event.title}</h3>
 
-        <div className="space-y-s3 mb-s6">
+        <div className="space-y-s3">
           <div className="flex items-center gap-s3 text-muted-foreground">
             <Calendar size={18} className="text-primary" />
             <span className="text-sm">{formatDate(event.date)}</span>
@@ -56,24 +91,25 @@ export default function EventCard({ event }: EventCardProps) {
             <MapPin size={18} className="text-primary" />
             <span className="text-sm">{event.location}</span>
           </div>
-          <div className="flex items-center gap-s3 text-muted-foreground">
-            <Users size={18} className="text-primary" />
-            <span className="text-sm">
-              {event.attendees ?? event.currentCount ?? 0} /{" "}
-              {event.maxCapacity ?? event.capacity ?? "Unlimited"} applied
-            </span>
+          <div className="mt-s4">
+            <div className="flex items-center justify-between mb-s2">
+              <span className="text-sm font-medium text-muted-foreground">
+                참여 인원
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {event.attendees ?? event.currentCount ?? 0}/
+                {event.maxCapacity ?? event.capacity ?? "∞"}
+              </span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{
+                  width: `${Math.min(((event.attendees ?? event.currentCount ?? 0) / (event.maxCapacity ?? event.capacity ?? 1)) * 100, 100)}%`,
+                }}
+              />
+            </div>
           </div>
-        </div>
-
-        <div
-          className={`w-full py-s4 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all ${
-            isAvailable
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 cursor-pointer"
-              : "bg-muted text-muted-foreground cursor-not-allowed"
-          }`}
-        >
-          {isAvailable ? "Apply Now" : "Application Unavailable"}
-          {isAvailable && <ArrowUpRight size={18} />}
         </div>
       </div>
     </div>

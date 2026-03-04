@@ -10,10 +10,17 @@ import {
   useCloseEvent as useCloseEventMutation,
 } from "@/api/model/event/event";
 import {
+  useGetAdminEventList,
+  useGetAdminEvent,
+} from "@/api/model/admin-event/admin-event";
+import {
   useRegisterEvent,
   useCancelRegistration,
 } from "@/api/model/event-registration/event-registration";
-import type { GetEventListParams } from "@/api/model/models";
+import type {
+  GetEventListParams,
+  GetAdminEventListParams,
+} from "@/api/model/models";
 import { myPageKeys } from "@/hooks/queries/useMyPage";
 
 // 쿼리 키 - Orval이 자동으로 생성하지만 invalidation을 위해 정의
@@ -26,14 +33,54 @@ export const eventKeys = {
   detail: (id: number) => [`/api/v1/events/${id}`] as const,
 };
 
+export const adminEventKeys = {
+  all: ["/api/v1/admin/events"] as const,
+  lists: () => [...adminEventKeys.all] as const,
+  list: (filters?: GetAdminEventListParams) =>
+    [...adminEventKeys.all, ...(filters ? [filters] : [])] as const,
+  detail: (id: number) => [`/api/v1/admin/events/${id}`] as const,
+};
+
 // 행사 목록 조회 (실제 API 사용)
-export function useEvents(params?: GetEventListParams) {
-  return useGetEventList(params);
+export function useEvents(params?: GetEventListParams, enabled = true) {
+  return useGetEventList(params, { query: { enabled } });
 }
 
 // 행사 상세 조회 (실제 API 사용)
-export function useEvent(eventId: number) {
-  return useGetEvent(eventId);
+export function useEvent(eventId: number, enabled = true) {
+  return useGetEvent(eventId, { query: { enabled: enabled && !!eventId } });
+}
+
+// 관리자 행사 목록 조회 (OPERATOR 이상)
+export function useAdminEvents(
+  params?: GetAdminEventListParams,
+  enabled = true,
+) {
+  return useGetAdminEventList(params, { query: { enabled } });
+}
+
+// 관리자 행사 상세 조회 (OPERATOR 이상)
+export function useAdminEvent(eventId: number, enabled = true) {
+  return useGetAdminEvent(eventId, {
+    query: { enabled: enabled && !!eventId },
+  });
+}
+
+// 행사 관련 쿼리 전체 무효화 헬퍼
+function invalidateEventQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  eventId?: number,
+) {
+  void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+  void queryClient.invalidateQueries({ queryKey: adminEventKeys.lists() });
+  if (eventId) {
+    void queryClient.invalidateQueries({
+      queryKey: eventKeys.detail(eventId),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: adminEventKeys.detail(eventId),
+    });
+  }
 }
 
 // 행사 신청 (실제 API 사용)
@@ -43,12 +90,7 @@ export function useApplyEvent() {
   return useRegisterEvent({
     mutation: {
       onSuccess: (_data, variables) => {
-        // 행사 상세 및 목록 새로고침
-        void queryClient.invalidateQueries({
-          queryKey: eventKeys.detail(variables.eventId),
-        });
-        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-        // 마이페이지 행사 신청 목록 새로고침
+        invalidateEventQueries(queryClient, variables.eventId);
         void queryClient.invalidateQueries({
           queryKey: myPageKeys.registrations(),
         });
@@ -64,12 +106,7 @@ export function useCancelEventApplication() {
   return useCancelRegistration({
     mutation: {
       onSuccess: (_data, variables) => {
-        // 행사 상세 및 목록 새로고침
-        void queryClient.invalidateQueries({
-          queryKey: eventKeys.detail(variables.eventId),
-        });
-        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-        // 마이페이지 행사 신청 목록 새로고침
+        invalidateEventQueries(queryClient, variables.eventId);
         void queryClient.invalidateQueries({
           queryKey: myPageKeys.registrations(),
         });
@@ -85,8 +122,7 @@ export function useCreateEvent() {
   return useCreateEventMutation({
     mutation: {
       onSuccess: () => {
-        // 행사 목록 새로고침
-        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+        invalidateEventQueries(queryClient);
       },
     },
   });
@@ -99,11 +135,7 @@ export function useUpdateEvent() {
   return useUpdateEventMutation({
     mutation: {
       onSuccess: (_data, variables) => {
-        // 행사 상세 및 목록 새로고침
-        void queryClient.invalidateQueries({
-          queryKey: eventKeys.detail(variables.eventId),
-        });
-        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+        invalidateEventQueries(queryClient, variables.eventId);
       },
     },
   });
@@ -116,8 +148,7 @@ export function useDeleteEvent() {
   return useDeleteEventMutation({
     mutation: {
       onSuccess: () => {
-        // 행사 목록 새로고침 (상세는 더 이상 존재하지 않음)
-        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+        invalidateEventQueries(queryClient);
       },
     },
   });
@@ -130,11 +161,7 @@ export function useCloseEvent() {
   return useCloseEventMutation({
     mutation: {
       onSuccess: (_data, variables) => {
-        // 행사 상세 및 목록 새로고침
-        void queryClient.invalidateQueries({
-          queryKey: eventKeys.detail(variables.eventId),
-        });
-        void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+        invalidateEventQueries(queryClient, variables.eventId);
       },
     },
   });

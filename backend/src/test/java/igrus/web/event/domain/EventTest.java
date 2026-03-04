@@ -905,19 +905,16 @@ class EventTest {
         }
 
         @Test
-        @DisplayName("[EVT-109] CANCELED 상태에서 전체 필드 수정 성공")
-        void update_WhenCanceled_AllFieldsSuccess() {
+        @DisplayName("[EVT-109] CANCELED 상태에서 수정 시도 시 예외 발생")
+        void update_WhenCanceled_ThrowsException() {
             Event event = createTestEvent();
             event.cancel();
             Instant newEventStart = EVENT_START_AT.plus(1, ChronoUnit.DAYS);
             Instant newEventEnd = EVENT_END_AT.plus(2, ChronoUnit.DAYS);
 
-            event.update("새 제목", "새 설명", "새 장소",
-                    newEventStart, newEventEnd, REGISTRATION_START_AT, REGISTRATION_END_AT, 50);
-
-            assertThat(event.getTitle()).isEqualTo("새 제목");
-            assertThat(event.getEventStartAt()).isEqualTo(newEventStart);
-            assertThat(event.getEventStatus()).isEqualTo(EventStatus.CANCELED);
+            assertThatThrownBy(() -> event.update("새 제목", "새 설명", "새 장소",
+                    newEventStart, newEventEnd, REGISTRATION_START_AT, REGISTRATION_END_AT, 50))
+                    .isInstanceOf(EventNotEditableException.class);
         }
 
         @Test

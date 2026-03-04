@@ -1281,38 +1281,20 @@ class EventRegistrationServiceTest {
         }
 
         /**
-         * SVC-REG-072: CANCELED 행사에서 자동 재오픈 차단
+         * SVC-REG-072: CANCELED 행사에서 신청 취소 시 예외 발생
          */
         @Test
-        @DisplayName("[SVC-REG-072] CANCELED 행사에서 취소 후 자동 재오픈 차단 (CLOSED 유지)")
-        void cancelRegistration_CanceledEvent_NoReopen() {
-            // given: eventStatus=CANCELED, CAPACITY_FULL 상태
+        @DisplayName("[SVC-REG-072] CANCELED 행사에서 신청 취소 시 예외 발생")
+        void cancelRegistration_CanceledEvent_ThrowsException() {
+            // given: eventStatus=CANCELED
             Event canceledEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
             when(canceledEvent.getEventStatus()).thenReturn(EventStatus.CANCELED);
-            when(canceledEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.CLOSED);
 
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(canceledEvent));
-            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
 
-            EventRegistration registration = mock(EventRegistration.class);
-            when(registration.isCanceled()).thenReturn(false);
-            when(registration.isActive()).thenReturn(true);
-            when(registration.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
-            when(registration.getRegisteredAt()).thenReturn(Instant.now());
-            when(registration.getId()).thenReturn(REGISTRATION_ID);
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
-                    .thenReturn(Optional.of(registration));
-
-            // when
-            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
-
-            // then
-            assertThat(response).isNotNull();
-            verify(eventRepository).decrementCurrentCount(EVENT_ID);
-            // reopenIfNeeded가 호출되지만, 내부에서 eventStatus=CANCELED 조건으로 CLOSED 유지
-            verify(canceledEvent).reopenIfNeeded(any(Instant.class));
-            // registrationStatus가 여전히 CLOSED인지 확인
-            assertThat(canceledEvent.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
+            // when & then: CANCELED 행사에서 신청 취소 시 예외 발생
+            assertThatThrownBy(() -> eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID))
+                    .isInstanceOf(EventNotCancelableException.class);
         }
 
         /**
@@ -1480,7 +1462,7 @@ class EventRegistrationServiceTest {
     class RegisterEventVisibilityTest {
 
         /**
-         * GAP-EVT-45: UNPUBLISHED 행사에 대한 registerEvent() 호출 시 EventNotFoundException
+         * GAP-EVT-45: UNPUBLISHED 행사에 대한 registerEvent() 호출 시 EventNotFoundException (정보 은폐)
          */
         @Test
         @DisplayName("[GAP-EVT-45] UNPUBLISHED 행사에 신청하면 EventNotFoundException 발생 (정보 은폐)")
@@ -1524,7 +1506,7 @@ class EventRegistrationServiceTest {
 
         /**
          * GAP-EVT-45: UNPUBLISHED 행사에서 신청 시 EventNotFoundException이 발생하므로
-         * 사용자 조회까지 도달하지 않음 (정보 은폐 원칙)
+         * 사용자 조회까지 도달하지 않음
          */
         @Test
         @DisplayName("[GAP-EVT-45] UNPUBLISHED 행사 신청 시 사용자 조회까지 도달하지 않는다")

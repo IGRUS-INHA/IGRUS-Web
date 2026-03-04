@@ -13,6 +13,7 @@ import igrus.web.event.exception.AlreadyCanceledException;
 import igrus.web.event.exception.AlreadyRegisteredException;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventCapacityFullException;
+import igrus.web.event.exception.EventNotCancelableException;
 import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.EventNotInRegistrationPeriodException;
@@ -156,12 +157,17 @@ public class EventRegistrationService {
      * @param userId  신청자 ID (본인)
      * @return 취소된 신청 응답 DTO
      * @throws EventNotFoundException             행사를 찾을 수 없는 경우
+     * @throws EventNotCancelableException         CANCELED 상태의 행사인 경우
      * @throws EventRegistrationNotFoundException 신청을 찾을 수 없는 경우
      */
     public RegistrationResponse cancelRegistration(Long eventId, Long userId) {
         // 1. 행사 존재 확인
-        if (eventRepository.findByIdAndNotDeleted(eventId).isEmpty()) {
-            throw new EventNotFoundException(eventId);
+        Event event = eventRepository.findByIdAndNotDeleted(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+
+        // 1-1. 취소된 행사의 신청은 취소 불가
+        if (event.getEventStatus() == EventStatus.CANCELED) {
+            throw new EventNotCancelableException(event.getEventStatus());
         }
 
         // 2. 신청 조회

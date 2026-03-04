@@ -121,6 +121,8 @@ export interface Event {
   maxCapacity?: number;
   currentCount?: number;
   attendees?: number;
+  visibility?: string;
+  registrationStatus?: string;
   registrationDeadline?: string;
   createdBy?: string;
   createdAt?: string;
