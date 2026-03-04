@@ -209,7 +209,6 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   EVENT_OPERATOR_REQUIRED: "행사 운영자 권한이 필요합니다.",
   EVENT_NOT_OPEN: "공개되지 않은 행사입니다.",
   EVENT_NOT_IN_REGISTRATION_PERIOD: "신청 기간이 아닙니다.",
-  EVENT_UNPUBLISHED: "비공개인 행사는 신청할 수 없습니다.",
   EVENT_CLOSED: "마감된 행사입니다.",
   EVENT_FULL: "정원이 마감되었습니다.",
   ALREADY_REGISTERED: "이미 신청한 행사입니다.",

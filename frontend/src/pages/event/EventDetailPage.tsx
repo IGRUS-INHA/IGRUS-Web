@@ -204,8 +204,6 @@ export default function EventDetailPage() {
             alert("정원이 마감되었습니다.");
           } else if (isEventRegistrationClosed(error)) {
             alert("신청 기간이 종료되었습니다.");
-          } else if (hasErrorCode(error, "EVENT_UNPUBLISHED")) {
-            alert("비공개인 행사는 신청할 수 없습니다.");
           } else if (isForbiddenError(error)) {
             alert("행사 신청 권한이 없습니다.");
           } else {
