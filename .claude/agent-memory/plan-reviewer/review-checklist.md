@@ -14,6 +14,7 @@
 - [ ] API paths consistent across task plan, verification criteria, and test cases
 - [ ] Status codes consistent across all three documents
 - [ ] DTO field names consistent across all three documents
+- [ ] OpenAPI spec responses include ALL HTTP status codes that backend actually returns (check existing error codes)
 
 ## Architecture Checks
 - [ ] Transaction boundaries explicitly designed (not "A or B")
@@ -34,6 +35,7 @@
 - [ ] Frontend tests planned (often missing)
 - [ ] All verification criteria mapped to at least one test task
 - [ ] All test cases mapped to at least one implementation task
+- [ ] ALL existing tests affected by new logic identified (including tests whose SETUP uses the affected code path, not just tests that directly test it)
 
 ## Documentation
 - [ ] Documentation update task included (root CLAUDE.md requirement)

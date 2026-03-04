@@ -82,21 +82,20 @@
 - event-verification-criteria.md: GAP 항목을 기존/신규로 나눠 추적, "해결됨" 상태 업데이트 관례
 - 3자 시스템 경계 ASCII 다이어그램 + 단계별 번호와 API 흐름 표 대응 방식 (storage 문서의 강점)
 
-## 행사 그룹(EventGroup) 도메인 특이사항 (2라운드 FAIL, 2026-03-03)
+## 행사 그룹(EventGroup) 도메인 특이사항 (3라운드 PASS, 2026-03-03)
 - 핵심 설계: Event.groupId(Long, nullable, FK 없음) — DECISION-01(C) 약한 참조, surveyId 패턴과 동일
-- 1라운드 심각 4건 모두 해소: DB 유니크 제약(Generated Column), DECISION-07/08/09 신설, 수정 시 자기 자신 제외 명시, PUT 근거 명시
-- 2라운드 심각 1건: DECISION 표 전체가 "권장안" 상태 — 불변조건 본문이 미확정 DECISION 참조하는 구조적 모순 지속
-  → "DECISION-07에 따라 다름: 권장안 (A)" 표현이 남아있어 구현자가 확정 여부 판단 불가
-  → 수정 방향: "권장안" 컬럼을 "결정(확정)"으로 변경 + 불변조건 본문의 미확정 언어를 확정 언어로 교체
-- 2라운드 주의 5건:
-  1. SoftDeletableEntity.restore() EventGroup 복원 정책 미언급 (복원 불가 명시 또는 재연결 정책 필요)
-  2. eventCount 조회 시 N+1 문제 — 그룹 목록에 COUNT 서브쿼리 또는 DTO Projection 전략 미명시
-  3. EVT-INV-07과 groupId 수정 분리 정책 교차 언급 없음
-  4. DECISION-07 멱등 응답 시 감사 로그 및 응답 본문 형식 미정의
-  5. EventGroupDetailResponse에 updatedBy(최종 수정자) 필드 누락 여부 미결정
-- DECISION-10(C) 전체 반환, DECISION-11(B) 인증 필수, DECISION-09(A) PUT 확정 — 모두 권장안으로만 표시
+- 1라운드 심각 4건 모두 해소, 2라운드 심각 1건 해소, 3라운드 PASS.
+- 3라운드 해소: DECISION 표 전체 "확정안" 전환 완료. 11개 DECISION 모두 "(X) 확정:" 형식으로 기술. 불변조건 본문의 미확정 언어 교체 완료.
+- 3라운드 잔존 주의 4건 (PASS 유지, 향후 권장):
+  1. SoftDeletableEntity.restore() 복원 불가 근거 미명시 — DECISION-03(A)에 의해 groupId=null 변경 후 복원 시 행사 재연결 불가이므로 복원 불가 명시 필요
+  2. eventCount N+1 문제 대응 전략(COUNT 서브쿼리 또는 DTO Projection) 미명시
+  3. EVT-INV-07(행사 수정 API)에서 groupId 수정이 불가함을 EGRP 문서에서 교차 언급하지 않음
+  4. DECISION-07 멱등 성공(200 OK) 시 응답 본문 및 서비스 로그 형식 미정의
+- 참고 4건: updatedBy 필드 미결정, collation 표기 불일치(utf8mb4_unicode_ci vs 0900_ai_ci), 상세조회에 eventCount 미포함 의도 미명시, 행사 제거 응답 200 OK 근거 미명시
+- DECISION-10(C) 전체 반환, DECISION-11(B) 인증 필수, DECISION-09(A) PUT — 모두 확정됨
 - DB 레벨 조건부 유니크 제약: Generated Column 방식 DDL 상세 기술 (이 프로젝트 첫 사례)
 - EGRP-INV-08 @Modifying(flushAutomatically=true, clearAutomatically=true) 주의사항 명시됨 (잘 작성된 부분)
+- 파일 위치: docs/criteria/event/event-group-verification-criteria.md
 
 ## Presigned URL 도메인 특이사항 (2026-02-26 리뷰)
 - 핵심 아키텍처: Frontend → Backend(URL발급) → S3(직접 PUT) → Backend(완료확인)

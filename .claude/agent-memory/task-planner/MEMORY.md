@@ -121,6 +121,25 @@
 - Visibility 기능: `docs/feature/event/task-plan.md` (TASK-001~021)
 - 이미지 연계: `docs/feature/event/event-image-integration-task-plan.md` (TASK-001~021)
 
+### Inquiry 관련 코드 구조
+- `Inquiry.java`: abstract, JOINED 상속 (GuestInquiry/MemberInquiry), SoftDeletableEntity 상속
+- `InquiryStatus` FSM: PENDING <-> IN_PROGRESS -> COMPLETED (종단), 동일 상태 멱등 허용
+- `Inquiry.hasReply()`: reply != null 체크 (line 115-117), OneToOne 관계
+- `Inquiry.changeStatus()`: FSM 검증 후 상태 변경, 위반 시 InvalidStatusTransitionException
+- `UpdateInquiryStatusService`: 상태 변경 + InquiryStatusChangeEvent 발행
+- `CreateInquiryReplyService`: 답변 작성 + inquiry.complete() + REPLY_COMPLETED 이벤트 발행
+- `InquiryErrorCode`: 11개 에러코드 (INQUIRY_NOT_FOUND, INVALID_STATUS_TRANSITION 등)
+- 검증 기준서: `docs/criteria/inquiry-verification-criteria.md`
+- 테스트 케이스 문서: 미작성 상태
+- 작업 계획: `docs/feature/inquiry/task-plan.md` (답변 필수 검증 + FE 캐시 무효화)
+
+### Inquiry FE 구조
+- `InquiriesTab.tsx`: 관리자 문의 목록/상세 (목록+상세패널 split view)
+  - useUpdateInquiryStatus: onSuccess에서 invalidate() -> 목록만 무효화 (상세 미무효화 버그)
+  - useCreateReply/useUpdateReply/useCreateMemo: 각각 상세 쿼리도 무효화하는 패턴 사용
+  - 쿼리 키 패턴: 목록 `/api/v1/inquiries`, 상세 `/api/v1/inquiries/${id}`
+- `InquiryDetailPage.tsx`: 회원 문의 상세 (읽기 전용, 상태 변경 기능 없음)
+
 ### 출력 형식 규칙
 - 파일 경로 출력: 마지막 줄에 `생성된 파일: {절대 경로}` 또는 `수정된 파일: {절대 경로}`
 - 이 줄 이후에는 어떠한 텍스트도 출력하지 말 것

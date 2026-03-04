@@ -55,8 +55,14 @@
 3. Concurrency handling for state transitions
 4. URL path encoding for path variables containing slashes
 5. Cross-document API path consistency (plan may be fixed but criteria/test-case docs still use old paths)
-6. Documentation update tasks (required by root CLAUDE.md but often omitted)
+6. Documentation update tasks (required by root CLAUDE.md but often omitted) -- confirmed again in Inquiry plan R1
 7. `skipDefaultInterface: 'true'` implications not considered when multiple controllers share a tag
+8. OpenAPI spec missing error response codes that backend already returns (e.g., 400 for validation errors)
+9. Affected existing test list incomplete -- plans only list "obviously failing" tests but miss tests whose setup also uses the affected code path
+
+### Escalation Pattern: Recommended -> Critical
+- If a Recommended issue from Round N is NOT addressed in Round N+1 AND its impact is confirmed to be build-breaking, escalate to Critical
+- Example: INQ-A-025/026 missing from affected test list was Recommended in R1, escalated to Critical in R2 because code verification confirmed setup failure
 
 ### Recurring Ambiguities
 - Transaction boundary design presented with multiple options instead of a single recommendation
@@ -129,6 +135,23 @@
 ## Frequently Missed Integration Points
 - OpenAPI spec changes to Admin*Response schemas require matching updates to AdminController mapping helpers
 - FileMetadata entity does NOT have @SQLRestriction (unlike Event entity) -- plans should not claim @SQLRestriction filtering for FileMetadata queries
+
+### Inquiry Status Change: task-plan.md (docs/feature/inquiry/)
+- Round 1: FAIL (2 Critical: OpenAPI spec missing 400 response for updateInquiryStatus endpoint, documentation TASK completely absent)
+- Round 2: FAIL (1 Critical: INQ-A-025/026 still missing from affected test list -- escalated from Recommended)
+- Round 3: PASS (All Critical resolved. INQ-A-025/026 added to affected test list with 5 tests total. 5 Recommended: test #3 overlaps modified INQ-A-021, frontend test plan absent, Orval regen procedure, "(수동 전이 시)" ambiguous, TASK-005 error type safety)
+
+## OpenAPI Spec Gaps (Verified 2026-03-03)
+- `updateInquiryStatus` endpoint responses: only 200/401/403/404 defined, NO 400 response
+- Existing `INVALID_STATUS_TRANSITION` already returns HTTP 400 but is not in the spec
+- Plans adding new 400-class error codes to endpoints MUST check if 400 is already in the OpenAPI spec
+
+## Inquiry Domain Specifics (Verified 2026-03-03)
+- `Inquiry.reply` is `@OneToOne(mappedBy)` non-owning side -- may be EAGER fetched by default
+- `hasReply()` at line 115-117 does simple null check: `return this.reply != null`
+- `InquiryStatus.canTransitionTo()` allows same-state transitions (idempotent) at line 28-30
+- Existing tests INQ-A-021/023/025/026/027 all use `changeStatus(COMPLETED)` without prior reply creation
+- Any plan adding reply-required-for-COMPLETED check must update ALL 5 of these tests, not just 3
 
 ## Review Checklist Additions
 - [See review-checklist.md for detailed checklist](./review-checklist.md)
