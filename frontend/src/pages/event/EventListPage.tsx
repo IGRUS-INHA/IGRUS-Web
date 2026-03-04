@@ -162,7 +162,7 @@ export default function EventListPage() {
       </div>
 
       {/* Event List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-s8">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-s8">
         {events?.map((event) => (
           <div
             key={event.id}
