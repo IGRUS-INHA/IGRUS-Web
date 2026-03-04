@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { UpdateInquiryStatusRequestStatus } from './updateInquiryStatusRequestStatus';
+import type { UpdateInquiryStatusRequestStatus } from "./updateInquiryStatusRequestStatus";
 
 /**
  * 문의 상태 변경 요청

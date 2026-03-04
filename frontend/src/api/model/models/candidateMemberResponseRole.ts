@@ -37,12 +37,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 현재 역할
  */
-export type CandidateMemberResponseRole = typeof CandidateMemberResponseRole[keyof typeof CandidateMemberResponseRole];
-
+export type CandidateMemberResponseRole =
+  (typeof CandidateMemberResponseRole)[keyof typeof CandidateMemberResponseRole];
 
 export const CandidateMemberResponseRole = {
-  ASSOCIATE: 'ASSOCIATE',
-  MEMBER: 'MEMBER',
-  OPERATOR: 'OPERATOR',
-  ADMIN: 'ADMIN',
+  ASSOCIATE: "ASSOCIATE",
+  MEMBER: "MEMBER",
+  OPERATOR: "OPERATOR",
+  ADMIN: "ADMIN",
 } as const;

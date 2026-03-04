@@ -34,19 +34,19 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type CreateQuestionRequestQuestionType = typeof CreateQuestionRequestQuestionType[keyof typeof CreateQuestionRequestQuestionType];
-
+export type CreateQuestionRequestQuestionType =
+  (typeof CreateQuestionRequestQuestionType)[keyof typeof CreateQuestionRequestQuestionType];
 
 export const CreateQuestionRequestQuestionType = {
-  SHORT_ANSWER: 'SHORT_ANSWER',
-  PARAGRAPH: 'PARAGRAPH',
-  MULTIPLE_CHOICE: 'MULTIPLE_CHOICE',
-  CHECKBOX: 'CHECKBOX',
-  DROPDOWN: 'DROPDOWN',
-  LINEAR_SCALE: 'LINEAR_SCALE',
-  MULTIPLE_CHOICE_GRID: 'MULTIPLE_CHOICE_GRID',
-  CHECKBOX_GRID: 'CHECKBOX_GRID',
-  DATE: 'DATE',
-  TIME: 'TIME',
-  FILE_UPLOAD: 'FILE_UPLOAD',
+  SHORT_ANSWER: "SHORT_ANSWER",
+  PARAGRAPH: "PARAGRAPH",
+  MULTIPLE_CHOICE: "MULTIPLE_CHOICE",
+  CHECKBOX: "CHECKBOX",
+  DROPDOWN: "DROPDOWN",
+  LINEAR_SCALE: "LINEAR_SCALE",
+  MULTIPLE_CHOICE_GRID: "MULTIPLE_CHOICE_GRID",
+  CHECKBOX_GRID: "CHECKBOX_GRID",
+  DATE: "DATE",
+  TIME: "TIME",
+  FILE_UPLOAD: "FILE_UPLOAD",
 } as const;

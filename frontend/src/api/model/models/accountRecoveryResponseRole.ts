@@ -37,12 +37,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 사용자 권한
  */
-export type AccountRecoveryResponseRole = typeof AccountRecoveryResponseRole[keyof typeof AccountRecoveryResponseRole];
-
+export type AccountRecoveryResponseRole =
+  (typeof AccountRecoveryResponseRole)[keyof typeof AccountRecoveryResponseRole];
 
 export const AccountRecoveryResponseRole = {
-  ASSOCIATE: 'ASSOCIATE',
-  MEMBER: 'MEMBER',
-  OPERATOR: 'OPERATOR',
-  ADMIN: 'ADMIN',
+  ASSOCIATE: "ASSOCIATE",
+  MEMBER: "MEMBER",
+  OPERATOR: "OPERATOR",
+  ADMIN: "ADMIN",
 } as const;
