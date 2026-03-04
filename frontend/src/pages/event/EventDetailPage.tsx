@@ -36,7 +36,6 @@ import {
   isEventOperatorRequired,
   hasErrorCode,
 } from "@/utils/error";
-import { myPageKeys } from "@/hooks/queries/useMyPage";
 import { formatDateTime } from "@/utils/date";
 
 export default function EventDetailPage() {
@@ -83,14 +82,6 @@ export default function EventDetailPage() {
     applyEvent(
       { eventId: Number(eventId), data: {} },
       {
-        onSuccess: () => {
-          void queryClient.invalidateQueries({
-            queryKey: [`/api/v1/events/${eventId}`],
-          });
-          void queryClient.invalidateQueries({
-            queryKey: myPageKeys.registrations(),
-          });
-        },
         onError: (error: unknown) => {
           if (isEventAlreadyRegistered(error)) {
             alert("이미 신청한 행사입니다.");
@@ -98,6 +89,10 @@ export default function EventDetailPage() {
             alert("정원이 마감되었습니다.");
           } else if (isEventRegistrationClosed(error)) {
             alert("신청 기간이 종료되었습니다.");
+          } else if (hasErrorCode(error, "EVENT_SURVEY_RESPONSE_REQUIRED")) {
+            alert("설문 응답이 필요합니다. 설문을 먼저 작성해주세요.");
+          } else if (hasErrorCode(error, "EVENT_SURVEY_NOT_READY")) {
+            alert("설문이 아직 시작되지 않았습니다.");
           } else if (isForbiddenError(error)) {
             alert("행사 신청 권한이 없습니다.");
           } else {
@@ -115,14 +110,6 @@ export default function EventDetailPage() {
     cancelEvent(
       { eventId: Number(eventId) },
       {
-        onSuccess: () => {
-          void queryClient.invalidateQueries({
-            queryKey: [`/api/v1/events/${eventId}`],
-          });
-          void queryClient.invalidateQueries({
-            queryKey: myPageKeys.registrations(),
-          });
-        },
         onError: (error: unknown) => {
           if (hasErrorCode(error, "EVENT_ALREADY_CANCELED")) {
             alert("이미 취소된 신청입니다.");

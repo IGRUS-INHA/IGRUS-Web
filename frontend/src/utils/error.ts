@@ -214,6 +214,9 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   ALREADY_REGISTERED: "이미 신청한 행사입니다.",
   NOT_REGISTERED: "신청 내역이 없습니다.",
   CANCEL_DEADLINE_PASSED: "취소 가능 기간이 지났습니다.",
+  EVENT_SURVEY_RESPONSE_REQUIRED:
+    "설문 응답이 필요합니다. 설문을 먼저 작성해주세요.",
+  EVENT_SURVEY_NOT_READY: "설문이 아직 시작되지 않았습니다.",
 
   // 일반
   PERMISSION_DENIED: "권한이 없습니다.",
