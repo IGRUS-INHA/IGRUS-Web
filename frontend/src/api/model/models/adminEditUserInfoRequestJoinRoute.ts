@@ -37,13 +37,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 가입 경로 (null이면 변경하지 않음)
  */
-export type AdminEditUserInfoRequestJoinRoute =
-  (typeof AdminEditUserInfoRequestJoinRoute)[keyof typeof AdminEditUserInfoRequestJoinRoute];
+export type AdminEditUserInfoRequestJoinRoute = typeof AdminEditUserInfoRequestJoinRoute[keyof typeof AdminEditUserInfoRequestJoinRoute];
+
 
 export const AdminEditUserInfoRequestJoinRoute = {
-  EVERYTIME: "EVERYTIME",
-  POSTER: "POSTER",
-  OT: "OT",
-  REFERRAL: "REFERRAL",
-  OTHER: "OTHER",
+  EVERYTIME: 'EVERYTIME',
+  POSTER: 'POSTER',
+  OT: 'OT',
+  REFERRAL: 'REFERRAL',
+  OTHER: 'OTHER',
 } as const;

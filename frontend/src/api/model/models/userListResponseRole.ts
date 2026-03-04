@@ -37,12 +37,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 역할
  */
-export type UserListResponseRole =
-  (typeof UserListResponseRole)[keyof typeof UserListResponseRole];
+export type UserListResponseRole = typeof UserListResponseRole[keyof typeof UserListResponseRole];
+
 
 export const UserListResponseRole = {
-  ASSOCIATE: "ASSOCIATE",
-  MEMBER: "MEMBER",
-  OPERATOR: "OPERATOR",
-  ADMIN: "ADMIN",
+  ASSOCIATE: 'ASSOCIATE',
+  MEMBER: 'MEMBER',
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
 } as const;

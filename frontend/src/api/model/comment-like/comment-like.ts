@@ -33,247 +33,214 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import { useMutation } from "@tanstack/react-query";
+import {
+  useMutation
+} from '@tanstack/react-query';
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
-  UseMutationResult,
-} from "@tanstack/react-query";
+  UseMutationResult
+} from '@tanstack/react-query';
 
-import { customFetch } from "../../client";
+import { customFetch } from '../../client';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * 댓글에 좋아요를 추가합니다. 본인 댓글에는 좋아요할 수 없습니다.
  * @summary 댓글 좋아요
  */
 export type likeCommentResponse201 = {
-  data: void;
-  status: 201;
-};
+  data: void
+  status: 201
+}
 
 export type likeCommentResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type likeCommentResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type likeCommentResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type likeCommentResponseSuccess = likeCommentResponse201 & {
+  data: void
+  status: 404
+}
+    
+export type likeCommentResponseSuccess = (likeCommentResponse201) & {
   headers: Headers;
 };
-export type likeCommentResponseError = (
-  | likeCommentResponse400
-  | likeCommentResponse401
-  | likeCommentResponse404
-) & {
+export type likeCommentResponseError = (likeCommentResponse400 | likeCommentResponse401 | likeCommentResponse404) & {
   headers: Headers;
 };
 
-export type likeCommentResponse =
-  | likeCommentResponseSuccess
-  | likeCommentResponseError;
+export type likeCommentResponse = (likeCommentResponseSuccess | likeCommentResponseError)
 
-export const getLikeCommentUrl = (commentId: number) => {
-  return `/api/v1/comments/${commentId}/likes`;
-};
+export const getLikeCommentUrl = (commentId: number,) => {
 
-export const likeComment = async (
-  commentId: number,
-  options?: RequestInit,
-): Promise<likeCommentResponse> => {
-  return customFetch<likeCommentResponse>(getLikeCommentUrl(commentId), {
+
+  
+
+  return `/api/v1/comments/${commentId}/likes`
+}
+
+export const likeComment = async (commentId: number, options?: RequestInit): Promise<likeCommentResponse> => {
+  
+  return customFetch<likeCommentResponse>(getLikeCommentUrl(commentId),
+  {      
     ...options,
-    method: "POST",
-  });
-};
+    method: 'POST'
+    
+    
+  }
+);}
 
-export const getLikeCommentMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof likeComment>>,
-    TError,
-    { commentId: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof likeComment>>,
-  TError,
-  { commentId: number },
-  TContext
-> => {
-  const mutationKey = ["likeComment"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof likeComment>>,
-    { commentId: number }
-  > = (props) => {
-    const { commentId } = props ?? {};
 
-    return likeComment(commentId, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getLikeCommentMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof likeComment>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof likeComment>>, TError,{commentId: number}, TContext> => {
 
-export type LikeCommentMutationResult = NonNullable<
-  Awaited<ReturnType<typeof likeComment>>
->;
+const mutationKey = ['likeComment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type LikeCommentMutationError = void;
+      
 
-/**
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof likeComment>>, {commentId: number}> = (props) => {
+          const {commentId} = props ?? {};
+
+          return  likeComment(commentId,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LikeCommentMutationResult = NonNullable<Awaited<ReturnType<typeof likeComment>>>
+    
+    export type LikeCommentMutationError = void
+
+    /**
  * @summary 댓글 좋아요
  */
-export const useLikeComment = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof likeComment>>,
-      TError,
-      { commentId: number },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof likeComment>>,
-  TError,
-  { commentId: number },
-  TContext
-> => {
-  return useMutation(getLikeCommentMutationOptions(options), queryClient);
-};
-/**
+export const useLikeComment = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof likeComment>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof likeComment>>,
+        TError,
+        {commentId: number},
+        TContext
+      > => {
+      return useMutation(getLikeCommentMutationOptions(options), queryClient);
+    }
+    /**
  * 댓글 좋아요를 취소합니다.
  * @summary 댓글 좋아요 취소
  */
 export type unlikeCommentResponse204 = {
-  data: void;
-  status: 204;
-};
+  data: void
+  status: 204
+}
 
 export type unlikeCommentResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type unlikeCommentResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type unlikeCommentResponseSuccess = unlikeCommentResponse204 & {
+  data: void
+  status: 404
+}
+    
+export type unlikeCommentResponseSuccess = (unlikeCommentResponse204) & {
   headers: Headers;
 };
-export type unlikeCommentResponseError = (
-  | unlikeCommentResponse401
-  | unlikeCommentResponse404
-) & {
+export type unlikeCommentResponseError = (unlikeCommentResponse401 | unlikeCommentResponse404) & {
   headers: Headers;
 };
 
-export type unlikeCommentResponse =
-  | unlikeCommentResponseSuccess
-  | unlikeCommentResponseError;
+export type unlikeCommentResponse = (unlikeCommentResponseSuccess | unlikeCommentResponseError)
 
-export const getUnlikeCommentUrl = (commentId: number) => {
-  return `/api/v1/comments/${commentId}/likes`;
-};
+export const getUnlikeCommentUrl = (commentId: number,) => {
 
-export const unlikeComment = async (
-  commentId: number,
-  options?: RequestInit,
-): Promise<unlikeCommentResponse> => {
-  return customFetch<unlikeCommentResponse>(getUnlikeCommentUrl(commentId), {
+
+  
+
+  return `/api/v1/comments/${commentId}/likes`
+}
+
+export const unlikeComment = async (commentId: number, options?: RequestInit): Promise<unlikeCommentResponse> => {
+  
+  return customFetch<unlikeCommentResponse>(getUnlikeCommentUrl(commentId),
+  {      
     ...options,
-    method: "DELETE",
-  });
-};
+    method: 'DELETE'
+    
+    
+  }
+);}
 
-export const getUnlikeCommentMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof unlikeComment>>,
-    TError,
-    { commentId: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof unlikeComment>>,
-  TError,
-  { commentId: number },
-  TContext
-> => {
-  const mutationKey = ["unlikeComment"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof unlikeComment>>,
-    { commentId: number }
-  > = (props) => {
-    const { commentId } = props ?? {};
 
-    return unlikeComment(commentId, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getUnlikeCommentMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlikeComment>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unlikeComment>>, TError,{commentId: number}, TContext> => {
 
-export type UnlikeCommentMutationResult = NonNullable<
-  Awaited<ReturnType<typeof unlikeComment>>
->;
+const mutationKey = ['unlikeComment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type UnlikeCommentMutationError = void;
+      
 
-/**
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unlikeComment>>, {commentId: number}> = (props) => {
+          const {commentId} = props ?? {};
+
+          return  unlikeComment(commentId,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnlikeCommentMutationResult = NonNullable<Awaited<ReturnType<typeof unlikeComment>>>
+    
+    export type UnlikeCommentMutationError = void
+
+    /**
  * @summary 댓글 좋아요 취소
  */
-export const useUnlikeComment = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof unlikeComment>>,
-      TError,
-      { commentId: number },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof unlikeComment>>,
-  TError,
-  { commentId: number },
-  TContext
-> => {
-  return useMutation(getUnlikeCommentMutationOptions(options), queryClient);
-};
+export const useUnlikeComment = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unlikeComment>>, TError,{commentId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof unlikeComment>>,
+        TError,
+        {commentId: number},
+        TContext
+      > => {
+      return useMutation(getUnlikeCommentMutationOptions(options), queryClient);
+    }
+    

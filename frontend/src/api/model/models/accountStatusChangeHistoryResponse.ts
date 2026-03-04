@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AccountStatusChangeHistoryResponseChangeType } from "./accountStatusChangeHistoryResponseChangeType";
+import type { AccountStatusChangeHistoryResponseChangeType } from './accountStatusChangeHistoryResponseChangeType';
 
 /**
  * 계정 상태 변경 감사 이력 응답

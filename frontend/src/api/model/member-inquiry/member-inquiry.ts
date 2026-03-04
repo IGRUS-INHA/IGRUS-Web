@@ -33,7 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -46,491 +49,364 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   CreateMemberInquiryRequest,
   GetMyInquiriesParams,
   InquiryCreateResponse,
   InquiryListPageResponse,
-  InquiryResponse,
-} from ".././models";
+  InquiryResponse
+} from '.././models';
 
-import { customFetch } from "../../client";
+import { customFetch } from '../../client';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * 로그인한 회원이 문의를 작성합니다. JWT 인증이 필요합니다.
  * @summary 회원 문의 작성
  */
 export type createMemberInquiryResponse201 = {
-  data: InquiryCreateResponse;
-  status: 201;
-};
+  data: InquiryCreateResponse
+  status: 201
+}
 
 export type createMemberInquiryResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type createMemberInquiryResponse401 = {
-  data: void;
-  status: 401;
+  data: void
+  status: 401
+}
+    
+export type createMemberInquiryResponseSuccess = (createMemberInquiryResponse201) & {
+  headers: Headers;
 };
-
-export type createMemberInquiryResponseSuccess =
-  createMemberInquiryResponse201 & {
-    headers: Headers;
-  };
-export type createMemberInquiryResponseError = (
-  | createMemberInquiryResponse400
-  | createMemberInquiryResponse401
-) & {
+export type createMemberInquiryResponseError = (createMemberInquiryResponse400 | createMemberInquiryResponse401) & {
   headers: Headers;
 };
 
-export type createMemberInquiryResponse =
-  | createMemberInquiryResponseSuccess
-  | createMemberInquiryResponseError;
+export type createMemberInquiryResponse = (createMemberInquiryResponseSuccess | createMemberInquiryResponseError)
 
 export const getCreateMemberInquiryUrl = () => {
-  return `/api/v1/inquiries/member`;
-};
 
-export const createMemberInquiry = async (
-  createMemberInquiryRequest: CreateMemberInquiryRequest,
-  options?: RequestInit,
-): Promise<createMemberInquiryResponse> => {
-  return customFetch<createMemberInquiryResponse>(getCreateMemberInquiryUrl(), {
+
+  
+
+  return `/api/v1/inquiries/member`
+}
+
+export const createMemberInquiry = async (createMemberInquiryRequest: CreateMemberInquiryRequest, options?: RequestInit): Promise<createMemberInquiryResponse> => {
+  
+  return customFetch<createMemberInquiryResponse>(getCreateMemberInquiryUrl(),
+  {      
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createMemberInquiryRequest),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createMemberInquiryRequest,)
+  }
+);}
 
-export const getCreateMemberInquiryMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createMemberInquiry>>,
-    TError,
-    { data: CreateMemberInquiryRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createMemberInquiry>>,
-  TError,
-  { data: CreateMemberInquiryRequest },
-  TContext
-> => {
-  const mutationKey = ["createMemberInquiry"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createMemberInquiry>>,
-    { data: CreateMemberInquiryRequest }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return createMemberInquiry(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getCreateMemberInquiryMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMemberInquiry>>, TError,{data: CreateMemberInquiryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMemberInquiry>>, TError,{data: CreateMemberInquiryRequest}, TContext> => {
 
-export type CreateMemberInquiryMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createMemberInquiry>>
->;
-export type CreateMemberInquiryMutationBody = CreateMemberInquiryRequest;
-export type CreateMemberInquiryMutationError = void;
+const mutationKey = ['createMemberInquiry'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMemberInquiry>>, {data: CreateMemberInquiryRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMemberInquiry(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMemberInquiryMutationResult = NonNullable<Awaited<ReturnType<typeof createMemberInquiry>>>
+    export type CreateMemberInquiryMutationBody = CreateMemberInquiryRequest
+    export type CreateMemberInquiryMutationError = void
+
+    /**
  * @summary 회원 문의 작성
  */
-export const useCreateMemberInquiry = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof createMemberInquiry>>,
-      TError,
-      { data: CreateMemberInquiryRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof createMemberInquiry>>,
-  TError,
-  { data: CreateMemberInquiryRequest },
-  TContext
-> => {
-  return useMutation(
-    getCreateMemberInquiryMutationOptions(options),
-    queryClient,
-  );
-};
-/**
+export const useCreateMemberInquiry = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMemberInquiry>>, TError,{data: CreateMemberInquiryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createMemberInquiry>>,
+        TError,
+        {data: CreateMemberInquiryRequest},
+        TContext
+      > => {
+      return useMutation(getCreateMemberInquiryMutationOptions(options), queryClient);
+    }
+    /**
  * 로그인한 회원의 문의 목록을 조회합니다. JWT 인증이 필요합니다.
  * @summary 내 문의 목록 조회
  */
 export type getMyInquiriesResponse200 = {
-  data: InquiryListPageResponse;
-  status: 200;
-};
+  data: InquiryListPageResponse
+  status: 200
+}
 
 export type getMyInquiriesResponse401 = {
-  data: void;
-  status: 401;
-};
-
-export type getMyInquiriesResponseSuccess = getMyInquiriesResponse200 & {
+  data: void
+  status: 401
+}
+    
+export type getMyInquiriesResponseSuccess = (getMyInquiriesResponse200) & {
   headers: Headers;
 };
-export type getMyInquiriesResponseError = getMyInquiriesResponse401 & {
+export type getMyInquiriesResponseError = (getMyInquiriesResponse401) & {
   headers: Headers;
 };
 
-export type getMyInquiriesResponse =
-  | getMyInquiriesResponseSuccess
-  | getMyInquiriesResponseError;
+export type getMyInquiriesResponse = (getMyInquiriesResponseSuccess | getMyInquiriesResponseError)
 
-export const getGetMyInquiriesUrl = (params?: GetMyInquiriesParams) => {
+export const getGetMyInquiriesUrl = (params?: GetMyInquiriesParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/v1/inquiries/my?${stringifiedParams}`
-    : `/api/v1/inquiries/my`;
-};
+  return stringifiedParams.length > 0 ? `/api/v1/inquiries/my?${stringifiedParams}` : `/api/v1/inquiries/my`
+}
 
-export const getMyInquiries = async (
-  params?: GetMyInquiriesParams,
-  options?: RequestInit,
-): Promise<getMyInquiriesResponse> => {
-  return customFetch<getMyInquiriesResponse>(getGetMyInquiriesUrl(params), {
+export const getMyInquiries = async (params?: GetMyInquiriesParams, options?: RequestInit): Promise<getMyInquiriesResponse> => {
+  
+  return customFetch<getMyInquiriesResponse>(getGetMyInquiriesUrl(params),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetMyInquiriesQueryKey = (params?: GetMyInquiriesParams) => {
-  return [`/api/v1/inquiries/my`, ...(params ? [params] : [])] as const;
-};
 
-export const getGetMyInquiriesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
->(
-  params?: GetMyInquiriesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+
+
+
+export const getGetMyInquiriesQueryKey = (params?: GetMyInquiriesParams,) => {
+    return [
+    `/api/v1/inquiries/my`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getGetMyInquiriesQueryOptions = <TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(params?: GetMyInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyInquiriesQueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyInquiries>>> = ({
-    signal,
-  }) => getMyInquiries(params, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMyInquiriesQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyInquiries>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetMyInquiriesQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyInquiries>>
->;
-export type GetMyInquiriesQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyInquiries>>> = ({ signal }) => getMyInquiries(params, { signal, ...requestOptions });
 
-export function useGetMyInquiries<
-  TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
->(
-  params: undefined | GetMyInquiriesParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyInquiriesQueryResult = NonNullable<Awaited<ReturnType<typeof getMyInquiries>>>
+export type GetMyInquiriesQueryError = void
+
+
+export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(
+ params: undefined |  GetMyInquiriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyInquiries>>,
           TError,
           Awaited<ReturnType<typeof getMyInquiries>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyInquiries<
-  TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
->(
-  params?: GetMyInquiriesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(
+ params?: GetMyInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyInquiries>>,
           TError,
           Awaited<ReturnType<typeof getMyInquiries>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyInquiries<
-  TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
->(
-  params?: GetMyInquiriesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(
+ params?: GetMyInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 내 문의 목록 조회
  */
 
-export function useGetMyInquiries<
-  TData = Awaited<ReturnType<typeof getMyInquiries>>,
-  TError = void,
->(
-  params?: GetMyInquiriesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMyInquiriesQueryOptions(params, options);
+export function useGetMyInquiries<TData = Awaited<ReturnType<typeof getMyInquiries>>, TError = void>(
+ params?: GetMyInquiriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiries>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMyInquiriesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * 로그인한 회원의 특정 문의 상세 정보를 조회합니다. JWT 인증이 필요합니다.
  * @summary 내 문의 상세 조회
  */
 export type getMyInquiryResponse200 = {
-  data: InquiryResponse;
-  status: 200;
-};
+  data: InquiryResponse
+  status: 200
+}
 
 export type getMyInquiryResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type getMyInquiryResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type getMyInquiryResponseSuccess = getMyInquiryResponse200 & {
+  data: void
+  status: 404
+}
+    
+export type getMyInquiryResponseSuccess = (getMyInquiryResponse200) & {
   headers: Headers;
 };
-export type getMyInquiryResponseError = (
-  | getMyInquiryResponse401
-  | getMyInquiryResponse404
-) & {
+export type getMyInquiryResponseError = (getMyInquiryResponse401 | getMyInquiryResponse404) & {
   headers: Headers;
 };
 
-export type getMyInquiryResponse =
-  | getMyInquiryResponseSuccess
-  | getMyInquiryResponseError;
+export type getMyInquiryResponse = (getMyInquiryResponseSuccess | getMyInquiryResponseError)
 
-export const getGetMyInquiryUrl = (id: number) => {
-  return `/api/v1/inquiries/my/${id}`;
-};
+export const getGetMyInquiryUrl = (id: number,) => {
 
-export const getMyInquiry = async (
-  id: number,
-  options?: RequestInit,
-): Promise<getMyInquiryResponse> => {
-  return customFetch<getMyInquiryResponse>(getGetMyInquiryUrl(id), {
+
+  
+
+  return `/api/v1/inquiries/my/${id}`
+}
+
+export const getMyInquiry = async (id: number, options?: RequestInit): Promise<getMyInquiryResponse> => {
+  
+  return customFetch<getMyInquiryResponse>(getGetMyInquiryUrl(id),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetMyInquiryQueryKey = (id: number) => {
-  return [`/api/v1/inquiries/my/${id}`] as const;
-};
 
-export const getGetMyInquiryQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
->(
-  id: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+
+
+
+export const getGetMyInquiryQueryKey = (id: number,) => {
+    return [
+    `/api/v1/inquiries/my/${id}`
+    ] as const;
+    }
+
+    
+export const getGetMyInquiryQueryOptions = <TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyInquiryQueryKey(id);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyInquiry>>> = ({
-    signal,
-  }) => getMyInquiry(id, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMyInquiryQueryKey(id);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!id,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyInquiry>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetMyInquiryQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyInquiry>>
->;
-export type GetMyInquiryQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyInquiry>>> = ({ signal }) => getMyInquiry(id, { signal, ...requestOptions });
 
-export function useGetMyInquiry<
-  TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
->(
-  id: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyInquiryQueryResult = NonNullable<Awaited<ReturnType<typeof getMyInquiry>>>
+export type GetMyInquiryQueryError = void
+
+
+export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyInquiry>>,
           TError,
           Awaited<ReturnType<typeof getMyInquiry>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyInquiry<
-  TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
->(
-  id: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyInquiry>>,
           TError,
           Awaited<ReturnType<typeof getMyInquiry>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyInquiry<
-  TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
->(
-  id: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 내 문의 상세 조회
  */
 
-export function useGetMyInquiry<
-  TData = Awaited<ReturnType<typeof getMyInquiry>>,
-  TError = void,
->(
-  id: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMyInquiryQueryOptions(id, options);
+export function useGetMyInquiry<TData = Awaited<ReturnType<typeof getMyInquiry>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyInquiry>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMyInquiryQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+

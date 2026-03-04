@@ -34,12 +34,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type UpdateSurveyRequestAccessLevel =
-  (typeof UpdateSurveyRequestAccessLevel)[keyof typeof UpdateSurveyRequestAccessLevel];
+export type UpdateSurveyRequestAccessLevel = typeof UpdateSurveyRequestAccessLevel[keyof typeof UpdateSurveyRequestAccessLevel];
+
 
 export const UpdateSurveyRequestAccessLevel = {
-  PUBLIC: "PUBLIC",
-  ASSOCIATE: "ASSOCIATE",
-  MEMBER: "MEMBER",
-  OPERATOR: "OPERATOR",
+  PUBLIC: 'PUBLIC',
+  ASSOCIATE: 'ASSOCIATE',
+  MEMBER: 'MEMBER',
+  OPERATOR: 'OPERATOR',
 } as const;

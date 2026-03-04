@@ -34,11 +34,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type EventDetailResponseRegistrationStatus =
-  (typeof EventDetailResponseRegistrationStatus)[keyof typeof EventDetailResponseRegistrationStatus];
+export type EventDetailResponseRegistrationStatus = typeof EventDetailResponseRegistrationStatus[keyof typeof EventDetailResponseRegistrationStatus];
+
 
 export const EventDetailResponseRegistrationStatus = {
-  NOT_STARTED: "NOT_STARTED",
-  OPEN: "OPEN",
-  CLOSED: "CLOSED",
+  NOT_STARTED: 'NOT_STARTED',
+  OPEN: 'OPEN',
+  CLOSED: 'CLOSED',
 } as const;

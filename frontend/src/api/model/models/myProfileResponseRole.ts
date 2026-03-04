@@ -37,12 +37,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 역할
  */
-export type MyProfileResponseRole =
-  (typeof MyProfileResponseRole)[keyof typeof MyProfileResponseRole];
+export type MyProfileResponseRole = typeof MyProfileResponseRole[keyof typeof MyProfileResponseRole];
+
 
 export const MyProfileResponseRole = {
-  ASSOCIATE: "ASSOCIATE",
-  MEMBER: "MEMBER",
-  OPERATOR: "OPERATOR",
-  ADMIN: "ADMIN",
+  ASSOCIATE: 'ASSOCIATE',
+  MEMBER: 'MEMBER',
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
 } as const;

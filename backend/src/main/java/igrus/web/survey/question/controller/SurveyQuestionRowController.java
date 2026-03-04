@@ -28,7 +28,7 @@ public class SurveyQuestionRowController implements SurveyQuestionRowApi {
     private final SurveyQuestionRowService surveyQuestionRowService;
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerRowsInner>> createRow(
             Long surveyId,
             Long questionId,
@@ -47,7 +47,7 @@ public class SurveyQuestionRowController implements SurveyQuestionRowApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerRowsInner>> getRowList(
             Long surveyId,
             Long questionId
@@ -60,7 +60,7 @@ public class SurveyQuestionRowController implements SurveyQuestionRowApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerRowsInner>> updateRow(
             Long surveyId,
             Long questionId,
@@ -80,7 +80,7 @@ public class SurveyQuestionRowController implements SurveyQuestionRowApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<Void> deleteRow(Long surveyId, Long questionId, Long rowId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행 삭제 요청 - surveyId: {}, questionId: {}, rowId: {}, userId: {}", surveyId, questionId, rowId, user.userId());

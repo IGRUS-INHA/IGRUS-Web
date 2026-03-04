@@ -37,12 +37,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * @nullable
  */
-export type AdminEventDetailResponseCloseReason =
-  | (typeof AdminEventDetailResponseCloseReason)[keyof typeof AdminEventDetailResponseCloseReason]
-  | null;
+export type AdminEventDetailResponseCloseReason = typeof AdminEventDetailResponseCloseReason[keyof typeof AdminEventDetailResponseCloseReason] | null;
+
 
 export const AdminEventDetailResponseCloseReason = {
-  CAPACITY_FULL: "CAPACITY_FULL",
-  DEADLINE_PASSED: "DEADLINE_PASSED",
-  MANUAL_CLOSE: "MANUAL_CLOSE",
+  CAPACITY_FULL: 'CAPACITY_FULL',
+  DEADLINE_PASSED: 'DEADLINE_PASSED',
+  MANUAL_CLOSE: 'MANUAL_CLOSE',
 } as const;

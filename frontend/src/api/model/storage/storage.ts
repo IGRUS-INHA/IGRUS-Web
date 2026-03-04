@@ -33,7 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -46,8 +49,8 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   ConfirmUploadRequest,
@@ -56,618 +59,470 @@ import type {
   CreatePresignedUrlRequest,
   CreatePresignedUrlResponse,
   DeleteFileParams,
-  DownloadUrlResponse,
-} from ".././models";
+  DownloadUrlResponse
+} from '.././models';
 
-import { customFetch } from "../../client";
+import { customFetch } from '../../client';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * S3에 파일을 업로드하기 위한 Presigned URL을 생성합니다. 인증 필요.
  * @summary 업로드용 Presigned URL 생성
  */
 export type createUploadUrlResponse200 = {
-  data: CreatePresignedUrlResponse;
-  status: 200;
-};
+  data: CreatePresignedUrlResponse
+  status: 200
+}
 
 export type createUploadUrlResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type createUploadUrlResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type createUploadUrlResponse500 = {
-  data: void;
-  status: 500;
-};
-
-export type createUploadUrlResponseSuccess = createUploadUrlResponse200 & {
+  data: void
+  status: 500
+}
+    
+export type createUploadUrlResponseSuccess = (createUploadUrlResponse200) & {
   headers: Headers;
 };
-export type createUploadUrlResponseError = (
-  | createUploadUrlResponse400
-  | createUploadUrlResponse401
-  | createUploadUrlResponse500
-) & {
+export type createUploadUrlResponseError = (createUploadUrlResponse400 | createUploadUrlResponse401 | createUploadUrlResponse500) & {
   headers: Headers;
 };
 
-export type createUploadUrlResponse =
-  | createUploadUrlResponseSuccess
-  | createUploadUrlResponseError;
+export type createUploadUrlResponse = (createUploadUrlResponseSuccess | createUploadUrlResponseError)
 
 export const getCreateUploadUrlUrl = () => {
-  return `/api/v1/storage/presigned-url`;
-};
 
-export const createUploadUrl = async (
-  createPresignedUrlRequest: CreatePresignedUrlRequest,
-  options?: RequestInit,
-): Promise<createUploadUrlResponse> => {
-  return customFetch<createUploadUrlResponse>(getCreateUploadUrlUrl(), {
+
+  
+
+  return `/api/v1/storage/presigned-url`
+}
+
+export const createUploadUrl = async (createPresignedUrlRequest: CreatePresignedUrlRequest, options?: RequestInit): Promise<createUploadUrlResponse> => {
+  
+  return customFetch<createUploadUrlResponse>(getCreateUploadUrlUrl(),
+  {      
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createPresignedUrlRequest),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createPresignedUrlRequest,)
+  }
+);}
 
-export const getCreateUploadUrlMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createUploadUrl>>,
-    TError,
-    { data: CreatePresignedUrlRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createUploadUrl>>,
-  TError,
-  { data: CreatePresignedUrlRequest },
-  TContext
-> => {
-  const mutationKey = ["createUploadUrl"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createUploadUrl>>,
-    { data: CreatePresignedUrlRequest }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return createUploadUrl(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getCreateUploadUrlMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreatePresignedUrlRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreatePresignedUrlRequest}, TContext> => {
 
-export type CreateUploadUrlMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createUploadUrl>>
->;
-export type CreateUploadUrlMutationBody = CreatePresignedUrlRequest;
-export type CreateUploadUrlMutationError = void;
+const mutationKey = ['createUploadUrl'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUploadUrl>>, {data: CreatePresignedUrlRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createUploadUrl(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateUploadUrlMutationResult = NonNullable<Awaited<ReturnType<typeof createUploadUrl>>>
+    export type CreateUploadUrlMutationBody = CreatePresignedUrlRequest
+    export type CreateUploadUrlMutationError = void
+
+    /**
  * @summary 업로드용 Presigned URL 생성
  */
-export const useCreateUploadUrl = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof createUploadUrl>>,
-      TError,
-      { data: CreatePresignedUrlRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof createUploadUrl>>,
-  TError,
-  { data: CreatePresignedUrlRequest },
-  TContext
-> => {
-  return useMutation(getCreateUploadUrlMutationOptions(options), queryClient);
-};
-/**
+export const useCreateUploadUrl = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUploadUrl>>, TError,{data: CreatePresignedUrlRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createUploadUrl>>,
+        TError,
+        {data: CreatePresignedUrlRequest},
+        TContext
+      > => {
+      return useMutation(getCreateUploadUrlMutationOptions(options), queryClient);
+    }
+    /**
  * S3에 파일 업로드 완료 후 백엔드에 알립니다. S3 HEAD 검증을 수행합니다. 인증 필요.
  * @summary 업로드 완료 확인
  */
 export type confirmUploadResponse200 = {
-  data: ConfirmUploadResponse;
-  status: 200;
-};
+  data: ConfirmUploadResponse
+  status: 200
+}
 
 export type confirmUploadResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type confirmUploadResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type confirmUploadResponse403 = {
-  data: void;
-  status: 403;
-};
+  data: void
+  status: 403
+}
 
 export type confirmUploadResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type confirmUploadResponseSuccess = confirmUploadResponse200 & {
+  data: void
+  status: 404
+}
+    
+export type confirmUploadResponseSuccess = (confirmUploadResponse200) & {
   headers: Headers;
 };
-export type confirmUploadResponseError = (
-  | confirmUploadResponse400
-  | confirmUploadResponse401
-  | confirmUploadResponse403
-  | confirmUploadResponse404
-) & {
+export type confirmUploadResponseError = (confirmUploadResponse400 | confirmUploadResponse401 | confirmUploadResponse403 | confirmUploadResponse404) & {
   headers: Headers;
 };
 
-export type confirmUploadResponse =
-  | confirmUploadResponseSuccess
-  | confirmUploadResponseError;
+export type confirmUploadResponse = (confirmUploadResponseSuccess | confirmUploadResponseError)
 
 export const getConfirmUploadUrl = () => {
-  return `/api/v1/storage/confirm`;
-};
 
-export const confirmUpload = async (
-  confirmUploadRequest: ConfirmUploadRequest,
-  options?: RequestInit,
-): Promise<confirmUploadResponse> => {
-  return customFetch<confirmUploadResponse>(getConfirmUploadUrl(), {
+
+  
+
+  return `/api/v1/storage/confirm`
+}
+
+export const confirmUpload = async (confirmUploadRequest: ConfirmUploadRequest, options?: RequestInit): Promise<confirmUploadResponse> => {
+  
+  return customFetch<confirmUploadResponse>(getConfirmUploadUrl(),
+  {      
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(confirmUploadRequest),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      confirmUploadRequest,)
+  }
+);}
 
-export const getConfirmUploadMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof confirmUpload>>,
-    TError,
-    { data: ConfirmUploadRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof confirmUpload>>,
-  TError,
-  { data: ConfirmUploadRequest },
-  TContext
-> => {
-  const mutationKey = ["confirmUpload"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof confirmUpload>>,
-    { data: ConfirmUploadRequest }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return confirmUpload(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getConfirmUploadMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadRequest}, TContext> => {
 
-export type ConfirmUploadMutationResult = NonNullable<
-  Awaited<ReturnType<typeof confirmUpload>>
->;
-export type ConfirmUploadMutationBody = ConfirmUploadRequest;
-export type ConfirmUploadMutationError = void;
+const mutationKey = ['confirmUpload'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmUpload>>, {data: ConfirmUploadRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  confirmUpload(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmUploadMutationResult = NonNullable<Awaited<ReturnType<typeof confirmUpload>>>
+    export type ConfirmUploadMutationBody = ConfirmUploadRequest
+    export type ConfirmUploadMutationError = void
+
+    /**
  * @summary 업로드 완료 확인
  */
-export const useConfirmUpload = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof confirmUpload>>,
-      TError,
-      { data: ConfirmUploadRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof confirmUpload>>,
-  TError,
-  { data: ConfirmUploadRequest },
-  TContext
-> => {
-  return useMutation(getConfirmUploadMutationOptions(options), queryClient);
-};
-/**
+export const useConfirmUpload = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmUpload>>, TError,{data: ConfirmUploadRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmUpload>>,
+        TError,
+        {data: ConfirmUploadRequest},
+        TContext
+      > => {
+      return useMutation(getConfirmUploadMutationOptions(options), queryClient);
+    }
+    /**
  * S3에서 파일을 다운로드하기 위한 Presigned URL을 생성합니다. COMPLETED 상태의 파일만 가능합니다. 인증 필요.
  * @summary 다운로드용 Presigned URL 생성
  */
 export type createDownloadUrlResponse200 = {
-  data: DownloadUrlResponse;
-  status: 200;
-};
+  data: DownloadUrlResponse
+  status: 200
+}
 
 export type createDownloadUrlResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type createDownloadUrlResponse404 = {
-  data: void;
-  status: 404;
-};
+  data: void
+  status: 404
+}
 
 export type createDownloadUrlResponse500 = {
-  data: void;
-  status: 500;
-};
-
-export type createDownloadUrlResponseSuccess = createDownloadUrlResponse200 & {
+  data: void
+  status: 500
+}
+    
+export type createDownloadUrlResponseSuccess = (createDownloadUrlResponse200) & {
   headers: Headers;
 };
-export type createDownloadUrlResponseError = (
-  | createDownloadUrlResponse401
-  | createDownloadUrlResponse404
-  | createDownloadUrlResponse500
-) & {
+export type createDownloadUrlResponseError = (createDownloadUrlResponse401 | createDownloadUrlResponse404 | createDownloadUrlResponse500) & {
   headers: Headers;
 };
 
-export type createDownloadUrlResponse =
-  | createDownloadUrlResponseSuccess
-  | createDownloadUrlResponseError;
+export type createDownloadUrlResponse = (createDownloadUrlResponseSuccess | createDownloadUrlResponseError)
 
-export const getCreateDownloadUrlUrl = (params: CreateDownloadUrlParams) => {
+export const getCreateDownloadUrlUrl = (params: CreateDownloadUrlParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/v1/storage/download-url?${stringifiedParams}`
-    : `/api/v1/storage/download-url`;
-};
+  return stringifiedParams.length > 0 ? `/api/v1/storage/download-url?${stringifiedParams}` : `/api/v1/storage/download-url`
+}
 
-export const createDownloadUrl = async (
-  params: CreateDownloadUrlParams,
-  options?: RequestInit,
-): Promise<createDownloadUrlResponse> => {
-  return customFetch<createDownloadUrlResponse>(
-    getCreateDownloadUrlUrl(params),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
+export const createDownloadUrl = async (params: CreateDownloadUrlParams, options?: RequestInit): Promise<createDownloadUrlResponse> => {
+  
+  return customFetch<createDownloadUrlResponse>(getCreateDownloadUrlUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getCreateDownloadUrlQueryKey = (
-  params?: CreateDownloadUrlParams,
+
+
+
+
+export const getCreateDownloadUrlQueryKey = (params?: CreateDownloadUrlParams,) => {
+    return [
+    `/api/v1/storage/download-url`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getCreateDownloadUrlQueryOptions = <TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(params: CreateDownloadUrlParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  return [`/api/v1/storage/download-url`, ...(params ? [params] : [])] as const;
-};
 
-export const getCreateDownloadUrlQueryOptions = <
-  TData = Awaited<ReturnType<typeof createDownloadUrl>>,
-  TError = void,
->(
-  params: CreateDownloadUrlParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof createDownloadUrl>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getCreateDownloadUrlQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getCreateDownloadUrlQueryKey(params);
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof createDownloadUrl>>
-  > = ({ signal }) => createDownloadUrl(params, { signal, ...requestOptions });
+  
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof createDownloadUrl>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof createDownloadUrl>>> = ({ signal }) => createDownloadUrl(params, { signal, ...requestOptions });
 
-export type CreateDownloadUrlQueryResult = NonNullable<
-  Awaited<ReturnType<typeof createDownloadUrl>>
->;
-export type CreateDownloadUrlQueryError = void;
+      
 
-export function useCreateDownloadUrl<
-  TData = Awaited<ReturnType<typeof createDownloadUrl>>,
-  TError = void,
->(
-  params: CreateDownloadUrlParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof createDownloadUrl>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CreateDownloadUrlQueryResult = NonNullable<Awaited<ReturnType<typeof createDownloadUrl>>>
+export type CreateDownloadUrlQueryError = void
+
+
+export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(
+ params: CreateDownloadUrlParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof createDownloadUrl>>,
           TError,
           Awaited<ReturnType<typeof createDownloadUrl>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useCreateDownloadUrl<
-  TData = Awaited<ReturnType<typeof createDownloadUrl>>,
-  TError = void,
->(
-  params: CreateDownloadUrlParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof createDownloadUrl>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(
+ params: CreateDownloadUrlParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof createDownloadUrl>>,
           TError,
           Awaited<ReturnType<typeof createDownloadUrl>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useCreateDownloadUrl<
-  TData = Awaited<ReturnType<typeof createDownloadUrl>>,
-  TError = void,
->(
-  params: CreateDownloadUrlParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof createDownloadUrl>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(
+ params: CreateDownloadUrlParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 다운로드용 Presigned URL 생성
  */
 
-export function useCreateDownloadUrl<
-  TData = Awaited<ReturnType<typeof createDownloadUrl>>,
-  TError = void,
->(
-  params: CreateDownloadUrlParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof createDownloadUrl>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getCreateDownloadUrlQueryOptions(params, options);
+export function useCreateDownloadUrl<TData = Awaited<ReturnType<typeof createDownloadUrl>>, TError = void>(
+ params: CreateDownloadUrlParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof createDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getCreateDownloadUrlQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * S3 객체와 파일 메타데이터를 삭제합니다. OPERATOR 이상 권한 필요.
  * @summary 파일 삭제
  */
 export type deleteFileResponse204 = {
-  data: void;
-  status: 204;
-};
+  data: void
+  status: 204
+}
 
 export type deleteFileResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type deleteFileResponse403 = {
-  data: void;
-  status: 403;
-};
+  data: void
+  status: 403
+}
 
 export type deleteFileResponse404 = {
-  data: void;
-  status: 404;
-};
+  data: void
+  status: 404
+}
 
 export type deleteFileResponse409 = {
-  data: void;
-  status: 409;
-};
+  data: void
+  status: 409
+}
 
 export type deleteFileResponse500 = {
-  data: void;
-  status: 500;
-};
-
-export type deleteFileResponseSuccess = deleteFileResponse204 & {
+  data: void
+  status: 500
+}
+    
+export type deleteFileResponseSuccess = (deleteFileResponse204) & {
   headers: Headers;
 };
-export type deleteFileResponseError = (
-  | deleteFileResponse401
-  | deleteFileResponse403
-  | deleteFileResponse404
-  | deleteFileResponse409
-  | deleteFileResponse500
-) & {
+export type deleteFileResponseError = (deleteFileResponse401 | deleteFileResponse403 | deleteFileResponse404 | deleteFileResponse409 | deleteFileResponse500) & {
   headers: Headers;
 };
 
-export type deleteFileResponse =
-  | deleteFileResponseSuccess
-  | deleteFileResponseError;
+export type deleteFileResponse = (deleteFileResponseSuccess | deleteFileResponseError)
 
-export const getDeleteFileUrl = (params: DeleteFileParams) => {
+export const getDeleteFileUrl = (params: DeleteFileParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/v1/storage?${stringifiedParams}`
-    : `/api/v1/storage`;
-};
+  return stringifiedParams.length > 0 ? `/api/v1/storage?${stringifiedParams}` : `/api/v1/storage`
+}
 
-export const deleteFile = async (
-  params: DeleteFileParams,
-  options?: RequestInit,
-): Promise<deleteFileResponse> => {
-  return customFetch<deleteFileResponse>(getDeleteFileUrl(params), {
+export const deleteFile = async (params: DeleteFileParams, options?: RequestInit): Promise<deleteFileResponse> => {
+  
+  return customFetch<deleteFileResponse>(getDeleteFileUrl(params),
+  {      
     ...options,
-    method: "DELETE",
-  });
-};
+    method: 'DELETE'
+    
+    
+  }
+);}
 
-export const getDeleteFileMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteFile>>,
-    TError,
-    { params: DeleteFileParams },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteFile>>,
-  TError,
-  { params: DeleteFileParams },
-  TContext
-> => {
-  const mutationKey = ["deleteFile"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteFile>>,
-    { params: DeleteFileParams }
-  > = (props) => {
-    const { params } = props ?? {};
 
-    return deleteFile(params, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getDeleteFileMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFile>>, TError,{params: DeleteFileParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteFile>>, TError,{params: DeleteFileParams}, TContext> => {
 
-export type DeleteFileMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteFile>>
->;
+const mutationKey = ['deleteFile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type DeleteFileMutationError = void;
+      
 
-/**
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteFile>>, {params: DeleteFileParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  deleteFile(params,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteFileMutationResult = NonNullable<Awaited<ReturnType<typeof deleteFile>>>
+    
+    export type DeleteFileMutationError = void
+
+    /**
  * @summary 파일 삭제
  */
-export const useDeleteFile = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteFile>>,
-      TError,
-      { params: DeleteFileParams },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteFile>>,
-  TError,
-  { params: DeleteFileParams },
-  TContext
-> => {
-  return useMutation(getDeleteFileMutationOptions(options), queryClient);
-};
+export const useDeleteFile = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFile>>, TError,{params: DeleteFileParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteFile>>,
+        TError,
+        {params: DeleteFileParams},
+        TContext
+      > => {
+      return useMutation(getDeleteFileMutationOptions(options), queryClient);
+    }
+    

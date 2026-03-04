@@ -33,7 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -46,496 +49,372 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   GetMyLikesParams,
   LikedPostPageResponse,
   PostLikeStatusResponse,
-  PostLikeToggleResponse,
-} from ".././models";
+  PostLikeToggleResponse
+} from '.././models';
 
-import { customFetch } from "../../client";
+import { customFetch } from '../../client';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * 게시글 좋아요를 토글합니다. 좋아요가 없으면 추가하고, 있으면 취소합니다.
  * @summary 게시글 좋아요 토글
  */
 export type toggleLikeResponse200 = {
-  data: PostLikeToggleResponse;
-  status: 200;
-};
+  data: PostLikeToggleResponse
+  status: 200
+}
 
 export type toggleLikeResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type toggleLikeResponse403 = {
-  data: void;
-  status: 403;
-};
+  data: void
+  status: 403
+}
 
 export type toggleLikeResponse404 = {
-  data: void;
-  status: 404;
-};
+  data: void
+  status: 404
+}
 
 export type toggleLikeResponse410 = {
-  data: void;
-  status: 410;
-};
-
-export type toggleLikeResponseSuccess = toggleLikeResponse200 & {
+  data: void
+  status: 410
+}
+    
+export type toggleLikeResponseSuccess = (toggleLikeResponse200) & {
   headers: Headers;
 };
-export type toggleLikeResponseError = (
-  | toggleLikeResponse401
-  | toggleLikeResponse403
-  | toggleLikeResponse404
-  | toggleLikeResponse410
-) & {
+export type toggleLikeResponseError = (toggleLikeResponse401 | toggleLikeResponse403 | toggleLikeResponse404 | toggleLikeResponse410) & {
   headers: Headers;
 };
 
-export type toggleLikeResponse =
-  | toggleLikeResponseSuccess
-  | toggleLikeResponseError;
+export type toggleLikeResponse = (toggleLikeResponseSuccess | toggleLikeResponseError)
 
-export const getToggleLikeUrl = (postId: number) => {
-  return `/api/v1/posts/${postId}/likes`;
-};
+export const getToggleLikeUrl = (postId: number,) => {
 
-export const toggleLike = async (
-  postId: number,
-  options?: RequestInit,
-): Promise<toggleLikeResponse> => {
-  return customFetch<toggleLikeResponse>(getToggleLikeUrl(postId), {
+
+  
+
+  return `/api/v1/posts/${postId}/likes`
+}
+
+export const toggleLike = async (postId: number, options?: RequestInit): Promise<toggleLikeResponse> => {
+  
+  return customFetch<toggleLikeResponse>(getToggleLikeUrl(postId),
+  {      
     ...options,
-    method: "POST",
-  });
-};
+    method: 'POST'
+    
+    
+  }
+);}
 
-export const getToggleLikeMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof toggleLike>>,
-    TError,
-    { postId: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof toggleLike>>,
-  TError,
-  { postId: number },
-  TContext
-> => {
-  const mutationKey = ["toggleLike"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof toggleLike>>,
-    { postId: number }
-  > = (props) => {
-    const { postId } = props ?? {};
 
-    return toggleLike(postId, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getToggleLikeMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleLike>>, TError,{postId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof toggleLike>>, TError,{postId: number}, TContext> => {
 
-export type ToggleLikeMutationResult = NonNullable<
-  Awaited<ReturnType<typeof toggleLike>>
->;
+const mutationKey = ['toggleLike'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-export type ToggleLikeMutationError = void;
+      
 
-/**
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof toggleLike>>, {postId: number}> = (props) => {
+          const {postId} = props ?? {};
+
+          return  toggleLike(postId,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ToggleLikeMutationResult = NonNullable<Awaited<ReturnType<typeof toggleLike>>>
+    
+    export type ToggleLikeMutationError = void
+
+    /**
  * @summary 게시글 좋아요 토글
  */
-export const useToggleLike = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof toggleLike>>,
-      TError,
-      { postId: number },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof toggleLike>>,
-  TError,
-  { postId: number },
-  TContext
-> => {
-  return useMutation(getToggleLikeMutationOptions(options), queryClient);
-};
-/**
+export const useToggleLike = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleLike>>, TError,{postId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof toggleLike>>,
+        TError,
+        {postId: number},
+        TContext
+      > => {
+      return useMutation(getToggleLikeMutationOptions(options), queryClient);
+    }
+    /**
  * 내가 좋아요한 게시글 목록을 조회합니다.
  * @summary 내 게시글 좋아요 목록 조회
  */
 export type getMyLikesResponse200 = {
-  data: LikedPostPageResponse;
-  status: 200;
-};
+  data: LikedPostPageResponse
+  status: 200
+}
 
 export type getMyLikesResponse401 = {
-  data: void;
-  status: 401;
-};
-
-export type getMyLikesResponseSuccess = getMyLikesResponse200 & {
+  data: void
+  status: 401
+}
+    
+export type getMyLikesResponseSuccess = (getMyLikesResponse200) & {
   headers: Headers;
 };
-export type getMyLikesResponseError = getMyLikesResponse401 & {
+export type getMyLikesResponseError = (getMyLikesResponse401) & {
   headers: Headers;
 };
 
-export type getMyLikesResponse =
-  | getMyLikesResponseSuccess
-  | getMyLikesResponseError;
+export type getMyLikesResponse = (getMyLikesResponseSuccess | getMyLikesResponseError)
 
-export const getGetMyLikesUrl = (params?: GetMyLikesParams) => {
+export const getGetMyLikesUrl = (params?: GetMyLikesParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/v1/users/me/likes?${stringifiedParams}`
-    : `/api/v1/users/me/likes`;
-};
+  return stringifiedParams.length > 0 ? `/api/v1/users/me/likes?${stringifiedParams}` : `/api/v1/users/me/likes`
+}
 
-export const getMyLikes = async (
-  params?: GetMyLikesParams,
-  options?: RequestInit,
-): Promise<getMyLikesResponse> => {
-  return customFetch<getMyLikesResponse>(getGetMyLikesUrl(params), {
+export const getMyLikes = async (params?: GetMyLikesParams, options?: RequestInit): Promise<getMyLikesResponse> => {
+  
+  return customFetch<getMyLikesResponse>(getGetMyLikesUrl(params),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetMyLikesQueryKey = (params?: GetMyLikesParams) => {
-  return [`/api/v1/users/me/likes`, ...(params ? [params] : [])] as const;
-};
 
-export const getGetMyLikesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyLikes>>,
-  TError = void,
->(
-  params?: GetMyLikesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+
+
+
+export const getGetMyLikesQueryKey = (params?: GetMyLikesParams,) => {
+    return [
+    `/api/v1/users/me/likes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getGetMyLikesQueryOptions = <TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(params?: GetMyLikesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyLikesQueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyLikes>>> = ({
-    signal,
-  }) => getMyLikes(params, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMyLikesQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyLikes>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetMyLikesQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyLikes>>
->;
-export type GetMyLikesQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyLikes>>> = ({ signal }) => getMyLikes(params, { signal, ...requestOptions });
 
-export function useGetMyLikes<
-  TData = Awaited<ReturnType<typeof getMyLikes>>,
-  TError = void,
->(
-  params: undefined | GetMyLikesParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyLikesQueryResult = NonNullable<Awaited<ReturnType<typeof getMyLikes>>>
+export type GetMyLikesQueryError = void
+
+
+export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(
+ params: undefined |  GetMyLikesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyLikes>>,
           TError,
           Awaited<ReturnType<typeof getMyLikes>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyLikes<
-  TData = Awaited<ReturnType<typeof getMyLikes>>,
-  TError = void,
->(
-  params?: GetMyLikesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(
+ params?: GetMyLikesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyLikes>>,
           TError,
           Awaited<ReturnType<typeof getMyLikes>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyLikes<
-  TData = Awaited<ReturnType<typeof getMyLikes>>,
-  TError = void,
->(
-  params?: GetMyLikesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(
+ params?: GetMyLikesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 내 게시글 좋아요 목록 조회
  */
 
-export function useGetMyLikes<
-  TData = Awaited<ReturnType<typeof getMyLikes>>,
-  TError = void,
->(
-  params?: GetMyLikesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMyLikesQueryOptions(params, options);
+export function useGetMyLikes<TData = Awaited<ReturnType<typeof getMyLikes>>, TError = void>(
+ params?: GetMyLikesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMyLikesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * 게시글의 좋아요 상태를 조회합니다.
  * @summary 게시글 좋아요 상태 조회
  */
 export type getLikeStatusResponse200 = {
-  data: PostLikeStatusResponse;
-  status: 200;
-};
+  data: PostLikeStatusResponse
+  status: 200
+}
 
 export type getLikeStatusResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type getLikeStatusResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type getLikeStatusResponseSuccess = getLikeStatusResponse200 & {
+  data: void
+  status: 404
+}
+    
+export type getLikeStatusResponseSuccess = (getLikeStatusResponse200) & {
   headers: Headers;
 };
-export type getLikeStatusResponseError = (
-  | getLikeStatusResponse401
-  | getLikeStatusResponse404
-) & {
+export type getLikeStatusResponseError = (getLikeStatusResponse401 | getLikeStatusResponse404) & {
   headers: Headers;
 };
 
-export type getLikeStatusResponse =
-  | getLikeStatusResponseSuccess
-  | getLikeStatusResponseError;
+export type getLikeStatusResponse = (getLikeStatusResponseSuccess | getLikeStatusResponseError)
 
-export const getGetLikeStatusUrl = (postId: number) => {
-  return `/api/v1/posts/${postId}/likes/status`;
-};
+export const getGetLikeStatusUrl = (postId: number,) => {
 
-export const getLikeStatus = async (
-  postId: number,
-  options?: RequestInit,
-): Promise<getLikeStatusResponse> => {
-  return customFetch<getLikeStatusResponse>(getGetLikeStatusUrl(postId), {
+
+  
+
+  return `/api/v1/posts/${postId}/likes/status`
+}
+
+export const getLikeStatus = async (postId: number, options?: RequestInit): Promise<getLikeStatusResponse> => {
+  
+  return customFetch<getLikeStatusResponse>(getGetLikeStatusUrl(postId),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetLikeStatusQueryKey = (postId: number) => {
-  return [`/api/v1/posts/${postId}/likes/status`] as const;
-};
 
-export const getGetLikeStatusQueryOptions = <
-  TData = Awaited<ReturnType<typeof getLikeStatus>>,
-  TError = void,
->(
-  postId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+
+
+
+export const getGetLikeStatusQueryKey = (postId: number,) => {
+    return [
+    `/api/v1/posts/${postId}/likes/status`
+    ] as const;
+    }
+
+    
+export const getGetLikeStatusQueryOptions = <TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetLikeStatusQueryKey(postId);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLikeStatus>>> = ({
-    signal,
-  }) => getLikeStatus(postId, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetLikeStatusQueryKey(postId);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!postId,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getLikeStatus>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetLikeStatusQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getLikeStatus>>
->;
-export type GetLikeStatusQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLikeStatus>>> = ({ signal }) => getLikeStatus(postId, { signal, ...requestOptions });
 
-export function useGetLikeStatus<
-  TData = Awaited<ReturnType<typeof getLikeStatus>>,
-  TError = void,
->(
-  postId: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(postId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetLikeStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getLikeStatus>>>
+export type GetLikeStatusQueryError = void
+
+
+export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(
+ postId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLikeStatus>>,
           TError,
           Awaited<ReturnType<typeof getLikeStatus>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetLikeStatus<
-  TData = Awaited<ReturnType<typeof getLikeStatus>>,
-  TError = void,
->(
-  postId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(
+ postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLikeStatus>>,
           TError,
           Awaited<ReturnType<typeof getLikeStatus>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetLikeStatus<
-  TData = Awaited<ReturnType<typeof getLikeStatus>>,
-  TError = void,
->(
-  postId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(
+ postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 게시글 좋아요 상태 조회
  */
 
-export function useGetLikeStatus<
-  TData = Awaited<ReturnType<typeof getLikeStatus>>,
-  TError = void,
->(
-  postId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetLikeStatusQueryOptions(postId, options);
+export function useGetLikeStatus<TData = Awaited<ReturnType<typeof getLikeStatus>>, TError = void>(
+ postId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLikeStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetLikeStatusQueryOptions(postId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+

@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AssociateInfoResponse } from "./associateInfoResponse";
+import type { AssociateInfoResponse } from './associateInfoResponse';
 
 /**
  * 준회원 목록 페이징 응답

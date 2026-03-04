@@ -33,8 +33,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { PinnedByInfo } from "./pinnedByInfo";
-import type { PostInfo } from "./postInfo";
+import type { PinnedByInfo } from './pinnedByInfo';
+import type { PostInfo } from './postInfo';
 
 export interface PinnedPostListResponse {
   id?: number;
