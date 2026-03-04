@@ -396,6 +396,8 @@ eventsByEventIdRegistrations:
           application/json:
             schema:
               $ref: ../schemas/events.yaml#/RegistrationResponse
+      '400':
+        description: 취소할 수 없는 상태의 행사
       '401':
         description: 인증 필요
       '404':

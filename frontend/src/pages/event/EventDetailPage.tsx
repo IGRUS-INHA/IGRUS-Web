@@ -218,6 +218,8 @@ export default function EventDetailPage() {
             alert("이미 취소된 신청입니다.");
           } else if (hasErrorCode(error, "CANCEL_DEADLINE_PASSED")) {
             alert("취소 가능 기간이 지났습니다.");
+          } else if (hasErrorCode(error, "EVENT_NOT_CANCELABLE")) {
+            alert("취소된 행사의 신청은 취소할 수 없습니다.");
           } else {
             alert(getErrorMessage(error));
           }
@@ -373,7 +375,7 @@ export default function EventDetailPage() {
   const isOpen = event.isRegistrable ?? false;
   const hasApplied = event.isRegistered ?? false;
   const canApply = user && isOpen && !hasApplied;
-  const canCancel = user && hasApplied;
+  const canCancel = user && hasApplied && event.eventStatus !== "CANCELED";
   const canManage = event.canEdit;
   const hasRegistrants = (event.currentCount ?? 0) > 0;
 
@@ -406,6 +408,8 @@ export default function EventDetailPage() {
   const hasNext = currentImageIndex < images.length - 1;
 
   // 더보기 메뉴 항목 구성
+  const isCanceled = event.eventStatus === "CANCELED";
+  const showEdit = !isCanceled;
   const showPublish = event.visibility === "UNPUBLISHED";
   const showUnpublish = event.visibility === "PUBLISHED";
   const showClose = event.registrationStatus === "OPEN";
@@ -439,13 +443,15 @@ export default function EventDetailPage() {
             {isMoreMenuOpen && (
               <div className="absolute right-0 top-full mt-s2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200 bg-popover border-border">
                 {/* 일반 관리 영역 */}
-                <button
-                  onClick={handleEdit}
-                  type="button"
-                  className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted"
-                >
-                  <Edit size={16} /> 수정하기
-                </button>
+                {showEdit && (
+                  <button
+                    onClick={handleEdit}
+                    type="button"
+                    className="w-full text-left px-s4 py-s3 text-sm font-medium flex items-center gap-s2 transition-colors cursor-pointer text-foreground hover:bg-muted"
+                  >
+                    <Edit size={16} /> 수정하기
+                  </button>
+                )}
 
                 {showPublish && (
                   <button

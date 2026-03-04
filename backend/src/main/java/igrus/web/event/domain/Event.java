@@ -477,8 +477,8 @@ public class Event extends SoftDeletableEntity {
                        Instant eventStartAt, Instant eventEndAt,
                        Instant registrationStartAt, Instant registrationEndAt,
                        Integer capacity) {
-        // COMPLETED는 수정 불가
-        if (this.eventStatus == EventStatus.COMPLETED) {
+        // COMPLETED 또는 CANCELED는 수정 불가
+        if (this.eventStatus == EventStatus.COMPLETED || this.eventStatus == EventStatus.CANCELED) {
             throw new EventNotEditableException(this.eventStatus);
         }
 
