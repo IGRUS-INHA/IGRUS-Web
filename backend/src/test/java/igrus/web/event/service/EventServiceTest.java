@@ -10,6 +10,7 @@ import igrus.web.event.exception.*;
 import igrus.web.event.event.EventStatusChangeEvent;
 import igrus.web.event.repository.EventRegistrationRepository;
 import igrus.web.event.repository.EventRepository;
+import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -57,6 +58,9 @@ class EventServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private SurveyRepository surveyRepository;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -140,7 +144,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -168,7 +173,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
 
@@ -185,7 +191,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -203,7 +210,8 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventEnd, eventStart, // 시작과 종료 역전
                     regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -221,7 +229,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, badRegEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -240,7 +249,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, badRegStart, badRegEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -261,7 +271,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     futureEventStart, futureEventEnd, pastRegStart, pastRegEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -278,7 +289,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, eventStart, eventEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -297,7 +309,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart1msBefore, regEndForTest,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -322,7 +335,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, eventStart,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -347,7 +361,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, eventEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -372,7 +387,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regEnd, regStart,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -389,7 +405,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventStart, regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -414,7 +431,8 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regStart,
-                    30, EventRegistrationType.AUTO_APPROVE
+                    30, EventRegistrationType.AUTO_APPROVE,
+                    null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -611,7 +629,8 @@ class EventServiceTest {
         void updateEvent_WithValidRequest_Success() {
             UpdateEventRequest request = new UpdateEventRequest(
                     "수정된 제목", "수정된 설명", "수정된 장소",
-                    eventStart, eventEnd, regStart, regEnd, 50
+                    eventStart, eventEnd, regStart, regEnd, 50,
+                    null
             );
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
@@ -620,7 +639,7 @@ class EventServiceTest {
 
             assertThat(response).isNotNull();
             verify(mockEvent).update("수정된 제목", "수정된 설명", "수정된 장소",
-                    eventStart, eventEnd, regStart, regEnd, 50);
+                    eventStart, eventEnd, regStart, regEnd, 50, null);
         }
 
         /**
@@ -631,7 +650,8 @@ class EventServiceTest {
         void updateEvent_WithRegularMember_ThrowsException() {
             UpdateEventRequest request = new UpdateEventRequest(
                     "수정", "설명", "장소",
-                    eventStart, eventEnd, regStart, regEnd, 50
+                    eventStart, eventEnd, regStart, regEnd, 50,
+                    null
             );
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
@@ -648,7 +668,8 @@ class EventServiceTest {
         void updateEvent_DeletedEvent_ThrowsException() {
             UpdateEventRequest request = new UpdateEventRequest(
                     "수정", "설명", "장소",
-                    eventStart, eventEnd, regStart, regEnd, 50
+                    eventStart, eventEnd, regStart, regEnd, 50,
+                    null
             );
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.empty());
 
@@ -1608,6 +1629,277 @@ class EventServiceTest {
 
             assertThatThrownBy(() -> eventService.getAdminEvent(999L, OPERATOR_ID))
                     .isInstanceOf(EventNotFoundException.class);
+        }
+    }
+
+    // ========== 설문 연동 (Survey-Event Linking) ==========
+
+    @Nested
+    @DisplayName("설문 연동 - 행사 생성/수정 시 설문 검증")
+    class SurveyEventLinkingTest {
+
+        private static final Long SURVEY_ID = 100L;
+
+        @Test
+        @DisplayName("[TC-004] 동일 설문을 두 행사에 연결 시 모두 성공")
+        void createEvent_SameSurveyTwoEvents_BothSucceed() {
+            // given
+            igrus.web.survey.domain.Survey mockSurvey = mock(igrus.web.survey.domain.Survey.class);
+            when(mockSurvey.getTrashedAt()).thenReturn(null);
+            when(surveyRepository.findByIdAndDeletedFalse(SURVEY_ID)).thenReturn(Optional.of(mockSurvey));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
+                Event savedEvent = mock(Event.class);
+                when(savedEvent.getId()).thenReturn(EVENT_ID);
+                when(savedEvent.getTitle()).thenReturn("행사 A");
+                when(savedEvent.getCreatedAt()).thenReturn(Instant.now());
+                return savedEvent;
+            });
+
+            CreateEventRequest requestA = new CreateEventRequest(
+                    "행사 A", "설명", "장소",
+                    eventStart, eventEnd, regStart, regEnd,
+                    30, EventRegistrationType.AUTO_APPROVE, SURVEY_ID
+            );
+            CreateEventRequest requestB = new CreateEventRequest(
+                    "행사 B", "설명", "장소",
+                    eventStart.plus(20, ChronoUnit.DAYS), eventEnd.plus(20, ChronoUnit.DAYS),
+                    regStart.plus(15, ChronoUnit.DAYS), regEnd.plus(15, ChronoUnit.DAYS),
+                    30, EventRegistrationType.AUTO_APPROVE, SURVEY_ID
+            );
+
+            // when
+            EventCreateResponse responseA = eventService.createEvent(requestA, OPERATOR_ID);
+            EventCreateResponse responseB = eventService.createEvent(requestB, OPERATOR_ID);
+
+            // then
+            assertThat(responseA).isNotNull();
+            assertThat(responseB).isNotNull();
+            verify(surveyRepository, times(2)).findByIdAndDeletedFalse(SURVEY_ID);
+        }
+
+        @Test
+        @DisplayName("[TC-005] 존재하는 활성 설문 ID로 행사 생성 성공")
+        void createEvent_WithActiveSurvey_Success() {
+            // given
+            igrus.web.survey.domain.Survey mockSurvey = mock(igrus.web.survey.domain.Survey.class);
+            when(mockSurvey.getTrashedAt()).thenReturn(null);
+            when(surveyRepository.findByIdAndDeletedFalse(SURVEY_ID)).thenReturn(Optional.of(mockSurvey));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
+                Event savedEvent = mock(Event.class);
+                when(savedEvent.getId()).thenReturn(EVENT_ID);
+                when(savedEvent.getTitle()).thenReturn("테스트 행사");
+                when(savedEvent.getCreatedAt()).thenReturn(Instant.now());
+                when(savedEvent.getSurveyId()).thenReturn(SURVEY_ID);
+                return savedEvent;
+            });
+
+            CreateEventRequest request = new CreateEventRequest(
+                    "테스트 행사", "설명", "장소",
+                    eventStart, eventEnd, regStart, regEnd,
+                    30, EventRegistrationType.AUTO_APPROVE, SURVEY_ID
+            );
+
+            // when
+            EventCreateResponse response = eventService.createEvent(request, OPERATOR_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(surveyRepository).findByIdAndDeletedFalse(SURVEY_ID);
+            verify(eventRepository).save(any(Event.class));
+        }
+
+        @Test
+        @DisplayName("[TC-006] 존재하지 않는 설문 ID로 행사 생성 시 SurveyNotFoundException")
+        void createEvent_WithNonExistentSurvey_ThrowsException() {
+            // given
+            Long invalidSurveyId = 99999L;
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(surveyRepository.findByIdAndDeletedFalse(invalidSurveyId)).thenReturn(Optional.empty());
+
+            CreateEventRequest request = new CreateEventRequest(
+                    "테스트 행사", "설명", "장소",
+                    eventStart, eventEnd, regStart, regEnd,
+                    30, EventRegistrationType.AUTO_APPROVE, invalidSurveyId
+            );
+
+            // when/then
+            assertThatThrownBy(() -> eventService.createEvent(request, OPERATOR_ID))
+                    .isInstanceOf(igrus.web.survey.exception.SurveyNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("[TC-007] 삭제된 설문 ID로 행사 생성 시 SurveyNotFoundException")
+        void createEvent_WithDeletedSurvey_ThrowsException() {
+            // given
+            Long deletedSurveyId = 200L;
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(surveyRepository.findByIdAndDeletedFalse(deletedSurveyId)).thenReturn(Optional.empty());
+
+            CreateEventRequest request = new CreateEventRequest(
+                    "테스트 행사", "설명", "장소",
+                    eventStart, eventEnd, regStart, regEnd,
+                    30, EventRegistrationType.AUTO_APPROVE, deletedSurveyId
+            );
+
+            // when/then
+            assertThatThrownBy(() -> eventService.createEvent(request, OPERATOR_ID))
+                    .isInstanceOf(igrus.web.survey.exception.SurveyNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("[TC-008] 휴지통 설문 ID로 행사 생성 시 SurveyNotFoundException")
+        void createEvent_WithTrashedSurvey_ThrowsException() {
+            // given
+            Long trashedSurveyId = 300L;
+            igrus.web.survey.domain.Survey trashedSurvey = mock(igrus.web.survey.domain.Survey.class);
+            when(trashedSurvey.getTrashedAt()).thenReturn(Instant.parse("2026-03-01T00:00:00Z"));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(surveyRepository.findByIdAndDeletedFalse(trashedSurveyId)).thenReturn(Optional.of(trashedSurvey));
+
+            CreateEventRequest request = new CreateEventRequest(
+                    "테스트 행사", "설명", "장소",
+                    eventStart, eventEnd, regStart, regEnd,
+                    30, EventRegistrationType.AUTO_APPROVE, trashedSurveyId
+            );
+
+            // when/then
+            assertThatThrownBy(() -> eventService.createEvent(request, OPERATOR_ID))
+                    .isInstanceOf(igrus.web.survey.exception.SurveyNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("[TC-041] updateEvent: surveyId null -> 유효 ID 변경 성공")
+        void updateEvent_SurveyIdNullToValid_Success() {
+            // given
+            when(mockEvent.getSurveyId()).thenReturn(null);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            igrus.web.survey.domain.Survey mockSurvey = mock(igrus.web.survey.domain.Survey.class);
+            when(mockSurvey.getTrashedAt()).thenReturn(null);
+            when(surveyRepository.findByIdAndDeletedFalse(SURVEY_ID)).thenReturn(Optional.of(mockSurvey));
+
+            UpdateEventRequest request = new UpdateEventRequest(
+                    "테스트 행사", "설명", "장소",
+                    eventStart, eventEnd, regStart, regEnd,
+                    30, SURVEY_ID
+            );
+
+            // when
+            eventService.updateEvent(EVENT_ID, request, OPERATOR_ID);
+
+            // then
+            verify(surveyRepository).findByIdAndDeletedFalse(SURVEY_ID);
+            verify(mockEvent).update(anyString(), anyString(), anyString(),
+                    any(Instant.class), any(Instant.class), any(Instant.class), any(Instant.class),
+                    anyInt(), eq(SURVEY_ID));
+        }
+
+        @Test
+        @DisplayName("[TC-042] updateEvent: surveyId ID-A -> ID-B 변경 성공")
+        void updateEvent_SurveyIdAToB_Success() {
+            // given
+            Long newSurveyId = 200L;
+            when(mockEvent.getSurveyId()).thenReturn(SURVEY_ID);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            igrus.web.survey.domain.Survey newSurvey = mock(igrus.web.survey.domain.Survey.class);
+            when(newSurvey.getTrashedAt()).thenReturn(null);
+            when(surveyRepository.findByIdAndDeletedFalse(newSurveyId)).thenReturn(Optional.of(newSurvey));
+
+            UpdateEventRequest request = new UpdateEventRequest(
+                    "테스트 행사", "설명", "장소",
+                    eventStart, eventEnd, regStart, regEnd,
+                    30, newSurveyId
+            );
+
+            // when
+            eventService.updateEvent(EVENT_ID, request, OPERATOR_ID);
+
+            // then
+            verify(surveyRepository).findByIdAndDeletedFalse(newSurveyId);
+            verify(mockEvent).update(anyString(), anyString(), anyString(),
+                    any(Instant.class), any(Instant.class), any(Instant.class), any(Instant.class),
+                    anyInt(), eq(newSurveyId));
+        }
+
+        @Test
+        @DisplayName("[TC-043] updateEvent: surveyId 유효 ID -> null 변경 (설문 해제) 성공")
+        void updateEvent_SurveyIdToNull_Success() {
+            // given
+            when(mockEvent.getSurveyId()).thenReturn(SURVEY_ID);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            UpdateEventRequest request = new UpdateEventRequest(
+                    "테스트 행사", "설명", "장소",
+                    eventStart, eventEnd, regStart, regEnd,
+                    30, null
+            );
+
+            // when
+            eventService.updateEvent(EVENT_ID, request, OPERATOR_ID);
+
+            // then
+            verify(surveyRepository, never()).findByIdAndDeletedFalse(any());
+            verify(mockEvent).update(anyString(), anyString(), anyString(),
+                    any(Instant.class), any(Instant.class), any(Instant.class), any(Instant.class),
+                    anyInt(), isNull());
+        }
+
+        @Test
+        @DisplayName("[TC-044] updateEvent: 삭제된 설문 ID로 변경 시 SurveyNotFoundException")
+        void updateEvent_WithDeletedSurvey_ThrowsException() {
+            // given
+            Long deletedSurveyId = 300L;
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(surveyRepository.findByIdAndDeletedFalse(deletedSurveyId)).thenReturn(Optional.empty());
+
+            UpdateEventRequest request = new UpdateEventRequest(
+                    "테스트 행사", "설명", "장소",
+                    eventStart, eventEnd, regStart, regEnd,
+                    30, deletedSurveyId
+            );
+
+            // when/then
+            assertThatThrownBy(() -> eventService.updateEvent(EVENT_ID, request, OPERATOR_ID))
+                    .isInstanceOf(igrus.web.survey.exception.SurveyNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("[TC-034] 행사 취소(CANCELED) 후 연결된 설문 상태 변경 없음")
+        void cancelEvent_SurveyStateUnchanged() {
+            // given: 설문 연결 행사
+            when(mockEvent.getSurveyId()).thenReturn(SURVEY_ID);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when: 행사 취소
+            eventService.cancelEvent(EVENT_ID, OPERATOR_ID, "취소 사유");
+
+            // then: Survey에 대한 상태 변경 호출 없음
+            verify(surveyRepository, never()).findByIdAndDeletedFalse(any());
+            verify(surveyRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("[TC-035] 행사 registrationStatus OPEN->CLOSED 전환 후 설문 상태 변경 없음")
+        void closeEvent_SurveyStateUnchanged() {
+            // given: 설문 연결 행사
+            when(mockEvent.getSurveyId()).thenReturn(SURVEY_ID);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when: 행사 등록 마감
+            eventService.closeEvent(EVENT_ID, OPERATOR_ID, "마감 사유");
+
+            // then: Survey에 대한 상태 변경 호출 없음
+            verify(surveyRepository, never()).findByIdAndDeletedFalse(any());
+            verify(surveyRepository, never()).save(any());
         }
     }
 

@@ -2,38 +2,53 @@ package igrus.web.event.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import igrus.web.common.OpenApiValidatorUtil;
 import igrus.web.common.ServiceIntegrationTestBase;
 import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventRegistrationType;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.EventStatusChangeReasonRequest;
 import igrus.web.event.repository.EventRepository;
+import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Event 컨트롤러 RBAC 통합 테스트.
+ * Event 컨트롤러 통합 테스트.
  *
  * <p>Spring Security의 인증 필터와 서비스 계층의 권한 검증이
  * HTTP 요청/응답 수준에서 올바르게 동작하는지 검증합니다.</p>
  *
+ * <p>또한 2xx 성공 응답이 OpenAPI 스키마와 일치하는지 검증합니다.</p>
+ *
  * <p>테스트 케이스:</p>
  * <ul>
+ *     <li>TC-212-01: EventController GET /events 응답 스키마 검증</li>
  *     <li>INT-023: 비인증 사용자 행사 생성 → 401</li>
  *     <li>INT-024: 비인증 사용자 행사 상세 조회 → 401</li>
  *     <li>INT-025: MEMBER가 행사 생성 → 403</li>
@@ -44,7 +59,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * </ul>
  */
 @AutoConfigureMockMvc
-@DisplayName("Event 컨트롤러 RBAC 통합 테스트")
+@DisplayName("Event 컨트롤러 통합 테스트")
 class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
 
     @Autowired
@@ -77,6 +92,20 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
         return jwtTokenProvider.createAccessToken(user.getId(), user.getStudentId(), user.getRole().name());
     }
 
+    private RequestPostProcessor withAuth(User user) {
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser(
+                user.getId(),
+                user.getStudentId(),
+                user.getRole().name()
+        );
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                authenticatedUser,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+        );
+        return authentication(auth);
+    }
+
     private CreateEventRequest createValidEventRequest() {
         Instant now = Instant.now();
         return new CreateEventRequest(
@@ -88,7 +117,8 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
                 now.plus(1, ChronoUnit.HOURS),
                 now.plus(6, ChronoUnit.DAYS),
                 30,
-                EventRegistrationType.AUTO_APPROVE
+                EventRegistrationType.AUTO_APPROVE,
+        null
         );
     }
 
@@ -109,7 +139,8 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
                     now.minus(1, ChronoUnit.DAYS),
                     now.plus(6, ChronoUnit.DAYS),
                     10,
-                    EventRegistrationType.AUTO_APPROVE
+                    EventRegistrationType.AUTO_APPROVE,
+            null
             );
             event.publish();
             event.openRegistration();
@@ -133,7 +164,8 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
                     now.minus(1, ChronoUnit.DAYS),
                     now.plus(6, ChronoUnit.DAYS),
                     10,
-                    EventRegistrationType.AUTO_APPROVE
+                    EventRegistrationType.AUTO_APPROVE,
+            null
             );
             event.publish();
             event.openRegistration();
@@ -158,13 +190,93 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
                     now.minus(1, ChronoUnit.DAYS),
                     now.plus(6, ChronoUnit.DAYS),
                     10,
-                    EventRegistrationType.AUTO_APPROVE
+                    EventRegistrationType.AUTO_APPROVE,
+            null
             );
             event.publish();
             event.openRegistration();
             event.closeRegistrationManually();
             return eventRepository.save(event);
         });
+    }
+
+    // ==================== OpenAPI 응답 스키마 검증 (TC-212-01) ====================
+
+    @Nested
+    @DisplayName("GET /api/v1/events - 행사 목록 조회 (OpenAPI 스키마 검증)")
+    class GetEventListOpenApiValidationTest {
+
+        @Test
+        @DisplayName("[TC-212-01] 행사 목록 조회 응답이 OpenAPI 스키마와 일치한다")
+        void getEventList_ReturnsResponseMatchingOpenApiSpec() throws Exception {
+            // given - 공개된 행사를 미리 생성
+            createAndSaveOpenEvent();
+
+            // when & then - 행사 목록은 인증 없이 조회 가능 (security: [{}])
+            mockMvc.perform(get("/api/v1/events")
+                            .with(csrf()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(1))
+                    .andExpect(jsonPath("$[0].id").exists())
+                    .andExpect(jsonPath("$[0].title").value("테스트 행사"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+
+        @Test
+        @DisplayName("[TC-212-01] 빈 행사 목록 조회 시 빈 배열 응답이 OpenAPI 스키마와 일치한다")
+        void getEventList_Empty_ReturnsResponseMatchingOpenApiSpec() throws Exception {
+            // when & then - 행사가 없는 경우 빈 배열 반환
+            mockMvc.perform(get("/api/v1/events")
+                            .with(csrf()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(0))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/events/{eventId} - 행사 상세 조회 (OpenAPI 스키마 검증)")
+    class GetEventDetailOpenApiValidationTest {
+
+        @Test
+        @DisplayName("[TC-212-01] OPERATOR가 행사 상세 조회 시 응답이 OpenAPI 스키마와 일치한다")
+        void getEvent_WithOperatorRole_ReturnsResponseMatchingOpenApiSpec() throws Exception {
+            // given
+            Event event = createAndSaveOpenEvent();
+
+            // when & then
+            mockMvc.perform(get("/api/v1/events/" + event.getId())
+                            .with(withAuth(operator))
+                            .with(csrf()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(event.getId()))
+                    .andExpect(jsonPath("$.title").value("테스트 행사"))
+                    .andExpect(jsonPath("$.registrationStatus").exists())
+                    .andExpect(jsonPath("$.eventStatus").exists())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+
+        @Test
+        @DisplayName("[TC-212-01] MEMBER가 행사 상세 조회 시 응답이 OpenAPI 스키마와 일치한다")
+        void getEvent_WithMemberRole_ReturnsResponseMatchingOpenApiSpec() throws Exception {
+            // given
+            Event event = createAndSaveOpenEvent();
+
+            // when & then
+            mockMvc.perform(get("/api/v1/events/" + event.getId())
+                            .with(withAuth(member))
+                            .with(csrf()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(event.getId()))
+                    .andExpect(jsonPath("$.canEdit").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
     }
 
     // ==================== INT-023 ====================

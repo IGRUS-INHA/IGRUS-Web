@@ -20,6 +20,9 @@ import igrus.web.event.exception.EventRegistrationNotReopenableException;
 import igrus.web.event.exception.InvalidEventDateException;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventRegistrationRepository;
+import igrus.web.survey.domain.Survey;
+import igrus.web.survey.exception.SurveyNotFoundException;
+import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -31,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -71,6 +75,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
     private final UserRepository userRepository;
+    private final SurveyRepository surveyRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -95,7 +100,12 @@ public class EventService {
         validateEventDates(request.eventStartAt(), request.eventEndAt(),
                 request.registrationStartAt(), request.registrationEndAt());
 
-        // 4. Event 도메인 객체 생성
+        // 4. 설문 존재 검증 (surveyId가 제공된 경우)
+        if (request.surveyId() != null) {
+            validateSurveyExists(request.surveyId());
+        }
+
+        // 5. Event 도메인 객체 생성
         Event event = Event.create(
                 user,
                 request.title(),
@@ -106,13 +116,19 @@ public class EventService {
                 request.registrationStartAt(),
                 request.registrationEndAt(),
                 request.capacity(),
-                request.registrationType()
+                request.registrationType(),
+                request.surveyId()
         );
 
         // 5. 저장
         Event savedEvent = eventRepository.save(event);
 
-        // 6. 응답 DTO 반환
+        // 6. 설문 연결 행사 생성 로그 (TASK-015)
+        if (request.surveyId() != null) {
+            log.info("행사 생성 요청 - userId: {}, title: {}, surveyId: {}", userId, request.title(), request.surveyId());
+        }
+
+        // 7. 응답 DTO 반환
         return EventCreateResponse.from(savedEvent);
     }
 
@@ -213,7 +229,26 @@ public class EventService {
         validateEventDates(request.eventStartAt(), request.eventEndAt(),
                 request.registrationStartAt(), request.registrationEndAt());
 
-        // 6. 행사 수정 (도메인 메서드 호출)
+        // 6. 설문 존재 검증 (새 surveyId가 non-null인 경우)
+        if (request.surveyId() != null) {
+            validateSurveyExists(request.surveyId());
+        }
+
+        // 7. 설문 변경 로그 (surveyId가 변경된 경우)
+        Long previousSurveyId = event.getSurveyId();
+        if (!Objects.equals(previousSurveyId, request.surveyId())) {
+            log.info("행사 수정 - eventId: {}, surveyId 변경: {} -> {}", eventId, previousSurveyId, request.surveyId());
+
+            boolean hasActiveRegistrants = eventRegistrationRepository
+                    .existsByEventIdAndStatusIn(eventId, ACTIVE_REGISTRATION_STATUSES);
+            if (hasActiveRegistrants) {
+                log.warn("행사 수정 경고 - eventId: {}, surveyId 변경 시 활성 신청자 존재. "
+                                + "기존 신청자의 설문 응답은 이전 설문({})에 연결되어 있음",
+                        eventId, previousSurveyId);
+            }
+        }
+
+        // 8. 행사 수정 (도메인 메서드 호출)
         event.update(
                 request.title(),
                 request.description(),
@@ -222,7 +257,8 @@ public class EventService {
                 request.eventEndAt(),
                 request.registrationStartAt(),
                 request.registrationEndAt(),
-                request.capacity()
+                request.capacity(),
+                request.surveyId()
         );
 
         // 7. 응답 반환 (dirty checking으로 자동 저장)
@@ -597,6 +633,22 @@ public class EventService {
     private void validateEditPermission(User user) {
         if (!user.isOperatorOrAbove()) {
             throw new EventAccessDeniedException("행사 수정/삭제는 운영진 이상만 가능합니다");
+        }
+    }
+
+    /**
+     * 설문의 존재 및 활성 상태를 검증합니다.
+     * SEVT-INV-04: 설문이 존재하고 deleted == false이고 trashedAt == null이어야 합니다.
+     * 연결 시점에 visibility나 responseStatus는 검증하지 않습니다.
+     *
+     * @param surveyId 설문 ID
+     * @throws SurveyNotFoundException 설문이 존재하지 않거나 삭제/휴지통 상태인 경우
+     */
+    private void validateSurveyExists(Long surveyId) {
+        Survey survey = surveyRepository.findByIdAndDeletedFalse(surveyId)
+                .orElseThrow(() -> new SurveyNotFoundException(surveyId));
+        if (survey.getTrashedAt() != null) {
+            throw new SurveyNotFoundException(surveyId);
         }
     }
 

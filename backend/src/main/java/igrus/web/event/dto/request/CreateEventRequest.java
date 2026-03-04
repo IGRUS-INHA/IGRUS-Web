@@ -4,6 +4,7 @@ import igrus.web.event.domain.EventRegistrationType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
@@ -51,6 +52,9 @@ public record CreateEventRequest(
         Integer capacity,
 
         @NotNull(message = "신청 방식은 필수입니다")
-        EventRegistrationType registrationType
+        EventRegistrationType registrationType,
+
+        @Positive(message = "설문 ID는 양수여야 합니다")
+        Long surveyId
 ) {
 }

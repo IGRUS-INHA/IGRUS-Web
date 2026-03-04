@@ -468,7 +468,7 @@ CandidateMemberResponse:
     studentId:
       type: string
       description: 학번
-      example: 12345678
+      example: '12345678'
     name:
       type: string
       description: 이름
@@ -821,7 +821,7 @@ LoginHistoryResponse:
     studentId:
       type: string
       description: 학번
-      example: 12345678
+      example: '12345678'
     ipAddress:
       type: string
       description: 클라이언트 IP 주소
@@ -862,7 +862,7 @@ RejectedAssociateInfoResponse:
     studentId:
       type: string
       description: 학번
-      example: 12345678
+      example: '12345678'
     name:
       type: string
       description: 이름
@@ -917,7 +917,7 @@ AssociateInfoResponse:
     studentId:
       type: string
       description: 학번
-      example: 12345678
+      example: '12345678'
     name:
       type: string
       description: 이름
@@ -962,7 +962,7 @@ DemotedAssociateInfoResponse:
     studentId:
       type: string
       description: 학번
-      example: 12345678
+      example: '12345678'
     name:
       type: string
       description: 이름

@@ -11,8 +11,12 @@ import igrus.web.generated.api.EventRegistrationApi;
 import igrus.web.generated.model.GetMyRegistrations200ResponseInner;
 import igrus.web.generated.model.GetRegistrationList200Response;
 import igrus.web.generated.model.GetRegistrationList200ResponseContentInner;
+import igrus.web.generated.model.RegisterEventRequest;
 import igrus.web.generated.model.RevertRegistration200Response;
+import igrus.web.generated.model.UpdateMyResponseRequestAnswersInner;
+import igrus.web.generated.model.UpdateMyResponseRequestAnswersInnerGridAnswersInner;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
+import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -39,10 +43,14 @@ public class EventRegistrationController implements EventRegistrationApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<RevertRegistration200Response> registerEvent(Long eventId) {
+    public ResponseEntity<RevertRegistration200Response> registerEvent(
+            Long eventId,
+            RegisterEventRequest registerEventRequest
+    ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 신청 요청 - eventId: {}, userId: {}", eventId, user.userId());
-        RegistrationResponse response = eventRegistrationService.registerEvent(eventId, user.userId());
+        List<SubmitAnswerRequest> surveyAnswers = mapToSubmitAnswerRequests(registerEventRequest);
+        RegistrationResponse response = eventRegistrationService.registerEvent(eventId, user.userId(), surveyAnswers);
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToRevertRegistration200Response(response));
     }
 
@@ -134,6 +142,38 @@ public class EventRegistrationController implements EventRegistrationApi {
     }
 
     // ===== 매핑 헬퍼 =====
+
+    /**
+     * Generated 모델의 RegisterEventRequest에서 서비스 내부 DTO인 SubmitAnswerRequest 목록으로 변환합니다.
+     * 요청 본문이 없거나 surveyAnswers가 비어있으면 빈 리스트를 반환합니다.
+     */
+    private List<SubmitAnswerRequest> mapToSubmitAnswerRequests(RegisterEventRequest request) {
+        if (request == null || request.getSurveyAnswers() == null || request.getSurveyAnswers().isEmpty()) {
+            return List.of();
+        }
+        return request.getSurveyAnswers().stream()
+                .map(this::mapToSubmitAnswerRequest)
+                .toList();
+    }
+
+    private SubmitAnswerRequest mapToSubmitAnswerRequest(UpdateMyResponseRequestAnswersInner a) {
+        List<SubmitAnswerRequest.GridAnswerRequest> gridAnswers = null;
+        if (a.getGridAnswers() != null && !a.getGridAnswers().isEmpty()) {
+            gridAnswers = a.getGridAnswers().stream()
+                    .map(g -> new SubmitAnswerRequest.GridAnswerRequest(
+                            g.getRowId(),
+                            g.getSelectedOptionIds()
+                    ))
+                    .toList();
+        }
+        return new SubmitAnswerRequest(
+                a.getQuestionId(),
+                a.getTextValue(),
+                a.getSelectedOptionIds(),
+                a.getNumericValue(),
+                gridAnswers
+        );
+    }
 
     private RevertRegistration200Response mapToRevertRegistration200Response(RegistrationResponse r) {
         return new RevertRegistration200Response()

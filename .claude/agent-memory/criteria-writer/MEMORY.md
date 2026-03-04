@@ -74,9 +74,47 @@
 - COMPLETED/CANCELED events always have registrationStatus=CLOSED (cross-axis invariant), so unpublish has no registration side-effect
 - Publish/unpublish auth: SecurityConfig URL rule only (no service-level validateOperatorPermission), unlike Survey which uses service-level check
 
+## Key Design Decisions (EventGroup)
+- EventGroup: new feature, no existing code/spec. Pure CRUD + association management
+- Recommended: weak reference pattern (Event.groupId nullable Long, no FK) -- consistent with Event.surveyId
+- 1:N relationship (one event belongs to max 1 group) -- simpler than M:N
+- Group delete policy: clear groupId on associated events (option A), not cascade delete
+- Public API for read (PUBLISHED events only) + Admin API for CRUD
+- EventGroup has no FSM -- only ACTIVE/DELETED via SoftDeletableEntity
+- Group does NOT affect event state (visibility/registrationStatus/eventStatus) -- pure logical grouping
+- ID prefixes: EGRP-INV-{NN}, SEC-EGRP-{NN}, GAP-EGRP-{NN}
+- Column naming: event_group_{column} pattern
+- DECISION table: 11 items (DECISION-01~11) covering relationship model, cardinality, delete policy, API placement, sort order, ungrouped display, idempotent add (DECISION-07), non-member remove (DECISION-08), PUT vs PATCH (DECISION-09), pagination (DECISION-10), public API auth level (DECISION-11)
+- DB UNIQUE: MySQL 8 Generated Column pattern for soft-delete-compatible unique constraint (`IF(deleted=FALSE, name, NULL) STORED` + UNIQUE on generated column)
+- Modify API: PUT (full update) -- only 2 fields (name, description), per backend/CLAUDE.md "PUT: 전체 수정"
+- eventCount: excludes soft-deleted events; public API also excludes UNPUBLISHED
+
+## Key Design Decisions (Event-Image Integration)
+- posterImageObjectKey: nullable String (VARCHAR 500), no FK to file_metadata (weak reference, same as surveyId)
+- Only COMPLETED status FileMetadata can be referenced by Event
+- Object Key prefix `events/` for event images (enforced by ObjectKeyGenerator purpose param)
+- No auto-delete of old images on change or event soft-delete (manual cleanup by operator)
+- EventFileReferenceChecker: new FileReferenceChecker implementation, checks non-deleted events
+- Soft-deleted events excluded from reference integrity checks (file can be deleted)
+- Single poster image field (not multi-image); future expansion via separate event_images table
+- Cross-domain invariant ID prefix: EVT-IMG-INV-{NN}; Security prefix: SEC-EVT-IMG-{NN}
+- DB column: event_poster_image_object_key VARCHAR(500) NULL
+- Image editability follows EVT-INV-07 (COMPLETED eventStatus blocks all edits including image)
+
 ## Review Feedback Patterns
 - Always verify actual source code before marking "(현재 구현 일치)" -- check enum values, entity fields, method existence
 - "(구현 예정)" and "(신규 구현 필요)" must be consistently used; prefer "(신규 구현 필요)" for clarity
 - When a feature crosses existing + new code, split the "관련 코드" section into separate `(현재 구현 일치)` and `**(신규 구현 필요)**` lines
 - Test coverage table: existing items affected by new features should be "부분 커버 ({feature} 미검증)"
 - Cross-axis invariant implications must be explicitly stated (e.g., COMPLETED->registrationStatus always CLOSED)
+- **Cross-document reference rule**: When referencing another doc's invariant (e.g., EVT-INV-07), verify the invariant actually covers the new field. If not, define an independent rule and add [ACTION REQUIRED] to update the other doc after implementation.
+- **DECISION cross-referencing**: Every section affected by a DECISION must reference it by ID (DECISION-01, not just "DECISION"). DECISION table must list all affected sections ("영향 범위").
+- **RBAC asymmetry**: ASSOCIATE can access event list (200 OK) but NOT event detail (403, SEC-EVT-01). When new fields are added to response DTOs, explicitly state the list vs detail exposure policy.
+- **Security reference accuracy**: STOR-INV-06 = upload restriction (unauthenticated), SEC-STOR-04 = download URL restriction (unauthenticated). Do not confuse upload vs download references.
+- **Input domain DECISION linkage**: When an input value's expected result depends on an unresolved DECISION, the input domain table must say "DECISION-XX에 따라 다름" instead of a definitive result.
+- **DB UNIQUE for soft-delete entities**: Always add DB-level unique constraint. For soft-delete compatible uniqueness in MySQL 8, use Generated Column pattern: `col_unique_key GENERATED ALWAYS AS (IF(deleted=FALSE, col, NULL)) STORED` + UNIQUE on generated column. Service-level check alone has race conditions.
+- **Self-exclusion in update uniqueness**: When INV defines unique constraint, the body text MUST explicitly state "수정 시 자기 자신을 제외하고 중복 검사". Repository method: `existsByNameAndIdNotAndDeletedFalse(name, id)`.
+- **Undecided policies must be DECISION items**: Any "... 또는 ..." or "DECISION 필요" in body text must be registered as formal DECISION-XX in the DECISION table with affected sections listed.
+- **HTTP method rationale required**: PUT vs PATCH must be explicitly decided with reference to backend/CLAUDE.md ("PUT: 전체 수정, PATCH: 부분 수정").
+- **Audit fields documentation**: SoftDeletableEntity -> BaseEntity provides 7 audit fields (createdAt, updatedAt, createdBy, updatedBy, deleted, deletedAt, deletedBy). Document in EGRP-INV-05 (initial state) and 5-2 (observability).
+- **API response status codes**: Document 201 Created for resource creation, 204 No Content for deletion. Don't leave ambiguous.

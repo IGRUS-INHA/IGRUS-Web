@@ -284,6 +284,23 @@ public class StorageController implements StorageApi {
 }
 ```
 
+##### OpenAPI 응답 스키마 런타임 검증
+
+컴파일 타임 검증(인터페이스 `implements`)만으로는 응답이 스키마와 일치하는지 보장할 수 없다.
+통합 테스트에서 `OpenApiValidatorUtil.matchesOpenApiSpec()`을 사용하여 **2xx 성공 응답이 OpenAPI 스펙과 일치하는지 반드시 검증**한다.
+
+```java
+// 컨트롤러 통합 테스트에서 2xx 응답에 반드시 추가
+mockMvc.perform(get("/api/v1/boards"))
+    .andExpect(status().isOk())
+    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+```
+
+- **새 컨트롤러/엔드포인트 추가 시**: 해당 엔드포인트의 성공 응답을 검증하는 통합 테스트에 `matchesOpenApiSpec()` 포함 필수
+- **기존 엔드포인트 응답 변경 시**: OpenAPI 스펙도 함께 수정하고, 테스트에서 스키마 검증이 통과하는지 확인
+- **4xx/5xx 에러 응답**: OpenAPI 스키마 검증 대상이 아니므로 추가하지 않음
+- **검증 실패 시 대응**: [트러블슈팅 가이드](../docs/feature/openapi-contract-first/response-validation-troubleshooting.md) 참조
+
 ##### Swagger UI
 - SpringDoc은 Swagger UI 제공 목적으로만 사용 (어노테이션 스캔은 비활성화)
 - `springdoc.api-docs.enabled: false`로 코드 기반 스펙 생성을 차단

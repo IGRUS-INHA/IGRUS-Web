@@ -28,6 +28,12 @@ UpdateEventRequest:
       type: integer
       format: int32
       minimum: 1
+    surveyId:
+      type:
+        - integer
+        - 'null'
+      format: int64
+      description: 연결할 설문 ID (null이면 설문 미연결)
   required:
   - capacity
   - description
@@ -88,11 +94,14 @@ EventDetailResponse:
       - COMPLETED
       - CANCELED
     closeReason:
-      type: string
+      type:
+        - string
+        - 'null'
       enum:
       - CAPACITY_FULL
       - DEADLINE_PASSED
       - MANUAL_CLOSE
+      - null
     registrationType:
       type: string
       enum:
@@ -110,6 +119,12 @@ EventDetailResponse:
       type: boolean
     isRegistered:
       type: boolean
+    surveyId:
+      type:
+        - integer
+        - 'null'
+      format: int64
+      description: 연결된 설문 ID (null이면 설문 미연결)
 RegistrationResponse:
   type: object
   properties:
@@ -161,6 +176,12 @@ CreateEventRequest:
       enum:
       - AUTO_APPROVE
       - MANUAL_APPROVE
+    surveyId:
+      type:
+        - integer
+        - 'null'
+      format: int64
+      description: 연결할 설문 ID (null이면 설문 미연결)
   required:
   - capacity
   - description
@@ -182,6 +203,12 @@ EventCreateResponse:
     createdAt:
       type: string
       format: date-time
+    surveyId:
+      type:
+        - integer
+        - 'null'
+      format: int64
+      description: 연결된 설문 ID (null이면 설문 미연결)
 EventStatusChangeReasonRequest:
   type: object
   properties:
@@ -265,6 +292,12 @@ EventListResponse:
       - MANUAL_APPROVE
     isRegistrable:
       type: boolean
+    surveyId:
+      type:
+        - integer
+        - 'null'
+      format: int64
+      description: 연결된 설문 ID (null이면 설문 미연결)
 AdminEventListResponse:
   type: object
   description: 관리자용 행사 목록 응답 (visibility 포함)
@@ -317,6 +350,12 @@ AdminEventListResponse:
       enum:
       - PUBLISHED
       - UNPUBLISHED
+    surveyId:
+      type:
+        - integer
+        - 'null'
+      format: int64
+      description: 연결된 설문 ID (null이면 설문 미연결)
 AdminEventDetailResponse:
   type: object
   description: 관리자용 행사 상세 응답 (visibility 포함)
@@ -364,11 +403,14 @@ AdminEventDetailResponse:
       - COMPLETED
       - CANCELED
     closeReason:
-      type: string
+      type:
+        - string
+        - 'null'
       enum:
       - CAPACITY_FULL
       - DEADLINE_PASSED
       - MANUAL_CLOSE
+      - null
     registrationType:
       type: string
       enum:
@@ -392,6 +434,12 @@ AdminEventDetailResponse:
       enum:
       - PUBLISHED
       - UNPUBLISHED
+    surveyId:
+      type:
+        - integer
+        - 'null'
+      format: int64
+      description: 연결된 설문 ID (null이면 설문 미연결)
 PageRegistrationListResponse:
   type: object
   properties:
@@ -424,6 +472,17 @@ PageRegistrationListResponse:
       type: boolean
     empty:
       type: boolean
+RegisterEventRequest:
+  type: object
+  description: 행사 신청 요청. 설문 연결 행사의 경우 surveyAnswers를 포함하여 설문 응답과 행사 신청을 원자적으로 처리합니다.
+  properties:
+    surveyAnswers:
+      type:
+        - array
+        - 'null'
+      description: 설문 응답 배열. 설문 연결 행사 신청 시 설문 응답을 포함합니다. 이미 응답한 경우 생략 가능합니다.
+      items:
+        $ref: ../schemas/surveys.yaml#/SubmitAnswerRequest
 RegistrationListResponse:
   type: object
   properties:

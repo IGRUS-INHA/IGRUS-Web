@@ -11,14 +11,27 @@ import igrus.web.event.domain.EventStatusChangeHistory;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.UpdateEventRequest;
+import igrus.web.event.exception.EventCapacityFullException;
 import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.EventNotOpenException;
 import igrus.web.event.exception.EventRegistrationNotReopenableException;
+import igrus.web.event.exception.SurveyNotReadyException;
+import igrus.web.event.exception.SurveyResponseRequiredException;
 import igrus.web.event.repository.EventRegistrationRepository;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventStatusChangeHistoryRepository;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.event.service.EventService;
+import igrus.web.survey.domain.Survey;
+import igrus.web.survey.domain.SurveyAccessLevel;
+import igrus.web.survey.exception.SurveyNotFoundException;
+import igrus.web.survey.question.domain.SurveyQuestionType;
+import igrus.web.survey.question.domain.TextSurveyQuestion;
+import igrus.web.survey.question.repository.SurveyQuestionRepository;
+import igrus.web.survey.repository.SurveyRepository;
+import igrus.web.survey.response.domain.SurveyResponse;
+import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
+import igrus.web.survey.response.repository.SurveyResponseRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,6 +93,15 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
     @Autowired
     private EventStatusChangeHistoryRepository eventStatusChangeHistoryRepository;
 
+    @Autowired
+    private SurveyRepository surveyRepository;
+
+    @Autowired
+    private SurveyQuestionRepository surveyQuestionRepository;
+
+    @Autowired
+    private SurveyResponseRepository surveyResponseRepository;
+
     private User member;
     private User member2;
     private User operator;
@@ -108,7 +130,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     now.minus(1, ChronoUnit.DAYS),
                     now.plus(6, ChronoUnit.DAYS),
                     10,
-                    EventRegistrationType.AUTO_APPROVE
+                    EventRegistrationType.AUTO_APPROVE,
+            null
             );
             event.publish();
             event.openRegistration();
@@ -129,7 +152,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     now.minus(1, ChronoUnit.DAYS),
                     now.plus(6, ChronoUnit.DAYS),
                     10,
-                    EventRegistrationType.MANUAL_APPROVE
+                    EventRegistrationType.MANUAL_APPROVE,
+            null
             );
             event.publish();
             event.openRegistration();
@@ -152,7 +176,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     now.minus(3, ChronoUnit.DAYS),    // regStart: past → OPEN
                     now.plus(3, ChronoUnit.DAYS),     // regEnd: future → still OPEN
                     10,
-                    EventRegistrationType.AUTO_APPROVE
+                    EventRegistrationType.AUTO_APPROVE,
+            null
             );
             event.publish();
             return eventRepository.save(event);
@@ -172,7 +197,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     now.minus(3, ChronoUnit.DAYS),
                     now.plus(3, ChronoUnit.DAYS),
                     capacity,
-                    EventRegistrationType.AUTO_APPROVE
+                    EventRegistrationType.AUTO_APPROVE,
+            null
             );
             event.publish();
             return eventRepository.save(event);
@@ -192,7 +218,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     now.minus(3, ChronoUnit.DAYS),
                     now.plus(3, ChronoUnit.DAYS),
                     capacity,
-                    EventRegistrationType.MANUAL_APPROVE
+                    EventRegistrationType.MANUAL_APPROVE,
+            null
             );
             event.publish();
             return eventRepository.save(event);
@@ -212,7 +239,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     now.plus(1, ChronoUnit.DAYS),     // regStart: future
                     now.plus(6, ChronoUnit.DAYS),     // regEnd: future
                     10,
-                    EventRegistrationType.AUTO_APPROVE
+                    EventRegistrationType.AUTO_APPROVE,
+            null
             );
             event.publish();
             return eventRepository.save(event);
@@ -235,7 +263,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             Event event = createAndSaveAutoApproveEvent();
 
             // when: 신청
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
 
             // then: DB에서 REGISTERED 확인
             EventRegistration afterRegister = eventRegistrationRepository
@@ -270,9 +298,9 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             Event event = createAndSaveAutoApproveEvent();
 
             // when: 신청 → 취소 → 재신청
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
             eventRegistrationService.cancelRegistration(event.getId(), member.getId());
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
 
             // then: DB에서 REGISTERED 확인
             EventRegistration afterReRegister = eventRegistrationRepository
@@ -302,9 +330,9 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             Event event = createAndSaveManualApproveEvent();
 
             // when: 신청 → 취소 → 재신청
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
             eventRegistrationService.cancelRegistration(event.getId(), member.getId());
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
 
             // then: DB에서 WAITING 확인
             EventRegistration afterReRegister = eventRegistrationRepository
@@ -325,7 +353,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             Event event = createAndSaveOverlapEvent();
 
             // when: 신청 시도 (Lazy evaluation으로 OPEN+ONGOING 전이 후 신청)
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
 
             // then: DB에서 상태 확인
             Event updatedEvent = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -346,8 +374,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             Event event = createAndSaveOverlapEventWithCapacity(2);
 
             // when: 2명 신청 → 정원 마감
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
-            eventRegistrationService.registerEvent(event.getId(), member2.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            eventRegistrationService.registerEvent(event.getId(), member2.getId(), null);
 
             // then: CLOSED, CAPACITY_FULL
             Event afterFull = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -371,7 +399,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         void overlapPeriod_ManualClose_EventContinues() {
             // given: 겹침 기간 행사
             Event event = createAndSaveOverlapEvent();
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
 
             // when: 운영자 수동 마감
             eventService.closeEvent(event.getId(), operator.getId(), "수동 마감 테스트");
@@ -431,7 +459,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
 
             // when/then: 신청 시도 → registrationStatus=CLOSED이므로 EventNotOpenException
             assertThatThrownBy(() ->
-                    eventRegistrationService.registerEvent(event.getId(), member.getId()))
+                    eventRegistrationService.registerEvent(event.getId(), member.getId(), null))
                     .isInstanceOf(EventNotOpenException.class);
         }
 
@@ -448,7 +476,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         now.minus(5, ChronoUnit.DAYS),   // regStart: past
                         now.minus(2, ChronoUnit.DAYS),   // regEnd: past
                         10,
-                        EventRegistrationType.MANUAL_APPROVE
+                        EventRegistrationType.MANUAL_APPROVE,
+                null
                 );
                 // OPEN 상태로 설정하여 COMPLETED 전이 전 상태를 시뮬레이션
                 e.openRegistration();
@@ -514,7 +543,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         now.minus(3, ChronoUnit.DAYS),
                         now.minus(1, ChronoUnit.HOURS),  // regEnd: past (Lazy → CLOSED by DEADLINE)
                         10,
-                        EventRegistrationType.AUTO_APPROVE
+                        EventRegistrationType.AUTO_APPROVE,
+                null
                 );
                 return eventRepository.save(e);
             });
@@ -538,7 +568,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         e.getEventStartAt(), e.getEventEndAt(),
                         e.getRegistrationStartAt(),
                         Instant.now().plus(3, ChronoUnit.DAYS), // regEnd 연장
-                        10);
+                        10, null);
                 return null;
             });
 
@@ -601,7 +631,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     current.getEventEndAt(),
                     current.getRegistrationStartAt(),  // 변경 안 함
                     current.getRegistrationEndAt(),
-                    current.getCapacity()
+                    current.getCapacity(),
+                    null
             );
             eventService.updateEvent(event.getId(), request, operator.getId());
 
@@ -628,7 +659,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     current.getTitle(), current.getDescription(), current.getLocation(),
                     newEventStart, newEventEnd,
                     current.getRegistrationStartAt(), newRegEnd,
-                    current.getCapacity()
+                    current.getCapacity(),
+                    null
             );
 
             // then: 예외 발생
@@ -649,7 +681,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         now.minus(5, ChronoUnit.DAYS),   // regStart: past → OPEN
                         now.minus(1, ChronoUnit.DAYS),   // regEnd: past → CLOSED (DEADLINE_PASSED)
                         10,
-                        EventRegistrationType.AUTO_APPROVE
+                        EventRegistrationType.AUTO_APPROVE,
+                null
                 );
                 return eventRepository.save(e);
             });
@@ -685,7 +718,8 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         now.minus(1, ChronoUnit.DAYS),
                         now.plus(6, ChronoUnit.DAYS),
                         1,  // capacity=1
-                        EventRegistrationType.MANUAL_APPROVE
+                        EventRegistrationType.MANUAL_APPROVE,
+                null
                 );
                 e.publish();
                 e.openRegistration();
@@ -693,7 +727,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             });
 
             // when: 신청 (WAITING, count=0)
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
             EventRegistration reg = eventRegistrationRepository
                     .findByEventIdAndUserId(event.getId(), member.getId())
                     .orElseThrow();
@@ -737,15 +771,16 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         now.minus(1, ChronoUnit.DAYS),
                         now.plus(6, ChronoUnit.DAYS),
                         2,
-                        EventRegistrationType.MANUAL_APPROVE
+                        EventRegistrationType.MANUAL_APPROVE,
+                null
                 );
                 e.publish();
                 e.openRegistration();
                 return eventRepository.save(e);
             });
 
-            eventRegistrationService.registerEvent(event.getId(), member.getId());
-            eventRegistrationService.registerEvent(event.getId(), member2.getId());
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            eventRegistrationService.registerEvent(event.getId(), member2.getId(), null);
 
             // when: 수동 마감
             eventService.closeEvent(event.getId(), operator.getId(), "수동 마감 테스트");
@@ -766,6 +801,485 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
 
             Event afterApprove = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
             assertThat(afterApprove.getCurrentCount()).isEqualTo(1);
+        }
+    }
+
+    // ==================== 설문 연동 행사 신청 통합 테스트 ====================
+
+    @Nested
+    @DisplayName("설문 연동 행사 신청 통합 테스트")
+    class SurveyEventRegistrationIntegrationTest {
+
+        /**
+         * 설문(PUBLISHED + OPEN)을 생성하고 저장합니다. 질문 1개(SHORT_ANSWER)를 포함합니다.
+         */
+        private Survey createAndSaveOpenSurvey() {
+            return transactionTemplate.execute(status -> {
+                Survey survey = Survey.create("통합 테스트 설문", "설명", SurveyAccessLevel.MEMBER, null);
+                survey.publishAndOpen();
+                Survey saved = surveyRepository.save(survey);
+
+                TextSurveyQuestion question = TextSurveyQuestion.create(
+                        saved, SurveyQuestionType.SHORT_ANSWER, "질문1", "설명", true, 1);
+                surveyQuestionRepository.save(question);
+
+                return saved;
+            });
+        }
+
+        /**
+         * 설문 연결된 선착순(AUTO_APPROVE) 행사를 생성합니다.
+         */
+        private Event createAndSaveSurveyLinkedAutoEvent(Long surveyId) {
+            return transactionTemplate.execute(status -> {
+                Instant now = Instant.now();
+                Event event = Event.create(
+                        operator, "설문 연동 선착순 행사", "설명", "장소",
+                        now.plus(7, ChronoUnit.DAYS),
+                        now.plus(8, ChronoUnit.DAYS),
+                        now.minus(1, ChronoUnit.DAYS),
+                        now.plus(6, ChronoUnit.DAYS),
+                        10,
+                        EventRegistrationType.AUTO_APPROVE,
+                        surveyId
+                );
+                event.publish();
+                event.openRegistration();
+                return eventRepository.save(event);
+            });
+        }
+
+        /**
+         * 설문 연결된 선발제(MANUAL_APPROVE) 행사를 생성합니다.
+         */
+        private Event createAndSaveSurveyLinkedManualEvent(Long surveyId) {
+            return transactionTemplate.execute(status -> {
+                Instant now = Instant.now();
+                Event event = Event.create(
+                        operator, "설문 연동 선발제 행사", "설명", "장소",
+                        now.plus(7, ChronoUnit.DAYS),
+                        now.plus(8, ChronoUnit.DAYS),
+                        now.minus(1, ChronoUnit.DAYS),
+                        now.plus(6, ChronoUnit.DAYS),
+                        10,
+                        EventRegistrationType.MANUAL_APPROVE,
+                        surveyId
+                );
+                event.publish();
+                event.openRegistration();
+                return eventRepository.save(event);
+            });
+        }
+
+        /**
+         * 설문 연결된 선착순 행사를 지정 정원으로 생성합니다.
+         */
+        private Event createAndSaveSurveyLinkedAutoEventWithCapacity(Long surveyId, int capacity) {
+            return transactionTemplate.execute(status -> {
+                Instant now = Instant.now();
+                Event event = Event.create(
+                        operator, "설문 연동 정원 제한 행사", "설명", "장소",
+                        now.plus(7, ChronoUnit.DAYS),
+                        now.plus(8, ChronoUnit.DAYS),
+                        now.minus(1, ChronoUnit.DAYS),
+                        now.plus(6, ChronoUnit.DAYS),
+                        capacity,
+                        EventRegistrationType.AUTO_APPROVE,
+                        surveyId
+                );
+                event.publish();
+                event.openRegistration();
+                return eventRepository.save(event);
+            });
+        }
+
+        /**
+         * 설문에 대한 응답을 직접 DB에 저장합니다.
+         */
+        private SurveyResponse createAndSaveSurveyResponse(Survey survey, User user) {
+            return transactionTemplate.execute(status -> {
+                SurveyResponse response = SurveyResponse.create(survey, user);
+                return surveyResponseRepository.save(response);
+            });
+        }
+
+        /**
+         * 설문 질문 ID를 기반으로 surveyAnswers를 생성합니다.
+         */
+        private List<SubmitAnswerRequest> createSurveyAnswers(Long questionId) {
+            return List.of(new SubmitAnswerRequest(questionId, "답변 내용", null, null, null));
+        }
+
+        /**
+         * 설문의 질문 ID를 조회합니다.
+         */
+        private Long getQuestionId(Survey survey) {
+            return transactionTemplate.execute(status -> {
+                Survey loaded = surveyRepository.findById(survey.getId()).orElseThrow();
+                return loaded.getQuestions().get(0).getId();
+            });
+        }
+
+        // ==================== TC-017 ====================
+
+        @Test
+        @DisplayName("[TC-017] 설문 미연결 행사에 기존 방식으로 신청 성공 (회귀 테스트)")
+        void registerEvent_WithoutSurvey_ExistingFlowWorks() {
+            // given: 설문 미연결 행사
+            Event event = createAndSaveAutoApproveEvent();
+
+            // when: surveyAnswers 없이 신청
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+
+            // then: 신청 성공
+            EventRegistration reg = eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(reg.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+        }
+
+        // ==================== TC-018 / TC-059 ====================
+
+        @Test
+        @DisplayName("[TC-018] 설문 응답 저장 후 정원 초과로 신청 실패 시 설문 응답도 롤백")
+        void registerEvent_WithSurvey_CapacityFull_SurveyResponseRolledBack() {
+            // given: capacity=1 설문 연동 선착순 행사, 다른 사용자가 이미 신청
+            Survey survey = createAndSaveOpenSurvey();
+            Long questionId = getQuestionId(survey);
+            Event event = createAndSaveSurveyLinkedAutoEventWithCapacity(survey.getId(), 1);
+
+            // member2가 먼저 신청하여 정원 소진 → AUTO_APPROVE이므로 정원 마감 시 registrationStatus가 CLOSED로 전환됨
+            createAndSaveSurveyResponse(survey, member2);
+            eventRegistrationService.registerEvent(event.getId(), member2.getId(), null);
+
+            // when: member가 설문 응답 + 행사 신청 시도 → 정원 마감으로 CLOSED 상태이므로 EventNotOpenException 발생
+            List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
+            assertThatThrownBy(() ->
+                    eventRegistrationService.registerEvent(event.getId(), member.getId(), answers))
+                    .isInstanceOf(EventNotOpenException.class);
+
+            // then: DB에 member의 SurveyResponse가 없음 (롤백됨)
+            boolean hasResponse = surveyResponseRepository
+                    .existsBySurveyIdAndUserId(survey.getId(), member.getId());
+            assertThat(hasResponse).isFalse();
+
+            // then: DB에 member의 EventRegistration도 없음
+            assertThat(eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId()))
+                    .isEmpty();
+        }
+
+        // ==================== TC-032 ====================
+
+        @Test
+        @DisplayName("[TC-032] 설문 OPEN->CLOSED 전환 후 기존 신청 유효 유지")
+        void surveyClosedAfterRegistration_ExistingRegistrationRemains() {
+            // given: 설문 OPEN 상태에서 응답 + 행사 신청 완료
+            Survey survey = createAndSaveOpenSurvey();
+            Long questionId = getQuestionId(survey);
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+
+            List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), answers);
+
+            // when: 설문을 CLOSED로 전환
+            transactionTemplate.execute(status -> {
+                Survey s = surveyRepository.findById(survey.getId()).orElseThrow();
+                s.closeResponse();
+                return null;
+            });
+
+            // then: 기존 EventRegistration 상태 유지
+            EventRegistration reg = eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(reg.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+        }
+
+        // ==================== TC-056 ====================
+
+        @Test
+        @DisplayName("[TC-056] 설문 연결 행사 기본 E2E (선착순) -- 설문 응답 + 신청 성공")
+        void registerEvent_AutoApprove_WithSurveyAnswers_Success() {
+            // given: 설문(PUBLISHED+OPEN) 연결 선착순 행사
+            Survey survey = createAndSaveOpenSurvey();
+            Long questionId = getQuestionId(survey);
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+
+            // when: surveyAnswers 포함하여 신청
+            List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), answers);
+
+            // then: EventRegistration 생성 (REGISTERED)
+            EventRegistration reg = eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(reg.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+
+            // then: SurveyResponse도 DB에 존재
+            boolean hasResponse = surveyResponseRepository
+                    .existsBySurveyIdAndUserId(survey.getId(), member.getId());
+            assertThat(hasResponse).isTrue();
+        }
+
+        // ==================== TC-057 ====================
+
+        @Test
+        @DisplayName("[TC-057] 설문 연결 행사 기본 E2E (선발제) -- 설문 응답 + 신청 성공")
+        void registerEvent_ManualApprove_WithSurveyAnswers_Success() {
+            // given: 설문(PUBLISHED+OPEN) 연결 선발제 행사
+            Survey survey = createAndSaveOpenSurvey();
+            Long questionId = getQuestionId(survey);
+            Event event = createAndSaveSurveyLinkedManualEvent(survey.getId());
+
+            // when: surveyAnswers 포함하여 신청
+            List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), answers);
+
+            // then: EventRegistration 생성 (WAITING)
+            EventRegistration reg = eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(reg.getStatus()).isEqualTo(EventRegistrationStatus.WAITING);
+
+            // then: SurveyResponse도 DB에 존재
+            boolean hasResponse = surveyResponseRepository
+                    .existsBySurveyIdAndUserId(survey.getId(), member.getId());
+            assertThat(hasResponse).isTrue();
+        }
+
+        // ==================== TC-058 ====================
+
+        @Test
+        @DisplayName("[TC-058] 동일 설문 다중 행사 -- 응답 1회로 두 행사 신청 성공")
+        void registerEvent_SameSurveyTwoEvents_OneResponseBothSuccess() {
+            // given: 동일 설문 연결된 두 행사 (시간 미겹침)
+            Survey survey = createAndSaveOpenSurvey();
+            Long questionId = getQuestionId(survey);
+
+            Event eventA = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+            // 행사 B는 시간 미겹침으로 생성
+            Event eventB = transactionTemplate.execute(status -> {
+                Instant now = Instant.now();
+                Event e = Event.create(
+                        operator, "설문 연동 행사 B", "설명", "장소",
+                        now.plus(14, ChronoUnit.DAYS),
+                        now.plus(15, ChronoUnit.DAYS),
+                        now.minus(1, ChronoUnit.DAYS),
+                        now.plus(6, ChronoUnit.DAYS),
+                        10,
+                        EventRegistrationType.AUTO_APPROVE,
+                        survey.getId()
+                );
+                e.publish();
+                e.openRegistration();
+                return eventRepository.save(e);
+            });
+
+            // when: 행사 A 신청 (surveyAnswers 포함 -- 설문 응답 첫 생성)
+            List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
+            eventRegistrationService.registerEvent(eventA.getId(), member.getId(), answers);
+
+            // when: 행사 B 신청 (surveyAnswers 생략 -- 기존 응답 재사용)
+            eventRegistrationService.registerEvent(eventB.getId(), member.getId(), null);
+
+            // then: 두 행사 모두 신청 성공
+            EventRegistration regA = eventRegistrationRepository
+                    .findByEventIdAndUserId(eventA.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(regA.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+
+            EventRegistration regB = eventRegistrationRepository
+                    .findByEventIdAndUserId(eventB.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(regB.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+
+            // then: SurveyResponse는 1건만 존재
+            boolean hasResponse = surveyResponseRepository
+                    .existsBySurveyIdAndUserId(survey.getId(), member.getId());
+            assertThat(hasResponse).isTrue();
+        }
+
+        // ==================== TC-061 ====================
+
+        @Test
+        @DisplayName("[TC-061] 설문 응답 후 설문 삭제 시 행사 신청 실패")
+        void registerEvent_SurveyDeletedAfterResponse_Fails() {
+            // given: 설문 응답 완료
+            Survey survey = createAndSaveOpenSurvey();
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+            createAndSaveSurveyResponse(survey, member);
+
+            // when: 설문 영구 삭제 (trash -> permanentDelete)
+            transactionTemplate.execute(status -> {
+                Survey s = surveyRepository.findById(survey.getId()).orElseThrow();
+                s.trash();
+                s.permanentDelete(operator.getId());
+                return null;
+            });
+
+            // then: 행사 신청 시도 실패 (SurveyNotFoundException)
+            assertThatThrownBy(() ->
+                    eventRegistrationService.registerEvent(event.getId(), member.getId(), null))
+                    .isInstanceOf(SurveyNotFoundException.class);
+        }
+
+        // ==================== TC-062 ====================
+
+        @Test
+        @DisplayName("[TC-062] 설문 응답 + 행사 신청 후 설문 삭제 시 기존 신청 유효 유지")
+        void registerEvent_SurveyDeletedAfterRegistration_RegistrationRemains() {
+            // given: 설문 응답 + 행사 신청 완료
+            Survey survey = createAndSaveOpenSurvey();
+            Long questionId = getQuestionId(survey);
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+
+            List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), answers);
+
+            // when: 설문 영구 삭제
+            transactionTemplate.execute(status -> {
+                Survey s = surveyRepository.findById(survey.getId()).orElseThrow();
+                s.trash();
+                s.permanentDelete(operator.getId());
+                return null;
+            });
+
+            // then: EventRegistration 상태 유지
+            EventRegistration reg = eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(reg.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+        }
+
+        // ==================== TC-063 ====================
+
+        @Test
+        @DisplayName("[TC-063] 복잡한 라이프사이클 -- 신청 -> 취소 -> 설문 변경 -> 재신청 성공")
+        void complexLifecycle_Register_Cancel_ChangeSurvey_ReRegister_Success() {
+            // given: 설문A 응답 + 행사 신청
+            Survey surveyA = createAndSaveOpenSurvey();
+            Long questionIdA = getQuestionId(surveyA);
+            Event event = createAndSaveSurveyLinkedAutoEvent(surveyA.getId());
+
+            List<SubmitAnswerRequest> answersA = createSurveyAnswers(questionIdA);
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), answersA);
+
+            // when: 취소
+            eventRegistrationService.cancelRegistration(event.getId(), member.getId());
+
+            // when: 운영진이 설문A -> 설문B로 변경
+            Survey surveyB = createAndSaveOpenSurvey();
+            transactionTemplate.execute(status -> {
+                Event e = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
+                e.update(e.getTitle(), e.getDescription(), e.getLocation(),
+                        e.getEventStartAt(), e.getEventEndAt(),
+                        e.getRegistrationStartAt(), e.getRegistrationEndAt(),
+                        e.getCapacity(), surveyB.getId());
+                return null;
+            });
+
+            // when: 사용자가 설문B 응답 완료
+            createAndSaveSurveyResponse(surveyB, member);
+
+            // when: 재신청
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+
+            // then: 재신청 성공
+            EventRegistration reg = eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(reg.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+        }
+
+        // ==================== TC-064 ====================
+
+        @Test
+        @DisplayName("[TC-064] 설문 변경 후 새 설문 미응답 시 재신청 실패")
+        void complexLifecycle_ChangeSurvey_NoResponse_ReRegisterFails() {
+            // given: 설문A 응답 + 행사 신청 -> 취소
+            Survey surveyA = createAndSaveOpenSurvey();
+            Long questionIdA = getQuestionId(surveyA);
+            Event event = createAndSaveSurveyLinkedAutoEvent(surveyA.getId());
+
+            List<SubmitAnswerRequest> answersA = createSurveyAnswers(questionIdA);
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), answersA);
+            eventRegistrationService.cancelRegistration(event.getId(), member.getId());
+
+            // when: 설문 변경 (A -> B), 사용자가 설문B에 미응답
+            Survey surveyB = createAndSaveOpenSurvey();
+            transactionTemplate.execute(status -> {
+                Event e = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
+                e.update(e.getTitle(), e.getDescription(), e.getLocation(),
+                        e.getEventStartAt(), e.getEventEndAt(),
+                        e.getRegistrationStartAt(), e.getRegistrationEndAt(),
+                        e.getCapacity(), surveyB.getId());
+                return null;
+            });
+
+            // then: 재신청 실패 (SurveyResponseRequiredException)
+            assertThatThrownBy(() ->
+                    eventRegistrationService.registerEvent(event.getId(), member.getId(), null))
+                    .isInstanceOf(SurveyResponseRequiredException.class);
+        }
+
+        // ==================== TC-066 ====================
+
+        @Test
+        @DisplayName("[TC-066] 선발제 승인 시점에 설문이 CLOSED/휴지통이어도 승인 성공")
+        void approveRegistration_SurveyClosedAndTrashed_ApproveSucceeds() {
+            // given: 설문 응답 + 선발제 행사 신청 (WAITING)
+            Survey survey = createAndSaveOpenSurvey();
+            Long questionId = getQuestionId(survey);
+            Event event = createAndSaveSurveyLinkedManualEvent(survey.getId());
+
+            List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), answers);
+
+            EventRegistration waiting = eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(waiting.getStatus()).isEqualTo(EventRegistrationStatus.WAITING);
+
+            // when: 설문 CLOSED + 휴지통 이동
+            transactionTemplate.execute(status -> {
+                Survey s = surveyRepository.findById(survey.getId()).orElseThrow();
+                s.closeResponse();
+                s.trash();
+                return null;
+            });
+
+            // when: 승인
+            eventRegistrationService.approveRegistration(waiting.getId(), operator.getId());
+
+            // then: 승인 성공 (WAITING -> APPROVED)
+            EventRegistration approved = eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId())
+                    .orElseThrow();
+            assertThat(approved.getStatus()).isEqualTo(EventRegistrationStatus.APPROVED);
+        }
+
+        // ==================== TC-067 ====================
+
+        @Test
+        @DisplayName("[TC-067] 설문 단독 API로 응답 제출 시 행사 신청이 자동 트리거되지 않음")
+        void surveyResponseSubmit_DoesNotTriggerEventRegistration() {
+            // given: 설문 연결된 행사, 사용자 미신청
+            Survey survey = createAndSaveOpenSurvey();
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+
+            // when: 설문 응답 직접 저장 (설문 단독 API 시뮬레이션)
+            createAndSaveSurveyResponse(survey, member);
+
+            // then: 설문 응답은 존재
+            boolean hasResponse = surveyResponseRepository
+                    .existsBySurveyIdAndUserId(survey.getId(), member.getId());
+            assertThat(hasResponse).isTrue();
+
+            // then: EventRegistration은 없음 (행사 신청 미발생)
+            assertThat(eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId()))
+                    .isEmpty();
         }
     }
 }

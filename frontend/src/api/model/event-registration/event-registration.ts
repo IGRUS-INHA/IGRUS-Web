@@ -53,6 +53,7 @@ import type {
   GetRegistrationListParams,
   MyRegistrationResponse,
   PageRegistrationListResponse,
+  RegisterEventRequest,
   RegistrationResponse,
 } from ".././models";
 
@@ -681,6 +682,10 @@ export function useGetRegistrationList<
 
 /**
  * 행사에 신청합니다. 정회원 이상만 가능합니다.
+설문이 연결된 행사의 경우, surveyAnswers를 포함하여 설문 응답과 행사 신청을 원자적으로 처리합니다.
+이미 설문에 응답한 경우 surveyAnswers를 생략할 수 있습니다.
+설문이 연결되지 않은 행사는 body 없이 요청 가능합니다.
+
  * @summary 행사 신청
  */
 export type registerEventResponse201 = {
@@ -736,11 +741,14 @@ export const getRegisterEventUrl = (eventId: number) => {
 
 export const registerEvent = async (
   eventId: number,
+  registerEventRequest?: RegisterEventRequest,
   options?: RequestInit,
 ): Promise<registerEventResponse> => {
   return customFetch<registerEventResponse>(getRegisterEventUrl(eventId), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(registerEventRequest),
   });
 };
 
@@ -751,14 +759,14 @@ export const getRegisterEventMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof registerEvent>>,
     TError,
-    { eventId: number },
+    { eventId: number; data: RegisterEventRequest },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof registerEvent>>,
   TError,
-  { eventId: number },
+  { eventId: number; data: RegisterEventRequest },
   TContext
 > => {
   const mutationKey = ["registerEvent"];
@@ -772,11 +780,11 @@ export const getRegisterEventMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof registerEvent>>,
-    { eventId: number }
+    { eventId: number; data: RegisterEventRequest }
   > = (props) => {
-    const { eventId } = props ?? {};
+    const { eventId, data } = props ?? {};
 
-    return registerEvent(eventId, requestOptions);
+    return registerEvent(eventId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -785,7 +793,7 @@ export const getRegisterEventMutationOptions = <
 export type RegisterEventMutationResult = NonNullable<
   Awaited<ReturnType<typeof registerEvent>>
 >;
-
+export type RegisterEventMutationBody = RegisterEventRequest;
 export type RegisterEventMutationError = void;
 
 /**
@@ -796,7 +804,7 @@ export const useRegisterEvent = <TError = void, TContext = unknown>(
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof registerEvent>>,
       TError,
-      { eventId: number },
+      { eventId: number; data: RegisterEventRequest },
       TContext
     >;
     request?: SecondParameter<typeof customFetch>;
@@ -805,7 +813,7 @@ export const useRegisterEvent = <TError = void, TContext = unknown>(
 ): UseMutationResult<
   Awaited<ReturnType<typeof registerEvent>>,
   TError,
-  { eventId: number },
+  { eventId: number; data: RegisterEventRequest },
   TContext
 > => {
   return useMutation(getRegisterEventMutationOptions(options), queryClient);

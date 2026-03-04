@@ -113,6 +113,10 @@ public class Event extends SoftDeletableEntity {
     @Column(name = "event_registration_type", nullable = false, length = 20)
     private EventRegistrationType registrationType;
 
+    /** 연결된 설문 ID (nullable, surveys.survey_id FK 참조) */
+    @Column(name = "event_survey_id")
+    private Long surveyId;
+
     // === 정적 팩토리 메서드 ===
 
     /**
@@ -125,7 +129,8 @@ public class Event extends SoftDeletableEntity {
     public static Event create(User user, String title, String description, String location,
                                Instant eventStartAt, Instant eventEndAt,
                                Instant registrationStartAt, Instant registrationEndAt,
-                               Integer capacity, EventRegistrationType registrationType) {
+                               Integer capacity, EventRegistrationType registrationType,
+                               Long surveyId) {
         validateCapacity(capacity);
 
         Event event = new Event();
@@ -143,6 +148,7 @@ public class Event extends SoftDeletableEntity {
         event.registrationStatus = RegistrationStatus.NOT_STARTED;
         event.eventStatus = EventStatus.UPCOMING;
         event.registrationType = registrationType;
+        event.surveyId = surveyId;
         return event;
     }
 
@@ -449,6 +455,15 @@ public class Event extends SoftDeletableEntity {
     }
 
     /**
+     * 설문이 연결되어 있는지 확인합니다.
+     *
+     * @return 설문 연결 여부
+     */
+    public boolean hasSurvey() {
+        return this.surveyId != null;
+    }
+
+    /**
      * 다른 행사와 시간이 겹치는지 확인합니다.
      *
      * @param otherStartAt 다른 행사 시작 시간
@@ -476,7 +491,7 @@ public class Event extends SoftDeletableEntity {
     public void update(String title, String description, String location,
                        Instant eventStartAt, Instant eventEndAt,
                        Instant registrationStartAt, Instant registrationEndAt,
-                       Integer capacity) {
+                       Integer capacity, Long surveyId) {
         // COMPLETED 또는 CANCELED는 수정 불가
         if (this.eventStatus == EventStatus.COMPLETED || this.eventStatus == EventStatus.CANCELED) {
             throw new EventNotEditableException(this.eventStatus);
@@ -500,7 +515,7 @@ public class Event extends SoftDeletableEntity {
             }
         }
 
-        // UPCOMING, CANCELED: 전체 필드 수정 가능
+        // UPCOMING: 전체 필드 수정 가능
         this.title = title;
         this.description = description;
         this.location = location;
@@ -509,5 +524,6 @@ public class Event extends SoftDeletableEntity {
         this.registrationStartAt = registrationStartAt;
         this.registrationEndAt = registrationEndAt;
         this.capacity = capacity;
+        this.surveyId = surveyId;
     }
 }

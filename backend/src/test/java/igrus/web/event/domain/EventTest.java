@@ -46,7 +46,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    CAPACITY, EventRegistrationType.AUTO_APPROVE);
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null);
 
             assertThat(event).isNotNull();
             assertThat(event.getTitle()).isEqualTo(TITLE);
@@ -65,7 +65,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    CAPACITY, EventRegistrationType.MANUAL_APPROVE);
+                    CAPACITY, EventRegistrationType.MANUAL_APPROVE, null);
 
             assertThat(event.getRegistrationType()).isEqualTo(EventRegistrationType.MANUAL_APPROVE);
             assertThat(event.isAutoApprove()).isFalse();
@@ -78,7 +78,7 @@ class EventTest {
             User mockUser = createMockUser();
             assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    0, EventRegistrationType.AUTO_APPROVE))
+                    0, EventRegistrationType.AUTO_APPROVE, null))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
 
@@ -88,7 +88,7 @@ class EventTest {
             User mockUser = createMockUser();
             assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    -1, EventRegistrationType.AUTO_APPROVE))
+                    -1, EventRegistrationType.AUTO_APPROVE, null))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
 
@@ -98,7 +98,7 @@ class EventTest {
             User mockUser = createMockUser();
             assertThatThrownBy(() -> Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    null, EventRegistrationType.AUTO_APPROVE))
+                    null, EventRegistrationType.AUTO_APPROVE, null))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
 
@@ -117,7 +117,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    1, EventRegistrationType.AUTO_APPROVE);
+                    1, EventRegistrationType.AUTO_APPROVE, null);
             assertThat(event.getCapacity()).isEqualTo(1);
         }
 
@@ -127,7 +127,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    Integer.MAX_VALUE, EventRegistrationType.AUTO_APPROVE);
+                    Integer.MAX_VALUE, EventRegistrationType.AUTO_APPROVE, null);
             assertThat(event.getCapacity()).isEqualTo(Integer.MAX_VALUE);
         }
     }
@@ -199,7 +199,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.AUTO_APPROVE);
+                    2, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             event.incrementCurrentCount();
@@ -225,7 +225,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.AUTO_APPROVE);
+                    2, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             event.incrementCurrentCount();
@@ -244,7 +244,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.AUTO_APPROVE);
+                    2, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             event.incrementCurrentCount();
@@ -261,7 +261,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    1, EventRegistrationType.AUTO_APPROVE);
+                    1, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
@@ -307,7 +307,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.AUTO_APPROVE);
+                    2, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             event.incrementCurrentCount();
@@ -339,7 +339,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.AUTO_APPROVE);
+                    2, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             event.incrementCurrentCount();
@@ -514,7 +514,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     eventStart, eventEnd, regStart, regEnd,
-                    CAPACITY, EventRegistrationType.AUTO_APPROVE);
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null);
 
             // During overlap: regStart < now < eventStart < now2 < regEnd
             Instant duringOverlap = eventStart.plus(1, ChronoUnit.HOURS);
@@ -547,7 +547,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     eventStart, eventEnd, regStart, regEnd,
-                    CAPACITY, EventRegistrationType.AUTO_APPROVE);
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null);
 
             // Move to during event (reg still open)
             Instant duringEvent = eventStart.plus(1, ChronoUnit.HOURS);
@@ -570,7 +570,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, regStartEnd, regStartEnd,
-                    CAPACITY, EventRegistrationType.AUTO_APPROVE);
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null);
 
             // now > regStart == regEnd → NOT_STARTED→OPEN→CLOSED 연속 전이
             Instant afterRegTime = regStartEnd.plus(1, ChronoUnit.MINUTES);
@@ -708,7 +708,7 @@ class EventTest {
             Instant regEnd = Instant.now().plus(10, ChronoUnit.DAYS);
             Instant eventEnd = Instant.now().plus(14, ChronoUnit.DAYS);
             Event e3 = Event.create(createMockUser(), TITLE, DESCRIPTION, LOCATION,
-                    eventStart, eventEnd, regStart, regEnd, CAPACITY, EventRegistrationType.AUTO_APPROVE);
+                    eventStart, eventEnd, regStart, regEnd, CAPACITY, EventRegistrationType.AUTO_APPROVE, null);
             Instant duringOverlap = eventStart.plus(1, ChronoUnit.HOURS);
             e3.updateStatusIfNeeded(duringOverlap);
             assertThat(e3.getRegistrationStatus()).isEqualTo(RegistrationStatus.OPEN);
@@ -761,7 +761,7 @@ class EventTest {
             Integer newCapacity = 50;
 
             event.update(newTitle, newDescription, LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, newCapacity);
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, newCapacity, null);
 
             assertThat(event.getTitle()).isEqualTo(newTitle);
             assertThat(event.getDescription()).isEqualTo(newDescription);
@@ -776,7 +776,7 @@ class EventTest {
             assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.OPEN);
 
             event.update("새 제목", "새 설명", "새 장소",
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 50);
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 50, null);
 
             assertThat(event.getTitle()).isEqualTo("새 제목");
             assertThat(event.getDescription()).isEqualTo("새 설명");
@@ -794,7 +794,7 @@ class EventTest {
             event.complete();
 
             assertThatThrownBy(() -> event.update("새 제목", "새 설명", LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 40))
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 40, null))
                     .isInstanceOf(EventNotEditableException.class);
         }
 
@@ -804,7 +804,7 @@ class EventTest {
             Event event = createTestEvent();
 
             assertThatThrownBy(() -> event.update("새 제목", "새 설명", LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 0))
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 0, null))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
 
@@ -813,7 +813,7 @@ class EventTest {
         void update_OngoingTitle_Success() {
             Event event = createOngoingEvent();
             event.update("새 제목", DESCRIPTION, LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY);
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY, null);
             assertThat(event.getTitle()).isEqualTo("새 제목");
         }
 
@@ -822,7 +822,7 @@ class EventTest {
         void update_OngoingDescription_Success() {
             Event event = createOngoingEvent();
             event.update(TITLE, "새 설명", LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY);
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY, null);
             assertThat(event.getDescription()).isEqualTo("새 설명");
         }
 
@@ -831,7 +831,7 @@ class EventTest {
         void update_OngoingLocation_Success() {
             Event event = createOngoingEvent();
             event.update(TITLE, DESCRIPTION, "새 장소",
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY);
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY, null);
             assertThat(event.getLocation()).isEqualTo("새 장소");
         }
 
@@ -841,7 +841,7 @@ class EventTest {
             Event event = createOngoingEvent();
             Instant newEventEnd = EVENT_END_AT.plus(1, ChronoUnit.DAYS);
             event.update(TITLE, DESCRIPTION, LOCATION,
-                    EVENT_START_AT, newEventEnd, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY);
+                    EVENT_START_AT, newEventEnd, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY, null);
             assertThat(event.getEventEndAt()).isEqualTo(newEventEnd);
         }
 
@@ -851,7 +851,7 @@ class EventTest {
             Event event = createOngoingEvent();
             Instant newRegEnd = REGISTRATION_END_AT.plus(1, ChronoUnit.DAYS);
             event.update(TITLE, DESCRIPTION, LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, newRegEnd, CAPACITY);
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, newRegEnd, CAPACITY, null);
             assertThat(event.getRegistrationEndAt()).isEqualTo(newRegEnd);
         }
 
@@ -861,7 +861,7 @@ class EventTest {
             Event event = createOngoingEvent();
             // currentCount=0, so capacity=10 is fine
             event.update(TITLE, DESCRIPTION, LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 10);
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 10, null);
             assertThat(event.getCapacity()).isEqualTo(10);
         }
 
@@ -872,7 +872,7 @@ class EventTest {
             Instant newEventStart = EVENT_START_AT.plus(1, ChronoUnit.HOURS);
 
             assertThatThrownBy(() -> event.update(TITLE, DESCRIPTION, LOCATION,
-                    newEventStart, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY))
+                    newEventStart, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, CAPACITY, null))
                     .isInstanceOf(EventNotEditableException.class);
         }
 
@@ -883,7 +883,7 @@ class EventTest {
             Instant newRegStart = REGISTRATION_START_AT.plus(1, ChronoUnit.HOURS);
 
             assertThatThrownBy(() -> event.update(TITLE, DESCRIPTION, LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, newRegStart, REGISTRATION_END_AT, CAPACITY))
+                    EVENT_START_AT, EVENT_END_AT, newRegStart, REGISTRATION_END_AT, CAPACITY, null))
                     .isInstanceOf(EventNotEditableException.class);
         }
 
@@ -893,14 +893,14 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    10, EventRegistrationType.AUTO_APPROVE);
+                    10, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             for (int i = 0; i < 5; i++) event.incrementCurrentCount();
             event.closeRegistrationManually();
             event.startOngoing();
 
             assertThatThrownBy(() -> event.update(TITLE, DESCRIPTION, LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 3))
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 3, null))
                     .isInstanceOf(InvalidEventCapacityException.class);
         }
 
@@ -913,7 +913,7 @@ class EventTest {
             Instant newEventEnd = EVENT_END_AT.plus(2, ChronoUnit.DAYS);
 
             assertThatThrownBy(() -> event.update("새 제목", "새 설명", "새 장소",
-                    newEventStart, newEventEnd, REGISTRATION_START_AT, REGISTRATION_END_AT, 50))
+                    newEventStart, newEventEnd, REGISTRATION_START_AT, REGISTRATION_END_AT, 50, null))
                     .isInstanceOf(EventNotEditableException.class);
         }
 
@@ -928,7 +928,7 @@ class EventTest {
             assertThat(event.getEventStatus()).isEqualTo(EventStatus.COMPLETED);
 
             assertThatThrownBy(() -> event.update("새 제목", "새 설명", LOCATION,
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 40))
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 40, null))
                     .isInstanceOf(EventNotEditableException.class);
         }
     }
@@ -961,7 +961,7 @@ class EventTest {
             Instant regEnd = Instant.now().plus(10, ChronoUnit.DAYS);
             Instant eventEnd = Instant.now().plus(14, ChronoUnit.DAYS);
             Event event = Event.create(createMockUser(), TITLE, DESCRIPTION, LOCATION,
-                    eventStart, eventEnd, regStart, regEnd, CAPACITY, EventRegistrationType.AUTO_APPROVE);
+                    eventStart, eventEnd, regStart, regEnd, CAPACITY, EventRegistrationType.AUTO_APPROVE, null);
             Instant duringOverlap = eventStart.plus(1, ChronoUnit.HOURS);
             event.updateStatusIfNeeded(duringOverlap);
             assertThat(event.getRegistrationStatus()).isEqualTo(RegistrationStatus.OPEN);
@@ -1062,7 +1062,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.AUTO_APPROVE);
+                    2, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             event.incrementCurrentCount();
@@ -1142,7 +1142,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.AUTO_APPROVE);
+                    2, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
 
             event.incrementCurrentCount();
@@ -1174,7 +1174,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    2, EventRegistrationType.AUTO_APPROVE);
+                    2, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             event.incrementCurrentCount();
@@ -1222,7 +1222,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    1, EventRegistrationType.AUTO_APPROVE);
+                    1, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             assertThat(event.isRegistrable()).isFalse();
@@ -1251,7 +1251,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    1, EventRegistrationType.AUTO_APPROVE);
+                    1, EventRegistrationType.AUTO_APPROVE, null);
             event.openRegistration();
             event.incrementCurrentCount();
             assertThat(event.getRemainingCapacity()).isEqualTo(0);
@@ -1271,7 +1271,7 @@ class EventTest {
             User mockUser = createMockUser();
             Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
                     EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                    CAPACITY, EventRegistrationType.MANUAL_APPROVE);
+                    CAPACITY, EventRegistrationType.MANUAL_APPROVE, null);
             assertThat(event.isManualApprove()).isTrue();
             assertThat(event.isAutoApprove()).isFalse();
         }
@@ -1523,7 +1523,7 @@ class EventTest {
             assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
 
             event.update("새 제목", "새 설명", "새 장소",
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 50);
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 50, null);
 
             assertThat(event.getVisibility()).isEqualTo(EventVisibility.UNPUBLISHED);
         }
@@ -1536,7 +1536,7 @@ class EventTest {
             assertThat(event.getVisibility()).isEqualTo(EventVisibility.PUBLISHED);
 
             event.update("새 제목", "새 설명", "새 장소",
-                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 50);
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT, 50, null);
 
             assertThat(event.getVisibility()).isEqualTo(EventVisibility.PUBLISHED);
         }
@@ -1575,6 +1575,99 @@ class EventTest {
         }
     }
 
+    // === 설문 연동 (Survey-Event Linking) ===
+
+    @Nested
+    @DisplayName("설문 연동 (Survey-Event Linking)")
+    class SurveyEventLinkingTest {
+
+        @Test
+        @DisplayName("[TC-001] 설문 미연결 행사 생성 시 surveyId가 null로 설정됨")
+        void create_WithoutSurvey_SurveyIdIsNull() {
+            User mockUser = createMockUser();
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null);
+
+            assertThat(event.getSurveyId()).isNull();
+            assertThat(event.hasSurvey()).isFalse();
+        }
+
+        @Test
+        @DisplayName("[TC-003] 행사 생성 시 단일 surveyId만 설정됨")
+        void create_WithSurveyId_SingleSurveyIdSet() {
+            User mockUser = createMockUser();
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, 100L);
+
+            assertThat(event.getSurveyId()).isEqualTo(100L);
+            assertThat(event.hasSurvey()).isTrue();
+        }
+
+        @Test
+        @DisplayName("[TC-009] UPCOMING 상태 행사에서 설문 연결 변경 성공 (null -> 100)")
+        void update_UpcomingEvent_SurveyIdChangeSucceeds() {
+            Event event = createTestEvent();
+            assertThat(event.getSurveyId()).isNull();
+
+            event.update(TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, 100L);
+
+            assertThat(event.getSurveyId()).isEqualTo(100L);
+        }
+
+        @Test
+        @DisplayName("[TC-010] ONGOING 상태 행사에서 설문 연결 변경 성공 (100 -> 200)")
+        void update_OngoingEvent_SurveyIdChangeSucceeds() {
+            User mockUser = createMockUser();
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, 100L);
+            event.openRegistration();
+            event.closeRegistrationManually();
+            event.startOngoing();
+
+            event.update(TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, 200L);
+
+            assertThat(event.getSurveyId()).isEqualTo(200L);
+        }
+
+        @Test
+        @DisplayName("[TC-011] CANCELED 상태 행사에서 설문 변경 시 수정 불가 예외")
+        void update_CanceledEvent_SurveyIdChangeThrowsException() {
+            User mockUser = createMockUser();
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, 100L);
+            event.openRegistration();
+            event.cancel();
+
+            assertThatThrownBy(() -> event.update(TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, null))
+                    .isInstanceOf(EventNotEditableException.class);
+        }
+
+        @Test
+        @DisplayName("[TC-012] COMPLETED 상태 행사에서 설문 연결 변경 시 수정 불가 예외")
+        void update_CompletedEvent_SurveyIdChangeThrowsException() {
+            Event event = createTestEvent();
+            event.openRegistration();
+            event.closeRegistrationManually();
+            event.startOngoing();
+            event.complete();
+
+            assertThatThrownBy(() -> event.update(TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, 100L))
+                    .isInstanceOf(EventNotEditableException.class);
+        }
+    }
+
     // === Helper Methods ===
 
     private User createMockUser() {
@@ -1587,7 +1680,7 @@ class EventTest {
     private Event createTestEvent() {
         return Event.create(createMockUser(), TITLE, DESCRIPTION, LOCATION,
                 EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                CAPACITY, EventRegistrationType.AUTO_APPROVE);
+                CAPACITY, EventRegistrationType.AUTO_APPROVE, null);
     }
 
     private Event createOngoingEvent() {

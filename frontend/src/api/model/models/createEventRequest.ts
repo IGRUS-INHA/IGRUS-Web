@@ -55,4 +55,9 @@ export interface CreateEventRequest {
   /** @minimum 1 */
   capacity: number;
   registrationType: CreateEventRequestRegistrationType;
+  /**
+   * 연결할 설문 ID (null이면 설문 미연결)
+   * @nullable
+   */
+  surveyId?: number | null;
 }

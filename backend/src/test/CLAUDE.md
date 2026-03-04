@@ -103,7 +103,24 @@ private User createAndSaveTestUser(UserRole role, UserStatus status) { ... }
 - FQCN 사용 금지 — import 추가 후 단순명 사용
 - `@Transactional` 테스트에 사용 금지
 
-## 7. 컨텍스트 캐싱 목표
+## 7. OpenAPI 응답 스키마 검증
+
+컨트롤러 통합 테스트에서 2xx 성공 응답은 반드시 `OpenApiValidatorUtil.matchesOpenApiSpec()`으로 OpenAPI 스펙 일치를 검증한다.
+
+```java
+import static igrus.web.common.OpenApiValidatorUtil.matchesOpenApiSpec;
+
+mockMvc.perform(get("/api/v1/boards").with(withAuth(user)))
+    .andDo(print())
+    .andExpect(status().isOk())
+    .andExpect(matchesOpenApiSpec());
+```
+
+- 새 컨트롤러 테스트 작성 시 **성공 응답에 `matchesOpenApiSpec()` 추가 필수**
+- 4xx/5xx 에러 응답(401, 403, 404 등)에는 추가하지 않음
+- 스키마 검증 실패 시: OpenAPI 스펙(`openapi/schemas/`)과 컨트롤러 응답 중 어느 쪽이 잘못인지 확인 후 수정
+
+## 8. 컨텍스트 캐싱 목표
 
 위 규칙을 지키면 Spring Context 로딩 횟수를 최소화할 수 있다.
 새 테스트 추가 시 기존 베이스 클래스를 상속하고 어노테이션을 추가하지 않으면 컨텍스트가 늘어나지 않는다.

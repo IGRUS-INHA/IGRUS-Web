@@ -3,7 +3,8 @@
 > **Status**: Draft
 > **Last Updated**: 2026-03-02
 > **Scope**: 행사-설문 연결(Event-Survey Linking), 설문 필수 행사 신청(Survey-Required Registration), 설문 없는 행사 신청(Direct Registration), 상태 교차 제약(Cross-Domain State Constraints)
-> **상태 모델**: 3축 연동 모델 — Event 2축(registrationStatus + eventStatus) + Survey 2축(visibility + responseStatus)
+> **상태 모델**: 5축 연동 모델 — Event 3축(visibility + registrationStatus + eventStatus) + Survey 2축(visibility + responseStatus)
+> **참고**: Event visibility 축은 EVT-INV-18에 의해 공개 API 접근 제한으로 신청 시점 이전에 걸러진다. 신청 가능성 판단의 주요 축은 registrationStatus, eventStatus, survey.responseStatus이다.
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 
 ## 목적
@@ -106,11 +107,11 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
   - `eventStatus == ONGOING`: 설문 연결/변경/해제 가능 (정보성 필드에 준함)
   - `eventStatus == CANCELED`: 설문 연결/변경/해제 가능
   - `eventStatus == COMPLETED`: 수정 불가
-- **EVT-INV-07과의 관계**: EVT-INV-07의 ONGOING 수정 표는 기존 필드(title, description 등) 기준이며, `surveyId`는 이 문서(SEVT-INV-05)의 정의를 우선한다. `surveyId`는 정보성 필드에 준하여 ONGOING 상태에서도 변경 가능하다.
+- **EVT-INV-07과의 관계**: EVT-INV-07의 ONGOING 수정 표는 기존 필드(title, description 등) 기준이며, `surveyId`는 이 문서(SEVT-INV-05)의 정의를 우선한다. `surveyId`는 정보성 필드에 준하여 ONGOING 상태에서도 변경 가능하다. **구현 시 EVT-INV-07의 상태별 수정 표에 `surveyId` 행을 명시적으로 추가하여 이 문서와 일관성을 유지할 것을 권장한다.**
 - **설문 변경은 행사 수정 API를 통해 이루어짐**: 설문 연결/변경/해제는 행사 수정 API(EVT-INV-07)를 통해 수행되며, ONGOING 상태의 부분 수정 제한 대상이 아닌 필드로 처리된다. 별도의 설문 연결 API는 존재하지 않는다.
 - **신청자 존재 시 설문 변경 제약**: 이미 설문 응답을 완료하고 행사에 신청한 사용자가 존재하는 상태에서 설문을 변경하면 기존 신청의 근거가 달라짐. 이에 대한 정책:
-  - **정책 A (권장 — 허용)**: 설문 변경을 허용하되, 기존 신청은 유효하게 유지. 새 신청자만 새 설문 기준 적용. 운영 유연성 우선.
-  - **정책 B (엄격 — 차단)**: 활성 신청이 존재하면 설문 변경 차단. 데이터 정합성 우선.
+  - **정책 A (확정 — 허용)**: 설문 변경을 허용하되, 기존 신청은 유효하게 유지. 새 신청자만 새 설문 기준 적용. 운영 유연성 우선. (DECISION-01 확정)
+  - ~~정책 B (엄격 — 차단): 활성 신청이 존재하면 설문 변경 차단. 데이터 정합성 우선.~~
 - **설문 해제 시**: `surveyId = null`로 설정. 이후 신청자는 설문 없이 바로 신청 가능. 기존 설문 응답이 있는 신청은 유효하게 유지
 
 ### 1.2. 설문 응답 필수 여부
@@ -127,6 +128,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
   - `surveyAnswers`가 누락된 경우: `SurveyResponseRequiredException` (신규 예외)
   - 설문 응답 유효성 검증 실패: 기존 설문 도메인의 validation 예외 위임
 - **이미 설문 응답이 존재하는 경우**: 동일 설문에 이미 응답을 제출한 사용자는 `surveyAnswers`를 생략할 수 있다. 이 경우 기존 응답 존재 여부(`existsBySurveyIdAndUserId`)만 확인하고 신청을 진행한다
+- **기존 응답 존재 + `surveyAnswers` 포함 시**: `surveyAnswers`는 무시하고 기존 응답으로 신청을 진행한다. 응답을 수정하려면 설문 단독 수정 API(`PUT /surveys/{surveyId}/responses/me`, INV-26)를 별도로 호출해야 한다. 근거: 행사 신청과 설문 응답 수정은 별개의 관심사이며, 통합 API에서 암묵적 갱신을 허용하면 INV-01(중복 응답 방지) 위반 위험이 있다.
 - **검증 시점**: 신청(`registerEvent`) 및 재신청(`reRegister`) 시 모두 적용
 - **승인(approve) 시**: 설문 응답 재검증을 수행하지 않음.
   - 근거: 신청 시점(WAITING 생성 시)에 이미 검증이 완료되었고, 응답 삭제는 1차 미지원(설문 INV-27)이므로 승인 시점에 응답이 소멸할 수 없음.
@@ -141,12 +143,14 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **검증 방법**: 기존 행사 신청 테스트 전체가 변경 없이 통과하는지 확인 (회귀 테스트)
 - **교차 참조**: REG-INV-01~14 전체
 
-#### SEVT-INV-08: 통합 API의 원자적 처리
+#### SEVT-INV-08: 통합 API의 원자성과 롤백 보장
 
-> 설문 연결 행사의 신청은 **행사-설문 통합 API**를 통해 설문 응답 저장과 행사 신청을 단일 트랜잭션으로 처리한다. 설문 응답만 저장되고 행사 신청이 실패하는 중간 상태가 발생하지 않는다.
+> 설문 연결 행사의 신청에서, 설문 응답 저장과 행사 신청 사이에 **중간 상태(고아 데이터)**가 발생하지 않는다. 트랜잭션 실패 시 양쪽 모두 롤백된다.
 
-- **흐름**: 사용자가 행사 신청 요청(`surveyAnswers` 포함) → 시스템이 단일 트랜잭션 내에서 설문 응답 저장 + 행사 신청 수행 → 성공 시 둘 다 커밋, 실패 시 둘 다 롤백
-- **근거**: 정합성 보장의 책임을 서버가 담당. 클라이언트는 한 번의 API 호출로 완료
+> **SEVT-INV-06과의 역할 분리**: SEVT-INV-06은 "설문 응답 필수 여부 및 기존 응답 재사용 정책"을 정의하고, SEVT-INV-08은 "원자성과 롤백 보장"을 정의한다.
+
+- **고아 데이터 방지**: 설문 응답만 저장되고 행사 신청이 실패하는 상태가 발생하지 않음. 정원 초과, 시간 겹침 등으로 신청이 실패하면 설문 응답도 저장되지 않음
+- **롤백 시나리오**: 설문 응답 저장 성공 → 정원 확인 실패(`EventCapacityFullException`) → 설문 응답 + 행사 신청 모두 롤백
 - **3종 API와의 관계**:
   - 행사 단독 API: `surveyId == null`인 행사 → 기존 로직 그대로 (설문 무관)
   - 설문 단독 API: 행사와 무관한 독립 설문 → 기존 설문 응답 API 그대로
@@ -178,7 +182,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | PUBLISHED | NOT_STARTED | **불가** | 설문이 아직 시작되지 않아 응답 불가능 |
 | UNPUBLISHED | NOT_STARTED | **불가** | 비공개 + 미시작, 응답 경로 없음 |
 | UNPUBLISHED | OPEN | **발생 불가** | 설문 INV-20에 의해 UNPUBLISHED 전환 시 responseStatus가 자동으로 CLOSED로 변경되므로 이 조합은 시스템에서 발생하지 않음 |
-| UNPUBLISHED | CLOSED | **가능** (기존 응답 존재 시) | 비공개 전환되었지만 기존 응답 유효 |
+| UNPUBLISHED | CLOSED | **가능** (기존 응답 존재 시) | INV-20에 의해 PUBLISHED+OPEN에서 비공개 전환 시 자동 CLOSED로 변경됨. 전환 전 OPEN 상태에서 응답 제출이 가능했으므로 기존 응답 존재 가능 |
 
 - **핵심 판단 기준**: `survey.responseStatus != NOT_STARTED`. 한번이라도 응답 수집이 시작되었으면(`OPEN` 또는 `CLOSED`), 해당 설문에 대한 기존 응답이 존재할 수 있으므로 신청을 허용
 - **NOT_STARTED 차단 근거**: 응답 수집이 시작되지 않은 설문에는 응답을 제출할 수 있는 경로 자체가 없으므로, SEVT-INV-06의 전제조건(응답 존재)을 충족할 수 없음
@@ -214,6 +218,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
   7. 시간 겹침 확인 (REG-INV-06)
   8. 정원 확인 및 원자적 UPDATE
 
+- **visibility 검증 위치**: 행사 visibility(`PUBLISHED`/`UNPUBLISHED`)는 검증 순서에 별도 단계로 포함하지 않음. 근거: EVT-INV-18에 의해 공개 API에서 UNPUBLISHED 행사 조회 자체가 차단(404)되므로, 신청 로직에 도달하기 이전에 이미 걸러진다. 관리자 API에서는 visibility 제약 없이 행사를 조회하지만, 관리자 API에서 직접 신청하는 시나리오는 없다.
 - **설문 검증 위치 근거**: 6번에 배치하는 이유는, 설문 응답 부재 시 정원 소진이나 시간 겹침 검증보다 먼저 빠르게 실패하여 불필요한 DB 조회를 방지하기 위함
 
 #### SEVT-INV-13: 기존 설문 불변조건 전체 보존
@@ -231,7 +236,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 ### 2-1. 행사-설문 연동 상태 교차 제약
 
-행사의 2축 상태(registrationStatus + eventStatus)와 설문의 2축 상태(visibility + responseStatus)가 교차하는 지점에서 신청 가능 여부가 결정된다.
+행사의 3축 상태(visibility + registrationStatus + eventStatus)와 설문의 2축 상태(visibility + responseStatus)가 교차하는 지점에서 신청 가능 여부가 결정된다. 단, 행사 visibility 축은 EVT-INV-18에 의해 공개 API에서 UNPUBLISHED 행사 접근이 차단되므로, 신청 가능 여부 판단의 실질적 교차 축은 registrationStatus × survey.responseStatus이다.
 
 #### 신청 가능 조건 (모든 조건 AND)
 
@@ -239,6 +244,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 신청 가능 = 행사 조건 AND 설문 조건
 
 행사 조건:
+  - event.visibility == PUBLISHED (EVT-INV-18: 공개 API 접근 전제)
   - event.registrationStatus == OPEN
   - registrationStartAt <= now <= registrationEndAt
   - 정원 여유 (선착순) 또는 WAITING 가능 (선발제)
@@ -252,15 +258,16 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 #### 2-1-1. 행사 상태 × 설문 상태 교차 매트릭스
 
-`event.surveyId != null`인 행사에 대해, 행사 registrationStatus와 설문 responseStatus 조합별 신청 가능 여부:
+`event.surveyId != null`인 행사에 대해, 행사 visibility, registrationStatus와 설문 responseStatus 조합별 신청 가능 여부:
 
-| 행사 registrationStatus | 설문 responseStatus | 신청 가능 | 근거 |
-|:---:|:---:|:---:|------|
-| NOT_STARTED | ANY | **불가** | 행사 등록 미시작 (REG-INV-05) |
-| OPEN | NOT_STARTED | **불가** | 설문 미시작, 응답 경로 없음 (SEVT-INV-10) |
-| OPEN | OPEN | **가능** (응답 존재 시) | 정상 시나리오 |
-| OPEN | CLOSED | **가능** (응답 존재 시) | 설문 마감 후 기존 응답으로 신청 |
-| CLOSED | ANY | **불가** | 행사 등록 마감 (REG-INV-05) |
+| 행사 visibility | 행사 registrationStatus | 설문 responseStatus | 신청 가능 | 근거 |
+|:---:|:---:|:---:|:---:|------|
+| UNPUBLISHED | ANY | ANY | **불가** | EVT-INV-18: 비공개 행사는 공개 API에서 조회 불가 (404 반환) |
+| PUBLISHED | NOT_STARTED | ANY | **불가** | 행사 등록 미시작 (REG-INV-05) |
+| PUBLISHED | OPEN | NOT_STARTED | **불가** | 설문 미시작, 응답 경로 없음 (SEVT-INV-10) |
+| PUBLISHED | OPEN | OPEN | **가능** (응답 존재 시) | 정상 시나리오 |
+| PUBLISHED | OPEN | CLOSED | **가능** (응답 존재 시) | 설문 마감 후 기존 응답으로 신청 |
+| PUBLISHED | CLOSED | ANY | **불가** | 행사 등록 마감 (REG-INV-05) |
 
 #### 2-1-2. 설문 라이프사이클과 행사 라이프사이클의 시간 관계
 
@@ -365,14 +372,18 @@ registerEventWithSurvey(eventId, userId, surveyAnswers) {
     validateSurveyState(survey);  // NOT_STARTED, 삭제, 휴지통 체크
 
     // 설문 응답 처리
-    if (surveyAnswers != null) {
-        // 새 응답 저장 (기존 SurveyResponseService 로직 위임)
+    boolean hasResponse = surveyResponseRepository
+        .existsBySurveyIdAndUserId(event.surveyId, userId);
+
+    if (hasResponse) {
+        // 기존 응답 존재 → surveyAnswers 유무와 무관하게 기존 응답으로 진행
+        // (응답 수정은 설문 단독 API로만 가능, SEVT-INV-06)
+    } else if (surveyAnswers != null) {
+        // 기존 응답 없음 + 새 응답 데이터 포함 → 새 응답 저장
         saveSurveyResponse(survey, userId, surveyAnswers);
     } else {
-        // surveyAnswers 미포함 → 기존 응답 존재 확인
-        boolean hasResponse = surveyResponseRepository
-            .existsBySurveyIdAndUserId(event.surveyId, userId);
-        if (!hasResponse) throw new SurveyResponseRequiredException();
+        // 기존 응답 없음 + surveyAnswers 미포함 → 거부
+        throw new SurveyResponseRequiredException();
     }
 
     // 행사 신청 로직 (정원 확인, 원자적 UPDATE 등) ...
@@ -417,12 +428,14 @@ registerEventWithSurvey(eventId, userId, surveyAnswers) {
 
 ### 4-3. 설문 연결 변경 경계값
 
-| 시나리오 | 기존 surveyId | 새 surveyId | 기존 신청자 | 결과 |
+> **"기존 신청자"의 범위**: 활성 신청(isActive == true, 즉 WAITING/REGISTERED/APPROVED 상태)을 가진 사용자를 의미한다. CANCELED 상태의 신청자는 재신청 시 현재 `event.surveyId` 기준이 적용되므로(SEVT-INV-06) "기존 신청자"에 포함하지 않는다.
+
+| 시나리오 | 기존 surveyId | 새 surveyId | 기존 활성 신청자 | 결과 |
 |---------|:---:|:---:|:---:|:---:|
 | 처음 설문 연결 | null | 유효 ID | 없음 | **성공** |
-| 처음 설문 연결 | null | 유효 ID | 있음 | **성공** (기존 신청 유지, 정책 A) |
+| 처음 설문 연결 | null | 유효 ID | 있음 | **성공** (기존 신청 유지, DECISION-01 확정) |
 | 설문 변경 | ID-A | ID-B | 없음 | **성공** |
-| 설문 변경 | ID-A | ID-B | 있음 (ID-A 응답 기반) | **성공** (기존 신청 유지, 정책 A) |
+| 설문 변경 | ID-A | ID-B | 있음 (ID-A 응답 기반) | **성공** (기존 신청 유지, DECISION-01 확정) |
 | 설문 해제 | 유효 ID | null | 있음 | **성공** (기존 신청 유지) |
 | 설문 해제 | 유효 ID | null | 없음 | **성공** |
 | 삭제된 설문으로 변경 | null | 삭제 ID | 없음 | **실패** (SurveyNotFoundException) |
@@ -556,7 +569,9 @@ registerEventWithSurvey(eventId, userId, surveyAnswers) {
 | 설문 OPEN → CLOSED → 기존 응답으로 신청 | SEVT-INV-10 | 중간 |
 | 설문 휴지통 이동 → 신규 신청 차단, 기존 신청 유지 | SEVT-INV-11 | 중간 |
 | 동시 신청 (설문 응답 존재 + 정원 경합) | SEVT-INV-06, REG-INV-01 | 중간 |
+| 동시 설문 응답 제출 + 행사 신청 경합 (F8) | SEVT-INV-08, INV-01 | 중간 |
 | 행사 생성 → 설문 연결 → 수정 → 설문 변경 → 신청 흐름 | SEVT-INV-04, 05, 06 | 중간 |
+| 선발제 행사 → 설문 응답 → 신청(WAITING) → 설문 CLOSED/휴지통 → 승인 → 성공 (E6) | SEVT-INV-06 (승인 시 재검증 안 함) | 중간 |
 
 ### 7-2. 테스트-검증 항목 매핑 (구현 전 — 모두 미작성)
 
@@ -594,7 +609,7 @@ registerEventWithSurvey(eventId, userId, surveyAnswers) {
 
 | ID | 결정 사항 | 선택지 | 권장 |
 |----|----------|--------|:---:|
-| DECISION-01 | 신청자 존재 시 설문 변경 허용 여부 | A: 허용 (기존 신청 유지), B: 차단 | **A** |
+| ~~DECISION-01~~ | ~~신청자 존재 시 설문 변경 허용 여부~~ | ~~A: 허용 (기존 신청 유지), B: 차단~~ | **A (확정)** — 운영 유연성 우선. SEVT-INV-05, 4-3 경계값 테이블이 이 결정을 전제로 작성됨 |
 | DECISION-02 | Event-Survey 참조 방식 | A: Long surveyId (약한 참조), B: @ManyToOne (강한 참조) | **A** |
 | DECISION-03 | 설문 상태 검증 수준 | A: responseStatus != NOT_STARTED만 검증, B: PUBLISHED + OPEN 필수 | **A** |
 | DECISION-04 | 설문 accessLevel ≠ 행사 권한 시 | A: 프론트 경고만, B: 백엔드 차단 | **A** |
@@ -626,7 +641,8 @@ registerEventWithSurvey(eventId, userId, surveyAnswers) {
 | F4 | 존재하지 않는 설문 연결 | 행사 생성(surveyId=99999) | `SurveyNotFoundException` |
 | F5 | 삭제된 설문 연결 | 행사 생성(surveyId=삭제된 ID) | `SurveyNotFoundException` |
 | F6 | 설문 응답과 함께 신청 시 정원 초과 | 행사 신청(surveyAnswers 포함) → 정원 이미 초과 → **설문 응답도 롤백** | `EventCapacityFullException` |
-| F7 | 설문 accessLevel 부족 | MEMBER가 OPERATOR 전용 설문 응답 시도 | 설문 도메인에서 거부 → 행사 신청 시 응답 미존재 → `SurveyResponseRequiredException` |
+| F7 | 설문 accessLevel 부족 | MEMBER가 OPERATOR 전용 설문 응답 시도 (설문 단독 API) → 거부 → 이후 행사 신청 시도 (통합 API) | 설문 도메인에서 거부 → 행사 신청 시 응답 미존재 → `SurveyResponseRequiredException` |
+| F8 | 동시 설문 응답 제출 경합 | 복수 사용자가 동일 설문에 동시 최초 응답 + 행사 신청 요청 → 한 명이 INV-01(중복 응답 방지)에 의해 설문 저장 실패 | 설문 도메인 예외가 통합 API 트랜잭션에서 전파 → 설문 응답 + 행사 신청 모두 롤백. 기존 설문 도메인 예외를 그대로 반환 |
 
 ### 8-3. 엣지 케이스 시나리오
 
@@ -662,7 +678,7 @@ ALTER TABLE events ADD COLUMN event_survey_id BIGINT NULL;
 
 ## 관련 문서
 
-- [행사 검증 기준서](./event-verification-criteria.md) — 행사 관리(CRUD, 상태), 2축 상태 모델 정의
-- [행사 신청 검증 기준서](./event-registration-verification-criteria.md) — 행사 신청 FSM, 동시성 제어, 2축 모델 연동
+- [행사 검증 기준서](./event-verification-criteria.md) — 행사 관리(CRUD, 상태), 3축 상태 모델 정의 (visibility + registrationStatus + eventStatus)
+- [행사 신청 검증 기준서](./event-registration-verification-criteria.md) — 행사 신청 FSM, 동시성 제어, 3축 모델 연동
 - [설문 검증 기준서](../survey/survey-criteria-v1.md) — 설문 2축 상태 모델, 질문 유형, 응답 규칙
 - [QA Testing 관련 용어 정리 (Wiki)](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC) — 용어 및 개념 참조

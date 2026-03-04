@@ -11,11 +11,13 @@ import java.time.Instant;
  * @param id        생성된 행사 ID
  * @param title     행사 제목
  * @param createdAt 생성일시
+ * @param surveyId  연결된 설문 ID (null이면 설문 미연결)
  */
 public record EventCreateResponse(
         Long id,
         String title,
-        Instant createdAt
+        Instant createdAt,
+        Long surveyId
 ) {
     /**
      * Event 엔티티로부터 EventCreateResponse를 생성합니다.
@@ -27,7 +29,8 @@ public record EventCreateResponse(
         return new EventCreateResponse(
                 event.getId(),
                 event.getTitle(),
-                event.getCreatedAt()
+                event.getCreatedAt(),
+                event.getSurveyId()
         );
     }
 }

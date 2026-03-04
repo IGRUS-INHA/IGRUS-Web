@@ -522,6 +522,8 @@ components:
       $ref: './schemas/events.yaml#/AdminEventDetailResponse'
     EventListResponse:
       $ref: './schemas/events.yaml#/EventListResponse'
+    RegisterEventRequest:
+      $ref: './schemas/events.yaml#/RegisterEventRequest'
     PageRegistrationListResponse:
       $ref: './schemas/events.yaml#/PageRegistrationListResponse'
     RegistrationListResponse:
