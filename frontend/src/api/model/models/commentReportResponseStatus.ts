@@ -34,11 +34,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type CommentReportResponseStatus = typeof CommentReportResponseStatus[keyof typeof CommentReportResponseStatus];
-
+export type CommentReportResponseStatus =
+  (typeof CommentReportResponseStatus)[keyof typeof CommentReportResponseStatus];
 
 export const CommentReportResponseStatus = {
-  PENDING: 'PENDING',
-  RESOLVED: 'RESOLVED',
-  DISMISSED: 'DISMISSED',
+  PENDING: "PENDING",
+  RESOLVED: "RESOLVED",
+  DISMISSED: "DISMISSED",
 } as const;

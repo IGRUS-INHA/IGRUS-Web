@@ -33,9 +33,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { PageableObject } from './pageableObject';
-import type { RegistrationListResponse } from './registrationListResponse';
-import type { SortObject } from './sortObject';
+import type { PageableObject } from "./pageableObject";
+import type { RegistrationListResponse } from "./registrationListResponse";
+import type { SortObject } from "./sortObject";
 
 export interface PageRegistrationListResponse {
   totalElements?: number;

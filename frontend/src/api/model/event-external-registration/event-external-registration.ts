@@ -33,27 +33,22 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import {
-  useMutation
-} from '@tanstack/react-query';
+import { useMutation } from "@tanstack/react-query";
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
-  UseMutationResult
-} from '@tanstack/react-query';
+  UseMutationResult,
+} from "@tanstack/react-query";
 
 import type {
   ExternalRegisterEventRequest,
-  RegistrationResponse
-} from '.././models';
+  RegistrationResponse,
+} from ".././models";
 
-import { customFetch } from '../../client';
-
+import { customFetch } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 /**
  * 외부인(비회원)이 행사에 신청합니다. allowExternal이 true인 행사에서만 가능합니다.
@@ -64,100 +59,127 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary 외부인 행사 신청
  */
 export type registerEventExternalResponse201 = {
-  data: RegistrationResponse
-  status: 201
-}
+  data: RegistrationResponse;
+  status: 201;
+};
 
 export type registerEventExternalResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type registerEventExternalResponse404 = {
-  data: void
-  status: 404
-}
+  data: void;
+  status: 404;
+};
 
 export type registerEventExternalResponse409 = {
-  data: void
-  status: 409
-}
-    
-export type registerEventExternalResponseSuccess = (registerEventExternalResponse201) & {
-  headers: Headers;
-};
-export type registerEventExternalResponseError = (registerEventExternalResponse400 | registerEventExternalResponse404 | registerEventExternalResponse409) & {
-  headers: Headers;
+  data: void;
+  status: 409;
 };
 
-export type registerEventExternalResponse = (registerEventExternalResponseSuccess | registerEventExternalResponseError)
+export type registerEventExternalResponseSuccess =
+  registerEventExternalResponse201 & {
+    headers: Headers;
+  };
+export type registerEventExternalResponseError = (
+  | registerEventExternalResponse400
+  | registerEventExternalResponse404
+  | registerEventExternalResponse409
+) & {
+  headers: Headers;
+};
 
-export const getRegisterEventExternalUrl = (eventId: number,) => {
+export type registerEventExternalResponse =
+  | registerEventExternalResponseSuccess
+  | registerEventExternalResponseError;
 
+export const getRegisterEventExternalUrl = (eventId: number) => {
+  return `/api/v1/events/${eventId}/registrations/external`;
+};
 
-  
+export const registerEventExternal = async (
+  eventId: number,
+  externalRegisterEventRequest: ExternalRegisterEventRequest,
+  options?: RequestInit,
+): Promise<registerEventExternalResponse> => {
+  return customFetch<registerEventExternalResponse>(
+    getRegisterEventExternalUrl(eventId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(externalRegisterEventRequest),
+    },
+  );
+};
 
-  return `/api/v1/events/${eventId}/registrations/external`
-}
+export const getRegisterEventExternalMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof registerEventExternal>>,
+    TError,
+    { eventId: number; data: ExternalRegisterEventRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof registerEventExternal>>,
+  TError,
+  { eventId: number; data: ExternalRegisterEventRequest },
+  TContext
+> => {
+  const mutationKey = ["registerEventExternal"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-export const registerEventExternal = async (eventId: number,
-    externalRegisterEventRequest: ExternalRegisterEventRequest, options?: RequestInit): Promise<registerEventExternalResponse> => {
-  
-  return customFetch<registerEventExternalResponse>(getRegisterEventExternalUrl(eventId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      externalRegisterEventRequest,)
-  }
-);}
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof registerEventExternal>>,
+    { eventId: number; data: ExternalRegisterEventRequest }
+  > = (props) => {
+    const { eventId, data } = props ?? {};
 
+    return registerEventExternal(eventId, data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type RegisterEventExternalMutationResult = NonNullable<
+  Awaited<ReturnType<typeof registerEventExternal>>
+>;
+export type RegisterEventExternalMutationBody = ExternalRegisterEventRequest;
+export type RegisterEventExternalMutationError = void;
 
-export const getRegisterEventExternalMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerEventExternal>>, TError,{eventId: number;data: ExternalRegisterEventRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof registerEventExternal>>, TError,{eventId: number;data: ExternalRegisterEventRequest}, TContext> => {
-
-const mutationKey = ['registerEventExternal'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerEventExternal>>, {eventId: number;data: ExternalRegisterEventRequest}> = (props) => {
-          const {eventId,data} = props ?? {};
-
-          return  registerEventExternal(eventId,data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RegisterEventExternalMutationResult = NonNullable<Awaited<ReturnType<typeof registerEventExternal>>>
-    export type RegisterEventExternalMutationBody = ExternalRegisterEventRequest
-    export type RegisterEventExternalMutationError = void
-
-    /**
+/**
  * @summary 외부인 행사 신청
  */
-export const useRegisterEventExternal = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerEventExternal>>, TError,{eventId: number;data: ExternalRegisterEventRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof registerEventExternal>>,
-        TError,
-        {eventId: number;data: ExternalRegisterEventRequest},
-        TContext
-      > => {
-      return useMutation(getRegisterEventExternalMutationOptions(options), queryClient);
-    }
-    
+export const useRegisterEventExternal = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof registerEventExternal>>,
+      TError,
+      { eventId: number; data: ExternalRegisterEventRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof registerEventExternal>>,
+  TError,
+  { eventId: number; data: ExternalRegisterEventRequest },
+  TContext
+> => {
+  return useMutation(
+    getRegisterEventExternalMutationOptions(options),
+    queryClient,
+  );
+};

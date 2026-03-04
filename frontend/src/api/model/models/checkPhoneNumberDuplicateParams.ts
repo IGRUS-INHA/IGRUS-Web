@@ -35,8 +35,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type CheckPhoneNumberDuplicateParams = {
-/**
- * 확인할 전화번호 (XXX-XXXX-XXXX)
- */
-phoneNumber: string;
+  /**
+   * 확인할 전화번호 (XXX-XXXX-XXXX)
+   */
+  phoneNumber: string;
 };

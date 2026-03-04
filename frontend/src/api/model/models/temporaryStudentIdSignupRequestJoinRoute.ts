@@ -37,13 +37,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 가입 경로
  */
-export type TemporaryStudentIdSignupRequestJoinRoute = typeof TemporaryStudentIdSignupRequestJoinRoute[keyof typeof TemporaryStudentIdSignupRequestJoinRoute];
-
+export type TemporaryStudentIdSignupRequestJoinRoute =
+  (typeof TemporaryStudentIdSignupRequestJoinRoute)[keyof typeof TemporaryStudentIdSignupRequestJoinRoute];
 
 export const TemporaryStudentIdSignupRequestJoinRoute = {
-  EVERYTIME: 'EVERYTIME',
-  POSTER: 'POSTER',
-  OT: 'OT',
-  REFERRAL: 'REFERRAL',
-  OTHER: 'OTHER',
+  EVERYTIME: "EVERYTIME",
+  POSTER: "POSTER",
+  OT: "OT",
+  REFERRAL: "REFERRAL",
+  OTHER: "OTHER",
 } as const;

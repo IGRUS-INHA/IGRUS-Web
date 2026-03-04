@@ -33,10 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -49,476 +46,637 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+  UseQueryResult,
+} from "@tanstack/react-query";
 
-import type {
-  OptionResponse,
-  SaveQuestionOptionRequest
-} from '.././models';
+import type { OptionResponse, SaveQuestionOptionRequest } from ".././models";
 
-import { customFetch } from '../../client';
-
+import { customFetch } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 /**
  * 질문의 선택지 목록을 조회합니다. 운영진 이상 권한 필요.
  * @summary 선택지 목록 조회
  */
 export type getOptionListResponse200 = {
-  data: OptionResponse[]
-  status: 200
-}
+  data: OptionResponse[];
+  status: 200;
+};
 
 export type getOptionListResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type getOptionListResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type getOptionListResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type getOptionListResponseSuccess = (getOptionListResponse200) & {
-  headers: Headers;
-};
-export type getOptionListResponseError = (getOptionListResponse401 | getOptionListResponse403 | getOptionListResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type getOptionListResponse = (getOptionListResponseSuccess | getOptionListResponseError)
+export type getOptionListResponseSuccess = getOptionListResponse200 & {
+  headers: Headers;
+};
+export type getOptionListResponseError = (
+  | getOptionListResponse401
+  | getOptionListResponse403
+  | getOptionListResponse404
+) & {
+  headers: Headers;
+};
 
-export const getGetOptionListUrl = (surveyId: number,
-    questionId: number,) => {
+export type getOptionListResponse =
+  | getOptionListResponseSuccess
+  | getOptionListResponseError;
 
+export const getGetOptionListUrl = (surveyId: number, questionId: number) => {
+  return `/api/v1/surveys/${surveyId}/questions/${questionId}/options`;
+};
 
-  
+export const getOptionList = async (
+  surveyId: number,
+  questionId: number,
+  options?: RequestInit,
+): Promise<getOptionListResponse> => {
+  return customFetch<getOptionListResponse>(
+    getGetOptionListUrl(surveyId, questionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
 
-  return `/api/v1/surveys/${surveyId}/questions/${questionId}/options`
-}
-
-export const getOptionList = async (surveyId: number,
-    questionId: number, options?: RequestInit): Promise<getOptionListResponse> => {
-  
-  return customFetch<getOptionListResponse>(getGetOptionListUrl(surveyId,questionId),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
-
-
-
-export const getGetOptionListQueryKey = (surveyId: number,
-    questionId: number,) => {
-    return [
-    `/api/v1/surveys/${surveyId}/questions/${questionId}/options`
-    ] as const;
-    }
-
-    
-export const getGetOptionListQueryOptions = <TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(surveyId: number,
-    questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetOptionListQueryKey = (
+  surveyId: number,
+  questionId: number,
 ) => {
+  return [
+    `/api/v1/surveys/${surveyId}/questions/${questionId}/options`,
+  ] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getGetOptionListQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOptionList>>,
+  TError = void,
+>(
+  surveyId: number,
+  questionId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetOptionListQueryKey(surveyId,questionId);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetOptionListQueryKey(surveyId, questionId);
 
-  
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getOptionList>>> = ({
+    signal,
+  }) => getOptionList(surveyId, questionId, { signal, ...requestOptions });
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOptionList>>> = ({ signal }) => getOptionList(surveyId,questionId, { signal, ...requestOptions });
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(surveyId && questionId),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOptionList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-      
+export type GetOptionListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getOptionList>>
+>;
+export type GetOptionListQueryError = void;
 
-      
-
-   return  { queryKey, queryFn, enabled: !!(surveyId && questionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetOptionListQueryResult = NonNullable<Awaited<ReturnType<typeof getOptionList>>>
-export type GetOptionListQueryError = void
-
-
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
- surveyId: number,
-    questionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>> & Pick<
+export function useGetOptionList<
+  TData = Awaited<ReturnType<typeof getOptionList>>,
+  TError = void,
+>(
+  surveyId: number,
+  questionId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOptionList>>,
           TError,
           Awaited<ReturnType<typeof getOptionList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
- surveyId: number,
-    questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetOptionList<
+  TData = Awaited<ReturnType<typeof getOptionList>>,
+  TError = void,
+>(
+  surveyId: number,
+  questionId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOptionList>>,
           TError,
           Awaited<ReturnType<typeof getOptionList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
- surveyId: number,
-    questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetOptionList<
+  TData = Awaited<ReturnType<typeof getOptionList>>,
+  TError = void,
+>(
+  surveyId: number,
+  questionId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary 선택지 목록 조회
  */
 
-export function useGetOptionList<TData = Awaited<ReturnType<typeof getOptionList>>, TError = void>(
- surveyId: number,
-    questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetOptionList<
+  TData = Awaited<ReturnType<typeof getOptionList>>,
+  TError = void,
+>(
+  surveyId: number,
+  questionId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getOptionList>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetOptionListQueryOptions(
+    surveyId,
+    questionId,
+    options,
+  );
 
-  const queryOptions = getGetOptionListQueryOptions(surveyId,questionId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
 
 /**
  * 질문에 새로운 선택지를 추가합니다. 운영진 이상 권한 필요.
  * @summary 선택지 추가
  */
 export type createOptionResponse201 = {
-  data: OptionResponse[]
-  status: 201
-}
+  data: OptionResponse[];
+  status: 201;
+};
 
 export type createOptionResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type createOptionResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type createOptionResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type createOptionResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type createOptionResponseSuccess = (createOptionResponse201) & {
-  headers: Headers;
-};
-export type createOptionResponseError = (createOptionResponse400 | createOptionResponse401 | createOptionResponse403 | createOptionResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type createOptionResponse = (createOptionResponseSuccess | createOptionResponseError)
+export type createOptionResponseSuccess = createOptionResponse201 & {
+  headers: Headers;
+};
+export type createOptionResponseError = (
+  | createOptionResponse400
+  | createOptionResponse401
+  | createOptionResponse403
+  | createOptionResponse404
+) & {
+  headers: Headers;
+};
 
-export const getCreateOptionUrl = (surveyId: number,
-    questionId: number,) => {
+export type createOptionResponse =
+  | createOptionResponseSuccess
+  | createOptionResponseError;
 
+export const getCreateOptionUrl = (surveyId: number, questionId: number) => {
+  return `/api/v1/surveys/${surveyId}/questions/${questionId}/options`;
+};
 
-  
+export const createOption = async (
+  surveyId: number,
+  questionId: number,
+  saveQuestionOptionRequest: SaveQuestionOptionRequest,
+  options?: RequestInit,
+): Promise<createOptionResponse> => {
+  return customFetch<createOptionResponse>(
+    getCreateOptionUrl(surveyId, questionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuestionOptionRequest),
+    },
+  );
+};
 
-  return `/api/v1/surveys/${surveyId}/questions/${questionId}/options`
-}
+export const getCreateOptionMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createOption>>,
+    TError,
+    { surveyId: number; questionId: number; data: SaveQuestionOptionRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createOption>>,
+  TError,
+  { surveyId: number; questionId: number; data: SaveQuestionOptionRequest },
+  TContext
+> => {
+  const mutationKey = ["createOption"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-export const createOption = async (surveyId: number,
-    questionId: number,
-    saveQuestionOptionRequest: SaveQuestionOptionRequest, options?: RequestInit): Promise<createOptionResponse> => {
-  
-  return customFetch<createOptionResponse>(getCreateOptionUrl(surveyId,questionId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      saveQuestionOptionRequest,)
-  }
-);}
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createOption>>,
+    { surveyId: number; questionId: number; data: SaveQuestionOptionRequest }
+  > = (props) => {
+    const { surveyId, questionId, data } = props ?? {};
 
+    return createOption(surveyId, questionId, data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type CreateOptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createOption>>
+>;
+export type CreateOptionMutationBody = SaveQuestionOptionRequest;
+export type CreateOptionMutationError = void;
 
-export const getCreateOptionMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: SaveQuestionOptionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: SaveQuestionOptionRequest}, TContext> => {
-
-const mutationKey = ['createOption'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOption>>, {surveyId: number;questionId: number;data: SaveQuestionOptionRequest}> = (props) => {
-          const {surveyId,questionId,data} = props ?? {};
-
-          return  createOption(surveyId,questionId,data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateOptionMutationResult = NonNullable<Awaited<ReturnType<typeof createOption>>>
-    export type CreateOptionMutationBody = SaveQuestionOptionRequest
-    export type CreateOptionMutationError = void
-
-    /**
+/**
  * @summary 선택지 추가
  */
-export const useCreateOption = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOption>>, TError,{surveyId: number;questionId: number;data: SaveQuestionOptionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createOption>>,
-        TError,
-        {surveyId: number;questionId: number;data: SaveQuestionOptionRequest},
-        TContext
-      > => {
-      return useMutation(getCreateOptionMutationOptions(options), queryClient);
-    }
-    /**
+export const useCreateOption = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createOption>>,
+      TError,
+      { surveyId: number; questionId: number; data: SaveQuestionOptionRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createOption>>,
+  TError,
+  { surveyId: number; questionId: number; data: SaveQuestionOptionRequest },
+  TContext
+> => {
+  return useMutation(getCreateOptionMutationOptions(options), queryClient);
+};
+/**
  * 선택지를 삭제합니다. 운영진 이상 권한 필요.
  * @summary 선택지 삭제
  */
 export type deleteOptionResponse204 = {
-  data: void
-  status: 204
-}
+  data: void;
+  status: 204;
+};
 
 export type deleteOptionResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type deleteOptionResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type deleteOptionResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type deleteOptionResponseSuccess = (deleteOptionResponse204) & {
-  headers: Headers;
-};
-export type deleteOptionResponseError = (deleteOptionResponse401 | deleteOptionResponse403 | deleteOptionResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type deleteOptionResponse = (deleteOptionResponseSuccess | deleteOptionResponseError)
+export type deleteOptionResponseSuccess = deleteOptionResponse204 & {
+  headers: Headers;
+};
+export type deleteOptionResponseError = (
+  | deleteOptionResponse401
+  | deleteOptionResponse403
+  | deleteOptionResponse404
+) & {
+  headers: Headers;
+};
 
-export const getDeleteOptionUrl = (surveyId: number,
-    questionId: number,
-    optionId: number,) => {
+export type deleteOptionResponse =
+  | deleteOptionResponseSuccess
+  | deleteOptionResponseError;
 
+export const getDeleteOptionUrl = (
+  surveyId: number,
+  questionId: number,
+  optionId: number,
+) => {
+  return `/api/v1/surveys/${surveyId}/questions/${questionId}/options/${optionId}`;
+};
 
-  
+export const deleteOption = async (
+  surveyId: number,
+  questionId: number,
+  optionId: number,
+  options?: RequestInit,
+): Promise<deleteOptionResponse> => {
+  return customFetch<deleteOptionResponse>(
+    getDeleteOptionUrl(surveyId, questionId, optionId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
 
-  return `/api/v1/surveys/${surveyId}/questions/${questionId}/options/${optionId}`
-}
+export const getDeleteOptionMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteOption>>,
+    TError,
+    { surveyId: number; questionId: number; optionId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteOption>>,
+  TError,
+  { surveyId: number; questionId: number; optionId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteOption"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-export const deleteOption = async (surveyId: number,
-    questionId: number,
-    optionId: number, options?: RequestInit): Promise<deleteOptionResponse> => {
-  
-  return customFetch<deleteOptionResponse>(getDeleteOptionUrl(surveyId,questionId,optionId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteOption>>,
+    { surveyId: number; questionId: number; optionId: number }
+  > = (props) => {
+    const { surveyId, questionId, optionId } = props ?? {};
 
+    return deleteOption(surveyId, questionId, optionId, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type DeleteOptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteOption>>
+>;
 
-export const getDeleteOptionMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOption>>, TError,{surveyId: number;questionId: number;optionId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteOption>>, TError,{surveyId: number;questionId: number;optionId: number}, TContext> => {
+export type DeleteOptionMutationError = void;
 
-const mutationKey = ['deleteOption'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOption>>, {surveyId: number;questionId: number;optionId: number}> = (props) => {
-          const {surveyId,questionId,optionId} = props ?? {};
-
-          return  deleteOption(surveyId,questionId,optionId,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteOptionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOption>>>
-    
-    export type DeleteOptionMutationError = void
-
-    /**
+/**
  * @summary 선택지 삭제
  */
-export const useDeleteOption = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOption>>, TError,{surveyId: number;questionId: number;optionId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteOption>>,
-        TError,
-        {surveyId: number;questionId: number;optionId: number},
-        TContext
-      > => {
-      return useMutation(getDeleteOptionMutationOptions(options), queryClient);
-    }
-    /**
+export const useDeleteOption = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteOption>>,
+      TError,
+      { surveyId: number; questionId: number; optionId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteOption>>,
+  TError,
+  { surveyId: number; questionId: number; optionId: number },
+  TContext
+> => {
+  return useMutation(getDeleteOptionMutationOptions(options), queryClient);
+};
+/**
  * 선택지를 수정합니다. 운영진 이상 권한 필요.
  * @summary 선택지 수정
  */
 export type updateOptionResponse200 = {
-  data: OptionResponse[]
-  status: 200
-}
+  data: OptionResponse[];
+  status: 200;
+};
 
 export type updateOptionResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type updateOptionResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type updateOptionResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type updateOptionResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type updateOptionResponseSuccess = (updateOptionResponse200) & {
-  headers: Headers;
-};
-export type updateOptionResponseError = (updateOptionResponse400 | updateOptionResponse401 | updateOptionResponse403 | updateOptionResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type updateOptionResponse = (updateOptionResponseSuccess | updateOptionResponseError)
+export type updateOptionResponseSuccess = updateOptionResponse200 & {
+  headers: Headers;
+};
+export type updateOptionResponseError = (
+  | updateOptionResponse400
+  | updateOptionResponse401
+  | updateOptionResponse403
+  | updateOptionResponse404
+) & {
+  headers: Headers;
+};
 
-export const getUpdateOptionUrl = (surveyId: number,
-    questionId: number,
-    optionId: number,) => {
+export type updateOptionResponse =
+  | updateOptionResponseSuccess
+  | updateOptionResponseError;
 
+export const getUpdateOptionUrl = (
+  surveyId: number,
+  questionId: number,
+  optionId: number,
+) => {
+  return `/api/v1/surveys/${surveyId}/questions/${questionId}/options/${optionId}`;
+};
 
-  
+export const updateOption = async (
+  surveyId: number,
+  questionId: number,
+  optionId: number,
+  saveQuestionOptionRequest: SaveQuestionOptionRequest,
+  options?: RequestInit,
+): Promise<updateOptionResponse> => {
+  return customFetch<updateOptionResponse>(
+    getUpdateOptionUrl(surveyId, questionId, optionId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(saveQuestionOptionRequest),
+    },
+  );
+};
 
-  return `/api/v1/surveys/${surveyId}/questions/${questionId}/options/${optionId}`
-}
+export const getUpdateOptionMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateOption>>,
+    TError,
+    {
+      surveyId: number;
+      questionId: number;
+      optionId: number;
+      data: SaveQuestionOptionRequest;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateOption>>,
+  TError,
+  {
+    surveyId: number;
+    questionId: number;
+    optionId: number;
+    data: SaveQuestionOptionRequest;
+  },
+  TContext
+> => {
+  const mutationKey = ["updateOption"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-export const updateOption = async (surveyId: number,
-    questionId: number,
-    optionId: number,
-    saveQuestionOptionRequest: SaveQuestionOptionRequest, options?: RequestInit): Promise<updateOptionResponse> => {
-  
-  return customFetch<updateOptionResponse>(getUpdateOptionUrl(surveyId,questionId,optionId),
-  {      
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      saveQuestionOptionRequest,)
-  }
-);}
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateOption>>,
+    {
+      surveyId: number;
+      questionId: number;
+      optionId: number;
+      data: SaveQuestionOptionRequest;
+    }
+  > = (props) => {
+    const { surveyId, questionId, optionId, data } = props ?? {};
 
+    return updateOption(surveyId, questionId, optionId, data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type UpdateOptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateOption>>
+>;
+export type UpdateOptionMutationBody = SaveQuestionOptionRequest;
+export type UpdateOptionMutationError = void;
 
-export const getUpdateOptionMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest}, TContext> => {
-
-const mutationKey = ['updateOption'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOption>>, {surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest}> = (props) => {
-          const {surveyId,questionId,optionId,data} = props ?? {};
-
-          return  updateOption(surveyId,questionId,optionId,data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateOptionMutationResult = NonNullable<Awaited<ReturnType<typeof updateOption>>>
-    export type UpdateOptionMutationBody = SaveQuestionOptionRequest
-    export type UpdateOptionMutationError = void
-
-    /**
+/**
  * @summary 선택지 수정
  */
-export const useUpdateOption = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOption>>, TError,{surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateOption>>,
-        TError,
-        {surveyId: number;questionId: number;optionId: number;data: SaveQuestionOptionRequest},
-        TContext
-      > => {
-      return useMutation(getUpdateOptionMutationOptions(options), queryClient);
-    }
-    
+export const useUpdateOption = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateOption>>,
+      TError,
+      {
+        surveyId: number;
+        questionId: number;
+        optionId: number;
+        data: SaveQuestionOptionRequest;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateOption>>,
+  TError,
+  {
+    surveyId: number;
+    questionId: number;
+    optionId: number;
+    data: SaveQuestionOptionRequest;
+  },
+  TContext
+> => {
+  return useMutation(getUpdateOptionMutationOptions(options), queryClient);
+};
