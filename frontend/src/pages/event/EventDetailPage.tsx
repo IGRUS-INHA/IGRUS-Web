@@ -403,12 +403,14 @@ export default function EventDetailPage() {
   const hasApplied = event.isRegistered ?? false;
   const isUnpublished = event.visibility === "UNPUBLISHED";
   const canApply = user && isOpen && !hasApplied && !isUnpublished;
+  // CANCELED 상태의 행사는 신청 취소 불가 (백엔드: EventRegistrationService.cancelRegistration)
   const canCancel = user && hasApplied && event.eventStatus !== "CANCELED";
   const canManage = event.canEdit;
   const hasRegistrants = (event.currentCount ?? 0) > 0;
 
   // 2축 상태 배지 (EventCard와 동일 로직)
   const regStatus = event.registrationStatus;
+  // COMPLETED 또는 CANCELED → 종료 상태 (모집 배지 숨김, 수정/신청취소 불가)
   const isEventEnded =
     event.eventStatus === "COMPLETED" || event.eventStatus === "CANCELED";
   const isUpcomingWithRegStatus =
@@ -447,6 +449,7 @@ export default function EventDetailPage() {
   const hasNext = currentImageIndex < images.length - 1;
 
   // 더보기 메뉴 항목 구성
+  // COMPLETED 또는 CANCELED는 수정 불가 (백엔드: Event.update)
   const isCanceled = event.eventStatus === "CANCELED";
   const showEdit = !isCanceled;
   const showPublish = event.visibility === "UNPUBLISHED";

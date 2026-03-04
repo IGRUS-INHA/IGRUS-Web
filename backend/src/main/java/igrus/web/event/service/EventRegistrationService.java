@@ -158,6 +158,7 @@ public class EventRegistrationService {
      * @param userId  신청자 ID (본인)
      * @return 취소된 신청 응답 DTO
      * @throws EventNotFoundException             행사를 찾을 수 없는 경우
+     * @throws EventNotCancelableException         CANCELED 상태의 행사인 경우
      * @throws EventRegistrationNotFoundException 신청을 찾을 수 없는 경우
      */
     public RegistrationResponse cancelRegistration(Long eventId, Long userId) {

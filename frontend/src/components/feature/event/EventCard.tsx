@@ -16,6 +16,7 @@ interface EventCardProps {
 
 export default function EventCard({ event }: EventCardProps) {
   const regStatus = event.registrationStatus;
+  // COMPLETED 또는 CANCELED → 종료 상태 (모집 배지 숨김, 수정/신청취소 불가)
   const isEventEnded =
     event.status === "COMPLETED" || event.status === "CANCELED";
 
