@@ -22,11 +22,13 @@ import {
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import {
   useEvent,
+  useAdminEvent,
   useApplyEvent,
   useCancelEventApplication,
   useDeleteEvent,
   useCloseEvent,
   eventKeys,
+  adminEventKeys,
 } from "@/hooks/queries/useEvents";
 import {
   useCancelEvent,
@@ -58,6 +60,8 @@ import {
   EVENT_STATUS_LABEL,
   REG_STATUS_BADGE,
   REG_STATUS_LABEL,
+  VISIBILITY_BADGE,
+  VISIBILITY_LABEL,
 } from "@/constants/eventStatus";
 import ReasonDialog from "@/components/feature/event/ReasonDialog";
 
@@ -65,13 +69,24 @@ export default function EventDetailPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: eventResponse, isLoading, error } = useEvent(Number(eventId));
+  const { user } = useAuth();
+  const isOperator = user?.role === "OPERATOR" || user?.role === "ADMIN";
+  const numericEventId = Number(eventId);
+
+  // OPERATOR+는 admin API로 비공개 행사도 조회 가능
+  const publicQuery = useEvent(numericEventId, !isOperator);
+  const adminQuery = useAdminEvent(numericEventId, isOperator);
+  const {
+    data: eventResponse,
+    isLoading,
+    error,
+  } = isOperator ? adminQuery : publicQuery;
+
   const { mutate: applyEvent, isPending: isApplying } = useApplyEvent();
   const { mutate: cancelRegistration, isPending: isCanceling } =
     useCancelEventApplication();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: closeEvent, isPending: isClosing } = useCloseEvent();
-  const { user } = useAuth();
 
   // 쿼리 무효화 헬퍼
   const invalidateEvent = () => {
@@ -81,8 +96,9 @@ export default function EventDetailPage() {
     });
     void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
     void queryClient.invalidateQueries({
-      queryKey: ["/api/v1/admin/events"],
+      queryKey: adminEventKeys.detail(Number(eventId)),
     });
+    void queryClient.invalidateQueries({ queryKey: adminEventKeys.lists() });
   };
 
   // 관리 mutation 훅
@@ -188,6 +204,8 @@ export default function EventDetailPage() {
             alert("정원이 마감되었습니다.");
           } else if (isEventRegistrationClosed(error)) {
             alert("신청 기간이 종료되었습니다.");
+          } else if (hasErrorCode(error, "EVENT_UNPUBLISHED")) {
+            alert("비공개인 행사는 신청할 수 없습니다.");
           } else if (isForbiddenError(error)) {
             alert("행사 신청 권한이 없습니다.");
           } else {
@@ -200,7 +218,16 @@ export default function EventDetailPage() {
 
   const handleCancelRegistration = () => {
     if (!eventId) return;
-    if (!confirm("행사 신청을 취소하시겠습니까?")) return;
+
+    const isReregistrationBlocked =
+      event?.closeReason === "DEADLINE_PASSED" ||
+      event?.closeReason === "MANUAL_CLOSE";
+
+    const message = isReregistrationBlocked
+      ? "신청을 취소하면 재신청이 불가능합니다. 정말 취소하시겠습니까?"
+      : "행사 신청을 취소하시겠습니까?";
+
+    if (!confirm(message)) return;
 
     cancelRegistration(
       { eventId: Number(eventId) },
@@ -374,26 +401,38 @@ export default function EventDetailPage() {
   // 상태 확인
   const isOpen = event.isRegistrable ?? false;
   const hasApplied = event.isRegistered ?? false;
-  const canApply = user && isOpen && !hasApplied;
+  const isUnpublished = event.visibility === "UNPUBLISHED";
+  const canApply = user && isOpen && !hasApplied && !isUnpublished;
   const canCancel = user && hasApplied && event.eventStatus !== "CANCELED";
   const canManage = event.canEdit;
   const hasRegistrants = (event.currentCount ?? 0) > 0;
 
-  // 2축 상태 배지
-  const eventStatusLabel = event.eventStatus
-    ? (EVENT_STATUS_LABEL[event.eventStatus] ?? event.eventStatus)
-    : "알 수 없음";
-  const regStatusLabel = event.registrationStatus
-    ? (REG_STATUS_LABEL[event.registrationStatus] ?? event.registrationStatus)
-    : null;
+  // 2축 상태 배지 (EventCard와 동일 로직)
+  const regStatus = event.registrationStatus;
+  const isEventEnded =
+    event.eventStatus === "COMPLETED" || event.eventStatus === "CANCELED";
+  const isUpcomingWithRegStatus =
+    event.eventStatus === "UPCOMING" &&
+    (regStatus === "NOT_STARTED" || regStatus === "OPEN");
+
+  const showEventStatus = !isUpcomingWithRegStatus;
   const eventStatusBadge = event.eventStatus
     ? (EVENT_STATUS_BADGE[event.eventStatus] ??
       "bg-muted text-muted-foreground")
     : "bg-muted text-muted-foreground";
-  const regStatusBadge = event.registrationStatus
-    ? (REG_STATUS_BADGE[event.registrationStatus] ??
-      "bg-muted text-muted-foreground")
-    : null;
+  const eventStatusLabel = event.eventStatus
+    ? (EVENT_STATUS_LABEL[event.eventStatus] ?? event.eventStatus)
+    : "알 수 없음";
+
+  const showRegStatus =
+    isUpcomingWithRegStatus ||
+    (!isEventEnded &&
+      regStatus &&
+      (regStatus === "OPEN" || regStatus === "CLOSED"));
+  const regStatusBadge =
+    showRegStatus && regStatus ? REG_STATUS_BADGE[regStatus] : null;
+  const regStatusLabel =
+    showRegStatus && regStatus ? REG_STATUS_LABEL[regStatus] : null;
 
   const { date: dateStr, time: timeStr } = formatDateTime(event.eventStartAt);
 
@@ -552,13 +591,22 @@ export default function EventDetailPage() {
               alt={event.title}
               className="w-[200px] h-[200px] object-contain"
             />
-            {/* 상태 뱃지 (2축) */}
+            {/* 상태 뱃지 (EventCard와 동일 로직) */}
             <div className="absolute top-s4 left-s4 flex gap-s2">
-              <span
-                className={`px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${eventStatusBadge}`}
-              >
-                {eventStatusLabel}
-              </span>
+              {event.visibility === "UNPUBLISHED" && (
+                <span
+                  className={`px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${VISIBILITY_BADGE["UNPUBLISHED"]}`}
+                >
+                  {VISIBILITY_LABEL["UNPUBLISHED"]}
+                </span>
+              )}
+              {showEventStatus && (
+                <span
+                  className={`px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${eventStatusBadge}`}
+                >
+                  {eventStatusLabel}
+                </span>
+              )}
               {regStatusLabel && (
                 <span
                   className={`px-s3 py-s1 rounded-full text-xs font-bold tracking-wide ${regStatusBadge}`}

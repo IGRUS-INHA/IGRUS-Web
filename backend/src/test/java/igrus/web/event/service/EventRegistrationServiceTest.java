@@ -1462,11 +1462,11 @@ class EventRegistrationServiceTest {
     class RegisterEventVisibilityTest {
 
         /**
-         * GAP-EVT-45: UNPUBLISHED 행사에 대한 registerEvent() 호출 시 EventNotFoundException
+         * GAP-EVT-45: UNPUBLISHED 행사에 대한 registerEvent() 호출 시 EventUnpublishedException
          */
         @Test
-        @DisplayName("[GAP-EVT-45] UNPUBLISHED 행사에 신청하면 EventNotFoundException 발생 (정보 은폐)")
-        void registerEvent_UnpublishedEvent_ThrowsEventNotFoundException() {
+        @DisplayName("[GAP-EVT-45] UNPUBLISHED 행사에 신청하면 EventUnpublishedException 발생")
+        void registerEvent_UnpublishedEvent_ThrowsEventUnpublishedException() {
             // given: UNPUBLISHED 행사 Mock
             Event unpublishedEvent = mock(Event.class);
             when(unpublishedEvent.getId()).thenReturn(EVENT_ID);
@@ -1475,7 +1475,7 @@ class EventRegistrationServiceTest {
 
             // when & then
             assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
-                    .isInstanceOf(EventNotFoundException.class);
+                    .isInstanceOf(EventUnpublishedException.class);
         }
 
         /**
@@ -1505,8 +1505,8 @@ class EventRegistrationServiceTest {
         }
 
         /**
-         * GAP-EVT-45: UNPUBLISHED 행사에서 신청 시 EventNotFoundException이 발생하므로
-         * 사용자 조회까지 도달하지 않음 (정보 은폐 원칙)
+         * GAP-EVT-45: UNPUBLISHED 행사에서 신청 시 EventUnpublishedException이 발생하므로
+         * 사용자 조회까지 도달하지 않음
          */
         @Test
         @DisplayName("[GAP-EVT-45] UNPUBLISHED 행사 신청 시 사용자 조회까지 도달하지 않는다")
@@ -1519,7 +1519,7 @@ class EventRegistrationServiceTest {
 
             // when & then
             assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID))
-                    .isInstanceOf(EventNotFoundException.class);
+                    .isInstanceOf(EventUnpublishedException.class);
 
             // 사용자 조회는 호출되지 않아야 함
             verify(userRepository, never()).findById(any());

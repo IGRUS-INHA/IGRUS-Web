@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus } from "lucide-react";
-import { useEvents } from "@/hooks/queries/useEvents";
+import { useEvents, useAdminEvents } from "@/hooks/queries/useEvents";
 import EventCard from "@/components/feature/event/EventCard";
 import { useAuthStore } from "@/stores/authStore";
 import { FilterSelect } from "@/components/board/FilterSelect";
@@ -10,7 +10,9 @@ import {
   type EventFilterStatus,
 } from "@/constants/event";
 import type { EventListResponse } from "@/api/model/models/eventListResponse";
+import type { AdminEventListResponse } from "@/api/model/models/adminEventListResponse";
 import type { GetEventListParams } from "@/api/model/models/getEventListParams";
+import type { GetAdminEventListParams } from "@/api/model/models/getAdminEventListParams";
 import type { Event } from "@/types/entities";
 import { isForbiddenError } from "@/utils/error";
 
@@ -31,34 +33,35 @@ function buildEventListParams(
   }
 }
 
-export default function EventListPage() {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const user = useAuthStore((state) => state.user);
+function buildAdminEventListParams(
+  filterStatus: EventFilterStatus,
+): GetAdminEventListParams | undefined {
+  switch (filterStatus) {
+    case EVENT_FILTER_STATUS.ALL:
+      return undefined;
+    case EVENT_FILTER_STATUS.UPCOMING:
+      return { eventStatus: "UPCOMING" };
+    case EVENT_FILTER_STATUS.OPEN:
+      return { registrationStatus: "OPEN" };
+    case EVENT_FILTER_STATUS.COMPLETED:
+      return { eventStatus: "COMPLETED" };
+    default:
+      return undefined;
+  }
+}
 
-  // URL 쿼리 파라미터에서 검색어 및 필터 상태 읽기
-  const searchKeyword = searchParams.get("search");
-  const filterStatus =
-    (searchParams.get("status") as EventFilterStatus) ??
-    EVENT_FILTER_STATUS.ALL;
-
-  // 행사 목록 조회 (API에서 필터링)
-  const {
-    data: eventsResponse,
-    isLoading,
-    error,
-  } = useEvents(buildEventListParams(filterStatus));
-
-  // Extract and transform API response to Event type
-  const eventListData =
-    (eventsResponse?.data as unknown as EventListResponse[]) ?? [];
-  const events: Event[] = eventListData.map((apiEvent) => ({
+function mapToEvent(
+  apiEvent: EventListResponse | AdminEventListResponse,
+): Event {
+  return {
     id: String(apiEvent.id ?? ""),
     title: apiEvent.title ?? "",
     description: "",
     date: apiEvent.eventStartAt ?? "",
     location: apiEvent.location ?? "",
     status: (apiEvent.eventStatus as Event["status"]) ?? "UPCOMING",
+    visibility: apiEvent.visibility,
+    registrationStatus: apiEvent.registrationStatus,
     ...(apiEvent.eventStartAt && { startDate: apiEvent.eventStartAt }),
     ...(apiEvent.eventEndAt && { endDate: apiEvent.eventEndAt }),
     ...(apiEvent.capacity !== undefined && { capacity: apiEvent.capacity }),
@@ -68,7 +71,43 @@ export default function EventListPage() {
     ...(apiEvent.registrationEndAt && {
       registrationDeadline: apiEvent.registrationEndAt,
     }),
-  }));
+  };
+}
+
+export default function EventListPage() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const user = useAuthStore((state) => state.user);
+
+  // OPERATOR 이상만 행사 작성/관리 가능
+  const isOperator = user?.role === "OPERATOR" || user?.role === "ADMIN";
+
+  // URL 쿼리 파라미터에서 검색어 및 필터 상태 읽기
+  const searchKeyword = searchParams.get("search");
+  const filterStatus =
+    (searchParams.get("status") as EventFilterStatus) ??
+    EVENT_FILTER_STATUS.ALL;
+
+  // 행사 목록 조회: OPERATOR+는 admin API (비공개 포함), 일반 사용자는 public API
+  const publicQuery = useEvents(
+    buildEventListParams(filterStatus),
+    !isOperator,
+  );
+  const adminQuery = useAdminEvents(
+    buildAdminEventListParams(filterStatus),
+    isOperator,
+  );
+
+  const activeQuery = isOperator ? adminQuery : publicQuery;
+  const { isLoading, error } = activeQuery;
+
+  // Extract and transform API response to Event type
+  const eventListData =
+    (activeQuery.data?.data as unknown as (
+      | EventListResponse
+      | AdminEventListResponse
+    )[]) ?? [];
+  const events: Event[] = eventListData.map(mapToEvent);
 
   // 필터 변경 핸들러
   const handleFilterChange = (newStatus: string) => {
@@ -80,9 +119,6 @@ export default function EventListPage() {
     }
     setSearchParams(newParams);
   };
-
-  // OPERATOR 이상만 행사 작성 가능
-  const canCreateEvent = user?.role === "OPERATOR" || user?.role === "ADMIN";
 
   // 403 에러 체크 (권한 없음)
   const isForbidden = isForbiddenError(error);
@@ -114,7 +150,7 @@ export default function EventListPage() {
           onChange={handleFilterChange}
           options={EVENT_FILTER_LABELS}
         />
-        {canCreateEvent && (
+        {isOperator && (
           <button
             type="button"
             onClick={() => navigate("/events/write")}

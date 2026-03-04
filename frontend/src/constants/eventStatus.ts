@@ -16,7 +16,7 @@ export const EVENT_STATUS_BADGE: Record<string, string> = {
   CANCELED: "bg-destructive/10 text-destructive",
 };
 export const EVENT_STATUS_LABEL: Record<string, string> = {
-  UPCOMING: "예정",
+  UPCOMING: "진행 예정",
   ONGOING: "진행중",
   COMPLETED: "완료",
   CANCELED: "취소됨",
@@ -24,12 +24,12 @@ export const EVENT_STATUS_LABEL: Record<string, string> = {
 
 // 모집 상태 (registrationStatus)
 export const REG_STATUS_BADGE: Record<string, string> = {
-  NOT_STARTED: "bg-muted text-muted-foreground",
+  NOT_STARTED: "bg-primary/10 text-primary",
   OPEN: "bg-success/10 text-success",
   CLOSED: "bg-warning/10 text-warning",
 };
 export const REG_STATUS_LABEL: Record<string, string> = {
-  NOT_STARTED: "대기",
+  NOT_STARTED: "모집 예정",
   OPEN: "모집중",
   CLOSED: "마감",
 };

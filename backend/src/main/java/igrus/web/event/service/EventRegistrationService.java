@@ -16,6 +16,7 @@ import igrus.web.event.exception.EventCapacityFullException;
 import igrus.web.event.exception.EventNotCancelableException;
 import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.EventNotFoundException;
+import igrus.web.event.exception.EventUnpublishedException;
 import igrus.web.event.exception.EventNotInRegistrationPeriodException;
 import igrus.web.event.exception.EventNotOpenException;
 import igrus.web.event.exception.EventRegistrationNotFoundException;
@@ -98,9 +99,9 @@ public class EventRegistrationService {
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
-        // 1-1. UNPUBLISHED 행사 신청 차단 (정보 은폐: 존재하지 않는 것처럼 처리)
+        // 1-1. UNPUBLISHED 행사 신청 차단
         if (event.getVisibility() == EventVisibility.UNPUBLISHED) {
-            throw new EventNotFoundException(eventId);
+            throw new EventUnpublishedException(eventId);
         }
 
         // 2. 사용자 조회
