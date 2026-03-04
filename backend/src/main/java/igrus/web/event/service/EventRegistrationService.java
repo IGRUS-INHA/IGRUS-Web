@@ -166,7 +166,7 @@ public class EventRegistrationService {
 
         // 1-1. 취소된 행사의 신청은 취소 불가
         if (event.getEventStatus() == EventStatus.CANCELED) {
-            throw new EventNotCancelableException();
+            throw new EventNotCancelableException(event.getEventStatus());
         }
 
         // 2. 신청 조회

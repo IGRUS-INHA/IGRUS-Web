@@ -66,11 +66,11 @@ jobs:
         run: |
           pnpm api:generate
           pnpm format
-          if [ -n "$(git -C .. status --porcelain frontend/src/api/model openapi/bundled.yaml)" ]; then
+          if [ -n "$(git -C .. status --porcelain frontend/src/api/model)" ]; then
             echo "::warning::Orval API client is outdated. Auto-committing regenerated files."
             git -C .. config user.name "github-actions[bot]"
             git -C .. config user.email "github-actions[bot]@users.noreply.github.com"
-            git -C .. add frontend/src/api/model openapi/bundled.yaml
+            git -C .. add frontend/src/api/model
             git -C .. commit -m "chore(frontend): Orval API 클라이언트 재생성"
             git -C .. push
           else
