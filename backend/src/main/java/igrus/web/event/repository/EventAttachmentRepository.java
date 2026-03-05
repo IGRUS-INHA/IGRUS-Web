@@ -14,9 +14,9 @@ import java.util.List;
 public interface EventAttachmentRepository extends JpaRepository<EventAttachment, Long> {
 
     /**
-     * 행사에 연결된 모든 첨부파일을 display_order 순으로 조회한다.
+     * 행사에 연결된 모든 첨부파일을 조회한다.
      */
-    List<EventAttachment> findByEventOrderByDisplayOrderAsc(Event event);
+    List<EventAttachment> findByEvent(Event event);
 
     /**
      * 행사에 연결된 모든 첨부파일을 삭제한다.
@@ -33,11 +33,10 @@ public interface EventAttachmentRepository extends JpaRepository<EventAttachment
     boolean existsByFileMetadataObjectKeyAndEventDeletedFalse(@Param("objectKey") String objectKey);
 
     /**
-     * 행사 ID로 첨부파일을 display_order 순으로 조회한다.
+     * 행사 ID로 첨부파일을 FileMetadata와 함께 조회한다 (FETCH JOIN).
      */
     @Query("SELECT ea FROM EventAttachment ea " +
             "JOIN FETCH ea.fileMetadata " +
-            "WHERE ea.event.id = :eventId " +
-            "ORDER BY ea.displayOrder ASC")
+            "WHERE ea.event.id = :eventId")
     List<EventAttachment> findByEventIdWithFileMetadata(@Param("eventId") Long eventId);
 }

@@ -60,8 +60,7 @@ public class EventController implements EventApi {
                 EnumUtils.fromStringOrNull(igrus.web.event.domain.EventRegistrationType.class,
                         createEventRequest.getRegistrationType().getValue()),
                 createEventRequest.getSurveyId(),
-                createEventRequest.getAttachmentFileIds(),
-                createEventRequest.getThumbnailFileId()
+                createEventRequest.getAttachmentFileIds()
         );
 
         EventCreateResponse result = eventService.createEvent(request, user.userId());
@@ -119,8 +118,7 @@ public class EventController implements EventApi {
                 updateEventRequest.getRegistrationEndAt(),
                 updateEventRequest.getCapacity(),
                 updateEventRequest.getSurveyId(),
-                updateEventRequest.getAttachmentFileIds(),
-                updateEventRequest.getThumbnailFileId()
+                updateEventRequest.getAttachmentFileIds()
         );
 
         EventDetailResponse response = eventService.updateEvent(eventId, request, user.userId());
@@ -265,8 +263,7 @@ public class EventController implements EventApi {
                                 r.registrationType().name())
                         : null)
                 .isRegistrable(r.isRegistrable())
-                .surveyId(r.surveyId())
-                .thumbnailUrl(r.thumbnailUrl());
+                .surveyId(r.surveyId());
     }
 
     private GetEvent200ResponseAttachmentsInner mapToAttachmentResponse(EventAttachmentDto a) {
@@ -275,8 +272,6 @@ public class EventController implements EventApi {
                 .fileMetadataId(a.fileMetadataId())
                 .objectKey(a.objectKey())
                 .originalFileName(a.originalFileName())
-                .contentType(a.contentType())
-                .isThumbnail(a.isThumbnail())
-                .displayOrder(a.displayOrder());
+                .contentType(a.contentType());
     }
 }

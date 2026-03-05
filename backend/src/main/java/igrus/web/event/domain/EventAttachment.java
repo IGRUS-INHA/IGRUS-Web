@@ -37,17 +37,9 @@ public class EventAttachment {
     @JoinColumn(name = "file_metadata_id", nullable = false)
     private FileMetadata fileMetadata;
 
-    @Column(name = "is_thumbnail", nullable = false)
-    private boolean thumbnail;
-
-    @Column(name = "display_order", nullable = false)
-    private int displayOrder;
-
-    private EventAttachment(Event event, FileMetadata fileMetadata, boolean thumbnail, int displayOrder) {
+    private EventAttachment(Event event, FileMetadata fileMetadata) {
         this.event = event;
         this.fileMetadata = fileMetadata;
-        this.thumbnail = thumbnail;
-        this.displayOrder = displayOrder;
     }
 
     /**
@@ -55,29 +47,9 @@ public class EventAttachment {
      *
      * @param event        행사
      * @param fileMetadata 파일 메타데이터
-     * @param thumbnail    썸네일 여부
-     * @param displayOrder 표시 순서 (0부터 시작)
      * @return EventAttachment 인스턴스
      */
-    public static EventAttachment create(Event event, FileMetadata fileMetadata, boolean thumbnail, int displayOrder) {
-        return new EventAttachment(event, fileMetadata, thumbnail, displayOrder);
-    }
-
-    /**
-     * 썸네일 여부를 변경한다.
-     *
-     * @param thumbnail 썸네일 여부
-     */
-    public void changeThumbnail(boolean thumbnail) {
-        this.thumbnail = thumbnail;
-    }
-
-    /**
-     * 표시 순서를 변경한다.
-     *
-     * @param displayOrder 새 표시 순서
-     */
-    public void changeDisplayOrder(int displayOrder) {
-        this.displayOrder = displayOrder;
+    public static EventAttachment create(Event event, FileMetadata fileMetadata) {
+        return new EventAttachment(event, fileMetadata);
     }
 }

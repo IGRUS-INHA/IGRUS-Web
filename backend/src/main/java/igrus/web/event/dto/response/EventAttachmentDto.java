@@ -10,17 +10,13 @@ import igrus.web.event.domain.EventAttachment;
  * @param objectKey        S3 Object Key
  * @param originalFileName 원본 파일명
  * @param contentType      파일 MIME 타입
- * @param isThumbnail      썸네일 여부
- * @param displayOrder     표시 순서
  */
 public record EventAttachmentDto(
         Long id,
         Long fileMetadataId,
         String objectKey,
         String originalFileName,
-        String contentType,
-        boolean isThumbnail,
-        int displayOrder
+        String contentType
 ) {
     public static EventAttachmentDto from(EventAttachment attachment) {
         return new EventAttachmentDto(
@@ -28,9 +24,7 @@ public record EventAttachmentDto(
                 attachment.getFileMetadata().getId(),
                 attachment.getFileMetadata().getObjectKey(),
                 attachment.getFileMetadata().getOriginalFileName(),
-                attachment.getFileMetadata().getContentType(),
-                attachment.isThumbnail(),
-                attachment.getDisplayOrder()
+                attachment.getFileMetadata().getContentType()
         );
     }
 }

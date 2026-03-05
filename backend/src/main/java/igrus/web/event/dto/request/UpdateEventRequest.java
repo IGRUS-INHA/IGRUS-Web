@@ -52,8 +52,6 @@ public record UpdateEventRequest(
         @Positive(message = "설문 ID는 양수여야 합니다")
         Long surveyId,
 
-        List<Long> attachmentFileIds,
-
-        Long thumbnailFileId
+        List<Long> attachmentFileIds
 ) {
 }

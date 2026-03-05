@@ -160,8 +160,7 @@ public class AdminEventController implements AdminEventApi {
                         ? GetAdminEventList200ResponseInner.VisibilityEnum.fromValue(
                                 r.visibility().name())
                         : null)
-                .surveyId(r.surveyId())
-                .thumbnailUrl(r.thumbnailUrl());
+                .surveyId(r.surveyId());
     }
 
     private GetEvent200ResponseAttachmentsInner mapToAttachmentResponse(EventAttachmentDto a) {
@@ -170,8 +169,6 @@ public class AdminEventController implements AdminEventApi {
                 .fileMetadataId(a.fileMetadataId())
                 .objectKey(a.objectKey())
                 .originalFileName(a.originalFileName())
-                .contentType(a.contentType())
-                .isThumbnail(a.isThumbnail())
-                .displayOrder(a.displayOrder());
+                .contentType(a.contentType());
     }
 }

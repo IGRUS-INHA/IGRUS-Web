@@ -113,7 +113,6 @@ class EventServiceTest {
 
         // EventAttachment 관련 기본 스텁 (첨부파일 없는 기본 상태)
         when(eventAttachmentRepository.findByEventIdWithFileMetadata(anyLong())).thenReturn(List.of());
-        when(eventAttachmentRepository.findByEventOrderByDisplayOrderAsc(any())).thenReturn(List.of());
     }
 
     private Event createMockEvent() {
@@ -156,7 +155,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -185,7 +184,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
 
@@ -203,7 +202,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -222,7 +221,7 @@ class EventServiceTest {
                     eventEnd, eventStart, // 시작과 종료 역전
                     regStart, regEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -241,7 +240,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, badRegEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -261,7 +260,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, badRegStart, badRegEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -283,7 +282,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     futureEventStart, futureEventEnd, pastRegStart, pastRegEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -301,7 +300,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, eventStart, eventEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -321,7 +320,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart1msBefore, regEndForTest,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -347,7 +346,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, eventStart,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -373,7 +372,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, eventEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -399,7 +398,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regEnd, regStart,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -417,7 +416,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventStart, regStart, regEnd,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -443,7 +442,7 @@ class EventServiceTest {
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regStart,
                     30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
+                    null, null
             );
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
 
@@ -641,7 +640,7 @@ class EventServiceTest {
             UpdateEventRequest request = new UpdateEventRequest(
                     "수정된 제목", "수정된 설명", "수정된 장소",
                     eventStart, eventEnd, regStart, regEnd, 50,
-                    null, null, null
+                    null, null
             );
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
@@ -662,7 +661,7 @@ class EventServiceTest {
             UpdateEventRequest request = new UpdateEventRequest(
                     "수정", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd, 50,
-                    null, null, null
+                    null, null
             );
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(MEMBER_ID)).thenReturn(Optional.of(regularMember));
@@ -680,7 +679,7 @@ class EventServiceTest {
             UpdateEventRequest request = new UpdateEventRequest(
                     "수정", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd, 50,
-                    null, null, null
+                    null, null
             );
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.empty());
 
@@ -1670,13 +1669,13 @@ class EventServiceTest {
             CreateEventRequest requestA = new CreateEventRequest(
                     "행사 A", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE, SURVEY_ID, null, null
+                    30, EventRegistrationType.AUTO_APPROVE, SURVEY_ID, null
             );
             CreateEventRequest requestB = new CreateEventRequest(
                     "행사 B", "설명", "장소",
                     eventStart.plus(20, ChronoUnit.DAYS), eventEnd.plus(20, ChronoUnit.DAYS),
                     regStart.plus(15, ChronoUnit.DAYS), regEnd.plus(15, ChronoUnit.DAYS),
-                    30, EventRegistrationType.AUTO_APPROVE, SURVEY_ID, null, null
+                    30, EventRegistrationType.AUTO_APPROVE, SURVEY_ID, null
             );
 
             // when
@@ -1709,7 +1708,7 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE, SURVEY_ID, null, null
+                    30, EventRegistrationType.AUTO_APPROVE, SURVEY_ID, null
             );
 
             // when
@@ -1732,7 +1731,7 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE, invalidSurveyId, null, null
+                    30, EventRegistrationType.AUTO_APPROVE, invalidSurveyId, null
             );
 
             // when/then
@@ -1751,7 +1750,7 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE, deletedSurveyId, null, null
+                    30, EventRegistrationType.AUTO_APPROVE, deletedSurveyId, null
             );
 
             // when/then
@@ -1772,7 +1771,7 @@ class EventServiceTest {
             CreateEventRequest request = new CreateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, EventRegistrationType.AUTO_APPROVE, trashedSurveyId, null, null
+                    30, EventRegistrationType.AUTO_APPROVE, trashedSurveyId, null
             );
 
             // when/then
@@ -1795,7 +1794,7 @@ class EventServiceTest {
             UpdateEventRequest request = new UpdateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, SURVEY_ID, null, null
+                    30, SURVEY_ID, null
             );
 
             // when
@@ -1824,7 +1823,7 @@ class EventServiceTest {
             UpdateEventRequest request = new UpdateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, newSurveyId, null, null
+                    30, newSurveyId, null
             );
 
             // when
@@ -1848,7 +1847,7 @@ class EventServiceTest {
             UpdateEventRequest request = new UpdateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, null, null, null
+                    30, null, null
             );
 
             // when
@@ -1873,7 +1872,7 @@ class EventServiceTest {
             UpdateEventRequest request = new UpdateEventRequest(
                     "테스트 행사", "설명", "장소",
                     eventStart, eventEnd, regStart, regEnd,
-                    30, deletedSurveyId, null, null
+                    30, deletedSurveyId, null
             );
 
             // when/then

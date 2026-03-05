@@ -51,6 +51,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
 /**
  * 행사 서비스.
  * 행사 관련 비즈니스 로직을 처리합니다.
@@ -142,7 +143,7 @@ public class EventService {
         // 6. 첨부파일 처리
         List<Long> attachmentFileIds = normalizeFileIds(request.attachmentFileIds());
         if (!attachmentFileIds.isEmpty()) {
-            validateAndCreateAttachments(savedEvent, attachmentFileIds, request.thumbnailFileId(), userId);
+            validateAndCreateAttachments(savedEvent, attachmentFileIds, userId);
             log.info("행사 생성: eventId={}, attachmentCount={}", savedEvent.getId(), attachmentFileIds.size());
         }
 
@@ -220,7 +221,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(event -> EventListResponse.from(event, getThumbnailObjectKey(event.getId())))
+                .map(EventListResponse::from)
                 .toList();
     }
 
@@ -285,10 +286,10 @@ public class EventService {
                 request.surveyId()
         );
 
-        // 9. 첨부파일 전체 교체 (EVT-ATT-INV-10)
+        // 9. 첨부파일 전체 교체
         List<Long> attachmentFileIds = normalizeFileIds(request.attachmentFileIds());
         List<EventAttachmentDto> attachmentDtos = resolveAttachments(
-                event, attachmentFileIds, request.thumbnailFileId(), userId);
+                event, attachmentFileIds, userId);
 
         // 10. 응답 반환 (dirty checking으로 자동 저장)
         return EventDetailResponse.from(event, false, false, attachmentDtos);
@@ -533,7 +534,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(event -> EventListResponse.from(event, getThumbnailObjectKey(event.getId())))
+                .map(EventListResponse::from)
                 .toList();
     }
 
@@ -693,179 +694,84 @@ public class EventService {
 
     /**
      * 첨부파일을 검증하고 EventAttachment를 생성한다.
-     * EVT-ATT-INV-02, INV-04, INV-05, INV-06, INV-07, INV-13
      */
-    private void validateAndCreateAttachments(Event event, List<Long> fileIds, Long thumbnailFileId, Long userId) {
-        // EVT-ATT-INV-13: 중복 파일 ID 방지
+    private void validateAndCreateAttachments(Event event, List<Long> fileIds, Long userId) {
         validateNoDuplicateFileIds(fileIds);
-
-        // 썸네일 유효성 검증 (EVT-ATT-INV-04)
-        validateThumbnailFileId(fileIds, thumbnailFileId);
-
-        // 파일 조회 및 검증
         List<FileMetadata> files = validateAndFetchFiles(fileIds, userId);
 
-        // EventAttachment 생성
-        List<EventAttachment> attachments = new ArrayList<>();
-        for (int i = 0; i < files.size(); i++) {
-            boolean isThumbnail = determineThumbnail(files.get(i).getId(), thumbnailFileId, i);
-            attachments.add(EventAttachment.create(event, files.get(i), isThumbnail, i));
-        }
+        List<EventAttachment> attachments = files.stream()
+                .map(file -> EventAttachment.create(event, file))
+                .toList();
 
         eventAttachmentRepository.saveAll(attachments);
     }
 
     /**
      * 전체 교체(Full Replace) 방식으로 첨부파일을 관리한다.
-     * EVT-ATT-INV-10
      */
-    private List<EventAttachmentDto> resolveAttachments(Event event, List<Long> newFileIds,
-                                                         Long thumbnailFileId, Long userId) {
+    private List<EventAttachmentDto> resolveAttachments(Event event, List<Long> newFileIds, Long userId) {
         List<EventAttachment> existing = eventAttachmentRepository.findByEventIdWithFileMetadata(event.getId());
 
-        // 기존 파일 ID 맵
-        Map<Long, EventAttachment> existingMap = existing.stream()
-                .collect(Collectors.toMap(
-                        ea -> ea.getFileMetadata().getId(),
-                        ea -> ea,
-                        (a, b) -> a,
-                        LinkedHashMap::new
-                ));
-
+        // 기존 파일 ID Set
+        Set<Long> existingFileIdSet = existing.stream()
+                .map(ea -> ea.getFileMetadata().getId())
+                .collect(Collectors.toSet());
         Set<Long> newFileIdSet = new HashSet<>(newFileIds);
-        Set<Long> existingFileIdSet = existingMap.keySet();
-
-        // 삭제 대상: 기존에 있지만 새 목록에 없는 것
-        Set<Long> toRemove = new HashSet<>(existingFileIdSet);
-        toRemove.removeAll(newFileIdSet);
-
-        // 추가 대상: 새 목록에 있지만 기존에 없는 것
-        Set<Long> toAdd = new HashSet<>(newFileIdSet);
-        toAdd.removeAll(existingFileIdSet);
-
-        // 유지 대상
-        Set<Long> toKeep = new HashSet<>(existingFileIdSet);
-        toKeep.retainAll(newFileIdSet);
 
         // 빈 배열이면 모두 삭제
         if (newFileIds.isEmpty()) {
             if (!existing.isEmpty()) {
                 eventAttachmentRepository.deleteAll(existing);
-                log.info("행사 수정 - eventId: {}, 첨부파일 변경: 추가=0, 삭제={}, 유지=0",
-                        event.getId(), existing.size());
             }
             return List.of();
         }
 
-        // EVT-ATT-INV-13: 중복 파일 ID 방지
         validateNoDuplicateFileIds(newFileIds);
 
-        // 썸네일 유효성 검증 (EVT-ATT-INV-04)
-        validateThumbnailFileId(newFileIds, thumbnailFileId);
+        // 변경이 없으면 기존 그대로 반환
+        if (existingFileIdSet.equals(newFileIdSet)) {
+            return existing.stream().map(EventAttachmentDto::from).toList();
+        }
 
-        // 신규 파일 검증 (기존 유지 파일은 재검증 불필요)
+        // 추가 대상 파일 검증
+        Set<Long> toAdd = new HashSet<>(newFileIdSet);
+        toAdd.removeAll(existingFileIdSet);
+
         Map<Long, FileMetadata> newFileMap = new LinkedHashMap<>();
         if (!toAdd.isEmpty()) {
             List<FileMetadata> newFiles = validateAndFetchFiles(new ArrayList<>(toAdd), userId);
             newFiles.forEach(f -> newFileMap.put(f.getId(), f));
         }
 
-        // 삭제
-        if (!toRemove.isEmpty()) {
-            List<EventAttachment> toDelete = toRemove.stream()
-                    .map(existingMap::get)
-                    .toList();
-            eventAttachmentRepository.deleteAll(toDelete);
-        }
+        // 기존 전체 삭제 후 새로 생성 (단순 전체 교체)
+        eventAttachmentRepository.deleteAll(existing);
 
-        // 기존 썸네일 파일 ID 확인
-        Long existingThumbnailFileId = existing.stream()
-                .filter(EventAttachment::isThumbnail)
-                .map(ea -> ea.getFileMetadata().getId())
-                .findFirst()
-                .orElse(null);
+        // 기존 파일 맵 (유지 대상용)
+        Map<Long, FileMetadata> existingFileMap = existing.stream()
+                .collect(Collectors.toMap(
+                        ea -> ea.getFileMetadata().getId(),
+                        EventAttachment::getFileMetadata,
+                        (a, b) -> a
+                ));
 
-        // 썸네일 결정
-        Long effectiveThumbnailFileId = determineThumbnailForUpdate(
-                newFileIds, thumbnailFileId, existingThumbnailFileId, toKeep);
-
-        // 유지 + 추가 파일로 새 attachment 목록 생성
-        List<EventAttachment> updatedAttachments = new ArrayList<>();
-        for (int i = 0; i < newFileIds.size(); i++) {
-            Long fileId = newFileIds.get(i);
-            boolean isThumbnail = fileId.equals(effectiveThumbnailFileId);
-
-            if (existingMap.containsKey(fileId)) {
-                // 기존 attachment 업데이트
-                EventAttachment ea = existingMap.get(fileId);
-                ea.changeDisplayOrder(i);
-                ea.changeThumbnail(isThumbnail);
-                updatedAttachments.add(ea);
-            } else {
-                // 새 attachment 생성
-                FileMetadata fm = newFileMap.get(fileId);
-                updatedAttachments.add(EventAttachment.create(event, fm, isThumbnail, i));
-            }
-        }
-
-        // 새로 추가된 것만 저장 (기존은 dirty checking)
-        List<EventAttachment> newAttachments = updatedAttachments.stream()
-                .filter(ea -> ea.getId() == null)
+        List<EventAttachment> newAttachments = newFileIds.stream()
+                .map(fileId -> {
+                    FileMetadata fm = newFileMap.containsKey(fileId)
+                            ? newFileMap.get(fileId)
+                            : existingFileMap.get(fileId);
+                    return EventAttachment.create(event, fm);
+                })
                 .toList();
-        if (!newAttachments.isEmpty()) {
-            eventAttachmentRepository.saveAll(newAttachments);
-        }
 
-        log.info("행사 수정 - eventId: {}, 첨부파일 변경: 추가={}, 삭제={}, 유지={}",
-                event.getId(), toAdd.size(), toRemove.size(), toKeep.size());
+        eventAttachmentRepository.saveAll(newAttachments);
 
-        // 썸네일 승계 로그
-        if (existingThumbnailFileId != null && !existingThumbnailFileId.equals(effectiveThumbnailFileId)) {
-            if (thumbnailFileId != null) {
-                log.info("썸네일 변경 - eventId: {}, thumbnailFileId={}", event.getId(), effectiveThumbnailFileId);
-            } else {
-                log.info("썸네일 자동 승계 - eventId: {}, 이전=fileId:{}, 새=fileId:{}",
-                        event.getId(), existingThumbnailFileId, effectiveThumbnailFileId);
-            }
-        }
+        log.info("행사 수정 - eventId: {}, 첨부파일 전체 교체: {}개", event.getId(), newFileIds.size());
 
-        return updatedAttachments.stream()
-                .map(EventAttachmentDto::from)
-                .toList();
+        return newAttachments.stream().map(EventAttachmentDto::from).toList();
     }
 
     /**
-     * 수정 시 썸네일 파일 ID를 결정한다.
-     * 1. thumbnailFileId가 명시적으로 제공되면 해당 파일 (EVT-ATT-INV-04)
-     * 2. 기존 썸네일이 새 목록에 포함되면 기존 썸네일 유지
-     * 3. 기존 썸네일이 없으면 첫 번째 파일 자동 지정 (EVT-ATT-INV-02)
-     */
-    private Long determineThumbnailForUpdate(List<Long> newFileIds, Long thumbnailFileId,
-                                              Long existingThumbnailFileId, Set<Long> toKeep) {
-        // 명시적 지정
-        if (thumbnailFileId != null) {
-            return thumbnailFileId;
-        }
-        // 기존 썸네일 유지 (EVT-ATT-INV-03 - 기존 썸네일이 새 목록에 포함)
-        if (existingThumbnailFileId != null && toKeep.contains(existingThumbnailFileId)) {
-            return existingThumbnailFileId;
-        }
-        // 자동 승계: 첫 번째 파일 (EVT-ATT-INV-02, INV-03)
-        return newFileIds.getFirst();
-    }
-
-    /**
-     * 생성 시 썸네일 여부를 결정한다.
-     */
-    private boolean determineThumbnail(Long fileId, Long thumbnailFileId, int index) {
-        if (thumbnailFileId != null) {
-            return fileId.equals(thumbnailFileId);
-        }
-        return index == 0; // 첫 번째 파일 자동 썸네일 (EVT-ATT-INV-02)
-    }
-
-    /**
-     * 중복 파일 ID를 검증한다. (EVT-ATT-INV-13)
+     * 중복 파일 ID를 검증한다.
      */
     private void validateNoDuplicateFileIds(List<Long> fileIds) {
         Set<Long> uniqueIds = new HashSet<>(fileIds);
@@ -875,24 +781,7 @@ public class EventService {
     }
 
     /**
-     * thumbnailFileId가 attachmentFileIds에 포함되는지 검증한다. (EVT-ATT-INV-04)
-     */
-    private void validateThumbnailFileId(List<Long> fileIds, Long thumbnailFileId) {
-        if (thumbnailFileId == null) {
-            return;
-        }
-        if (fileIds.isEmpty()) {
-            throw new EventAttachmentValidationException(EventErrorCode.EVENT_ATTACHMENT_THUMBNAIL_NOT_IN_LIST,
-                    "첨부파일이 없는데 썸네일을 지정할 수 없습니다");
-        }
-        if (!fileIds.contains(thumbnailFileId)) {
-            throw new EventAttachmentValidationException(EventErrorCode.EVENT_ATTACHMENT_THUMBNAIL_NOT_IN_LIST,
-                    "썸네일 파일 ID가 첨부파일 목록에 포함되어 있지 않습니다: thumbnailFileId=" + thumbnailFileId);
-        }
-    }
-
-    /**
-     * 파일 ID 목록의 파일들을 조회하고 상태/소유권을 검증한다. (EVT-ATT-INV-06, INV-07)
+     * 파일 ID 목록의 파일들을 조회하고 상태/소유권을 검증한다.
      */
     private List<FileMetadata> validateAndFetchFiles(List<Long> fileIds, Long userId) {
         List<FileMetadata> files = new ArrayList<>();
@@ -905,14 +794,12 @@ public class EventService {
                                 "파일을 찾을 수 없습니다: fileId=" + fileId);
                     });
 
-            // EVT-ATT-INV-06: COMPLETED 상태 검증
             if (file.getStatus() != FileUploadStatus.COMPLETED) {
                 log.warn("파일 상태 검증 실패: fileId={}, status={}", fileId, file.getStatus());
                 throw new EventAttachmentValidationException(EventErrorCode.EVENT_ATTACHMENT_FILE_NOT_COMPLETED,
                         "업로드가 완료되지 않은 파일입니다: fileId=" + fileId + ", status=" + file.getStatus());
             }
 
-            // EVT-ATT-INV-07: 소유권 검증
             if (!file.getUploaderUserId().equals(userId)) {
                 log.warn("파일 소유권 불일치: fileId={}, uploaderUserId={}, requestUserId={}",
                         fileId, file.getUploaderUserId(), userId);
@@ -932,18 +819,6 @@ public class EventService {
                 .stream()
                 .map(EventAttachmentDto::from)
                 .toList();
-    }
-
-    /**
-     * 행사의 썸네일 Object Key를 조회한다. 없으면 null.
-     */
-    private String getThumbnailObjectKey(Long eventId) {
-        return eventAttachmentRepository.findByEventIdWithFileMetadata(eventId)
-                .stream()
-                .filter(EventAttachment::isThumbnail)
-                .findFirst()
-                .map(ea -> ea.getFileMetadata().getObjectKey())
-                .orElse(null);
     }
 
     /**

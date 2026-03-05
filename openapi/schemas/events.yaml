@@ -42,12 +42,6 @@ UpdateEventRequest:
       items:
         type: integer
         format: int64
-    thumbnailFileId:
-      type:
-        - integer
-        - 'null'
-      format: int64
-      description: 썸네일로 지정할 파일 ID (null이면 자동 지정)
   required:
   - capacity
   - description
@@ -211,12 +205,6 @@ CreateEventRequest:
       items:
         type: integer
         format: int64
-    thumbnailFileId:
-      type:
-        - integer
-        - 'null'
-      format: int64
-      description: 썸네일로 지정할 파일 ID (null이면 자동 지정)
   required:
   - capacity
   - description
@@ -333,11 +321,6 @@ EventListResponse:
         - 'null'
       format: int64
       description: 연결된 설문 ID (null이면 설문 미연결)
-    thumbnailUrl:
-      type:
-        - string
-        - 'null'
-      description: 썸네일 이미지 Object Key
 AdminEventListResponse:
   type: object
   description: 관리자용 행사 목록 응답 (visibility 포함)
@@ -396,11 +379,6 @@ AdminEventListResponse:
         - 'null'
       format: int64
       description: 연결된 설문 ID (null이면 설문 미연결)
-    thumbnailUrl:
-      type:
-        - string
-        - 'null'
-      description: 썸네일 이미지 Object Key
 AdminEventDetailResponse:
   type: object
   description: 관리자용 행사 상세 응답 (visibility 포함)
@@ -589,10 +567,3 @@ EventAttachmentResponse:
     contentType:
       type: string
       description: 파일 MIME 타입
-    isThumbnail:
-      type: boolean
-      description: 썸네일 여부
-    displayOrder:
-      type: integer
-      format: int32
-      description: 표시 순서 (0부터 시작)

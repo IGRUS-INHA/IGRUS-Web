@@ -2,8 +2,6 @@ CREATE TABLE event_attachment (
     event_attachment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     event_id BIGINT NOT NULL,
     file_metadata_id BIGINT NOT NULL,
-    is_thumbnail BOOLEAN NOT NULL DEFAULT FALSE,
-    display_order INT NOT NULL,
 
     CONSTRAINT fk_event_attachment_event
         FOREIGN KEY (event_id) REFERENCES events(event_id),
