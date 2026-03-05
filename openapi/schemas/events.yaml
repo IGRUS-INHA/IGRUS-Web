@@ -42,6 +42,9 @@ UpdateEventRequest:
       items:
         type: integer
         format: int64
+    allowExternal:
+      type: boolean
+      description: 외부인(비회원) 신청 허용 여부
   required:
   - capacity
   - description
@@ -140,6 +143,9 @@ EventDetailResponse:
       description: 첨부파일 목록
       items:
         $ref: '#/EventAttachmentResponse'
+    allowExternal:
+      type: boolean
+      description: 외부인(비회원) 신청 허용 여부
 RegistrationResponse:
   type: object
   properties:
@@ -205,6 +211,9 @@ CreateEventRequest:
       items:
         type: integer
         format: int64
+    allowExternal:
+      type: boolean
+      description: 외부인(비회원) 신청 허용 여부
   required:
   - capacity
   - description
@@ -232,6 +241,9 @@ EventCreateResponse:
         - 'null'
       format: int64
       description: 연결된 설문 ID (null이면 설문 미연결)
+    allowExternal:
+      type: boolean
+      description: 외부인(비회원) 신청 허용 여부
 EventStatusChangeReasonRequest:
   type: object
   properties:
@@ -321,6 +333,9 @@ EventListResponse:
         - 'null'
       format: int64
       description: 연결된 설문 ID (null이면 설문 미연결)
+    allowExternal:
+      type: boolean
+      description: 외부인(비회원) 신청 허용 여부
 AdminEventListResponse:
   type: object
   description: 관리자용 행사 목록 응답 (visibility 포함)
@@ -379,6 +394,9 @@ AdminEventListResponse:
         - 'null'
       format: int64
       description: 연결된 설문 ID (null이면 설문 미연결)
+    allowExternal:
+      type: boolean
+      description: 외부인(비회원) 신청 허용 여부
 AdminEventDetailResponse:
   type: object
   description: 관리자용 행사 상세 응답 (visibility 포함)
@@ -470,6 +488,9 @@ AdminEventDetailResponse:
       description: 첨부파일 목록
       items:
         $ref: '#/EventAttachmentResponse'
+    allowExternal:
+      type: boolean
+      description: 외부인(비회원) 신청 허용 여부
 PageRegistrationListResponse:
   type: object
   properties:
@@ -520,21 +541,48 @@ RegistrationListResponse:
       type: integer
       format: int64
     userId:
-      type: integer
+      type:
+        - integer
+        - 'null'
       format: int64
+      description: 회원 신청자의 사용자 ID (외부인 신청의 경우 null)
     userName:
       type: string
+      description: 신청자 이름
     userEmail:
-      type: string
+      type:
+        - string
+        - 'null'
+      description: 신청자 이메일 (외부인 신청의 경우 null)
     studentId:
-      type: string
+      type:
+        - string
+        - 'null'
+      description: 학번
     userGender:
-      type: string
+      type:
+        - string
+        - 'null'
+      description: 성별 (외부인의 경우 null)
     userGrade:
-      type: integer
+      type:
+        - integer
+        - 'null'
       format: int32
+      description: 학년 (외부인의 경우 null)
     userDepartment:
-      type: string
+      type:
+        - string
+        - 'null'
+      description: 학과
+    phone:
+      type:
+        - string
+        - 'null'
+      description: 연락처 (외부인의 경우에만 표시)
+    isExternal:
+      type: boolean
+      description: 외부인 신청 여부
     status:
       type: string
       enum:
@@ -567,3 +615,42 @@ EventAttachmentResponse:
     contentType:
       type: string
       description: 파일 MIME 타입
+ExternalRegisterEventRequest:
+  type: object
+  description: |
+    외부인(비회원) 행사 신청 요청.
+    학번과 전화번호 각각 동일 행사 내 중복 신청을 방지합니다.
+    설문 연결 행사의 경우 surveyAnswers를 포함하여 설문 응답과 행사 신청을 원자적으로 처리합니다.
+  properties:
+    name:
+      type: string
+      maxLength: 50
+      minLength: 1
+      description: 신청자 이름
+    studentId:
+      type: string
+      maxLength: 20
+      minLength: 1
+      description: 신청자 학번 (중복 방지 식별자)
+    phone:
+      type: string
+      maxLength: 20
+      minLength: 1
+      description: 신청자 연락처 (중복 방지 식별자)
+    department:
+      type: string
+      maxLength: 100
+      minLength: 1
+      description: 신청자 학과
+    surveyAnswers:
+      type:
+        - array
+        - 'null'
+      description: 설문 응답 배열. 설문 연결 행사 신청 시 설문 응답을 포함합니다.
+      items:
+        $ref: ../schemas/surveys.yaml#/SubmitAnswerRequest
+  required:
+  - name
+  - studentId
+  - phone
+  - department

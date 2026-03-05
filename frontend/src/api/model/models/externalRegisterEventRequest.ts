@@ -33,49 +33,42 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { RegistrationListResponseStatus } from "./registrationListResponseStatus";
+import type { SubmitAnswerRequest } from "./submitAnswerRequest";
 
-export interface RegistrationListResponse {
-  registrationId?: number;
+/**
+ * 외부인(비회원) 행사 신청 요청.
+학번과 전화번호 각각 동일 행사 내 중복 신청을 방지합니다.
+설문 연결 행사의 경우 surveyAnswers를 포함하여 설문 응답과 행사 신청을 원자적으로 처리합니다.
+
+ */
+export interface ExternalRegisterEventRequest {
   /**
-   * 회원 신청자의 사용자 ID (외부인 신청의 경우 null)
+   * 신청자 이름
+   * @minLength 1
+   * @maxLength 50
+   */
+  name: string;
+  /**
+   * 신청자 학번 (중복 방지 식별자)
+   * @minLength 1
+   * @maxLength 20
+   */
+  studentId: string;
+  /**
+   * 신청자 연락처 (중복 방지 식별자)
+   * @minLength 1
+   * @maxLength 20
+   */
+  phone: string;
+  /**
+   * 신청자 학과
+   * @minLength 1
+   * @maxLength 100
+   */
+  department: string;
+  /**
+   * 설문 응답 배열. 설문 연결 행사 신청 시 설문 응답을 포함합니다.
    * @nullable
    */
-  userId?: number | null;
-  /** 신청자 이름 */
-  userName?: string;
-  /**
-   * 신청자 이메일 (외부인 신청의 경우 null)
-   * @nullable
-   */
-  userEmail?: string | null;
-  /**
-   * 학번
-   * @nullable
-   */
-  studentId?: string | null;
-  /**
-   * 성별 (외부인의 경우 null)
-   * @nullable
-   */
-  userGender?: string | null;
-  /**
-   * 학년 (외부인의 경우 null)
-   * @nullable
-   */
-  userGrade?: number | null;
-  /**
-   * 학과
-   * @nullable
-   */
-  userDepartment?: string | null;
-  /**
-   * 연락처 (외부인의 경우에만 표시)
-   * @nullable
-   */
-  phone?: string | null;
-  /** 외부인 신청 여부 */
-  isExternal?: boolean;
-  status?: RegistrationListResponseStatus;
-  registeredAt?: string;
+  surveyAnswers?: SubmitAnswerRequest[] | null;
 }
