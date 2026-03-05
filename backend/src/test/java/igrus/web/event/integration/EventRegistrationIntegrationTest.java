@@ -632,7 +632,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     current.getRegistrationStartAt(),  // 변경 안 함
                     current.getRegistrationEndAt(),
                     current.getCapacity(),
-                    null
+                    null, null, null
             );
             eventService.updateEvent(event.getId(), request, operator.getId());
 
@@ -660,7 +660,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     newEventStart, newEventEnd,
                     current.getRegistrationStartAt(), newRegEnd,
                     current.getCapacity(),
-                    null
+                    null, null, null
             );
 
             // then: 예외 발생
