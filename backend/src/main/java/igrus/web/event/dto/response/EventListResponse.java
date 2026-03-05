@@ -41,7 +41,8 @@ public record EventListResponse(
         EventStatus eventStatus,
         EventRegistrationType registrationType,
         boolean isRegistrable,
-        Long surveyId
+        Long surveyId,
+        String thumbnailUrl
 ) {
     /**
      * Event 엔티티로부터 EventListResponse를 생성합니다.
@@ -50,6 +51,10 @@ public record EventListResponse(
      * @return EventListResponse
      */
     public static EventListResponse from(Event event) {
+        return from(event, null);
+    }
+
+    public static EventListResponse from(Event event, String thumbnailUrl) {
         return new EventListResponse(
                 event.getId(),
                 event.getTitle(),
@@ -64,7 +69,8 @@ public record EventListResponse(
                 event.getEventStatus(),
                 event.getRegistrationType(),
                 event.isRegistrable(),
-                event.getSurveyId()
+                event.getSurveyId(),
+                thumbnailUrl
         );
     }
 }

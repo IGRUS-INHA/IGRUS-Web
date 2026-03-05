@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 행사 생성 요청 DTO.
@@ -55,6 +56,10 @@ public record CreateEventRequest(
         EventRegistrationType registrationType,
 
         @Positive(message = "설문 ID는 양수여야 합니다")
-        Long surveyId
+        Long surveyId,
+
+        List<Long> attachmentFileIds,
+
+        Long thumbnailFileId
 ) {
 }

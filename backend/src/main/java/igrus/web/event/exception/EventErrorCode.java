@@ -30,7 +30,11 @@ public enum EventErrorCode implements ErrorCode {
     EVENT_REOPEN_REASON_REQUIRED(400, "재오픈 사유는 필수입니다"),
     EVENT_NOT_DELETABLE(400, "신청자가 있는 행사는 삭제할 수 없습니다"),
     EVENT_SURVEY_RESPONSE_REQUIRED(400, "설문 응답이 필요합니다"),
-    EVENT_SURVEY_NOT_READY(400, "설문이 아직 시작되지 않았습니다");
+    EVENT_SURVEY_NOT_READY(400, "설문이 아직 시작되지 않았습니다"),
+    EVENT_ATTACHMENT_FILE_NOT_FOUND(404, "첨부파일을 찾을 수 없습니다"),
+    EVENT_ATTACHMENT_FILE_NOT_COMPLETED(400, "업로드가 완료되지 않은 파일입니다"),
+    EVENT_ATTACHMENT_DUPLICATE_FILE(400, "중복된 첨부파일 ID가 포함되어 있습니다"),
+    EVENT_ATTACHMENT_THUMBNAIL_NOT_IN_LIST(400, "썸네일 파일이 첨부파일 목록에 포함되어 있지 않습니다");
 
     private final int status;
     private final String message;
