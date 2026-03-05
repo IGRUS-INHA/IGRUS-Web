@@ -690,3 +690,42 @@ myRegistrations:
         description: 인증 필요
     security:
     - BearerAuthentication: []
+eventsByEventIdRegistrationsExternal:
+  post:
+    tags:
+    - Event External Registration
+    summary: 외부인 행사 신청
+    description: |
+      외부인(비회원)이 행사에 신청합니다. allowExternal이 true인 행사에서만 가능합니다.
+      학번과 전화번호 각각으로 중복 신청을 방지합니다.
+      설문이 연결된 행사의 경우, surveyAnswers를 포함하여 설문 응답과 행사 신청을 원자적으로 처리합니다.
+      외부인 신청 취소는 관리자만 가능합니다.
+    operationId: registerEventExternal
+    parameters:
+    - name: eventId
+      in: path
+      description: 행사 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/events.yaml#/ExternalRegisterEventRequest
+      required: true
+    responses:
+      '201':
+        description: 신청 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/events.yaml#/RegistrationResponse
+      '400':
+        description: 신청 불가 (정원 초과, 기간 외, 외부인 신청 비허용 행사, 설문 응답 누락 등)
+      '404':
+        description: 행사를 찾을 수 없음
+      '409':
+        description: 이미 신청함 (동일 학번 또는 동일 전화번호로 중복 신청)
+    security: []

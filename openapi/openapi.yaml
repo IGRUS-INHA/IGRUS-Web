@@ -89,6 +89,8 @@ tags:
   description: 헬스체크 API
 - name: Event Registration
   description: 행사 신청 API
+- name: Event External Registration
+  description: 외부인(비회원) 행사 신청 API
 - name: Password Authentication
   description: 비밀번호 기반 인증 관련 API
 - name: MyPage
@@ -190,6 +192,8 @@ paths:
     $ref: ./paths/events.yaml#/eventsByEventIdReopenRegistration
   /api/v1/events/{eventId}/registrations:
     $ref: ./paths/events.yaml#/eventsByEventIdRegistrations
+  /api/v1/events/{eventId}/registrations/external:
+    $ref: ./paths/events.yaml#/eventsByEventIdRegistrationsExternal
   /api/v1/events/{eventId}/reactivate:
     $ref: ./paths/events.yaml#/eventsByEventIdReactivate
   /api/v1/events/{eventId}/close:
@@ -532,6 +536,8 @@ components:
       $ref: './schemas/events.yaml#/EventListResponse'
     RegisterEventRequest:
       $ref: './schemas/events.yaml#/RegisterEventRequest'
+    ExternalRegisterEventRequest:
+      $ref: './schemas/events.yaml#/ExternalRegisterEventRequest'
     PageRegistrationListResponse:
       $ref: './schemas/events.yaml#/PageRegistrationListResponse'
     RegistrationListResponse:
