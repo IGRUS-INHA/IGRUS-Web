@@ -5,12 +5,14 @@ import igrus.web.common.util.SecurityUtils;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
+import igrus.web.event.dto.response.EventAttachmentDto;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.service.EventService;
 import igrus.web.generated.api.AdminEventApi;
 import igrus.web.generated.model.GetAdminEvent200Response;
 import igrus.web.generated.model.GetAdminEventList200ResponseInner;
+import igrus.web.generated.model.GetEvent200ResponseAttachmentsInner;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +88,7 @@ public class AdminEventController implements AdminEventApi {
     // ===== 매핑 헬퍼 =====
 
     private GetAdminEvent200Response mapToAdminEventDetailResponse(EventDetailResponse r) {
-        return new GetAdminEvent200Response()
+        GetAdminEvent200Response response = new GetAdminEvent200Response()
                 .id(r.id())
                 .title(r.title())
                 .description(r.description())
@@ -121,6 +123,14 @@ public class AdminEventController implements AdminEventApi {
                         ? GetAdminEvent200Response.VisibilityEnum.fromValue(r.visibility().name())
                         : null)
                 .surveyId(r.surveyId());
+
+        if (r.attachments() != null) {
+            response.setAttachments(r.attachments().stream()
+                    .map(this::mapToAttachmentResponse)
+                    .toList());
+        }
+
+        return response;
     }
 
     private GetAdminEventList200ResponseInner mapToAdminEventListResponse(EventListResponse r) {
@@ -150,6 +160,18 @@ public class AdminEventController implements AdminEventApi {
                         ? GetAdminEventList200ResponseInner.VisibilityEnum.fromValue(
                                 r.visibility().name())
                         : null)
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .thumbnailUrl(r.thumbnailUrl());
+    }
+
+    private GetEvent200ResponseAttachmentsInner mapToAttachmentResponse(EventAttachmentDto a) {
+        return new GetEvent200ResponseAttachmentsInner()
+                .id(a.id())
+                .fileMetadataId(a.fileMetadataId())
+                .objectKey(a.objectKey())
+                .originalFileName(a.originalFileName())
+                .contentType(a.contentType())
+                .isThumbnail(a.isThumbnail())
+                .displayOrder(a.displayOrder());
     }
 }

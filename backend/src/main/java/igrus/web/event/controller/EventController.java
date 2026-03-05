@@ -6,6 +6,7 @@ import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.UpdateEventRequest;
+import igrus.web.event.dto.response.EventAttachmentDto;
 import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
@@ -13,6 +14,7 @@ import igrus.web.event.service.EventService;
 import igrus.web.generated.api.EventApi;
 import igrus.web.generated.model.CreateEvent201Response;
 import igrus.web.generated.model.GetEvent200Response;
+import igrus.web.generated.model.GetEvent200ResponseAttachmentsInner;
 import igrus.web.generated.model.GetEventList200ResponseInner;
 import igrus.web.generated.model.ReopenRegistrationRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
@@ -57,7 +59,9 @@ public class EventController implements EventApi {
                 createEventRequest.getCapacity(),
                 EnumUtils.fromStringOrNull(igrus.web.event.domain.EventRegistrationType.class,
                         createEventRequest.getRegistrationType().getValue()),
-                createEventRequest.getSurveyId()
+                createEventRequest.getSurveyId(),
+                createEventRequest.getAttachmentFileIds(),
+                createEventRequest.getThumbnailFileId()
         );
 
         EventCreateResponse result = eventService.createEvent(request, user.userId());
@@ -114,7 +118,9 @@ public class EventController implements EventApi {
                 updateEventRequest.getRegistrationStartAt(),
                 updateEventRequest.getRegistrationEndAt(),
                 updateEventRequest.getCapacity(),
-                updateEventRequest.getSurveyId()
+                updateEventRequest.getSurveyId(),
+                updateEventRequest.getAttachmentFileIds(),
+                updateEventRequest.getThumbnailFileId()
         );
 
         EventDetailResponse response = eventService.updateEvent(eventId, request, user.userId());
@@ -191,7 +197,7 @@ public class EventController implements EventApi {
     // ===== 매핑 헬퍼 =====
 
     private GetEvent200Response mapToGetEvent200Response(EventDetailResponse r) {
-        return new GetEvent200Response()
+        GetEvent200Response response = new GetEvent200Response()
                 .id(r.id())
                 .title(r.title())
                 .description(r.description())
@@ -224,6 +230,14 @@ public class EventController implements EventApi {
                 .canEdit(r.canEdit())
                 .isRegistered(r.isRegistered())
                 .surveyId(r.surveyId());
+
+        if (r.attachments() != null) {
+            response.setAttachments(r.attachments().stream()
+                    .map(this::mapToAttachmentResponse)
+                    .toList());
+        }
+
+        return response;
     }
 
     private GetEventList200ResponseInner mapToEventListResponseInner(EventListResponse r) {
@@ -251,6 +265,18 @@ public class EventController implements EventApi {
                                 r.registrationType().name())
                         : null)
                 .isRegistrable(r.isRegistrable())
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .thumbnailUrl(r.thumbnailUrl());
+    }
+
+    private GetEvent200ResponseAttachmentsInner mapToAttachmentResponse(EventAttachmentDto a) {
+        return new GetEvent200ResponseAttachmentsInner()
+                .id(a.id())
+                .fileMetadataId(a.fileMetadataId())
+                .objectKey(a.objectKey())
+                .originalFileName(a.originalFileName())
+                .contentType(a.contentType())
+                .isThumbnail(a.isThumbnail())
+                .displayOrder(a.displayOrder());
     }
 }
