@@ -1070,6 +1070,7 @@
 .timeline-item {
   position: relative;
   padding-bottom: 48px;
+  cursor: pointer;
 }
 
 .timeline-item:last-child {
@@ -1091,6 +1092,10 @@
 .timeline-item:first-child .timeline-dot {
   border-color: var(--primary);
   background: var(--primary);
+}
+
+.timeline-item:hover h3 {
+  color: var(--primary);
 }
 
 /* ============================================

@@ -19,6 +19,7 @@ import {
   Users,
 } from "lucide-react";
 import MarkdownPreview from "@uiw/react-markdown-preview";
+import remarkBreaks from "remark-breaks";
 import type { Event } from "@/types/entities";
 import { useAuth } from "@/hooks";
 import {
@@ -647,7 +648,8 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           ) : detail?.description ? (
             <div className="[&_.wmde-markdown]:!text-sm [&_.wmde-markdown_*]:!text-sm">
               <MarkdownPreview
-                source={detail.description.replace(/\n/g, "  \n")}
+                source={detail.description}
+                remarkPlugins={[remarkBreaks]}
                 className="!leading-relaxed"
               />
             </div>

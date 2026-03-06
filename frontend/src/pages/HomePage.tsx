@@ -585,7 +585,7 @@ function EventTimeline({
             다가오는 행사가 없습니다
           </div>
         ) : (
-          <div className="event-timeline">
+          <div className="event-timeline pointer-events-none">
             {events.map((event, idx) => (
               <div key={event.id} className="timeline-item">
                 <div className="timeline-dot" />
