@@ -123,7 +123,11 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
       )}
       <div className="flex-1">
         {title && <p className="font-medium">{title}</p>}
-        {message && <p className="text-sm text-muted-foreground">{message}</p>}
+        {message && (
+          <p className="whitespace-pre-line text-sm text-muted-foreground">
+            {message}
+          </p>
+        )}
       </div>
       <button
         onClick={onClose}
