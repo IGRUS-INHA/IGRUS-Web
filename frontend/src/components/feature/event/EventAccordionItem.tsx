@@ -226,8 +226,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
   // Handlers
   const handleApply = () => {
+    if (detail?.surveyId) {
+      navigate(`/events/${numericId}/apply`);
+      return;
+    }
     applyEvent(
-      { eventId: numericId },
+      { eventId: numericId, data: {} },
       {
         onError: (error: unknown) => {
           if (isEventAlreadyRegistered(error)) {
@@ -237,7 +241,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           } else if (isEventRegistrationClosed(error)) {
             alert("신청 기간이 종료되었습니다.");
           } else if (hasErrorCode(error, "EVENT_SURVEY_RESPONSE_REQUIRED")) {
-            alert("설문 응답이 필요합니다. 설문을 먼저 작성해주세요.");
+            navigate(`/events/${numericId}/apply`);
           } else if (hasErrorCode(error, "EVENT_SURVEY_NOT_READY")) {
             alert("설문이 아직 시작되지 않았습니다.");
           } else if (isForbiddenError(error)) {
