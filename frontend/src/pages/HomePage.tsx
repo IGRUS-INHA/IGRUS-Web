@@ -95,7 +95,7 @@ function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
       <div className="hero-ring hero-ring-1" />
       <div className="hero-ring hero-ring-2" />
       <div className="hero-ring hero-ring-3" />
-      <div className="relative z-[1] max-w-[1280px] mx-auto px-s6 max-md:px-s4">
+      <div className="relative z-[1] max-w-[1280px] mx-auto px-s6 max-md:px-s2">
         <div className="grid grid-cols-2 gap-s7 items-center max-lg:grid-cols-1">
           <HeroText isAuthenticated={isAuthenticated} />
           <BubbleOrbit />
@@ -587,11 +587,7 @@ function EventTimeline({
         ) : (
           <div className="event-timeline">
             {events.map((event, idx) => (
-              <Link
-                key={event.id}
-                to={`/events/${event.id}`}
-                className="timeline-item block"
-              >
+              <div key={event.id} className="timeline-item">
                 <div className="timeline-dot" />
                 <div
                   className={cn(
@@ -601,7 +597,7 @@ function EventTimeline({
                 >
                   {formatDateDot(event.eventStartAt)}
                 </div>
-                <h3 className="typo-b1 font-semibold text-foreground mb-s1 leading-snug transition-colors">
+                <h3 className="typo-b1 font-semibold text-foreground mb-s1 leading-snug">
                   {event.title}
                 </h3>
                 {event.location && (
@@ -609,7 +605,7 @@ function EventTimeline({
                     {event.location}
                   </p>
                 )}
-              </Link>
+              </div>
             ))}
           </div>
         )}

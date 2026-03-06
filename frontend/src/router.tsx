@@ -19,7 +19,6 @@ import PostEditPage from "@/pages/board/PostEditPage";
 
 // 행사
 import EventListPage from "@/pages/event/EventListPage";
-import EventDetailPage from "@/pages/event/EventDetailPage";
 import EventWritePage from "@/pages/event/EventWritePage";
 import EventEditPage from "@/pages/event/EventEditPage";
 import EventRegistrationsPage from "@/pages/event/EventRegistrationsPage";
@@ -109,14 +108,6 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute minRole="OPERATOR">
             <EventWritePage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "events/:eventId",
-        element: (
-          <ProtectedRoute>
-            <EventDetailPage />
           </ProtectedRoute>
         ),
       },

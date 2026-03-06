@@ -251,10 +251,10 @@ export default function EventRegistrationsPage() {
       {/* 뒤로가기 */}
       <button
         type="button"
-        onClick={() => navigate(`/events/${eventId}`)}
+        onClick={() => navigate("/events")}
         className="mb-s6 flex items-center gap-s2 text-sm font-bold transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
       >
-        <ArrowLeft size={18} /> 행사 상세로 돌아가기
+        <ArrowLeft size={18} /> 행사 목록으로 돌아가기
       </button>
 
       {/* 헤더 */}

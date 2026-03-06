@@ -18,7 +18,7 @@ import {
   DIRECT_INPUT_VALUE,
 } from "@/components/feature/event/LocationSelector";
 import { RegistrationPeriodSelector } from "@/components/feature/event/RegistrationPeriodSelector";
-import { useEvent, useUpdateEvent } from "@/hooks/queries/useEvents";
+import { useAdminEvent, useUpdateEvent } from "@/hooks/queries/useEvents";
 import { EventDateTimePicker } from "@/components/feature/event/EventDateTimePicker";
 import { EventCalendarPreview } from "@/components/feature/event/EventCalendarPreview";
 import { REGISTRATION_PERIOD_PRESETS } from "@/constants/event";
@@ -98,7 +98,11 @@ export default function EventEditPage() {
   const navigate = useNavigate();
   const { theme } = useUIStore();
   const isDark = theme === "dark";
-  const { data: eventResponse, isLoading, error } = useEvent(Number(eventId));
+  const {
+    data: eventResponse,
+    isLoading,
+    error,
+  } = useAdminEvent(Number(eventId));
   const { mutate: updateEvent, isPending } = useUpdateEvent();
   const event = eventResponse?.data;
   const isInitialized = useRef(false);
@@ -137,9 +141,9 @@ export default function EventEditPage() {
   // 권한 체크 (권한 없으면 상세 페이지로 리다이렉트)
   useEffect(() => {
     if (event && !event.canEdit) {
-      navigate(`/events/${eventId}`);
+      navigate("/events");
     }
-  }, [event, eventId, navigate]);
+  }, [event, navigate]);
 
   // 기존 데이터로 폼 초기화
   useEffect(() => {
@@ -265,7 +269,7 @@ export default function EventEditPage() {
       {
         onSuccess: () => {
           alert("행사가 수정되었습니다.");
-          navigate(`/events/${eventId}`);
+          navigate("/events");
         },
         onError: (error: unknown) => {
           if (isForbiddenError(error) || isEventOperatorRequired(error)) {
@@ -323,7 +327,7 @@ export default function EventEditPage() {
         <div className="flex justify-between items-center mb-s6 sticky top-0 z-10 py-s4 backdrop-blur-md bg-background/80">
           <button
             type="button"
-            onClick={() => navigate(`/events/${eventId}`)}
+            onClick={() => navigate("/events")}
             className="flex items-center gap-s2 text-sm font-bold transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <ArrowLeft size={18} /> 취소
