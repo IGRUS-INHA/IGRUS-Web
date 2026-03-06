@@ -140,7 +140,6 @@ export * from "./eventListResponseRegistrationStatus";
 export * from "./eventListResponseRegistrationType";
 export * from "./eventListResponseVisibility";
 export * from "./eventStatusChangeReasonRequest";
-export * from "./externalRegisterEventRequest";
 export * from "./forceWithdrawRequest";
 export * from "./getAdminEventListEventStatus";
 export * from "./getAdminEventListParams";

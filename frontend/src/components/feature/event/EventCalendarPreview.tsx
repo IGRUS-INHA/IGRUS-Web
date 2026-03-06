@@ -18,6 +18,8 @@ interface EventCalendarPreviewProps {
   onEventDateChange?: (startDate: string, endDate: string) => void;
   onRegistrationDateChange?: (startDate: string, endDate: string) => void;
   onRegistrationPresetChange?: () => void;
+  onSelectionStart?: (mode: EditMode) => void;
+  showModeToggle?: boolean;
 }
 
 function parseDateParts(str: string): [number, number, number] | null {
@@ -60,6 +62,8 @@ export function EventCalendarPreview({
   onEventDateChange,
   onRegistrationDateChange,
   onRegistrationPresetChange,
+  onSelectionStart,
+  showModeToggle = true,
 }: EventCalendarPreviewProps) {
   const [mode, setMode] = useState<EditMode>("registration");
   // 범위 선택 중간 상태 (첫 번째 클릭 후, 두 번째 클릭 전)
@@ -124,6 +128,7 @@ export function EventCalendarPreview({
 
     if (!end) {
       // 첫 번째 클릭: 내부 상태로만 추적 (부모 폼 건드리지 않음)
+      onSelectionStart?.(mode);
       setSelectingStart(start);
     } else {
       // 두 번째 클릭: 범위 완성 → 부모에 커밋
@@ -151,36 +156,43 @@ export function EventCalendarPreview({
       </label>
 
       {/* Mode toggle tabs */}
-      <div className="flex gap-s1 mb-s3">
-        <button
-          type="button"
-          onClick={() => handleModeChange("registration")}
-          className={cn(
-            "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
-            mode === "registration"
-              ? "bg-amber-500 text-white"
-              : "bg-muted/50 text-muted-foreground hover:bg-muted",
-          )}
-        >
-          신청 기간
-        </button>
-        <button
-          type="button"
-          onClick={() => handleModeChange("event")}
-          className={cn(
-            "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
-            mode === "event"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted/50 text-muted-foreground hover:bg-muted",
-          )}
-        >
-          행사 기간
-        </button>
-      </div>
+      {showModeToggle && (
+        <div className="flex flex-col gap-s1 mb-s3">
+          <button
+            type="button"
+            onClick={() => handleModeChange("registration")}
+            className={cn(
+              "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
+              mode === "registration"
+                ? "bg-brand-l2 text-brand-l7"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted",
+            )}
+          >
+            신청 기간
+          </button>
+          <button
+            type="button"
+            onClick={() => handleModeChange("event")}
+            className={cn(
+              "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
+              mode === "event"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted",
+            )}
+          >
+            행사 기간
+          </button>
+        </div>
+      )}
 
       {/* Interactive calendar */}
       <div className={cn("cal-preview-wrapper", `cal-mode-${mode}`)}>
         <DatePicker
+          key={
+            selectingStart
+              ? "selecting"
+              : `${mode}-${committedStart?.toISOString()}-${committedEnd?.toISOString()}`
+          }
           inline
           locale="ko"
           selectsRange
@@ -201,7 +213,7 @@ export function EventCalendarPreview({
           <span className="typo-c1 text-muted-foreground">행사 기간</span>
         </div>
         <div className="flex items-center gap-s1">
-          <div className="w-3 h-3 rounded-sm bg-amber-500" />
+          <div className="w-3 h-3 rounded-sm bg-brand-l2" />
           <span className="typo-c1 text-muted-foreground">신청 기간</span>
         </div>
       </div>

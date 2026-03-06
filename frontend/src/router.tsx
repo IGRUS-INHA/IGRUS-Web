@@ -19,9 +19,10 @@ import PostEditPage from "@/pages/board/PostEditPage";
 
 // 행사
 import EventListPage from "@/pages/event/EventListPage";
-import EventWritePage from "@/pages/event/EventWritePage";
+import EventCreatePage from "@/pages/event/EventCreatePage";
 import EventEditPage from "@/pages/event/EventEditPage";
 import EventRegistrationsPage from "@/pages/event/EventRegistrationsPage";
+import EventApplyPage from "@/pages/event/EventApplyPage";
 
 // 문의
 import InquiryPage from "@/pages/inquiry/InquiryPage";
@@ -104,10 +105,10 @@ const routes: RouteObject[] = [
         ),
       },
       {
-        path: "events/write",
+        path: "events/create",
         element: (
           <ProtectedRoute minRole="OPERATOR">
-            <EventWritePage />
+            <EventCreatePage />
           </ProtectedRoute>
         ),
       },
@@ -116,6 +117,14 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute minRole="OPERATOR">
             <EventEditPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "events/:eventId/apply",
+        element: (
+          <ProtectedRoute minRole="MEMBER">
+            <EventApplyPage />
           </ProtectedRoute>
         ),
       },

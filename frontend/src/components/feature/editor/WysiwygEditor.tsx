@@ -89,7 +89,7 @@ export function WysiwygEditor({
             },
             attributes: {
               class:
-                "prose prose-lg dark:prose-invert prose-headings:font-bold focus:outline-none max-w-full min-h-[500px] px-s6 py-s5",
+                "prose prose-sm dark:prose-invert prose-headings:font-bold focus:outline-none max-w-full min-h-[500px] px-s6 py-s5",
             },
           }}
           className="w-full"

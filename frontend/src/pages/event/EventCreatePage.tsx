@@ -1,5 +1,5 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { FullPageSpinner } from "@/components/ui";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,28 +10,30 @@ import {
   Users,
   CheckSquare,
   FileText,
-  Save,
+  Image as ImageIcon,
   Minus,
   Plus,
 } from "lucide-react";
 import { WysiwygEditor } from "@/components/feature/editor";
 import { RegistrationPeriodSelector } from "@/components/feature/event/RegistrationPeriodSelector";
-import { useAdminEvent, useUpdateEvent } from "@/hooks/queries/useEvents";
 import { EventDateTimePicker } from "@/components/feature/event/EventDateTimePicker";
 import { EventCalendarPreview } from "@/components/feature/event/EventCalendarPreview";
+import { useCreateEvent } from "@/hooks/queries/useEvents";
+import { CreateEventRequestRegistrationType } from "@/api/model/models";
 import {
   REGISTRATION_PERIOD_PRESETS,
   EVENT_LOCATIONS,
 } from "@/constants/event";
-import { detectRegistrationPreset, formatDateLocal } from "@/utils/event";
+import { formatDateLocal } from "@/utils/event";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
 import {
-  getErrorMessage,
   isForbiddenError,
-  isEventAccessDenied,
   isEventOperatorRequired,
+  getErrorMessage,
 } from "@/utils/error";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useToast } from "@/hooks/useToast";
+import { IMAGE_UPLOAD_CONFIG } from "@/utils/upload";
 
 const eventSchema = z
   .object({
@@ -43,6 +45,7 @@ const eventSchema = z
     endTime: z.string().min(1, "행사 종료 시간을 선택하세요"),
     location: z.string().min(1, "장소를 입력하세요"),
     capacity: z.number().min(1, "최대 인원은 1명 이상이어야 합니다"),
+    registrationType: z.enum(["AUTO_APPROVE", "MANUAL_APPROVE"]),
     registrationPreset: z.enum(["default", "short", "custom"]),
     registrationStartDate: z.string().min(1, "신청 시작일을 선택하세요"),
     registrationStartTime: z.string().min(1, "신청 시작 시간을 선택하세요"),
@@ -72,25 +75,28 @@ const eventSchema = z
 
 type EventForm = z.infer<typeof eventSchema>;
 
-export default function EventEditPage() {
-  const { eventId } = useParams<{ eventId: string }>();
+const TODAY = new Date().toLocaleDateString("ko-KR", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+export default function EventCreatePage() {
   const navigate = useNavigate();
-  const {
-    data: eventResponse,
-    isLoading,
-    error,
-  } = useAdminEvent(Number(eventId));
-  const { mutate: updateEvent, isPending } = useUpdateEvent();
-  const event = eventResponse?.data;
-  const isInitialized = useRef(false);
-  const [formReady, setFormReady] = useState(false);
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-  const locationRef = useRef<HTMLDivElement>(null);
+  const { mutate: createEvent, isPending } = useCreateEvent();
+  const toast = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { files, addFiles, removeFile } = useImageUpload({
+    config: IMAGE_UPLOAD_CONFIG,
+    onValidationError: (errors) => {
+      errors.forEach((msg) => toast.error(msg));
+    },
+  });
 
   const {
     register,
     handleSubmit,
-    reset,
     control,
     watch,
     setValue,
@@ -98,14 +104,26 @@ export default function EventEditPage() {
   } = useForm<EventForm>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
-      capacity: 30,
-      registrationPreset: "custom",
+      title: "",
+      description: "",
+      date: "",
+      time: "",
+      endDate: "",
+      endTime: "",
       location: "",
+      capacity: 30,
+      registrationType: "AUTO_APPROVE",
+      registrationPreset: "default",
+      registrationStartDate: "",
+      registrationStartTime: "",
+      registrationDeadlineDate: "",
+      registrationDeadlineTime: "",
     },
   });
 
-  const eventTime = watch("time");
+  const registrationType = watch("registrationType");
   const eventDate = watch("date");
+  const eventTime = watch("time");
   const endDate = watch("endDate");
   const endTime = watch("endTime");
   const registrationPreset = watch("registrationPreset");
@@ -114,6 +132,10 @@ export default function EventEditPage() {
   const registrationDeadlineDate = watch("registrationDeadlineDate");
   const registrationDeadlineTime = watch("registrationDeadlineTime");
   const capacity = watch("capacity");
+
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [capacityRaw, setCapacityRaw] = useState("30");
+  const locationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -128,64 +150,8 @@ export default function EventEditPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 권한 체크 (권한 없으면 목록으로 리다이렉트)
+  // 신청 기간 자동 계산
   useEffect(() => {
-    if (event && !event.canEdit) {
-      navigate("/events");
-    }
-  }, [event, navigate]);
-
-  // 기존 데이터로 폼 초기화
-  useEffect(() => {
-    if (event) {
-      const parseDateTime = (isoString?: string) => {
-        if (!isoString) return { date: "", time: "" };
-        const d = new Date(isoString);
-        if (isNaN(d.getTime())) return { date: "", time: "" };
-        return {
-          date: d.toISOString().split("T")[0],
-          time: d.toTimeString().slice(0, 5),
-        };
-      };
-
-      const eventDateTime = parseDateTime(event.eventStartAt);
-      const eventEndDateTime = parseDateTime(event.eventEndAt);
-      const regStartDateTime = parseDateTime(event.registrationStartAt);
-      const regEndDateTime = parseDateTime(event.registrationEndAt);
-
-      const detectedPreset = detectRegistrationPreset(
-        eventDateTime.date ?? "",
-        regStartDateTime.date ?? "",
-        regStartDateTime.time ?? "",
-        regEndDateTime.date ?? "",
-        regEndDateTime.time ?? "",
-        eventDateTime.time ?? "",
-      );
-
-      reset({
-        title: event.title || "",
-        description: event.description || "",
-        date: eventDateTime.date ?? "",
-        time: eventDateTime.time ?? "",
-        endDate: eventEndDateTime.date || eventDateTime.date || "",
-        endTime: eventEndDateTime.time || eventDateTime.time || "",
-        location: event.location || "",
-        capacity: event.capacity || 30,
-        registrationPreset: detectedPreset,
-        registrationStartDate: regStartDateTime.date ?? "",
-        registrationStartTime: regStartDateTime.time ?? "",
-        registrationDeadlineDate: regEndDateTime.date ?? "",
-        registrationDeadlineTime: regEndDateTime.time ?? "",
-      });
-
-      isInitialized.current = true;
-      setFormReady(true);
-    }
-  }, [event, reset]);
-
-  // 신청 기간 자동 계산 (초기 로드 시에는 건너뜀)
-  useEffect(() => {
-    if (!isInitialized.current) return;
     if (!eventDate || registrationPreset === "custom") return;
     const preset = REGISTRATION_PERIOD_PRESETS.find(
       (p) => p.value === registrationPreset,
@@ -199,9 +165,15 @@ export default function EventEditPage() {
     const startDate = new Date(year, month - 1, day - preset.startDaysBefore);
     const endDateCalc = new Date(year, month - 1, day - preset.endDaysBefore);
 
-    setValue("registrationStartDate", formatDateLocal(startDate));
-    setValue("registrationStartTime", preset.startTime);
-    setValue("registrationDeadlineDate", formatDateLocal(endDateCalc));
+    setValue("registrationStartDate", formatDateLocal(startDate), {
+      shouldValidate: true,
+    });
+    setValue("registrationStartTime", preset.startTime, {
+      shouldValidate: true,
+    });
+    setValue("registrationDeadlineDate", formatDateLocal(endDateCalc), {
+      shouldValidate: true,
+    });
 
     if ("endTimeOffsetHours" in preset && eventTime) {
       const tp = eventTime.split(":").map(Number);
@@ -214,15 +186,17 @@ export default function EventEditPage() {
       );
       const endH = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
       const endM = String(totalMinutes % 60).padStart(2, "0");
-      setValue("registrationDeadlineTime", `${endH}:${endM}`);
+      setValue("registrationDeadlineTime", `${endH}:${endM}`, {
+        shouldValidate: true,
+      });
     } else {
-      setValue("registrationDeadlineTime", preset.endTime);
+      setValue("registrationDeadlineTime", preset.endTime, {
+        shouldValidate: true,
+      });
     }
   }, [eventDate, eventTime, registrationPreset, setValue]);
 
   const onSubmit = (data: EventForm) => {
-    if (!eventId) return;
-
     const eventStartAt = new Date(`${data.date}T${data.time}:00`).toISOString();
     const eventEndAt = new Date(
       `${data.endDate}T${data.endTime}:00`,
@@ -234,9 +208,8 @@ export default function EventEditPage() {
       `${data.registrationDeadlineDate}T${data.registrationDeadlineTime}:00`,
     ).toISOString();
 
-    updateEvent(
+    createEvent(
       {
-        eventId: Number(eventId),
         data: {
           title: data.title,
           description: data.description,
@@ -246,16 +219,18 @@ export default function EventEditPage() {
           registrationStartAt,
           registrationEndAt,
           capacity: data.capacity,
+          registrationType:
+            data.registrationType as CreateEventRequestRegistrationType,
         },
       },
       {
         onSuccess: () => {
-          alert("행사가 수정되었습니다.");
+          alert("행사가 등록되었습니다.");
           navigate("/events");
         },
         onError: (error: unknown) => {
           if (isForbiddenError(error) || isEventOperatorRequired(error)) {
-            alert("행사 수정 권한이 없습니다.");
+            alert("행사 등록 권한이 없습니다.");
           } else {
             alert(getErrorMessage(error));
           }
@@ -263,44 +238,6 @@ export default function EventEditPage() {
       },
     );
   };
-
-  if (isLoading) {
-    return <FullPageSpinner />;
-  }
-
-  const isForbidden = isForbiddenError(error) || isEventAccessDenied(error);
-
-  if (isForbidden) {
-    return (
-      <div className="text-center py-12 space-y-s4">
-        <p className="text-muted-foreground">
-          정회원 승인 후 행사 조회가 가능합니다.
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate("/events")}
-          className="text-sm text-primary hover:underline cursor-pointer"
-        >
-          목록으로 돌아가기
-        </button>
-      </div>
-    );
-  }
-
-  if (error || !event) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">행사를 찾을 수 없습니다.</p>
-        <button
-          type="button"
-          onClick={() => navigate("/events")}
-          className="mt-s4 text-primary hover:underline cursor-pointer"
-        >
-          목록으로 돌아가기
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="animate-in slide-in-from-bottom-8 duration-300 max-w-2xl mx-auto">
@@ -314,12 +251,15 @@ export default function EventEditPage() {
           >
             <ArrowLeft size={18} /> 취소
           </button>
+          <div className="text-center">
+            <p className="typo-c1 text-muted-foreground">{TODAY}</p>
+          </div>
           <button
             type="submit"
             disabled={isPending}
-            className="bg-primary text-primary-foreground px-s5 py-s2 rounded-full text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 flex items-center gap-s2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-primary text-primary-foreground px-s5 py-s2 rounded-full text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save size={16} /> {isPending ? "수정 중..." : "수정 완료"}
+            {isPending ? "등록 중..." : "행사 등록"}
           </button>
         </div>
 
@@ -396,9 +336,11 @@ export default function EventEditPage() {
                 <div className="flex items-center justify-center gap-s3">
                   <button
                     type="button"
-                    onClick={() =>
-                      setValue("capacity", Math.max(1, capacity - 1))
-                    }
+                    onClick={() => {
+                      const newVal = Math.max(1, capacity - 1);
+                      setValue("capacity", newVal);
+                      setCapacityRaw(String(newVal));
+                    }}
                     className="w-8 h-8 rounded-full border border-border bg-muted/50 flex items-center justify-center hover:bg-muted transition cursor-pointer"
                   >
                     <Minus size={14} />
@@ -406,16 +348,26 @@ export default function EventEditPage() {
                   <input
                     type="number"
                     min={1}
-                    value={capacity}
+                    value={capacityRaw}
                     onChange={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      if (!isNaN(v)) setValue("capacity", v);
+                      const raw = e.target.value;
+                      setCapacityRaw(raw);
+                      if (raw === "") {
+                        setValue("capacity", 0);
+                      } else {
+                        const v = parseInt(raw, 10);
+                        if (!isNaN(v)) setValue("capacity", v);
+                      }
                     }}
                     className="w-12 text-center text-sm font-semibold bg-transparent border-none focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <button
                     type="button"
-                    onClick={() => setValue("capacity", capacity + 1)}
+                    onClick={() => {
+                      const newVal = capacity + 1;
+                      setValue("capacity", newVal);
+                      setCapacityRaw(String(newVal));
+                    }}
                     className="w-8 h-8 rounded-full border border-border bg-muted/50 flex items-center justify-center hover:bg-muted transition cursor-pointer"
                   >
                     <Plus size={14} />
@@ -430,18 +382,20 @@ export default function EventEditPage() {
             </div>
           </div>
 
-          {/* 신청 방식 (읽기 전용) */}
+          {/* 신청 방식 */}
           <div className="rounded-r4 border bg-card border-border shadow-sm">
             <div className="px-s5 py-s3 border-b border-border">
               <p className="typo-label text-muted-foreground flex items-center gap-s2">
                 <CheckSquare size={14} /> 신청 방식
               </p>
             </div>
-            <div className="px-s5 py-s4 space-y-s2 pointer-events-none opacity-60">
-              <div
+            <div className="px-s5 py-s4 space-y-s2">
+              <button
+                type="button"
+                onClick={() => setValue("registrationType", "AUTO_APPROVE")}
                 className={cn(
-                  "w-full rounded-r3 px-s4 py-s3 border text-sm",
-                  event.registrationType === "AUTO_APPROVE"
+                  "w-full rounded-r3 px-s4 py-s3 border text-left text-sm transition-colors cursor-pointer",
+                  registrationType === "AUTO_APPROVE"
                     ? "border-primary bg-primary/5"
                     : "border-border bg-muted/50",
                 )}
@@ -450,12 +404,12 @@ export default function EventEditPage() {
                   <div
                     className={cn(
                       "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                      event.registrationType === "AUTO_APPROVE"
+                      registrationType === "AUTO_APPROVE"
                         ? "border-primary"
                         : "border-muted-foreground/40",
                     )}
                   >
-                    {event.registrationType === "AUTO_APPROVE" && (
+                    {registrationType === "AUTO_APPROVE" && (
                       <div className="w-2 h-2 rounded-full bg-primary" />
                     )}
                   </div>
@@ -466,11 +420,13 @@ export default function EventEditPage() {
                     </p>
                   </div>
                 </div>
-              </div>
-              <div
+              </button>
+              <button
+                type="button"
+                onClick={() => setValue("registrationType", "MANUAL_APPROVE")}
                 className={cn(
-                  "w-full rounded-r3 px-s4 py-s3 border text-sm",
-                  event.registrationType === "MANUAL_APPROVE"
+                  "w-full rounded-r3 px-s4 py-s3 border text-left text-sm transition-colors cursor-pointer",
+                  registrationType === "MANUAL_APPROVE"
                     ? "border-primary bg-primary/5"
                     : "border-border bg-muted/50",
                 )}
@@ -479,12 +435,12 @@ export default function EventEditPage() {
                   <div
                     className={cn(
                       "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                      event.registrationType === "MANUAL_APPROVE"
+                      registrationType === "MANUAL_APPROVE"
                         ? "border-primary"
                         : "border-muted-foreground/40",
                     )}
                   >
-                    {event.registrationType === "MANUAL_APPROVE" && (
+                    {registrationType === "MANUAL_APPROVE" && (
                       <div className="w-2 h-2 rounded-full bg-primary" />
                     )}
                   </div>
@@ -495,11 +451,8 @@ export default function EventEditPage() {
                     </p>
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
-            <p className="typo-c1 text-muted-foreground px-s5 pb-s4">
-              생성 후 변경할 수 없습니다
-            </p>
           </div>
 
           {/* 신청 기간 + 행사 기간 */}
@@ -514,7 +467,9 @@ export default function EventEditPage() {
                 registrationDeadlineTime={registrationDeadlineTime}
                 onPresetChange={(v) => setValue("registrationPreset", v)}
                 onFieldChange={(field, value) =>
-                  setValue(field as keyof EventForm, value)
+                  setValue(field as keyof EventForm, value, {
+                    shouldValidate: true,
+                  })
                 }
                 errors={errors}
               />
@@ -531,15 +486,21 @@ export default function EventEditPage() {
                 endDate={endDate}
                 endTime={endTime}
                 onDateChange={(v) => {
-                  setValue("date", v);
-                  if (endDate && v > endDate) setValue("endDate", v);
+                  setValue("date", v, { shouldValidate: true });
+                  if (endDate && v > endDate)
+                    setValue("endDate", v, { shouldValidate: true });
                 }}
-                onTimeChange={(v) => setValue("time", v)}
+                onTimeChange={(v) =>
+                  setValue("time", v, { shouldValidate: true })
+                }
                 onEndDateChange={(v) => {
-                  setValue("endDate", v);
-                  if (eventDate && v < eventDate) setValue("date", v);
+                  setValue("endDate", v, { shouldValidate: true });
+                  if (eventDate && v < eventDate)
+                    setValue("date", v, { shouldValidate: true });
                 }}
-                onEndTimeChange={(v) => setValue("endTime", v)}
+                onEndTimeChange={(v) =>
+                  setValue("endTime", v, { shouldValidate: true })
+                }
                 dateError={errors.date?.message}
                 timeError={errors.time?.message}
                 endDateError={errors.endDate?.message}
@@ -564,28 +525,93 @@ export default function EventEditPage() {
             <label className="flex items-center gap-s2 typo-label text-muted-foreground px-s5 pt-s4 pb-s3">
               <FileText size={14} /> 행사 세부 내용
             </label>
-            {formReady && (
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <WysiwygEditor
-                    value={field.value ?? ""}
-                    onChange={field.onChange}
-                    hasError={!!errors.description}
-                    className="border-0 rounded-none"
-                  />
-                )}
-              />
-            )}
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <WysiwygEditor
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  hasError={!!errors.description}
+                  className="border-0 rounded-none"
+                />
+              )}
+            />
             {errors.description && (
               <p className="typo-c1 text-destructive px-s6 pb-s2">
                 {errors.description.message}
               </p>
             )}
           </div>
+
+          {/* 이미지 업로드 */}
+          <div
+            className="rounded-r4 border-2 border-dashed border-border bg-card shadow-sm px-s6 py-s8 flex flex-col items-center justify-center gap-s3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (e.dataTransfer.files.length > 0) {
+                addFiles(e.dataTransfer.files);
+              }
+            }}
+          >
+            {files.length > 0 ? (
+              <div className="w-full space-y-s2">
+                {files.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span className="text-foreground truncate max-w-[80%]">
+                      {file.file.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(file.id);
+                      }}
+                      className="text-muted-foreground hover:text-destructive transition cursor-pointer text-xs ml-s2"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground text-center pt-s2">
+                  클릭하여 이미지 추가 · {files.length}/
+                  {IMAGE_UPLOAD_CONFIG.maxFiles}
+                </p>
+              </div>
+            ) : (
+              <>
+                <ImageIcon size={32} className="text-muted-foreground/50" />
+                <p className="text-sm font-medium text-muted-foreground">
+                  클릭하여 이미지 업로드
+                </p>
+                <p className="typo-c1 text-muted-foreground/70">
+                  JPG, PNG, GIF, WebP · 최대 10MB
+                </p>
+              </>
+            )}
+          </div>
         </div>
       </form>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            addFiles(e.target.files);
+            e.target.value = "";
+          }
+        }}
+        className="hidden"
+      />
     </div>
   );
 }

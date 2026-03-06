@@ -1070,7 +1070,6 @@
 .timeline-item {
   position: relative;
   padding-bottom: 48px;
-  cursor: pointer;
 }
 
 .timeline-item:last-child {
@@ -1092,10 +1091,6 @@
 .timeline-item:first-child .timeline-dot {
   border-color: var(--primary);
   background: var(--primary);
-}
-
-.timeline-item:hover h3 {
-  color: var(--primary);
 }
 
 /* ============================================
@@ -1354,23 +1349,54 @@
   width: 100%;
 }
 
+.cal-preview-wrapper .react-datepicker__month {
+  margin: 0;
+}
+
 .cal-preview-wrapper .react-datepicker__header {
   background-color: transparent !important;
   border-bottom: 1px solid var(--border) !important;
   padding-top: 4px !important;
 }
 
+.cal-preview-wrapper .react-datepicker__navigation {
+  display: none !important;
+}
+
 .cal-preview-wrapper .react-datepicker__day-names,
 .cal-preview-wrapper .react-datepicker__week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  place-items: center;
+}
+
+.cal-preview-wrapper .react-datepicker__week {
+  padding: 4px 0;
+}
+
+.cal-preview-wrapper .react-datepicker__day-names {
+  padding: 4px 0;
+}
+
+.cal-preview-wrapper .react-datepicker__day-name {
+  font-size: 12px !important;
+  width: 2rem;
+  height: 2rem;
   display: flex;
-  justify-content: space-around;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
 }
 
 .cal-preview-wrapper .react-datepicker__day {
   cursor: default !important;
-  width: 2rem;
-  line-height: 2rem;
   font-size: 12px !important;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
 }
 
 .cal-preview-wrapper .react-datepicker__day:hover {
@@ -1378,10 +1404,10 @@
   color: var(--foreground) !important;
 }
 
-/* Registration period highlight (amber) */
+/* Registration period highlight (brand-l2) */
 .cal-preview-wrapper .react-datepicker__day.cal-preview-reg {
-  background-color: #f59e0b !important;
-  color: white !important;
+  background-color: var(--brand-l2) !important;
+  color: var(--brand-l7) !important;
   border-radius: 8px !important;
 }
 
@@ -1407,16 +1433,16 @@
 .cal-preview-wrapper.cal-mode-registration .react-datepicker__day--in-range,
 .cal-preview-wrapper.cal-mode-registration .react-datepicker__day--range-start,
 .cal-preview-wrapper.cal-mode-registration .react-datepicker__day--range-end {
-  background-color: #f59e0b !important;
-  color: white !important;
+  background-color: var(--brand-l2) !important;
+  color: var(--brand-l7) !important;
 }
 
 .cal-preview-wrapper.cal-mode-registration
   .react-datepicker__day--in-selecting-range:not(
     .react-datepicker__day--in-range
   ) {
-  background-color: #fcd34d !important;
-  color: #78350f !important;
+  background-color: var(--brand-l1) !important;
+  color: var(--brand-l6) !important;
 }
 
 .cal-preview-wrapper.cal-mode-event .react-datepicker__day--in-range,
