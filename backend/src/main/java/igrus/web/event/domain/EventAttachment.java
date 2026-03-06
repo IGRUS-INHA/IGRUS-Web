@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 행사 첨부파일 엔티티.
+ * 행사 첨부파일 엔티티
  * 행사(Event)와 파일(FileMetadata) 간의 다대다 관계를 중간 테이블로 관리한다.
  */
 @Entity
