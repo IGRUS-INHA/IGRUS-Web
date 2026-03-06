@@ -116,7 +116,7 @@ export default function BoardListPage() {
         </p>
         <h1 className="text-3xl font-bold mb-s2">IGRUS 게시판</h1>
         <p className="text-sm text-muted-foreground">
-          공지사항, 자유게시판 등 다양한 게시판을 이용하세요.
+          아이그루스의 주요 공지와 안내 사항을 확인할 수 있는 공간입니다.
         </p>
       </div>
 

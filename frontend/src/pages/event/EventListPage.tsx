@@ -187,7 +187,7 @@ export default function EventListPage() {
         </p>
         <h1 className="text-3xl font-bold mb-s2">IGRUS 행사</h1>
         <p className="text-sm text-muted-foreground">
-          세미나, 해커톤, MT, 워크숍 등 다양한 동아리 행사를 확인하세요.
+          아이그루스에서 진행되는 다양한 활동을 확인해보세요.
         </p>
       </div>
 
