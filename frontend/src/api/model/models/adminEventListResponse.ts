@@ -56,9 +56,4 @@ export interface AdminEventListResponse {
   isRegistrable?: boolean;
   /** 공개 상태 */
   visibility?: AdminEventListResponseVisibility;
-  /**
-   * 연결된 설문 ID (null이면 설문 미연결)
-   * @nullable
-   */
-  surveyId?: number | null;
 }

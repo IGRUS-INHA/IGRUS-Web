@@ -244,7 +244,6 @@ export * from "./privacyConsentResponse";
 export * from "./questionResponse";
 export * from "./questionResponseQuestionType";
 export * from "./recoveryEligibilityResponse";
-export * from "./registerEventRequest";
 export * from "./registerSemesterMembersRequest";
 export * from "./registerSemesterMembersResponse";
 export * from "./registrationListResponse";

@@ -34,12 +34,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-/**
- * @nullable
- */
 export type AdminEventDetailResponseCloseReason =
-  | (typeof AdminEventDetailResponseCloseReason)[keyof typeof AdminEventDetailResponseCloseReason]
-  | null;
+  (typeof AdminEventDetailResponseCloseReason)[keyof typeof AdminEventDetailResponseCloseReason];
 
 export const AdminEventDetailResponseCloseReason = {
   CAPACITY_FULL: "CAPACITY_FULL",

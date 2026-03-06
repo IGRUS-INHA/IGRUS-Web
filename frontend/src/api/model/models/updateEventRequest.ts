@@ -53,9 +53,4 @@ export interface UpdateEventRequest {
   registrationEndAt: string;
   /** @minimum 1 */
   capacity: number;
-  /**
-   * 연결할 설문 ID (null이면 설문 미연결)
-   * @nullable
-   */
-  surveyId?: number | null;
 }

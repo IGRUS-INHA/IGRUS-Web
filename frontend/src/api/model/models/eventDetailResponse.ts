@@ -54,7 +54,6 @@ export interface EventDetailResponse {
   visibility?: EventDetailResponseVisibility;
   registrationStatus?: EventDetailResponseRegistrationStatus;
   eventStatus?: EventDetailResponseEventStatus;
-  /** @nullable */
   closeReason?: EventDetailResponseCloseReason;
   registrationType?: EventDetailResponseRegistrationType;
   isRegistrable?: boolean;
@@ -62,9 +61,4 @@ export interface EventDetailResponse {
   updatedAt?: string;
   canEdit?: boolean;
   isRegistered?: boolean;
-  /**
-   * 연결된 설문 ID (null이면 설문 미연결)
-   * @nullable
-   */
-  surveyId?: number | null;
 }
