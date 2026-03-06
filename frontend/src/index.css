@@ -1168,8 +1168,8 @@
 
 @media (max-width: 767px) {
   .hero-section {
-    padding-top: 48px;
-    padding-bottom: 48px;
+    padding-top: 32px;
+    padding-bottom: 32px;
   }
   .hero-heading {
     font-size: clamp(28px, 7vw, 36px);

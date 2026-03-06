@@ -631,10 +631,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           {isDetailLoading ? (
             <p className="text-sm text-muted-foreground">불러오는 중...</p>
           ) : detail?.description ? (
-            <MarkdownPreview
-              source={detail.description.replace(/\n/g, "  \n")}
-              className="!leading-relaxed"
-            />
+            <div className="[&_.wmde-markdown]:!text-sm [&_.wmde-markdown_*]:!text-sm">
+              <MarkdownPreview
+                source={detail.description.replace(/\n/g, "  \n")}
+                className="!leading-relaxed"
+              />
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">
               상세 설명이 없습니다.

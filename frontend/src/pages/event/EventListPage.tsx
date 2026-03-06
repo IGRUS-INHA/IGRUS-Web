@@ -179,9 +179,9 @@ export default function EventListPage() {
   const grouped = groupByMonth(events);
 
   return (
-    <div className="animate-in fade-in duration-300">
+    <div className="space-y-s6 animate-in fade-in duration-300">
       {/* Page header */}
-      <div className="mb-s6">
+      <div>
         <p className="text-xs font-bold text-primary tracking-widest mb-s1">
           EVENTS
         </p>
@@ -192,7 +192,7 @@ export default function EventListPage() {
       </div>
 
       {/* Filter tabs + action button */}
-      <div className="flex items-center gap-s2 flex-wrap mb-s6">
+      <div className="flex items-center gap-s2 flex-wrap">
         {FILTER_TABS.map((tab) => {
           const isActive = filterStatus === tab;
           const dotColor = FILTER_DOT_COLOR[tab];
