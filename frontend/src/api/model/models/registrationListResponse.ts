@@ -33,17 +33,49 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { RegistrationListResponseStatus } from './registrationListResponseStatus';
+import type { RegistrationListResponseStatus } from "./registrationListResponseStatus";
 
 export interface RegistrationListResponse {
   registrationId?: number;
-  userId?: number;
+  /**
+   * 회원 신청자의 사용자 ID (외부인 신청의 경우 null)
+   * @nullable
+   */
+  userId?: number | null;
+  /** 신청자 이름 */
   userName?: string;
-  userEmail?: string;
-  studentId?: string;
-  userGender?: string;
-  userGrade?: number;
-  userDepartment?: string;
+  /**
+   * 신청자 이메일 (외부인 신청의 경우 null)
+   * @nullable
+   */
+  userEmail?: string | null;
+  /**
+   * 학번
+   * @nullable
+   */
+  studentId?: string | null;
+  /**
+   * 성별 (외부인의 경우 null)
+   * @nullable
+   */
+  userGender?: string | null;
+  /**
+   * 학년 (외부인의 경우 null)
+   * @nullable
+   */
+  userGrade?: number | null;
+  /**
+   * 학과
+   * @nullable
+   */
+  userDepartment?: string | null;
+  /**
+   * 연락처 (외부인의 경우에만 표시)
+   * @nullable
+   */
+  phone?: string | null;
+  /** 외부인 신청 여부 */
+  isExternal?: boolean;
   status?: RegistrationListResponseStatus;
   registeredAt?: string;
 }

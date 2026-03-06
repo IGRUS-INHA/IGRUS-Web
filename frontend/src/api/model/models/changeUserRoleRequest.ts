@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { ChangeUserRoleRequestRole } from './changeUserRoleRequestRole';
+import type { ChangeUserRoleRequestRole } from "./changeUserRoleRequestRole";
 
 /**
  * 회원 권한 변경 요청

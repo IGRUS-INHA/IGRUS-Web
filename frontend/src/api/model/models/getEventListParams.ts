@@ -33,16 +33,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { GetEventListEventStatus } from './getEventListEventStatus';
-import type { GetEventListRegistrationStatus } from './getEventListRegistrationStatus';
+import type { GetEventListEventStatus } from "./getEventListEventStatus";
+import type { GetEventListRegistrationStatus } from "./getEventListRegistrationStatus";
 
 export type GetEventListParams = {
-/**
- * 행사 진행 상태 필터 (UPCOMING, ONGOING, COMPLETED, CANCELED)
- */
-eventStatus?: GetEventListEventStatus;
-/**
- * 등록 상태 필터 (NOT_STARTED, OPEN, CLOSED)
- */
-registrationStatus?: GetEventListRegistrationStatus;
+  /**
+   * 행사 진행 상태 필터 (UPCOMING, ONGOING, COMPLETED, CANCELED)
+   */
+  eventStatus?: GetEventListEventStatus;
+  /**
+   * 등록 상태 필터 (NOT_STARTED, OPEN, CLOSED)
+   */
+  registrationStatus?: GetEventListRegistrationStatus;
 };

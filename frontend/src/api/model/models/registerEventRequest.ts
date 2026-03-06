@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { SubmitAnswerRequest } from './submitAnswerRequest';
+import type { SubmitAnswerRequest } from "./submitAnswerRequest";
 
 /**
  * 행사 신청 요청. 설문 연결 행사의 경우 surveyAnswers를 포함하여 설문 응답과 행사 신청을 원자적으로 처리합니다.

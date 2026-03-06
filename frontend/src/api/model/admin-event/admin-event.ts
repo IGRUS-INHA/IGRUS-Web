@@ -33,10 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -49,486 +46,661 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 import type {
   AdminEventDetailResponse,
   AdminEventListResponse,
-  GetAdminEventListParams
-} from '.././models';
+  GetAdminEventListParams,
+} from ".././models";
 
-import { customFetch } from '../../client';
-
+import { customFetch } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 /**
  * 관리자용 행사 목록을 조회합니다. visibility, 행사 진행 상태, 등록 상태별 필터링이 가능합니다. OPERATOR 이상 권한 필요.
  * @summary 관리자 행사 목록 조회
  */
 export type getAdminEventListResponse200 = {
-  data: AdminEventListResponse[]
-  status: 200
-}
+  data: AdminEventListResponse[];
+  status: 200;
+};
 
 export type getAdminEventListResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type getAdminEventListResponse403 = {
-  data: void
-  status: 403
-}
-    
-export type getAdminEventListResponseSuccess = (getAdminEventListResponse200) & {
+  data: void;
+  status: 403;
+};
+
+export type getAdminEventListResponseSuccess = getAdminEventListResponse200 & {
   headers: Headers;
 };
-export type getAdminEventListResponseError = (getAdminEventListResponse401 | getAdminEventListResponse403) & {
+export type getAdminEventListResponseError = (
+  | getAdminEventListResponse401
+  | getAdminEventListResponse403
+) & {
   headers: Headers;
 };
 
-export type getAdminEventListResponse = (getAdminEventListResponseSuccess | getAdminEventListResponseError)
+export type getAdminEventListResponse =
+  | getAdminEventListResponseSuccess
+  | getAdminEventListResponseError;
 
-export const getGetAdminEventListUrl = (params?: GetAdminEventListParams,) => {
+export const getGetAdminEventListUrl = (params?: GetAdminEventListParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+      normalizedParams.append(key, value === null ? "null" : value.toString());
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/admin/events?${stringifiedParams}` : `/api/v1/admin/events`
-}
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/events?${stringifiedParams}`
+    : `/api/v1/admin/events`;
+};
 
-export const getAdminEventList = async (params?: GetAdminEventListParams, options?: RequestInit): Promise<getAdminEventListResponse> => {
-  
-  return customFetch<getAdminEventListResponse>(getGetAdminEventListUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
+export const getAdminEventList = async (
+  params?: GetAdminEventListParams,
+  options?: RequestInit,
+): Promise<getAdminEventListResponse> => {
+  return customFetch<getAdminEventListResponse>(
+    getGetAdminEventListUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
 
-
-
-
-
-export const getGetAdminEventListQueryKey = (params?: GetAdminEventListParams,) => {
-    return [
-    `/api/v1/admin/events`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-    
-export const getGetAdminEventListQueryOptions = <TData = Awaited<ReturnType<typeof getAdminEventList>>, TError = void>(params?: GetAdminEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetAdminEventListQueryKey = (
+  params?: GetAdminEventListParams,
 ) => {
+  return [`/api/v1/admin/events`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getGetAdminEventListQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminEventList>>,
+  TError = void,
+>(
+  params?: GetAdminEventListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminEventList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetAdminEventListQueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAdminEventListQueryKey(params);
 
-  
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAdminEventList>>
+  > = ({ signal }) => getAdminEventList(params, { signal, ...requestOptions });
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminEventList>>> = ({ signal }) => getAdminEventList(params, { signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminEventList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-      
+export type GetAdminEventListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminEventList>>
+>;
+export type GetAdminEventListQueryError = void;
 
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminEventList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetAdminEventListQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminEventList>>>
-export type GetAdminEventListQueryError = void
-
-
-export function useGetAdminEventList<TData = Awaited<ReturnType<typeof getAdminEventList>>, TError = void>(
- params: undefined |  GetAdminEventListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEventList>>, TError, TData>> & Pick<
+export function useGetAdminEventList<
+  TData = Awaited<ReturnType<typeof getAdminEventList>>,
+  TError = void,
+>(
+  params: undefined | GetAdminEventListParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminEventList>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminEventList>>,
           TError,
           Awaited<ReturnType<typeof getAdminEventList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminEventList<TData = Awaited<ReturnType<typeof getAdminEventList>>, TError = void>(
- params?: GetAdminEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEventList>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAdminEventList<
+  TData = Awaited<ReturnType<typeof getAdminEventList>>,
+  TError = void,
+>(
+  params?: GetAdminEventListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminEventList>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminEventList>>,
           TError,
           Awaited<ReturnType<typeof getAdminEventList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminEventList<TData = Awaited<ReturnType<typeof getAdminEventList>>, TError = void>(
- params?: GetAdminEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAdminEventList<
+  TData = Awaited<ReturnType<typeof getAdminEventList>>,
+  TError = void,
+>(
+  params?: GetAdminEventListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminEventList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary 관리자 행사 목록 조회
  */
 
-export function useGetAdminEventList<TData = Awaited<ReturnType<typeof getAdminEventList>>, TError = void>(
- params?: GetAdminEventListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEventList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetAdminEventList<
+  TData = Awaited<ReturnType<typeof getAdminEventList>>,
+  TError = void,
+>(
+  params?: GetAdminEventListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminEventList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetAdminEventListQueryOptions(params, options);
 
-  const queryOptions = getGetAdminEventListQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
 
 /**
  * 관리자용 행사 상세 정보를 조회합니다. visibility 무관하게 모든 행사를 조회할 수 있습니다. OPERATOR 이상 권한 필요.
  * @summary 관리자 행사 상세 조회
  */
 export type getAdminEventResponse200 = {
-  data: AdminEventDetailResponse
-  status: 200
-}
+  data: AdminEventDetailResponse;
+  status: 200;
+};
 
 export type getAdminEventResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type getAdminEventResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type getAdminEventResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type getAdminEventResponseSuccess = (getAdminEventResponse200) & {
-  headers: Headers;
-};
-export type getAdminEventResponseError = (getAdminEventResponse401 | getAdminEventResponse403 | getAdminEventResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type getAdminEventResponse = (getAdminEventResponseSuccess | getAdminEventResponseError)
+export type getAdminEventResponseSuccess = getAdminEventResponse200 & {
+  headers: Headers;
+};
+export type getAdminEventResponseError = (
+  | getAdminEventResponse401
+  | getAdminEventResponse403
+  | getAdminEventResponse404
+) & {
+  headers: Headers;
+};
 
-export const getGetAdminEventUrl = (eventId: number,) => {
+export type getAdminEventResponse =
+  | getAdminEventResponseSuccess
+  | getAdminEventResponseError;
 
+export const getGetAdminEventUrl = (eventId: number) => {
+  return `/api/v1/admin/events/${eventId}`;
+};
 
-  
-
-  return `/api/v1/admin/events/${eventId}`
-}
-
-export const getAdminEvent = async (eventId: number, options?: RequestInit): Promise<getAdminEventResponse> => {
-  
-  return customFetch<getAdminEventResponse>(getGetAdminEventUrl(eventId),
-  {      
+export const getAdminEvent = async (
+  eventId: number,
+  options?: RequestInit,
+): Promise<getAdminEventResponse> => {
+  return customFetch<getAdminEventResponse>(getGetAdminEventUrl(eventId), {
     ...options,
-    method: 'GET'
-    
-    
-  }
-);}
+    method: "GET",
+  });
+};
 
+export const getGetAdminEventQueryKey = (eventId: number) => {
+  return [`/api/v1/admin/events/${eventId}`] as const;
+};
 
-
-
-
-export const getGetAdminEventQueryKey = (eventId: number,) => {
-    return [
-    `/api/v1/admin/events/${eventId}`
-    ] as const;
-    }
-
-    
-export const getGetAdminEventQueryOptions = <TData = Awaited<ReturnType<typeof getAdminEvent>>, TError = void>(eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetAdminEventQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminEvent>>,
+  TError = void,
+>(
+  eventId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetAdminEventQueryKey(eventId);
 
-  const queryKey =  queryOptions?.queryKey ?? getGetAdminEventQueryKey(eventId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminEvent>>> = ({
+    signal,
+  }) => getAdminEvent(eventId, { signal, ...requestOptions });
 
-  
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!eventId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminEvent>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminEvent>>> = ({ signal }) => getAdminEvent(eventId, { signal, ...requestOptions });
+export type GetAdminEventQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminEvent>>
+>;
+export type GetAdminEventQueryError = void;
 
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(eventId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetAdminEventQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminEvent>>>
-export type GetAdminEventQueryError = void
-
-
-export function useGetAdminEvent<TData = Awaited<ReturnType<typeof getAdminEvent>>, TError = void>(
- eventId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>> & Pick<
+export function useGetAdminEvent<
+  TData = Awaited<ReturnType<typeof getAdminEvent>>,
+  TError = void,
+>(
+  eventId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminEvent>>,
           TError,
           Awaited<ReturnType<typeof getAdminEvent>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminEvent<TData = Awaited<ReturnType<typeof getAdminEvent>>, TError = void>(
- eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAdminEvent<
+  TData = Awaited<ReturnType<typeof getAdminEvent>>,
+  TError = void,
+>(
+  eventId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminEvent>>,
           TError,
           Awaited<ReturnType<typeof getAdminEvent>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminEvent<TData = Awaited<ReturnType<typeof getAdminEvent>>, TError = void>(
- eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAdminEvent<
+  TData = Awaited<ReturnType<typeof getAdminEvent>>,
+  TError = void,
+>(
+  eventId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 /**
  * @summary 관리자 행사 상세 조회
  */
 
-export function useGetAdminEvent<TData = Awaited<ReturnType<typeof getAdminEvent>>, TError = void>(
- eventId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetAdminEvent<
+  TData = Awaited<ReturnType<typeof getAdminEvent>>,
+  TError = void,
+>(
+  eventId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAdminEvent>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetAdminEventQueryOptions(eventId, options);
 
-  const queryOptions = getGetAdminEventQueryOptions(eventId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
 
 /**
  * 행사를 공개합니다. UNPUBLISHED -> PUBLISHED. body 없이 호출합니다. OPERATOR 이상 권한 필요.
  * @summary 행사 공개
  */
 export type publishEventResponse200 = {
-  data: AdminEventDetailResponse
-  status: 200
-}
+  data: AdminEventDetailResponse;
+  status: 200;
+};
 
 export type publishEventResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type publishEventResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type publishEventResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type publishEventResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type publishEventResponseSuccess = (publishEventResponse200) & {
-  headers: Headers;
-};
-export type publishEventResponseError = (publishEventResponse400 | publishEventResponse401 | publishEventResponse403 | publishEventResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type publishEventResponse = (publishEventResponseSuccess | publishEventResponseError)
+export type publishEventResponseSuccess = publishEventResponse200 & {
+  headers: Headers;
+};
+export type publishEventResponseError = (
+  | publishEventResponse400
+  | publishEventResponse401
+  | publishEventResponse403
+  | publishEventResponse404
+) & {
+  headers: Headers;
+};
 
-export const getPublishEventUrl = (eventId: number,) => {
+export type publishEventResponse =
+  | publishEventResponseSuccess
+  | publishEventResponseError;
 
+export const getPublishEventUrl = (eventId: number) => {
+  return `/api/v1/admin/events/${eventId}/publish`;
+};
 
-  
-
-  return `/api/v1/admin/events/${eventId}/publish`
-}
-
-export const publishEvent = async (eventId: number, options?: RequestInit): Promise<publishEventResponse> => {
-  
-  return customFetch<publishEventResponse>(getPublishEventUrl(eventId),
-  {      
+export const publishEvent = async (
+  eventId: number,
+  options?: RequestInit,
+): Promise<publishEventResponse> => {
+  return customFetch<publishEventResponse>(getPublishEventUrl(eventId), {
     ...options,
-    method: 'POST'
-    
-    
-  }
-);}
+    method: "POST",
+  });
+};
 
+export const getPublishEventMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof publishEvent>>,
+    TError,
+    { eventId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof publishEvent>>,
+  TError,
+  { eventId: number },
+  TContext
+> => {
+  const mutationKey = ["publishEvent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof publishEvent>>,
+    { eventId: number }
+  > = (props) => {
+    const { eventId } = props ?? {};
 
+    return publishEvent(eventId, requestOptions);
+  };
 
-export const getPublishEventMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof publishEvent>>, TError,{eventId: number}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['publishEvent'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type PublishEventMutationResult = NonNullable<
+  Awaited<ReturnType<typeof publishEvent>>
+>;
 
-      
+export type PublishEventMutationError = void;
 
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publishEvent>>, {eventId: number}> = (props) => {
-          const {eventId} = props ?? {};
-
-          return  publishEvent(eventId,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type PublishEventMutationResult = NonNullable<Awaited<ReturnType<typeof publishEvent>>>
-    
-    export type PublishEventMutationError = void
-
-    /**
+/**
  * @summary 행사 공개
  */
-export const usePublishEvent = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof publishEvent>>,
-        TError,
-        {eventId: number},
-        TContext
-      > => {
-      return useMutation(getPublishEventMutationOptions(options), queryClient);
-    }
-    /**
+export const usePublishEvent = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof publishEvent>>,
+      TError,
+      { eventId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof publishEvent>>,
+  TError,
+  { eventId: number },
+  TContext
+> => {
+  return useMutation(getPublishEventMutationOptions(options), queryClient);
+};
+/**
  * 행사를 비공개로 전환합니다. PUBLISHED -> UNPUBLISHED. 등록 상태가 OPEN이면 자동 마감됩니다. body 없이 호출합니다. OPERATOR 이상 권한 필요.
  * @summary 행사 비공개
  */
 export type unpublishEventResponse200 = {
-  data: AdminEventDetailResponse
-  status: 200
-}
+  data: AdminEventDetailResponse;
+  status: 200;
+};
 
 export type unpublishEventResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type unpublishEventResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type unpublishEventResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type unpublishEventResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type unpublishEventResponseSuccess = (unpublishEventResponse200) & {
-  headers: Headers;
-};
-export type unpublishEventResponseError = (unpublishEventResponse400 | unpublishEventResponse401 | unpublishEventResponse403 | unpublishEventResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type unpublishEventResponse = (unpublishEventResponseSuccess | unpublishEventResponseError)
+export type unpublishEventResponseSuccess = unpublishEventResponse200 & {
+  headers: Headers;
+};
+export type unpublishEventResponseError = (
+  | unpublishEventResponse400
+  | unpublishEventResponse401
+  | unpublishEventResponse403
+  | unpublishEventResponse404
+) & {
+  headers: Headers;
+};
 
-export const getUnpublishEventUrl = (eventId: number,) => {
+export type unpublishEventResponse =
+  | unpublishEventResponseSuccess
+  | unpublishEventResponseError;
 
+export const getUnpublishEventUrl = (eventId: number) => {
+  return `/api/v1/admin/events/${eventId}/unpublish`;
+};
 
-  
-
-  return `/api/v1/admin/events/${eventId}/unpublish`
-}
-
-export const unpublishEvent = async (eventId: number, options?: RequestInit): Promise<unpublishEventResponse> => {
-  
-  return customFetch<unpublishEventResponse>(getUnpublishEventUrl(eventId),
-  {      
+export const unpublishEvent = async (
+  eventId: number,
+  options?: RequestInit,
+): Promise<unpublishEventResponse> => {
+  return customFetch<unpublishEventResponse>(getUnpublishEventUrl(eventId), {
     ...options,
-    method: 'POST'
-    
-    
-  }
-);}
+    method: "POST",
+  });
+};
 
+export const getUnpublishEventMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unpublishEvent>>,
+    TError,
+    { eventId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unpublishEvent>>,
+  TError,
+  { eventId: number },
+  TContext
+> => {
+  const mutationKey = ["unpublishEvent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unpublishEvent>>,
+    { eventId: number }
+  > = (props) => {
+    const { eventId } = props ?? {};
 
+    return unpublishEvent(eventId, requestOptions);
+  };
 
-export const getUnpublishEventMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpublishEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof unpublishEvent>>, TError,{eventId: number}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['unpublishEvent'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type UnpublishEventMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unpublishEvent>>
+>;
 
-      
+export type UnpublishEventMutationError = void;
 
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unpublishEvent>>, {eventId: number}> = (props) => {
-          const {eventId} = props ?? {};
-
-          return  unpublishEvent(eventId,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UnpublishEventMutationResult = NonNullable<Awaited<ReturnType<typeof unpublishEvent>>>
-    
-    export type UnpublishEventMutationError = void
-
-    /**
+/**
  * @summary 행사 비공개
  */
-export const useUnpublishEvent = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpublishEvent>>, TError,{eventId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof unpublishEvent>>,
-        TError,
-        {eventId: number},
-        TContext
-      > => {
-      return useMutation(getUnpublishEventMutationOptions(options), queryClient);
-    }
-    
+export const useUnpublishEvent = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof unpublishEvent>>,
+      TError,
+      { eventId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof unpublishEvent>>,
+  TError,
+  { eventId: number },
+  TContext
+> => {
+  return useMutation(getUnpublishEventMutationOptions(options), queryClient);
+};

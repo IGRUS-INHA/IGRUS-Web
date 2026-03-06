@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { ChangeUserStatusRequestAction } from './changeUserStatusRequestAction';
+import type { ChangeUserStatusRequestAction } from "./changeUserStatusRequestAction";
 
 /**
  * 회원 상태 변경 요청

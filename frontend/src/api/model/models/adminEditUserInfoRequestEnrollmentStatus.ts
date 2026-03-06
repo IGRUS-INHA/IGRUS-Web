@@ -37,11 +37,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 재학 상태 (null이면 변경하지 않음)
  */
-export type AdminEditUserInfoRequestEnrollmentStatus = typeof AdminEditUserInfoRequestEnrollmentStatus[keyof typeof AdminEditUserInfoRequestEnrollmentStatus];
-
+export type AdminEditUserInfoRequestEnrollmentStatus =
+  (typeof AdminEditUserInfoRequestEnrollmentStatus)[keyof typeof AdminEditUserInfoRequestEnrollmentStatus];
 
 export const AdminEditUserInfoRequestEnrollmentStatus = {
-  ENROLLED: 'ENROLLED',
-  GENERAL_LEAVE: 'GENERAL_LEAVE',
-  MILITARY_LEAVE: 'MILITARY_LEAVE',
+  ENROLLED: "ENROLLED",
+  GENERAL_LEAVE: "GENERAL_LEAVE",
+  MILITARY_LEAVE: "MILITARY_LEAVE",
 } as const;

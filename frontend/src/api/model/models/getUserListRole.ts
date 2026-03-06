@@ -34,12 +34,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type GetUserListRole = typeof GetUserListRole[keyof typeof GetUserListRole];
-
+export type GetUserListRole =
+  (typeof GetUserListRole)[keyof typeof GetUserListRole];
 
 export const GetUserListRole = {
-  ASSOCIATE: 'ASSOCIATE',
-  MEMBER: 'MEMBER',
-  OPERATOR: 'OPERATOR',
-  ADMIN: 'ADMIN',
+  ASSOCIATE: "ASSOCIATE",
+  MEMBER: "MEMBER",
+  OPERATOR: "OPERATOR",
+  ADMIN: "ADMIN",
 } as const;
