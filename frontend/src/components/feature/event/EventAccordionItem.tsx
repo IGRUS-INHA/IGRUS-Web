@@ -335,7 +335,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const expandedImages = hasImage ? [event.image as string] : [];
 
   return (
-    <div className="border border-border rounded-r4 bg-card">
+    <div className="border border-border rounded-r4 bg-card overflow-hidden">
       {/* Status gradient top bar */}
       <div
         className="h-1 rounded-t-r4"
