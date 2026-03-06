@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -58,6 +59,7 @@ import {
   hasErrorCode,
 } from "@/utils/error";
 import ReasonDialog from "@/components/feature/event/ReasonDialog";
+import { cn } from "@/lib/utils";
 
 function formatShortDate(isoString?: string): string {
   if (!isoString) return "";
@@ -335,10 +337,15 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const expandedImages = hasImage ? [event.image as string] : [];
 
   return (
-    <div className="border border-border rounded-r4 bg-card overflow-hidden">
+    <div
+      className={cn(
+        "border border-border rounded-r4 bg-card overflow-hidden",
+        event.status === "CANCELED" && "opacity-60 grayscale",
+      )}
+    >
       {/* Status gradient top bar */}
       <div
-        className="h-1 rounded-t-r4"
+        className="h-1"
         style={{
           backgroundImage: `linear-gradient(to right, ${accentColor}, transparent)`,
         }}
@@ -368,7 +375,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
         <div className="flex-1 min-w-0">
           {/* Title + badges on same row */}
           <div className="flex items-start gap-s2">
-            <p className="text-xl font-bold leading-tight flex-1">
+            <p
+              className={cn(
+                "text-xl font-bold leading-tight flex-1",
+                event.status === "CANCELED" && "line-through",
+              )}
+            >
               {event.title}
             </p>
             <div className="flex flex-wrap items-center gap-s1 shrink-0 mt-0.5">
@@ -416,11 +428,20 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           </div>
         </div>
 
-        {/* Bottom-right: operator more menu + chevron */}
-        <div className="absolute bottom-s3 right-s4 flex items-center gap-s1">
-          {/* OPERATOR more menu (only when expanded) */}
-          {isExpanded && isOperator && (
-            <div className="relative" ref={moreMenuRef}>
+        {/* Bottom-right: chevron */}
+        <div className="absolute bottom-s3 right-s4">
+          <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted text-muted-foreground">
+            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </span>
+        </div>
+      </div>
+
+      {/* Expanded body */}
+      {isExpanded && (
+        <div className="relative border-t border-border px-s6 pb-s6 pt-s4 space-y-s4">
+          {/* OPERATOR more menu — 토글 바로 아래 */}
+          {isOperator && (
+            <div className="absolute top-s2 right-s4" ref={moreMenuRef}>
               <button
                 type="button"
                 onClick={(e) => {
@@ -432,7 +453,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                 <MoreHorizontal size={18} />
               </button>
               {isMoreMenuOpen && (
-                <div className="absolute right-0 bottom-full mb-s2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200 bg-popover border-border">
+                <div className="absolute right-0 top-full mt-s2 w-48 rounded-r3 shadow-2xl border overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200 bg-popover border-border">
                   {showEdit && (
                     <button
                       type="button"
@@ -598,17 +619,6 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
               )}
             </div>
           )}
-
-          {/* Chevron */}
-          <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted text-muted-foreground">
-            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </span>
-        </div>
-      </div>
-
-      {/* Expanded body */}
-      {isExpanded && (
-        <div className="border-t border-border px-s6 pb-s6 pt-s4 space-y-s4">
           {/* Image thumbnails (only if event has image) */}
           {expandedImages.length > 0 && (
             <div className="flex gap-s3">
@@ -719,14 +729,16 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
         </div>
       )}
 
-      {/* Reason dialog */}
-      {reasonDialog && (
-        <ReasonDialog
-          title={reasonDialog.title}
-          onConfirm={reasonDialog.onConfirm}
-          onCancel={() => setReasonDialog(null)}
-        />
-      )}
+      {/* Reason dialog — grayscale 필터 영향을 피하기 위해 portal로 body에 렌더링 */}
+      {reasonDialog &&
+        createPortal(
+          <ReasonDialog
+            title={reasonDialog.title}
+            onConfirm={reasonDialog.onConfirm}
+            onCancel={() => setReasonDialog(null)}
+          />,
+          document.body,
+        )}
     </div>
   );
 }

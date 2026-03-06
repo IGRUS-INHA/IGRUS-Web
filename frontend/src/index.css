@@ -605,7 +605,6 @@
 .hero-section {
   padding-top: 80px;
   padding-bottom: 80px;
-  border-bottom: 1px solid var(--border);
   position: relative;
   overflow: hidden;
 }
@@ -617,17 +616,17 @@
   background:
     radial-gradient(
       circle at 15% 40%,
-      rgba(3, 166, 158, 0.08) 0%,
+      rgba(3, 166, 158, 0.18) 0%,
       transparent 45%
     ),
     radial-gradient(
       circle at 80% 25%,
-      rgba(23, 162, 184, 0.05) 0%,
+      rgba(23, 162, 184, 0.15) 0%,
       transparent 35%
     ),
     radial-gradient(
       circle at 65% 75%,
-      rgba(111, 66, 193, 0.04) 0%,
+      rgba(111, 66, 193, 0.14) 0%,
       transparent 35%
     );
   pointer-events: none;
@@ -637,17 +636,17 @@
   background:
     radial-gradient(
       circle at 15% 40%,
-      rgba(102, 203, 197, 0.06) 0%,
+      rgba(102, 203, 197, 0.16) 0%,
       transparent 45%
     ),
     radial-gradient(
       circle at 80% 25%,
-      rgba(91, 192, 211, 0.04) 0%,
+      rgba(91, 192, 211, 0.14) 0%,
       transparent 35%
     ),
     radial-gradient(
       circle at 65% 75%,
-      rgba(167, 139, 218, 0.03) 0%,
+      rgba(167, 139, 218, 0.13) 0%,
       transparent 35%
     );
 }
