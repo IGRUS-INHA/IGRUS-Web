@@ -587,11 +587,7 @@ function EventTimeline({
         ) : (
           <div className="event-timeline">
             {events.map((event, idx) => (
-              <Link
-                key={event.id}
-                to={`/events/${event.id}`}
-                className="timeline-item block"
-              >
+              <div key={event.id} className="timeline-item">
                 <div className="timeline-dot" />
                 <div
                   className={cn(
@@ -601,7 +597,7 @@ function EventTimeline({
                 >
                   {formatDateDot(event.eventStartAt)}
                 </div>
-                <h3 className="typo-b1 font-semibold text-foreground mb-s1 leading-snug transition-colors">
+                <h3 className="typo-b1 font-semibold text-foreground mb-s1 leading-snug">
                   {event.title}
                 </h3>
                 {event.location && (
@@ -609,7 +605,7 @@ function EventTimeline({
                     {event.location}
                   </p>
                 )}
-              </Link>
+              </div>
             ))}
           </div>
         )}
