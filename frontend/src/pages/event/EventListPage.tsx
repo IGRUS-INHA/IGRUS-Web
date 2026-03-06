@@ -1,9 +1,9 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useEvents, useAdminEvents } from "@/hooks/queries/useEvents";
-import EventCard from "@/components/feature/event/EventCard";
+import EventAccordionItem from "@/components/feature/event/EventAccordionItem";
+import EventSidebar from "@/components/feature/event/EventSidebar";
 import { useAuthStore } from "@/stores/authStore";
-import { FilterSelect } from "@/components/board/FilterSelect";
 import {
   EVENT_FILTER_STATUS,
   EVENT_FILTER_LABELS,
@@ -16,16 +16,23 @@ import type { GetAdminEventListParams } from "@/api/model/models/getAdminEventLi
 import type { Event } from "@/types/entities";
 import { isForbiddenError } from "@/utils/error";
 
+// Filter status dot colors for non-active tabs
+const FILTER_DOT_COLOR: Partial<Record<EventFilterStatus, string>> = {
+  [EVENT_FILTER_STATUS.OPEN]: "bg-success",
+  [EVENT_FILTER_STATUS.ONGOING]: "bg-primary",
+  [EVENT_FILTER_STATUS.COMPLETED]: "bg-muted-foreground",
+};
+
 function buildEventListParams(
   filterStatus: EventFilterStatus,
 ): GetEventListParams | undefined {
   switch (filterStatus) {
     case EVENT_FILTER_STATUS.ALL:
       return undefined;
-    case EVENT_FILTER_STATUS.UPCOMING:
-      return { eventStatus: "UPCOMING" };
     case EVENT_FILTER_STATUS.OPEN:
       return { registrationStatus: "OPEN" };
+    case EVENT_FILTER_STATUS.ONGOING:
+      return { eventStatus: "ONGOING" };
     case EVENT_FILTER_STATUS.COMPLETED:
       return { eventStatus: "COMPLETED" };
     default:
@@ -39,10 +46,10 @@ function buildAdminEventListParams(
   switch (filterStatus) {
     case EVENT_FILTER_STATUS.ALL:
       return undefined;
-    case EVENT_FILTER_STATUS.UPCOMING:
-      return { eventStatus: "UPCOMING" };
     case EVENT_FILTER_STATUS.OPEN:
       return { registrationStatus: "OPEN" };
+    case EVENT_FILTER_STATUS.ONGOING:
+      return { eventStatus: "ONGOING" };
     case EVENT_FILTER_STATUS.COMPLETED:
       return { eventStatus: "COMPLETED" };
     default:
@@ -74,21 +81,42 @@ function mapToEvent(
   };
 }
 
+function groupByMonth(events: Event[]): [string, Event[]][] {
+  const map = new Map<string, Event[]>();
+  for (const event of events) {
+    const d = new Date(event.startDate ?? event.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(event);
+  }
+  // Descending order (newest month first)
+  return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
+}
+
+function formatMonthLabel(key: string): string {
+  const [year, month] = key.split("-");
+  return `${year}년 ${Number(month)}월`;
+}
+
+const FILTER_TABS = [
+  EVENT_FILTER_STATUS.ALL,
+  EVENT_FILTER_STATUS.OPEN,
+  EVENT_FILTER_STATUS.ONGOING,
+  EVENT_FILTER_STATUS.COMPLETED,
+] as const;
+
 export default function EventListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const user = useAuthStore((state) => state.user);
 
-  // OPERATOR 이상만 행사 작성/관리 가능
   const isOperator = user?.role === "OPERATOR" || user?.role === "ADMIN";
 
-  // URL 쿼리 파라미터에서 검색어 및 필터 상태 읽기
-  const searchKeyword = searchParams.get("search");
   const filterStatus =
     (searchParams.get("status") as EventFilterStatus) ??
     EVENT_FILTER_STATUS.ALL;
 
-  // 행사 목록 조회: OPERATOR+는 admin API (비공개 포함), 일반 사용자는 public API
+  // Filtered queries
   const publicQuery = useEvents(
     buildEventListParams(filterStatus),
     !isOperator,
@@ -97,11 +125,9 @@ export default function EventListPage() {
     buildAdminEventListParams(filterStatus),
     isOperator,
   );
-
   const activeQuery = isOperator ? adminQuery : publicQuery;
   const { isLoading, error } = activeQuery;
 
-  // Extract and transform API response to Event type
   const eventListData =
     (activeQuery.data?.data as unknown as (
       | EventListResponse
@@ -109,8 +135,18 @@ export default function EventListPage() {
     )[]) ?? [];
   const events: Event[] = eventListData.map(mapToEvent);
 
-  // 필터 변경 핸들러
-  const handleFilterChange = (newStatus: string) => {
+  // Unfiltered queries (for sidebar statistics)
+  const allPublicQuery = useEvents(undefined, !isOperator);
+  const allAdminQuery = useAdminEvents(undefined, isOperator);
+  const allQuery = isOperator ? allAdminQuery : allPublicQuery;
+  const allEventListData =
+    (allQuery.data?.data as unknown as (
+      | EventListResponse
+      | AdminEventListResponse
+    )[]) ?? [];
+  const allEvents: Event[] = allEventListData.map(mapToEvent);
+
+  const handleFilterChange = (newStatus: EventFilterStatus) => {
     const newParams = new URLSearchParams(searchParams);
     if (newStatus === EVENT_FILTER_STATUS.ALL) {
       newParams.delete("status");
@@ -120,7 +156,6 @@ export default function EventListPage() {
     setSearchParams(newParams);
   };
 
-  // 403 에러 체크 (권한 없음)
   const isForbidden = isForbiddenError(error);
 
   if (isLoading) {
@@ -141,47 +176,95 @@ export default function EventListPage() {
     );
   }
 
+  const grouped = groupByMonth(events);
+
   return (
-    <div className="space-y-s8 animate-in fade-in duration-300">
-      {/* Header with Filter and Actions */}
-      <div className="flex items-center justify-end gap-s4 border-b border-border pb-s4">
-        <FilterSelect
-          value={filterStatus}
-          onChange={handleFilterChange}
-          options={EVENT_FILTER_LABELS}
-        />
+    <div className="animate-in fade-in duration-300">
+      {/* Page header */}
+      <div className="mb-s6">
+        <p className="text-xs font-bold text-primary tracking-widest mb-s1">
+          EVENTS
+        </p>
+        <h1 className="text-3xl font-bold mb-s2">IGRUS 행사</h1>
+        <p className="text-sm text-muted-foreground">
+          세미나, 해커톤, MT, 워크숍 등 다양한 동아리 행사를 확인하세요.
+        </p>
+      </div>
+
+      {/* Filter tabs + action button */}
+      <div className="flex items-center gap-s2 flex-wrap mb-s6">
+        {FILTER_TABS.map((tab) => {
+          const isActive = filterStatus === tab;
+          const dotColor = FILTER_DOT_COLOR[tab];
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => handleFilterChange(tab)}
+              className={`flex items-center gap-s2 px-s4 py-s2 rounded-full text-sm font-bold transition cursor-pointer ${
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border text-foreground hover:bg-muted"
+              }`}
+            >
+              {dotColor && !isActive && (
+                <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+              )}
+              {EVENT_FILTER_LABELS[tab]}
+            </button>
+          );
+        })}
+
         {isOperator && (
           <button
             type="button"
             onClick={() => navigate("/events/write")}
-            className="flex items-center gap-s2 px-s4 py-s2 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 cursor-pointer"
+            className="ml-auto flex items-center gap-s2 px-s4 py-s2 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 cursor-pointer"
           >
             <Plus size={16} /> 행사 등록
           </button>
         )}
       </div>
 
-      {/* Event List */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-s8">
-        {events?.map((event) => (
-          <div
-            key={event.id}
-            onClick={() => navigate(`/events/${event.id}`)}
-            className="cursor-pointer"
-          >
-            <EventCard event={event} />
-          </div>
-        ))}
-      </div>
+      {/* Main layout: event list + sidebar */}
+      <div className="flex gap-s8 items-start">
+        {/* Event list */}
+        <div className="flex-1 min-w-0">
+          {grouped.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              {filterStatus !== EVENT_FILTER_STATUS.ALL
+                ? "검색 조건에 맞는 행사가 없습니다."
+                : "등록된 행사가 없습니다."}
+            </div>
+          ) : (
+            /* 단일 타임라인 컨테이너: 모든 월 그룹을 하나의 선이 관통 */
+            <div className="relative space-y-s6">
+              {/* 연속 세로선 */}
+              <div className="absolute left-[15px] top-3 -bottom-8 w-0.5 bg-primary/40 rounded-full" />
 
-      {/* Empty State */}
-      {events?.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          {filterStatus !== EVENT_FILTER_STATUS.ALL || searchKeyword
-            ? "검색 조건에 맞는 행사가 없습니다."
-            : "등록된 행사가 없습니다."}
+              {grouped.map(([monthKey, monthEvents]) => (
+                <div key={monthKey}>
+                  {/* Month header pill — z-10으로 선 위에 올라탐 */}
+                  <div className="relative z-10 inline-flex items-center gap-s2 px-s3 py-s1 rounded-full bg-primary text-white text-xs font-bold mb-s3">
+                    <span className="w-2 h-2 rounded-full bg-white" />
+                    {formatMonthLabel(monthKey)}
+                  </div>
+
+                  {/* Event rows */}
+                  <div className="ml-s5 space-y-s3">
+                    {monthEvents.map((event) => (
+                      <EventAccordionItem key={event.id} event={event} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Right sidebar (desktop only) */}
+        <EventSidebar events={allEvents} />
+      </div>
     </div>
   );
 }
