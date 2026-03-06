@@ -186,7 +186,7 @@ export default function EventDetailPage() {
   const handleApply = () => {
     if (!eventId) return;
     applyEvent(
-      { eventId: Number(eventId), data: {} },
+      { eventId: Number(eventId) },
       {
         onError: (error: unknown) => {
           if (isEventAlreadyRegistered(error)) {
