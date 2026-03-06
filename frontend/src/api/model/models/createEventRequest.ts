@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { CreateEventRequestRegistrationType } from "./createEventRequestRegistrationType";
+import type { CreateEventRequestRegistrationType } from './createEventRequestRegistrationType';
 
 export interface CreateEventRequest {
   /**
@@ -55,4 +55,9 @@ export interface CreateEventRequest {
   /** @minimum 1 */
   capacity: number;
   registrationType: CreateEventRequestRegistrationType;
+  /**
+   * 연결할 설문 ID (null이면 설문 미연결)
+   * @nullable
+   */
+  surveyId?: number | null;
 }

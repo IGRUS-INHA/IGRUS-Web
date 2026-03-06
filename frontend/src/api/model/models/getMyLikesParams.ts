@@ -35,18 +35,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type GetMyLikesParams = {
-  /**
-   * 페이지 번호 (0부터 시작)
-   * @minimum 0
-   */
-  page?: number;
-  /**
-   * 페이지당 항목 수
-   * @minimum 1
-   */
-  size?: number;
-  /**
-   * 정렬 조건. 여러 정렬은 sort를 여러 번 지정합니다. (sort=createdAt,DESC&sort=id,ASC)
-   */
-  sort?: string[];
+/**
+ * 페이지 번호 (0부터 시작)
+ * @minimum 0
+ */
+page?: number;
+/**
+ * 페이지당 항목 수
+ * @minimum 1
+ */
+size?: number;
+/**
+ * 정렬 조건. 여러 정렬은 sort를 여러 번 지정합니다. (sort=createdAt,DESC&sort=id,ASC)
+ */
+sort?: string[];
 };

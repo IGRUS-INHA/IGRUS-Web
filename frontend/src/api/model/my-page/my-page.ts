@@ -33,7 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -46,8 +49,8 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   BookmarkedPostPageResponse,
@@ -65,1803 +68,1350 @@ import type {
   MyProfileResponse,
   MyRegistrationResponse,
   UpdateStudentIdRequest,
-  WithdrawRequest,
-} from ".././models";
+  WithdrawRequest
+} from '.././models';
 
-import { customFetch } from "../../client";
+import { customFetch } from '../../client';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * 인증 코드를 확인하고 이메일을 변경합니다
  * @summary 이메일 변경 인증
  */
 export type verifyEmailChangeResponse200 = {
-  data: void;
-  status: 200;
-};
+  data: void
+  status: 200
+}
 
 export type verifyEmailChangeResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type verifyEmailChangeResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type verifyEmailChangeResponse409 = {
-  data: void;
-  status: 409;
-};
+  data: void
+  status: 409
+}
 
 export type verifyEmailChangeResponse429 = {
-  data: void;
-  status: 429;
-};
-
-export type verifyEmailChangeResponseSuccess = verifyEmailChangeResponse200 & {
+  data: void
+  status: 429
+}
+    
+export type verifyEmailChangeResponseSuccess = (verifyEmailChangeResponse200) & {
   headers: Headers;
 };
-export type verifyEmailChangeResponseError = (
-  | verifyEmailChangeResponse400
-  | verifyEmailChangeResponse401
-  | verifyEmailChangeResponse409
-  | verifyEmailChangeResponse429
-) & {
+export type verifyEmailChangeResponseError = (verifyEmailChangeResponse400 | verifyEmailChangeResponse401 | verifyEmailChangeResponse409 | verifyEmailChangeResponse429) & {
   headers: Headers;
 };
 
-export type verifyEmailChangeResponse =
-  | verifyEmailChangeResponseSuccess
-  | verifyEmailChangeResponseError;
+export type verifyEmailChangeResponse = (verifyEmailChangeResponseSuccess | verifyEmailChangeResponseError)
 
 export const getVerifyEmailChangeUrl = () => {
-  return `/api/v1/mypage/email/verify`;
-};
 
-export const verifyEmailChange = async (
-  emailVerificationRequest: EmailVerificationRequest,
-  options?: RequestInit,
-): Promise<verifyEmailChangeResponse> => {
-  return customFetch<verifyEmailChangeResponse>(getVerifyEmailChangeUrl(), {
+
+  
+
+  return `/api/v1/mypage/email/verify`
+}
+
+export const verifyEmailChange = async (emailVerificationRequest: EmailVerificationRequest, options?: RequestInit): Promise<verifyEmailChangeResponse> => {
+  
+  return customFetch<verifyEmailChangeResponse>(getVerifyEmailChangeUrl(),
+  {      
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(emailVerificationRequest),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      emailVerificationRequest,)
+  }
+);}
 
-export const getVerifyEmailChangeMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof verifyEmailChange>>,
-    TError,
-    { data: EmailVerificationRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof verifyEmailChange>>,
-  TError,
-  { data: EmailVerificationRequest },
-  TContext
-> => {
-  const mutationKey = ["verifyEmailChange"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof verifyEmailChange>>,
-    { data: EmailVerificationRequest }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return verifyEmailChange(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getVerifyEmailChangeMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyEmailChange>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyEmailChange>>, TError,{data: EmailVerificationRequest}, TContext> => {
 
-export type VerifyEmailChangeMutationResult = NonNullable<
-  Awaited<ReturnType<typeof verifyEmailChange>>
->;
-export type VerifyEmailChangeMutationBody = EmailVerificationRequest;
-export type VerifyEmailChangeMutationError = void;
+const mutationKey = ['verifyEmailChange'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyEmailChange>>, {data: EmailVerificationRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifyEmailChange(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyEmailChangeMutationResult = NonNullable<Awaited<ReturnType<typeof verifyEmailChange>>>
+    export type VerifyEmailChangeMutationBody = EmailVerificationRequest
+    export type VerifyEmailChangeMutationError = void
+
+    /**
  * @summary 이메일 변경 인증
  */
-export const useVerifyEmailChange = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof verifyEmailChange>>,
-      TError,
-      { data: EmailVerificationRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof verifyEmailChange>>,
-  TError,
-  { data: EmailVerificationRequest },
-  TContext
-> => {
-  return useMutation(getVerifyEmailChangeMutationOptions(options), queryClient);
-};
-/**
+export const useVerifyEmailChange = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyEmailChange>>, TError,{data: EmailVerificationRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof verifyEmailChange>>,
+        TError,
+        {data: EmailVerificationRequest},
+        TContext
+      > => {
+      return useMutation(getVerifyEmailChangeMutationOptions(options), queryClient);
+    }
+    /**
  * 비밀번호 확인 후 새 이메일로 인증 코드를 발송합니다
  * @summary 이메일 변경 요청
  */
 export type requestEmailChangeResponse200 = {
-  data: void;
-  status: 200;
-};
+  data: void
+  status: 200
+}
 
 export type requestEmailChangeResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type requestEmailChangeResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type requestEmailChangeResponse409 = {
-  data: void;
-  status: 409;
+  data: void
+  status: 409
+}
+    
+export type requestEmailChangeResponseSuccess = (requestEmailChangeResponse200) & {
+  headers: Headers;
 };
-
-export type requestEmailChangeResponseSuccess =
-  requestEmailChangeResponse200 & {
-    headers: Headers;
-  };
-export type requestEmailChangeResponseError = (
-  | requestEmailChangeResponse400
-  | requestEmailChangeResponse401
-  | requestEmailChangeResponse409
-) & {
+export type requestEmailChangeResponseError = (requestEmailChangeResponse400 | requestEmailChangeResponse401 | requestEmailChangeResponse409) & {
   headers: Headers;
 };
 
-export type requestEmailChangeResponse =
-  | requestEmailChangeResponseSuccess
-  | requestEmailChangeResponseError;
+export type requestEmailChangeResponse = (requestEmailChangeResponseSuccess | requestEmailChangeResponseError)
 
 export const getRequestEmailChangeUrl = () => {
-  return `/api/v1/mypage/email/change-request`;
-};
 
-export const requestEmailChange = async (
-  changeEmailRequest: ChangeEmailRequest,
-  options?: RequestInit,
-): Promise<requestEmailChangeResponse> => {
-  return customFetch<requestEmailChangeResponse>(getRequestEmailChangeUrl(), {
+
+  
+
+  return `/api/v1/mypage/email/change-request`
+}
+
+export const requestEmailChange = async (changeEmailRequest: ChangeEmailRequest, options?: RequestInit): Promise<requestEmailChangeResponse> => {
+  
+  return customFetch<requestEmailChangeResponse>(getRequestEmailChangeUrl(),
+  {      
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(changeEmailRequest),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      changeEmailRequest,)
+  }
+);}
 
-export const getRequestEmailChangeMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof requestEmailChange>>,
-    TError,
-    { data: ChangeEmailRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof requestEmailChange>>,
-  TError,
-  { data: ChangeEmailRequest },
-  TContext
-> => {
-  const mutationKey = ["requestEmailChange"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof requestEmailChange>>,
-    { data: ChangeEmailRequest }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return requestEmailChange(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getRequestEmailChangeMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestEmailChange>>, TError,{data: ChangeEmailRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestEmailChange>>, TError,{data: ChangeEmailRequest}, TContext> => {
 
-export type RequestEmailChangeMutationResult = NonNullable<
-  Awaited<ReturnType<typeof requestEmailChange>>
->;
-export type RequestEmailChangeMutationBody = ChangeEmailRequest;
-export type RequestEmailChangeMutationError = void;
+const mutationKey = ['requestEmailChange'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestEmailChange>>, {data: ChangeEmailRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestEmailChange(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestEmailChangeMutationResult = NonNullable<Awaited<ReturnType<typeof requestEmailChange>>>
+    export type RequestEmailChangeMutationBody = ChangeEmailRequest
+    export type RequestEmailChangeMutationError = void
+
+    /**
  * @summary 이메일 변경 요청
  */
-export const useRequestEmailChange = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof requestEmailChange>>,
-      TError,
-      { data: ChangeEmailRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof requestEmailChange>>,
-  TError,
-  { data: ChangeEmailRequest },
-  TContext
-> => {
-  return useMutation(
-    getRequestEmailChangeMutationOptions(options),
-    queryClient,
-  );
-};
-/**
+export const useRequestEmailChange = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestEmailChange>>, TError,{data: ChangeEmailRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestEmailChange>>,
+        TError,
+        {data: ChangeEmailRequest},
+        TContext
+      > => {
+      return useMutation(getRequestEmailChangeMutationOptions(options), queryClient);
+    }
+    /**
  * 임시 학번을 실제 학번으로 변경합니다. 임시 학번 사용자만 가능합니다.
  * @summary 학번 변경
  */
 export type updateStudentIdResponse200 = {
-  data: void;
-  status: 200;
-};
+  data: void
+  status: 200
+}
 
 export type updateStudentIdResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type updateStudentIdResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type updateStudentIdResponse409 = {
-  data: void;
-  status: 409;
-};
-
-export type updateStudentIdResponseSuccess = updateStudentIdResponse200 & {
+  data: void
+  status: 409
+}
+    
+export type updateStudentIdResponseSuccess = (updateStudentIdResponse200) & {
   headers: Headers;
 };
-export type updateStudentIdResponseError = (
-  | updateStudentIdResponse400
-  | updateStudentIdResponse401
-  | updateStudentIdResponse409
-) & {
+export type updateStudentIdResponseError = (updateStudentIdResponse400 | updateStudentIdResponse401 | updateStudentIdResponse409) & {
   headers: Headers;
 };
 
-export type updateStudentIdResponse =
-  | updateStudentIdResponseSuccess
-  | updateStudentIdResponseError;
+export type updateStudentIdResponse = (updateStudentIdResponseSuccess | updateStudentIdResponseError)
 
 export const getUpdateStudentIdUrl = () => {
-  return `/api/v1/mypage/student-id`;
-};
 
-export const updateStudentId = async (
-  updateStudentIdRequest: UpdateStudentIdRequest,
-  options?: RequestInit,
-): Promise<updateStudentIdResponse> => {
-  return customFetch<updateStudentIdResponse>(getUpdateStudentIdUrl(), {
+
+  
+
+  return `/api/v1/mypage/student-id`
+}
+
+export const updateStudentId = async (updateStudentIdRequest: UpdateStudentIdRequest, options?: RequestInit): Promise<updateStudentIdResponse> => {
+  
+  return customFetch<updateStudentIdResponse>(getUpdateStudentIdUrl(),
+  {      
     ...options,
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(updateStudentIdRequest),
-  });
-};
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateStudentIdRequest,)
+  }
+);}
 
-export const getUpdateStudentIdMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateStudentId>>,
-    TError,
-    { data: UpdateStudentIdRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof updateStudentId>>,
-  TError,
-  { data: UpdateStudentIdRequest },
-  TContext
-> => {
-  const mutationKey = ["updateStudentId"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof updateStudentId>>,
-    { data: UpdateStudentIdRequest }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return updateStudentId(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getUpdateStudentIdMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStudentId>>, TError,{data: UpdateStudentIdRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateStudentId>>, TError,{data: UpdateStudentIdRequest}, TContext> => {
 
-export type UpdateStudentIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof updateStudentId>>
->;
-export type UpdateStudentIdMutationBody = UpdateStudentIdRequest;
-export type UpdateStudentIdMutationError = void;
+const mutationKey = ['updateStudentId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateStudentId>>, {data: UpdateStudentIdRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateStudentId(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateStudentIdMutationResult = NonNullable<Awaited<ReturnType<typeof updateStudentId>>>
+    export type UpdateStudentIdMutationBody = UpdateStudentIdRequest
+    export type UpdateStudentIdMutationError = void
+
+    /**
  * @summary 학번 변경
  */
-export const useUpdateStudentId = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof updateStudentId>>,
-      TError,
-      { data: UpdateStudentIdRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof updateStudentId>>,
-  TError,
-  { data: UpdateStudentIdRequest },
-  TContext
-> => {
-  return useMutation(getUpdateStudentIdMutationOptions(options), queryClient);
-};
-/**
+export const useUpdateStudentId = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStudentId>>, TError,{data: UpdateStudentIdRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateStudentId>>,
+        TError,
+        {data: UpdateStudentIdRequest},
+        TContext
+      > => {
+      return useMutation(getUpdateStudentIdMutationOptions(options), queryClient);
+    }
+    /**
  * 비밀번호 확인 후 전화번호를 변경합니다
  * @summary 전화번호 변경
  */
 export type changePhoneNumberResponse200 = {
-  data: void;
-  status: 200;
-};
+  data: void
+  status: 200
+}
 
 export type changePhoneNumberResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type changePhoneNumberResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type changePhoneNumberResponse409 = {
-  data: void;
-  status: 409;
-};
-
-export type changePhoneNumberResponseSuccess = changePhoneNumberResponse200 & {
+  data: void
+  status: 409
+}
+    
+export type changePhoneNumberResponseSuccess = (changePhoneNumberResponse200) & {
   headers: Headers;
 };
-export type changePhoneNumberResponseError = (
-  | changePhoneNumberResponse400
-  | changePhoneNumberResponse401
-  | changePhoneNumberResponse409
-) & {
+export type changePhoneNumberResponseError = (changePhoneNumberResponse400 | changePhoneNumberResponse401 | changePhoneNumberResponse409) & {
   headers: Headers;
 };
 
-export type changePhoneNumberResponse =
-  | changePhoneNumberResponseSuccess
-  | changePhoneNumberResponseError;
+export type changePhoneNumberResponse = (changePhoneNumberResponseSuccess | changePhoneNumberResponseError)
 
 export const getChangePhoneNumberUrl = () => {
-  return `/api/v1/mypage/phone`;
-};
 
-export const changePhoneNumber = async (
-  changePhoneNumberRequest: ChangePhoneNumberRequest,
-  options?: RequestInit,
-): Promise<changePhoneNumberResponse> => {
-  return customFetch<changePhoneNumberResponse>(getChangePhoneNumberUrl(), {
+
+  
+
+  return `/api/v1/mypage/phone`
+}
+
+export const changePhoneNumber = async (changePhoneNumberRequest: ChangePhoneNumberRequest, options?: RequestInit): Promise<changePhoneNumberResponse> => {
+  
+  return customFetch<changePhoneNumberResponse>(getChangePhoneNumberUrl(),
+  {      
     ...options,
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(changePhoneNumberRequest),
-  });
-};
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      changePhoneNumberRequest,)
+  }
+);}
 
-export const getChangePhoneNumberMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof changePhoneNumber>>,
-    TError,
-    { data: ChangePhoneNumberRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof changePhoneNumber>>,
-  TError,
-  { data: ChangePhoneNumberRequest },
-  TContext
-> => {
-  const mutationKey = ["changePhoneNumber"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof changePhoneNumber>>,
-    { data: ChangePhoneNumberRequest }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return changePhoneNumber(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getChangePhoneNumberMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePhoneNumber>>, TError,{data: ChangePhoneNumberRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changePhoneNumber>>, TError,{data: ChangePhoneNumberRequest}, TContext> => {
 
-export type ChangePhoneNumberMutationResult = NonNullable<
-  Awaited<ReturnType<typeof changePhoneNumber>>
->;
-export type ChangePhoneNumberMutationBody = ChangePhoneNumberRequest;
-export type ChangePhoneNumberMutationError = void;
+const mutationKey = ['changePhoneNumber'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePhoneNumber>>, {data: ChangePhoneNumberRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  changePhoneNumber(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangePhoneNumberMutationResult = NonNullable<Awaited<ReturnType<typeof changePhoneNumber>>>
+    export type ChangePhoneNumberMutationBody = ChangePhoneNumberRequest
+    export type ChangePhoneNumberMutationError = void
+
+    /**
  * @summary 전화번호 변경
  */
-export const useChangePhoneNumber = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof changePhoneNumber>>,
-      TError,
-      { data: ChangePhoneNumberRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof changePhoneNumber>>,
-  TError,
-  { data: ChangePhoneNumberRequest },
-  TContext
-> => {
-  return useMutation(getChangePhoneNumberMutationOptions(options), queryClient);
-};
-/**
+export const useChangePhoneNumber = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePhoneNumber>>, TError,{data: ChangePhoneNumberRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changePhoneNumber>>,
+        TError,
+        {data: ChangePhoneNumberRequest},
+        TContext
+      > => {
+      return useMutation(getChangePhoneNumberMutationOptions(options), queryClient);
+    }
+    /**
  * 현재 비밀번호 확인 후 새 비밀번호로 변경합니다
  * @summary 비밀번호 변경
  */
 export type changeMyPasswordResponse200 = {
-  data: void;
-  status: 200;
-};
+  data: void
+  status: 200
+}
 
 export type changeMyPasswordResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type changeMyPasswordResponse401 = {
-  data: void;
-  status: 401;
-};
-
-export type changeMyPasswordResponseSuccess = changeMyPasswordResponse200 & {
+  data: void
+  status: 401
+}
+    
+export type changeMyPasswordResponseSuccess = (changeMyPasswordResponse200) & {
   headers: Headers;
 };
-export type changeMyPasswordResponseError = (
-  | changeMyPasswordResponse400
-  | changeMyPasswordResponse401
-) & {
+export type changeMyPasswordResponseError = (changeMyPasswordResponse400 | changeMyPasswordResponse401) & {
   headers: Headers;
 };
 
-export type changeMyPasswordResponse =
-  | changeMyPasswordResponseSuccess
-  | changeMyPasswordResponseError;
+export type changeMyPasswordResponse = (changeMyPasswordResponseSuccess | changeMyPasswordResponseError)
 
 export const getChangeMyPasswordUrl = () => {
-  return `/api/v1/mypage/password`;
-};
 
-export const changeMyPassword = async (
-  changePasswordRequest: ChangePasswordRequest,
-  options?: RequestInit,
-): Promise<changeMyPasswordResponse> => {
-  return customFetch<changeMyPasswordResponse>(getChangeMyPasswordUrl(), {
+
+  
+
+  return `/api/v1/mypage/password`
+}
+
+export const changeMyPassword = async (changePasswordRequest: ChangePasswordRequest, options?: RequestInit): Promise<changeMyPasswordResponse> => {
+  
+  return customFetch<changeMyPasswordResponse>(getChangeMyPasswordUrl(),
+  {      
     ...options,
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(changePasswordRequest),
-  });
-};
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      changePasswordRequest,)
+  }
+);}
 
-export const getChangeMyPasswordMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof changeMyPassword>>,
-    TError,
-    { data: ChangePasswordRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof changeMyPassword>>,
-  TError,
-  { data: ChangePasswordRequest },
-  TContext
-> => {
-  const mutationKey = ["changeMyPassword"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof changeMyPassword>>,
-    { data: ChangePasswordRequest }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return changeMyPassword(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getChangeMyPasswordMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeMyPassword>>, TError,{data: ChangePasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeMyPassword>>, TError,{data: ChangePasswordRequest}, TContext> => {
 
-export type ChangeMyPasswordMutationResult = NonNullable<
-  Awaited<ReturnType<typeof changeMyPassword>>
->;
-export type ChangeMyPasswordMutationBody = ChangePasswordRequest;
-export type ChangeMyPasswordMutationError = void;
+const mutationKey = ['changeMyPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeMyPassword>>, {data: ChangePasswordRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  changeMyPassword(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangeMyPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changeMyPassword>>>
+    export type ChangeMyPasswordMutationBody = ChangePasswordRequest
+    export type ChangeMyPasswordMutationError = void
+
+    /**
  * @summary 비밀번호 변경
  */
-export const useChangeMyPassword = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof changeMyPassword>>,
-      TError,
-      { data: ChangePasswordRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof changeMyPassword>>,
-  TError,
-  { data: ChangePasswordRequest },
-  TContext
-> => {
-  return useMutation(getChangeMyPasswordMutationOptions(options), queryClient);
-};
-/**
+export const useChangeMyPassword = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeMyPassword>>, TError,{data: ChangePasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changeMyPassword>>,
+        TError,
+        {data: ChangePasswordRequest},
+        TContext
+      > => {
+      return useMutation(getChangeMyPasswordMutationOptions(options), queryClient);
+    }
+    /**
  * 내가 신청한 행사 목록을 조회합니다
  * @summary 내 행사 신청 목록 조회
  */
 export type getMyRegistrationsResponse200 = {
-  data: MyRegistrationResponse[];
-  status: 200;
-};
+  data: MyRegistrationResponse[]
+  status: 200
+}
 
 export type getMyRegistrationsResponse401 = {
-  data: void;
-  status: 401;
+  data: void
+  status: 401
+}
+    
+export type getMyRegistrationsResponseSuccess = (getMyRegistrationsResponse200) & {
+  headers: Headers;
 };
-
-export type getMyRegistrationsResponseSuccess =
-  getMyRegistrationsResponse200 & {
-    headers: Headers;
-  };
-export type getMyRegistrationsResponseError = getMyRegistrationsResponse401 & {
+export type getMyRegistrationsResponseError = (getMyRegistrationsResponse401) & {
   headers: Headers;
 };
 
-export type getMyRegistrationsResponse =
-  | getMyRegistrationsResponseSuccess
-  | getMyRegistrationsResponseError;
+export type getMyRegistrationsResponse = (getMyRegistrationsResponseSuccess | getMyRegistrationsResponseError)
 
 export const getGetMyRegistrationsUrl = () => {
-  return `/api/v1/mypage/registrations`;
-};
 
-export const getMyRegistrations = async (
-  options?: RequestInit,
-): Promise<getMyRegistrationsResponse> => {
-  return customFetch<getMyRegistrationsResponse>(getGetMyRegistrationsUrl(), {
+
+  
+
+  return `/api/v1/mypage/registrations`
+}
+
+export const getMyRegistrations = async ( options?: RequestInit): Promise<getMyRegistrationsResponse> => {
+  
+  return customFetch<getMyRegistrationsResponse>(getGetMyRegistrationsUrl(),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
 
 export const getGetMyRegistrationsQueryKey = () => {
-  return [`/api/v1/mypage/registrations`] as const;
-};
+    return [
+    `/api/v1/mypage/registrations`
+    ] as const;
+    }
 
-export const getGetMyRegistrationsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyRegistrations>>,
-  TError = void,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<
-      Awaited<ReturnType<typeof getMyRegistrations>>,
-      TError,
-      TData
-    >
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+    
+export const getGetMyRegistrationsQueryOptions = <TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyRegistrationsQueryKey();
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getMyRegistrations>>
-  > = ({ signal }) => getMyRegistrations({ signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMyRegistrationsQueryKey();
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyRegistrations>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetMyRegistrationsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyRegistrations>>
->;
-export type GetMyRegistrationsQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyRegistrations>>> = ({ signal }) => getMyRegistrations({ signal, ...requestOptions });
 
-export function useGetMyRegistrations<
-  TData = Awaited<ReturnType<typeof getMyRegistrations>>,
-  TError = void,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMyRegistrations>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyRegistrationsQueryResult = NonNullable<Awaited<ReturnType<typeof getMyRegistrations>>>
+export type GetMyRegistrationsQueryError = void
+
+
+export function useGetMyRegistrations<TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyRegistrations>>,
           TError,
           Awaited<ReturnType<typeof getMyRegistrations>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyRegistrations<
-  TData = Awaited<ReturnType<typeof getMyRegistrations>>,
-  TError = void,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMyRegistrations>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyRegistrations<TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyRegistrations>>,
           TError,
           Awaited<ReturnType<typeof getMyRegistrations>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyRegistrations<
-  TData = Awaited<ReturnType<typeof getMyRegistrations>>,
-  TError = void,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMyRegistrations>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyRegistrations<TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 내 행사 신청 목록 조회
  */
 
-export function useGetMyRegistrations<
-  TData = Awaited<ReturnType<typeof getMyRegistrations>>,
-  TError = void,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMyRegistrations>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMyRegistrationsQueryOptions(options);
+export function useGetMyRegistrations<TData = Awaited<ReturnType<typeof getMyRegistrations>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyRegistrations>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMyRegistrationsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * 로그인한 사용자의 프로필 정보를 조회합니다
  * @summary 내 프로필 조회
  */
 export type getMyProfileResponse200 = {
-  data: MyProfileResponse;
-  status: 200;
-};
+  data: MyProfileResponse
+  status: 200
+}
 
 export type getMyProfileResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type getMyProfileResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type getMyProfileResponseSuccess = getMyProfileResponse200 & {
+  data: void
+  status: 404
+}
+    
+export type getMyProfileResponseSuccess = (getMyProfileResponse200) & {
   headers: Headers;
 };
-export type getMyProfileResponseError = (
-  | getMyProfileResponse401
-  | getMyProfileResponse404
-) & {
+export type getMyProfileResponseError = (getMyProfileResponse401 | getMyProfileResponse404) & {
   headers: Headers;
 };
 
-export type getMyProfileResponse =
-  | getMyProfileResponseSuccess
-  | getMyProfileResponseError;
+export type getMyProfileResponse = (getMyProfileResponseSuccess | getMyProfileResponseError)
 
 export const getGetMyProfileUrl = () => {
-  return `/api/v1/mypage/profile`;
-};
 
-export const getMyProfile = async (
-  options?: RequestInit,
-): Promise<getMyProfileResponse> => {
-  return customFetch<getMyProfileResponse>(getGetMyProfileUrl(), {
+
+  
+
+  return `/api/v1/mypage/profile`
+}
+
+export const getMyProfile = async ( options?: RequestInit): Promise<getMyProfileResponse> => {
+  
+  return customFetch<getMyProfileResponse>(getGetMyProfileUrl(),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
 
 export const getGetMyProfileQueryKey = () => {
-  return [`/api/v1/mypage/profile`] as const;
-};
+    return [
+    `/api/v1/mypage/profile`
+    ] as const;
+    }
 
-export const getGetMyProfileQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = void,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+    
+export const getGetMyProfileQueryOptions = <TData = Awaited<ReturnType<typeof getMyProfile>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyProfileQueryKey();
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyProfile>>> = ({
-    signal,
-  }) => getMyProfile({ signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMyProfileQueryKey();
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyProfile>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetMyProfileQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyProfile>>
->;
-export type GetMyProfileQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyProfile>>> = ({ signal }) => getMyProfile({ signal, ...requestOptions });
 
-export function useGetMyProfile<
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = void,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getMyProfile>>>
+export type GetMyProfileQueryError = void
+
+
+export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyProfile>>,
           TError,
           Awaited<ReturnType<typeof getMyProfile>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyProfile<
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = void,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyProfile>>,
           TError,
           Awaited<ReturnType<typeof getMyProfile>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyProfile<
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = void,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 내 프로필 조회
  */
 
-export function useGetMyProfile<
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = void,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMyProfileQueryOptions(options);
+export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMyProfileQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * 내가 작성한 게시글 목록을 페이징하여 조회합니다
  * @summary 내 게시글 목록 조회
  */
 export type getMyPostsResponse200 = {
-  data: MyPostPageResponse;
-  status: 200;
-};
+  data: MyPostPageResponse
+  status: 200
+}
 
 export type getMyPostsResponse401 = {
-  data: void;
-  status: 401;
-};
-
-export type getMyPostsResponseSuccess = getMyPostsResponse200 & {
+  data: void
+  status: 401
+}
+    
+export type getMyPostsResponseSuccess = (getMyPostsResponse200) & {
   headers: Headers;
 };
-export type getMyPostsResponseError = getMyPostsResponse401 & {
+export type getMyPostsResponseError = (getMyPostsResponse401) & {
   headers: Headers;
 };
 
-export type getMyPostsResponse =
-  | getMyPostsResponseSuccess
-  | getMyPostsResponseError;
+export type getMyPostsResponse = (getMyPostsResponseSuccess | getMyPostsResponseError)
 
-export const getGetMyPostsUrl = (params?: GetMyPostsParams) => {
+export const getGetMyPostsUrl = (params?: GetMyPostsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/v1/mypage/posts?${stringifiedParams}`
-    : `/api/v1/mypage/posts`;
-};
+  return stringifiedParams.length > 0 ? `/api/v1/mypage/posts?${stringifiedParams}` : `/api/v1/mypage/posts`
+}
 
-export const getMyPosts = async (
-  params?: GetMyPostsParams,
-  options?: RequestInit,
-): Promise<getMyPostsResponse> => {
-  return customFetch<getMyPostsResponse>(getGetMyPostsUrl(params), {
+export const getMyPosts = async (params?: GetMyPostsParams, options?: RequestInit): Promise<getMyPostsResponse> => {
+  
+  return customFetch<getMyPostsResponse>(getGetMyPostsUrl(params),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetMyPostsQueryKey = (params?: GetMyPostsParams) => {
-  return [`/api/v1/mypage/posts`, ...(params ? [params] : [])] as const;
-};
 
-export const getGetMyPostsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyPosts>>,
-  TError = void,
->(
-  params?: GetMyPostsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+
+
+
+export const getGetMyPostsQueryKey = (params?: GetMyPostsParams,) => {
+    return [
+    `/api/v1/mypage/posts`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getGetMyPostsQueryOptions = <TData = Awaited<ReturnType<typeof getMyPosts>>, TError = void>(params?: GetMyPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyPostsQueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyPosts>>> = ({
-    signal,
-  }) => getMyPosts(params, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMyPostsQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyPosts>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetMyPostsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyPosts>>
->;
-export type GetMyPostsQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyPosts>>> = ({ signal }) => getMyPosts(params, { signal, ...requestOptions });
 
-export function useGetMyPosts<
-  TData = Awaited<ReturnType<typeof getMyPosts>>,
-  TError = void,
->(
-  params: undefined | GetMyPostsParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyPostsQueryResult = NonNullable<Awaited<ReturnType<typeof getMyPosts>>>
+export type GetMyPostsQueryError = void
+
+
+export function useGetMyPosts<TData = Awaited<ReturnType<typeof getMyPosts>>, TError = void>(
+ params: undefined |  GetMyPostsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyPosts>>,
           TError,
           Awaited<ReturnType<typeof getMyPosts>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyPosts<
-  TData = Awaited<ReturnType<typeof getMyPosts>>,
-  TError = void,
->(
-  params?: GetMyPostsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyPosts<TData = Awaited<ReturnType<typeof getMyPosts>>, TError = void>(
+ params?: GetMyPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyPosts>>,
           TError,
           Awaited<ReturnType<typeof getMyPosts>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyPosts<
-  TData = Awaited<ReturnType<typeof getMyPosts>>,
-  TError = void,
->(
-  params?: GetMyPostsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyPosts<TData = Awaited<ReturnType<typeof getMyPosts>>, TError = void>(
+ params?: GetMyPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 내 게시글 목록 조회
  */
 
-export function useGetMyPosts<
-  TData = Awaited<ReturnType<typeof getMyPosts>>,
-  TError = void,
->(
-  params?: GetMyPostsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMyPostsQueryOptions(params, options);
+export function useGetMyPosts<TData = Awaited<ReturnType<typeof getMyPosts>>, TError = void>(
+ params?: GetMyPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPosts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMyPostsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * 내가 좋아요한 게시글 목록을 페이징하여 조회합니다
  * @summary 좋아요한 게시글 목록 조회
  */
 export type getMyLikes1Response200 = {
-  data: LikedPostPageResponse;
-  status: 200;
-};
+  data: LikedPostPageResponse
+  status: 200
+}
 
 export type getMyLikes1Response401 = {
-  data: void;
-  status: 401;
-};
-
-export type getMyLikes1ResponseSuccess = getMyLikes1Response200 & {
+  data: void
+  status: 401
+}
+    
+export type getMyLikes1ResponseSuccess = (getMyLikes1Response200) & {
   headers: Headers;
 };
-export type getMyLikes1ResponseError = getMyLikes1Response401 & {
+export type getMyLikes1ResponseError = (getMyLikes1Response401) & {
   headers: Headers;
 };
 
-export type getMyLikes1Response =
-  | getMyLikes1ResponseSuccess
-  | getMyLikes1ResponseError;
+export type getMyLikes1Response = (getMyLikes1ResponseSuccess | getMyLikes1ResponseError)
 
-export const getGetMyLikes1Url = (params?: GetMyLikes1Params) => {
+export const getGetMyLikes1Url = (params?: GetMyLikes1Params,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/v1/mypage/likes?${stringifiedParams}`
-    : `/api/v1/mypage/likes`;
-};
+  return stringifiedParams.length > 0 ? `/api/v1/mypage/likes?${stringifiedParams}` : `/api/v1/mypage/likes`
+}
 
-export const getMyLikes1 = async (
-  params?: GetMyLikes1Params,
-  options?: RequestInit,
-): Promise<getMyLikes1Response> => {
-  return customFetch<getMyLikes1Response>(getGetMyLikes1Url(params), {
+export const getMyLikes1 = async (params?: GetMyLikes1Params, options?: RequestInit): Promise<getMyLikes1Response> => {
+  
+  return customFetch<getMyLikes1Response>(getGetMyLikes1Url(params),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetMyLikes1QueryKey = (params?: GetMyLikes1Params) => {
-  return [`/api/v1/mypage/likes`, ...(params ? [params] : [])] as const;
-};
 
-export const getGetMyLikes1QueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyLikes1>>,
-  TError = void,
->(
-  params?: GetMyLikes1Params,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+
+
+
+export const getGetMyLikes1QueryKey = (params?: GetMyLikes1Params,) => {
+    return [
+    `/api/v1/mypage/likes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getGetMyLikes1QueryOptions = <TData = Awaited<ReturnType<typeof getMyLikes1>>, TError = void>(params?: GetMyLikes1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyLikes1QueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyLikes1>>> = ({
-    signal,
-  }) => getMyLikes1(params, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMyLikes1QueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyLikes1>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetMyLikes1QueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyLikes1>>
->;
-export type GetMyLikes1QueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyLikes1>>> = ({ signal }) => getMyLikes1(params, { signal, ...requestOptions });
 
-export function useGetMyLikes1<
-  TData = Awaited<ReturnType<typeof getMyLikes1>>,
-  TError = void,
->(
-  params: undefined | GetMyLikes1Params,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyLikes1QueryResult = NonNullable<Awaited<ReturnType<typeof getMyLikes1>>>
+export type GetMyLikes1QueryError = void
+
+
+export function useGetMyLikes1<TData = Awaited<ReturnType<typeof getMyLikes1>>, TError = void>(
+ params: undefined |  GetMyLikes1Params, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyLikes1>>,
           TError,
           Awaited<ReturnType<typeof getMyLikes1>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyLikes1<
-  TData = Awaited<ReturnType<typeof getMyLikes1>>,
-  TError = void,
->(
-  params?: GetMyLikes1Params,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyLikes1<TData = Awaited<ReturnType<typeof getMyLikes1>>, TError = void>(
+ params?: GetMyLikes1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyLikes1>>,
           TError,
           Awaited<ReturnType<typeof getMyLikes1>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyLikes1<
-  TData = Awaited<ReturnType<typeof getMyLikes1>>,
-  TError = void,
->(
-  params?: GetMyLikes1Params,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyLikes1<TData = Awaited<ReturnType<typeof getMyLikes1>>, TError = void>(
+ params?: GetMyLikes1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 좋아요한 게시글 목록 조회
  */
 
-export function useGetMyLikes1<
-  TData = Awaited<ReturnType<typeof getMyLikes1>>,
-  TError = void,
->(
-  params?: GetMyLikes1Params,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMyLikes1QueryOptions(params, options);
+export function useGetMyLikes1<TData = Awaited<ReturnType<typeof getMyLikes1>>, TError = void>(
+ params?: GetMyLikes1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLikes1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMyLikes1QueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * 내가 작성한 댓글 목록을 페이징하여 조회합니다
  * @summary 내 댓글 목록 조회
  */
 export type getMyCommentsResponse200 = {
-  data: MyCommentPageResponse;
-  status: 200;
-};
+  data: MyCommentPageResponse
+  status: 200
+}
 
 export type getMyCommentsResponse401 = {
-  data: void;
-  status: 401;
-};
-
-export type getMyCommentsResponseSuccess = getMyCommentsResponse200 & {
+  data: void
+  status: 401
+}
+    
+export type getMyCommentsResponseSuccess = (getMyCommentsResponse200) & {
   headers: Headers;
 };
-export type getMyCommentsResponseError = getMyCommentsResponse401 & {
+export type getMyCommentsResponseError = (getMyCommentsResponse401) & {
   headers: Headers;
 };
 
-export type getMyCommentsResponse =
-  | getMyCommentsResponseSuccess
-  | getMyCommentsResponseError;
+export type getMyCommentsResponse = (getMyCommentsResponseSuccess | getMyCommentsResponseError)
 
-export const getGetMyCommentsUrl = (params?: GetMyCommentsParams) => {
+export const getGetMyCommentsUrl = (params?: GetMyCommentsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/v1/mypage/comments?${stringifiedParams}`
-    : `/api/v1/mypage/comments`;
-};
+  return stringifiedParams.length > 0 ? `/api/v1/mypage/comments?${stringifiedParams}` : `/api/v1/mypage/comments`
+}
 
-export const getMyComments = async (
-  params?: GetMyCommentsParams,
-  options?: RequestInit,
-): Promise<getMyCommentsResponse> => {
-  return customFetch<getMyCommentsResponse>(getGetMyCommentsUrl(params), {
+export const getMyComments = async (params?: GetMyCommentsParams, options?: RequestInit): Promise<getMyCommentsResponse> => {
+  
+  return customFetch<getMyCommentsResponse>(getGetMyCommentsUrl(params),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetMyCommentsQueryKey = (params?: GetMyCommentsParams) => {
-  return [`/api/v1/mypage/comments`, ...(params ? [params] : [])] as const;
-};
 
-export const getGetMyCommentsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyComments>>,
-  TError = void,
->(
-  params?: GetMyCommentsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+
+
+
+export const getGetMyCommentsQueryKey = (params?: GetMyCommentsParams,) => {
+    return [
+    `/api/v1/mypage/comments`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getGetMyCommentsQueryOptions = <TData = Awaited<ReturnType<typeof getMyComments>>, TError = void>(params?: GetMyCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyCommentsQueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyComments>>> = ({
-    signal,
-  }) => getMyComments(params, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMyCommentsQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyComments>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetMyCommentsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyComments>>
->;
-export type GetMyCommentsQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyComments>>> = ({ signal }) => getMyComments(params, { signal, ...requestOptions });
 
-export function useGetMyComments<
-  TData = Awaited<ReturnType<typeof getMyComments>>,
-  TError = void,
->(
-  params: undefined | GetMyCommentsParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyCommentsQueryResult = NonNullable<Awaited<ReturnType<typeof getMyComments>>>
+export type GetMyCommentsQueryError = void
+
+
+export function useGetMyComments<TData = Awaited<ReturnType<typeof getMyComments>>, TError = void>(
+ params: undefined |  GetMyCommentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyComments>>,
           TError,
           Awaited<ReturnType<typeof getMyComments>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyComments<
-  TData = Awaited<ReturnType<typeof getMyComments>>,
-  TError = void,
->(
-  params?: GetMyCommentsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyComments<TData = Awaited<ReturnType<typeof getMyComments>>, TError = void>(
+ params?: GetMyCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyComments>>,
           TError,
           Awaited<ReturnType<typeof getMyComments>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyComments<
-  TData = Awaited<ReturnType<typeof getMyComments>>,
-  TError = void,
->(
-  params?: GetMyCommentsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyComments<TData = Awaited<ReturnType<typeof getMyComments>>, TError = void>(
+ params?: GetMyCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 내 댓글 목록 조회
  */
 
-export function useGetMyComments<
-  TData = Awaited<ReturnType<typeof getMyComments>>,
-  TError = void,
->(
-  params?: GetMyCommentsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMyCommentsQueryOptions(params, options);
+export function useGetMyComments<TData = Awaited<ReturnType<typeof getMyComments>>, TError = void>(
+ params?: GetMyCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyComments>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMyCommentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * 내가 북마크한 게시글 목록을 페이징하여 조회합니다
  * @summary 북마크한 게시글 목록 조회
  */
 export type getMyBookmarks1Response200 = {
-  data: BookmarkedPostPageResponse;
-  status: 200;
-};
+  data: BookmarkedPostPageResponse
+  status: 200
+}
 
 export type getMyBookmarks1Response401 = {
-  data: void;
-  status: 401;
-};
-
-export type getMyBookmarks1ResponseSuccess = getMyBookmarks1Response200 & {
+  data: void
+  status: 401
+}
+    
+export type getMyBookmarks1ResponseSuccess = (getMyBookmarks1Response200) & {
   headers: Headers;
 };
-export type getMyBookmarks1ResponseError = getMyBookmarks1Response401 & {
+export type getMyBookmarks1ResponseError = (getMyBookmarks1Response401) & {
   headers: Headers;
 };
 
-export type getMyBookmarks1Response =
-  | getMyBookmarks1ResponseSuccess
-  | getMyBookmarks1ResponseError;
+export type getMyBookmarks1Response = (getMyBookmarks1ResponseSuccess | getMyBookmarks1ResponseError)
 
-export const getGetMyBookmarks1Url = (params?: GetMyBookmarks1Params) => {
+export const getGetMyBookmarks1Url = (params?: GetMyBookmarks1Params,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/v1/mypage/bookmarks?${stringifiedParams}`
-    : `/api/v1/mypage/bookmarks`;
-};
+  return stringifiedParams.length > 0 ? `/api/v1/mypage/bookmarks?${stringifiedParams}` : `/api/v1/mypage/bookmarks`
+}
 
-export const getMyBookmarks1 = async (
-  params?: GetMyBookmarks1Params,
-  options?: RequestInit,
-): Promise<getMyBookmarks1Response> => {
-  return customFetch<getMyBookmarks1Response>(getGetMyBookmarks1Url(params), {
+export const getMyBookmarks1 = async (params?: GetMyBookmarks1Params, options?: RequestInit): Promise<getMyBookmarks1Response> => {
+  
+  return customFetch<getMyBookmarks1Response>(getGetMyBookmarks1Url(params),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetMyBookmarks1QueryKey = (params?: GetMyBookmarks1Params) => {
-  return [`/api/v1/mypage/bookmarks`, ...(params ? [params] : [])] as const;
-};
 
-export const getGetMyBookmarks1QueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyBookmarks1>>,
-  TError = void,
->(
-  params?: GetMyBookmarks1Params,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMyBookmarks1>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+
+
+
+export const getGetMyBookmarks1QueryKey = (params?: GetMyBookmarks1Params,) => {
+    return [
+    `/api/v1/mypage/bookmarks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getGetMyBookmarks1QueryOptions = <TData = Awaited<ReturnType<typeof getMyBookmarks1>>, TError = void>(params?: GetMyBookmarks1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyBookmarks1QueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBookmarks1>>> = ({
-    signal,
-  }) => getMyBookmarks1(params, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetMyBookmarks1QueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyBookmarks1>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetMyBookmarks1QueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyBookmarks1>>
->;
-export type GetMyBookmarks1QueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBookmarks1>>> = ({ signal }) => getMyBookmarks1(params, { signal, ...requestOptions });
 
-export function useGetMyBookmarks1<
-  TData = Awaited<ReturnType<typeof getMyBookmarks1>>,
-  TError = void,
->(
-  params: undefined | GetMyBookmarks1Params,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMyBookmarks1>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks1>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyBookmarks1QueryResult = NonNullable<Awaited<ReturnType<typeof getMyBookmarks1>>>
+export type GetMyBookmarks1QueryError = void
+
+
+export function useGetMyBookmarks1<TData = Awaited<ReturnType<typeof getMyBookmarks1>>, TError = void>(
+ params: undefined |  GetMyBookmarks1Params, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks1>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyBookmarks1>>,
           TError,
           Awaited<ReturnType<typeof getMyBookmarks1>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyBookmarks1<
-  TData = Awaited<ReturnType<typeof getMyBookmarks1>>,
-  TError = void,
->(
-  params?: GetMyBookmarks1Params,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMyBookmarks1>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyBookmarks1<TData = Awaited<ReturnType<typeof getMyBookmarks1>>, TError = void>(
+ params?: GetMyBookmarks1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks1>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyBookmarks1>>,
           TError,
           Awaited<ReturnType<typeof getMyBookmarks1>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetMyBookmarks1<
-  TData = Awaited<ReturnType<typeof getMyBookmarks1>>,
-  TError = void,
->(
-  params?: GetMyBookmarks1Params,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMyBookmarks1>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyBookmarks1<TData = Awaited<ReturnType<typeof getMyBookmarks1>>, TError = void>(
+ params?: GetMyBookmarks1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 북마크한 게시글 목록 조회
  */
 
-export function useGetMyBookmarks1<
-  TData = Awaited<ReturnType<typeof getMyBookmarks1>>,
-  TError = void,
->(
-  params?: GetMyBookmarks1Params,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getMyBookmarks1>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetMyBookmarks1QueryOptions(params, options);
+export function useGetMyBookmarks1<TData = Awaited<ReturnType<typeof getMyBookmarks1>>, TError = void>(
+ params?: GetMyBookmarks1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookmarks1>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetMyBookmarks1QueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * 비밀번호 확인 후 회원 탈퇴를 진행합니다. 탈퇴 후 5일 이내 복구 가능합니다.
  * @summary 회원 탈퇴
  */
 export type withdrawResponse200 = {
-  data: void;
-  status: 200;
-};
+  data: void
+  status: 200
+}
 
 export type withdrawResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type withdrawResponse401 = {
-  data: void;
-  status: 401;
-};
-
-export type withdrawResponseSuccess = withdrawResponse200 & {
+  data: void
+  status: 401
+}
+    
+export type withdrawResponseSuccess = (withdrawResponse200) & {
   headers: Headers;
 };
-export type withdrawResponseError = (
-  | withdrawResponse400
-  | withdrawResponse401
-) & {
+export type withdrawResponseError = (withdrawResponse400 | withdrawResponse401) & {
   headers: Headers;
 };
 
-export type withdrawResponse = withdrawResponseSuccess | withdrawResponseError;
+export type withdrawResponse = (withdrawResponseSuccess | withdrawResponseError)
 
 export const getWithdrawUrl = () => {
-  return `/api/v1/mypage/account`;
-};
 
-export const withdraw = async (
-  withdrawRequest: WithdrawRequest,
-  options?: RequestInit,
-): Promise<withdrawResponse> => {
-  return customFetch<withdrawResponse>(getWithdrawUrl(), {
+
+  
+
+  return `/api/v1/mypage/account`
+}
+
+export const withdraw = async (withdrawRequest: WithdrawRequest, options?: RequestInit): Promise<withdrawResponse> => {
+  
+  return customFetch<withdrawResponse>(getWithdrawUrl(),
+  {      
     ...options,
-    method: "DELETE",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(withdrawRequest),
-  });
-};
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      withdrawRequest,)
+  }
+);}
 
-export const getWithdrawMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof withdraw>>,
-    TError,
-    { data: WithdrawRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof withdraw>>,
-  TError,
-  { data: WithdrawRequest },
-  TContext
-> => {
-  const mutationKey = ["withdraw"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof withdraw>>,
-    { data: WithdrawRequest }
-  > = (props) => {
-    const { data } = props ?? {};
 
-    return withdraw(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getWithdrawMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdraw>>, TError,{data: WithdrawRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof withdraw>>, TError,{data: WithdrawRequest}, TContext> => {
 
-export type WithdrawMutationResult = NonNullable<
-  Awaited<ReturnType<typeof withdraw>>
->;
-export type WithdrawMutationBody = WithdrawRequest;
-export type WithdrawMutationError = void;
+const mutationKey = ['withdraw'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof withdraw>>, {data: WithdrawRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  withdraw(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WithdrawMutationResult = NonNullable<Awaited<ReturnType<typeof withdraw>>>
+    export type WithdrawMutationBody = WithdrawRequest
+    export type WithdrawMutationError = void
+
+    /**
  * @summary 회원 탈퇴
  */
-export const useWithdraw = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof withdraw>>,
-      TError,
-      { data: WithdrawRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof withdraw>>,
-  TError,
-  { data: WithdrawRequest },
-  TContext
-> => {
-  return useMutation(getWithdrawMutationOptions(options), queryClient);
-};
+export const useWithdraw = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdraw>>, TError,{data: WithdrawRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof withdraw>>,
+        TError,
+        {data: WithdrawRequest},
+        TContext
+      > => {
+      return useMutation(getWithdrawMutationOptions(options), queryClient);
+    }
+    

@@ -34,13 +34,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type RejectedAssociateInfoResponseWishesItem =
-  (typeof RejectedAssociateInfoResponseWishesItem)[keyof typeof RejectedAssociateInfoResponseWishesItem];
+export type RejectedAssociateInfoResponseWishesItem = typeof RejectedAssociateInfoResponseWishesItem[keyof typeof RejectedAssociateInfoResponseWishesItem];
+
 
 export const RejectedAssociateInfoResponseWishesItem = {
-  NETWORKING: "NETWORKING",
-  STUDY: "STUDY",
-  PROJECT: "PROJECT",
-  CAREER: "CAREER",
-  PROGRAMMING: "PROGRAMMING",
+  NETWORKING: 'NETWORKING',
+  STUDY: 'STUDY',
+  PROJECT: 'PROJECT',
+  CAREER: 'CAREER',
+  PROGRAMMING: 'PROGRAMMING',
 } as const;

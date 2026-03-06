@@ -33,8 +33,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { UserRoleHistoryResponseNewRole } from "./userRoleHistoryResponseNewRole";
-import type { UserRoleHistoryResponsePreviousRole } from "./userRoleHistoryResponsePreviousRole";
+import type { UserRoleHistoryResponseNewRole } from './userRoleHistoryResponseNewRole';
+import type { UserRoleHistoryResponsePreviousRole } from './userRoleHistoryResponsePreviousRole';
 
 /**
  * 권한 변경 이력 응답

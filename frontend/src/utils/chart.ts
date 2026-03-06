@@ -34,7 +34,7 @@ const GENDER_COLORS: Record<string, string> = {
 };
 
 export function aggregateByGender(
-  registrations: Array<{ userGender?: string }>,
+  registrations: Array<{ userGender?: string | null }>,
 ): ChartDataItem[] {
   const counts: Record<string, number> = {};
   for (const r of registrations) {
@@ -53,7 +53,7 @@ export function aggregateByGender(
 }
 
 export function aggregateByGrade(
-  registrations: Array<{ userGrade?: number }>,
+  registrations: Array<{ userGrade?: number | null }>,
 ): ChartDataItem[] {
   const counts: Record<string, number> = {};
   for (const r of registrations) {
@@ -74,7 +74,7 @@ export function aggregateByGrade(
 }
 
 export function aggregateByDepartment(
-  registrations: Array<{ userDepartment?: string }>,
+  registrations: Array<{ userDepartment?: string | null }>,
 ): ChartDataItem[] {
   const counts: Record<string, number> = {};
   for (const r of registrations) {

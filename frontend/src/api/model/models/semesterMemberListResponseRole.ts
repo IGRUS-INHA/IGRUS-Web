@@ -37,12 +37,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 등록 시점 역할
  */
-export type SemesterMemberListResponseRole =
-  (typeof SemesterMemberListResponseRole)[keyof typeof SemesterMemberListResponseRole];
+export type SemesterMemberListResponseRole = typeof SemesterMemberListResponseRole[keyof typeof SemesterMemberListResponseRole];
+
 
 export const SemesterMemberListResponseRole = {
-  ASSOCIATE: "ASSOCIATE",
-  MEMBER: "MEMBER",
-  OPERATOR: "OPERATOR",
-  ADMIN: "ADMIN",
+  ASSOCIATE: 'ASSOCIATE',
+  MEMBER: 'MEMBER',
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
 } as const;

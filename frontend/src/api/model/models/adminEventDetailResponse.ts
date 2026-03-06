@@ -33,11 +33,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AdminEventDetailResponseCloseReason } from "./adminEventDetailResponseCloseReason";
-import type { AdminEventDetailResponseEventStatus } from "./adminEventDetailResponseEventStatus";
-import type { AdminEventDetailResponseRegistrationStatus } from "./adminEventDetailResponseRegistrationStatus";
-import type { AdminEventDetailResponseRegistrationType } from "./adminEventDetailResponseRegistrationType";
-import type { AdminEventDetailResponseVisibility } from "./adminEventDetailResponseVisibility";
+import type { AdminEventDetailResponseCloseReason } from './adminEventDetailResponseCloseReason';
+import type { AdminEventDetailResponseEventStatus } from './adminEventDetailResponseEventStatus';
+import type { AdminEventDetailResponseRegistrationStatus } from './adminEventDetailResponseRegistrationStatus';
+import type { AdminEventDetailResponseRegistrationType } from './adminEventDetailResponseRegistrationType';
+import type { AdminEventDetailResponseVisibility } from './adminEventDetailResponseVisibility';
 
 /**
  * 관리자용 행사 상세 응답 (visibility 포함)
@@ -56,6 +56,7 @@ export interface AdminEventDetailResponse {
   currentCount?: number;
   registrationStatus?: AdminEventDetailResponseRegistrationStatus;
   eventStatus?: AdminEventDetailResponseEventStatus;
+  /** @nullable */
   closeReason?: AdminEventDetailResponseCloseReason;
   registrationType?: AdminEventDetailResponseRegistrationType;
   isRegistrable?: boolean;
@@ -65,4 +66,9 @@ export interface AdminEventDetailResponse {
   isRegistered?: boolean;
   /** 공개 상태 */
   visibility?: AdminEventDetailResponseVisibility;
+  /**
+   * 연결된 설문 ID (null이면 설문 미연결)
+   * @nullable
+   */
+  surveyId?: number | null;
 }

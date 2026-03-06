@@ -33,10 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { EventListResponseEventStatus } from "./eventListResponseEventStatus";
-import type { EventListResponseRegistrationStatus } from "./eventListResponseRegistrationStatus";
-import type { EventListResponseRegistrationType } from "./eventListResponseRegistrationType";
-import type { EventListResponseVisibility } from "./eventListResponseVisibility";
+import type { EventListResponseEventStatus } from './eventListResponseEventStatus';
+import type { EventListResponseRegistrationStatus } from './eventListResponseRegistrationStatus';
+import type { EventListResponseRegistrationType } from './eventListResponseRegistrationType';
+import type { EventListResponseVisibility } from './eventListResponseVisibility';
 
 export interface EventListResponse {
   id?: number;
@@ -52,4 +52,9 @@ export interface EventListResponse {
   eventStatus?: EventListResponseEventStatus;
   registrationType?: EventListResponseRegistrationType;
   isRegistrable?: boolean;
+  /**
+   * 연결된 설문 ID (null이면 설문 미연결)
+   * @nullable
+   */
+  surveyId?: number | null;
 }

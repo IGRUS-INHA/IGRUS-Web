@@ -4,15 +4,13 @@ import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.SurveyApi;
 import igrus.web.generated.model.GetSurveyDetail200Response;
-import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInner;
-import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInnerOptionsInner;
-import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInnerRowsInner;
 import igrus.web.generated.model.GetSurveyList200ResponseInner;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.domain.SurveyAccessLevel;
 import igrus.web.survey.dto.request.CreateSurveyRequest;
 import igrus.web.survey.dto.request.UpdateSurveyRequest;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
+import igrus.web.survey.dto.response.SurveyDetailResponseMapper;
 import igrus.web.survey.dto.response.SurveyListResponse;
 import igrus.web.survey.service.SurveyService;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +36,7 @@ public class SurveyController implements SurveyApi {
     // ===== 설문 CRUD =====
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<GetSurveyDetail200Response> createSurvey(
             igrus.web.generated.model.UpdateSurveyRequest updateSurveyRequest
     ) {
@@ -54,11 +52,11 @@ public class SurveyController implements SurveyApi {
         );
 
         SurveyDetailResponse response = surveyService.createSurvey(request, user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapToSurveyDetailResponse(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(SurveyDetailResponseMapper.toApiResponse(response));
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<List<GetSurveyList200ResponseInner>> getSurveyList() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 목록 조회 요청 - userId: {}", user.userId());
@@ -69,16 +67,16 @@ public class SurveyController implements SurveyApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<GetSurveyDetail200Response> getSurveyDetail(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 상세 조회 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.getSurveyDetail(surveyId, user);
-        return ResponseEntity.ok(mapToSurveyDetailResponse(response));
+        return ResponseEntity.ok(SurveyDetailResponseMapper.toApiResponse(response));
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<GetSurveyDetail200Response> updateSurvey(
             Long surveyId,
             igrus.web.generated.model.UpdateSurveyRequest updateSurveyRequest
@@ -95,13 +93,13 @@ public class SurveyController implements SurveyApi {
         );
 
         SurveyDetailResponse response = surveyService.updateSurvey(surveyId, request, user);
-        return ResponseEntity.ok(mapToSurveyDetailResponse(response));
+        return ResponseEntity.ok(SurveyDetailResponseMapper.toApiResponse(response));
     }
 
     // ===== 휴지통 =====
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<List<GetSurveyList200ResponseInner>> getTrashedSurveyList() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("휴지통 목록 조회 요청 - userId: {}", user.userId());
@@ -112,7 +110,7 @@ public class SurveyController implements SurveyApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<Void> trashSurvey(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 휴지통 이동 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
@@ -121,7 +119,7 @@ public class SurveyController implements SurveyApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<Void> restoreSurvey(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 휴지통 복원 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
@@ -130,7 +128,7 @@ public class SurveyController implements SurveyApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<Void> permanentDeleteSurvey(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 영구 삭제 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
@@ -141,109 +139,51 @@ public class SurveyController implements SurveyApi {
     // ===== 상태 전이 =====
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<GetSurveyDetail200Response> publishSurvey(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 공개 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.publishSurvey(surveyId, user);
-        return ResponseEntity.ok(mapToSurveyDetailResponse(response));
+        return ResponseEntity.ok(SurveyDetailResponseMapper.toApiResponse(response));
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<GetSurveyDetail200Response> unpublishSurvey(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 비공개 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.unpublishSurvey(surveyId, user);
-        return ResponseEntity.ok(mapToSurveyDetailResponse(response));
+        return ResponseEntity.ok(SurveyDetailResponseMapper.toApiResponse(response));
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<GetSurveyDetail200Response> openResponse(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("응답 수집 시작 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.openResponse(surveyId, user);
-        return ResponseEntity.ok(mapToSurveyDetailResponse(response));
+        return ResponseEntity.ok(SurveyDetailResponseMapper.toApiResponse(response));
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<GetSurveyDetail200Response> closeResponse(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("응답 수집 마감 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.closeResponse(surveyId, user);
-        return ResponseEntity.ok(mapToSurveyDetailResponse(response));
+        return ResponseEntity.ok(SurveyDetailResponseMapper.toApiResponse(response));
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<GetSurveyDetail200Response> publishAndOpen(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 공개+응답 시작 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.publishAndOpen(surveyId, user);
-        return ResponseEntity.ok(mapToSurveyDetailResponse(response));
+        return ResponseEntity.ok(SurveyDetailResponseMapper.toApiResponse(response));
     }
 
     // === Private helper methods ===
-
-    private GetSurveyDetail200Response mapToSurveyDetailResponse(SurveyDetailResponse response) {
-        return new GetSurveyDetail200Response()
-                .id(response.id())
-                .title(response.title())
-                .description(response.description())
-                .visibility(response.visibility() != null
-                        ? GetSurveyDetail200Response.VisibilityEnum.fromValue(response.visibility().name()) : null)
-                .responseStatus(response.responseStatus() != null
-                        ? GetSurveyDetail200Response.ResponseStatusEnum.fromValue(response.responseStatus().name()) : null)
-                .accessLevel(response.accessLevel() != null
-                        ? GetSurveyDetail200Response.AccessLevelEnum.fromValue(response.accessLevel().name()) : null)
-                .deadline(response.deadline())
-                .createdAt(response.createdAt())
-                .updatedAt(response.updatedAt())
-                .questions(response.questions() != null
-                        ? response.questions().stream()
-                                .map(this::mapToQuestionInner)
-                                .toList()
-                        : List.of());
-    }
-
-    private GetSurveyDetail200ResponseQuestionsInner mapToQuestionInner(SurveyDetailResponse.QuestionResponse q) {
-        return new GetSurveyDetail200ResponseQuestionsInner()
-                .id(q.id())
-                .questionType(q.questionType() != null
-                        ? GetSurveyDetail200ResponseQuestionsInner.QuestionTypeEnum.fromValue(q.questionType().name()) : null)
-                .title(q.title())
-                .description(q.description())
-                .required(q.required())
-                .displayOrder(q.displayOrder())
-                .scaleMin(q.scaleMin())
-                .scaleMax(q.scaleMax())
-                .options(q.options() != null
-                        ? q.options().stream()
-                                .map(this::mapToOptionInner)
-                                .toList()
-                        : List.of())
-                .rows(q.rows() != null
-                        ? q.rows().stream()
-                                .map(this::mapToRowInner)
-                                .toList()
-                        : List.of());
-    }
-
-    private GetSurveyDetail200ResponseQuestionsInnerOptionsInner mapToOptionInner(SurveyDetailResponse.OptionResponse o) {
-        return new GetSurveyDetail200ResponseQuestionsInnerOptionsInner()
-                .id(o.id())
-                .text(o.text())
-                .displayOrder(o.displayOrder());
-    }
-
-    private GetSurveyDetail200ResponseQuestionsInnerRowsInner mapToRowInner(SurveyDetailResponse.RowResponse r) {
-        return new GetSurveyDetail200ResponseQuestionsInnerRowsInner()
-                .id(r.id())
-                .label(r.label())
-                .displayOrder(r.displayOrder());
-    }
 
     private GetSurveyList200ResponseInner mapToSurveyListInner(SurveyListResponse s) {
         return new GetSurveyList200ResponseInner()

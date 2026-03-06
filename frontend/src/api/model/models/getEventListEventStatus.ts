@@ -34,12 +34,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type GetEventListEventStatus =
-  (typeof GetEventListEventStatus)[keyof typeof GetEventListEventStatus];
+export type GetEventListEventStatus = typeof GetEventListEventStatus[keyof typeof GetEventListEventStatus];
+
 
 export const GetEventListEventStatus = {
-  UPCOMING: "UPCOMING",
-  ONGOING: "ONGOING",
-  COMPLETED: "COMPLETED",
-  CANCELED: "CANCELED",
+  UPCOMING: 'UPCOMING',
+  ONGOING: 'ONGOING',
+  COMPLETED: 'COMPLETED',
+  CANCELED: 'CANCELED',
 } as const;

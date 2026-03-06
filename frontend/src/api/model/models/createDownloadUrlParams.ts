@@ -35,8 +35,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type CreateDownloadUrlParams = {
-  /**
-   * S3 Object Key
-   */
-  objectKey: string;
+/**
+ * S3 Object Key
+ */
+objectKey: string;
 };
