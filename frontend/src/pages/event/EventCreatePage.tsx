@@ -18,7 +18,13 @@ import { WysiwygEditor } from "@/components/feature/editor";
 import { RegistrationPeriodSelector } from "@/components/feature/event/RegistrationPeriodSelector";
 import { EventDateTimePicker } from "@/components/feature/event/EventDateTimePicker";
 import { EventCalendarPreview } from "@/components/feature/event/EventCalendarPreview";
+import {
+  SurveyQuestionBuilder,
+  type DraftQuestion,
+} from "@/components/feature/event/SurveyQuestionBuilder";
 import { useCreateEvent } from "@/hooks/queries/useEvents";
+import { useCreateSurvey } from "@/api/model/survey/survey";
+import { useCreateQuestion } from "@/api/model/survey-question/survey-question";
 import { CreateEventRequestRegistrationType } from "@/api/model/models";
 import {
   REGISTRATION_PERIOD_PRESETS,
@@ -135,7 +141,11 @@ export default function EventCreatePage() {
 
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [capacityRaw, setCapacityRaw] = useState("30");
+  const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([]);
   const locationRef = useRef<HTMLDivElement>(null);
+
+  const { mutateAsync: createSurveyAsync } = useCreateSurvey();
+  const { mutateAsync: createQuestionAsync } = useCreateQuestion();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -196,7 +206,7 @@ export default function EventCreatePage() {
     }
   }, [eventDate, eventTime, registrationPreset, setValue]);
 
-  const onSubmit = (data: EventForm) => {
+  const onSubmit = async (data: EventForm) => {
     const eventStartAt = new Date(`${data.date}T${data.time}:00`).toISOString();
     const eventEndAt = new Date(
       `${data.endDate}T${data.endTime}:00`,
@@ -207,6 +217,38 @@ export default function EventCreatePage() {
     const registrationEndAt = new Date(
       `${data.registrationDeadlineDate}T${data.registrationDeadlineTime}:00`,
     ).toISOString();
+
+    let surveyId: number | null = null;
+
+    if (draftQuestions.length > 0) {
+      try {
+        const surveyRes = await createSurveyAsync({
+          data: {
+            title: `${data.title} 신청 설문`,
+            accessLevel: "MEMBER",
+          },
+        });
+        const newSurveyId =
+          surveyRes.status === 201 ? (surveyRes.data.id ?? null) : null;
+        if (newSurveyId) {
+          surveyId = newSurveyId;
+          for (const q of draftQuestions) {
+            await createQuestionAsync({
+              surveyId: newSurveyId,
+              data: {
+                questionType: q.questionType,
+                title: q.title || "질문",
+                required: q.required,
+                displayOrder: q.displayOrder,
+              },
+            });
+          }
+        }
+      } catch {
+        alert("설문 생성에 실패했습니다. 다시 시도해주세요.");
+        return;
+      }
+    }
 
     createEvent(
       {
@@ -221,6 +263,7 @@ export default function EventCreatePage() {
           capacity: data.capacity,
           registrationType:
             data.registrationType as CreateEventRequestRegistrationType,
+          surveyId,
         },
       },
       {
@@ -519,6 +562,12 @@ export default function EventCreatePage() {
               showModeToggle={false}
             />
           </div>
+
+          {/* 신청 설문 문항 */}
+          <SurveyQuestionBuilder
+            questions={draftQuestions}
+            onChange={setDraftQuestions}
+          />
 
           {/* 행사 내용 (에디터) */}
           <div className="rounded-r4 border bg-card border-border shadow-sm">

@@ -20,6 +20,10 @@ import { useAdminEvent, useUpdateEvent } from "@/hooks/queries/useEvents";
 import { EventDateTimePicker } from "@/components/feature/event/EventDateTimePicker";
 import { EventCalendarPreview } from "@/components/feature/event/EventCalendarPreview";
 import {
+  SurveyQuestionBuilder,
+  type DraftQuestion,
+} from "@/components/feature/event/SurveyQuestionBuilder";
+import {
   REGISTRATION_PERIOD_PRESETS,
   EVENT_LOCATIONS,
 } from "@/constants/event";
@@ -32,6 +36,13 @@ import {
   isEventAccessDenied,
   isEventOperatorRequired,
 } from "@/utils/error";
+import { useCreateSurvey } from "@/api/model/survey/survey";
+import {
+  useCreateQuestion,
+  useDeleteQuestion,
+  useUpdateQuestion,
+  useGetQuestionList,
+} from "@/api/model/survey-question/survey-question";
 
 const eventSchema = z
   .object({
@@ -85,7 +96,18 @@ export default function EventEditPage() {
   const isInitialized = useRef(false);
   const [formReady, setFormReady] = useState(false);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([]);
   const locationRef = useRef<HTMLDivElement>(null);
+
+  const existingSurveyId = event?.surveyId ?? undefined;
+  const { data: questionListResponse } = useGetQuestionList(
+    existingSurveyId ?? 0,
+    { query: { enabled: !!existingSurveyId } },
+  );
+  const { mutateAsync: createSurveyAsync } = useCreateSurvey();
+  const { mutateAsync: createQuestionAsync } = useCreateQuestion();
+  const { mutateAsync: deleteQuestionAsync } = useDeleteQuestion();
+  const { mutateAsync: updateQuestionAsync } = useUpdateQuestion();
 
   const {
     register,
@@ -183,6 +205,23 @@ export default function EventEditPage() {
     }
   }, [event, reset]);
 
+  // 기존 설문 문항 로드
+  useEffect(() => {
+    if (questionListResponse?.status === 200) {
+      const existing = questionListResponse.data;
+      setDraftQuestions(
+        existing.map((q, i) => ({
+          localId: String(q.id ?? i),
+          serverId: q.id,
+          questionType: q.questionType ?? "SHORT_ANSWER",
+          title: q.title ?? "",
+          required: q.required ?? false,
+          displayOrder: q.displayOrder ?? i + 1,
+        })),
+      );
+    }
+  }, [questionListResponse]);
+
   // 신청 기간 자동 계산 (초기 로드 시에는 건너뜀)
   useEffect(() => {
     if (!isInitialized.current) return;
@@ -220,7 +259,7 @@ export default function EventEditPage() {
     }
   }, [eventDate, eventTime, registrationPreset, setValue]);
 
-  const onSubmit = (data: EventForm) => {
+  const onSubmit = async (data: EventForm) => {
     if (!eventId) return;
 
     const eventStartAt = new Date(`${data.date}T${data.time}:00`).toISOString();
@@ -234,6 +273,86 @@ export default function EventEditPage() {
       `${data.registrationDeadlineDate}T${data.registrationDeadlineTime}:00`,
     ).toISOString();
 
+    let resolvedSurveyId: number | null = existingSurveyId ?? null;
+
+    try {
+      if (existingSurveyId) {
+        // 기존 설문이 있는 경우: 삭제/수정/추가 diff 적용
+        const originalIds = new Set(
+          (questionListResponse?.status === 200
+            ? questionListResponse.data
+            : []
+          ).map((q) => q.id),
+        );
+        const currentServerIds = new Set(
+          draftQuestions.filter((q) => q.serverId).map((q) => q.serverId),
+        );
+
+        // 삭제된 문항 처리
+        for (const id of originalIds) {
+          if (id !== undefined && !currentServerIds.has(id)) {
+            await deleteQuestionAsync({
+              surveyId: existingSurveyId,
+              questionId: id,
+            });
+          }
+        }
+
+        // 수정 및 추가 처리
+        for (const q of draftQuestions) {
+          if (q.serverId) {
+            await updateQuestionAsync({
+              surveyId: existingSurveyId,
+              questionId: q.serverId,
+              data: {
+                questionType: q.questionType,
+                title: q.title || "질문",
+                required: q.required,
+                displayOrder: q.displayOrder,
+              },
+            });
+          } else {
+            await createQuestionAsync({
+              surveyId: existingSurveyId,
+              data: {
+                questionType: q.questionType,
+                title: q.title || "질문",
+                required: q.required,
+                displayOrder: q.displayOrder,
+              },
+            });
+          }
+        }
+      } else if (draftQuestions.length > 0) {
+        // 새 설문 생성
+        const surveyRes = await createSurveyAsync({
+          data: {
+            title: `${data.title} 신청 설문`,
+            accessLevel: "MEMBER",
+          },
+        });
+        const newSurveyId =
+          surveyRes.status === 201 ? (surveyRes.data.id ?? null) : null;
+        if (newSurveyId) {
+          resolvedSurveyId = newSurveyId;
+          for (const q of draftQuestions) {
+            await createQuestionAsync({
+              surveyId: newSurveyId,
+              data: {
+                questionType: q.questionType,
+                title: q.title || "질문",
+                required: q.required,
+                displayOrder: q.displayOrder,
+              },
+            });
+          }
+        }
+      }
+    } catch {
+      alert("설문 처리에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
+
     updateEvent(
       {
         eventId: Number(eventId),
@@ -246,6 +365,7 @@ export default function EventEditPage() {
           registrationStartAt,
           registrationEndAt,
           capacity: data.capacity,
+          surveyId: draftQuestions.length > 0 ? resolvedSurveyId : null,
         },
       },
       {
@@ -558,6 +678,12 @@ export default function EventEditPage() {
               showModeToggle={false}
             />
           </div>
+
+          {/* 신청 설문 문항 */}
+          <SurveyQuestionBuilder
+            questions={draftQuestions}
+            onChange={setDraftQuestions}
+          />
 
           {/* 행사 내용 (에디터) */}
           <div className="rounded-r4 border bg-card border-border shadow-sm">
