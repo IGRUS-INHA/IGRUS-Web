@@ -18,7 +18,7 @@ import {
   DIRECT_INPUT_VALUE,
 } from "@/components/feature/event/LocationSelector";
 import { RegistrationPeriodSelector } from "@/components/feature/event/RegistrationPeriodSelector";
-import { useEvent, useUpdateEvent } from "@/hooks/queries/useEvents";
+import { useAdminEvent, useUpdateEvent } from "@/hooks/queries/useEvents";
 import { EventDateTimePicker } from "@/components/feature/event/EventDateTimePicker";
 import { EventCalendarPreview } from "@/components/feature/event/EventCalendarPreview";
 import { REGISTRATION_PERIOD_PRESETS } from "@/constants/event";
@@ -98,7 +98,11 @@ export default function EventEditPage() {
   const navigate = useNavigate();
   const { theme } = useUIStore();
   const isDark = theme === "dark";
-  const { data: eventResponse, isLoading, error } = useEvent(Number(eventId));
+  const {
+    data: eventResponse,
+    isLoading,
+    error,
+  } = useAdminEvent(Number(eventId));
   const { mutate: updateEvent, isPending } = useUpdateEvent();
   const event = eventResponse?.data;
   const isInitialized = useRef(false);
