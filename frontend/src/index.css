@@ -190,7 +190,7 @@
   }
 
   html {
-    font-family: "Inter", "Pretendard Variable", system-ui, sans-serif;
+    font-family: "Pretendard Variable", "Inter", system-ui, sans-serif;
   }
 
   body {
@@ -1199,16 +1199,32 @@
    Login Page
    ============================================ */
 
-/* 브랜드 패널 그라디언트 */
+/* 브랜드 패널 그라디언트 — 히어로 섹션 배경 색상 사용 */
 .login-brand-panel {
-  background: linear-gradient(135deg, #013e3b 0%, #027a75 40%, #03a69e 100%);
+  background:
+    radial-gradient(
+      circle at 15% 40%,
+      rgba(3, 166, 158, 0.32) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      circle at 85% 20%,
+      rgba(23, 162, 184, 0.26) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 60% 85%,
+      rgba(111, 66, 193, 0.22) 0%,
+      transparent 55%
+    ),
+    #ffffff;
 }
 
 /* 브랜드 패널 도트 그리드 */
 .login-dot-grid {
   background-image: radial-gradient(
     circle,
-    rgba(255, 255, 255, 0.08) 1px,
+    rgba(3, 166, 158, 0.18) 1px,
     transparent 1px
   );
   background-size: 24px 24px;
