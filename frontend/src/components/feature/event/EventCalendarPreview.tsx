@@ -1,7 +1,7 @@
 import DatePicker, { registerLocale } from "react-datepicker";
 import { ko } from "date-fns/locale";
 import "react-datepicker/dist/react-datepicker.css";
-import { Calendar } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatDateLocal } from "@/utils/event";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,8 @@ interface EventCalendarPreviewProps {
   onEventDateChange?: (startDate: string, endDate: string) => void;
   onRegistrationDateChange?: (startDate: string, endDate: string) => void;
   onRegistrationPresetChange?: () => void;
+  onSelectionStart?: (mode: EditMode) => void;
+  showModeToggle?: boolean;
 }
 
 function parseDateParts(str: string): [number, number, number] | null {
@@ -60,10 +62,21 @@ export function EventCalendarPreview({
   onEventDateChange,
   onRegistrationDateChange,
   onRegistrationPresetChange,
+  onSelectionStart,
+  showModeToggle = true,
 }: EventCalendarPreviewProps) {
   const [mode, setMode] = useState<EditMode>("registration");
   // 범위 선택 중간 상태 (첫 번째 클릭 후, 두 번째 클릭 전)
   const [selectingStart, setSelectingStart] = useState<Date | null>(null);
+
+  const openToDate = useMemo(() => {
+    return (
+      toDate(registrationStartDate) ?? toDate(eventStartDate) ?? new Date()
+    );
+  }, [eventStartDate, registrationStartDate]);
+
+  // preview 모드 월 네비게이션
+  const [viewDate, setViewDate] = useState<Date>(openToDate);
 
   // 외부에서 날짜가 변경되면 선택 중간 상태 초기화
   useEffect(() => {
@@ -74,6 +87,11 @@ export function EventCalendarPreview({
     registrationStartDate,
     registrationEndDate,
   ]);
+
+  // openToDate가 변경되면 viewDate 동기화 (preview 모드)
+  useEffect(() => {
+    setViewDate(openToDate);
+  }, [openToDate]);
 
   // 활성 범위: 선택 중이면 내부 상태 사용, 아니면 부모 props 사용
   const committedStart =
@@ -106,11 +124,67 @@ export function EventCalendarPreview({
     registrationEndDate,
   ]);
 
-  const openToDate = useMemo(() => {
-    return (
-      toDate(registrationStartDate) ?? toDate(eventStartDate) ?? new Date()
-    );
-  }, [eventStartDate, registrationStartDate]);
+  // preview 모드 월 네비게이션 범위
+  const minMonth = useMemo(() => {
+    const dates = [
+      registrationStartDate,
+      registrationEndDate,
+      eventStartDate,
+      eventEndDate,
+    ]
+      .map(toDate)
+      .filter((d): d is Date => d !== null);
+    if (!dates.length) return null;
+    return dates.reduce((a, b) => (a < b ? a : b));
+  }, [
+    registrationStartDate,
+    registrationEndDate,
+    eventStartDate,
+    eventEndDate,
+  ]);
+
+  const maxMonth = useMemo(() => {
+    const dates = [
+      registrationStartDate,
+      registrationEndDate,
+      eventStartDate,
+      eventEndDate,
+    ]
+      .map(toDate)
+      .filter((d): d is Date => d !== null);
+    if (!dates.length) return null;
+    return dates.reduce((a, b) => (a > b ? a : b));
+  }, [
+    registrationStartDate,
+    registrationEndDate,
+    eventStartDate,
+    eventEndDate,
+  ]);
+
+  const spansMultipleMonths =
+    minMonth !== null &&
+    maxMonth !== null &&
+    (minMonth.getFullYear() !== maxMonth.getFullYear() ||
+      minMonth.getMonth() !== maxMonth.getMonth());
+
+  const toMonthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
+  const viewMonthIndex = toMonthIndex(viewDate);
+  const canPrev = minMonth ? viewMonthIndex > toMonthIndex(minMonth) : true;
+  const canNext = maxMonth ? viewMonthIndex < toMonthIndex(maxMonth) : true;
+
+  const handlePrevMonth = () => {
+    setViewDate((d) => {
+      const prev = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+      return prev;
+    });
+  };
+
+  const handleNextMonth = () => {
+    setViewDate((d) => {
+      const next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+      return next;
+    });
+  };
 
   // 신청기간 모드에서 행사 시작일 이전까지만 선택 가능
   const registrationMaxDate = useMemo(() => {
@@ -124,6 +198,7 @@ export function EventCalendarPreview({
 
     if (!end) {
       // 첫 번째 클릭: 내부 상태로만 추적 (부모 폼 건드리지 않음)
+      onSelectionStart?.(mode);
       setSelectingStart(start);
     } else {
       // 두 번째 클릭: 범위 완성 → 부모에 커밋
@@ -151,43 +226,89 @@ export function EventCalendarPreview({
       </label>
 
       {/* Mode toggle tabs */}
-      <div className="flex gap-s1 mb-s3">
-        <button
-          type="button"
-          onClick={() => handleModeChange("registration")}
-          className={cn(
-            "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
-            mode === "registration"
-              ? "bg-amber-500 text-white"
-              : "bg-muted/50 text-muted-foreground hover:bg-muted",
-          )}
-        >
-          신청 기간
-        </button>
-        <button
-          type="button"
-          onClick={() => handleModeChange("event")}
-          className={cn(
-            "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
-            mode === "event"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted/50 text-muted-foreground hover:bg-muted",
-          )}
-        >
-          행사 기간
-        </button>
-      </div>
+      {showModeToggle && (
+        <div className="flex flex-col gap-s1 mb-s3">
+          <button
+            type="button"
+            onClick={() => handleModeChange("registration")}
+            className={cn(
+              "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
+              mode === "registration"
+                ? "bg-brand-l2 text-brand-l7"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted",
+            )}
+          >
+            신청 기간
+          </button>
+          <button
+            type="button"
+            onClick={() => handleModeChange("event")}
+            className={cn(
+              "flex-1 px-s3 py-s2 rounded-r2 text-xs font-medium transition-colors cursor-pointer",
+              mode === "event"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted",
+            )}
+          >
+            행사 기간
+          </button>
+        </div>
+      )}
+
+      {/* preview 모드 월 네비게이션 */}
+      {!showModeToggle && spansMultipleMonths && (
+        <div className="flex items-center justify-between mb-s2">
+          <button
+            type="button"
+            onClick={handlePrevMonth}
+            disabled={!canPrev}
+            className={cn(
+              "p-1 rounded hover:bg-muted transition cursor-pointer text-muted-foreground hover:text-foreground",
+              !canPrev && "opacity-30 cursor-default pointer-events-none",
+            )}
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <span className="text-sm font-semibold text-foreground">
+            {viewDate.getFullYear()}년 {viewDate.getMonth() + 1}월
+          </span>
+          <button
+            type="button"
+            onClick={handleNextMonth}
+            disabled={!canNext}
+            className={cn(
+              "p-1 rounded hover:bg-muted transition cursor-pointer text-muted-foreground hover:text-foreground",
+              !canNext && "opacity-30 cursor-default pointer-events-none",
+            )}
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Interactive calendar */}
-      <div className={cn("cal-preview-wrapper", `cal-mode-${mode}`)}>
+      <div
+        className={cn(
+          "cal-preview-wrapper",
+          `cal-mode-${mode}`,
+          !showModeToggle && "pointer-events-none select-none",
+        )}
+      >
         <DatePicker
+          key={
+            !showModeToggle
+              ? `preview-${viewDate.getFullYear()}-${viewDate.getMonth()}`
+              : selectingStart
+                ? "selecting"
+                : `${mode}-${committedStart?.toISOString()}-${committedEnd?.toISOString()}`
+          }
           inline
           locale="ko"
           selectsRange
           startDate={activeStart}
           endDate={activeEnd}
           onChange={handleRangeChange}
-          openToDate={openToDate}
+          openToDate={!showModeToggle ? viewDate : openToDate}
           {...(registrationMaxDate ? { maxDate: registrationMaxDate } : {})}
           highlightDates={inactiveHighlight}
           calendarClassName="cal-preview"
@@ -201,7 +322,7 @@ export function EventCalendarPreview({
           <span className="typo-c1 text-muted-foreground">행사 기간</span>
         </div>
         <div className="flex items-center gap-s1">
-          <div className="w-3 h-3 rounded-sm bg-amber-500" />
+          <div className="w-3 h-3 rounded-sm bg-brand-l2" />
           <span className="typo-c1 text-muted-foreground">신청 기간</span>
         </div>
       </div>

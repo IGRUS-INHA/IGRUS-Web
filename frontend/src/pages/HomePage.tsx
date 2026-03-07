@@ -51,9 +51,9 @@ function formatDateDot(dateStr?: string) {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function isWithin7Days(dateStr?: string) {
+function isWithin2Days(dateStr?: string) {
   if (!dateStr) return false;
-  return Date.now() - new Date(dateStr).getTime() < 7 * 24 * 60 * 60 * 1000;
+  return Date.now() - new Date(dateStr).getTime() < 2 * 24 * 60 * 60 * 1000;
 }
 
 // ─── Main ──────────────────────────────────────────
@@ -95,7 +95,7 @@ function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
       <div className="hero-ring hero-ring-1" />
       <div className="hero-ring hero-ring-2" />
       <div className="hero-ring hero-ring-3" />
-      <div className="relative z-[1] max-w-[1280px] mx-auto px-s6 max-md:px-s4">
+      <div className="relative z-[1] max-w-[1280px] mx-auto px-s6 max-md:px-s2">
         <div className="grid grid-cols-2 gap-s7 items-center max-lg:grid-cols-1">
           <HeroText isAuthenticated={isAuthenticated} />
           <BubbleOrbit />
@@ -446,7 +446,7 @@ function NoticeSection({
   return (
     <section className="pt-s6 pb-s8 border-t border-border">
       <div className="max-w-[1280px] mx-auto px-s6 max-md:px-s4">
-        <div className="flex items-baseline justify-between mb-s7 max-md:flex-col max-md:gap-s2 max-md:mb-s6">
+        <div className="flex items-baseline justify-between mb-s6 max-md:flex-col max-md:gap-s2 max-md:mb-s5">
           <div className="flex items-baseline gap-s3">
             <span className="typo-c1 font-semibold text-primary uppercase tracking-[0.08em]">
               Notice
@@ -473,7 +473,7 @@ function NoticeSection({
           ) : (
             pinnedPosts.map((pinned) => {
               const post = pinned.post;
-              const postIsNew = isWithin7Days(post?.createdAt);
+              const postIsNew = isWithin2Days(post?.createdAt);
               return (
                 <Link
                   key={pinned.id}
@@ -560,7 +560,7 @@ function EventTimeline({
 }) {
   return (
     <>
-      <div className="flex items-baseline justify-between mb-s7 max-md:flex-col max-md:gap-s2 max-md:mb-s6">
+      <div className="flex items-baseline justify-between mb-s6 max-md:flex-col max-md:gap-s2 max-md:mb-s5">
         <div className="flex items-baseline gap-s3">
           <span className="typo-c1 font-semibold text-primary uppercase tracking-[0.08em]">
             Events
@@ -585,13 +585,9 @@ function EventTimeline({
             다가오는 행사가 없습니다
           </div>
         ) : (
-          <div className="event-timeline">
+          <div className="event-timeline pointer-events-none">
             {events.map((event, idx) => (
-              <Link
-                key={event.id}
-                to={`/events/${event.id}`}
-                className="timeline-item block"
-              >
+              <div key={event.id} className="timeline-item">
                 <div className="timeline-dot" />
                 <div
                   className={cn(
@@ -601,7 +597,7 @@ function EventTimeline({
                 >
                   {formatDateDot(event.eventStartAt)}
                 </div>
-                <h3 className="typo-b1 font-semibold text-foreground mb-s1 leading-snug transition-colors">
+                <h3 className="typo-b1 font-semibold text-foreground mb-s1 leading-snug">
                   {event.title}
                 </h3>
                 {event.location && (
@@ -609,7 +605,7 @@ function EventTimeline({
                     {event.location}
                   </p>
                 )}
-              </Link>
+              </div>
             ))}
           </div>
         )}

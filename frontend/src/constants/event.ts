@@ -20,8 +20,8 @@ export const EVENT_STATUS_LABELS = {
 // 행사 필터 옵션 (UI용)
 export const EVENT_FILTER_STATUS = {
   ALL: "all",
-  UPCOMING: "UPCOMING",
   OPEN: "OPEN",
+  ONGOING: "ONGOING",
   COMPLETED: "COMPLETED",
 } as const;
 
@@ -30,9 +30,9 @@ export type EventFilterStatus =
 
 export const EVENT_FILTER_LABELS = {
   [EVENT_FILTER_STATUS.ALL]: "전체",
-  [EVENT_FILTER_STATUS.UPCOMING]: "예정",
-  [EVENT_FILTER_STATUS.OPEN]: "신청 가능",
-  [EVENT_FILTER_STATUS.COMPLETED]: "신청 불가",
+  [EVENT_FILTER_STATUS.OPEN]: "모집중",
+  [EVENT_FILTER_STATUS.ONGOING]: "진행중",
+  [EVENT_FILTER_STATUS.COMPLETED]: "종료",
 } as const;
 
 // 신청 상태
