@@ -43,16 +43,20 @@ export function WysiwygEditor({
 }: WysiwygEditorProps) {
   const editorRef = useRef<EditorInstance | null>(null);
   const initialValueRef = useRef(value);
+  const isExternalUpdate = useRef(false);
 
   const handleCreate = ({ editor }: { editor: EditorInstance }) => {
     editorRef.current = editor;
     if (initialValueRef.current) {
+      isExternalUpdate.current = true;
       editor.commands.setContent(initialValueRef.current);
+      isExternalUpdate.current = false;
     }
   };
 
   const handleUpdate = useCallback(
     ({ editor }: { editor: EditorInstance }) => {
+      if (isExternalUpdate.current) return;
       const md = editor.storage.markdown.getMarkdown();
       onChange(md);
     },
@@ -65,7 +69,9 @@ export function WysiwygEditor({
     if (!editor || !value) return;
     const currentContent = editor.storage.markdown.getMarkdown();
     if (currentContent !== value) {
+      isExternalUpdate.current = true;
       editor.commands.setContent(value);
+      isExternalUpdate.current = false;
     }
   }, [value]);
 
@@ -89,7 +95,7 @@ export function WysiwygEditor({
             },
             attributes: {
               class:
-                "prose prose-sm dark:prose-invert prose-headings:font-bold focus:outline-none max-w-full min-h-[500px] px-s6 py-s5",
+                "prose prose-sm dark:prose-invert prose-headings:font-bold focus:outline-none max-w-full min-h-[500px] px-s6 pb-s4",
             },
           }}
           className="w-full"
