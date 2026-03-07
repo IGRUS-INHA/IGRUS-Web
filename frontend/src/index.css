@@ -1368,6 +1368,10 @@
   display: none !important;
 }
 
+.cal-preview-wrapper .react-datepicker__current-month {
+  display: none !important;
+}
+
 .cal-preview-wrapper .react-datepicker__day-names,
 .cal-preview-wrapper .react-datepicker__week {
   display: grid;
