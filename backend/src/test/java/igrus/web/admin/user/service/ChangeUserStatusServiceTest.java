@@ -5,7 +5,7 @@ import igrus.web.admin.user.exception.SelfStatusChangeException;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserSuspension;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.exception.InvalidSuspensionException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -70,7 +70,7 @@ class ChangeUserStatusServiceTest {
 
             // then
             verify(userSuspensionRepository).save(any(UserSuspension.class));
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
     }
 
@@ -102,7 +102,7 @@ class ChangeUserStatusServiceTest {
             changeUserStatusService.changeUserStatus(targetUserId, request, currentUserId);
 
             // then
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
     }
 
@@ -277,7 +277,7 @@ class ChangeUserStatusServiceTest {
 
             // then
             verify(userSuspensionRepository).save(any(UserSuspension.class));
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
     }
 
@@ -309,7 +309,7 @@ class ChangeUserStatusServiceTest {
             assertThat(suspension.isLifted()).isTrue();
             assertThat(suspension.getLiftedBy()).isNull();
             assertThat(user.isActive()).isTrue();
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
 
         @Test
@@ -361,7 +361,7 @@ class ChangeUserStatusServiceTest {
             assertThat(suspension2.isLifted()).isTrue();
             assertThat(user1.isActive()).isTrue();
             assertThat(user2.isActive()).isTrue();
-            verify(eventPublisher, times(2)).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher, times(2)).publishEvent(any(AccountStatusChanged.class));
         }
 
         @Test
@@ -384,11 +384,11 @@ class ChangeUserStatusServiceTest {
             changeUserStatusService.liftExpiredSuspensions();
 
             // then
-            ArgumentCaptor<AccountStatusChangeEvent> captor =
-                    ArgumentCaptor.forClass(AccountStatusChangeEvent.class);
+            ArgumentCaptor<AccountStatusChanged> captor =
+                    ArgumentCaptor.forClass(AccountStatusChanged.class);
             verify(eventPublisher).publishEvent(captor.capture());
 
-            AccountStatusChangeEvent event = captor.getValue();
+            AccountStatusChanged event = captor.getValue();
             assertThat(event.userId()).isEqualTo(1L);
             assertThat(event.changedByUserId()).isNull();
             assertThat(event.previousValue()).isEqualTo("SUSPENDED");

@@ -4,7 +4,7 @@ import igrus.web.inquiry.domain.Inquiry;
 import igrus.web.inquiry.domain.InquiryChangeType;
 import igrus.web.inquiry.domain.InquiryStatus;
 import igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest;
-import igrus.web.inquiry.event.InquiryStatusChangeEvent;
+import igrus.web.inquiry.audit.InquiryStatusChanged;
 import igrus.web.inquiry.service.support.InquiryFinder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,7 @@ public class UpdateInquiryStatusService {
         inquiry.changeStatus(request.getStatus());
 
         if (!previousStatus.equals(inquiry.getStatus())) {
-            eventPublisher.publishEvent(new InquiryStatusChangeEvent(
+            eventPublisher.publishEvent(new InquiryStatusChanged(
                     inquiryId, operatorId, InquiryChangeType.STATUS_CHANGED,
                     previousStatus.name(), inquiry.getStatus().name()));
         }

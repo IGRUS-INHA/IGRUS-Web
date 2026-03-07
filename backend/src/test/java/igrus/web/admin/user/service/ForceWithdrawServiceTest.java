@@ -10,7 +10,7 @@ import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.withdrawal.domain.WithdrawalLog;
@@ -82,7 +82,7 @@ class ForceWithdrawServiceTest {
             verify(credential).withdraw();
             verify(credential).delete(currentUserId);
             verify(refreshTokenRepository).revokeAllByUserId(targetUserId);
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
 
         @Test
@@ -105,7 +105,7 @@ class ForceWithdrawServiceTest {
             assertThat(targetUser.isWithdrawn()).isTrue();
             verify(withdrawalLogRepository).save(any(WithdrawalLog.class));
             verify(refreshTokenRepository).revokeAllByUserId(targetUserId);
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
 
         @Test
@@ -127,7 +127,7 @@ class ForceWithdrawServiceTest {
             // then
             assertThat(targetAdmin.isWithdrawn()).isTrue();
             verify(withdrawalLogRepository).save(any(WithdrawalLog.class));
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
 
         @Test
@@ -170,11 +170,11 @@ class ForceWithdrawServiceTest {
             forceWithdrawService.forceWithdraw(targetUserId, reason, currentUserId);
 
             // then
-            ArgumentCaptor<AccountStatusChangeEvent> captor =
-                    ArgumentCaptor.forClass(AccountStatusChangeEvent.class);
+            ArgumentCaptor<AccountStatusChanged> captor =
+                    ArgumentCaptor.forClass(AccountStatusChanged.class);
             verify(eventPublisher).publishEvent(captor.capture());
 
-            AccountStatusChangeEvent event = captor.getValue();
+            AccountStatusChanged event = captor.getValue();
             assertThat(event.userId()).isEqualTo(targetUserId);
             assertThat(event.changedByUserId()).isEqualTo(currentUserId);
             assertThat(event.changeType()).isEqualTo(AccountChangeType.FORCE_WITHDRAWAL);
@@ -202,7 +202,7 @@ class ForceWithdrawServiceTest {
             assertThat(targetUser.isWithdrawn()).isTrue();
             verify(withdrawalLogRepository).save(any(WithdrawalLog.class));
             verify(refreshTokenRepository).revokeAllByUserId(targetUserId);
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
     }
 

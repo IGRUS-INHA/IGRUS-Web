@@ -13,7 +13,7 @@ import igrus.web.user.repository.UserRepository;
 import igrus.web.user.repository.UserSuspensionRepository;
 import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.UserStatus;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -87,7 +87,7 @@ public class ChangeUserStatusService {
         userSuspensionRepository.save(suspension);
 
         // 8. 감사 이벤트 발행
-        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+        eventPublisher.publishEvent(new AccountStatusChanged(
                 targetUserId, currentUserId, AccountChangeType.SUSPENSION,
                 previousStatus, UserStatus.SUSPENDED.name(),
                 request.reason()
@@ -117,7 +117,7 @@ public class ChangeUserStatusService {
             user.activate();
 
             // 4. 감사 이벤트 발행 (수동 해제와 구분하기 위해 changedByUserId = null, 사유 명시)
-            eventPublisher.publishEvent(new AccountStatusChangeEvent(
+            eventPublisher.publishEvent(new AccountStatusChanged(
                     user.getId(), null, AccountChangeType.SUSPENSION_LIFT,
                     previousStatus, UserStatus.ACTIVE.name(),
                     "자동 정지 해제 (정지 기간 만료)"
@@ -146,7 +146,7 @@ public class ChangeUserStatusService {
         targetUser.activate();
 
         // 4. 감사 이벤트 발행
-        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+        eventPublisher.publishEvent(new AccountStatusChanged(
                 targetUserId, currentUserId, AccountChangeType.SUSPENSION_LIFT,
                 previousStatus, UserStatus.ACTIVE.name(),
                 null

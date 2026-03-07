@@ -6,7 +6,7 @@ import igrus.web.inquiry.domain.InquiryReply;
 import igrus.web.inquiry.domain.InquiryStatus;
 import igrus.web.inquiry.dto.request.CreateInquiryReplyRequest;
 import igrus.web.inquiry.dto.response.InquiryReplyResponse;
-import igrus.web.inquiry.event.InquiryStatusChangeEvent;
+import igrus.web.inquiry.audit.InquiryStatusChanged;
 import igrus.web.inquiry.exception.InquiryAlreadyRepliedException;
 import igrus.web.inquiry.service.support.InquiryFinder;
 import igrus.web.inquiry.service.support.InquiryNotificationService;
@@ -57,7 +57,7 @@ public class CreateInquiryReplyService {
         InquiryStatus previousStatus = inquiry.getStatus();
         inquiry.complete();
 
-        eventPublisher.publishEvent(new InquiryStatusChangeEvent(
+        eventPublisher.publishEvent(new InquiryStatusChanged(
                 inquiryId, operatorId, InquiryChangeType.REPLY_COMPLETED,
                 previousStatus.name(), InquiryStatus.COMPLETED.name()));
 

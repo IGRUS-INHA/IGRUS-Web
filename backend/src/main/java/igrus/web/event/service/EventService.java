@@ -11,7 +11,7 @@ import igrus.web.event.dto.request.UpdateEventRequest;
 import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
-import igrus.web.event.event.EventStatusChangeEvent;
+import igrus.web.event.audit.EventStatusChanged;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventAccessDeniedException;
 import igrus.web.event.exception.EventNotDeletableException;
@@ -327,7 +327,7 @@ public class EventService {
         event.closeRegistrationManually();
 
         // 6. 감사 이력 이벤트 발행
-        eventPublisher.publishEvent(new EventStatusChangeEvent(
+        eventPublisher.publishEvent(new EventStatusChanged(
                 eventId, userId, EventChangeType.REGISTRATION_CLOSED_MANUAL,
                 previousRegStatus, event.getRegistrationStatus().name(), reason));
 
@@ -365,7 +365,7 @@ public class EventService {
         event.cancel();
 
         // 6. 감사 이력 이벤트 발행
-        eventPublisher.publishEvent(new EventStatusChangeEvent(
+        eventPublisher.publishEvent(new EventStatusChanged(
                 eventId, userId, EventChangeType.EVENT_CANCELED,
                 previousEventStatus, event.getEventStatus().name(), reason));
 
@@ -400,7 +400,7 @@ public class EventService {
         event.reactivate(Instant.now());
 
         // 5. 감사 이력 이벤트 발행
-        eventPublisher.publishEvent(new EventStatusChangeEvent(
+        eventPublisher.publishEvent(new EventStatusChanged(
                 eventId, userId, EventChangeType.EVENT_REACTIVATED,
                 previousEventStatus, event.getEventStatus().name(), reason));
 
@@ -462,7 +462,7 @@ public class EventService {
         event.reopenRegistration();
 
         // 7. 감사 이력 이벤트 발행 (EVT-INV-14)
-        eventPublisher.publishEvent(new EventStatusChangeEvent(
+        eventPublisher.publishEvent(new EventStatusChanged(
                 eventId, userId, EventChangeType.REGISTRATION_REOPENED,
                 previousRegStatus, event.getRegistrationStatus().name(), reason));
 
@@ -557,7 +557,7 @@ public class EventService {
         event.publish();
 
         // 4. 감사 이력 이벤트 발행
-        eventPublisher.publishEvent(new EventStatusChangeEvent(
+        eventPublisher.publishEvent(new EventStatusChanged(
                 eventId, userId, EventChangeType.EVENT_PUBLISHED,
                 previousVisibility, event.getVisibility().name(), null));
 
@@ -592,13 +592,13 @@ public class EventService {
         event.unpublish();
 
         // 4. 감사 이력 이벤트 발행 (visibility 변경)
-        eventPublisher.publishEvent(new EventStatusChangeEvent(
+        eventPublisher.publishEvent(new EventStatusChanged(
                 eventId, userId, EventChangeType.EVENT_UNPUBLISHED,
                 previousVisibility, event.getVisibility().name(), null));
 
         // 5. 등록 자동 마감 시 추가 감사 이력 발행
         if (!previousRegStatus.equals(event.getRegistrationStatus().name())) {
-            eventPublisher.publishEvent(new EventStatusChangeEvent(
+            eventPublisher.publishEvent(new EventStatusChanged(
                     eventId, userId, EventChangeType.REGISTRATION_CLOSED_MANUAL,
                     previousRegStatus, event.getRegistrationStatus().name(),
                     "비공개 전환에 의한 자동 마감"));

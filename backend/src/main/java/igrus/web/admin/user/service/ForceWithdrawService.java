@@ -9,7 +9,7 @@ import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.withdrawal.domain.WithdrawalLog;
@@ -78,7 +78,7 @@ public class ForceWithdrawService {
         refreshTokenRepository.revokeAllByUserId(targetUserId);
 
         // 9. 감사 이력 이벤트 발행
-        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+        eventPublisher.publishEvent(new AccountStatusChanged(
                 targetUserId, currentUserId, AccountChangeType.FORCE_WITHDRAWAL,
                 previousStatus, UserStatus.WITHDRAWN.name(),
                 reason

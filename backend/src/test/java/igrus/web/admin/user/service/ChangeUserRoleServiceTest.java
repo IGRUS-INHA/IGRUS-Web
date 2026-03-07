@@ -12,7 +12,7 @@ import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.exception.SameRoleChangeException;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -83,7 +83,7 @@ class ChangeUserRoleServiceTest {
             verify(userRoleHistoryRepository).save(any(UserRoleHistory.class));
             verify(validateNotLastAdminService).validateNotLastAdmin(targetUserId);
             verify(refreshTokenRepository).revokeAllByUserId(targetUserId);
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
 
         @Test
@@ -161,7 +161,7 @@ class ChangeUserRoleServiceTest {
             assertThat(targetUser.getRole()).isEqualTo(UserRole.MEMBER);
             verify(userRoleHistoryRepository).save(any(UserRoleHistory.class));
             verify(refreshTokenRepository).revokeAllByUserId(targetUserId);
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
     }
 

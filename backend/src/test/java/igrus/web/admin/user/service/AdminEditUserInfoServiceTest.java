@@ -4,7 +4,7 @@ import igrus.web.admin.user.dto.AdminEditUserInfoRequest;
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.User;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.exception.DuplicateEmailException;
 import igrus.web.user.exception.DuplicatePhoneNumberException;
 import igrus.web.user.exception.UserNotFoundException;
@@ -71,7 +71,7 @@ class AdminEditUserInfoServiceTest {
             // then
             assertThat(targetUser.getEmail()).isEqualTo(newEmail);
             verify(emailVerificationRepository).deleteByEmail(previousEmail);
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
 
         @Test
@@ -144,7 +144,7 @@ class AdminEditUserInfoServiceTest {
             // then
             assertThat(targetUser.getEmail()).isEqualTo(originalEmail);
             assertThat(targetUser.getName()).isEqualTo(originalName);
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
 
         @Test
@@ -165,11 +165,11 @@ class AdminEditUserInfoServiceTest {
             adminEditUserInfoService.editUserInfo(targetUserId, request, currentUserId);
 
             // then
-            ArgumentCaptor<AccountStatusChangeEvent> captor =
-                    ArgumentCaptor.forClass(AccountStatusChangeEvent.class);
+            ArgumentCaptor<AccountStatusChanged> captor =
+                    ArgumentCaptor.forClass(AccountStatusChanged.class);
             verify(eventPublisher).publishEvent(captor.capture());
 
-            AccountStatusChangeEvent event = captor.getValue();
+            AccountStatusChanged event = captor.getValue();
             assertThat(event.userId()).isEqualTo(targetUserId);
             assertThat(event.changedByUserId()).isEqualTo(currentUserId);
             assertThat(event.changeType()).isEqualTo(AccountChangeType.ADMIN_INFO_EDIT);
