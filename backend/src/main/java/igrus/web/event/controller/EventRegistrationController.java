@@ -12,7 +12,7 @@ import igrus.web.generated.model.GetMyRegistrations200ResponseInner;
 import igrus.web.generated.model.GetRegistrationList200Response;
 import igrus.web.generated.model.GetRegistrationList200ResponseContentInner;
 import igrus.web.generated.model.RegisterEventRequest;
-import igrus.web.generated.model.RevertRegistration200Response;
+import igrus.web.generated.model.CancelRegistrationByAdmin200Response;
 import igrus.web.generated.model.UpdateMyResponseRequestAnswersInner;
 import igrus.web.generated.model.UpdateMyResponseRequestAnswersInnerGridAnswersInner;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
@@ -43,7 +43,7 @@ public class EventRegistrationController implements EventRegistrationApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<RevertRegistration200Response> registerEvent(
+    public ResponseEntity<CancelRegistrationByAdmin200Response> registerEvent(
             Long eventId,
             RegisterEventRequest registerEventRequest
     ) {
@@ -51,16 +51,16 @@ public class EventRegistrationController implements EventRegistrationApi {
         log.info("행사 신청 요청 - eventId: {}, userId: {}", eventId, user.userId());
         List<SubmitAnswerRequest> surveyAnswers = mapToSubmitAnswerRequests(registerEventRequest);
         RegistrationResponse response = eventRegistrationService.registerEvent(eventId, user.userId(), surveyAnswers);
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapToRevertRegistration200Response(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapToCancelRegistrationByAdmin200Response(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<RevertRegistration200Response> cancelRegistration(Long eventId) {
+    public ResponseEntity<CancelRegistrationByAdmin200Response> cancelRegistration(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 취소 요청 - eventId: {}, userId: {}", eventId, user.userId());
         RegistrationResponse response = eventRegistrationService.cancelRegistration(eventId, user.userId());
-        return ResponseEntity.ok(mapToRevertRegistration200Response(response));
+        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
     }
 
     @Override
@@ -113,32 +113,42 @@ public class EventRegistrationController implements EventRegistrationApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<RevertRegistration200Response> approveRegistration(Long registrationId) {
+    public ResponseEntity<CancelRegistrationByAdmin200Response> approveRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 승인 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
         RegistrationResponse response = eventRegistrationService.approveRegistration(
                 registrationId, user.userId());
-        return ResponseEntity.ok(mapToRevertRegistration200Response(response));
+        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<RevertRegistration200Response> rejectRegistration(Long registrationId) {
+    public ResponseEntity<CancelRegistrationByAdmin200Response> rejectRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 거절 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
         RegistrationResponse response = eventRegistrationService.rejectRegistration(
                 registrationId, user.userId());
-        return ResponseEntity.ok(mapToRevertRegistration200Response(response));
+        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<RevertRegistration200Response> revertRegistration(Long registrationId) {
+    public ResponseEntity<CancelRegistrationByAdmin200Response> revertRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("승인/거절 되돌리기 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
         RegistrationResponse response = eventRegistrationService.revertRegistration(
                 registrationId, user.userId());
-        return ResponseEntity.ok(mapToRevertRegistration200Response(response));
+        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<CancelRegistrationByAdmin200Response> cancelRegistrationByAdmin(Long registrationId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("관리자 행사 신청 취소 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
+        RegistrationResponse response = eventRegistrationService.cancelRegistrationByAdmin(
+                registrationId, user.userId());
+        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
     }
 
     // ===== 매핑 헬퍼 =====
@@ -175,11 +185,11 @@ public class EventRegistrationController implements EventRegistrationApi {
         );
     }
 
-    private RevertRegistration200Response mapToRevertRegistration200Response(RegistrationResponse r) {
-        return new RevertRegistration200Response()
+    private CancelRegistrationByAdmin200Response mapToCancelRegistrationByAdmin200Response(RegistrationResponse r) {
+        return new CancelRegistrationByAdmin200Response()
                 .registrationId(r.registrationId())
                 .status(r.status() != null
-                        ? RevertRegistration200Response.StatusEnum.fromValue(r.status().name())
+                        ? CancelRegistrationByAdmin200Response.StatusEnum.fromValue(r.status().name())
                         : null)
                 .isRegistered(r.isRegistered());
     }
@@ -210,6 +220,8 @@ public class EventRegistrationController implements EventRegistrationApi {
                 .status(r.status() != null
                         ? GetRegistrationList200ResponseContentInner.StatusEnum.fromValue(r.status().name())
                         : null)
-                .registeredAt(r.registeredAt());
+                .registeredAt(r.registeredAt())
+                .isExternal(r.isExternal())
+                .phone(r.phone());
     }
 }

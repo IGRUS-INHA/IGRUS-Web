@@ -47,18 +47,24 @@ public class ApiSecurityConfig {
                 // 행사 목록 조회 (GET만 공개, 상세/POST/PUT/DELETE는 인증 필요)
                 .requestMatchers(HttpMethod.GET, "/api/v1/events").permitAll()
 
+                // 외부인 행사 신청 (인증 불필요)
+                .requestMatchers(HttpMethod.POST, "/api/v1/events/*/registrations/external").permitAll()
+
                 // 학기별 회원 명단 조회 (운영진 이상)
                 .requestMatchers("/api/v1/semesters/**").hasAnyRole("OPERATOR", "ADMIN")
 
                 // 학기별 회원 관리 (관리자 전용)
                 .requestMatchers("/api/v1/admin/semesters/**").hasRole("ADMIN")
 
+                // 신청자 목록 조회 (GET만 운영진 이상, POST/DELETE는 인증된 사용자)
+                .requestMatchers(HttpMethod.GET, "/api/v1/events/*/registrations").hasAnyRole("OPERATOR", "ADMIN")
+
                 // 운영진 이상 (더 구체적인 경로를 먼저 배치)
                 .requestMatchers(
                         "/api/v1/admin/dashboard",
                         "/api/v1/admin/users/**",
                         "/api/v1/admin/events/**",
-                        "/api/events/*/registrations",
+                        "/api/v1/registrations/*/cancel",
                         "/api/v1/admin/comment-reports/**"
                 ).hasAnyRole("OPERATOR", "ADMIN")
 
