@@ -61,7 +61,9 @@ export default function EventSidebar({ events }: EventSidebarProps) {
 
   // Statistics
   const totalEvents = events.length;
-  const ongoingCount = events.filter((e) => e.status === "ONGOING").length;
+  const recruitingCount = events.filter(
+    (e) => e.registrationStatus === "OPEN" && e.visibility === "PUBLISHED",
+  ).length;
   const totalParticipants = events.reduce(
     (sum, e) => sum + (e.currentCount ?? 0),
     0,
@@ -147,7 +149,7 @@ export default function EventSidebar({ events }: EventSidebarProps) {
       {/* Statistics */}
       <div className="rounded-r4 border border-border bg-card p-s4">
         <p className="text-xs font-bold text-muted-foreground tracking-wider mb-s3">
-          STATISTICS
+          통계
         </p>
         <div className="grid grid-cols-2 gap-s4">
           <div>
@@ -155,8 +157,8 @@ export default function EventSidebar({ events }: EventSidebarProps) {
             <p className="text-xs text-muted-foreground mt-0.5">전체 행사</p>
           </div>
           <div>
-            <p className="text-2xl font-bold">{ongoingCount}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">진행중</p>
+            <p className="text-2xl font-bold">{recruitingCount}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">모집중</p>
           </div>
           <div>
             <p className="text-2xl font-bold">{totalParticipants}</p>

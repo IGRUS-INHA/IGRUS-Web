@@ -15,3 +15,4 @@ declare const __FEATURE_SEARCH__: boolean;
 declare const __FEATURE_PROFILE_EDIT__: boolean;
 declare const __FEATURE_EVENTS__: boolean;
 declare const __FEATURE_INSTAGRAM__: boolean;
+declare const __FEATURE_DARK_MODE__: boolean;

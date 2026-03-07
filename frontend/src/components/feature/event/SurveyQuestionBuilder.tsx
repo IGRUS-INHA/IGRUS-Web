@@ -1,4 +1,4 @@
-import { ClipboardList, Copy, Plus, Trash2 } from "lucide-react";
+import { ClipboardList, Copy, Plus, Trash2, X } from "lucide-react";
 import { CreateQuestionRequestQuestionType } from "@/api/model/models";
 import { cn } from "@/lib/utils";
 
@@ -9,7 +9,14 @@ export interface DraftQuestion {
   title: string;
   required: boolean;
   displayOrder: number;
+  options?: string[];
 }
+
+const OPTION_TYPES = new Set<CreateQuestionRequestQuestionType>([
+  "MULTIPLE_CHOICE",
+  "CHECKBOX",
+  "DROPDOWN",
+]);
 
 const QUESTION_TYPES: {
   value: CreateQuestionRequestQuestionType;
@@ -20,8 +27,6 @@ const QUESTION_TYPES: {
   { value: "MULTIPLE_CHOICE", label: "객관식" },
   { value: "CHECKBOX", label: "체크박스" },
   { value: "DROPDOWN", label: "드롭다운" },
-  { value: "DATE", label: "날짜" },
-  { value: "TIME", label: "시간" },
 ];
 
 function AnswerPreview({ type }: { type: CreateQuestionRequestQuestionType }) {
@@ -73,21 +78,63 @@ function AnswerPreview({ type }: { type: CreateQuestionRequestQuestionType }) {
           <span className="ml-auto text-xs">▾</span>
         </div>
       );
-    case "DATE":
-      return (
-        <p className="text-sm text-muted-foreground/50 border-b border-border pb-1 w-36">
-          날짜 선택
-        </p>
-      );
-    case "TIME":
-      return (
-        <p className="text-sm text-muted-foreground/50 border-b border-border pb-1 w-36">
-          시간 선택
-        </p>
-      );
+
     default:
       return <p className="text-sm text-muted-foreground/50">답변 미리보기</p>;
   }
+}
+
+function OptionsEditor({
+  questionType,
+  options,
+  onChange,
+}: {
+  questionType: CreateQuestionRequestQuestionType;
+  options: string[];
+  onChange: (opts: string[]) => void;
+}) {
+  return (
+    <div className="space-y-s2">
+      {options.map((text, idx) => (
+        <div key={idx} className="flex items-center gap-s2">
+          {questionType === "DROPDOWN" ? (
+            <span className="text-xs text-muted-foreground/60 w-4 shrink-0">
+              {idx + 1}.
+            </span>
+          ) : questionType === "MULTIPLE_CHOICE" ? (
+            <div className="w-3.5 h-3.5 rounded-full border border-muted-foreground/40 shrink-0" />
+          ) : (
+            <div className="w-3.5 h-3.5 rounded-sm border border-muted-foreground/40 shrink-0" />
+          )}
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => {
+              const next = [...options];
+              next[idx] = e.target.value;
+              onChange(next);
+            }}
+            placeholder={`옵션 ${idx + 1}`}
+            className="flex-1 text-sm bg-transparent border-b border-border/50 focus:outline-none focus:border-primary pb-0.5 placeholder:text-muted-foreground/30"
+          />
+          <button
+            type="button"
+            onClick={() => onChange(options.filter((_, i) => i !== idx))}
+            className="text-muted-foreground/40 hover:text-destructive transition cursor-pointer shrink-0"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...options, ""])}
+        className="flex items-center gap-s1 text-xs text-primary hover:text-primary/80 transition cursor-pointer mt-s1"
+      >
+        <Plus size={12} /> 옵션 추가
+      </button>
+    </div>
+  );
 }
 
 interface SurveyQuestionBuilderProps {
@@ -165,7 +212,10 @@ export function SurveyQuestionBuilder({
         {questions.map((q) => (
           <div
             key={q.localId}
-            className="rounded-r3 border border-border bg-muted/30 overflow-hidden"
+            className={cn(
+              "rounded-r3 border bg-muted/30 overflow-hidden",
+              q.required ? "border-primary/50" : "border-border",
+            )}
           >
             {/* 질문 헤더: 제목 입력 + 타입 선택 */}
             <div className="px-s4 pt-s3 pb-s2 flex items-center gap-s3">
@@ -180,12 +230,16 @@ export function SurveyQuestionBuilder({
               />
               <select
                 value={q.questionType}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const newType = e.target
+                    .value as CreateQuestionRequestQuestionType;
                   updateQuestion(q.localId, {
-                    questionType: e.target
-                      .value as CreateQuestionRequestQuestionType,
-                  })
-                }
+                    questionType: newType,
+                    options: OPTION_TYPES.has(newType)
+                      ? (q.options ?? ["", ""])
+                      : undefined,
+                  });
+                }}
                 className="text-xs border border-border rounded-r2 px-s2 py-1 bg-card text-foreground focus:outline-none focus:border-primary cursor-pointer shrink-0"
               >
                 {QUESTION_TYPES.map((t) => (
@@ -196,9 +250,19 @@ export function SurveyQuestionBuilder({
               </select>
             </div>
 
-            {/* 답변 미리보기 */}
+            {/* 답변 미리보기 또는 옵션 편집기 */}
             <div className="px-s4 pb-s3">
-              <AnswerPreview type={q.questionType} />
+              {OPTION_TYPES.has(q.questionType) ? (
+                <OptionsEditor
+                  questionType={q.questionType}
+                  options={q.options ?? ["", ""]}
+                  onChange={(opts) =>
+                    updateQuestion(q.localId, { options: opts })
+                  }
+                />
+              ) : (
+                <AnswerPreview type={q.questionType} />
+              )}
             </div>
 
             {/* 하단 액션 버튼 */}

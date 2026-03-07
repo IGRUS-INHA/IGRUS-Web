@@ -89,8 +89,20 @@ function groupByMonth(events: Event[]): [string, Event[]][] {
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(event);
   }
-  // Descending order (newest month first)
-  return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
+  // Descending order (newest month first, newest date first within each month)
+  return Array.from(map.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(
+      ([key, monthEvents]) =>
+        [
+          key,
+          [...monthEvents].sort((a, b) => {
+            const da = new Date(a.startDate ?? a.date).getTime();
+            const db = new Date(b.startDate ?? b.date).getTime();
+            return db - da;
+          }),
+        ] as [string, Event[]],
+    );
 }
 
 function formatMonthLabel(key: string): string {
