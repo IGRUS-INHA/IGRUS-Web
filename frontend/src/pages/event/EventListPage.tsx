@@ -218,7 +218,7 @@ export default function EventListPage() {
         {isOperator && (
           <button
             type="button"
-            onClick={() => navigate("/events/write")}
+            onClick={() => navigate("/events/create")}
             className="ml-auto flex items-center gap-s2 px-s4 py-s2 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 cursor-pointer"
           >
             <Plus size={16} /> 행사 등록

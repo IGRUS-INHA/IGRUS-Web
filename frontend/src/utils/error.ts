@@ -196,7 +196,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   // Event (15개)
   EVENT_NOT_FOUND: "행사를 찾을 수 없습니다.",
   EVENT_ACCESS_DENIED: "행사 접근 권한이 없습니다.",
-  EVENT_INVALID_DATE: "행사 날짜가 올바르지 않습니다.",
+  EVENT_INVALID_DATE: "행사 기간이 올바르지 않습니다.",
   EVENT_INVALID_CAPACITY: "행사 정원이 올바르지 않습니다.",
   EVENT_ALREADY_REGISTERED: "이미 신청한 행사입니다.",
   EVENT_REGISTRATION_CLOSED: "신청 기간이 종료되었습니다.",

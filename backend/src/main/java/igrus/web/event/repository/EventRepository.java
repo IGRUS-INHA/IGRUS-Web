@@ -93,7 +93,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("SELECT e FROM Event e WHERE " +
            "e.visibility = :visibility AND " +
            "(:eventStatus IS NULL OR e.eventStatus = :eventStatus) AND " +
-           "(:registrationStatus IS NULL OR e.registrationStatus = :registrationStatus)")
+           "(:registrationStatus IS NULL OR e.registrationStatus = :registrationStatus) " +
+           "ORDER BY e.eventStartAt ASC")
     List<Event> findByVisibilityAndFilters(
             @Param("visibility") EventVisibility visibility,
             @Param("eventStatus") EventStatus eventStatus,
