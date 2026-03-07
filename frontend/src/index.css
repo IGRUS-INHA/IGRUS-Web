@@ -1034,12 +1034,10 @@
 
 .notice-row:first-child {
   border-top: 1px solid var(--foreground);
-  padding-top: 24px;
 }
 
 .notice-row:last-child {
   border-bottom: 1px solid var(--foreground);
-  padding-bottom: 24px;
 }
 
 .notice-row:hover {
