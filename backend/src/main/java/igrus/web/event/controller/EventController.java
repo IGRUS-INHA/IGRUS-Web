@@ -270,7 +270,8 @@ public class EventController implements EventApi {
                         : null)
                 .isRegistrable(r.isRegistrable())
                 .surveyId(r.surveyId())
-                .allowExternal(r.allowExternal());
+                .allowExternal(r.allowExternal())
+                .thumbnailObjectKey(r.thumbnailObjectKey());
     }
 
     private ApiEventAttachmentResponse mapToAttachmentResponse(EventAttachmentDto a) {

@@ -221,8 +221,16 @@ public class EventService {
                     .toList();
         }
 
+        List<Long> eventIds = events.stream().map(Event::getId).toList();
+        Map<Long, String> thumbnailMap = eventAttachmentRepository.findFirstByEventIds(eventIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ea -> ea.getEvent().getId(),
+                        ea -> ea.getFileMetadata().getObjectKey()
+                ));
+
         return events.stream()
-                .map(EventListResponse::from)
+                .map(event -> EventListResponse.from(event, thumbnailMap.get(event.getId())))
                 .toList();
     }
 
@@ -535,8 +543,16 @@ public class EventService {
                     .toList();
         }
 
+        List<Long> eventIds = events.stream().map(Event::getId).toList();
+        Map<Long, String> thumbnailMap = eventAttachmentRepository.findFirstByEventIds(eventIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ea -> ea.getEvent().getId(),
+                        ea -> ea.getFileMetadata().getObjectKey()
+                ));
+
         return events.stream()
-                .map(EventListResponse::from)
+                .map(event -> EventListResponse.from(event, thumbnailMap.get(event.getId())))
                 .toList();
     }
 
