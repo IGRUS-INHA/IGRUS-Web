@@ -362,6 +362,128 @@ export const useUpdateMyResponse = <TError = void, TContext = unknown>(
   return useMutation(getUpdateMyResponseMutationOptions(options), queryClient);
 };
 /**
+ * 본인이 제출한 설문 응답을 삭제합니다. OPEN 상태의 설문에서만 삭제 가능합니다. 행사 연결 설문의 경우 행사 신청도 함께 취소됩니다.
+ * @summary 본인 응답 삭제
+ */
+export type deleteMyResponseResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type deleteMyResponseResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type deleteMyResponseResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type deleteMyResponseResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type deleteMyResponseResponseSuccess = deleteMyResponseResponse204 & {
+  headers: Headers;
+};
+export type deleteMyResponseResponseError = (
+  | deleteMyResponseResponse401
+  | deleteMyResponseResponse404
+  | deleteMyResponseResponse409
+) & {
+  headers: Headers;
+};
+
+export type deleteMyResponseResponse =
+  | deleteMyResponseResponseSuccess
+  | deleteMyResponseResponseError;
+
+export const getDeleteMyResponseUrl = (surveyId: number) => {
+  return `/api/v1/surveys/${surveyId}/responses`;
+};
+
+export const deleteMyResponse = async (
+  surveyId: number,
+  options?: RequestInit,
+): Promise<deleteMyResponseResponse> => {
+  return customFetch<deleteMyResponseResponse>(
+    getDeleteMyResponseUrl(surveyId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getDeleteMyResponseMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMyResponse>>,
+    TError,
+    { surveyId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteMyResponse>>,
+  TError,
+  { surveyId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteMyResponse"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMyResponse>>,
+    { surveyId: number }
+  > = (props) => {
+    const { surveyId } = props ?? {};
+
+    return deleteMyResponse(surveyId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMyResponseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteMyResponse>>
+>;
+
+export type DeleteMyResponseMutationError = void;
+
+/**
+ * @summary 본인 응답 삭제
+ */
+export const useDeleteMyResponse = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteMyResponse>>,
+      TError,
+      { surveyId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteMyResponse>>,
+  TError,
+  { surveyId: number },
+  TContext
+> => {
+  return useMutation(getDeleteMyResponseMutationOptions(options), queryClient);
+};
+/**
  * 회원이 설문에 응답을 제출합니다. 설문당 1회만 가능합니다.
  * @summary 설문 응답 제출
  */
