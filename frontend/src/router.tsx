@@ -23,6 +23,7 @@ import EventCreatePage from "@/pages/event/EventCreatePage";
 import EventEditPage from "@/pages/event/EventEditPage";
 import EventRegistrationsPage from "@/pages/event/EventRegistrationsPage";
 import EventApplyPage from "@/pages/event/EventApplyPage";
+import EventExternalApplyPage from "@/pages/event/EventExternalApplyPage";
 
 // 문의
 import InquiryPage from "@/pages/inquiry/InquiryPage";
@@ -96,14 +97,7 @@ const routes: RouteObject[] = [
       },
 
       // 행사
-      {
-        path: "events",
-        element: (
-          <ProtectedRoute>
-            <EventListPage />
-          </ProtectedRoute>
-        ),
-      },
+      { path: "events", element: <EventListPage /> },
       {
         path: "events/create",
         element: (
@@ -127,6 +121,10 @@ const routes: RouteObject[] = [
             <EventApplyPage />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: "events/:eventId/apply/external",
+        element: <EventExternalApplyPage />,
       },
       {
         path: "events/:eventId/registrations",

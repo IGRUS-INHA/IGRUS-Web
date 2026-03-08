@@ -20,6 +20,7 @@ import {
   Plus,
   UserCheck,
   Check,
+  Star,
 } from "lucide-react";
 import type { UploadFile } from "@/types/upload";
 import { WysiwygEditor } from "@/components/feature/editor";
@@ -100,6 +101,7 @@ interface EventFormFieldsProps {
   files: UploadFile[];
   onAddFiles: (files: FileList) => void;
   onRemoveFile: (id: string) => void;
+  onReorderFiles: (fromIndex: number, toIndex: number) => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
 }
 
@@ -129,6 +131,7 @@ export function EventFormFields({
   files,
   onAddFiles,
   onRemoveFile,
+  onReorderFiles,
   fileInputRef,
 }: EventFormFieldsProps) {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -555,6 +558,24 @@ export function EventFormFields({
                     className="w-full h-full object-cover rounded-r3 border border-border"
                   />
                 </button>
+                {idx === 0 ? (
+                  <div className="absolute bottom-s1 left-s1 flex items-center gap-0.5 bg-black/60 text-white rounded-r2 px-s2 py-0.5 text-xs pointer-events-none">
+                    <Star
+                      size={10}
+                      className="fill-yellow-400 text-yellow-400"
+                    />
+                    대표 이미지
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onReorderFiles(idx, 0)}
+                    className="absolute bottom-s1 left-s1 flex items-center gap-0.5 bg-black/60 text-white rounded-r2 px-s2 py-0.5 text-xs opacity-0 group-hover:opacity-100 transition cursor-pointer hover:bg-black/80"
+                  >
+                    <Star size={10} />
+                    대표로 설정
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => onRemoveFile(file.id)}
@@ -597,6 +618,9 @@ export function EventFormFields({
             </p>
             <p className="typo-c1 text-muted-foreground/70">
               JPG, PNG, GIF, WebP · 최대 10MB
+            </p>
+            <p className="typo-c1 text-muted-foreground/50 flex items-center gap-s1">
+              <Star size={10} />첫 번째 이미지가 목록 썸네일로 사용됩니다
             </p>
           </div>
         )}

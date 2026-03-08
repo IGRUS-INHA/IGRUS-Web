@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -17,6 +17,8 @@ import {
   RotateCcw,
   Trash2,
   Users,
+  ClipboardList,
+  FileText,
 } from "lucide-react";
 import { RichTextViewer } from "@/components/feature/editor";
 import type { Event } from "@/types/entities";
@@ -36,6 +38,7 @@ import {
   useReactivateEvent,
   useReopenRegistration,
 } from "@/api/model/event/event";
+import { useRegisterEventExternal } from "@/api/model/event-external-registration/event-external-registration";
 import {
   usePublishEvent,
   useUnpublishEvent,
@@ -52,12 +55,16 @@ import {
 import {
   getErrorMessage,
   isForbiddenError,
+  isConflictError,
+  isNotFoundError,
   isEventAlreadyRegistered,
   isEventCapacityFull,
   isEventRegistrationClosed,
   isEventOperatorRequired,
   hasErrorCode,
 } from "@/utils/error";
+import { formatPhoneNumber } from "@/utils";
+import { majorOptions } from "@/constants/majorOptions";
 import ReasonDialog from "@/components/feature/event/ReasonDialog";
 import { cn } from "@/lib/utils";
 import { useResolvedImageUrls } from "@/hooks/useResolvedImageUrls";
@@ -82,13 +89,28 @@ interface EventAccordionItemProps {
 
 export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const isOperator = user?.role === "OPERATOR" || user?.role === "ADMIN";
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  const hashId = `event-${event.id}`;
+  const isHashTarget = location.hash === `#${hashId}`;
+
+  const [isExpanded, setIsExpanded] = useState(() => isHashTarget);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [externalForm, setExternalForm] = useState({
+    name: "",
+    studentId: "",
+    phone: "",
+    department: "",
+    customDepartment: "",
+  });
+  const [externalFormErrors, setExternalFormErrors] = useState<
+    Record<string, string>
+  >({});
+  const itemRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const [reasonDialog, setReasonDialog] = useState<{
     title: string;
@@ -98,12 +120,99 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const numericId = Number(event.id);
 
   // Lazy fetch detail when expanded
-  const publicQuery = useEvent(numericId, isExpanded && !isOperator);
+  // allowExternal=true 행사는 비인증 사용자도 상세 조회 가능
+  const publicQuery = useEvent(
+    numericId,
+    isExpanded && !isOperator && (isAuthenticated || !!event.allowExternal),
+  );
   const adminQuery = useAdminEvent(numericId, isExpanded && isOperator);
   const { data: detailResponse, isLoading: isDetailLoading } = isOperator
     ? adminQuery
     : publicQuery;
   const detail = detailResponse?.data;
+
+  // External registration mutation
+  const { mutate: registerExternal, isPending: isRegisteringExternal } =
+    useRegisterEventExternal({
+      mutation: {
+        onSuccess: () => {
+          alert("행사 신청이 완료되었습니다.");
+          setExternalForm({
+            name: "",
+            studentId: "",
+            phone: "",
+            department: "",
+            customDepartment: "",
+          });
+          setExternalFormErrors({});
+        },
+        onError: (error: unknown) => {
+          if (isConflictError(error)) {
+            alert("이미 신청한 행사입니다. (동일 학번 또는 연락처)");
+          } else if (isNotFoundError(error)) {
+            alert("행사를 찾을 수 없습니다.");
+          } else {
+            alert(getErrorMessage(error));
+          }
+        },
+      },
+    });
+
+  const handleExternalApply = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const errors: Record<string, string> = {};
+    if (!externalForm.name.trim()) {
+      errors.name = "이름을 입력해주세요.";
+    } else if (externalForm.name.trim().length > 50) {
+      errors.name = "이름은 50자 이내여야 합니다.";
+    }
+    if (!externalForm.studentId.trim()) {
+      errors.studentId = "학번을 입력해주세요.";
+    } else if (!/^\d{8}$/.test(externalForm.studentId)) {
+      errors.studentId = "학번은 8자리 숫자여야 합니다.";
+    }
+    if (!externalForm.phone.trim()) {
+      errors.phone = "연락처를 입력해주세요.";
+    } else if (!/^\d{3}-\d{4}-\d{4}$/.test(externalForm.phone)) {
+      errors.phone = "올바른 전화번호를 입력해주세요. (예: 010-1234-5678)";
+    }
+    const resolvedDepartment =
+      externalForm.department === "기타"
+        ? externalForm.customDepartment.trim()
+        : externalForm.department;
+    if (!externalForm.department) {
+      errors.department = "학과를 선택해주세요.";
+    } else if (
+      externalForm.department === "기타" &&
+      !externalForm.customDepartment.trim()
+    ) {
+      errors.department = "학과를 직접 입력해주세요.";
+    }
+    if (Object.keys(errors).length > 0) {
+      setExternalFormErrors(errors);
+      return;
+    }
+    if (event.surveyId) {
+      const params = new URLSearchParams({
+        surveyId: String(event.surveyId),
+        name: externalForm.name,
+        studentId: externalForm.studentId,
+        phone: externalForm.phone,
+        department: resolvedDepartment,
+      });
+      navigate(`/events/${numericId}/apply/external?${params.toString()}`);
+      return;
+    }
+    registerExternal({
+      eventId: numericId,
+      data: {
+        name: externalForm.name,
+        studentId: externalForm.studentId,
+        phone: externalForm.phone,
+        department: resolvedDepartment,
+      },
+    });
+  };
 
   // Mutations
   const { mutate: applyEvent, isPending: isApplying } = useApplyEvent();
@@ -166,6 +275,27 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
     isReactivating ||
     isDeleting;
 
+  // 해시 타겟이면 마운트 시 스크롤
+  useEffect(() => {
+    if (isHashTarget && itemRef.current) {
+      setTimeout(() => {
+        itemRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleToggle = () => {
+    const next = !isExpanded;
+    setIsExpanded(next);
+    if (next) {
+      navigate(`${location.pathname}${location.search}#${hashId}`, {
+        replace: true,
+      });
+    } else if (location.hash === `#${hashId}`) {
+      navigate(`${location.pathname}${location.search}`, { replace: true });
+    }
+  };
+
   // Outside click to close more menu
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -202,7 +332,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
     showRegStatus && regStatus ? REG_STATUS_LABEL[regStatus] : null;
 
   // Action state
-  const isRegistrable = detail?.isRegistrable ?? false;
+  const isRegistrable = detail?.isRegistrable ?? event.isRegistrable ?? false;
   const hasApplied = detail?.isRegistered ?? false;
   const isUnpublished =
     (detail?.visibility ?? event.visibility) === "UNPUBLISHED";
@@ -340,7 +470,19 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const progressPercent =
     capacity > 0 ? Math.min((currentCount / capacity) * 100, 100) : 0;
 
+  // 이미지 — 확장 시 detail.attachments에서 objectKey 추출
+  const imageObjectKeys = useMemo(
+    () =>
+      (detail?.attachments ?? [])
+        .map((a) => a.objectKey ?? "")
+        .filter((key) => Boolean(key) && key !== event.thumbnailObjectKey),
+    [detail?.attachments, event.thumbnailObjectKey],
+  );
+  const { urls: resolvedImageUrls } = useResolvedImageUrls(imageObjectKeys);
+
   // 썸네일 — collapsed 상태에서 제목 좌측에 표시
+  // event.thumbnailObjectKey가 없으면 detail.attachments[0] 폴백 사용
+  // (resolvedImageUrls는 이미 위에서 계산되므로 추가 API 호출 없음)
   const thumbnailKeys = useMemo(
     () => (event.thumbnailObjectKey ? [event.thumbnailObjectKey] : []),
     [event.thumbnailObjectKey],
@@ -348,20 +490,37 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const { urls: thumbnailUrls } = useResolvedImageUrls(thumbnailKeys);
   const thumbnailSrc = event.thumbnailObjectKey
     ? thumbnailUrls.get(event.thumbnailObjectKey)
-    : undefined;
+    : imageObjectKeys[0]
+      ? resolvedImageUrls.get(imageObjectKeys[0])
+      : undefined;
 
-  // 이미지 — 확장 시 detail.attachments에서 objectKey 추출
-  const imageObjectKeys = useMemo(
-    () =>
-      (detail?.attachments ?? []).map((a) => a.objectKey ?? "").filter(Boolean),
-    [detail?.attachments],
-  );
-  const { urls: resolvedImageUrls } = useResolvedImageUrls(imageObjectKeys);
+  // 라이트박스용 전체 이미지 배열: [썸네일, ...갤러리]
+  // thumbnailObjectKey가 없으면 thumbnailSrc == 첫 번째 갤러리 이미지이므로 중복 없음
+  const allLightboxSrcs = useMemo(() => {
+    const srcs: string[] = [];
+    if (thumbnailSrc && event.thumbnailObjectKey) {
+      srcs.push(thumbnailSrc);
+    }
+    for (const key of imageObjectKeys) {
+      const url = resolvedImageUrls.get(key);
+      if (url) srcs.push(url);
+    }
+    return srcs;
+  }, [
+    thumbnailSrc,
+    event.thumbnailObjectKey,
+    imageObjectKeys,
+    resolvedImageUrls,
+  ]);
+
+  // 갤러리 이미지 클릭 시 라이트박스 인덱스 오프셋 (전용 썸네일이 배열 앞에 오는 경우)
+  const galleryLightboxOffset = event.thumbnailObjectKey ? 1 : 0;
 
   return (
     <div
+      ref={itemRef}
       className={cn(
-        "border border-border rounded-r4 bg-card overflow-hidden",
+        "border border-border rounded-r4 bg-card overflow-hidden scroll-mt-20",
         event.status === "CANCELED" && "opacity-60 grayscale",
       )}
     >
@@ -376,21 +535,31 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
       <div
         role="button"
         tabIndex={0}
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggle}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") setIsExpanded(!isExpanded);
+          if (e.key === "Enter" || e.key === " ") handleToggle();
         }}
-        className="relative w-full px-s5 py-s4 flex items-center gap-s4 text-left hover:bg-muted/30 transition cursor-pointer"
+        className={cn(
+          "relative w-full pl-s4 pr-s5 flex items-center gap-s4 text-left hover:bg-muted/30 transition cursor-pointer",
+          thumbnailSrc ? "py-s3" : "py-s4",
+        )}
       >
         {/* Thumbnail */}
         {thumbnailSrc && (
-          <div className="w-14 h-14 rounded-r3 overflow-hidden bg-muted/30 shrink-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxIndex(0);
+            }}
+            className="w-[84px] h-[84px] overflow-hidden bg-muted/30 shrink-0 cursor-zoom-in"
+          >
             <img
               src={thumbnailSrc}
               alt={event.title}
               className="w-full h-full object-cover"
             />
-          </div>
+          </button>
         )}
 
         {/* Info area */}
@@ -430,6 +599,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
                   {regStatusLabel}
+                </span>
+              )}
+              {/* 비회원 신청 가능 badge */}
+              {event.allowExternal && (
+                <span className="px-s2 py-0.5 rounded-full text-xs font-bold bg-secondary text-secondary-foreground">
+                  비회원 신청 가능
                 </span>
               )}
             </div>
@@ -653,9 +828,9 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setLightboxIndex(idx);
+                      setLightboxIndex(galleryLightboxOffset + idx);
                     }}
-                    className="w-24 h-24 rounded-r3 overflow-hidden bg-muted/30 shrink-0 cursor-pointer"
+                    className="w-[84px] h-[84px] overflow-hidden bg-muted/30 shrink-0 cursor-pointer"
                   >
                     <img
                       src={src}
@@ -669,8 +844,18 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           )}
 
           {/* Description */}
+          <div className="flex items-center gap-1.5">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-foreground">
+              상세 정보
+            </span>
+          </div>
           {isDetailLoading ? (
             <p className="text-sm text-muted-foreground">불러오는 중...</p>
+          ) : !isAuthenticated && !event.allowExternal ? (
+            <p className="text-sm text-muted-foreground">
+              로그인하면 상세 정보를 확인할 수 있습니다.
+            </p>
           ) : detail?.description ? (
             <RichTextViewer
               content={detail.description}
@@ -686,9 +871,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           {capacity > 0 && (
             <div>
               <div className="flex items-center justify-between mb-s2">
-                <span className="text-sm font-medium text-muted-foreground">
-                  모집 현황
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-semibold text-foreground">
+                    모집 현황
+                  </span>
+                </div>
                 <span className="text-sm font-medium text-muted-foreground">
                   {currentCount} / {capacity}
                 </span>
@@ -704,7 +892,151 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
           {/* Action buttons */}
           <div className="space-y-s3">
-            {canApply && (
+            {/* 비인증 외부인 신청 폼 */}
+            {!isAuthenticated &&
+              event.allowExternal &&
+              event.registrationStatus === "OPEN" && (
+                <div
+                  className="space-y-s3"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold text-foreground">
+                      비회원 신청 정보
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-s3">
+                    {(
+                      [
+                        { key: "name", placeholder: "이름", type: "text" },
+                        {
+                          key: "studentId",
+                          placeholder: "학번 (8자리)",
+                          type: "text",
+                        },
+                        {
+                          key: "phone",
+                          placeholder: "010-0000-0000",
+                          type: "tel",
+                        },
+                      ] as const
+                    ).map(({ key, placeholder, type }) => (
+                      <div key={key}>
+                        <input
+                          type={type}
+                          placeholder={placeholder}
+                          value={externalForm[key]}
+                          onChange={(e) => {
+                            const value =
+                              key === "phone"
+                                ? formatPhoneNumber(e.target.value)
+                                : e.target.value;
+                            setExternalForm((prev) => ({
+                              ...prev,
+                              [key]: value,
+                            }));
+                            if (externalFormErrors[key]) {
+                              setExternalFormErrors((prev) => ({
+                                ...prev,
+                                [key]: "",
+                              }));
+                            }
+                          }}
+                          className={cn(
+                            "w-full px-s3 py-s2 text-sm border rounded-r3 bg-background focus:outline-none focus:ring-1 focus:ring-primary",
+                            externalFormErrors[key]
+                              ? "border-destructive"
+                              : "border-border",
+                          )}
+                        />
+                        {externalFormErrors[key] && (
+                          <p className="text-xs text-destructive mt-1">
+                            {externalFormErrors[key]}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                    {/* 학과 선택 */}
+                    <div className="relative">
+                      <select
+                        value={externalForm.department}
+                        onChange={(e) => {
+                          setExternalForm((prev) => ({
+                            ...prev,
+                            department: e.target.value,
+                            customDepartment: "",
+                          }));
+                          if (externalFormErrors.department) {
+                            setExternalFormErrors((prev) => ({
+                              ...prev,
+                              department: "",
+                            }));
+                          }
+                        }}
+                        className={cn(
+                          "w-full appearance-none pl-s3 pr-8 py-s2 text-sm border rounded-r3 bg-background focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer",
+                          externalForm.department
+                            ? "text-foreground"
+                            : "text-muted-foreground",
+                          externalFormErrors.department
+                            ? "border-destructive"
+                            : "border-border",
+                        )}
+                      >
+                        <option value="">학과 선택</option>
+                        {majorOptions.map((group) => (
+                          <optgroup key={group.title} label={group.title}>
+                            {group.items.map((item) => (
+                              <option key={item.key} value={item.value}>
+                                {item.value}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                        <option value="기타">기타 (직접 입력)</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  {/* 기타 직접 입력 + 에러 (그리드 외부) */}
+                  {externalForm.department === "기타" && (
+                    <input
+                      type="text"
+                      placeholder="학과를 직접 입력해주세요"
+                      value={externalForm.customDepartment}
+                      onChange={(e) => {
+                        setExternalForm((prev) => ({
+                          ...prev,
+                          customDepartment: e.target.value,
+                        }));
+                        if (externalFormErrors.department) {
+                          setExternalFormErrors((prev) => ({
+                            ...prev,
+                            department: "",
+                          }));
+                        }
+                      }}
+                      className="w-full px-s3 py-s2 text-sm border border-border rounded-r3 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  )}
+                  {externalFormErrors.department && (
+                    <p className="text-xs text-destructive -mt-s1">
+                      {externalFormErrors.department}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleExternalApply}
+                    disabled={isRegisteringExternal}
+                    className="w-full py-s3 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isRegisteringExternal ? "신청 중..." : "신청하기"}
+                  </button>
+                </div>
+              )}
+            {/* 인증 사용자 신청/취소 버튼 */}
+            {isAuthenticated && canApply && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -717,7 +1049,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                 {isApplying ? "신청 중..." : "신청하기"}
               </button>
             )}
-            {canCancel && (
+            {isAuthenticated && canCancel && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -730,7 +1062,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                 {isCanceling ? "취소 중..." : "신청 취소"}
               </button>
             )}
-            {!canApply && !canCancel && (
+            {isAuthenticated && !canApply && !canCancel && (
               <button
                 type="button"
                 disabled
@@ -759,11 +1091,9 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
       )}
 
       {/* Image lightbox */}
-      {lightboxIndex !== null && (
+      {lightboxIndex !== null && allLightboxSrcs.length > 0 && (
         <ImageLightbox
-          images={imageObjectKeys
-            .map((key) => resolvedImageUrls.get(key))
-            .filter((src): src is string => !!src)}
+          images={allLightboxSrcs}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
         />

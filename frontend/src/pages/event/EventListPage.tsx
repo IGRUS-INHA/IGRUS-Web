@@ -81,6 +81,13 @@ function mapToEvent(
     ...(apiEvent.thumbnailObjectKey && {
       thumbnailObjectKey: apiEvent.thumbnailObjectKey,
     }),
+    ...(apiEvent.allowExternal !== undefined && {
+      allowExternal: apiEvent.allowExternal,
+    }),
+    ...(apiEvent.isRegistrable !== undefined && {
+      isRegistrable: apiEvent.isRegistrable,
+    }),
+    ...(apiEvent.surveyId != null && { surveyId: apiEvent.surveyId }),
   };
 }
 
