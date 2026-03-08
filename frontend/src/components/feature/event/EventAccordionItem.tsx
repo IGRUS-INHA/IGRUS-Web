@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -61,6 +61,8 @@ import {
   isEventOperatorRequired,
   hasErrorCode,
 } from "@/utils/error";
+import { formatPhoneNumber } from "@/utils";
+import { majorOptions } from "@/constants/majorOptions";
 import ReasonDialog from "@/components/feature/event/ReasonDialog";
 import { cn } from "@/lib/utils";
 import { useResolvedImageUrls } from "@/hooks/useResolvedImageUrls";
@@ -85,11 +87,15 @@ interface EventAccordionItemProps {
 
 export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const isOperator = user?.role === "OPERATOR" || user?.role === "ADMIN";
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  const hashId = `event-${event.id}`;
+  const isHashTarget = location.hash === `#${hashId}`;
+
+  const [isExpanded, setIsExpanded] = useState(() => isHashTarget);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [externalForm, setExternalForm] = useState({
@@ -97,10 +103,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
     studentId: "",
     phone: "",
     department: "",
+    customDepartment: "",
   });
   const [externalFormErrors, setExternalFormErrors] = useState<
     Record<string, string>
   >({});
+  const itemRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const [reasonDialog, setReasonDialog] = useState<{
     title: string;
@@ -132,6 +140,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
             studentId: "",
             phone: "",
             department: "",
+            customDepartment: "",
           });
           setExternalFormErrors({});
         },
@@ -150,11 +159,33 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const handleExternalApply = (e: React.MouseEvent) => {
     e.stopPropagation();
     const errors: Record<string, string> = {};
-    if (!externalForm.name.trim()) errors.name = "이름을 입력하세요";
-    if (!externalForm.studentId.trim()) errors.studentId = "학번을 입력하세요";
-    if (!externalForm.phone.trim()) errors.phone = "연락처를 입력하세요";
-    if (!externalForm.department.trim())
-      errors.department = "학과를 입력하세요";
+    if (!externalForm.name.trim()) {
+      errors.name = "이름을 입력해주세요.";
+    } else if (externalForm.name.trim().length > 50) {
+      errors.name = "이름은 50자 이내여야 합니다.";
+    }
+    if (!externalForm.studentId.trim()) {
+      errors.studentId = "학번을 입력해주세요.";
+    } else if (!/^\d{8}$/.test(externalForm.studentId)) {
+      errors.studentId = "학번은 8자리 숫자여야 합니다.";
+    }
+    if (!externalForm.phone.trim()) {
+      errors.phone = "연락처를 입력해주세요.";
+    } else if (!/^\d{3}-\d{4}-\d{4}$/.test(externalForm.phone)) {
+      errors.phone = "올바른 전화번호를 입력해주세요. (예: 010-1234-5678)";
+    }
+    const resolvedDepartment =
+      externalForm.department === "기타"
+        ? externalForm.customDepartment.trim()
+        : externalForm.department;
+    if (!externalForm.department) {
+      errors.department = "학과를 선택해주세요.";
+    } else if (
+      externalForm.department === "기타" &&
+      !externalForm.customDepartment.trim()
+    ) {
+      errors.department = "학과를 직접 입력해주세요.";
+    }
     if (Object.keys(errors).length > 0) {
       setExternalFormErrors(errors);
       return;
@@ -165,12 +196,20 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
         name: externalForm.name,
         studentId: externalForm.studentId,
         phone: externalForm.phone,
-        department: externalForm.department,
+        department: resolvedDepartment,
       });
       navigate(`/events/${numericId}/apply/external?${params.toString()}`);
       return;
     }
-    registerExternal({ eventId: numericId, data: { ...externalForm } });
+    registerExternal({
+      eventId: numericId,
+      data: {
+        name: externalForm.name,
+        studentId: externalForm.studentId,
+        phone: externalForm.phone,
+        department: resolvedDepartment,
+      },
+    });
   };
 
   // Mutations
@@ -233,6 +272,27 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
     isCancelingEvent ||
     isReactivating ||
     isDeleting;
+
+  // 해시 타겟이면 마운트 시 스크롤
+  useEffect(() => {
+    if (isHashTarget && itemRef.current) {
+      setTimeout(() => {
+        itemRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleToggle = () => {
+    const next = !isExpanded;
+    setIsExpanded(next);
+    if (next) {
+      navigate(`${location.pathname}${location.search}#${hashId}`, {
+        replace: true,
+      });
+    } else if (location.hash === `#${hashId}`) {
+      navigate(`${location.pathname}${location.search}`, { replace: true });
+    }
+  };
 
   // Outside click to close more menu
   useEffect(() => {
@@ -411,8 +471,10 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   // 이미지 — 확장 시 detail.attachments에서 objectKey 추출
   const imageObjectKeys = useMemo(
     () =>
-      (detail?.attachments ?? []).map((a) => a.objectKey ?? "").filter(Boolean),
-    [detail?.attachments],
+      (detail?.attachments ?? [])
+        .map((a) => a.objectKey ?? "")
+        .filter((key) => Boolean(key) && key !== event.thumbnailObjectKey),
+    [detail?.attachments, event.thumbnailObjectKey],
   );
   const { urls: resolvedImageUrls } = useResolvedImageUrls(imageObjectKeys);
 
@@ -432,8 +494,9 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
   return (
     <div
+      ref={itemRef}
       className={cn(
-        "border border-border rounded-r4 bg-card overflow-hidden",
+        "border border-border rounded-r4 bg-card overflow-hidden scroll-mt-20",
         event.status === "CANCELED" && "opacity-60 grayscale",
       )}
     >
@@ -448,9 +511,9 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
       <div
         role="button"
         tabIndex={0}
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggle}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") setIsExpanded(!isExpanded);
+          if (e.key === "Enter" || e.key === " ") handleToggle();
         }}
         className={cn(
           "relative w-full pl-s4 pr-s5 flex items-center gap-s4 text-left hover:bg-muted/30 transition cursor-pointer",
@@ -800,23 +863,40 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                   <div className="grid grid-cols-2 gap-s3">
                     {(
                       [
-                        { key: "name", placeholder: "이름" },
-                        { key: "studentId", placeholder: "학번" },
-                        { key: "phone", placeholder: "연락처" },
-                        { key: "department", placeholder: "학과" },
+                        { key: "name", placeholder: "이름", type: "text" },
+                        {
+                          key: "studentId",
+                          placeholder: "학번 (8자리)",
+                          type: "text",
+                        },
+                        {
+                          key: "phone",
+                          placeholder: "010-0000-0000",
+                          type: "tel",
+                        },
                       ] as const
-                    ).map(({ key, placeholder }) => (
+                    ).map(({ key, placeholder, type }) => (
                       <div key={key}>
                         <input
-                          type="text"
+                          type={type}
                           placeholder={placeholder}
                           value={externalForm[key]}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const value =
+                              key === "phone"
+                                ? formatPhoneNumber(e.target.value)
+                                : e.target.value;
                             setExternalForm((prev) => ({
                               ...prev,
-                              [key]: e.target.value,
-                            }))
-                          }
+                              [key]: value,
+                            }));
+                            if (externalFormErrors[key]) {
+                              setExternalFormErrors((prev) => ({
+                                ...prev,
+                                [key]: "",
+                              }));
+                            }
+                          }}
                           className={cn(
                             "w-full px-s3 py-s2 text-sm border rounded-r3 bg-background focus:outline-none focus:ring-1 focus:ring-primary",
                             externalFormErrors[key]
@@ -831,7 +911,74 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                         )}
                       </div>
                     ))}
+                    {/* 학과 선택 */}
+                    <div className="relative">
+                      <select
+                        value={externalForm.department}
+                        onChange={(e) => {
+                          setExternalForm((prev) => ({
+                            ...prev,
+                            department: e.target.value,
+                            customDepartment: "",
+                          }));
+                          if (externalFormErrors.department) {
+                            setExternalFormErrors((prev) => ({
+                              ...prev,
+                              department: "",
+                            }));
+                          }
+                        }}
+                        className={cn(
+                          "w-full appearance-none pl-s3 pr-8 py-s2 text-sm border rounded-r3 bg-background focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer",
+                          externalForm.department
+                            ? "text-foreground"
+                            : "text-muted-foreground",
+                          externalFormErrors.department
+                            ? "border-destructive"
+                            : "border-border",
+                        )}
+                      >
+                        <option value="">학과 선택</option>
+                        {majorOptions.map((group) => (
+                          <optgroup key={group.title} label={group.title}>
+                            {group.items.map((item) => (
+                              <option key={item.key} value={item.value}>
+                                {item.value}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                        <option value="기타">기타 (직접 입력)</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    </div>
                   </div>
+                  {/* 기타 직접 입력 + 에러 (그리드 외부) */}
+                  {externalForm.department === "기타" && (
+                    <input
+                      type="text"
+                      placeholder="학과를 직접 입력해주세요"
+                      value={externalForm.customDepartment}
+                      onChange={(e) => {
+                        setExternalForm((prev) => ({
+                          ...prev,
+                          customDepartment: e.target.value,
+                        }));
+                        if (externalFormErrors.department) {
+                          setExternalFormErrors((prev) => ({
+                            ...prev,
+                            department: "",
+                          }));
+                        }
+                      }}
+                      className="w-full px-s3 py-s2 text-sm border border-border rounded-r3 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  )}
+                  {externalFormErrors.department && (
+                    <p className="text-xs text-destructive -mt-s1">
+                      {externalFormErrors.department}
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={handleExternalApply}
