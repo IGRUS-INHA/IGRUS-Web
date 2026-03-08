@@ -12,6 +12,9 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -116,6 +119,10 @@ public class Event extends SoftDeletableEntity {
     /** 연결된 설문 ID (nullable, surveys.survey_id FK 참조) */
     @Column(name = "event_survey_id")
     private Long surveyId;
+
+    /** 첨부 이미지 목록 (최대 5개) */
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EventImage> images = new ArrayList<>();
 
     // === 정적 팩토리 메서드 ===
 
@@ -473,6 +480,30 @@ public class Event extends SoftDeletableEntity {
     public boolean overlaps(Instant otherStartAt, Instant otherEndAt) {
         // 겹침 조건: 내 시작 < 상대 종료 && 내 종료 > 상대 시작
         return this.eventStartAt.isBefore(otherEndAt) && this.eventEndAt.isAfter(otherStartAt);
+    }
+
+    // === 이미지 관리 ===
+
+    /**
+     * 이미지 목록을 조회합니다 (불변 리스트 반환).
+     *
+     * @return 이미지 목록
+     */
+    public List<EventImage> getImages() {
+        return Collections.unmodifiableList(this.images);
+    }
+
+    /**
+     * 이미지 목록을 새 URL 목록으로 교체합니다.
+     * 기존 이미지를 모두 제거하고 새 이미지를 추가합니다.
+     *
+     * @param imageUrls 새 이미지 URL 목록
+     */
+    public void updateImages(List<String> imageUrls) {
+        this.images.clear();
+        for (int i = 0; i < imageUrls.size(); i++) {
+            this.images.add(EventImage.create(this, imageUrls.get(i), i));
+        }
     }
 
     // === 수정 메서드 ===

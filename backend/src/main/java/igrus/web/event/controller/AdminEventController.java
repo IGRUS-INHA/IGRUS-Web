@@ -120,7 +120,8 @@ public class AdminEventController implements AdminEventApi {
                 .visibility(r.visibility() != null
                         ? GetAdminEvent200Response.VisibilityEnum.fromValue(r.visibility().name())
                         : null)
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .imageUrls(r.imageUrls());
     }
 
     private GetAdminEventList200ResponseInner mapToAdminEventListResponse(EventListResponse r) {
@@ -150,6 +151,7 @@ public class AdminEventController implements AdminEventApi {
                         ? GetAdminEventList200ResponseInner.VisibilityEnum.fromValue(
                                 r.visibility().name())
                         : null)
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .imageUrls(r.imageUrls());
     }
 }

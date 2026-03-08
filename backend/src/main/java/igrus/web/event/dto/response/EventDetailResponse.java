@@ -2,12 +2,14 @@ package igrus.web.event.dto.response;
 
 import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventCloseReason;
+import igrus.web.event.domain.EventImage;
 import igrus.web.event.domain.EventRegistrationType;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 행사 상세 조회 응답 DTO.
@@ -35,6 +37,7 @@ import java.time.Instant;
  * @param canEdit             현재 사용자가 수정 가능한지 여부
  * @param isRegistered        현재 사용자가 신청했는지 여부
  * @param surveyId            연결된 설문 ID (null이면 설문 미연결)
+ * @param imageUrls           행사 이미지 URL 목록
  */
 public record EventDetailResponse(
         Long id,
@@ -58,7 +61,8 @@ public record EventDetailResponse(
         Instant updatedAt,
         boolean canEdit,
         boolean isRegistered,
-        Long surveyId
+        Long surveyId,
+        List<String> imageUrls
 ) {
     /**
      * Event 엔티티로부터 EventDetailResponse를 생성합니다.
@@ -70,6 +74,10 @@ public record EventDetailResponse(
      * @return EventDetailResponse
      */
     public static EventDetailResponse from(Event event, boolean canEdit, boolean isRegistered) {
+        List<String> imageUrls = event.getImages().stream()
+                .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                .map(EventImage::getImageUrl)
+                .toList();
         return new EventDetailResponse(
                 event.getId(),
                 event.getTitle(),
@@ -92,7 +100,8 @@ public record EventDetailResponse(
                 event.getUpdatedAt(),
                 canEdit,
                 isRegistered,
-                event.getSurveyId()
+                event.getSurveyId(),
+                imageUrls
         );
     }
 

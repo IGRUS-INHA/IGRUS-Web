@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 행사 수정 요청 DTO.
@@ -49,6 +50,9 @@ public record UpdateEventRequest(
         Integer capacity,
 
         @Positive(message = "설문 ID는 양수여야 합니다")
-        Long surveyId
+        Long surveyId,
+
+        @Size(max = 5, message = "이미지는 최대 5개까지 첨부할 수 있습니다")
+        List<String> imageUrls
 ) {
 }

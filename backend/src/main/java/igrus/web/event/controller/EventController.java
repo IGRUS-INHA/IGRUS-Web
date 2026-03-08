@@ -57,7 +57,8 @@ public class EventController implements EventApi {
                 createEventRequest.getCapacity(),
                 EnumUtils.fromStringOrNull(igrus.web.event.domain.EventRegistrationType.class,
                         createEventRequest.getRegistrationType().getValue()),
-                createEventRequest.getSurveyId()
+                createEventRequest.getSurveyId(),
+                createEventRequest.getImageUrls()
         );
 
         EventCreateResponse result = eventService.createEvent(request, user.userId());
@@ -114,7 +115,8 @@ public class EventController implements EventApi {
                 updateEventRequest.getRegistrationStartAt(),
                 updateEventRequest.getRegistrationEndAt(),
                 updateEventRequest.getCapacity(),
-                updateEventRequest.getSurveyId()
+                updateEventRequest.getSurveyId(),
+                updateEventRequest.getImageUrls()
         );
 
         EventDetailResponse response = eventService.updateEvent(eventId, request, user.userId());
@@ -223,7 +225,8 @@ public class EventController implements EventApi {
                 .updatedAt(r.updatedAt())
                 .canEdit(r.canEdit())
                 .isRegistered(r.isRegistered())
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .imageUrls(r.imageUrls());
     }
 
     private GetEventList200ResponseInner mapToEventListResponseInner(EventListResponse r) {
@@ -251,6 +254,7 @@ public class EventController implements EventApi {
                                 r.registrationType().name())
                         : null)
                 .isRegistrable(r.isRegistrable())
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .imageUrls(r.imageUrls());
     }
 }

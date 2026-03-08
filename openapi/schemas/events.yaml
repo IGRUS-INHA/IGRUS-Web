@@ -37,6 +37,14 @@ UpdateEventRequest:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
+    imageUrls:
+      type: array
+      items:
+        type: string
+      maxItems: 5
+      minItems: 0
+      default: []
+      description: 행사 이미지 URL 목록 (최대 5개)
   required:
   - capacity
   - description
@@ -131,6 +139,11 @@ EventDetailResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
+    imageUrls:
+      type: array
+      items:
+        type: string
+      description: 행사 이미지 URL 목록
 RegistrationResponse:
   type: object
   properties:
@@ -191,6 +204,14 @@ CreateEventRequest:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
+    imageUrls:
+      type: array
+      items:
+        type: string
+      maxItems: 5
+      minItems: 0
+      default: []
+      description: 행사 이미지 URL 목록 (최대 5개)
   required:
   - capacity
   - description
@@ -313,6 +334,11 @@ EventListResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
+    imageUrls:
+      type: array
+      items:
+        type: string
+      description: 행사 이미지 URL 목록
 AdminEventListResponse:
   type: object
   description: 관리자용 행사 목록 응답 (visibility 포함)
@@ -374,6 +400,11 @@ AdminEventListResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
+    imageUrls:
+      type: array
+      items:
+        type: string
+      description: 행사 이미지 URL 목록
 AdminEventDetailResponse:
   type: object
   description: 관리자용 행사 상세 응답 (visibility 포함)
@@ -461,6 +492,11 @@ AdminEventDetailResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
+    imageUrls:
+      type: array
+      items:
+        type: string
+      description: 행사 이미지 URL 목록
 PageRegistrationListResponse:
   type: object
   properties:

@@ -123,12 +123,17 @@ public class EventService {
         // 5. 저장
         Event savedEvent = eventRepository.save(event);
 
-        // 6. 설문 연결 행사 생성 로그 (TASK-015)
+        // 6. 이미지 저장
+        if (request.imageUrls() != null && !request.imageUrls().isEmpty()) {
+            savedEvent.updateImages(request.imageUrls());
+        }
+
+        // 7. 설문 연결 행사 생성 로그 (TASK-015)
         if (request.surveyId() != null) {
             log.info("행사 생성 요청 - userId: {}, title: {}, surveyId: {}", userId, request.title(), request.surveyId());
         }
 
-        // 7. 응답 DTO 반환
+        // 8. 응답 DTO 반환
         return EventCreateResponse.from(savedEvent);
     }
 
@@ -261,7 +266,11 @@ public class EventService {
                 request.surveyId()
         );
 
-        // 7. 응답 반환 (dirty checking으로 자동 저장)
+        // 9. 이미지 수정
+        List<String> imageUrls = request.imageUrls() != null ? request.imageUrls() : List.of();
+        event.updateImages(imageUrls);
+
+        // 10. 응답 반환 (dirty checking으로 자동 저장)
         return EventDetailResponse.from(event);
     }
 
