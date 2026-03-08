@@ -81,13 +81,15 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **위반 시**: 여러 설문이 하나의 행사에 연결되어 신청 조건이 모호해짐
 - **DB 제약**: `events.event_survey_id` 컬럼 — nullable FK (또는 nullable Long, 약한 참조)
 
-#### SEVT-INV-03: 설문은 여러 행사에 연결 가능 (재사용)
+#### SEVT-INV-03: 설문-행사 1:1 연결 제약
 
-> 하나의 설문을 여러 행사에 연결할 수 있다. 설문:행사 = 1:N 관계이다.
+> 하나의 설문은 최대 하나의 행사에만 연결할 수 있다. 설문:행사 = 1:1 관계이다.
 
-- **근거**: 동일한 참가 신청서(설문)를 여러 행사에 재사용하는 운영 시나리오 지원
-- **사후조건**: 동일한 `surveyId`가 여러 행사의 `event.surveyId`에 설정될 수 있음
-- **주의사항**: 설문 응답은 설문 단위로 관리되므로 (SurveyResponse는 survey_id + user_id unique), 동일 설문이 여러 행사에 연결된 경우 사용자는 설문에 1회만 응답하면 됨 (1.2절 SEVT-INV-06 참조)
+- **근거**: 행사 상태 변경 시 설문 상태를 자동 연동하기 위해 1:1 관계가 필요. N:1 관계에서는 한 행사의 취소가 다른 행사에 연결된 같은 설문에 영향을 주는 부작용이 발생
+- **사후조건**: 동일한 `surveyId`가 두 개 이상의 행사에 설정될 수 없음
+- **DB 제약**: `events.event_survey_id` 컬럼에 UNIQUE 제약 (`uk_events_survey_id`). nullable이므로 다수의 NULL은 허용
+- **위반 시 예외**: `SurveyAlreadyLinkedToEventException` (409)
+- **검증 시점**: 행사 생성 시 `findBySurveyId()`, 행사 수정 시 `existsBySurveyIdAndIdNot()`으로 검증
 
 #### SEVT-INV-04: 연결 대상 설문의 존재 검증
 
@@ -302,13 +304,28 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 ### 2-3. 행사 상태 변경이 설문에 미치는 영향
 
-| 행사 상태 변경 | 연결된 설문 | 비고 |
-|-------------|:---:|------|
-| 행사 취소 (CANCELED) | **변경 없음** | 설문은 행사의 존재를 모름 |
-| 행사 삭제 (soft delete) | **변경 없음** | 설문 독립 유지 |
-| registrationStatus: OPEN → CLOSED | **변경 없음** | 설문은 독립적으로 운영 |
+행사 상태 변경 시 연결된 설문의 상태를 `EventSurveySyncService` (이벤트 리스너)를 통해 자동 동기화한다.
 
-**핵심 원칙**: 행사의 상태 변경은 연결된 설문의 상태에 영향을 주지 않는다. 양 도메인은 단방향 의존(행사 → 설문)이다.
+| 행사 상태 변경 (EventChangeType) | 설문 액션 | 비고 |
+|-------------|:---:|------|
+| `EVENT_CANCELED` (행사 취소) | OPEN → CLOSED (`closeResponse()`) | 행사 취소 시 설문 응답 불필요 |
+| `EVENT_UNPUBLISHED` (행사 비공개) | PUBLISHED → UNPUBLISHED (`unpublish()`, 자동으로 OPEN → CLOSED) | 비공개 전환 시 설문도 비공개 |
+| `EVENT_PUBLISHED` (행사 공개) | UNPUBLISHED → PUBLISHED (`publish()`) | 공개 시 설문도 공개 |
+| `REGISTRATION_CLOSED_MANUAL` (모집 마감) | OPEN → CLOSED (`closeResponse()`) | 모집 마감 시 설문도 마감 |
+| `REGISTRATION_REOPENED` (모집 재개) | CLOSED → OPEN (`openResponse()`) | 모집 재개 시 설문도 재개 |
+| `EVENT_REACTIVATED` (행사 재활성화) | UNPUBLISHED → PUBLISHED + CLOSED → OPEN | 재활성화 시 설문도 공개 + 응답 재개 |
+| `REGISTRATION_CANCELED_BY_ADMIN` (개별 신청 취소) | **변경 없음** | 개별 신청 취소이므로 설문 무관 |
+| 행사 삭제 (soft delete) | **변경 없음** | 삭제는 도메인 이벤트를 발행하지 않음 |
+
+**동기화 방식**: `@EventListener` + `TransactionTemplate(PROPAGATION_REQUIRES_NEW)` — `RecordEventStatusChangeService`와 동일 패턴. best-effort 방식으로 동기화 실패 시 로그만 기록하고 행사 작업에 영향 없음.
+
+**엣지 케이스**:
+- `surveyId == null`: 아무 동작 안 함
+- 설문이 삭제/휴지통 상태: skip + 경고 로그
+- 설문이 이미 목표 상태: 멱등 처리 (변경 없음, DEBUG 로그)
+- `EVENT_PUBLISHED` 시 설문 publish 실패 (질문 0개 등): 경고 로그, 행사 공개는 정상 진행
+
+**핵심 원칙**: 행사의 상태 변경은 이벤트 리스너를 통해 연결된 설문의 상태에 영향을 준다. SEVT-INV-03의 1:1 관계 제약 하에서 안전하게 동기화된다.
 
 ---
 
@@ -333,6 +350,7 @@ Event 도메인                      Survey 도메인
 - **Event → Survey**: Event 엔티티가 `surveyId` (Long)로 설문을 참조. JPA 연관관계(`@ManyToOne`) 없이 ID만 보유
 - **Survey → Event**: Survey는 Event의 존재를 모름. 어떤 참조도 없음
 - **의존 방향 근거**: "설문이 행사 신청의 전제조건"이므로, 행사 도메인이 설문 도메인을 조회하는 것이 자연스러움
+- **상태 동기화**: `EventSurveySyncService`가 `EventStatusChanged` 도메인 이벤트를 수신하여 설문 상태를 동기화. 행사 도메인이 설문 도메인의 상태 전이 메서드(`publish()`, `unpublish()`, `openResponse()`, `closeResponse()`)를 호출하는 단방향 의존을 유지
 
 #### 약한 참조 (Weak Reference) 채택 이유
 
@@ -441,13 +459,14 @@ registerEventWithSurvey(eventId, userId, surveyAnswers) {
 | 삭제된 설문으로 변경 | null | 삭제 ID | 없음 | **실패** (SurveyNotFoundException) |
 | 휴지통 설문으로 변경 | null | 휴지통 ID | 없음 | **실패** (SurveyNotFoundException) |
 
-### 4-4. 동일 설문 다중 행사 연결 경계값
+### 4-4. 설문 1:1 연결 제약 경계값
 
-| 시나리오 | 설문 응답 | 행사 A 신청 | 행사 B 신청 | 결과 |
-|---------|:---:|:---:|:---:|:---:|
-| 같은 설문 연결 두 행사, 응답 1회 | 1건 | 미신청 | 미신청 | A 신청 **성공**, B 신청 **성공** |
-| 같은 설문 연결 두 행사, 시간 겹침 | 1건 | 신청 완료 | 미신청 | B 신청 **실패** (시간 겹침, REG-INV-06) |
-| 같은 설문 연결 두 행사, 시간 미겹침 | 1건 | 신청 완료 | 미신청 | B 신청 **성공** |
+| 시나리오 | 결과 |
+|---------|:---:|
+| 행사 A에 설문 S 연결 → 행사 B에 동일 설문 S 연결 시도 | **실패** (`SurveyAlreadyLinkedToEventException`, 409) |
+| 행사 A에 설문 S 연결 → 행사 A 수정 시 동일 설문 S 유지 | **성공** (자기 자신 제외 검증) |
+| 행사 A에 설문 S 연결 → 행사 A에서 설문 해제 → 행사 B에 설문 S 연결 | **성공** (해제 후 재연결) |
+| 행사 A에 설문 S 연결 → 행사 A soft delete → 행사 B에 설문 S 연결 시도 | **주의** (@SQLRestriction에 의한 soft delete 필터링 동작에 따라 다름) |
 
 ### 4-5. 재신청(reRegister) 시 설문 검증 경계값
 
@@ -628,7 +647,7 @@ registerEventWithSurvey(eventId, userId, surveyAnswers) {
 | S1 | 설문 연결 행사 — 기본 흐름 | 운영진: 설문 생성 → 설문 공개+응답시작 → 행사 생성(surveyId 연결) → 사용자: 행사 신청(surveyAnswers 포함) → 설문 응답 + 신청 원자적 처리 → 성공 |
 | S2 | 설문 미연결 행사 — 기존 흐름 | 운영진: 행사 생성(surveyId=null) → 사용자: 행사 신청 → 성공 (기존과 동일) |
 | S3 | 설문 마감 후 신청 | 운영진: 설문 CLOSED → 사용자: 설문에 이미 응답했으므로 행사 신청(surveyAnswers 생략) → 기존 응답 확인 → 성공 |
-| S4 | 동일 설문 다중 행사 | 설문 S에 행사 A, B 연결 → 사용자: 행사 A 신청(surveyAnswers 포함) → 행사 B 신청(surveyAnswers 생략, 기존 응답 재사용) → 모두 성공 |
+| S4 | 행사 상태 변경 → 설문 연동 | 행사 취소 → 설문 응답 자동 마감 / 행사 공개 → 설문 자동 공개 / 행사 재활성화 → 설문 공개 + 응답 재개 |
 | S5 | 설문 연결 후 해제 | 행사 수정으로 surveyId = null → 이후 신청자는 설문 없이 바로 신청 |
 
 ### 8-2. 실패 시나리오
@@ -662,9 +681,13 @@ registerEventWithSurvey(eventId, userId, surveyAnswers) {
 ### events 테이블 변경
 
 ```sql
+-- V47: 설문 연결 컬럼 추가
 ALTER TABLE events ADD COLUMN event_survey_id BIGINT NULL;
--- FK 없음 (약한 참조). 설문 soft delete와의 호환을 위해 FK 제약 생략.
--- 서비스 레벨에서 참조 무결성 검증.
+-- FK 제약은 V47에서 추가됨 (fk_events_survey)
+
+-- V53: 1:1 관계 제약 추가 (하나의 설문은 하나의 행사에만 연결 가능)
+ALTER TABLE events ADD CONSTRAINT uk_events_survey_id UNIQUE (event_survey_id);
+-- MySQL: nullable UNIQUE는 다수의 NULL을 허용
 ```
 
 ### 신규 예외 클래스
@@ -673,6 +696,7 @@ ALTER TABLE events ADD COLUMN event_survey_id BIGINT NULL;
 |------|------|:---:|------|
 | `SurveyResponseRequiredException` | 설문 응답 미존재 시 행사 신청 거부 | 400 | 클라이언트가 설문 응답을 먼저 제출해야 하는 전제조건 미충족. 요청 자체의 구조적 오류가 아닌 비즈니스 전제조건 위반이므로 400 (Bad Request) 또는 422 (Unprocessable Entity) 중 400 선택 — 프로젝트 전반의 비즈니스 예외 처리 관례와 일치 |
 | `SurveyNotReadyException` | 설문이 NOT_STARTED 상태일 때 행사 신청 거부 | 400 | 연결된 설문이 아직 응답 수집을 시작하지 않아 신청이 불가능한 상태. 서버 측 리소스 상태 문제이나, 409 (Conflict)가 아닌 400을 선택 — 프로젝트에서 도메인 상태 위반을 400으로 일관 처리하는 관례 적용 |
+| `SurveyAlreadyLinkedToEventException` | 이미 다른 행사에 연결된 설문을 연결하려 할 때 (1:1 제약 위반) | 409 | 동일 설문이 이미 다른 행사에 연결되어 있는 상태 충돌. SEVT-INV-03 적용 |
 
 ---
 
