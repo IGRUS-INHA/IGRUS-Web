@@ -762,7 +762,8 @@ public class EventService {
         }
 
         // 기존 전체 삭제 후 새로 생성 (단순 전체 교체)
-        eventAttachmentRepository.deleteAll(existing);
+        // deleteAllInBatch: DELETE SQL을 즉시 실행하여 후속 INSERT의 unique 충돌 방지
+        eventAttachmentRepository.deleteAllInBatch(existing);
 
         // 기존 파일 맵 (유지 대상용)
         Map<String, FileMetadata> existingFileMap = existing.stream()
