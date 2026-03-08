@@ -57,6 +57,7 @@ export function useSurveyEdit(existingSurveyId?: number) {
   // 실패 시 캐시 무효화 후 throw하여 호출자가 처리.
   const submitSurvey = async (
     eventTitle: string,
+    allowExternal?: boolean,
   ): Promise<number | undefined> => {
     try {
       if (existingSurveyId) {
@@ -144,7 +145,10 @@ export function useSurveyEdit(existingSurveyId?: number) {
       } else if (draftQuestions.length > 0) {
         // 기존 설문 없음 & 새 문항 있음 → 신규 생성
         const surveyRes = await createSurveyAsync({
-          data: { title: `${eventTitle} 신청 설문`, accessLevel: "MEMBER" },
+          data: {
+            title: `${eventTitle} 신청 설문`,
+            accessLevel: allowExternal ? "PUBLIC" : "MEMBER",
+          },
         });
         const newSurveyId =
           surveyRes.status === 201
