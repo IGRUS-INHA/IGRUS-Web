@@ -3,16 +3,14 @@ package igrus.web.community.like.post_like.controller;
 import igrus.web.common.util.PageableUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
-import igrus.web.community.like.post_like.dto.response.PostLikeStatusResponse;
-import igrus.web.community.like.post_like.dto.response.PostLikeToggleResponse;
 import igrus.web.community.like.post_like.service.read.GetMyLikedPostsService;
 import igrus.web.community.like.post_like.service.read.GetPostLikeStatusService;
 import igrus.web.community.like.post_like.service.write.TogglePostLikeService;
 import igrus.web.generated.api.PostLikeApi;
-import igrus.web.generated.model.GetLikeStatus200Response;
-import igrus.web.generated.model.GetMyLikes200Response;
-import igrus.web.generated.model.GetMyLikes200ResponsePostsInner;
-import igrus.web.generated.model.ToggleLike200Response;
+import igrus.web.generated.model.ApiPostLikeStatusResponse;
+import igrus.web.generated.model.ApiLikedPostPageResponse;
+import igrus.web.generated.model.ApiLikedPostResponse;
+import igrus.web.generated.model.ApiPostLikeToggleResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,40 +37,40 @@ public class PostLikeController implements PostLikeApi {
 
     @Override
     @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
-    public ResponseEntity<ToggleLike200Response> toggleLike(Long postId) {
+    public ResponseEntity<ApiPostLikeToggleResponse> toggleLike(Long postId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 좋아요 토글 요청 - postId: {}, userId: {}", postId, user.userId());
 
-        PostLikeToggleResponse result = togglePostLikeService.toggleLike(postId, user.userId());
-        return ResponseEntity.ok(new ToggleLike200Response()
+        var result = togglePostLikeService.toggleLike(postId, user.userId());
+        return ResponseEntity.ok(new ApiPostLikeToggleResponse()
                 .liked(result.liked())
                 .likeCount(result.likeCount()));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetLikeStatus200Response> getLikeStatus(Long postId) {
+    public ResponseEntity<ApiPostLikeStatusResponse> getLikeStatus(Long postId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 좋아요 상태 조회 요청 - postId: {}, userId: {}", postId, user.userId());
 
-        PostLikeStatusResponse result = getPostLikeStatusService.getLikeStatus(postId, user.userId());
-        return ResponseEntity.ok(new GetLikeStatus200Response()
+        var result = getPostLikeStatusService.getLikeStatus(postId, user.userId());
+        return ResponseEntity.ok(new ApiPostLikeStatusResponse()
                 .liked(result.liked())
                 .likeCount(result.likeCount()));
     }
 
     @Override
     @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetMyLikes200Response> getMyLikes(Integer page, Integer size, List<String> sort) {
+    public ResponseEntity<ApiLikedPostPageResponse> getMyLikes(Integer page, Integer size, List<String> sort) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         Pageable pageable = PageableUtils.of(page, size, sort);
         log.info("내 게시글 좋아요 목록 조회 요청 - userId: {}, page: {}, size: {}",
                 user.userId(), pageable.getPageNumber(), pageable.getPageSize());
 
         Page<LikedPostResponse> resultPage = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
-        return ResponseEntity.ok(new GetMyLikes200Response()
+        return ResponseEntity.ok(new ApiLikedPostPageResponse()
                 .posts(resultPage.getContent().stream()
-                        .map(p -> new GetMyLikes200ResponsePostsInner()
+                        .map(p -> new ApiLikedPostResponse()
                                 .postId(p.postId())
                                 .title(p.title())
                                 .boardCode(p.boardCode())

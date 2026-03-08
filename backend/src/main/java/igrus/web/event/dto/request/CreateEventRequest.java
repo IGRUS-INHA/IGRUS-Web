@@ -23,8 +23,6 @@ import java.util.List;
  * @param registrationEndAt   신청 마감일시 (필수)
  * @param capacity            정원 (필수, 1명 이상)
  * @param registrationType    신청 방식 (필수, AUTO_APPROVE: 자동 승인/선착순, MANUAL_APPROVE: 수동 승인/선발제)
- * @param surveyId            연결할 설문 ID (선택)
- * @param imageUrls           행사 이미지 URL 목록 (최대 5개)
  */
 public record CreateEventRequest(
         @NotBlank(message = "제목은 필수입니다")
@@ -60,7 +58,6 @@ public record CreateEventRequest(
         @Positive(message = "설문 ID는 양수여야 합니다")
         Long surveyId,
 
-        @Size(max = 5, message = "이미지는 최대 5개까지 첨부할 수 있습니다")
-        List<String> imageUrls
+        List<Long> attachmentFileIds
 ) {
 }

@@ -3,8 +3,10 @@ package igrus.web.survey.controller;
 import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.SurveyApi;
-import igrus.web.generated.model.GetSurveyDetail200Response;
-import igrus.web.generated.model.GetSurveyList200ResponseInner;
+import igrus.web.generated.model.ApiCreateSurveyRequest;
+import igrus.web.generated.model.ApiSurveyDetailResponse;
+import igrus.web.generated.model.ApiSurveyListResponse;
+import igrus.web.generated.model.ApiUpdateSurveyRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.domain.SurveyAccessLevel;
 import igrus.web.survey.dto.request.CreateSurveyRequest;
@@ -37,18 +39,18 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> createSurvey(
-            igrus.web.generated.model.UpdateSurveyRequest updateSurveyRequest
+    public ResponseEntity<ApiSurveyDetailResponse> createSurvey(
+            ApiCreateSurveyRequest createSurveyRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
-        log.info("설문 생성 요청 - userId: {}, title: {}", user.userId(), updateSurveyRequest.getTitle());
+        log.info("설문 생성 요청 - userId: {}, title: {}", user.userId(), createSurveyRequest.getTitle());
 
         CreateSurveyRequest request = new CreateSurveyRequest(
-                updateSurveyRequest.getTitle(),
-                updateSurveyRequest.getDescription(),
-                updateSurveyRequest.getAccessLevel() != null
-                        ? EnumUtils.fromStringOrNull(SurveyAccessLevel.class, updateSurveyRequest.getAccessLevel().getValue()) : null,
-                updateSurveyRequest.getDeadline()
+                createSurveyRequest.getTitle(),
+                createSurveyRequest.getDescription(),
+                createSurveyRequest.getAccessLevel() != null
+                        ? EnumUtils.fromStringOrNull(SurveyAccessLevel.class, createSurveyRequest.getAccessLevel().getValue()) : null,
+                createSurveyRequest.getDeadline()
         );
 
         SurveyDetailResponse response = surveyService.createSurvey(request, user);
@@ -57,7 +59,7 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<GetSurveyList200ResponseInner>> getSurveyList() {
+    public ResponseEntity<List<ApiSurveyListResponse>> getSurveyList() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 목록 조회 요청 - userId: {}", user.userId());
         List<SurveyListResponse> response = surveyService.getSurveyList(user);
@@ -68,7 +70,7 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> getSurveyDetail(Long surveyId) {
+    public ResponseEntity<ApiSurveyDetailResponse> getSurveyDetail(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 상세 조회 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.getSurveyDetail(surveyId, user);
@@ -77,9 +79,9 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> updateSurvey(
+    public ResponseEntity<ApiSurveyDetailResponse> updateSurvey(
             Long surveyId,
-            igrus.web.generated.model.UpdateSurveyRequest updateSurveyRequest
+            ApiUpdateSurveyRequest updateSurveyRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 수정 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
@@ -100,7 +102,7 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<GetSurveyList200ResponseInner>> getTrashedSurveyList() {
+    public ResponseEntity<List<ApiSurveyListResponse>> getTrashedSurveyList() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("휴지통 목록 조회 요청 - userId: {}", user.userId());
         List<SurveyListResponse> response = surveyService.getTrashedSurveyList(user);
@@ -140,7 +142,7 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> publishSurvey(Long surveyId) {
+    public ResponseEntity<ApiSurveyDetailResponse> publishSurvey(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 공개 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.publishSurvey(surveyId, user);
@@ -149,7 +151,7 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> unpublishSurvey(Long surveyId) {
+    public ResponseEntity<ApiSurveyDetailResponse> unpublishSurvey(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 비공개 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.unpublishSurvey(surveyId, user);
@@ -158,7 +160,7 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> openResponse(Long surveyId) {
+    public ResponseEntity<ApiSurveyDetailResponse> openResponse(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("응답 수집 시작 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.openResponse(surveyId, user);
@@ -167,7 +169,7 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> closeResponse(Long surveyId) {
+    public ResponseEntity<ApiSurveyDetailResponse> closeResponse(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("응답 수집 마감 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.closeResponse(surveyId, user);
@@ -176,7 +178,7 @@ public class SurveyController implements SurveyApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> publishAndOpen(Long surveyId) {
+    public ResponseEntity<ApiSurveyDetailResponse> publishAndOpen(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 공개+응답 시작 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
         SurveyDetailResponse response = surveyService.publishAndOpen(surveyId, user);
@@ -185,16 +187,16 @@ public class SurveyController implements SurveyApi {
 
     // === Private helper methods ===
 
-    private GetSurveyList200ResponseInner mapToSurveyListInner(SurveyListResponse s) {
-        return new GetSurveyList200ResponseInner()
+    private ApiSurveyListResponse mapToSurveyListInner(SurveyListResponse s) {
+        return new ApiSurveyListResponse()
                 .id(s.id())
                 .title(s.title())
                 .visibility(s.visibility() != null
-                        ? GetSurveyList200ResponseInner.VisibilityEnum.fromValue(s.visibility().name()) : null)
+                        ? ApiSurveyListResponse.VisibilityEnum.fromValue(s.visibility().name()) : null)
                 .responseStatus(s.responseStatus() != null
-                        ? GetSurveyList200ResponseInner.ResponseStatusEnum.fromValue(s.responseStatus().name()) : null)
+                        ? ApiSurveyListResponse.ResponseStatusEnum.fromValue(s.responseStatus().name()) : null)
                 .accessLevel(s.accessLevel() != null
-                        ? GetSurveyList200ResponseInner.AccessLevelEnum.fromValue(s.accessLevel().name()) : null)
+                        ? ApiSurveyListResponse.AccessLevelEnum.fromValue(s.accessLevel().name()) : null)
                 .deadline(s.deadline())
                 .createdAt(s.createdAt());
     }

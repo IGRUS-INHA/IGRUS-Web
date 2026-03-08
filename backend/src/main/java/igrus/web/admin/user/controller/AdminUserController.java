@@ -1,9 +1,7 @@
 package igrus.web.admin.user.controller;
 
 import igrus.web.admin.user.dto.AdminEditUserInfoRequest;
-import igrus.web.admin.user.dto.UserDetailResponse;
-import igrus.web.admin.user.dto.UserListResponse;
-import igrus.web.admin.user.dto.UserRoleHistoryResponse;
+import igrus.web.admin.user.dto.ChangeUserStatusRequest;
 import igrus.web.admin.user.service.AdminEditUserInfoService;
 import igrus.web.admin.user.service.ChangeUserRoleService;
 import igrus.web.admin.user.service.ChangeUserStatusService;
@@ -17,11 +15,15 @@ import igrus.web.common.util.PageResponseMapper;
 import igrus.web.common.util.PageableUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.AdminUserManagementApi;
-import igrus.web.generated.model.GetRoleHistories200Response;
-import igrus.web.generated.model.GetRoleHistories200ResponseContentInner;
-import igrus.web.generated.model.GetUserDetail200Response;
-import igrus.web.generated.model.GetUserList200Response;
-import igrus.web.generated.model.GetUserList200ResponseUsersInner;
+import igrus.web.generated.model.ApiAdminEditUserInfoRequest;
+import igrus.web.generated.model.ApiChangeUserRoleRequest;
+import igrus.web.generated.model.ApiChangeUserStatusRequest;
+import igrus.web.generated.model.ApiForceWithdrawRequest;
+import igrus.web.generated.model.ApiPageUserRoleHistoryResponse;
+import igrus.web.generated.model.ApiUserDetailResponse;
+import igrus.web.generated.model.ApiUserListPageResponse;
+import igrus.web.generated.model.ApiUserListResponse;
+import igrus.web.generated.model.ApiUserRoleHistoryResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
@@ -32,7 +34,6 @@ import igrus.web.user.domain.UserStatus;
 import igrus.web.user.domain.Wish;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,7 +63,7 @@ public class AdminUserController implements AdminUserManagementApi {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<GetRoleHistories200Response> getRoleHistories(
+    public ResponseEntity<ApiPageUserRoleHistoryResponse> getRoleHistories(
             Long userId,
             String previousRole,
             String newRole,
@@ -80,24 +81,24 @@ public class AdminUserController implements AdminUserManagementApi {
         UserRole prevRole = EnumUtils.fromStringOrNull(UserRole.class, previousRole);
         UserRole nextRole = EnumUtils.fromStringOrNull(UserRole.class, newRole);
 
-        Page<UserRoleHistoryResponse> resultPage = getUserRoleHistoryService.getUserRoleHistories(
+        var resultPage = getUserRoleHistoryService.getUserRoleHistories(
                 userId, prevRole, nextRole, changedBy, startDate, endDate, pageable);
 
         return ResponseEntity.ok(PageResponseMapper.toSpringPageResponse(
                 resultPage,
-                h -> new GetRoleHistories200ResponseContentInner()
+                h -> new ApiUserRoleHistoryResponse()
                         .id(h.id())
                         .userId(h.userId())
                         .userName(h.userName())
                         .studentId(h.studentId())
                         .previousRole(h.previousRole() != null
-                                ? GetRoleHistories200ResponseContentInner.PreviousRoleEnum.fromValue(h.previousRole().name()) : null)
+                                ? ApiUserRoleHistoryResponse.PreviousRoleEnum.fromValue(h.previousRole().name()) : null)
                         .newRole(h.newRole() != null
-                                ? GetRoleHistories200ResponseContentInner.NewRoleEnum.fromValue(h.newRole().name()) : null)
+                                ? ApiUserRoleHistoryResponse.NewRoleEnum.fromValue(h.newRole().name()) : null)
                         .reason(h.reason())
                         .changedBy(h.changedBy())
                         .changedAt(h.changedAt()),
-                GetRoleHistories200Response::new,
+                ApiPageUserRoleHistoryResponse::new,
                 (r, content, meta) -> r
                         .content(content)
                         .totalElements(meta.totalElements())
@@ -114,7 +115,7 @@ public class AdminUserController implements AdminUserManagementApi {
     }
 
     @Override
-    public ResponseEntity<GetUserList200Response> getUserList(
+    public ResponseEntity<ApiUserListPageResponse> getUserList(
             String keyword,
             String role,
             String status,
@@ -129,16 +130,16 @@ public class AdminUserController implements AdminUserManagementApi {
         UserRole userRole = EnumUtils.fromStringOrNull(UserRole.class, role);
         UserStatus userStatus = EnumUtils.fromStringOrNull(UserStatus.class, status);
 
-        Page<UserListResponse> resultPage = getUserListService.getUserList(keyword, userRole, userStatus, pageable);
-        return ResponseEntity.ok(new GetUserList200Response()
+        var resultPage = getUserListService.getUserList(keyword, userRole, userStatus, pageable);
+        return ResponseEntity.ok(new ApiUserListPageResponse()
                 .users(resultPage.getContent().stream()
-                        .map(u -> new GetUserList200ResponseUsersInner()
+                        .map(u -> new ApiUserListResponse()
                                 .userId(u.userId())
                                 .studentId(u.studentId())
                                 .name(u.name())
                                 .email(u.email())
-                                .role(GetUserList200ResponseUsersInner.RoleEnum.fromValue(u.role().name()))
-                                .status(GetUserList200ResponseUsersInner.StatusEnum.fromValue(u.status().name()))
+                                .role(ApiUserListResponse.RoleEnum.fromValue(u.role().name()))
+                                .status(ApiUserListResponse.StatusEnum.fromValue(u.status().name()))
                                 .createdAt(u.createdAt()))
                         .toList())
                 .totalElements(resultPage.getTotalElements())
@@ -148,11 +149,11 @@ public class AdminUserController implements AdminUserManagementApi {
     }
 
     @Override
-    public ResponseEntity<GetUserDetail200Response> getUserDetail(Long userId) {
+    public ResponseEntity<ApiUserDetailResponse> getUserDetail(Long userId) {
         log.info("회원 상세 조회 요청 - userId: {}", userId);
 
-        UserDetailResponse result = getUserDetailService.getUserDetail(userId);
-        return ResponseEntity.ok(new GetUserDetail200Response()
+        var result = getUserDetailService.getUserDetail(userId);
+        return ResponseEntity.ok(new ApiUserDetailResponse()
                 .userId(result.userId())
                 .studentId(result.studentId())
                 .name(result.name())
@@ -162,25 +163,25 @@ public class AdminUserController implements AdminUserManagementApi {
                 .motivation(result.motivation())
                 .wishes(result.wishes() != null
                         ? result.wishes().stream()
-                                .map(w -> GetUserDetail200Response.WishesEnum.fromValue(w.name()))
+                                .map(w -> ApiUserDetailResponse.WishesEnum.fromValue(w.name()))
                                 .toList()
                         : null)
                 .interests(result.interests() != null
                         ? result.interests().stream()
-                                .map(i -> GetUserDetail200Response.InterestsEnum.fromValue(i.name()))
+                                .map(i -> ApiUserDetailResponse.InterestsEnum.fromValue(i.name()))
                                 .toList()
                         : null)
                 .customInterest(result.customInterest())
                 .joinRoute(result.joinRoute() != null
-                        ? GetUserDetail200Response.JoinRouteEnum.fromValue(result.joinRoute().name()) : null)
+                        ? ApiUserDetailResponse.JoinRouteEnum.fromValue(result.joinRoute().name()) : null)
                 .customJoinRoute(result.customJoinRoute())
                 .gender(result.gender() != null
-                        ? GetUserDetail200Response.GenderEnum.fromValue(result.gender().name()) : null)
+                        ? ApiUserDetailResponse.GenderEnum.fromValue(result.gender().name()) : null)
                 .grade(result.grade())
                 .enrollmentStatus(result.enrollmentStatus() != null
-                        ? GetUserDetail200Response.EnrollmentStatusEnum.fromValue(result.enrollmentStatus().name()) : null)
-                .role(GetUserDetail200Response.RoleEnum.fromValue(result.role().name()))
-                .status(GetUserDetail200Response.StatusEnum.fromValue(result.status().name()))
+                        ? ApiUserDetailResponse.EnrollmentStatusEnum.fromValue(result.enrollmentStatus().name()) : null)
+                .role(ApiUserDetailResponse.RoleEnum.fromValue(result.role().name()))
+                .status(ApiUserDetailResponse.StatusEnum.fromValue(result.status().name()))
                 .createdAt(result.createdAt()));
     }
 
@@ -188,7 +189,7 @@ public class AdminUserController implements AdminUserManagementApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> changeUserRole(
             Long userId,
-            igrus.web.generated.model.ChangeUserRoleRequest changeUserRoleRequest
+            ApiChangeUserRoleRequest changeUserRoleRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("회원 권한 변경 요청 - targetUserId: {}, newRole: {}, performedBy: {}",
@@ -203,15 +204,15 @@ public class AdminUserController implements AdminUserManagementApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> changeUserStatus(
             Long userId,
-            igrus.web.generated.model.ChangeUserStatusRequest changeUserStatusRequest
+            ApiChangeUserStatusRequest changeUserStatusRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("회원 상태 변경 요청 - targetUserId: {}, action: {}, performedBy: {}",
                 userId, changeUserStatusRequest.getAction(), user.userId());
 
-        igrus.web.admin.user.dto.ChangeUserStatusRequest internalRequest =
-                new igrus.web.admin.user.dto.ChangeUserStatusRequest(
-                        EnumUtils.fromStringOrNull(igrus.web.admin.user.dto.ChangeUserStatusRequest.Action.class,
+        var internalRequest =
+                new ChangeUserStatusRequest(
+                        EnumUtils.fromStringOrNull(ChangeUserStatusRequest.Action.class,
                                 changeUserStatusRequest.getAction().name()),
                         changeUserStatusRequest.getReason(),
                         changeUserStatusRequest.getSuspendedUntil()
@@ -225,12 +226,12 @@ public class AdminUserController implements AdminUserManagementApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> forceWithdrawUser(
             Long userId,
-            igrus.web.generated.model.ForceWithdrawUserRequest forceWithdrawUserRequest
+            ApiForceWithdrawRequest forceWithdrawRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("회원 강제 탈퇴 요청 - targetUserId: {}, performedBy: {}", userId, user.userId());
 
-        forceWithdrawService.forceWithdraw(userId, forceWithdrawUserRequest.getReason(), user.userId());
+        forceWithdrawService.forceWithdraw(userId, forceWithdrawRequest.getReason(), user.userId());
         return ResponseEntity.noContent().build();
     }
 
@@ -248,37 +249,37 @@ public class AdminUserController implements AdminUserManagementApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> editUserInfo(
             Long userId,
-            igrus.web.generated.model.EditUserInfoRequest editUserInfoRequest
+            ApiAdminEditUserInfoRequest adminEditUserInfoRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("회원 정보 수정 요청 - targetUserId: {}, performedBy: {}", userId, user.userId());
 
-        AdminEditUserInfoRequest internalRequest = new AdminEditUserInfoRequest(
-                editUserInfoRequest.getStudentId(),
-                editUserInfoRequest.getEmail(),
-                editUserInfoRequest.getName(),
-                editUserInfoRequest.getPhoneNumber(),
-                editUserInfoRequest.getDepartment(),
-                editUserInfoRequest.getGender() != null
-                        ? EnumUtils.fromStringOrNull(Gender.class, editUserInfoRequest.getGender().name()) : null,
-                editUserInfoRequest.getGrade(),
-                editUserInfoRequest.getEnrollmentStatus() != null
-                        ? EnumUtils.fromStringOrNull(EnrollmentStatus.class, editUserInfoRequest.getEnrollmentStatus().name()) : null,
-                editUserInfoRequest.getMotivation(),
-                editUserInfoRequest.getWishes() != null
-                        ? editUserInfoRequest.getWishes().stream()
+        var internalRequest = new AdminEditUserInfoRequest(
+                adminEditUserInfoRequest.getStudentId(),
+                adminEditUserInfoRequest.getEmail(),
+                adminEditUserInfoRequest.getName(),
+                adminEditUserInfoRequest.getPhoneNumber(),
+                adminEditUserInfoRequest.getDepartment(),
+                adminEditUserInfoRequest.getGender() != null
+                        ? EnumUtils.fromStringOrNull(Gender.class, adminEditUserInfoRequest.getGender().name()) : null,
+                adminEditUserInfoRequest.getGrade(),
+                adminEditUserInfoRequest.getEnrollmentStatus() != null
+                        ? EnumUtils.fromStringOrNull(EnrollmentStatus.class, adminEditUserInfoRequest.getEnrollmentStatus().name()) : null,
+                adminEditUserInfoRequest.getMotivation(),
+                adminEditUserInfoRequest.getWishes() != null
+                        ? adminEditUserInfoRequest.getWishes().stream()
                                 .map(w -> EnumUtils.fromStringOrNull(Wish.class, w.name()))
                                 .toList()
                         : null,
-                editUserInfoRequest.getInterests() != null
-                        ? editUserInfoRequest.getInterests().stream()
+                adminEditUserInfoRequest.getInterests() != null
+                        ? adminEditUserInfoRequest.getInterests().stream()
                                 .map(i -> EnumUtils.fromStringOrNull(Interest.class, i.name()))
                                 .toList()
                         : null,
-                editUserInfoRequest.getCustomInterest(),
-                editUserInfoRequest.getJoinRoute() != null
-                        ? EnumUtils.fromStringOrNull(JoinRoute.class, editUserInfoRequest.getJoinRoute().name()) : null,
-                editUserInfoRequest.getCustomJoinRoute()
+                adminEditUserInfoRequest.getCustomInterest(),
+                adminEditUserInfoRequest.getJoinRoute() != null
+                        ? EnumUtils.fromStringOrNull(JoinRoute.class, adminEditUserInfoRequest.getJoinRoute().name()) : null,
+                adminEditUserInfoRequest.getCustomJoinRoute()
         );
 
         adminEditUserInfoService.editUserInfo(userId, internalRequest, user.userId());

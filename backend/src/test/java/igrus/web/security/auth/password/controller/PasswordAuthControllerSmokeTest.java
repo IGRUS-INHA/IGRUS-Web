@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * PasswordAuthController OpenAPI 응답 스키마 스모크 테스트.
  *
  * <p>TC-213-02: POST /api/v1/auth/password/login 응답이 OpenAPI 스키마와 일치하는지 검증한다.
- * 로그인 성공 시 응답 스키마(Login200Response)의 정합성을 확인한다.</p>
+ * 로그인 성공 시 응답 스키마(ApiPasswordLoginResponse)의 정합성을 확인한다.</p>
  *
  * <p>POST /api/v1/auth/password/** 는 인증 없이 접근 가능한 공개 API이다.</p>
  */

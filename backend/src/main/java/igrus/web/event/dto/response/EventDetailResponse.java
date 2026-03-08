@@ -2,7 +2,6 @@ package igrus.web.event.dto.response;
 
 import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventCloseReason;
-import igrus.web.event.domain.EventImage;
 import igrus.web.event.domain.EventRegistrationType;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.EventVisibility;
@@ -37,7 +36,6 @@ import java.util.List;
  * @param canEdit             현재 사용자가 수정 가능한지 여부
  * @param isRegistered        현재 사용자가 신청했는지 여부
  * @param surveyId            연결된 설문 ID (null이면 설문 미연결)
- * @param imageUrls           행사 이미지 URL 목록
  */
 public record EventDetailResponse(
         Long id,
@@ -62,7 +60,7 @@ public record EventDetailResponse(
         boolean canEdit,
         boolean isRegistered,
         Long surveyId,
-        List<String> imageUrls
+        List<EventAttachmentDto> attachments
 ) {
     /**
      * Event 엔티티로부터 EventDetailResponse를 생성합니다.
@@ -74,10 +72,11 @@ public record EventDetailResponse(
      * @return EventDetailResponse
      */
     public static EventDetailResponse from(Event event, boolean canEdit, boolean isRegistered) {
-        List<String> imageUrls = event.getImages().stream()
-                .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
-                .map(EventImage::getImageUrl)
-                .toList();
+        return from(event, canEdit, isRegistered, List.of());
+    }
+
+    public static EventDetailResponse from(Event event, boolean canEdit, boolean isRegistered,
+                                            List<EventAttachmentDto> attachments) {
         return new EventDetailResponse(
                 event.getId(),
                 event.getTitle(),
@@ -101,7 +100,7 @@ public record EventDetailResponse(
                 canEdit,
                 isRegistered,
                 event.getSurveyId(),
-                imageUrls
+                attachments
         );
     }
 
@@ -113,6 +112,6 @@ public record EventDetailResponse(
      * @return EventDetailResponse
      */
     public static EventDetailResponse from(Event event) {
-        return from(event, false, false);
+        return from(event, false, false, List.of());
     }
 }

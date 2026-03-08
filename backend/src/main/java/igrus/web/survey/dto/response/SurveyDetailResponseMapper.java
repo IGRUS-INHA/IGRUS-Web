@@ -1,9 +1,9 @@
 package igrus.web.survey.dto.response;
 
-import igrus.web.generated.model.GetSurveyDetail200Response;
-import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInner;
-import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInnerOptionsInner;
-import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInnerRowsInner;
+import igrus.web.generated.model.ApiOptionResponse;
+import igrus.web.generated.model.ApiQuestionResponse;
+import igrus.web.generated.model.ApiRowResponse;
+import igrus.web.generated.model.ApiSurveyDetailResponse;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -16,17 +16,17 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SurveyDetailResponseMapper {
 
-    public static GetSurveyDetail200Response toApiResponse(SurveyDetailResponse response) {
-        return new GetSurveyDetail200Response()
+    public static ApiSurveyDetailResponse toApiResponse(SurveyDetailResponse response) {
+        return new ApiSurveyDetailResponse()
                 .id(response.id())
                 .title(response.title())
                 .description(response.description())
                 .visibility(response.visibility() != null
-                        ? GetSurveyDetail200Response.VisibilityEnum.fromValue(response.visibility().name()) : null)
+                        ? ApiSurveyDetailResponse.VisibilityEnum.fromValue(response.visibility().name()) : null)
                 .responseStatus(response.responseStatus() != null
-                        ? GetSurveyDetail200Response.ResponseStatusEnum.fromValue(response.responseStatus().name()) : null)
+                        ? ApiSurveyDetailResponse.ResponseStatusEnum.fromValue(response.responseStatus().name()) : null)
                 .accessLevel(response.accessLevel() != null
-                        ? GetSurveyDetail200Response.AccessLevelEnum.fromValue(response.accessLevel().name()) : null)
+                        ? ApiSurveyDetailResponse.AccessLevelEnum.fromValue(response.accessLevel().name()) : null)
                 .deadline(response.deadline())
                 .createdAt(response.createdAt())
                 .updatedAt(response.updatedAt())
@@ -37,11 +37,11 @@ public final class SurveyDetailResponseMapper {
                         : List.of());
     }
 
-    public static GetSurveyDetail200ResponseQuestionsInner toQuestionInner(SurveyDetailResponse.QuestionResponse q) {
-        return new GetSurveyDetail200ResponseQuestionsInner()
+    public static ApiQuestionResponse toQuestionInner(SurveyDetailResponse.QuestionResponse q) {
+        return new ApiQuestionResponse()
                 .id(q.id())
                 .questionType(q.questionType() != null
-                        ? GetSurveyDetail200ResponseQuestionsInner.QuestionTypeEnum.fromValue(q.questionType().name()) : null)
+                        ? ApiQuestionResponse.QuestionTypeEnum.fromValue(q.questionType().name()) : null)
                 .title(q.title())
                 .description(q.description())
                 .required(q.required())
@@ -60,15 +60,15 @@ public final class SurveyDetailResponseMapper {
                         : List.of());
     }
 
-    private static GetSurveyDetail200ResponseQuestionsInnerOptionsInner toOptionInner(SurveyDetailResponse.OptionResponse o) {
-        return new GetSurveyDetail200ResponseQuestionsInnerOptionsInner()
+    private static ApiOptionResponse toOptionInner(SurveyDetailResponse.OptionResponse o) {
+        return new ApiOptionResponse()
                 .id(o.id())
                 .text(o.text())
                 .displayOrder(o.displayOrder());
     }
 
-    private static GetSurveyDetail200ResponseQuestionsInnerRowsInner toRowInner(SurveyDetailResponse.RowResponse r) {
-        return new GetSurveyDetail200ResponseQuestionsInnerRowsInner()
+    private static ApiRowResponse toRowInner(SurveyDetailResponse.RowResponse r) {
+        return new ApiRowResponse()
                 .id(r.id())
                 .label(r.label())
                 .displayOrder(r.displayOrder());

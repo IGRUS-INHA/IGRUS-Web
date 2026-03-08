@@ -8,19 +8,24 @@ import igrus.web.community.bookmark.service.read.GetMyBookmarksService;
 import igrus.web.community.like.post_like.dto.response.LikedPostPageResponse;
 import igrus.web.community.like.post_like.dto.response.LikedPostResponse;
 import igrus.web.community.like.post_like.service.read.GetMyLikedPostsService;
-import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.generated.api.MyPageApi;
-import igrus.web.generated.model.GetMyBookmarks200Response;
-import igrus.web.generated.model.GetMyBookmarks200ResponsePostsInner;
-import igrus.web.generated.model.GetMyComments200Response;
-import igrus.web.generated.model.GetMyComments200ResponseCommentsInner;
-import igrus.web.generated.model.GetMyLikes200Response;
-import igrus.web.generated.model.GetMyLikes200ResponsePostsInner;
-import igrus.web.generated.model.GetMyPosts200Response;
-import igrus.web.generated.model.GetMyPosts200ResponsePostsInner;
-import igrus.web.generated.model.GetMyProfile200Response;
-import igrus.web.generated.model.GetMyRegistrations200ResponseInner;
+import igrus.web.generated.model.ApiBookmarkedPostPageResponse;
+import igrus.web.generated.model.ApiBookmarkedPostResponse;
+import igrus.web.generated.model.ApiMyCommentPageResponse;
+import igrus.web.generated.model.ApiMyCommentResponse;
+import igrus.web.generated.model.ApiLikedPostPageResponse;
+import igrus.web.generated.model.ApiLikedPostResponse;
+import igrus.web.generated.model.ApiMyPostPageResponse;
+import igrus.web.generated.model.ApiMyPostResponse;
+import igrus.web.generated.model.ApiMyProfileResponse;
+import igrus.web.generated.model.ApiMyRegistrationResponse;
+import igrus.web.generated.model.ApiChangeEmailRequest;
+import igrus.web.generated.model.ApiEmailVerificationRequest;
+import igrus.web.generated.model.ApiChangePhoneNumberRequest;
+import igrus.web.generated.model.ApiUpdateStudentIdRequest;
+import igrus.web.generated.model.ApiChangePasswordRequest;
+import igrus.web.generated.model.ApiWithdrawRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.user.mypage.dto.request.ChangeEmailRequest;
@@ -31,7 +36,6 @@ import igrus.web.user.mypage.dto.response.MyCommentPageResponse;
 import igrus.web.user.mypage.dto.response.MyCommentResponse;
 import igrus.web.user.mypage.dto.response.MyPostPageResponse;
 import igrus.web.user.mypage.dto.response.MyPostResponse;
-import igrus.web.user.mypage.dto.response.MyProfileResponse;
 import igrus.web.user.mypage.service.read.GetMyCommentsService;
 import igrus.web.user.mypage.service.read.GetMyPostsService;
 import igrus.web.user.mypage.service.read.GetMyProfileService;
@@ -44,7 +48,6 @@ import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.service.WithdrawService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -78,17 +81,17 @@ public class MyPageController implements MyPageApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetMyProfile200Response> getMyProfile() {
+    public ResponseEntity<ApiMyProfileResponse> getMyProfile() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
-        MyProfileResponse response = getMyProfileService.getMyProfile(user.userId());
-        return ResponseEntity.ok(new GetMyProfile200Response()
+        var response = getMyProfileService.getMyProfile(user.userId());
+        return ResponseEntity.ok(new ApiMyProfileResponse()
                 .studentId(response.studentId())
                 .name(response.name())
                 .email(response.email())
                 .phoneNumber(response.phoneNumber())
                 .department(response.department())
                 .role(response.role() != null
-                        ? GetMyProfile200Response.RoleEnum.fromValue(response.role().name()) : null)
+                        ? ApiMyProfileResponse.RoleEnum.fromValue(response.role().name()) : null)
                 .createdAt(response.createdAt())
                 .hasTemporaryStudentId(response.hasTemporaryStudentId()));
     }
@@ -98,12 +101,12 @@ public class MyPageController implements MyPageApi {
     @Override
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> requestEmailChange(
-            igrus.web.generated.model.RequestEmailChangeRequest requestEmailChangeRequest
+            ApiChangeEmailRequest changeEmailRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         ChangeEmailRequest request = new ChangeEmailRequest(
-                requestEmailChangeRequest.getPassword(),
-                requestEmailChangeRequest.getNewEmail()
+                changeEmailRequest.getPassword(),
+                changeEmailRequest.getNewEmail()
         );
         changeEmailService.changeEmail(user.userId(), request);
         return ResponseEntity.ok().build();
@@ -112,12 +115,12 @@ public class MyPageController implements MyPageApi {
     @Override
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> verifyEmailChange(
-            igrus.web.generated.model.VerifyEmailChangeRequest verifyEmailChangeRequest
+            ApiEmailVerificationRequest emailVerificationRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         EmailVerificationRequest request = new EmailVerificationRequest(
-                verifyEmailChangeRequest.getEmail(),
-                verifyEmailChangeRequest.getCode()
+                emailVerificationRequest.getEmail(),
+                emailVerificationRequest.getCode()
         );
         verifyEmailChangeService.verifyAndChangeEmail(user.userId(), request);
         return ResponseEntity.ok().build();
@@ -128,7 +131,7 @@ public class MyPageController implements MyPageApi {
     @Override
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePhoneNumber(
-            igrus.web.generated.model.ChangePhoneNumberRequest changePhoneNumberRequest
+            ApiChangePhoneNumberRequest changePhoneNumberRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         ChangePhoneNumberRequest request = new ChangePhoneNumberRequest(
@@ -144,7 +147,7 @@ public class MyPageController implements MyPageApi {
     @Override
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateStudentId(
-            igrus.web.generated.model.UpdateStudentIdRequest updateStudentIdRequest
+            ApiUpdateStudentIdRequest updateStudentIdRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         UpdateStudentIdRequest request = new UpdateStudentIdRequest(
@@ -160,12 +163,12 @@ public class MyPageController implements MyPageApi {
     @Override
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changeMyPassword(
-            igrus.web.generated.model.ChangeMyPasswordRequest changeMyPasswordRequest
+            ApiChangePasswordRequest changePasswordRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         ChangePasswordRequest request = new ChangePasswordRequest(
-                changeMyPasswordRequest.getCurrentPassword(),
-                changeMyPasswordRequest.getNewPassword()
+                changePasswordRequest.getCurrentPassword(),
+                changePasswordRequest.getNewPassword()
         );
         changeMyPasswordService.changePassword(user.userId(), request);
         return ResponseEntity.ok().build();
@@ -176,7 +179,7 @@ public class MyPageController implements MyPageApi {
     @Override
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> withdraw(
-            igrus.web.generated.model.WithdrawRequest withdrawRequest
+            ApiWithdrawRequest withdrawRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         WithdrawRequest request = new WithdrawRequest(
@@ -191,15 +194,15 @@ public class MyPageController implements MyPageApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetMyPosts200Response> getMyPosts(
+    public ResponseEntity<ApiMyPostPageResponse> getMyPosts(
             Integer page, Integer size, List<String> sort
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         Pageable pageable = PageableUtils.of(page, size, sort);
-        Page<MyPostResponse> postPage = getMyPostsService.getMyPosts(user.userId(), pageable);
-        MyPostPageResponse pageResponse = MyPostPageResponse.from(postPage);
+        var postPage = getMyPostsService.getMyPosts(user.userId(), pageable);
+        var pageResponse = MyPostPageResponse.from(postPage);
 
-        return ResponseEntity.ok(new GetMyPosts200Response()
+        return ResponseEntity.ok(new ApiMyPostPageResponse()
                 .posts(pageResponse.posts().stream()
                         .map(this::mapToMyPostInner)
                         .toList())
@@ -211,15 +214,15 @@ public class MyPageController implements MyPageApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetMyComments200Response> getMyComments(
+    public ResponseEntity<ApiMyCommentPageResponse> getMyComments(
             Integer page, Integer size, List<String> sort
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         Pageable pageable = PageableUtils.of(page, size, sort);
-        Page<MyCommentResponse> commentPage = getMyCommentsService.getMyComments(user.userId(), pageable);
-        MyCommentPageResponse pageResponse = MyCommentPageResponse.from(commentPage);
+        var commentPage = getMyCommentsService.getMyComments(user.userId(), pageable);
+        var pageResponse = MyCommentPageResponse.from(commentPage);
 
-        return ResponseEntity.ok(new GetMyComments200Response()
+        return ResponseEntity.ok(new ApiMyCommentPageResponse()
                 .comments(pageResponse.comments().stream()
                         .map(this::mapToMyCommentInner)
                         .toList())
@@ -231,9 +234,9 @@ public class MyPageController implements MyPageApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<GetMyRegistrations200ResponseInner>> getMyRegistrations() {
+    public ResponseEntity<List<ApiMyRegistrationResponse>> getMyRegistrations() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
-        List<MyRegistrationResponse> response = eventRegistrationService.getMyRegistrations(user.userId());
+        var response = eventRegistrationService.getMyRegistrations(user.userId());
         return ResponseEntity.ok(response.stream()
                 .map(this::mapToMyRegistrationInner)
                 .toList());
@@ -241,15 +244,15 @@ public class MyPageController implements MyPageApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetMyLikes200Response> getMyLikes1(
+    public ResponseEntity<ApiLikedPostPageResponse> getMyLikes1(
             Integer page, Integer size, List<String> sort
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         Pageable pageable = PageableUtils.of(page, size, sort);
-        Page<LikedPostResponse> likePage = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
-        LikedPostPageResponse pageResponse = LikedPostPageResponse.from(likePage);
+        var likePage = getMyLikedPostsService.getMyLikes(user.userId(), pageable);
+        var pageResponse = LikedPostPageResponse.from(likePage);
 
-        return ResponseEntity.ok(new GetMyLikes200Response()
+        return ResponseEntity.ok(new ApiLikedPostPageResponse()
                 .posts(pageResponse.posts().stream()
                         .map(this::mapToLikedPostInner)
                         .toList())
@@ -261,15 +264,15 @@ public class MyPageController implements MyPageApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetMyBookmarks200Response> getMyBookmarks1(
+    public ResponseEntity<ApiBookmarkedPostPageResponse> getMyBookmarks1(
             Integer page, Integer size, List<String> sort
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         Pageable pageable = PageableUtils.of(page, size, sort);
-        Page<BookmarkedPostResponse> bookmarkPage = getMyBookmarksService.getMyBookmarks(user.userId(), pageable);
-        BookmarkedPostPageResponse pageResponse = BookmarkedPostPageResponse.from(bookmarkPage);
+        var bookmarkPage = getMyBookmarksService.getMyBookmarks(user.userId(), pageable);
+        var pageResponse = BookmarkedPostPageResponse.from(bookmarkPage);
 
-        return ResponseEntity.ok(new GetMyBookmarks200Response()
+        return ResponseEntity.ok(new ApiBookmarkedPostPageResponse()
                 .posts(pageResponse.posts().stream()
                         .map(this::mapToBookmarkedPostInner)
                         .toList())
@@ -281,8 +284,8 @@ public class MyPageController implements MyPageApi {
 
     // === Private helper methods ===
 
-    private GetMyPosts200ResponsePostsInner mapToMyPostInner(MyPostResponse p) {
-        return new GetMyPosts200ResponsePostsInner()
+    private ApiMyPostResponse mapToMyPostInner(MyPostResponse p) {
+        return new ApiMyPostResponse()
                 .id(p.id())
                 .boardCode(p.boardCode())
                 .boardName(p.boardName())
@@ -293,8 +296,8 @@ public class MyPageController implements MyPageApi {
                 .createdAt(p.createdAt());
     }
 
-    private GetMyComments200ResponseCommentsInner mapToMyCommentInner(MyCommentResponse c) {
-        return new GetMyComments200ResponseCommentsInner()
+    private ApiMyCommentResponse mapToMyCommentInner(MyCommentResponse c) {
+        return new ApiMyCommentResponse()
                 .id(c.id())
                 .postId(c.postId())
                 .postTitle(c.postTitle())
@@ -304,19 +307,19 @@ public class MyPageController implements MyPageApi {
                 .createdAt(c.createdAt());
     }
 
-    private GetMyRegistrations200ResponseInner mapToMyRegistrationInner(MyRegistrationResponse r) {
-        return new GetMyRegistrations200ResponseInner()
+    private ApiMyRegistrationResponse mapToMyRegistrationInner(igrus.web.event.dto.response.MyRegistrationResponse r) {
+        return new ApiMyRegistrationResponse()
                 .registrationId(r.registrationId())
                 .eventId(r.eventId())
                 .eventTitle(r.eventTitle())
                 .eventStartAt(r.eventStartAt())
                 .status(r.status() != null
-                        ? GetMyRegistrations200ResponseInner.StatusEnum.fromValue(r.status().name()) : null)
+                        ? ApiMyRegistrationResponse.StatusEnum.fromValue(r.status().name()) : null)
                 .registeredAt(r.registeredAt());
     }
 
-    private GetMyLikes200ResponsePostsInner mapToLikedPostInner(LikedPostResponse p) {
-        return new GetMyLikes200ResponsePostsInner()
+    private ApiLikedPostResponse mapToLikedPostInner(LikedPostResponse p) {
+        return new ApiLikedPostResponse()
                 .postId(p.postId())
                 .title(p.title())
                 .boardCode(p.boardCode())
@@ -328,8 +331,8 @@ public class MyPageController implements MyPageApi {
                 .deletedMessage(p.deletedMessage());
     }
 
-    private GetMyBookmarks200ResponsePostsInner mapToBookmarkedPostInner(BookmarkedPostResponse p) {
-        return new GetMyBookmarks200ResponsePostsInner()
+    private ApiBookmarkedPostResponse mapToBookmarkedPostInner(BookmarkedPostResponse p) {
+        return new ApiBookmarkedPostResponse()
                 .postId(p.postId())
                 .title(p.title())
                 .boardCode(p.boardCode())

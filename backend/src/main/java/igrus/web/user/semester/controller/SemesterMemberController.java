@@ -1,10 +1,8 @@
 package igrus.web.user.semester.controller;
 
 import igrus.web.generated.api.SemesterMemberApi;
-import igrus.web.generated.model.GetMemberList200ResponseInner;
-import igrus.web.generated.model.GetSemesterList200ResponseInner;
-import igrus.web.user.semester.dto.response.SemesterMemberListResponse;
-import igrus.web.user.semester.dto.response.SemesterSummaryResponse;
+import igrus.web.generated.model.ApiSemesterMemberListResponse;
+import igrus.web.generated.model.ApiSemesterSummaryResponse;
 import igrus.web.user.semester.service.read.GetSemesterListService;
 import igrus.web.user.semester.service.read.GetSemesterMemberListService;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +21,11 @@ public class SemesterMemberController implements SemesterMemberApi {
     private final GetSemesterMemberListService getSemesterMemberListService;
 
     @Override
-    public ResponseEntity<List<GetSemesterList200ResponseInner>> getSemesterList() {
-        List<SemesterSummaryResponse> semesters = getSemesterListService.getSemesterList();
+    public ResponseEntity<List<ApiSemesterSummaryResponse>> getSemesterList() {
+        var semesters = getSemesterListService.getSemesterList();
 
-        List<GetSemesterList200ResponseInner> response = semesters.stream()
-                .map(s -> new GetSemesterList200ResponseInner()
+        List<ApiSemesterSummaryResponse> response = semesters.stream()
+                .map(s -> new ApiSemesterSummaryResponse()
                         .year(s.year())
                         .semester(s.semester())
                         .memberCount(s.memberCount())
@@ -38,20 +36,19 @@ public class SemesterMemberController implements SemesterMemberApi {
     }
 
     @Override
-    public ResponseEntity<List<GetMemberList200ResponseInner>> getMemberList(
+    public ResponseEntity<List<ApiSemesterMemberListResponse>> getMemberList(
             Integer year, Integer semester, String keyword) {
-        List<SemesterMemberListResponse> members =
-                getSemesterMemberListService.getMemberList(year, semester, keyword);
+        var members = getSemesterMemberListService.getMemberList(year, semester, keyword);
 
-        List<GetMemberList200ResponseInner> response = members.stream()
-                .map(m -> new GetMemberList200ResponseInner()
+        List<ApiSemesterMemberListResponse> response = members.stream()
+                .map(m -> new ApiSemesterMemberListResponse()
                         .userId(m.userId())
                         .studentId(m.studentId())
                         .name(m.name())
                         .department(m.department())
                         .email(m.email())
                         .phoneNumber(m.phoneNumber())
-                        .role(GetMemberList200ResponseInner.RoleEnum.fromValue(m.role().name()))
+                        .role(ApiSemesterMemberListResponse.RoleEnum.fromValue(m.role().name()))
                         .isWithdrawn(m.isWithdrawn())
                         .grade(m.grade())
                         .motivation(m.motivation()))

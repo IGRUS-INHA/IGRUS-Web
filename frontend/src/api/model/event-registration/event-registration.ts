@@ -62,6 +62,132 @@ import { customFetch } from "../../client";
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
+ * 관리자가 신청(회원/외부인)을 취소합니다. 운영진 이상만 가능합니다.
+ * @summary 관리자 신청 취소
+ */
+export type cancelRegistrationByAdminResponse200 = {
+  data: RegistrationResponse;
+  status: 200;
+};
+
+export type cancelRegistrationByAdminResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type cancelRegistrationByAdminResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type cancelRegistrationByAdminResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type cancelRegistrationByAdminResponseSuccess =
+  cancelRegistrationByAdminResponse200 & {
+    headers: Headers;
+  };
+export type cancelRegistrationByAdminResponseError = (
+  | cancelRegistrationByAdminResponse401
+  | cancelRegistrationByAdminResponse403
+  | cancelRegistrationByAdminResponse404
+) & {
+  headers: Headers;
+};
+
+export type cancelRegistrationByAdminResponse =
+  | cancelRegistrationByAdminResponseSuccess
+  | cancelRegistrationByAdminResponseError;
+
+export const getCancelRegistrationByAdminUrl = (registrationId: number) => {
+  return `/api/v1/registrations/${registrationId}/cancel`;
+};
+
+export const cancelRegistrationByAdmin = async (
+  registrationId: number,
+  options?: RequestInit,
+): Promise<cancelRegistrationByAdminResponse> => {
+  return customFetch<cancelRegistrationByAdminResponse>(
+    getCancelRegistrationByAdminUrl(registrationId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCancelRegistrationByAdminMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelRegistrationByAdmin>>,
+    TError,
+    { registrationId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelRegistrationByAdmin>>,
+  TError,
+  { registrationId: number },
+  TContext
+> => {
+  const mutationKey = ["cancelRegistrationByAdmin"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelRegistrationByAdmin>>,
+    { registrationId: number }
+  > = (props) => {
+    const { registrationId } = props ?? {};
+
+    return cancelRegistrationByAdmin(registrationId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelRegistrationByAdminMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelRegistrationByAdmin>>
+>;
+
+export type CancelRegistrationByAdminMutationError = void;
+
+/**
+ * @summary 관리자 신청 취소
+ */
+export const useCancelRegistrationByAdmin = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cancelRegistrationByAdmin>>,
+      TError,
+      { registrationId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof cancelRegistrationByAdmin>>,
+  TError,
+  { registrationId: number },
+  TContext
+> => {
+  return useMutation(
+    getCancelRegistrationByAdminMutationOptions(options),
+    queryClient,
+  );
+};
+/**
  * 승인 또는 거절한 신청을 대기 상태로 되돌립니다. (선발제) 운영진 이상만 가능합니다.
  * @summary 승인/거절 되돌리기
  */

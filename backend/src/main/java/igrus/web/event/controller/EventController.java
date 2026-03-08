@@ -3,18 +3,22 @@ package igrus.web.event.controller;
 import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.event.domain.EventStatus;
+import igrus.web.event.domain.EventRegistrationType;
 import igrus.web.event.domain.RegistrationStatus;
-import igrus.web.event.dto.request.CreateEventRequest;
-import igrus.web.event.dto.request.UpdateEventRequest;
-import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
+import igrus.web.event.dto.request.CreateEventRequest;
+import igrus.web.event.dto.request.UpdateEventRequest;
+import igrus.web.event.dto.response.EventAttachmentDto;
 import igrus.web.event.service.EventService;
 import igrus.web.generated.api.EventApi;
-import igrus.web.generated.model.CreateEvent201Response;
-import igrus.web.generated.model.GetEvent200Response;
-import igrus.web.generated.model.GetEventList200ResponseInner;
-import igrus.web.generated.model.ReopenRegistrationRequest;
+import igrus.web.generated.model.ApiEventCreateResponse;
+import igrus.web.generated.model.ApiEventDetailResponse;
+import igrus.web.generated.model.ApiEventAttachmentResponse;
+import igrus.web.generated.model.ApiEventListResponse;
+import igrus.web.generated.model.ApiEventStatusChangeReasonRequest;
+import igrus.web.generated.model.ApiCreateEventRequest;
+import igrus.web.generated.model.ApiUpdateEventRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +44,8 @@ public class EventController implements EventApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CreateEvent201Response> createEvent(
-            igrus.web.generated.model.CreateEventRequest createEventRequest
+    public ResponseEntity<ApiEventCreateResponse> createEvent(
+            ApiCreateEventRequest createEventRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 생성 요청 - userId: {}, title: {}", user.userId(), createEventRequest.getTitle());
@@ -55,14 +59,14 @@ public class EventController implements EventApi {
                 createEventRequest.getRegistrationStartAt(),
                 createEventRequest.getRegistrationEndAt(),
                 createEventRequest.getCapacity(),
-                EnumUtils.fromStringOrNull(igrus.web.event.domain.EventRegistrationType.class,
+                EnumUtils.fromStringOrNull(EventRegistrationType.class,
                         createEventRequest.getRegistrationType().getValue()),
                 createEventRequest.getSurveyId(),
-                createEventRequest.getImageUrls()
+                createEventRequest.getAttachmentFileIds()
         );
 
-        EventCreateResponse result = eventService.createEvent(request, user.userId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new CreateEvent201Response()
+        var result = eventService.createEvent(request, user.userId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiEventCreateResponse()
                 .id(result.id())
                 .title(result.title())
                 .createdAt(result.createdAt())
@@ -70,7 +74,7 @@ public class EventController implements EventApi {
     }
 
     @Override
-    public ResponseEntity<List<GetEventList200ResponseInner>> getEventList(
+    public ResponseEntity<List<ApiEventListResponse>> getEventList(
             String eventStatus,
             String registrationStatus
     ) {
@@ -81,8 +85,8 @@ public class EventController implements EventApi {
         log.info("행사 목록 조회 요청 - eventStatus: {}, registrationStatus: {}",
                 eventStatusEnum, registrationStatusEnum);
 
-        List<EventListResponse> responses = eventService.getEventList(eventStatusEnum, registrationStatusEnum);
-        List<GetEventList200ResponseInner> result = responses.stream()
+        var responses = eventService.getEventList(eventStatusEnum, registrationStatusEnum);
+        List<ApiEventListResponse> result = responses.stream()
                 .map(this::mapToEventListResponseInner)
                 .toList();
         return ResponseEntity.ok(result);
@@ -90,18 +94,18 @@ public class EventController implements EventApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetEvent200Response> getEvent(Long eventId) {
+    public ResponseEntity<ApiEventDetailResponse> getEvent(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 상세 조회 요청 - eventId: {}, userId: {}", eventId, user.userId());
-        EventDetailResponse response = eventService.getEvent(eventId, user.userId());
-        return ResponseEntity.ok(mapToGetEvent200Response(response));
+        var response = eventService.getEvent(eventId, user.userId());
+        return ResponseEntity.ok(mapToEventDetailResponse(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetEvent200Response> updateEvent(
+    public ResponseEntity<ApiEventDetailResponse> updateEvent(
             Long eventId,
-            igrus.web.generated.model.UpdateEventRequest updateEventRequest
+            ApiUpdateEventRequest updateEventRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 수정 요청 - eventId: {}, userId: {}", eventId, user.userId());
@@ -116,11 +120,11 @@ public class EventController implements EventApi {
                 updateEventRequest.getRegistrationEndAt(),
                 updateEventRequest.getCapacity(),
                 updateEventRequest.getSurveyId(),
-                updateEventRequest.getImageUrls()
+                updateEventRequest.getAttachmentFileIds()
         );
 
-        EventDetailResponse response = eventService.updateEvent(eventId, request, user.userId());
-        return ResponseEntity.ok(mapToGetEvent200Response(response));
+        var response = eventService.updateEvent(eventId, request, user.userId());
+        return ResponseEntity.ok(mapToEventDetailResponse(response));
     }
 
     @Override
@@ -136,64 +140,64 @@ public class EventController implements EventApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetEvent200Response> closeEvent(
+    public ResponseEntity<ApiEventDetailResponse> closeEvent(
             Long eventId,
-            ReopenRegistrationRequest reopenRegistrationRequest
+            ApiEventStatusChangeReasonRequest eventStatusChangeReasonRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("등록 마감 요청 - eventId: {}, userId: {}, reason: {}",
-                eventId, user.userId(), reopenRegistrationRequest.getReason());
-        EventDetailResponse response = eventService.closeEvent(
-                eventId, user.userId(), reopenRegistrationRequest.getReason());
-        return ResponseEntity.ok(mapToGetEvent200Response(response));
+                eventId, user.userId(), eventStatusChangeReasonRequest.getReason());
+        var response = eventService.closeEvent(
+                eventId, user.userId(), eventStatusChangeReasonRequest.getReason());
+        return ResponseEntity.ok(mapToEventDetailResponse(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetEvent200Response> cancelEvent(
+    public ResponseEntity<ApiEventDetailResponse> cancelEvent(
             Long eventId,
-            ReopenRegistrationRequest reopenRegistrationRequest
+            ApiEventStatusChangeReasonRequest eventStatusChangeReasonRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 취소 요청 - eventId: {}, userId: {}, reason: {}",
-                eventId, user.userId(), reopenRegistrationRequest.getReason());
-        EventDetailResponse response = eventService.cancelEvent(
-                eventId, user.userId(), reopenRegistrationRequest.getReason());
-        return ResponseEntity.ok(mapToGetEvent200Response(response));
+                eventId, user.userId(), eventStatusChangeReasonRequest.getReason());
+        var response = eventService.cancelEvent(
+                eventId, user.userId(), eventStatusChangeReasonRequest.getReason());
+        return ResponseEntity.ok(mapToEventDetailResponse(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetEvent200Response> reactivateEvent(
+    public ResponseEntity<ApiEventDetailResponse> reactivateEvent(
             Long eventId,
-            ReopenRegistrationRequest reopenRegistrationRequest
+            ApiEventStatusChangeReasonRequest eventStatusChangeReasonRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 재활성화 요청 - eventId: {}, userId: {}, reason: {}",
-                eventId, user.userId(), reopenRegistrationRequest.getReason());
-        EventDetailResponse response = eventService.reactivateEvent(
-                eventId, user.userId(), reopenRegistrationRequest.getReason());
-        return ResponseEntity.ok(mapToGetEvent200Response(response));
+                eventId, user.userId(), eventStatusChangeReasonRequest.getReason());
+        var response = eventService.reactivateEvent(
+                eventId, user.userId(), eventStatusChangeReasonRequest.getReason());
+        return ResponseEntity.ok(mapToEventDetailResponse(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetEvent200Response> reopenRegistration(
+    public ResponseEntity<ApiEventDetailResponse> reopenRegistration(
             Long eventId,
-            ReopenRegistrationRequest reopenRegistrationRequest
+            ApiEventStatusChangeReasonRequest eventStatusChangeReasonRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("등록 재오픈 요청 - eventId: {}, userId: {}, reason: {}",
-                eventId, user.userId(), reopenRegistrationRequest.getReason());
-        EventDetailResponse response = eventService.reopenRegistration(
-                eventId, user.userId(), reopenRegistrationRequest.getReason());
-        return ResponseEntity.ok(mapToGetEvent200Response(response));
+                eventId, user.userId(), eventStatusChangeReasonRequest.getReason());
+        var response = eventService.reopenRegistration(
+                eventId, user.userId(), eventStatusChangeReasonRequest.getReason());
+        return ResponseEntity.ok(mapToEventDetailResponse(response));
     }
 
     // ===== 매핑 헬퍼 =====
 
-    private GetEvent200Response mapToGetEvent200Response(EventDetailResponse r) {
-        return new GetEvent200Response()
+    private ApiEventDetailResponse mapToEventDetailResponse(EventDetailResponse r) {
+        ApiEventDetailResponse response = new ApiEventDetailResponse()
                 .id(r.id())
                 .title(r.title())
                 .description(r.description())
@@ -206,31 +210,38 @@ public class EventController implements EventApi {
                 .capacity(r.capacity())
                 .currentCount(r.currentCount())
                 .visibility(r.visibility() != null
-                        ? GetEvent200Response.VisibilityEnum.fromValue(r.visibility().name())
+                        ? ApiEventDetailResponse.VisibilityEnum.fromValue(r.visibility().name())
                         : null)
                 .registrationStatus(r.registrationStatus() != null
-                        ? GetEvent200Response.RegistrationStatusEnum.fromValue(r.registrationStatus().name())
+                        ? ApiEventDetailResponse.RegistrationStatusEnum.fromValue(r.registrationStatus().name())
                         : null)
                 .eventStatus(r.eventStatus() != null
-                        ? GetEvent200Response.EventStatusEnum.fromValue(r.eventStatus().name())
+                        ? ApiEventDetailResponse.EventStatusEnum.fromValue(r.eventStatus().name())
                         : null)
                 .closeReason(r.closeReason() != null
-                        ? GetEvent200Response.CloseReasonEnum.fromValue(r.closeReason().name())
+                        ? ApiEventDetailResponse.CloseReasonEnum.fromValue(r.closeReason().name())
                         : null)
                 .registrationType(r.registrationType() != null
-                        ? GetEvent200Response.RegistrationTypeEnum.fromValue(r.registrationType().name())
+                        ? ApiEventDetailResponse.RegistrationTypeEnum.fromValue(r.registrationType().name())
                         : null)
                 .isRegistrable(r.isRegistrable())
                 .createdAt(r.createdAt())
                 .updatedAt(r.updatedAt())
                 .canEdit(r.canEdit())
                 .isRegistered(r.isRegistered())
-                .surveyId(r.surveyId())
-                .imageUrls(r.imageUrls());
+                .surveyId(r.surveyId());
+
+        if (r.attachments() != null) {
+            response.setAttachments(r.attachments().stream()
+                    .map(this::mapToAttachmentResponse)
+                    .toList());
+        }
+
+        return response;
     }
 
-    private GetEventList200ResponseInner mapToEventListResponseInner(EventListResponse r) {
-        return new GetEventList200ResponseInner()
+    private ApiEventListResponse mapToEventListResponseInner(EventListResponse r) {
+        return new ApiEventListResponse()
                 .id(r.id())
                 .title(r.title())
                 .location(r.location())
@@ -240,21 +251,29 @@ public class EventController implements EventApi {
                 .capacity(r.capacity())
                 .currentCount(r.currentCount())
                 .visibility(r.visibility() != null
-                        ? GetEventList200ResponseInner.VisibilityEnum.fromValue(r.visibility().name())
+                        ? ApiEventListResponse.VisibilityEnum.fromValue(r.visibility().name())
                         : null)
                 .registrationStatus(r.registrationStatus() != null
-                        ? GetEventList200ResponseInner.RegistrationStatusEnum.fromValue(
+                        ? ApiEventListResponse.RegistrationStatusEnum.fromValue(
                                 r.registrationStatus().name())
                         : null)
                 .eventStatus(r.eventStatus() != null
-                        ? GetEventList200ResponseInner.EventStatusEnum.fromValue(r.eventStatus().name())
+                        ? ApiEventListResponse.EventStatusEnum.fromValue(r.eventStatus().name())
                         : null)
                 .registrationType(r.registrationType() != null
-                        ? GetEventList200ResponseInner.RegistrationTypeEnum.fromValue(
+                        ? ApiEventListResponse.RegistrationTypeEnum.fromValue(
                                 r.registrationType().name())
                         : null)
                 .isRegistrable(r.isRegistrable())
-                .surveyId(r.surveyId())
-                .imageUrls(r.imageUrls());
+                .surveyId(r.surveyId());
+    }
+
+    private ApiEventAttachmentResponse mapToAttachmentResponse(EventAttachmentDto a) {
+        return new ApiEventAttachmentResponse()
+                .id(a.id())
+                .fileMetadataId(a.fileMetadataId())
+                .objectKey(a.objectKey())
+                .originalFileName(a.originalFileName())
+                .contentType(a.contentType());
     }
 }

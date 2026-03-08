@@ -4,7 +4,7 @@ import igrus.web.admin.user.dto.AdminEditUserInfoRequest;
 import igrus.web.security.auth.common.repository.EmailVerificationRepository;
 import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.User;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.security.auth.common.exception.signup.DuplicateStudentIdException;
 import igrus.web.user.exception.DuplicateEmailException;
 import igrus.web.user.exception.DuplicatePhoneNumberException;
@@ -42,7 +42,7 @@ public class AdminEditUserInfoService {
             emailVerificationRepository.deleteByEmail(targetUser.getEmail());
         }
 
-        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+        eventPublisher.publishEvent(new AccountStatusChanged(
                 targetUserId, currentUserId, AccountChangeType.ADMIN_INFO_EDIT,
                 "INFO", "INFO",
                 "관리자에 의한 사용자 정보 수정"

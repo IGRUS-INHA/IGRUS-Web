@@ -38,6 +38,7 @@ import type { AdminEventDetailResponseEventStatus } from "./adminEventDetailResp
 import type { AdminEventDetailResponseRegistrationStatus } from "./adminEventDetailResponseRegistrationStatus";
 import type { AdminEventDetailResponseRegistrationType } from "./adminEventDetailResponseRegistrationType";
 import type { AdminEventDetailResponseVisibility } from "./adminEventDetailResponseVisibility";
+import type { EventAttachmentResponse } from "./eventAttachmentResponse";
 
 /**
  * 관리자용 행사 상세 응답 (visibility 포함)
@@ -71,6 +72,11 @@ export interface AdminEventDetailResponse {
    * @nullable
    */
   surveyId?: number | null;
+  /**
+   * 첨부파일 목록
+   * @nullable
+   */
+  attachments?: EventAttachmentResponse[] | null;
   /** 외부인(비회원) 신청 허용 여부 */
   allowExternal?: boolean;
   /** 행사 이미지 URL 목록 */

@@ -58,6 +58,11 @@ export interface UpdateEventRequest {
    * @nullable
    */
   surveyId?: number | null;
+  /**
+   * 첨부파일 ID 목록 (전체 교체 방식)
+   * @nullable
+   */
+  attachmentFileIds?: number[] | null;
   /** 외부인(비회원) 신청 허용 여부 */
   allowExternal?: boolean;
   /**

@@ -28,7 +28,7 @@
 - Boolean defaults: `DEFAULT FALSE`
 - FK added separately with `ALTER TABLE ... ADD CONSTRAINT`
 - ENGINE=InnoDB, CHARSET=utf8mb4, COLLATE=utf8mb4_unicode_ci
-- Latest version: V47 (add_survey_id_to_events)
+- Latest version: V50 (create_external_survey_responses_table)
 
 ### Config Pattern
 - `Clock` Bean already exists in `ClockConfig` (Asia/Seoul timezone)
@@ -98,6 +98,7 @@
 - `replace_all` on constructor patterns must be carefully scoped: `isEqualTo(EnumType.VALUE)` can match `EnumType.VALUE);` pattern and get corrupted (e.g., `isEqualTo(EnumType.VALUE, null)`)
 - Controller DTO mapping from generated model to internal DTO requires updating when internal DTO changes
 - After OpenAPI spec changes, must `rm -rf build/generated/openapi/` then `./gradlew openApiGenerate` to force regeneration
+- openapi-generator 200Response naming: When multiple operations share the same response schema (e.g., RegistrationResponse), the generator picks one operation alphabetically for the model name (e.g., `CancelRegistrationByAdmin200Response` instead of `RevertRegistration200Response`). Adding new endpoints that share a schema can rename existing generated models, breaking existing controllers. Must update all references.
 - `@InjectMocks` in unit tests: when adding new dependencies to a service, must add corresponding `@Mock` field in test class
 
 ### Cross-Domain Weak Reference Pattern

@@ -1,7 +1,7 @@
 package igrus.web.common.util;
 
-import igrus.web.generated.model.GetRegistrationList200ResponsePageable;
-import igrus.web.generated.model.GetRegistrationList200ResponsePageableSort;
+import igrus.web.generated.model.ApiPageableObject;
+import igrus.web.generated.model.ApiSortObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -21,12 +21,12 @@ import java.util.function.Supplier;
  * Page<AccountStatusChangeHistory> page = service.getHistories(pageable);
  *
  * // 컨트롤러에서 변환
- * PageAccountStatusChangeHistoryResponse response = PageResponseMapper.toSpringPageResponse(
+ * ApiPageAccountStatusChangeHistoryResponse response = PageResponseMapper.toSpringPageResponse(
  *     page,
- *     entity -> new PageAccountStatusChangeHistoryResponseContentInner()
+ *     entity -> new ApiPageAccountStatusChangeHistoryResponseContentInner()
  *         .changeType(entity.getChangeType().name())
  *         .changedAt(entity.getChangedAt()),
- *     PageAccountStatusChangeHistoryResponse::new,
+ *     ApiPageAccountStatusChangeHistoryResponse::new,
  *     (r, content, meta) -> r
  *         .content(content)
  *         .totalElements(meta.totalElements())
@@ -44,9 +44,9 @@ import java.util.function.Supplier;
  *
  * <p><b>2. 커스텀 간소화 응답 (인라인 매핑)</b></p>
  * <pre>{@code
- * PostListPageResponse response = new PostListPageResponse()
+ * ApiPostListPageResponse response = new ApiPostListPageResponse()
  *     .posts(page.getContent().stream()
- *         .map(post -> new PostListResponseItem()
+ *         .map(post -> new ApiPostListResponseItem()
  *             .id(post.getId())
  *             .title(post.getTitle()))
  *         .toList())
@@ -64,11 +64,11 @@ public final class PageResponseMapper {
     /**
      * Spring Page의 페이지네이션 메타데이터를 담는 레코드.
      *
-     * <p>pageable/sort 필드가 {@code GetRegistrationList200ResponsePageable} /
-     * {@code GetRegistrationList200ResponsePageableSort} 타입을 사용하는 이유:
+     * <p>pageable/sort 필드가 {@code ApiPageableObject} /
+     * {@code ApiSortObject} 타입을 사용하는 이유:
      * openapi-generator가 {@code _common.yaml}의 {@code PageableObject}/{@code SortObject} 스키마를
      * 처리할 때, 최초 인라인 참조 위치의 이름으로 클래스를 생성하고 이후 모든 {@code Page*Response}에서
-     * 동일한 타입을 재사용한다. 별도로 생성된 {@code PageableObject}/{@code SortObject} 클래스는
+     * 동일한 타입을 재사용한다. 별도로 생성된 {@code ApiPageableObject}/{@code ApiSortObject} 클래스는
      * 실제 응답 모델의 setter와 타입이 호환되지 않으므로 여기서는 사용하지 않는다.</p>
      */
     public record PageMeta(
@@ -80,8 +80,8 @@ public final class PageResponseMapper {
             boolean first,
             boolean last,
             boolean empty,
-            GetRegistrationList200ResponsePageable pageable,
-            GetRegistrationList200ResponsePageableSort sort
+            ApiPageableObject pageable,
+            ApiSortObject sort
     ) {
     }
 
@@ -92,12 +92,12 @@ public final class PageResponseMapper {
         Pageable pageable = page.getPageable();
         Sort pageSort = page.getSort();
 
-        GetRegistrationList200ResponsePageableSort sortObj = new GetRegistrationList200ResponsePageableSort()
+        ApiSortObject sortObj = new ApiSortObject()
                 .empty(pageSort.isEmpty())
                 .sorted(!pageSort.isEmpty())
                 .unsorted(pageSort.isEmpty());
 
-        GetRegistrationList200ResponsePageable pageableObj = new GetRegistrationList200ResponsePageable()
+        ApiPageableObject pageableObj = new ApiPageableObject()
                 .pageNumber(pageable.isPaged() ? pageable.getPageNumber() : null)
                 .pageSize(pageable.isPaged() ? pageable.getPageSize() : null)
                 .offset(pageable.isPaged() ? pageable.getOffset() : null)

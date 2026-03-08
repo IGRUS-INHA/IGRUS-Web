@@ -7,7 +7,6 @@ import igrus.web.inquiry.domain.InquiryType;
 import igrus.web.inquiry.dto.request.AttachmentInfo;
 import igrus.web.inquiry.dto.request.CreateMemberInquiryRequest;
 import igrus.web.inquiry.dto.response.AttachmentResponse;
-import igrus.web.inquiry.dto.response.InquiryCreateResponse;
 import igrus.web.inquiry.dto.response.InquiryListPageResponse;
 import igrus.web.inquiry.dto.response.InquiryListResponse;
 import igrus.web.inquiry.dto.response.InquiryReplyResponse;
@@ -16,15 +15,15 @@ import igrus.web.inquiry.service.create.CreateMemberInquiryService;
 import igrus.web.inquiry.service.read.GetMyInquiriesService;
 import igrus.web.inquiry.service.read.GetMyInquiryService;
 import igrus.web.generated.api.MemberInquiryApi;
-import igrus.web.generated.model.CreateMemberInquiry201Response;
-import igrus.web.generated.model.GetAllInquiries200Response;
-import igrus.web.generated.model.GetAllInquiries200ResponseInquiriesInner;
-import igrus.web.generated.model.LookupGuestInquiry200Response;
-import igrus.web.generated.model.LookupGuestInquiry200ResponseAttachmentsInner;
-import igrus.web.generated.model.LookupGuestInquiry200ResponseReply;
+import igrus.web.generated.model.ApiInquiryCreateResponse;
+import igrus.web.generated.model.ApiInquiryListPageResponse;
+import igrus.web.generated.model.ApiInquiryListResponse;
+import igrus.web.generated.model.ApiInquiryResponse;
+import igrus.web.generated.model.ApiAttachmentResponse;
+import igrus.web.generated.model.ApiInquiryReplyResponse;
+import igrus.web.generated.model.ApiCreateMemberInquiryRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,12 +46,12 @@ public class MemberInquiryController implements MemberInquiryApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CreateMemberInquiry201Response> createMemberInquiry(
-            igrus.web.generated.model.CreateMemberInquiryRequest createMemberInquiryRequest
+    public ResponseEntity<ApiInquiryCreateResponse> createMemberInquiry(
+            ApiCreateMemberInquiryRequest createMemberInquiryRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
 
-        CreateMemberInquiryRequest internalRequest = CreateMemberInquiryRequest.builder()
+        var internalRequest = CreateMemberInquiryRequest.builder()
                 .type(EnumUtils.fromStringOrNull(InquiryType.class, createMemberInquiryRequest.getType().getValue()))
                 .title(createMemberInquiryRequest.getTitle())
                 .content(createMemberInquiryRequest.getContent())
@@ -67,9 +66,9 @@ public class MemberInquiryController implements MemberInquiryApi {
                         : null)
                 .build();
 
-        InquiryCreateResponse response = createMemberInquiryService.createMemberInquiry(
+        var response = createMemberInquiryService.createMemberInquiry(
                 internalRequest, user.userId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new CreateMemberInquiry201Response()
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiInquiryCreateResponse()
                 .id(response.getId())
                 .inquiryNumber(response.getInquiryNumber())
                 .message(response.getMessage()));
@@ -77,18 +76,18 @@ public class MemberInquiryController implements MemberInquiryApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetAllInquiries200Response> getMyInquiries(
+    public ResponseEntity<ApiInquiryListPageResponse> getMyInquiries(
             Integer page,
             Integer size,
             List<String> sort
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         Pageable pageable = PageableUtils.of(page, size, sort);
-        Page<InquiryListResponse> responsePage = getMyInquiriesService.getMyInquiries(
+        var responsePage = getMyInquiriesService.getMyInquiries(
                 user.userId(), pageable);
-        InquiryListPageResponse pageResponse = InquiryListPageResponse.from(responsePage);
+        var pageResponse = InquiryListPageResponse.from(responsePage);
 
-        GetAllInquiries200Response result = new GetAllInquiries200Response()
+        ApiInquiryListPageResponse result = new ApiInquiryListPageResponse()
                 .inquiries(pageResponse.inquiries().stream()
                         .map(this::mapToInquiriesInner)
                         .toList())
@@ -101,24 +100,24 @@ public class MemberInquiryController implements MemberInquiryApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<LookupGuestInquiry200Response> getMyInquiry(Long id) {
+    public ResponseEntity<ApiInquiryResponse> getMyInquiry(Long id) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
-        InquiryResponse response = getMyInquiryService.getMyInquiry(id, user.userId());
-        return ResponseEntity.ok(mapToLookupGuestInquiry200Response(response));
+        var response = getMyInquiryService.getMyInquiry(id, user.userId());
+        return ResponseEntity.ok(mapToInquiryResponse(response));
     }
 
     // ===== 매핑 헬퍼 =====
 
-    private GetAllInquiries200ResponseInquiriesInner mapToInquiriesInner(InquiryListResponse r) {
-        return new GetAllInquiries200ResponseInquiriesInner()
+    private ApiInquiryListResponse mapToInquiriesInner(InquiryListResponse r) {
+        return new ApiInquiryListResponse()
                 .id(r.getId())
                 .inquiryNumber(r.getInquiryNumber())
                 .type(r.getType() != null
-                        ? GetAllInquiries200ResponseInquiriesInner.TypeEnum.fromValue(r.getType().name())
+                        ? ApiInquiryListResponse.TypeEnum.fromValue(r.getType().name())
                         : null)
                 .typeDescription(r.getTypeDescription())
                 .status(r.getStatus() != null
-                        ? GetAllInquiries200ResponseInquiriesInner.StatusEnum.fromValue(r.getStatus().name())
+                        ? ApiInquiryListResponse.StatusEnum.fromValue(r.getStatus().name())
                         : null)
                 .statusDescription(r.getStatusDescription())
                 .title(r.getTitle())
@@ -129,16 +128,16 @@ public class MemberInquiryController implements MemberInquiryApi {
                 .createdAt(r.getCreatedAt());
     }
 
-    private LookupGuestInquiry200Response mapToLookupGuestInquiry200Response(InquiryResponse r) {
-        return new LookupGuestInquiry200Response()
+    private ApiInquiryResponse mapToInquiryResponse(InquiryResponse r) {
+        return new ApiInquiryResponse()
                 .id(r.getId())
                 .inquiryNumber(r.getInquiryNumber())
                 .type(r.getType() != null
-                        ? LookupGuestInquiry200Response.TypeEnum.fromValue(r.getType().name())
+                        ? ApiInquiryResponse.TypeEnum.fromValue(r.getType().name())
                         : null)
                 .typeDescription(r.getTypeDescription())
                 .status(r.getStatus() != null
-                        ? LookupGuestInquiry200Response.StatusEnum.fromValue(r.getStatus().name())
+                        ? ApiInquiryResponse.StatusEnum.fromValue(r.getStatus().name())
                         : null)
                 .statusDescription(r.getStatusDescription())
                 .title(r.getTitle())
@@ -156,16 +155,16 @@ public class MemberInquiryController implements MemberInquiryApi {
                 .updatedAt(r.getUpdatedAt());
     }
 
-    private LookupGuestInquiry200ResponseAttachmentsInner mapToAttachment(AttachmentResponse a) {
-        return new LookupGuestInquiry200ResponseAttachmentsInner()
+    private ApiAttachmentResponse mapToAttachment(AttachmentResponse a) {
+        return new ApiAttachmentResponse()
                 .id(a.getId())
                 .fileUrl(a.getFileUrl())
                 .fileName(a.getFileName())
                 .fileSize(a.getFileSize());
     }
 
-    private LookupGuestInquiry200ResponseReply mapToReply(InquiryReplyResponse r) {
-        return new LookupGuestInquiry200ResponseReply()
+    private ApiInquiryReplyResponse mapToReply(InquiryReplyResponse r) {
+        return new ApiInquiryReplyResponse()
                 .id(r.getId())
                 .content(r.getContent())
                 .repliedByName(r.getRepliedByName())

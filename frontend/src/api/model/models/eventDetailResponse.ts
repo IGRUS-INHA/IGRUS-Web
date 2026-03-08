@@ -33,6 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
+import type { EventAttachmentResponse } from "./eventAttachmentResponse";
 import type { EventDetailResponseCloseReason } from "./eventDetailResponseCloseReason";
 import type { EventDetailResponseEventStatus } from "./eventDetailResponseEventStatus";
 import type { EventDetailResponseRegistrationStatus } from "./eventDetailResponseRegistrationStatus";
@@ -67,6 +68,11 @@ export interface EventDetailResponse {
    * @nullable
    */
   surveyId?: number | null;
+  /**
+   * 첨부파일 목록
+   * @nullable
+   */
+  attachments?: EventAttachmentResponse[] | null;
   /** 외부인(비회원) 신청 허용 여부 */
   allowExternal?: boolean;
   /** 행사 이미지 URL 목록 */

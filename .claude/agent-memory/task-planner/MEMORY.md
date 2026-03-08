@@ -120,6 +120,15 @@
 ### Event 작업 계획 문서
 - Visibility 기능: `docs/feature/event/task-plan.md` (TASK-001~021)
 - 이미지 연계: `docs/feature/event/event-image-integration-task-plan.md` (TASK-001~021)
+- 외부인 신청: `docs/feature/event/external-event-registration-task-plan.md` (TASK-001~029)
+
+### EventRegistration 엔티티 구조 (외부인 신청 전)
+- `user` 필드: `@JoinColumn(nullable = false)` -- 외부인 지원 시 nullable로 변경 필요
+- UNIQUE: `uk_event_registrations_event_user(event_id, user_id)` -- MySQL에서 NULL은 UNIQUE 무시
+- 상태: REGISTERED, WAITING, APPROVED, REJECTED, CANCELED
+- `isActive()`: REGISTERED || APPROVED
+- OpenAPI 외부인 스펙: 이미 추가됨 (ExternalRegisterEventRequest, registerEventExternal, security: [])
+- 관리자 취소 스펙: 미추가 (GAP-EXT-03)
 
 ### Inquiry 관련 코드 구조
 - `Inquiry.java`: abstract, JOINED 상속 (GuestInquiry/MemberInquiry), SoftDeletableEntity 상속

@@ -60,6 +60,11 @@ export interface CreateEventRequest {
    * @nullable
    */
   surveyId?: number | null;
+  /**
+   * 첨부파일 ID 목록
+   * @nullable
+   */
+  attachmentFileIds?: number[] | null;
   /** 외부인(비회원) 신청 허용 여부 */
   allowExternal?: boolean;
   /**

@@ -1,12 +1,10 @@
 package igrus.web.user.semester.controller;
 
 import igrus.web.generated.api.AdminSemesterMemberApi;
-import igrus.web.generated.model.GetCandidateMembers200ResponseInner;
-import igrus.web.generated.model.RegisterMembers200Response;
-import igrus.web.generated.model.RegisterMembersRequest;
-import igrus.web.generated.model.RemoveMembersRequest;
-import igrus.web.user.semester.dto.response.CandidateMemberResponse;
-import igrus.web.user.semester.dto.response.RegisterSemesterMembersResponse;
+import igrus.web.generated.model.ApiCandidateMemberResponse;
+import igrus.web.generated.model.ApiRegisterSemesterMembersRequest;
+import igrus.web.generated.model.ApiRegisterSemesterMembersResponse;
+import igrus.web.generated.model.ApiRemoveSemesterMembersRequest;
 import igrus.web.user.semester.service.read.GetCandidateMembersService;
 import igrus.web.user.semester.service.write.RegisterSemesterMembersService;
 import igrus.web.user.semester.service.write.RemoveSemesterMembersService;
@@ -27,22 +25,21 @@ public class AdminSemesterMemberController implements AdminSemesterMemberApi {
     private final RemoveSemesterMembersService removeSemesterMembersService;
 
     @Override
-    public ResponseEntity<List<GetCandidateMembers200ResponseInner>> getCandidateMembers(
+    public ResponseEntity<List<ApiCandidateMemberResponse>> getCandidateMembers(
             Integer year, Integer semester) {
-        List<CandidateMemberResponse> candidates =
-                getCandidateMembersService.getCandidateMembers(year, semester);
+        var candidates = getCandidateMembersService.getCandidateMembers(year, semester);
 
-        List<GetCandidateMembers200ResponseInner> response = candidates.stream()
-                .map(c -> new GetCandidateMembers200ResponseInner()
+        List<ApiCandidateMemberResponse> response = candidates.stream()
+                .map(c -> new ApiCandidateMemberResponse()
                         .userId(c.userId())
                         .studentId(c.studentId())
                         .name(c.name())
                         .department(c.department())
-                        .role(GetCandidateMembers200ResponseInner.RoleEnum.fromValue(c.role().name()))
+                        .role(ApiCandidateMemberResponse.RoleEnum.fromValue(c.role().name()))
                         .alreadyRegistered(c.alreadyRegistered())
                         .motivation(c.motivation())
                         .wishes(c.wishes().stream()
-                                .map(w -> GetCandidateMembers200ResponseInner.WishesEnum.fromValue(w.name()))
+                                .map(w -> ApiCandidateMemberResponse.WishesEnum.fromValue(w.name()))
                                 .toList()))
                 .toList();
 
@@ -50,12 +47,11 @@ public class AdminSemesterMemberController implements AdminSemesterMemberApi {
     }
 
     @Override
-    public ResponseEntity<RegisterMembers200Response> registerMembers(
-            Integer year, Integer semester, RegisterMembersRequest registerMembersRequest) {
-        RegisterSemesterMembersResponse internal =
-                registerSemesterMembersService.registerMembers(year, semester, registerMembersRequest.getUserIds());
+    public ResponseEntity<ApiRegisterSemesterMembersResponse> registerMembers(
+            Integer year, Integer semester, ApiRegisterSemesterMembersRequest registerSemesterMembersRequest) {
+        var internal = registerSemesterMembersService.registerMembers(year, semester, registerSemesterMembersRequest.getUserIds());
 
-        RegisterMembers200Response response = new RegisterMembers200Response()
+        ApiRegisterSemesterMembersResponse response = new ApiRegisterSemesterMembersResponse()
                 .registeredCount(internal.registeredCount())
                 .skippedCount(internal.skippedCount())
                 .totalRequested(internal.totalRequested());
@@ -65,9 +61,9 @@ public class AdminSemesterMemberController implements AdminSemesterMemberApi {
 
     @Override
     public ResponseEntity<Integer> removeMembers(
-            Integer year, Integer semester, RemoveMembersRequest removeMembersRequest) {
+            Integer year, Integer semester, ApiRemoveSemesterMembersRequest removeSemesterMembersRequest) {
         int removedCount = removeSemesterMembersService.removeMembers(
-                year, semester, removeMembersRequest.getUserIds());
+                year, semester, removeSemesterMembersRequest.getUserIds());
         return ResponseEntity.ok(removedCount);
     }
 }

@@ -12,9 +12,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -120,9 +117,9 @@ public class Event extends SoftDeletableEntity {
     @Column(name = "event_survey_id")
     private Long surveyId;
 
-    /** 첨부 이미지 목록 (최대 5개) */
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EventImage> images = new ArrayList<>();
+    /** 외부인 신청 허용 여부 (기본값 false, DECISION-05) */
+    @Column(name = "event_allow_external", nullable = false)
+    private Boolean allowExternal = false;
 
     // === 정적 팩토리 메서드 ===
 
@@ -138,6 +135,22 @@ public class Event extends SoftDeletableEntity {
                                Instant registrationStartAt, Instant registrationEndAt,
                                Integer capacity, EventRegistrationType registrationType,
                                Long surveyId) {
+        return create(user, title, description, location, eventStartAt, eventEndAt,
+                registrationStartAt, registrationEndAt, capacity, registrationType, surveyId, null);
+    }
+
+    /**
+     * 행사를 생성합니다. (allowExternal 지정 가능)
+     * 초기 상태: visibility=UNPUBLISHED, registrationStatus=NOT_STARTED, eventStatus=UPCOMING, currentCount=0
+     *
+     * @param allowExternal 외부인 신청 허용 여부 (null이면 false, DECISION-05)
+     * @throws InvalidEventCapacityException 정원이 1 미만인 경우
+     */
+    public static Event create(User user, String title, String description, String location,
+                               Instant eventStartAt, Instant eventEndAt,
+                               Instant registrationStartAt, Instant registrationEndAt,
+                               Integer capacity, EventRegistrationType registrationType,
+                               Long surveyId, Boolean allowExternal) {
         validateCapacity(capacity);
 
         Event event = new Event();
@@ -156,6 +169,7 @@ public class Event extends SoftDeletableEntity {
         event.eventStatus = EventStatus.UPCOMING;
         event.registrationType = registrationType;
         event.surveyId = surveyId;
+        event.allowExternal = Boolean.TRUE.equals(allowExternal);
         return event;
     }
 
@@ -482,31 +496,19 @@ public class Event extends SoftDeletableEntity {
         return this.eventStartAt.isBefore(otherEndAt) && this.eventEndAt.isAfter(otherStartAt);
     }
 
-    // === 이미지 관리 ===
-
-    /**
-     * 이미지 목록을 조회합니다 (불변 리스트 반환).
-     *
-     * @return 이미지 목록
-     */
-    public List<EventImage> getImages() {
-        return Collections.unmodifiableList(this.images);
-    }
-
-    /**
-     * 이미지 목록을 새 URL 목록으로 교체합니다.
-     * 기존 이미지를 모두 제거하고 새 이미지를 추가합니다.
-     *
-     * @param imageUrls 새 이미지 URL 목록
-     */
-    public void updateImages(List<String> imageUrls) {
-        this.images.clear();
-        for (int i = 0; i < imageUrls.size(); i++) {
-            this.images.add(EventImage.create(this, imageUrls.get(i), i));
-        }
-    }
-
     // === 수정 메서드 ===
+
+    /**
+     * 행사 정보를 수정합니다. (allowExternal 변경 없음)
+     * 기존 호출부 호환성을 위한 오버로드.
+     */
+    public void update(String title, String description, String location,
+                       Instant eventStartAt, Instant eventEndAt,
+                       Instant registrationStartAt, Instant registrationEndAt,
+                       Integer capacity, Long surveyId) {
+        update(title, description, location, eventStartAt, eventEndAt,
+                registrationStartAt, registrationEndAt, capacity, surveyId, this.allowExternal);
+    }
 
     /**
      * 행사 정보를 수정합니다.
@@ -522,7 +524,7 @@ public class Event extends SoftDeletableEntity {
     public void update(String title, String description, String location,
                        Instant eventStartAt, Instant eventEndAt,
                        Instant registrationStartAt, Instant registrationEndAt,
-                       Integer capacity, Long surveyId) {
+                       Integer capacity, Long surveyId, Boolean allowExternal) {
         // COMPLETED 또는 CANCELED는 수정 불가
         if (this.eventStatus == EventStatus.COMPLETED || this.eventStatus == EventStatus.CANCELED) {
             throw new EventNotEditableException(this.eventStatus);
@@ -556,5 +558,6 @@ public class Event extends SoftDeletableEntity {
         this.registrationEndAt = registrationEndAt;
         this.capacity = capacity;
         this.surveyId = surveyId;
+        this.allowExternal = Boolean.TRUE.equals(allowExternal);
     }
 }

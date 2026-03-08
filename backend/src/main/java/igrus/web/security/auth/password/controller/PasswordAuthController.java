@@ -5,46 +5,43 @@ import igrus.web.common.exception.CustomBaseException;
 import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.ServletContextUtil;
 import igrus.web.generated.api.PasswordAuthenticationApi;
-import igrus.web.generated.model.CheckReRegistrationEligibility200Response;
-import igrus.web.generated.model.CheckRecoveryEligibility200Response;
-import igrus.web.generated.model.CheckStudentIdDuplicate200Response;
-import igrus.web.generated.model.ConfirmPasswordResetRequest;
-import igrus.web.generated.model.Login200Response;
-import igrus.web.generated.model.LoginRequest;
-import igrus.web.generated.model.RecoverAccount200Response;
-import igrus.web.generated.model.RecoverAccountRequest;
-import igrus.web.generated.model.RefreshToken200Response;
-import igrus.web.generated.model.RequestPasswordResetRequest;
-import igrus.web.generated.model.SendPreSignupCode200Response;
-import igrus.web.generated.model.SendPreSignupCodeRequest;
-import igrus.web.generated.model.Signup201Response;
-import igrus.web.generated.model.SignupRequest;
-import igrus.web.generated.model.SignupWithTemporaryStudentIdRequest;
-import igrus.web.generated.model.VerifyEmailChangeRequest;
-import igrus.web.generated.model.VerifyPreSignupCode200Response;
+import igrus.web.generated.model.ApiAccountRecoveryResponse;
+import igrus.web.generated.model.ApiDuplicateCheckResponse;
+import igrus.web.generated.model.ApiPasswordLoginResponse;
+import igrus.web.generated.model.ApiPasswordSignupResponse;
+import igrus.web.generated.model.ApiPreSignupVerificationResponse;
+import igrus.web.generated.model.ApiReRegistrationCheckResult;
+import igrus.web.generated.model.ApiRecoveryEligibilityResponse;
+import igrus.web.generated.model.ApiTokenRefreshResponse;
+import igrus.web.generated.model.ApiVerificationResendResponse;
+import igrus.web.generated.model.ApiPasswordLoginRequest;
+import igrus.web.generated.model.ApiPasswordSignupRequest;
+import igrus.web.generated.model.ApiTemporaryStudentIdSignupRequest;
+import igrus.web.generated.model.ApiResendVerificationRequest;
+import igrus.web.generated.model.ApiEmailVerificationRequest;
+import igrus.web.generated.model.ApiAccountRecoveryRequest;
+import igrus.web.generated.model.ApiPasswordResetRequest;
+import igrus.web.generated.model.ApiPasswordResetConfirmRequest;
 import igrus.web.security.auth.common.dto.internal.RecoveryResult;
-import igrus.web.security.auth.common.dto.response.AccountRecoveryResponse;
-import igrus.web.security.auth.common.dto.response.RecoveryEligibilityResponse;
+import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
+import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
+import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
+import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
+import igrus.web.security.auth.password.dto.request.TemporaryStudentIdSignupRequest;
+import igrus.web.user.domain.EnrollmentStatus;
+import igrus.web.user.domain.Gender;
+import igrus.web.user.domain.Interest;
+import igrus.web.user.domain.JoinRoute;
+import igrus.web.user.domain.Wish;
 import igrus.web.security.auth.common.exception.token.RefreshTokenExpiredException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenInvalidException;
 import igrus.web.security.auth.common.exception.token.RefreshTokenTheftException;
 import igrus.web.security.auth.common.service.account.CheckReRegistrationEligibilityService;
 import igrus.web.security.auth.common.service.account.CheckRecoveryEligibilityService;
-import igrus.web.security.auth.common.service.account.ReRegistrationCheckResult;
 import igrus.web.security.auth.common.service.account.RecoverAccountService;
 import igrus.web.security.auth.common.util.CookieUtil;
 import igrus.web.security.auth.password.dto.internal.LoginResult;
 import igrus.web.security.auth.password.dto.internal.TokenRotationResult;
-import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
-import igrus.web.security.auth.password.dto.request.PasswordResetConfirmRequest;
-import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
-import igrus.web.security.auth.password.dto.request.TemporaryStudentIdSignupRequest;
-import igrus.web.security.auth.password.dto.response.DuplicateCheckResponse;
-import igrus.web.security.auth.password.dto.response.PasswordLoginResponse;
-import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
-import igrus.web.security.auth.password.dto.response.PreSignupVerificationResponse;
-import igrus.web.security.auth.password.dto.response.TokenRefreshResponse;
-import igrus.web.security.auth.password.dto.response.VerificationResendResponse;
 import igrus.web.security.auth.password.service.auth.LoginService;
 import igrus.web.security.auth.password.service.auth.LogoutService;
 import igrus.web.security.auth.password.service.auth.RefreshTokenService;
@@ -90,16 +87,16 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
     private final CookieUtil cookieUtil;
 
     @Override
-    public ResponseEntity<Login200Response> login(LoginRequest loginRequest) {
+    public ResponseEntity<ApiPasswordLoginResponse> login(ApiPasswordLoginRequest passwordLoginRequest) {
         HttpServletRequest httpRequest = ServletContextUtil.getCurrentRequest();
         HttpServletResponse httpResponse = ServletContextUtil.getCurrentResponse();
 
         String ipAddress = ServletContextUtil.extractIpAddress(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
 
-        PasswordLoginRequest request = new PasswordLoginRequest(
-                loginRequest.getStudentId(),
-                loginRequest.getPassword()
+        var request = new PasswordLoginRequest(
+                passwordLoginRequest.getStudentId(),
+                passwordLoginRequest.getPassword()
         );
 
         LoginResult result = loginService.login(request, ipAddress, userAgent);
@@ -110,13 +107,13 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
         );
         httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        PasswordLoginResponse response = result.toResponse();
-        return ResponseEntity.ok(new Login200Response()
+        var response = result.toResponse();
+        return ResponseEntity.ok(new ApiPasswordLoginResponse()
                 .accessToken(response.accessToken())
                 .userId(response.userId())
                 .studentId(response.studentId())
                 .name(response.name())
-                .role(Login200Response.RoleEnum.fromValue(response.role().name()))
+                .role(ApiPasswordLoginResponse.RoleEnum.fromValue(response.role().name()))
                 .expiresIn(response.expiresIn()));
     }
 
@@ -137,7 +134,7 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
     }
 
     @Override
-    public ResponseEntity<RefreshToken200Response> refreshToken() {
+    public ResponseEntity<ApiTokenRefreshResponse> refreshToken() {
         HttpServletRequest httpRequest = ServletContextUtil.getCurrentRequest();
         HttpServletResponse httpResponse = ServletContextUtil.getCurrentResponse();
 
@@ -162,146 +159,146 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
             httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         }
 
-        TokenRefreshResponse response = result.toResponse();
-        return ResponseEntity.ok(new RefreshToken200Response()
+        var response = result.toResponse();
+        return ResponseEntity.ok(new ApiTokenRefreshResponse()
                 .accessToken(response.accessToken())
                 .expiresIn(response.expiresIn()));
     }
 
     @Override
-    public ResponseEntity<Signup201Response> signup(SignupRequest signupRequest) {
-        validatePrivacyConsent(signupRequest.getPrivacyConsent());
-        PasswordSignupRequest request = new PasswordSignupRequest(
-                signupRequest.getStudentId(),
-                signupRequest.getName(),
-                signupRequest.getEmail(),
-                signupRequest.getPassword(),
-                signupRequest.getPhoneNumber(),
-                signupRequest.getDepartment(),
-                signupRequest.getMotivation(),
-                signupRequest.getWishes() != null
-                        ? signupRequest.getWishes().stream()
-                                .map(w -> EnumUtils.fromStringOrNull(igrus.web.user.domain.Wish.class, w.getValue()))
+    public ResponseEntity<ApiPasswordSignupResponse> signup(ApiPasswordSignupRequest passwordSignupRequest) {
+        validatePrivacyConsent(passwordSignupRequest.getPrivacyConsent());
+        var request = new PasswordSignupRequest(
+                passwordSignupRequest.getStudentId(),
+                passwordSignupRequest.getName(),
+                passwordSignupRequest.getEmail(),
+                passwordSignupRequest.getPassword(),
+                passwordSignupRequest.getPhoneNumber(),
+                passwordSignupRequest.getDepartment(),
+                passwordSignupRequest.getMotivation(),
+                passwordSignupRequest.getWishes() != null
+                        ? passwordSignupRequest.getWishes().stream()
+                                .map(w -> EnumUtils.fromStringOrNull(Wish.class, w.getValue()))
                                 .toList()
                         : null,
-                signupRequest.getInterests() != null
-                        ? signupRequest.getInterests().stream()
-                                .map(i -> EnumUtils.fromStringOrNull(igrus.web.user.domain.Interest.class, i.getValue()))
+                passwordSignupRequest.getInterests() != null
+                        ? passwordSignupRequest.getInterests().stream()
+                                .map(i -> EnumUtils.fromStringOrNull(Interest.class, i.getValue()))
                                 .toList()
                         : null,
-                signupRequest.getCustomInterest(),
-                signupRequest.getJoinRoute() != null
-                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.JoinRoute.class, signupRequest.getJoinRoute().getValue()) : null,
-                signupRequest.getCustomJoinRoute(),
-                signupRequest.getGender() != null
-                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.Gender.class, signupRequest.getGender().getValue()) : null,
-                signupRequest.getGrade(),
-                signupRequest.getEnrollmentStatus() != null
-                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.EnrollmentStatus.class, signupRequest.getEnrollmentStatus().getValue()) : null,
-                Boolean.TRUE.equals(signupRequest.getPrivacyConsent()),
-                signupRequest.getVerificationToken()
+                passwordSignupRequest.getCustomInterest(),
+                passwordSignupRequest.getJoinRoute() != null
+                        ? EnumUtils.fromStringOrNull(JoinRoute.class, passwordSignupRequest.getJoinRoute().getValue()) : null,
+                passwordSignupRequest.getCustomJoinRoute(),
+                passwordSignupRequest.getGender() != null
+                        ? EnumUtils.fromStringOrNull(Gender.class, passwordSignupRequest.getGender().getValue()) : null,
+                passwordSignupRequest.getGrade(),
+                passwordSignupRequest.getEnrollmentStatus() != null
+                        ? EnumUtils.fromStringOrNull(EnrollmentStatus.class, passwordSignupRequest.getEnrollmentStatus().getValue()) : null,
+                Boolean.TRUE.equals(passwordSignupRequest.getPrivacyConsent()),
+                passwordSignupRequest.getVerificationToken()
         );
 
-        PasswordSignupResponse response = signupService.signup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new Signup201Response()
+        var response = signupService.signup(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiPasswordSignupResponse()
                 .message(response.message())
                 .email(response.email())
                 .temporaryStudentId(response.temporaryStudentId()));
     }
 
     @Override
-    public ResponseEntity<Signup201Response> signupWithTemporaryStudentId(
-            SignupWithTemporaryStudentIdRequest signupWithTemporaryStudentIdRequest
+    public ResponseEntity<ApiPasswordSignupResponse> signupWithTemporaryStudentId(
+            ApiTemporaryStudentIdSignupRequest temporaryStudentIdSignupRequest
     ) {
-        validatePrivacyConsent(signupWithTemporaryStudentIdRequest.getPrivacyConsent());
-        TemporaryStudentIdSignupRequest request = new TemporaryStudentIdSignupRequest(
-                signupWithTemporaryStudentIdRequest.getName(),
-                signupWithTemporaryStudentIdRequest.getEmail(),
-                signupWithTemporaryStudentIdRequest.getPassword(),
-                signupWithTemporaryStudentIdRequest.getPhoneNumber(),
-                signupWithTemporaryStudentIdRequest.getDepartment(),
-                signupWithTemporaryStudentIdRequest.getMotivation(),
-                signupWithTemporaryStudentIdRequest.getWishes() != null
-                        ? signupWithTemporaryStudentIdRequest.getWishes().stream()
-                                .map(w -> EnumUtils.fromStringOrNull(igrus.web.user.domain.Wish.class, w.getValue()))
+        validatePrivacyConsent(temporaryStudentIdSignupRequest.getPrivacyConsent());
+        var request = new TemporaryStudentIdSignupRequest(
+                temporaryStudentIdSignupRequest.getName(),
+                temporaryStudentIdSignupRequest.getEmail(),
+                temporaryStudentIdSignupRequest.getPassword(),
+                temporaryStudentIdSignupRequest.getPhoneNumber(),
+                temporaryStudentIdSignupRequest.getDepartment(),
+                temporaryStudentIdSignupRequest.getMotivation(),
+                temporaryStudentIdSignupRequest.getWishes() != null
+                        ? temporaryStudentIdSignupRequest.getWishes().stream()
+                                .map(w -> EnumUtils.fromStringOrNull(Wish.class, w.getValue()))
                                 .toList()
                         : null,
-                signupWithTemporaryStudentIdRequest.getInterests() != null
-                        ? signupWithTemporaryStudentIdRequest.getInterests().stream()
-                                .map(i -> EnumUtils.fromStringOrNull(igrus.web.user.domain.Interest.class, i.getValue()))
+                temporaryStudentIdSignupRequest.getInterests() != null
+                        ? temporaryStudentIdSignupRequest.getInterests().stream()
+                                .map(i -> EnumUtils.fromStringOrNull(Interest.class, i.getValue()))
                                 .toList()
                         : null,
-                signupWithTemporaryStudentIdRequest.getCustomInterest(),
-                signupWithTemporaryStudentIdRequest.getJoinRoute() != null
-                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.JoinRoute.class, signupWithTemporaryStudentIdRequest.getJoinRoute().getValue()) : null,
-                signupWithTemporaryStudentIdRequest.getCustomJoinRoute(),
-                signupWithTemporaryStudentIdRequest.getGender() != null
-                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.Gender.class, signupWithTemporaryStudentIdRequest.getGender().getValue()) : null,
-                signupWithTemporaryStudentIdRequest.getGrade(),
-                signupWithTemporaryStudentIdRequest.getEnrollmentStatus() != null
-                        ? EnumUtils.fromStringOrNull(igrus.web.user.domain.EnrollmentStatus.class, signupWithTemporaryStudentIdRequest.getEnrollmentStatus().getValue()) : null,
-                Boolean.TRUE.equals(signupWithTemporaryStudentIdRequest.getPrivacyConsent()),
-                signupWithTemporaryStudentIdRequest.getVerificationToken()
+                temporaryStudentIdSignupRequest.getCustomInterest(),
+                temporaryStudentIdSignupRequest.getJoinRoute() != null
+                        ? EnumUtils.fromStringOrNull(JoinRoute.class, temporaryStudentIdSignupRequest.getJoinRoute().getValue()) : null,
+                temporaryStudentIdSignupRequest.getCustomJoinRoute(),
+                temporaryStudentIdSignupRequest.getGender() != null
+                        ? EnumUtils.fromStringOrNull(Gender.class, temporaryStudentIdSignupRequest.getGender().getValue()) : null,
+                temporaryStudentIdSignupRequest.getGrade(),
+                temporaryStudentIdSignupRequest.getEnrollmentStatus() != null
+                        ? EnumUtils.fromStringOrNull(EnrollmentStatus.class, temporaryStudentIdSignupRequest.getEnrollmentStatus().getValue()) : null,
+                Boolean.TRUE.equals(temporaryStudentIdSignupRequest.getPrivacyConsent()),
+                temporaryStudentIdSignupRequest.getVerificationToken()
         );
 
-        PasswordSignupResponse response = tempStudentIdSignupService.signup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new Signup201Response()
+        var response = tempStudentIdSignupService.signup(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiPasswordSignupResponse()
                 .message(response.message())
                 .email(response.email())
                 .temporaryStudentId(response.temporaryStudentId()));
     }
 
     @Override
-    public ResponseEntity<CheckStudentIdDuplicate200Response> checkStudentIdDuplicate(String studentId) {
-        DuplicateCheckResponse response = checkDuplicateService.checkStudentId(studentId);
-        return ResponseEntity.ok(new CheckStudentIdDuplicate200Response()
+    public ResponseEntity<ApiDuplicateCheckResponse> checkStudentIdDuplicate(String studentId) {
+        var response = checkDuplicateService.checkStudentId(studentId);
+        return ResponseEntity.ok(new ApiDuplicateCheckResponse()
                 .available(response.available())
                 .message(response.message()));
     }
 
     @Override
-    public ResponseEntity<CheckStudentIdDuplicate200Response> checkEmailDuplicate(String email) {
-        DuplicateCheckResponse response = checkDuplicateService.checkEmail(email);
-        return ResponseEntity.ok(new CheckStudentIdDuplicate200Response()
+    public ResponseEntity<ApiDuplicateCheckResponse> checkEmailDuplicate(String email) {
+        var response = checkDuplicateService.checkEmail(email);
+        return ResponseEntity.ok(new ApiDuplicateCheckResponse()
                 .available(response.available())
                 .message(response.message()));
     }
 
     @Override
-    public ResponseEntity<CheckStudentIdDuplicate200Response> checkPhoneNumberDuplicate(String phoneNumber) {
-        DuplicateCheckResponse response = checkDuplicateService.checkPhoneNumber(phoneNumber);
-        return ResponseEntity.ok(new CheckStudentIdDuplicate200Response()
+    public ResponseEntity<ApiDuplicateCheckResponse> checkPhoneNumberDuplicate(String phoneNumber) {
+        var response = checkDuplicateService.checkPhoneNumber(phoneNumber);
+        return ResponseEntity.ok(new ApiDuplicateCheckResponse()
                 .available(response.available())
                 .message(response.message()));
     }
 
     @Override
-    public ResponseEntity<SendPreSignupCode200Response> sendPreSignupCode(
-            SendPreSignupCodeRequest sendPreSignupCodeRequest
+    public ResponseEntity<ApiVerificationResendResponse> sendPreSignupCode(
+            ApiResendVerificationRequest resendVerificationRequest
     ) {
-        igrus.web.security.auth.common.dto.request.ResendVerificationRequest request =
-                new igrus.web.security.auth.common.dto.request.ResendVerificationRequest(
-                        sendPreSignupCodeRequest.getEmail()
+        var request =
+                new ResendVerificationRequest(
+                        resendVerificationRequest.getEmail()
                 );
 
-        VerificationResendResponse response = preSignupSendCodeService.sendCode(request);
-        return ResponseEntity.ok(new SendPreSignupCode200Response()
+        var response = preSignupSendCodeService.sendCode(request);
+        return ResponseEntity.ok(new ApiVerificationResendResponse()
                 .message(response.message())
                 .email(response.email()));
     }
 
     @Override
-    public ResponseEntity<VerifyPreSignupCode200Response> verifyPreSignupCode(
-            VerifyEmailChangeRequest verifyEmailChangeRequest
+    public ResponseEntity<ApiPreSignupVerificationResponse> verifyPreSignupCode(
+            ApiEmailVerificationRequest emailVerificationRequest
     ) {
-        igrus.web.security.auth.common.dto.request.EmailVerificationRequest request =
-                new igrus.web.security.auth.common.dto.request.EmailVerificationRequest(
-                        verifyEmailChangeRequest.getEmail(),
-                        verifyEmailChangeRequest.getCode()
+        var request =
+                new EmailVerificationRequest(
+                        emailVerificationRequest.getEmail(),
+                        emailVerificationRequest.getCode()
                 );
 
-        PreSignupVerificationResponse response = preSignupVerifyCodeService.verifyCode(request);
-        return ResponseEntity.ok(new VerifyPreSignupCode200Response()
+        var response = preSignupVerifyCodeService.verifyCode(request);
+        return ResponseEntity.ok(new ApiPreSignupVerificationResponse()
                 .message(response.message())
                 .email(response.email())
                 .verified(response.verified())
@@ -309,11 +306,11 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
     }
 
     @Override
-    public ResponseEntity<CheckReRegistrationEligibility200Response> checkReRegistrationEligibility(
+    public ResponseEntity<ApiReRegistrationCheckResult> checkReRegistrationEligibility(
             String studentId
     ) {
-        ReRegistrationCheckResult result = checkReRegistrationEligibilityService.checkReRegistrationEligibility(studentId);
-        return ResponseEntity.ok(new CheckReRegistrationEligibility200Response()
+        var result = checkReRegistrationEligibilityService.checkReRegistrationEligibility(studentId);
+        return ResponseEntity.ok(new ApiReRegistrationCheckResult()
                 .isEligible(result.isEligible())
                 .isAlreadyRegistered(result.isAlreadyRegistered())
                 .reRegistrationAvailableAt(result.reRegistrationAvailableAt())
@@ -321,22 +318,22 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
     }
 
     @Override
-    public ResponseEntity<CheckRecoveryEligibility200Response> checkRecoveryEligibility(String studentId) {
-        RecoveryEligibilityResponse response = checkRecoveryEligibilityService.checkRecoveryEligibility(studentId);
-        return ResponseEntity.ok(new CheckRecoveryEligibility200Response()
+    public ResponseEntity<ApiRecoveryEligibilityResponse> checkRecoveryEligibility(String studentId) {
+        var response = checkRecoveryEligibilityService.checkRecoveryEligibility(studentId);
+        return ResponseEntity.ok(new ApiRecoveryEligibilityResponse()
                 .recoverable(response.recoverable())
                 .recoveryDeadline(response.recoveryDeadline())
                 .message(response.message()));
     }
 
     @Override
-    public ResponseEntity<RecoverAccount200Response> recoverAccount(
-            RecoverAccountRequest recoverAccountRequest
+    public ResponseEntity<ApiAccountRecoveryResponse> recoverAccount(
+            ApiAccountRecoveryRequest accountRecoveryRequest
     ) {
         HttpServletResponse httpResponse = ServletContextUtil.getCurrentResponse();
 
         RecoveryResult result = recoverAccountService.recoverAccount(
-                recoverAccountRequest.getStudentId(), recoverAccountRequest.getPassword());
+                accountRecoveryRequest.getStudentId(), accountRecoveryRequest.getPassword());
 
         ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(
                 result.refreshToken(),
@@ -344,32 +341,32 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
         );
         httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        AccountRecoveryResponse response = result.toResponse();
-        return ResponseEntity.ok(new RecoverAccount200Response()
+        var response = result.toResponse();
+        return ResponseEntity.ok(new ApiAccountRecoveryResponse()
                 .accessToken(response.accessToken())
                 .userId(response.userId())
                 .studentId(response.studentId())
                 .name(response.name())
-                .role(RecoverAccount200Response.RoleEnum.fromValue(response.role().name()))
+                .role(ApiAccountRecoveryResponse.RoleEnum.fromValue(response.role().name()))
                 .expiresIn(response.expiresIn())
                 .message(response.message()));
     }
 
     @Override
     public ResponseEntity<Void> requestPasswordReset(
-            RequestPasswordResetRequest requestPasswordResetRequest
+            ApiPasswordResetRequest passwordResetRequest
     ) {
-        requestPasswordResetService.requestPasswordReset(requestPasswordResetRequest.getStudentId());
+        requestPasswordResetService.requestPasswordReset(passwordResetRequest.getStudentId());
         return ResponseEntity.ok().build();
     }
 
     @Override
     public ResponseEntity<Void> confirmPasswordReset(
-            ConfirmPasswordResetRequest confirmPasswordResetRequest
+            ApiPasswordResetConfirmRequest passwordResetConfirmRequest
     ) {
         resetPasswordService.resetPassword(
-                confirmPasswordResetRequest.getToken(),
-                confirmPasswordResetRequest.getNewPassword());
+                passwordResetConfirmRequest.getToken(),
+                passwordResetConfirmRequest.getNewPassword());
         return ResponseEntity.ok().build();
     }
 

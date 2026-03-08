@@ -1,19 +1,23 @@
 package igrus.web.community.pinnedpost.controller;
 
 import igrus.web.common.util.SecurityUtils;
+import igrus.web.community.pinnedpost.dto.request.CreatePinnedPostRequest;
+import igrus.web.community.pinnedpost.dto.request.UpdateDisplayOrderRequest;
 import igrus.web.community.pinnedpost.dto.response.PinnedPostDetailResponse;
 import igrus.web.community.pinnedpost.dto.response.PinnedPostListResponse;
+import igrus.web.community.pinnedpost.dto.response.PinnedPostListResponse.PostInfo;
 import igrus.web.community.pinnedpost.service.read.GetPinnedPostListService;
 import igrus.web.community.pinnedpost.service.write.CreatePinnedPostService;
 import igrus.web.community.pinnedpost.service.write.DeletePinnedPostService;
 import igrus.web.community.pinnedpost.service.write.UpdatePinnedPostDisplayOrderService;
 import igrus.web.generated.api.PinnedPostApi;
-import igrus.web.generated.model.CreatePinnedPostRequest;
-import igrus.web.generated.model.GetPinnedPostList200ResponseInner;
-import igrus.web.generated.model.GetPinnedPostList200ResponseInnerPost;
-import igrus.web.generated.model.UpdateDisplayOrder200Response;
-import igrus.web.generated.model.UpdateDisplayOrder200ResponsePinnedBy;
-import igrus.web.generated.model.UpdateDisplayOrderRequest;
+import igrus.web.generated.model.ApiCreatePinnedPostRequest;
+import igrus.web.generated.model.ApiPinnedPostListResponse;
+import igrus.web.generated.model.ApiPostInfo;
+import igrus.web.generated.model.ApiPinnedPostDetailResponse;
+import igrus.web.generated.model.ApiPinnedByInfo;
+import igrus.web.generated.model.ApiUpdateDisplayOrderRequest;
+import igrus.web.generated.model.ApiAuthorInfo;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,27 +40,26 @@ public class PinnedPostController implements PinnedPostApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<UpdateDisplayOrder200Response> createPinnedPost(
-            CreatePinnedPostRequest createPinnedPostRequest) {
+    public ResponseEntity<ApiPinnedPostDetailResponse> createPinnedPost(
+            ApiCreatePinnedPostRequest createPinnedPostRequest) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 고정 요청 - postId: {}, displayOrder: {}, userId: {}",
                 createPinnedPostRequest.getPostId(), createPinnedPostRequest.getDisplayOrder(), user.userId());
 
-        igrus.web.community.pinnedpost.dto.request.CreatePinnedPostRequest internalRequest =
-                new igrus.web.community.pinnedpost.dto.request.CreatePinnedPostRequest(
-                        createPinnedPostRequest.getPostId(),
-                        createPinnedPostRequest.getDisplayOrder());
+        var internalRequest = new CreatePinnedPostRequest(
+                createPinnedPostRequest.getPostId(),
+                createPinnedPostRequest.getDisplayOrder());
 
-        PinnedPostDetailResponse result = createPinnedPostService.createPinnedPost(internalRequest, user);
+        var result = createPinnedPostService.createPinnedPost(internalRequest, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToDetailResponse(result));
     }
 
     @Override
-    public ResponseEntity<List<GetPinnedPostList200ResponseInner>> getPinnedPostList() {
+    public ResponseEntity<List<ApiPinnedPostListResponse>> getPinnedPostList() {
         log.debug("고정 게시글 목록 조회 요청");
 
-        List<PinnedPostListResponse> results = getPinnedPostListService.getPinnedPostList();
-        List<GetPinnedPostList200ResponseInner> response = results.stream()
+        var results = getPinnedPostListService.getPinnedPostList();
+        List<ApiPinnedPostListResponse> response = results.stream()
                 .map(this::mapToListResponse)
                 .toList();
         return ResponseEntity.ok(response);
@@ -64,17 +67,16 @@ public class PinnedPostController implements PinnedPostApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<UpdateDisplayOrder200Response> updateDisplayOrder(
-            Long id, UpdateDisplayOrderRequest updateDisplayOrderRequest) {
+    public ResponseEntity<ApiPinnedPostDetailResponse> updateDisplayOrder(
+            Long id, ApiUpdateDisplayOrderRequest updateDisplayOrderRequest) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("고정 게시글 순서 변경 요청 - id: {}, newOrder: {}, userId: {}",
                 id, updateDisplayOrderRequest.getDisplayOrder(), user.userId());
 
-        igrus.web.community.pinnedpost.dto.request.UpdateDisplayOrderRequest internalRequest =
-                new igrus.web.community.pinnedpost.dto.request.UpdateDisplayOrderRequest(
-                        updateDisplayOrderRequest.getDisplayOrder());
+        var internalRequest = new UpdateDisplayOrderRequest(
+                updateDisplayOrderRequest.getDisplayOrder());
 
-        PinnedPostDetailResponse result = updatePinnedPostDisplayOrderService.updateDisplayOrder(id, internalRequest);
+        var result = updatePinnedPostDisplayOrderService.updateDisplayOrder(id, internalRequest);
         return ResponseEntity.ok(mapToDetailResponse(result));
     }
 
@@ -88,30 +90,30 @@ public class PinnedPostController implements PinnedPostApi {
         return ResponseEntity.noContent().build();
     }
 
-    private UpdateDisplayOrder200Response mapToDetailResponse(PinnedPostDetailResponse result) {
-        return new UpdateDisplayOrder200Response()
+    private ApiPinnedPostDetailResponse mapToDetailResponse(PinnedPostDetailResponse result) {
+        return new ApiPinnedPostDetailResponse()
                 .id(result.id())
                 .postId(result.postId())
                 .postTitle(result.postTitle())
                 .boardCode(result.boardCode())
                 .displayOrder(result.displayOrder())
-                .pinnedBy(new UpdateDisplayOrder200ResponsePinnedBy()
+                .pinnedBy(new ApiPinnedByInfo()
                         .id(result.pinnedBy().id())
                         .name(result.pinnedBy().name()))
                 .createdAt(result.createdAt());
     }
 
-    private GetPinnedPostList200ResponseInner mapToListResponse(PinnedPostListResponse result) {
-        PinnedPostListResponse.PostInfo postInfo = result.post();
-        return new GetPinnedPostList200ResponseInner()
+    private ApiPinnedPostListResponse mapToListResponse(PinnedPostListResponse result) {
+        PostInfo postInfo = result.post();
+        return new ApiPinnedPostListResponse()
                 .id(result.id())
-                .post(new GetPinnedPostList200ResponseInnerPost()
+                .post(new ApiPostInfo()
                         .id(postInfo.id())
                         .title(postInfo.title())
                         .contentPreview(postInfo.contentPreview())
                         .boardCode(postInfo.boardCode())
                         .boardName(postInfo.boardName())
-                        .author(new UpdateDisplayOrder200ResponsePinnedBy()
+                        .author(new ApiAuthorInfo()
                                 .id(postInfo.author().id())
                                 .name(postInfo.author().name()))
                         .isVisibleToAssociate(postInfo.isVisibleToAssociate())
@@ -120,7 +122,7 @@ public class PinnedPostController implements PinnedPostApi {
                         .commentCount(postInfo.commentCount())
                         .createdAt(postInfo.createdAt()))
                 .displayOrder(result.displayOrder())
-                .pinnedBy(new UpdateDisplayOrder200ResponsePinnedBy()
+                .pinnedBy(new ApiPinnedByInfo()
                         .id(result.pinnedBy().id())
                         .name(result.pinnedBy().name()))
                 .pinnedAt(result.pinnedAt());

@@ -52,7 +52,6 @@ public record UpdateEventRequest(
         @Positive(message = "설문 ID는 양수여야 합니다")
         Long surveyId,
 
-        @Size(max = 5, message = "이미지는 최대 5개까지 첨부할 수 있습니다")
-        List<String> imageUrls
+        List<Long> attachmentFileIds
 ) {
 }
