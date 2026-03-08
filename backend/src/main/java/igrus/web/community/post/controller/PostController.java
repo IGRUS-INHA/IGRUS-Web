@@ -4,28 +4,25 @@ import igrus.web.common.util.PageableUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.community.post.dto.request.CreatePostRequest;
 import igrus.web.community.post.dto.request.UpdatePostRequest;
-import igrus.web.community.post.dto.response.PostCreateResponse;
-import igrus.web.community.post.dto.response.PostDetailResponse;
-import igrus.web.community.post.dto.response.PostListPageResponse;
-import igrus.web.community.post.dto.response.PostUpdateResponse;
-import igrus.web.community.post.dto.response.PostViewHistoryResponse;
-import igrus.web.community.post.dto.response.PostViewStatsResponse;
 import igrus.web.community.post.service.read.GetPostDetailService;
 import igrus.web.community.post.service.read.GetPostListService;
 import igrus.web.community.post.service.read.GetPostViewHistoryService;
 import igrus.web.community.post.service.read.GetPostViewStatsService;
 import igrus.web.community.post.service.write.CreatePostService;
 import igrus.web.community.post.service.write.DeletePostService;
+import igrus.web.community.post.dto.response.PostViewHistoryResponse;
 import igrus.web.community.post.service.write.UpdatePostService;
 import igrus.web.generated.api.PostApi;
-import igrus.web.generated.model.CreatePost201Response;
-import igrus.web.generated.model.GetPostDetail200Response;
-import igrus.web.generated.model.GetPostList200Response;
-import igrus.web.generated.model.GetPostList200ResponsePostsInner;
-import igrus.web.generated.model.GetPostViewHistory200Response;
-import igrus.web.generated.model.GetPostViewHistory200ResponseViewHistoryInner;
-import igrus.web.generated.model.GetPostViewStats200Response;
-import igrus.web.generated.model.UpdatePost200Response;
+import igrus.web.generated.model.ApiPostCreateResponse;
+import igrus.web.generated.model.ApiPostDetailResponse;
+import igrus.web.generated.model.ApiPostListPageResponse;
+import igrus.web.generated.model.ApiPostListResponse;
+import igrus.web.generated.model.ApiPostViewHistoryPageResponse;
+import igrus.web.generated.model.ApiPostViewHistoryResponse;
+import igrus.web.generated.model.ApiPostViewStatsResponse;
+import igrus.web.generated.model.ApiPostUpdateResponse;
+import igrus.web.generated.model.ApiCreatePostRequest;
+import igrus.web.generated.model.ApiUpdatePostRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,9 +54,9 @@ public class PostController implements PostApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CreatePost201Response> createPost(
+    public ResponseEntity<ApiPostCreateResponse> createPost(
             String boardCode,
-            igrus.web.generated.model.CreatePostRequest createPostRequest
+            ApiCreatePostRequest createPostRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 작성 요청 - boardCode: {}, userId: {}, title: {}",
@@ -74,8 +71,8 @@ public class PostController implements PostApi {
                 createPostRequest.getImageUrls()
         );
 
-        PostCreateResponse result = createPostService.createPost(boardCode, request, user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new CreatePost201Response()
+        var result = createPostService.createPost(boardCode, request, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiPostCreateResponse()
                 .postId(result.postId())
                 .boardCode(result.boardCode())
                 .title(result.title())
@@ -84,7 +81,7 @@ public class PostController implements PostApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetPostList200Response> getPostList(
+    public ResponseEntity<ApiPostListPageResponse> getPostList(
             String boardCode,
             String keyword,
             Boolean questionOnly,
@@ -97,11 +94,11 @@ public class PostController implements PostApi {
         log.info("게시글 목록 조회 요청 - boardCode: {}, keyword: {}, questionOnly: {}, page: {}, size: {}",
                 boardCode, keyword, questionOnly, pageable.getPageNumber(), pageable.getPageSize());
 
-        PostListPageResponse result = getPostListService.getPostList(boardCode, user, keyword, questionOnly, pageable);
+        var result = getPostListService.getPostList(boardCode, user, keyword, questionOnly, pageable);
 
-        return ResponseEntity.ok(new GetPostList200Response()
+        return ResponseEntity.ok(new ApiPostListPageResponse()
                 .posts(result.posts().stream()
-                        .map(p -> new GetPostList200ResponsePostsInner()
+                        .map(p -> new ApiPostListResponse()
                                 .postId(p.postId())
                                 .title(p.title())
                                 .authorName(p.authorName())
@@ -122,13 +119,13 @@ public class PostController implements PostApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetPostDetail200Response> getPostDetail(String boardCode, Long postId) {
+    public ResponseEntity<ApiPostDetailResponse> getPostDetail(String boardCode, Long postId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 상세 조회 요청 - boardCode: {}, postId: {}, userId: {}",
                 boardCode, postId, user.userId());
 
-        PostDetailResponse result = getPostDetailService.getPostDetail(boardCode, postId, user);
-        return ResponseEntity.ok(new GetPostDetail200Response()
+        var result = getPostDetailService.getPostDetail(boardCode, postId, user);
+        return ResponseEntity.ok(new ApiPostDetailResponse()
                 .postId(result.postId())
                 .boardCode(result.boardCode())
                 .title(result.title())
@@ -152,10 +149,10 @@ public class PostController implements PostApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UpdatePost200Response> updatePost(
+    public ResponseEntity<ApiPostUpdateResponse> updatePost(
             String boardCode,
             Long postId,
-            igrus.web.generated.model.UpdatePostRequest updatePostRequest
+            ApiUpdatePostRequest updatePostRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 수정 요청 - boardCode: {}, postId: {}, userId: {}, title: {}",
@@ -169,8 +166,8 @@ public class PostController implements PostApi {
                 updatePostRequest.getImageUrls()
         );
 
-        PostUpdateResponse result = updatePostService.updatePost(boardCode, postId, request, user);
-        return ResponseEntity.ok(new UpdatePost200Response()
+        var result = updatePostService.updatePost(boardCode, postId, request, user);
+        return ResponseEntity.ok(new ApiPostUpdateResponse()
                 .postId(result.postId())
                 .boardCode(result.boardCode())
                 .title(result.title())
@@ -190,13 +187,13 @@ public class PostController implements PostApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetPostViewStats200Response> getPostViewStats(String boardCode, Long postId) {
+    public ResponseEntity<ApiPostViewStatsResponse> getPostViewStats(String boardCode, Long postId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("게시글 조회 통계 요청 - boardCode: {}, postId: {}, userId: {}",
                 boardCode, postId, user.userId());
 
-        PostViewStatsResponse result = getPostViewStatsService.getPostViewStats(boardCode, postId, user);
-        return ResponseEntity.ok(new GetPostViewStats200Response()
+        var result = getPostViewStatsService.getPostViewStats(boardCode, postId, user);
+        return ResponseEntity.ok(new ApiPostViewStatsResponse()
                 .postId(result.postId())
                 .totalViews(result.totalViews())
                 .uniqueViewers(result.uniqueViewers()));
@@ -204,7 +201,7 @@ public class PostController implements PostApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetPostViewHistory200Response> getPostViewHistory(
+    public ResponseEntity<ApiPostViewHistoryPageResponse> getPostViewHistory(
             String boardCode,
             Long postId,
             Integer page,
@@ -217,9 +214,9 @@ public class PostController implements PostApi {
                 boardCode, postId, user.userId(), pageable.getPageNumber(), pageable.getPageSize());
 
         Page<PostViewHistoryResponse> resultPage = getPostViewHistoryService.getPostViewHistory(boardCode, postId, user, pageable);
-        return ResponseEntity.ok(new GetPostViewHistory200Response()
+        return ResponseEntity.ok(new ApiPostViewHistoryPageResponse()
                 .viewHistory(resultPage.getContent().stream()
-                        .map(vh -> new GetPostViewHistory200ResponseViewHistoryInner()
+                        .map(vh -> new ApiPostViewHistoryResponse()
                                 .viewId(vh.viewId())
                                 .viewerId(vh.viewerId())
                                 .viewerName(vh.viewerName())

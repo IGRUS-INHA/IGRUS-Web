@@ -1,7 +1,7 @@
 package igrus.web.survey.form.controller;
 
 import igrus.web.generated.api.SurveyAnonymousFormApi;
-import igrus.web.generated.model.GetSurveyDetail200Response;
+import igrus.web.generated.model.ApiSurveyDetailResponse;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.dto.response.SurveyDetailResponseMapper;
 import igrus.web.survey.form.service.SurveyFormService;
@@ -23,7 +23,7 @@ public class SurveyAnonymousFormController implements SurveyAnonymousFormApi {
     private final SurveyFormService surveyFormService;
 
     @Override
-    public ResponseEntity<GetSurveyDetail200Response> getAnonymousSurveyForm(Long surveyId) {
+    public ResponseEntity<ApiSurveyDetailResponse> getAnonymousSurveyForm(Long surveyId) {
         log.info("비회원 설문 양식 조회 요청 - surveyId: {}", surveyId);
 
         SurveyDetailResponse response = surveyFormService.getAnonymousSurveyForm(surveyId);

@@ -4,14 +4,15 @@ import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.community.comment.domain.ReportStatus;
 import igrus.web.community.comment.dto.request.CreateCommentReportRequest;
+import igrus.web.community.comment.dto.request.UpdateReportStatusRequest;
 import igrus.web.community.comment.dto.response.CommentReportResponse;
 import igrus.web.community.comment.service.support.GetPendingReportsService;
 import igrus.web.community.comment.service.support.ReportCommentService;
 import igrus.web.community.comment.service.support.UpdateReportStatusService;
 import igrus.web.generated.api.CommentReportApi;
-import igrus.web.generated.model.ReopenRegistrationRequest;
-import igrus.web.generated.model.ReportComment201Response;
-import igrus.web.generated.model.UpdateReportStatusRequest;
+import igrus.web.generated.model.ApiCommentReportResponse;
+import igrus.web.generated.model.ApiCreateCommentReportRequest;
+import igrus.web.generated.model.ApiUpdateReportStatusRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,26 +37,26 @@ public class CommentReportController implements CommentReportApi {
     private final UpdateReportStatusService updateReportStatusService;
 
     @Override
-    public ResponseEntity<ReportComment201Response> reportComment(
-            Long commentId, ReopenRegistrationRequest reopenRegistrationRequest) {
+    public ResponseEntity<ApiCommentReportResponse> reportComment(
+            Long commentId, ApiCreateCommentReportRequest createCommentReportRequest) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("댓글 신고 요청 - commentId: {}, userId: {}", commentId, user.userId());
 
-        CreateCommentReportRequest internalRequest =
-                new CreateCommentReportRequest(reopenRegistrationRequest.getReason());
+        var internalRequest =
+                new CreateCommentReportRequest(createCommentReportRequest.getReason());
 
-        CommentReportResponse result = reportCommentService.reportComment(commentId, internalRequest, user.userId());
+        var result = reportCommentService.reportComment(commentId, internalRequest, user.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(result));
     }
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<ReportComment201Response>> getPendingReports() {
+    public ResponseEntity<List<ApiCommentReportResponse>> getPendingReports() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신고 목록 조회 요청 - userId: {}", user.userId());
 
-        List<CommentReportResponse> reports = getPendingReportsService.getPendingReports();
-        List<ReportComment201Response> response = reports.stream()
+        var reports = getPendingReportsService.getPendingReports();
+        List<ApiCommentReportResponse> response = reports.stream()
                 .map(this::mapToResponse)
                 .toList();
         return ResponseEntity.ok(response);
@@ -64,28 +65,28 @@ public class CommentReportController implements CommentReportApi {
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<Void> updateReportStatus(
-            Long reportId, UpdateReportStatusRequest updateReportStatusRequest) {
+            Long reportId, ApiUpdateReportStatusRequest updateReportStatusRequest) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신고 처리 요청 - reportId: {}, status: {}, userId: {}",
                 reportId, updateReportStatusRequest.getStatus(), user.userId());
 
         ReportStatus status = EnumUtils.fromStringOrNull(ReportStatus.class, updateReportStatusRequest.getStatus().getValue());
-        igrus.web.community.comment.dto.request.UpdateReportStatusRequest internalRequest =
-                new igrus.web.community.comment.dto.request.UpdateReportStatusRequest(status);
+        var internalRequest =
+                new UpdateReportStatusRequest(status);
 
         updateReportStatusService.updateReportStatus(reportId, internalRequest, user.userId());
         return ResponseEntity.noContent().build();
     }
 
-    private ReportComment201Response mapToResponse(CommentReportResponse result) {
-        return new ReportComment201Response()
+    private ApiCommentReportResponse mapToResponse(CommentReportResponse result) {
+        return new ApiCommentReportResponse()
                 .id(result.getId())
                 .commentId(result.getCommentId())
                 .commentContent(result.getCommentContent())
                 .reporterId(result.getReporterId())
                 .reporterName(result.getReporterName())
                 .reason(result.getReason())
-                .status(ReportComment201Response.StatusEnum.fromValue(result.getStatus().name()))
+                .status(ApiCommentReportResponse.StatusEnum.fromValue(result.getStatus().name()))
                 .createdAt(result.getCreatedAt())
                 .resolvedAt(result.getResolvedAt())
                 .resolvedById(result.getResolvedById())

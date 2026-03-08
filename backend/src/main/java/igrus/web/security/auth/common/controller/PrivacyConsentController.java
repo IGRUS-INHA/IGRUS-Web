@@ -1,12 +1,12 @@
 package igrus.web.security.auth.common.controller;
 
 import igrus.web.common.util.SecurityUtils;
-import igrus.web.generated.api.PrivacyConsentApi;
-import igrus.web.generated.model.CheckNeedsReConsent200Response;
-import igrus.web.generated.model.GetConsentHistory200Response;
-import igrus.web.generated.model.GetLatestConsent200Response;
-import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.security.auth.common.dto.response.PrivacyConsentHistoryResponse;
+import igrus.web.generated.api.PrivacyConsentApi;
+import igrus.web.generated.model.ApiConsentCheckResponse;
+import igrus.web.generated.model.ApiPrivacyConsentHistoryResponse;
+import igrus.web.generated.model.ApiPrivacyConsentResponse;
+import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.security.auth.common.service.consent.GetConsentHistoryService;
 import igrus.web.security.auth.common.service.consent.GetLatestConsentService;
 import igrus.web.security.auth.common.service.consent.HasAnyConsentService;
@@ -27,14 +27,14 @@ public class PrivacyConsentController implements PrivacyConsentApi {
     private final NeedsReConsentService needsReConsentService;
 
     @Override
-    public ResponseEntity<GetConsentHistory200Response> getConsentHistory() {
+    public ResponseEntity<ApiPrivacyConsentHistoryResponse> getConsentHistory() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         PrivacyConsentHistoryResponse internal = getConsentHistoryService.getConsentHistory(user.userId());
 
-        GetConsentHistory200Response response = new GetConsentHistory200Response()
+        ApiPrivacyConsentHistoryResponse response = new ApiPrivacyConsentHistoryResponse()
                 .userId(internal.userId())
                 .consents(internal.consents().stream()
-                        .map(c -> new GetLatestConsent200Response()
+                        .map(c -> new ApiPrivacyConsentResponse()
                                 .id(c.id())
                                 .userId(c.userId())
                                 .consentGiven(c.consentGiven())
@@ -47,10 +47,10 @@ public class PrivacyConsentController implements PrivacyConsentApi {
     }
 
     @Override
-    public ResponseEntity<GetLatestConsent200Response> getLatestConsent() {
+    public ResponseEntity<ApiPrivacyConsentResponse> getLatestConsent() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         return getLatestConsentService.getLatestConsent(user.userId())
-                .map(c -> ResponseEntity.ok(new GetLatestConsent200Response()
+                .map(c -> ResponseEntity.ok(new ApiPrivacyConsentResponse()
                         .id(c.id())
                         .userId(c.userId())
                         .consentGiven(c.consentGiven())
@@ -60,23 +60,23 @@ public class PrivacyConsentController implements PrivacyConsentApi {
     }
 
     @Override
-    public ResponseEntity<CheckNeedsReConsent200Response> checkHasConsent() {
+    public ResponseEntity<ApiConsentCheckResponse> checkHasConsent() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         boolean hasConsent = hasAnyConsentService.hasAnyConsent(user.userId());
-        return ResponseEntity.ok(new CheckNeedsReConsent200Response().result(hasConsent));
+        return ResponseEntity.ok(new ApiConsentCheckResponse().result(hasConsent));
     }
 
     @Override
-    public ResponseEntity<CheckNeedsReConsent200Response> checkConsentedToVersion(String version) {
+    public ResponseEntity<ApiConsentCheckResponse> checkConsentedToVersion(String version) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         boolean consented = hasConsentedToVersionService.hasConsentedToVersion(user.userId(), version);
-        return ResponseEntity.ok(new CheckNeedsReConsent200Response().result(consented));
+        return ResponseEntity.ok(new ApiConsentCheckResponse().result(consented));
     }
 
     @Override
-    public ResponseEntity<CheckNeedsReConsent200Response> checkNeedsReConsent(String currentVersion) {
+    public ResponseEntity<ApiConsentCheckResponse> checkNeedsReConsent(String currentVersion) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         boolean needsReConsent = needsReConsentService.needsReConsent(user.userId(), currentVersion);
-        return ResponseEntity.ok(new CheckNeedsReConsent200Response().result(needsReConsent));
+        return ResponseEntity.ok(new ApiConsentCheckResponse().result(needsReConsent));
     }
 }

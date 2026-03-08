@@ -2,7 +2,8 @@ package igrus.web.survey.question.controller;
 
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.SurveyQuestionRowApi;
-import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInnerRowsInner;
+import igrus.web.generated.model.ApiRowResponse;
+import igrus.web.generated.model.ApiSaveQuestionRowRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.question.dto.request.SaveQuestionRowRequest;
@@ -29,10 +30,10 @@ public class SurveyQuestionRowController implements SurveyQuestionRowApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerRowsInner>> createRow(
+    public ResponseEntity<List<ApiRowResponse>> createRow(
             Long surveyId,
             Long questionId,
-            igrus.web.generated.model.CreateRowRequest createRowRequest
+            ApiSaveQuestionRowRequest createRowRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행 추가 요청 - surveyId: {}, questionId: {}, userId: {}", surveyId, questionId, user.userId());
@@ -48,7 +49,7 @@ public class SurveyQuestionRowController implements SurveyQuestionRowApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerRowsInner>> getRowList(
+    public ResponseEntity<List<ApiRowResponse>> getRowList(
             Long surveyId,
             Long questionId
     ) {
@@ -61,11 +62,11 @@ public class SurveyQuestionRowController implements SurveyQuestionRowApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerRowsInner>> updateRow(
+    public ResponseEntity<List<ApiRowResponse>> updateRow(
             Long surveyId,
             Long questionId,
             Long rowId,
-            igrus.web.generated.model.CreateRowRequest createRowRequest
+            ApiSaveQuestionRowRequest createRowRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행 수정 요청 - surveyId: {}, questionId: {}, rowId: {}, userId: {}", surveyId, questionId, rowId, user.userId());
@@ -91,11 +92,11 @@ public class SurveyQuestionRowController implements SurveyQuestionRowApi {
 
     // === Private helper methods ===
 
-    private List<GetSurveyDetail200ResponseQuestionsInnerRowsInner> mapToRowList(
+    private List<ApiRowResponse> mapToRowList(
             List<SurveyDetailResponse.RowResponse> rows
     ) {
         return rows.stream()
-                .map(r -> new GetSurveyDetail200ResponseQuestionsInnerRowsInner()
+                .map(r -> new ApiRowResponse()
                         .id(r.id())
                         .label(r.label())
                         .displayOrder(r.displayOrder()))

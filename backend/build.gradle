@@ -71,10 +71,11 @@ dependencies {
 
 openApiGenerate {
 	generatorName = 'spring'
-	inputSpec = file("${rootProject.projectDir}/../openapi/openapi.yaml").absolutePath.replace('\\', '/')
+	inputSpec = file("${projectDir}/src/main/resources/static/openapi.yaml").absolutePath.replace('\\', '/')
 	outputDir = layout.buildDirectory.dir("generated/openapi").get().asFile.absolutePath
 	apiPackage = 'igrus.web.generated.api'
 	modelPackage = 'igrus.web.generated.model'
+	modelNamePrefix = 'Api'
 	configOptions = [
 		interfaceOnly      : 'true',
 		useTags            : 'true',
@@ -107,6 +108,10 @@ tasks.register('bundleOpenApiSpec', Exec) {
 }
 
 tasks.named('processResources') {
+	dependsOn 'bundleOpenApiSpec'
+}
+
+tasks.named('openApiGenerate') {
 	dependsOn 'bundleOpenApiSpec'
 }
 

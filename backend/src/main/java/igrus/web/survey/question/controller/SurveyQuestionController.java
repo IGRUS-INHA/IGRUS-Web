@@ -3,8 +3,10 @@ package igrus.web.survey.question.controller;
 import igrus.web.common.util.EnumUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.SurveyQuestionApi;
-import igrus.web.generated.model.GetSurveyDetail200Response;
-import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInner;
+import igrus.web.generated.model.ApiCreateQuestionRequest;
+import igrus.web.generated.model.ApiQuestionResponse;
+import igrus.web.generated.model.ApiSurveyDetailResponse;
+import igrus.web.generated.model.ApiUpdateQuestionRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.dto.response.SurveyDetailResponseMapper;
@@ -34,9 +36,9 @@ public class SurveyQuestionController implements SurveyQuestionApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> createQuestion(
+    public ResponseEntity<ApiSurveyDetailResponse> createQuestion(
             Long surveyId,
-            igrus.web.generated.model.CreateQuestionRequest createQuestionRequest
+            ApiCreateQuestionRequest createQuestionRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("질문 추가 요청 - surveyId: {}, userId: {}, title: {}", surveyId, user.userId(), createQuestionRequest.getTitle());
@@ -55,7 +57,7 @@ public class SurveyQuestionController implements SurveyQuestionApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInner>> getQuestionList(Long surveyId) {
+    public ResponseEntity<List<ApiQuestionResponse>> getQuestionList(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("질문 목록 조회 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
 
@@ -67,20 +69,20 @@ public class SurveyQuestionController implements SurveyQuestionApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetSurveyDetail200Response> updateQuestion(
+    public ResponseEntity<ApiSurveyDetailResponse> updateQuestion(
             Long surveyId,
             Long questionId,
-            igrus.web.generated.model.CreateQuestionRequest createQuestionRequest
+            ApiUpdateQuestionRequest updateQuestionRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("질문 수정 요청 - surveyId: {}, questionId: {}, userId: {}", surveyId, questionId, user.userId());
 
         UpdateQuestionRequest request = new UpdateQuestionRequest(
-                EnumUtils.fromStringOrNull(SurveyQuestionType.class, createQuestionRequest.getQuestionType().name()),
-                createQuestionRequest.getTitle(),
-                createQuestionRequest.getDescription(),
-                Boolean.TRUE.equals(createQuestionRequest.getRequired()),
-                createQuestionRequest.getDisplayOrder() != null ? createQuestionRequest.getDisplayOrder() : 0
+                EnumUtils.fromStringOrNull(SurveyQuestionType.class, updateQuestionRequest.getQuestionType().name()),
+                updateQuestionRequest.getTitle(),
+                updateQuestionRequest.getDescription(),
+                Boolean.TRUE.equals(updateQuestionRequest.getRequired()),
+                updateQuestionRequest.getDisplayOrder() != null ? updateQuestionRequest.getDisplayOrder() : 0
         );
 
         SurveyDetailResponse response = surveyQuestionService.updateQuestion(surveyId, questionId, request, user);
