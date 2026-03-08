@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { UserListResponse } from './userListResponse';
+import type { UserListResponse } from "./userListResponse";
 
 /**
  * 관리자용 회원 목록 페이징 응답

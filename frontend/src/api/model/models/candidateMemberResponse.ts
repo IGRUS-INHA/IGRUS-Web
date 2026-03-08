@@ -33,8 +33,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { CandidateMemberResponseRole } from './candidateMemberResponseRole';
-import type { CandidateMemberResponseWishesItem } from './candidateMemberResponseWishesItem';
+import type { CandidateMemberResponseRole } from "./candidateMemberResponseRole";
+import type { CandidateMemberResponseWishesItem } from "./candidateMemberResponseWishesItem";
 
 /**
  * 학기별 회원 등록 후보 응답
