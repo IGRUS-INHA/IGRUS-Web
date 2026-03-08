@@ -528,6 +528,10 @@
   margin-bottom: var(--spacing-s5);
 }
 
+.infoGridEditing {
+  grid-template-columns: 1fr;
+}
+
 .infoItem {
   padding: var(--spacing-s3);
   background: var(--color-secondary);
@@ -549,6 +553,60 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--color-foreground);
+}
+
+/* ===== Edit Mode ===== */
+.infoItem input,
+.infoItem select {
+  width: 100%;
+  font-size: 13px;
+  padding: var(--spacing-s1) var(--spacing-s2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-r1);
+  background: var(--color-background);
+  font-family: inherit;
+  color: var(--color-foreground);
+}
+
+.infoItem input:focus,
+.infoItem select:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(3, 166, 158, 0.12);
+}
+
+.editBtnGroup {
+  display: flex;
+  gap: var(--spacing-s1);
+  flex-wrap: wrap;
+}
+
+.editBtnGroup button {
+  flex: 1;
+  min-width: 0;
+  padding: var(--spacing-s1) var(--spacing-s2);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-r1);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.editBtnGroup button:hover {
+  background: var(--color-muted);
+}
+
+.editBtnGroupActive {
+  background: var(--color-primary) !important;
+  color: var(--color-primary-foreground) !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* ===== Timeline ===== */

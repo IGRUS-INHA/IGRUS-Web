@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import { keepPreviousData } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   Search,
   User,
@@ -12,20 +15,32 @@ import {
   BookOpen,
   Pencil,
   LogOut,
+  Save,
   Users,
   X,
 } from "lucide-react";
 import {
   useGetUserList,
   useGetUserDetail,
+  useEditUserInfo,
+  useChangeUserRole,
 } from "@/api/model/admin-user-management/admin-user-management";
+import type { ChangeUserRoleRequestRole } from "@/api/model/models/changeUserRoleRequestRole";
 import { useGetPendingAssociates } from "@/api/model/admin-associate-approval/admin-associate-approval";
 import { useGetAllInquiries } from "@/api/model/admin-inquiry/admin-inquiry";
 import type { GetUserListRole } from "@/api/model/models/getUserListRole";
 import { Button } from "@/components/ui/button";
+import { majorOptions } from "@/constants/majorOptions";
 import { useAuth, usePermission } from "@/hooks";
 import { cn } from "@/lib/utils";
-import UserEditModal from "./UserEditModal";
+import { useUIStore } from "@/stores";
+import { formatPhoneNumber } from "@/utils";
+import { getErrorMessage, hasErrorCode } from "@/utils/error";
+import {
+  userEditSchema,
+  buildPatchPayload,
+  type UserEditFormData,
+} from "./userEditSchema";
 import styles from "./UsersTab.module.css";
 
 /* ===== Constants ===== */
@@ -448,17 +463,187 @@ function NavButtonCell({
   );
 }
 
+const EDIT_ENROLLMENT_OPTIONS = [
+  { value: "ENROLLED", label: "재학" },
+  { value: "GENERAL_LEAVE", label: "휴학(일반)" },
+  { value: "MILITARY_LEAVE", label: "휴학(군)" },
+] as const;
+
+const EDIT_GENDER_OPTIONS = [
+  { value: "MALE", label: "남" },
+  { value: "FEMALE", label: "여" },
+] as const;
+
+const EDIT_ROLE_OPTIONS = [
+  { value: "ASSOCIATE", label: "준회원" },
+  { value: "MEMBER", label: "정회원" },
+  { value: "OPERATOR", label: "운영진" },
+  { value: "ADMIN", label: "관리자" },
+] as const;
+
+const EDIT_GRADE_OPTIONS = [1, 2, 3, 4] as const;
+
 function DetailPanel({
   userId,
   isAdmin,
-  onEditClick,
 }: {
   userId: number;
   isAdmin: boolean;
-  onEditClick: () => void;
 }) {
+  const addToast = useUIStore((s) => s.addToast);
+  const queryClient = useQueryClient();
+
   const { data: response, isLoading } = useGetUserDetail(userId);
   const detail = response?.status === 200 ? response.data : undefined;
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<
+    ChangeUserRoleRequestRole | undefined
+  >(undefined);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    setError,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<UserEditFormData>({
+    resolver: zodResolver(userEditSchema),
+    mode: "onTouched",
+  });
+
+  // Sync form & role when detail loads
+  useEffect(() => {
+    if (detail) {
+      reset({
+        studentId: detail.studentId ?? "",
+        email: detail.email ?? "",
+        name: detail.name ?? "",
+        phoneNumber: detail.phoneNumber ?? "",
+        department: detail.department ?? "",
+        grade: detail.grade ?? 1,
+        enrollmentStatus:
+          (detail.enrollmentStatus as UserEditFormData["enrollmentStatus"]) ??
+          "ENROLLED",
+        gender: (detail.gender as UserEditFormData["gender"]) ?? "MALE",
+      });
+      setSelectedRole(detail.role as ChangeUserRoleRequestRole);
+    }
+  }, [detail, reset]);
+
+  const { mutate: editUserInfo, isPending } = useEditUserInfo({
+    mutation: {
+      onSuccess: () => {
+        addToast({
+          type: "success",
+          title: "정보 수정 완료",
+          message: "회원 정보가 수정되었습니다.",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/v1/admin/users"] });
+        setIsEditing(false);
+      },
+      onError: (error: unknown) => {
+        if (hasErrorCode(error, "DUPLICATE_STUDENT_ID")) {
+          setError("studentId", { message: "이미 가입된 학번입니다." });
+        } else if (hasErrorCode(error, "DUPLICATE_EMAIL")) {
+          setError("email", { message: "이미 사용 중인 이메일입니다." });
+        } else if (hasErrorCode(error, "DUPLICATE_PHONE_NUMBER")) {
+          setError("phoneNumber", {
+            message: "이미 사용 중인 전화번호입니다.",
+          });
+        } else {
+          addToast({
+            type: "error",
+            title: "정보 수정 실패",
+            message: getErrorMessage(error),
+          });
+        }
+      },
+    },
+  });
+
+  const { mutate: changeUserRole, isPending: isRoleChangePending } =
+    useChangeUserRole({
+      mutation: {
+        onSuccess: () => {
+          addToast({
+            type: "success",
+            title: "권한 변경 완료",
+            message: "회원 권한이 변경되었습니다.",
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/v1/admin/users"] });
+          setIsEditing(false);
+        },
+        onError: (error: unknown) => {
+          addToast({
+            type: "error",
+            title: "권한 변경 실패",
+            message: getErrorMessage(error),
+          });
+        },
+      },
+    });
+
+  const selectedGrade = watch("grade");
+  const selectedEnrollment = watch("enrollmentStatus");
+  const selectedGender = watch("gender");
+
+  const onSubmit = async (data: UserEditFormData) => {
+    if (!detail) return;
+
+    const payload = buildPatchPayload(detail, data);
+    const hasInfoChanges = Object.keys(payload).length > 0;
+    const hasRoleChange =
+      selectedRole !== undefined && selectedRole !== detail.role;
+
+    if (!hasInfoChanges && !hasRoleChange) {
+      addToast({ type: "default", message: "변경된 항목이 없습니다." });
+      return;
+    }
+
+    const result = await Swal.fire({
+      icon: "question",
+      title: "회원 정보 수정",
+      text: `${detail.name}님의 정보를 수정하시겠습니까?`,
+      showCancelButton: true,
+      confirmButtonText: "수정",
+      cancelButtonText: "취소",
+      confirmButtonColor: "#2563EB",
+      cancelButtonColor: "#6C757D",
+      showClass: { popup: "", backdrop: "" },
+      hideClass: { popup: "", backdrop: "" },
+    });
+
+    if (result.isConfirmed) {
+      if (hasInfoChanges) {
+        editUserInfo({ userId, data: payload });
+      }
+      if (hasRoleChange) {
+        changeUserRole({ userId, data: { role: selectedRole } });
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    if (detail) {
+      reset({
+        studentId: detail.studentId ?? "",
+        email: detail.email ?? "",
+        name: detail.name ?? "",
+        phoneNumber: detail.phoneNumber ?? "",
+        department: detail.department ?? "",
+        grade: detail.grade ?? 1,
+        enrollmentStatus:
+          (detail.enrollmentStatus as UserEditFormData["enrollmentStatus"]) ??
+          "ENROLLED",
+        gender: (detail.gender as UserEditFormData["gender"]) ?? "MALE",
+      });
+      setSelectedRole(detail.role as ChangeUserRoleRequestRole);
+    }
+    setIsEditing(false);
+  };
 
   if (isLoading) {
     return (
@@ -483,6 +668,7 @@ function DetailPanel({
   }
 
   const roleLabel = ROLE_LABELS[detail.role ?? ""] ?? detail.role ?? "-";
+  const isSaving = isSubmitting || isPending || isRoleChangePending;
 
   return (
     <div className={styles.detailPanel} key={userId}>
@@ -498,23 +684,198 @@ function DetailPanel({
       {/* Body */}
       <div className={styles.detailBody}>
         <div className={styles.detailSectionLabel}>Information</div>
-        <div className={styles.infoGrid}>
-          <InfoItem label="학번" value={detail.studentId ?? "-"} />
-          <InfoItem label="학과" value={detail.department ?? "-"} />
-          <InfoItem label="이메일" value={detail.email ?? "-"} fullWidth />
-          <InfoItem label="전화번호" value={detail.phoneNumber ?? "-"} />
-          <InfoItem
+        <form
+          id={`edit-form-${userId}`}
+          onSubmit={handleSubmit(onSubmit)}
+          className={cn(styles.infoGrid, isEditing && styles.infoGridEditing)}
+        >
+          {/* Edit-only: 이름 */}
+          {isEditing && (
+            <EditableInfoItem
+              label="이름"
+              viewValue={detail.name ?? "-"}
+              editContent={<input {...register("name")} placeholder="홍길동" />}
+              error={errors.name?.message}
+              isEditing={isEditing}
+            />
+          )}
+
+          {/* Edit-only: 권한 */}
+          {isEditing && (
+            <EditableInfoItem
+              label="권한"
+              viewValue={roleLabel}
+              editContent={
+                <div className={styles.editBtnGroup}>
+                  {EDIT_ROLE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() =>
+                        setSelectedRole(opt.value as ChangeUserRoleRequestRole)
+                      }
+                      className={cn(
+                        selectedRole === opt.value && styles.editBtnGroupActive,
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              }
+              isEditing={isEditing}
+            />
+          )}
+
+          {/* 학번 */}
+          <EditableInfoItem
+            label="학번"
+            viewValue={detail.studentId ?? "-"}
+            editContent={
+              <input {...register("studentId")} placeholder="20231234" />
+            }
+            error={errors.studentId?.message}
+            isEditing={isEditing}
+          />
+
+          {/* 학과 */}
+          <EditableInfoItem
+            label="학과"
+            viewValue={detail.department ?? "-"}
+            editContent={
+              <select {...register("department")}>
+                <option value="">학과 선택</option>
+                {majorOptions.map((group) => (
+                  <optgroup key={group.title} label={group.title}>
+                    {group.items.map((item) => (
+                      <option key={item.key} value={item.value}>
+                        {item.value}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            }
+            error={errors.department?.message}
+            isEditing={isEditing}
+          />
+
+          {/* 이메일 */}
+          <EditableInfoItem
+            label="이메일"
+            viewValue={detail.email ?? "-"}
+            editContent={
+              <input
+                {...register("email")}
+                type="email"
+                placeholder="user@inha.edu"
+              />
+            }
+            error={errors.email?.message}
+            isEditing={isEditing}
+            fullWidth
+          />
+
+          {/* 전화번호 */}
+          <EditableInfoItem
+            label="전화번호"
+            viewValue={detail.phoneNumber ?? "-"}
+            editContent={
+              <input
+                {...register("phoneNumber", {
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                    setValue("phoneNumber", formatPhoneNumber(e.target.value));
+                  },
+                })}
+                placeholder="010-1234-5678"
+              />
+            }
+            error={errors.phoneNumber?.message}
+            isEditing={isEditing}
+          />
+
+          {/* 학년 */}
+          <EditableInfoItem
             label="학년"
-            value={detail.grade ? `${detail.grade}학년` : "-"}
+            viewValue={detail.grade ? `${detail.grade}학년` : "-"}
+            editContent={
+              <div className={styles.editBtnGroup}>
+                {EDIT_GRADE_OPTIONS.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() =>
+                      setValue("grade", g, { shouldValidate: true })
+                    }
+                    className={cn(
+                      selectedGrade === g && styles.editBtnGroupActive,
+                    )}
+                  >
+                    {g}학년
+                  </button>
+                ))}
+              </div>
+            }
+            error={errors.grade?.message}
+            isEditing={isEditing}
           />
-          <InfoItem
+
+          {/* 성별 */}
+          <EditableInfoItem
             label="성별"
-            value={GENDER_LABELS[detail.gender ?? ""] ?? "-"}
+            viewValue={GENDER_LABELS[detail.gender ?? ""] ?? "-"}
+            editContent={
+              <div className={styles.editBtnGroup}>
+                {EDIT_GENDER_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() =>
+                      setValue("gender", opt.value, { shouldValidate: true })
+                    }
+                    className={cn(
+                      selectedGender === opt.value && styles.editBtnGroupActive,
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            }
+            error={errors.gender?.message}
+            isEditing={isEditing}
           />
-          <InfoItem
+
+          {/* 재학 상태 */}
+          <EditableInfoItem
             label="재학 상태"
-            value={ENROLLMENT_LABELS[detail.enrollmentStatus ?? ""] ?? "-"}
+            viewValue={ENROLLMENT_LABELS[detail.enrollmentStatus ?? ""] ?? "-"}
+            editContent={
+              <div className={styles.editBtnGroup}>
+                {EDIT_ENROLLMENT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() =>
+                      setValue("enrollmentStatus", opt.value, {
+                        shouldValidate: true,
+                      })
+                    }
+                    className={cn(
+                      selectedEnrollment === opt.value &&
+                        styles.editBtnGroupActive,
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            }
+            error={errors.enrollmentStatus?.message}
+            isEditing={isEditing}
           />
+
+          {/* 읽기 전용 필드 */}
           <InfoItem
             label="가입일"
             value={
@@ -563,7 +924,7 @@ function DetailPanel({
             }
             fullWidth
           />
-        </div>
+        </form>
 
         {/* Recent Activity (Mock) */}
         <div className={styles.detailSectionLabel}>Recent Activity</div>
@@ -590,20 +951,76 @@ function DetailPanel({
       {/* Actions */}
       {isAdmin && (
         <div className={styles.detailActions}>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onEditClick}
-          >
-            <Pencil size={14} />
-            정보수정
-          </Button>
-          <Button type="button" variant="destructive" size="sm">
-            <LogOut size={14} />
-            강제 탈퇴
-          </Button>
+          {isEditing ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCancel}
+                disabled={isSaving}
+              >
+                <X size={14} />
+                취소
+              </Button>
+              <Button
+                type="submit"
+                form={`edit-form-${userId}`}
+                size="sm"
+                disabled={isSaving}
+              >
+                <Save size={14} />
+                {isSaving ? "저장 중..." : "저장"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil size={14} />
+                정보수정
+              </Button>
+              <Button type="button" variant="destructive" size="sm">
+                <LogOut size={14} />
+                강제 탈퇴
+              </Button>
+            </>
+          )}
         </div>
+      )}
+    </div>
+  );
+}
+
+function EditableInfoItem({
+  label,
+  viewValue,
+  editContent,
+  error,
+  isEditing,
+  fullWidth,
+}: {
+  label: string;
+  viewValue: string;
+  editContent: React.ReactNode;
+  error?: string;
+  isEditing: boolean;
+  fullWidth?: boolean;
+}) {
+  return (
+    <div className={cn(styles.infoItem, fullWidth && styles.infoItemFullWidth)}>
+      <div className={styles.infoLabel}>{label}</div>
+      {isEditing ? (
+        <div>
+          {editContent}
+          {error && <p className="text-destructive text-xs mt-s1">{error}</p>}
+        </div>
+      ) : (
+        <div className={styles.infoValue}>{viewValue}</div>
       )}
     </div>
   );
@@ -648,7 +1065,7 @@ function EmptyDetailPanel() {
 export default function UsersTab() {
   const [, setSearchParams] = useSearchParams();
   const { user: currentUser } = useAuth();
-  const { canApproveAssociate } = usePermission();
+  const { canAccessAdmin } = usePermission();
 
   // 승인 대기 준회원 수 (size=1로 최소 데이터만, totalElements만 사용)
   const { data: pendingAssociatesRes } = useGetPendingAssociates({
@@ -675,9 +1092,6 @@ export default function UsersTab() {
   const [roleFilter, setRoleFilter] = useState<GetUserListRole | "">("");
   const [page, setPage] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState<number | undefined>(
-    undefined,
-  );
-  const [editModalUserId, setEditModalUserId] = useState<number | undefined>(
     undefined,
   );
   const [isCompact, setIsCompact] = useState(() => window.innerWidth < 1200);
@@ -760,7 +1174,7 @@ export default function UsersTab() {
           title="준회원 승인"
           count={pendingAssociateCount}
           onClick={() => setSearchParams({ tab: "associates" })}
-          disabled={!canApproveAssociate()}
+          disabled={!canAccessAdmin()}
         />
         <BentoChartRegistrations />
         <NavButtonCell
@@ -941,11 +1355,7 @@ export default function UsersTab() {
         {/* Right: Detail Panel (desktop only) */}
         {!isCompact &&
           (selectedUserId ? (
-            <DetailPanel
-              userId={selectedUserId}
-              isAdmin={isAdmin}
-              onEditClick={() => setEditModalUserId(selectedUserId)}
-            />
+            <DetailPanel userId={selectedUserId} isAdmin={isAdmin} />
           ) : (
             <EmptyDetailPanel />
           ))}
@@ -968,21 +1378,9 @@ export default function UsersTab() {
             >
               <X size={20} />
             </button>
-            <DetailPanel
-              userId={selectedUserId}
-              isAdmin={isAdmin}
-              onEditClick={() => setEditModalUserId(selectedUserId)}
-            />
+            <DetailPanel userId={selectedUserId} isAdmin={isAdmin} />
           </div>
         </div>
-      )}
-
-      {/* Edit Modal */}
-      {editModalUserId !== undefined && (
-        <UserEditModal
-          userId={editModalUserId}
-          onClose={() => setEditModalUserId(undefined)}
-        />
       )}
     </div>
   );
