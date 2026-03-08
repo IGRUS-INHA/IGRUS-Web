@@ -85,6 +85,6 @@ jobs:
           FEATURE_COMMUNITY: 'false'
           FEATURE_SEARCH: 'false'
           FEATURE_PROFILE_EDIT: 'false'
-          FEATURE_EVENTS: 'false'
+          FEATURE_EVENTS: 'true'
           FEATURE_INSTAGRAM: 'false'
           FEATURE_DARK_MODE: 'false'
