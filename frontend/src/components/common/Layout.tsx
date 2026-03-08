@@ -20,6 +20,7 @@ export default function Layout() {
   };
 
   const showFooter = shouldShowFooter(location.pathname);
+  const isHome = location.pathname === "/";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
@@ -46,7 +47,7 @@ export default function Layout() {
         </div>
 
         {/* Page Content */}
-        <main className="px-s5 pt-s5 pb-s5 flex-1">
+        <main className={`px-s5 pb-s5 flex-1 ${isHome ? "" : "pt-s5"}`}>
           <div className="max-w-7xl mx-auto h-full">
             <Outlet />
           </div>
