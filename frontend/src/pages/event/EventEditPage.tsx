@@ -237,7 +237,8 @@ export default function EventEditPage() {
     let resolvedSurveyId: number | null = null;
 
     try {
-      resolvedSurveyId = (await submitSurvey(data.title)) ?? null;
+      resolvedSurveyId =
+        (await submitSurvey(data.title, data.allowExternal)) ?? null;
     } catch {
       alert("설문 처리에 실패했습니다. 다시 시도해주세요.");
       return;
