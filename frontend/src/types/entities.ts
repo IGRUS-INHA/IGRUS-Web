@@ -129,6 +129,7 @@ export interface Event {
   thumbnailObjectKey?: string;
   allowExternal?: boolean;
   isRegistrable?: boolean;
+  surveyId?: number;
 }
 
 export interface EventDetail extends Event {

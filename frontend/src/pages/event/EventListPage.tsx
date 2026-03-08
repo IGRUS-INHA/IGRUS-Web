@@ -87,6 +87,7 @@ function mapToEvent(
     ...(apiEvent.isRegistrable !== undefined && {
       isRegistrable: apiEvent.isRegistrable,
     }),
+    ...(apiEvent.surveyId != null && { surveyId: apiEvent.surveyId }),
   };
 }
 
