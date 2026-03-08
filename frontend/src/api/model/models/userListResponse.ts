@@ -52,6 +52,10 @@ export interface UserListResponse {
   role?: UserListResponseRole;
   /** 상태 */
   status?: UserListResponseStatus;
+  /** 학과 */
+  department?: string;
+  /** 전화번호 */
+  phoneNumber?: string;
   /** 가입일 */
   createdAt?: string;
 }
