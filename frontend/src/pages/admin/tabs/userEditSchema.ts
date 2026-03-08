@@ -1,4 +1,6 @@
 import { z } from "zod";
+import type { AdminEditUserInfoRequest } from "@/api/model/models/adminEditUserInfoRequest";
+import type { UserDetailResponse } from "@/api/model/models/userDetailResponse";
 
 export const userEditSchema = z.object({
   studentId: z
@@ -31,3 +33,28 @@ export const userEditSchema = z.object({
 });
 
 export type UserEditFormData = z.infer<typeof userEditSchema>;
+
+export function buildPatchPayload(
+  original: UserDetailResponse,
+  edited: UserEditFormData,
+): AdminEditUserInfoRequest {
+  const payload: AdminEditUserInfoRequest = {};
+  if (edited.studentId !== original.studentId)
+    payload.studentId = edited.studentId;
+  if (edited.email !== original.email) payload.email = edited.email;
+  if (edited.name !== original.name) payload.name = edited.name;
+  if (edited.phoneNumber !== original.phoneNumber)
+    payload.phoneNumber = edited.phoneNumber;
+  if (edited.department !== original.department)
+    payload.department = edited.department;
+  if (edited.grade !== original.grade) payload.grade = edited.grade;
+  if (edited.enrollmentStatus !== original.enrollmentStatus)
+    payload.enrollmentStatus = edited.enrollmentStatus as NonNullable<
+      AdminEditUserInfoRequest["enrollmentStatus"]
+    >;
+  if (edited.gender !== original.gender)
+    payload.gender = edited.gender as NonNullable<
+      AdminEditUserInfoRequest["gender"]
+    >;
+  return payload;
+}
