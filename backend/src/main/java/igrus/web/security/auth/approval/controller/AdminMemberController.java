@@ -52,6 +52,7 @@ public class AdminMemberController implements AdminAssociateApprovalApi {
     private final BulkRejectAssociatesService bulkRejectAssociatesService;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR')")
     public ResponseEntity<ApiAssociateInfoPageResponse> getPendingAssociates(
             Integer page,
             Integer size,

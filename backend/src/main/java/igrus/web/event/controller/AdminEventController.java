@@ -162,7 +162,8 @@ public class AdminEventController implements AdminEventApi {
                                 r.visibility().name())
                         : null)
                 .surveyId(r.surveyId())
-                .allowExternal(r.allowExternal());
+                .allowExternal(r.allowExternal())
+                .thumbnailObjectKey(r.thumbnailObjectKey());
     }
 
     private ApiEventAttachmentResponse mapToAttachmentResponse(EventAttachmentDto a) {

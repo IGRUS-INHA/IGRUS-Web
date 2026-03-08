@@ -14,7 +14,7 @@ interface CommentListProps {
 export function CommentList({ comments, postId }: CommentListProps) {
   if (comments.length === 0) {
     return (
-      <div className="text-center py-s8 text-muted-foreground">
+      <div className="text-center py-s8 text-sm md:text-base text-muted-foreground">
         아직 댓글이 없습니다. 첫 댓글을 작성해보세요!
       </div>
     );

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -39,4 +40,17 @@ public interface EventAttachmentRepository extends JpaRepository<EventAttachment
             "JOIN FETCH ea.fileMetadata " +
             "WHERE ea.event.id = :eventId")
     List<EventAttachment> findByEventIdWithFileMetadata(@Param("eventId") Long eventId);
+
+    /**
+     * 여러 행사 ID에 대해 각 행사의 첫 번째 첨부파일(id 기준)을 한 번에 조회한다 (N+1 방지).
+     */
+    @Query("SELECT ea FROM EventAttachment ea " +
+            "JOIN FETCH ea.fileMetadata " +
+            "WHERE ea.event.id IN :eventIds " +
+            "AND ea.id IN (" +
+            "  SELECT MIN(ea2.id) FROM EventAttachment ea2 " +
+            "  WHERE ea2.event.id IN :eventIds " +
+            "  GROUP BY ea2.event.id" +
+            ")")
+    List<EventAttachment> findFirstByEventIds(@Param("eventIds") Collection<Long> eventIds);
 }

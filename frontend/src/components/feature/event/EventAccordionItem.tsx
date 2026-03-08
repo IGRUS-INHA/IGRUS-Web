@@ -62,6 +62,7 @@ import ReasonDialog from "@/components/feature/event/ReasonDialog";
 import { cn } from "@/lib/utils";
 import { useResolvedImageUrls } from "@/hooks/useResolvedImageUrls";
 import { useMemo } from "react";
+import { ImageLightbox } from "@/components/ui";
 
 function formatShortDate(isoString?: string): string {
   if (!isoString) return "";
@@ -87,6 +88,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const [reasonDialog, setReasonDialog] = useState<{
     title: string;
@@ -338,6 +340,16 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const progressPercent =
     capacity > 0 ? Math.min((currentCount / capacity) * 100, 100) : 0;
 
+  // 썸네일 — collapsed 상태에서 제목 좌측에 표시
+  const thumbnailKeys = useMemo(
+    () => (event.thumbnailObjectKey ? [event.thumbnailObjectKey] : []),
+    [event.thumbnailObjectKey],
+  );
+  const { urls: thumbnailUrls } = useResolvedImageUrls(thumbnailKeys);
+  const thumbnailSrc = event.thumbnailObjectKey
+    ? thumbnailUrls.get(event.thumbnailObjectKey)
+    : undefined;
+
   // 이미지 — 확장 시 detail.attachments에서 objectKey 추출
   const imageObjectKeys = useMemo(
     () =>
@@ -370,6 +382,17 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
         }}
         className="relative w-full px-s5 py-s4 flex items-center gap-s4 text-left hover:bg-muted/30 transition cursor-pointer"
       >
+        {/* Thumbnail */}
+        {thumbnailSrc && (
+          <div className="w-14 h-14 rounded-r3 overflow-hidden bg-muted/30 shrink-0">
+            <img
+              src={thumbnailSrc}
+              alt={event.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         {/* Info area */}
         <div className="flex-1 min-w-0">
           {/* Title + badges on same row */}
@@ -625,16 +648,21 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                 const src = resolvedImageUrls.get(key);
                 if (!src) return null;
                 return (
-                  <div
+                  <button
                     key={key}
-                    className="w-24 h-24 rounded-r3 overflow-hidden bg-muted/30 shrink-0"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxIndex(idx);
+                    }}
+                    className="w-24 h-24 rounded-r3 overflow-hidden bg-muted/30 shrink-0 cursor-pointer"
                   >
                     <img
                       src={src}
                       alt={`${event.title} ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -728,6 +756,17 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Image lightbox */}
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={imageObjectKeys
+            .map((key) => resolvedImageUrls.get(key))
+            .filter((src): src is string => !!src)}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
       )}
 
       {/* Reason dialog — grayscale 필터 영향을 피하기 위해 portal로 body에 렌더링 */}

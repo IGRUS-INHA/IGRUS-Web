@@ -334,6 +334,11 @@ EventListResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
+    thumbnailObjectKey:
+      type:
+        - string
+        - 'null'
+      description: 첫 번째 첨부파일의 object key (썸네일 용도)
 AdminEventListResponse:
   type: object
   description: 관리자용 행사 목록 응답 (visibility 포함)
@@ -395,6 +400,11 @@ AdminEventListResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
+    thumbnailObjectKey:
+      type:
+        - string
+        - 'null'
+      description: 첫 번째 첨부파일의 object key (썸네일 용도)
 AdminEventDetailResponse:
   type: object
   description: 관리자용 행사 상세 응답 (visibility 포함)

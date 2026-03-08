@@ -95,11 +95,11 @@ public class EventController implements EventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiEventDetailResponse> getEvent(Long eventId) {
-        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
-        log.info("행사 상세 조회 요청 - eventId: {}, userId: {}", eventId, user.userId());
-        var response = eventService.getEvent(eventId, user.userId());
+        AuthenticatedUser user = SecurityUtils.getCurrentUser();
+        Long userId = user != null ? user.userId() : null;
+        log.info("행사 상세 조회 요청 - eventId: {}, userId: {}", eventId, userId);
+        var response = eventService.getEvent(eventId, userId);
         return ResponseEntity.ok(mapToEventDetailResponse(response));
     }
 
@@ -270,7 +270,8 @@ public class EventController implements EventApi {
                         : null)
                 .isRegistrable(r.isRegistrable())
                 .surveyId(r.surveyId())
-                .allowExternal(r.allowExternal());
+                .allowExternal(r.allowExternal())
+                .thumbnailObjectKey(r.thumbnailObjectKey());
     }
 
     private ApiEventAttachmentResponse mapToAttachmentResponse(EventAttachmentDto a) {

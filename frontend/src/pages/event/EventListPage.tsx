@@ -78,6 +78,9 @@ function mapToEvent(
     ...(apiEvent.registrationEndAt && {
       registrationDeadline: apiEvent.registrationEndAt,
     }),
+    ...(apiEvent.thumbnailObjectKey && {
+      thumbnailObjectKey: apiEvent.thumbnailObjectKey,
+    }),
   };
 }
 

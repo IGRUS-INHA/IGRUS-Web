@@ -3,7 +3,9 @@ eventsByEventId:
     tags:
     - Event
     summary: 행사 상세 조회
-    description: 행사의 상세 정보를 조회합니다. 준회원은 조회할 수 없습니다.
+    description: |-
+      행사의 상세 정보를 조회합니다. 준회원은 조회할 수 없습니다.
+      allowExternal=true인 행사는 비인증 사용자도 조회할 수 있습니다.
     operationId: getEvent
     parameters:
     - name: eventId
@@ -21,13 +23,14 @@ eventsByEventId:
             schema:
               $ref: ../schemas/events.yaml#/EventDetailResponse
       '401':
-        description: 인증 필요
+        description: 인증 필요 (allowExternal이 false인 행사에 비인증 접근 시)
       '403':
         description: 준회원 접근 불가
       '404':
         description: 행사를 찾을 수 없음
     security:
     - BearerAuthentication: []
+    - {}
   put:
     tags:
     - Event
