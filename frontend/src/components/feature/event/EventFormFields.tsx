@@ -19,7 +19,6 @@ import {
   Plus,
 } from "lucide-react";
 import type { UploadFile } from "@/types/upload";
-import { IMAGE_UPLOAD_CONFIG } from "@/utils/upload";
 import { WysiwygEditor } from "@/components/feature/editor";
 import { RegistrationPeriodSelector } from "@/components/feature/event/RegistrationPeriodSelector";
 import { EventDateTimePicker } from "@/components/feature/event/EventDateTimePicker";
@@ -532,8 +531,7 @@ export function EventFormFields({
                 </div>
               ))}
               <p className="text-xs text-muted-foreground text-center pt-s2">
-                클릭하여 이미지 추가 · {files.length}/
-                {IMAGE_UPLOAD_CONFIG.maxFiles}
+                클릭하여 이미지 추가 · {files.length}개
               </p>
             </div>
           ) : (

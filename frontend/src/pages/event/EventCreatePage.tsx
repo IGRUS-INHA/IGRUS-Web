@@ -9,9 +9,7 @@ import {
   type EventFormValues,
 } from "@/components/feature/event/EventFormFields";
 import { useCreateEvent } from "@/hooks/queries/useEvents";
-import { useCreateSurvey } from "@/api/model/survey/survey";
-import { useCreateQuestion } from "@/api/model/survey-question/survey-question";
-import { useCreateOption } from "@/api/model/survey-question-option/survey-question-option";
+import { useSurveyCreate } from "@/hooks/useSurveyCreate";
 import { CreateEventRequestRegistrationType } from "@/api/model/models";
 import { REGISTRATION_PERIOD_PRESETS } from "@/constants/event";
 import { formatDateLocal } from "@/utils/event";
@@ -24,7 +22,6 @@ import { useImageUpload } from "@/hooks/useImageUpload";
 import { useToast } from "@/hooks/useToast";
 import { IMAGE_UPLOAD_CONFIG } from "@/utils/upload";
 import { UPLOAD_PURPOSE } from "@/services/uploadService";
-import type { DraftQuestion } from "@/components/feature/event/SurveyQuestionBuilder";
 
 const TODAY = new Date().toLocaleDateString("ko-KR", {
   year: "numeric",
@@ -86,11 +83,7 @@ export default function EventCreatePage() {
   const capacity = watch("capacity");
 
   const [capacityRaw, setCapacityRaw] = useState("30");
-  const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([]);
-
-  const { mutateAsync: createSurveyAsync } = useCreateSurvey();
-  const { mutateAsync: createQuestionAsync } = useCreateQuestion();
-  const { mutateAsync: createOptionAsync } = useCreateOption();
+  const { draftQuestions, setDraftQuestions, submitSurvey } = useSurveyCreate();
 
   // 신청 기간 자동 계산
   useEffect(() => {
@@ -152,47 +145,11 @@ export default function EventCreatePage() {
 
     let surveyId: number | null = null;
 
-    if (draftQuestions.length > 0) {
-      try {
-        const surveyRes = await createSurveyAsync({
-          data: {
-            title: `${data.title} 신청 설문`,
-            accessLevel: "MEMBER",
-          },
-        });
-        const newSurveyId =
-          surveyRes.status === 201 ? (surveyRes.data.id ?? null) : null;
-        if (newSurveyId) {
-          surveyId = newSurveyId;
-          for (const q of draftQuestions) {
-            const qRes = await createQuestionAsync({
-              surveyId: newSurveyId,
-              data: {
-                questionType: q.questionType,
-                title: q.title || "질문",
-                required: q.required,
-                displayOrder: q.displayOrder,
-              },
-            });
-            const newQuestionId =
-              qRes.status === 201 ? (qRes.data?.id ?? null) : null;
-            if (newQuestionId && q.options?.length) {
-              for (const [i, text] of q.options.entries()) {
-                if (text.trim()) {
-                  await createOptionAsync({
-                    surveyId: newSurveyId,
-                    questionId: newQuestionId,
-                    data: { text: text.trim(), displayOrder: i + 1 },
-                  });
-                }
-              }
-            }
-          }
-        }
-      } catch {
-        alert("설문 생성에 실패했습니다. 다시 시도해주세요.");
-        return;
-      }
+    try {
+      surveyId = (await submitSurvey(data.title)) ?? null;
+    } catch {
+      alert("설문 생성에 실패했습니다. 다시 시도해주세요.");
+      return;
     }
 
     const uploadResults = await uploadAll();
