@@ -28,8 +28,8 @@ export interface UploadFile {
 
 /** 업로드 제한 설정 */
 export interface UploadConfig {
-  /** 최대 파일 개수 */
-  maxFiles: number;
+  /** 최대 파일 개수 (undefined이면 무제한) */
+  maxFiles?: number;
   /** 최대 파일 크기 (bytes) */
   maxFileSize: number;
   /** 허용 MIME 타입 */

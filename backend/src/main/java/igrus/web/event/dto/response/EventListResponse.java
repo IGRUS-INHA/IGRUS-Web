@@ -7,6 +7,7 @@ import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 행사 목록 조회 응답 DTO.
@@ -26,6 +27,7 @@ import java.time.Instant;
  * @param registrationType    신청 방식 (선착순/선발제)
  * @param isRegistrable       신청 가능 여부
  * @param surveyId            연결된 설문 ID (null이면 설문 미연결)
+ * @param imageUrls           행사 이미지 URL 목록
  */
 public record EventListResponse(
         Long id,
@@ -41,7 +43,8 @@ public record EventListResponse(
         EventStatus eventStatus,
         EventRegistrationType registrationType,
         boolean isRegistrable,
-        Long surveyId
+        Long surveyId,
+        List<String> imageUrls
 ) {
     /**
      * Event 엔티티로부터 EventListResponse를 생성합니다.
@@ -49,7 +52,10 @@ public record EventListResponse(
      * @param event 행사 엔티티
      * @return EventListResponse
      */
-    public static EventListResponse from(Event event) {
+    public static EventListResponse from(Event event, List<EventAttachmentDto> attachments) {
+        List<String> imageUrls = attachments.stream()
+                .map(EventAttachmentDto::objectKey)
+                .toList();
         return new EventListResponse(
                 event.getId(),
                 event.getTitle(),
@@ -64,7 +70,8 @@ public record EventListResponse(
                 event.getEventStatus(),
                 event.getRegistrationType(),
                 event.isRegistrable(),
-                event.getSurveyId()
+                event.getSurveyId(),
+                imageUrls
         );
     }
 }

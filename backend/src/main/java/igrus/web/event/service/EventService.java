@@ -221,7 +221,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(EventListResponse::from)
+                .map(event -> EventListResponse.from(event, getAttachmentDtos(event.getId())))
                 .toList();
     }
 
@@ -534,7 +534,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(EventListResponse::from)
+                .map(event -> EventListResponse.from(event, getAttachmentDtos(event.getId())))
                 .toList();
     }
 

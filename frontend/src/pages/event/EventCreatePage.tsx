@@ -2,16 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import {
   EventFormFields,
   eventFormSchema,
   type EventFormValues,
 } from "@/components/feature/event/EventFormFields";
 import { useCreateEvent } from "@/hooks/queries/useEvents";
-import { useCreateSurvey } from "@/api/model/survey/survey";
-import { useCreateQuestion } from "@/api/model/survey-question/survey-question";
-import { useCreateOption } from "@/api/model/survey-question-option/survey-question-option";
+import { useSurveyCreate } from "@/hooks/useSurveyCreate";
 import { CreateEventRequestRegistrationType } from "@/api/model/models";
 import { REGISTRATION_PERIOD_PRESETS } from "@/constants/event";
 import { formatDateLocal } from "@/utils/event";
@@ -23,7 +21,7 @@ import {
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useToast } from "@/hooks/useToast";
 import { IMAGE_UPLOAD_CONFIG } from "@/utils/upload";
-import type { DraftQuestion } from "@/components/feature/event/SurveyQuestionBuilder";
+import { UPLOAD_PURPOSE } from "@/services/uploadService";
 
 const TODAY = new Date().toLocaleDateString("ko-KR", {
   year: "numeric",
@@ -37,8 +35,9 @@ export default function EventCreatePage() {
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { files, addFiles, removeFile } = useImageUpload({
+  const { files, addFiles, removeFile, uploadAll } = useImageUpload({
     config: IMAGE_UPLOAD_CONFIG,
+    purpose: UPLOAD_PURPOSE.EVENT_IMAGE,
     onValidationError: (errors) => {
       errors.forEach((msg) => toast.error(msg));
     },
@@ -84,11 +83,7 @@ export default function EventCreatePage() {
   const capacity = watch("capacity");
 
   const [capacityRaw, setCapacityRaw] = useState("30");
-  const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([]);
-
-  const { mutateAsync: createSurveyAsync } = useCreateSurvey();
-  const { mutateAsync: createQuestionAsync } = useCreateQuestion();
-  const { mutateAsync: createOptionAsync } = useCreateOption();
+  const { draftQuestions, setDraftQuestions, submitSurvey } = useSurveyCreate();
 
   // 신청 기간 자동 계산
   useEffect(() => {
@@ -150,48 +145,15 @@ export default function EventCreatePage() {
 
     let surveyId: number | null = null;
 
-    if (draftQuestions.length > 0) {
-      try {
-        const surveyRes = await createSurveyAsync({
-          data: {
-            title: `${data.title} 신청 설문`,
-            accessLevel: "MEMBER",
-          },
-        });
-        const newSurveyId =
-          surveyRes.status === 201 ? (surveyRes.data.id ?? null) : null;
-        if (newSurveyId) {
-          surveyId = newSurveyId;
-          for (const q of draftQuestions) {
-            const qRes = await createQuestionAsync({
-              surveyId: newSurveyId,
-              data: {
-                questionType: q.questionType,
-                title: q.title || "질문",
-                required: q.required,
-                displayOrder: q.displayOrder,
-              },
-            });
-            const newQuestionId =
-              qRes.status === 201 ? (qRes.data?.id ?? null) : null;
-            if (newQuestionId && q.options?.length) {
-              for (const [i, text] of q.options.entries()) {
-                if (text.trim()) {
-                  await createOptionAsync({
-                    surveyId: newSurveyId,
-                    questionId: newQuestionId,
-                    data: { text: text.trim(), displayOrder: i + 1 },
-                  });
-                }
-              }
-            }
-          }
-        }
-      } catch {
-        alert("설문 생성에 실패했습니다. 다시 시도해주세요.");
-        return;
-      }
+    try {
+      surveyId = (await submitSurvey(data.title)) ?? null;
+    } catch {
+      alert("설문 생성에 실패했습니다. 다시 시도해주세요.");
+      return;
     }
+
+    const uploadResults = await uploadAll();
+    const imageUrls = uploadResults.map((r) => r.objectKey);
 
     createEvent(
       {
@@ -207,6 +169,7 @@ export default function EventCreatePage() {
           registrationType:
             data.registrationType as CreateEventRequestRegistrationType,
           surveyId,
+          imageUrls,
         },
       },
       {
@@ -270,77 +233,12 @@ export default function EventCreatePage() {
           draftQuestions={draftQuestions}
           onDraftQuestionsChange={setDraftQuestions}
           registrationTypeMode="editable"
+          files={files}
+          onAddFiles={addFiles}
+          onRemoveFile={removeFile}
+          fileInputRef={fileInputRef}
         />
-
-        {/* 이미지 업로드 (생성 전용) */}
-        <div className="mt-s4">
-          <div
-            className="rounded-r4 border-2 border-dashed border-border bg-card shadow-sm px-s6 py-s8 flex flex-col items-center justify-center gap-s3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (e.dataTransfer.files.length > 0) {
-                addFiles(e.dataTransfer.files);
-              }
-            }}
-          >
-            {files.length > 0 ? (
-              <div className="w-full space-y-s2">
-                {files.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-foreground truncate max-w-[80%]">
-                      {file.file.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFile(file.id);
-                      }}
-                      className="text-muted-foreground hover:text-destructive transition cursor-pointer text-xs ml-s2"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                ))}
-                <p className="text-xs text-muted-foreground text-center pt-s2">
-                  클릭하여 이미지 추가 · {files.length}/
-                  {IMAGE_UPLOAD_CONFIG.maxFiles}
-                </p>
-              </div>
-            ) : (
-              <>
-                <ImageIcon size={32} className="text-muted-foreground/50" />
-                <p className="text-sm font-medium text-muted-foreground">
-                  클릭하여 이미지 업로드
-                </p>
-                <p className="typo-c1 text-muted-foreground/70">
-                  JPG, PNG, GIF, WebP · 최대 10MB
-                </p>
-              </>
-            )}
-          </div>
-        </div>
       </form>
-
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={(e) => {
-          if (e.target.files && e.target.files.length > 0) {
-            addFiles(e.target.files);
-            e.target.value = "";
-          }
-        }}
-        className="hidden"
-      />
     </div>
   );
 }

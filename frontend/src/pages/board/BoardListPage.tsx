@@ -143,7 +143,7 @@ export default function BoardListPage() {
               className={cn(
                 "px-s5 py-s2 rounded-full text-sm font-bold transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer",
                 validBoardType === tab
-                  ? "bg-primary text-primary-foreground shadow-lg"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted",
               )}
             >

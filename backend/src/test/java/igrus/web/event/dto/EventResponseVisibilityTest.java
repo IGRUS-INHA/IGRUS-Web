@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -80,7 +81,7 @@ class EventResponseVisibilityTest {
         void from_UnpublishedEvent_MapsVisibilityCorrectly() {
             Event event = createMockEvent(EventVisibility.UNPUBLISHED);
 
-            EventListResponse response = EventListResponse.from(event);
+            EventListResponse response = EventListResponse.from(event, List.of());
 
             assertThat(response.visibility()).isEqualTo(EventVisibility.UNPUBLISHED);
         }
@@ -90,7 +91,7 @@ class EventResponseVisibilityTest {
         void from_PublishedEvent_MapsVisibilityCorrectly() {
             Event event = createMockEvent(EventVisibility.PUBLISHED);
 
-            EventListResponse response = EventListResponse.from(event);
+            EventListResponse response = EventListResponse.from(event, List.of());
 
             assertThat(response.visibility()).isEqualTo(EventVisibility.PUBLISHED);
         }

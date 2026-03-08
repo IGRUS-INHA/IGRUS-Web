@@ -8,6 +8,7 @@ import {
 export const UPLOAD_PURPOSE = {
   POST_IMAGE: "POST_IMAGE",
   INQUIRY_ATTACHMENT: "INQUIRY_ATTACHMENT",
+  EVENT_IMAGE: "EVENT_IMAGE",
 } as const;
 
 /**
