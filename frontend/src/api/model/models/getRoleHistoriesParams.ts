@@ -33,46 +33,46 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { GetRoleHistoriesNewRole } from "./getRoleHistoriesNewRole";
-import type { GetRoleHistoriesPreviousRole } from "./getRoleHistoriesPreviousRole";
+import type { GetRoleHistoriesNewRole } from './getRoleHistoriesNewRole';
+import type { GetRoleHistoriesPreviousRole } from './getRoleHistoriesPreviousRole';
 
 export type GetRoleHistoriesParams = {
-  /**
-   * 대상 사용자 ID
-   */
-  userId?: number;
-  /**
-   * 변경 전 역할 필터
-   */
-  previousRole?: GetRoleHistoriesPreviousRole;
-  /**
-   * 변경 후 역할 필터
-   */
-  newRole?: GetRoleHistoriesNewRole;
-  /**
-   * 변경자 ID 필터
-   */
-  changedBy?: number;
-  /**
-   * 시작 일시
-   */
-  startDate?: string;
-  /**
-   * 종료 일시
-   */
-  endDate?: string;
-  /**
-   * 페이지 번호 (0부터 시작)
-   * @minimum 0
-   */
-  page?: number;
-  /**
-   * 페이지당 항목 수
-   * @minimum 1
-   */
-  size?: number;
-  /**
-   * 정렬 조건. 여러 정렬은 sort를 여러 번 지정합니다. (sort=createdAt,DESC&sort=id,ASC)
-   */
-  sort?: string[];
+/**
+ * 대상 사용자 ID
+ */
+userId?: number;
+/**
+ * 변경 전 역할 필터
+ */
+previousRole?: GetRoleHistoriesPreviousRole;
+/**
+ * 변경 후 역할 필터
+ */
+newRole?: GetRoleHistoriesNewRole;
+/**
+ * 변경자 ID 필터
+ */
+changedBy?: number;
+/**
+ * 시작 일시
+ */
+startDate?: string;
+/**
+ * 종료 일시
+ */
+endDate?: string;
+/**
+ * 페이지 번호 (0부터 시작)
+ * @minimum 0
+ */
+page?: number;
+/**
+ * 페이지당 항목 수
+ * @minimum 1
+ */
+size?: number;
+/**
+ * 정렬 조건. 여러 정렬은 sort를 여러 번 지정합니다. (sort=createdAt,DESC&sort=id,ASC)
+ */
+sort?: string[];
 };

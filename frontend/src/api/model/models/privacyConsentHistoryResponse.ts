@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { PrivacyConsentResponse } from "./privacyConsentResponse";
+import type { PrivacyConsentResponse } from './privacyConsentResponse';
 
 /**
  * 개인정보 동의 이력 응답

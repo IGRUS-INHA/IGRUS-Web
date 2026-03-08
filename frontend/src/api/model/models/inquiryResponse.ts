@@ -33,10 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AttachmentResponse } from "./attachmentResponse";
-import type { InquiryReplyResponse } from "./inquiryReplyResponse";
-import type { InquiryResponseStatus } from "./inquiryResponseStatus";
-import type { InquiryResponseType } from "./inquiryResponseType";
+import type { AttachmentResponse } from './attachmentResponse';
+import type { InquiryReplyResponse } from './inquiryReplyResponse';
+import type { InquiryResponseStatus } from './inquiryResponseStatus';
+import type { InquiryResponseType } from './inquiryResponseType';
 
 /**
  * 문의 응답

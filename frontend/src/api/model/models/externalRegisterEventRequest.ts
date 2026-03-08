@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { SubmitAnswerRequest } from "./submitAnswerRequest";
+import type { SubmitAnswerRequest } from './submitAnswerRequest';
 
 /**
  * 외부인(비회원) 행사 신청 요청.

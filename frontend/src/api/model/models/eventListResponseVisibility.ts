@@ -34,10 +34,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type EventListResponseVisibility =
-  (typeof EventListResponseVisibility)[keyof typeof EventListResponseVisibility];
+export type EventListResponseVisibility = typeof EventListResponseVisibility[keyof typeof EventListResponseVisibility];
+
 
 export const EventListResponseVisibility = {
-  UNPUBLISHED: "UNPUBLISHED",
-  PUBLISHED: "PUBLISHED",
+  UNPUBLISHED: 'UNPUBLISHED',
+  PUBLISHED: 'PUBLISHED',
 } as const;

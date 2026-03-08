@@ -34,13 +34,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type TemporaryStudentIdSignupRequestWishesItem =
-  (typeof TemporaryStudentIdSignupRequestWishesItem)[keyof typeof TemporaryStudentIdSignupRequestWishesItem];
+export type TemporaryStudentIdSignupRequestWishesItem = typeof TemporaryStudentIdSignupRequestWishesItem[keyof typeof TemporaryStudentIdSignupRequestWishesItem];
+
 
 export const TemporaryStudentIdSignupRequestWishesItem = {
-  NETWORKING: "NETWORKING",
-  STUDY: "STUDY",
-  PROJECT: "PROJECT",
-  CAREER: "CAREER",
-  PROGRAMMING: "PROGRAMMING",
+  NETWORKING: 'NETWORKING',
+  STUDY: 'STUDY',
+  PROJECT: 'PROJECT',
+  CAREER: 'CAREER',
+  PROGRAMMING: 'PROGRAMMING',
 } as const;

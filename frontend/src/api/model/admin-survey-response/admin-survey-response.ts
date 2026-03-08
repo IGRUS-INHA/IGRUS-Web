@@ -33,7 +33,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import { useQuery } from "@tanstack/react-query";
+import {
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -43,224 +45,145 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
-import type { AdminSurveyResponseListItem } from ".././models";
+import type {
+  AdminSurveyResponseListItem
+} from '.././models';
 
-import { customFetch } from "../../client";
+import { customFetch } from '../../client';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * 관리자가 특정 설문에 제출된 응답 목록을 조회합니다. OPERATOR 이상 권한 필요.
  * @summary 관리자 설문 응답 목록 조회
  */
 export type getAdminSurveyResponsesResponse200 = {
-  data: AdminSurveyResponseListItem[];
-  status: 200;
-};
+  data: AdminSurveyResponseListItem[]
+  status: 200
+}
 
 export type getAdminSurveyResponsesResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type getAdminSurveyResponsesResponse403 = {
-  data: void;
-  status: 403;
-};
+  data: void
+  status: 403
+}
 
 export type getAdminSurveyResponsesResponse404 = {
-  data: void;
-  status: 404;
+  data: void
+  status: 404
+}
+    
+export type getAdminSurveyResponsesResponseSuccess = (getAdminSurveyResponsesResponse200) & {
+  headers: Headers;
 };
-
-export type getAdminSurveyResponsesResponseSuccess =
-  getAdminSurveyResponsesResponse200 & {
-    headers: Headers;
-  };
-export type getAdminSurveyResponsesResponseError = (
-  | getAdminSurveyResponsesResponse401
-  | getAdminSurveyResponsesResponse403
-  | getAdminSurveyResponsesResponse404
-) & {
+export type getAdminSurveyResponsesResponseError = (getAdminSurveyResponsesResponse401 | getAdminSurveyResponsesResponse403 | getAdminSurveyResponsesResponse404) & {
   headers: Headers;
 };
 
-export type getAdminSurveyResponsesResponse =
-  | getAdminSurveyResponsesResponseSuccess
-  | getAdminSurveyResponsesResponseError;
+export type getAdminSurveyResponsesResponse = (getAdminSurveyResponsesResponseSuccess | getAdminSurveyResponsesResponseError)
 
-export const getGetAdminSurveyResponsesUrl = (surveyId: number) => {
-  return `/api/v1/admin/surveys/${surveyId}/responses`;
-};
+export const getGetAdminSurveyResponsesUrl = (surveyId: number,) => {
 
-export const getAdminSurveyResponses = async (
-  surveyId: number,
-  options?: RequestInit,
-): Promise<getAdminSurveyResponsesResponse> => {
-  return customFetch<getAdminSurveyResponsesResponse>(
-    getGetAdminSurveyResponsesUrl(surveyId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
 
-export const getGetAdminSurveyResponsesQueryKey = (surveyId: number) => {
-  return [`/api/v1/admin/surveys/${surveyId}/responses`] as const;
-};
+  
 
-export const getGetAdminSurveyResponsesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-  TError = void,
->(
-  surveyId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+  return `/api/v1/admin/surveys/${surveyId}/responses`
+}
+
+export const getAdminSurveyResponses = async (surveyId: number, options?: RequestInit): Promise<getAdminSurveyResponsesResponse> => {
+  
+  return customFetch<getAdminSurveyResponsesResponse>(getGetAdminSurveyResponsesUrl(surveyId),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetAdminSurveyResponsesQueryKey = (surveyId: number,) => {
+    return [
+    `/api/v1/admin/surveys/${surveyId}/responses`
+    ] as const;
+    }
+
+    
+export const getGetAdminSurveyResponsesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError = void>(surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getGetAdminSurveyResponsesQueryKey(surveyId);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getAdminSurveyResponses>>
-  > = ({ signal }) =>
-    getAdminSurveyResponses(surveyId, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminSurveyResponsesQueryKey(surveyId);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!surveyId,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetAdminSurveyResponsesQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getAdminSurveyResponses>>
->;
-export type GetAdminSurveyResponsesQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminSurveyResponses>>> = ({ signal }) => getAdminSurveyResponses(surveyId, { signal, ...requestOptions });
 
-export function useGetAdminSurveyResponses<
-  TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-  TError = void,
->(
-  surveyId: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(surveyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminSurveyResponsesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminSurveyResponses>>>
+export type GetAdminSurveyResponsesQueryError = void
+
+
+export function useGetAdminSurveyResponses<TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError = void>(
+ surveyId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminSurveyResponses>>,
           TError,
           Awaited<ReturnType<typeof getAdminSurveyResponses>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetAdminSurveyResponses<
-  TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-  TError = void,
->(
-  surveyId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSurveyResponses<TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError = void>(
+ surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminSurveyResponses>>,
           TError,
           Awaited<ReturnType<typeof getAdminSurveyResponses>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetAdminSurveyResponses<
-  TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-  TError = void,
->(
-  surveyId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSurveyResponses<TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError = void>(
+ surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 관리자 설문 응답 목록 조회
  */
 
-export function useGetAdminSurveyResponses<
-  TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-  TError = void,
->(
-  surveyId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getAdminSurveyResponses>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetAdminSurveyResponsesQueryOptions(
-    surveyId,
-    options,
-  );
+export function useGetAdminSurveyResponses<TData = Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError = void>(
+ surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSurveyResponses>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetAdminSurveyResponsesQueryOptions(surveyId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+

@@ -35,8 +35,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type CheckNeedsReConsentParams = {
-  /**
-   * 현재 정책 버전
-   */
-  currentVersion: string;
+/**
+ * 현재 정책 버전
+ */
+currentVersion: string;
 };
