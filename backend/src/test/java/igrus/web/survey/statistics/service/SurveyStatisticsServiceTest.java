@@ -1,5 +1,8 @@
 package igrus.web.survey.statistics.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import igrus.web.event.domain.ExternalSurveyResponse;
+import igrus.web.event.repository.ExternalSurveyResponseRepository;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.domain.SurveyAccessLevel;
 import igrus.web.survey.exception.SurveyNotFoundException;
@@ -7,10 +10,13 @@ import igrus.web.survey.question.domain.*;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.survey.response.domain.*;
+import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import igrus.web.survey.response.repository.SurveyAnswerRepository;
 import igrus.web.survey.response.repository.SurveyResponseRepository;
 import igrus.web.survey.statistics.dto.response.*;
 import igrus.web.user.domain.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -33,6 +39,8 @@ import static igrus.web.common.fixture.TestEntityIdAssigner.withId;
 import static igrus.web.common.fixture.UserTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 /**
@@ -56,6 +64,12 @@ class SurveyStatisticsServiceTest {
 
     @Mock
     private SurveyQuestionRepository surveyQuestionRepository;
+
+    @Mock
+    private ExternalSurveyResponseRepository externalSurveyResponseRepository;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private SurveyStatisticsService surveyStatisticsService;
@@ -97,6 +111,8 @@ class SurveyStatisticsServiceTest {
                 .willReturn(questions);
         given(surveyAnswerRepository.findValidAnswersBySurveyId(DEFAULT_SURVEY_ID))
                 .willReturn(answers);
+        given(externalSurveyResponseRepository.findBySurveyId(DEFAULT_SURVEY_ID))
+                .willReturn(List.of());
     }
 
     // ==================== TEXT 카테고리 테스트 ====================
@@ -1782,6 +1798,8 @@ class SurveyStatisticsServiceTest {
                     .willReturn(List.of());
             given(surveyAnswerRepository.findValidAnswersBySurveyId(DEFAULT_SURVEY_ID))
                     .willReturn(List.of());
+            given(externalSurveyResponseRepository.findBySurveyId(DEFAULT_SURVEY_ID))
+                    .willReturn(List.of());
 
             // when
             SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
@@ -1815,6 +1833,8 @@ class SurveyStatisticsServiceTest {
                     .willReturn(List.of());
             given(surveyAnswerRepository.findValidAnswersBySurveyId(DEFAULT_SURVEY_ID))
                     .willReturn(List.of());
+            given(externalSurveyResponseRepository.findBySurveyId(DEFAULT_SURVEY_ID))
+                    .willReturn(List.of());
 
             // when
             SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
@@ -1844,6 +1864,8 @@ class SurveyStatisticsServiceTest {
             given(surveyQuestionRepository.findAllBySurveyIdWithRows(DEFAULT_SURVEY_ID))
                     .willReturn(List.of());
             given(surveyAnswerRepository.findValidAnswersBySurveyId(DEFAULT_SURVEY_ID))
+                    .willReturn(List.of());
+            given(externalSurveyResponseRepository.findBySurveyId(DEFAULT_SURVEY_ID))
                     .willReturn(List.of());
 
             // when
@@ -1892,6 +1914,8 @@ class SurveyStatisticsServiceTest {
                     .willReturn(questions);
             given(surveyAnswerRepository.findValidAnswersBySurveyId(DEFAULT_SURVEY_ID))
                     .willReturn(answers);
+            given(externalSurveyResponseRepository.findBySurveyId(DEFAULT_SURVEY_ID))
+                    .willReturn(List.of());
         }
 
         @DisplayName("PUBLIC 설문 - respondents null, TEXT respondent null")
@@ -2040,6 +2064,414 @@ class SurveyStatisticsServiceTest {
             assertThat(result.respondents()).hasSize(1);
             assertThat(result.respondents().get(0).userId()).isEqualTo(DEFAULT_OPERATOR_ID);
             assertThat(result.respondents().get(0).name()).isEqualTo(OPERATOR_NAME);
+        }
+    }
+
+    // ==================== 외부인 응답 통합 통계 (TC-EVTSRV-050~059) ====================
+
+    @Nested
+    @DisplayName("외부인 응답 통합 통계")
+    class ExternalResponseIntegrationStatistics {
+
+        /**
+         * ExternalSurveyResponse Mock 객체를 생성합니다.
+         */
+        private ExternalSurveyResponse createExternalResponse(Long id, String answersJson) {
+            ExternalSurveyResponse extResponse = ExternalSurveyResponse.create(
+                    DEFAULT_SURVEY_ID, 100L + id, "ext-student-" + id, answersJson);
+            withId(extResponse, id);
+            return extResponse;
+        }
+
+        /**
+         * 외부인 응답 포함 Mock 설정
+         */
+        private void setUpMocksWithExternal(List<SurveyResponse> responses,
+                                             List<SurveyQuestion> questions,
+                                             List<SurveyAnswer> answers,
+                                             List<ExternalSurveyResponse> externalResponses) {
+            given(surveyRepository.findByIdAndDeletedFalse(DEFAULT_SURVEY_ID))
+                    .willReturn(Optional.of(survey));
+            given(surveyResponseRepository.findBySurveyIdAndDeletedFalseOrderByCreatedAtAsc(DEFAULT_SURVEY_ID))
+                    .willReturn(responses);
+            given(surveyQuestionRepository.findAllBySurveyIdWithOptions(DEFAULT_SURVEY_ID))
+                    .willReturn(questions);
+            given(surveyQuestionRepository.findAllBySurveyIdWithRows(DEFAULT_SURVEY_ID))
+                    .willReturn(questions);
+            given(surveyAnswerRepository.findValidAnswersBySurveyId(DEFAULT_SURVEY_ID))
+                    .willReturn(answers);
+            given(externalSurveyResponseRepository.findBySurveyId(DEFAULT_SURVEY_ID))
+                    .willReturn(externalResponses);
+        }
+
+        @DisplayName("TC-EVTSRV-050: 회원 3건 + 외부인 2건 -> totalResponseCount == 5, 질문별 통계에 외부인 포함")
+        @Test
+        void getSurveyStatistics_WithMemberAndExternalResponses_ReturnsCombinedCount() throws Exception {
+            // given: TEXT 질문 1개, 회원 응답 3건, 외부인 응답 2건
+            TextSurveyQuestion question = TextSurveyQuestion.create(
+                    survey, SurveyQuestionType.SHORT_ANSWER, "단답형 질문", null, true, 1);
+            withId(question, 100L);
+
+            SurveyResponse r1 = createResponseWithIdAndCreatedAt(1L, Instant.parse("2026-02-01T00:00:00Z"));
+            SurveyResponse r2 = createResponseWithIdAndCreatedAt(2L, Instant.parse("2026-02-02T00:00:00Z"));
+            SurveyResponse r3 = createResponseWithIdAndCreatedAt(3L, Instant.parse("2026-02-03T00:00:00Z"));
+
+            List<SurveyAnswer> answers = List.of(
+                    TextSurveyAnswer.create(r1, question, "회원답변1"),
+                    TextSurveyAnswer.create(r2, question, "회원답변2"),
+                    TextSurveyAnswer.create(r3, question, "회원답변3")
+            );
+
+            // 외부인 응답 2건
+            String ext1Json = "ext1-json";
+            String ext2Json = "ext2-json";
+            ExternalSurveyResponse ext1 = createExternalResponse(10L, ext1Json);
+            ExternalSurveyResponse ext2 = createExternalResponse(11L, ext2Json);
+
+            List<SubmitAnswerRequest> ext1Answers = List.of(
+                    new SubmitAnswerRequest(100L, "외부인답변1", null, null, null)
+            );
+            List<SubmitAnswerRequest> ext2Answers = List.of(
+                    new SubmitAnswerRequest(100L, "외부인답변2", null, null, null)
+            );
+
+            given(objectMapper.readValue(eq(ext1Json), any(TypeReference.class)))
+                    .willReturn(ext1Answers);
+            given(objectMapper.readValue(eq(ext2Json), any(TypeReference.class)))
+                    .willReturn(ext2Answers);
+
+            setUpMocksWithExternal(List.of(r1, r2, r3), List.of(question), answers, List.of(ext1, ext2));
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then
+            assertThat(result.totalResponseCount()).isEqualTo(5);
+
+            QuestionStatisticsResponse qStat = result.questionStatistics().getFirst();
+            assertThat(qStat.responseCount()).isEqualTo(5);
+            assertThat(qStat.textStatistics()).isNotNull();
+            assertThat(qStat.textStatistics().textResponses()).hasSize(5);
+            // 회원 답변 3건 + 외부인 답변 2건
+            assertThat(qStat.textStatistics().textResponses())
+                    .extracting(TextResponseItem::text)
+                    .contains("회원답변1", "회원답변2", "회원답변3", "외부인답변1", "외부인답변2");
+        }
+
+        @DisplayName("TC-EVTSRV-051: TEXT 유형 외부인 응답 파싱 정확성")
+        @Test
+        void getSurveyStatistics_WithExternalTextResponses_ParsesCorrectly() throws Exception {
+            // given
+            TextSurveyQuestion question = TextSurveyQuestion.create(
+                    survey, SurveyQuestionType.SHORT_ANSWER, "텍스트 질문", null, true, 1);
+            withId(question, 100L);
+
+            // 회원 응답 1건
+            SurveyResponse r1 = createResponseWithIdAndCreatedAt(1L, Instant.parse("2026-02-01T00:00:00Z"));
+            List<SurveyAnswer> answers = List.of(
+                    TextSurveyAnswer.create(r1, question, "회원 텍스트")
+            );
+
+            // 외부인 응답 1건 (TEXT)
+            String extJson = "ext-text-json";
+            ExternalSurveyResponse ext = createExternalResponse(10L, extJson);
+
+            List<SubmitAnswerRequest> extAnswers = List.of(
+                    new SubmitAnswerRequest(100L, "외부인 텍스트", null, null, null)
+            );
+            given(objectMapper.readValue(eq(extJson), any(TypeReference.class)))
+                    .willReturn(extAnswers);
+
+            setUpMocksWithExternal(List.of(r1), List.of(question), answers, List.of(ext));
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then
+            assertThat(result.totalResponseCount()).isEqualTo(2);
+            TextQuestionStatistics textStats = result.questionStatistics().getFirst().textStatistics();
+            assertThat(textStats).isNotNull();
+            assertThat(textStats.textResponses()).hasSize(2);
+            assertThat(textStats.textResponses())
+                    .extracting(TextResponseItem::text)
+                    .containsExactly("회원 텍스트", "외부인 텍스트");
+            // 외부인 응답의 respondent는 null
+            assertThat(textStats.textResponses().get(1).respondent()).isNull();
+        }
+
+        @DisplayName("TC-EVTSRV-052: OPTION 유형 외부인 응답 파싱 정확성")
+        @Test
+        void getSurveyStatistics_WithExternalOptionResponses_ParsesCorrectly() throws Exception {
+            // given
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(
+                    survey, SurveyQuestionType.MULTIPLE_CHOICE, "객관식 질문", null, true, 1);
+            withId(question, 100L);
+
+            SurveyQuestionOption optA = SurveyQuestionOption.create(question, "A", 1);
+            withId(optA, 201L);
+            SurveyQuestionOption optB = SurveyQuestionOption.create(question, "B", 2);
+            withId(optB, 202L);
+            question.addOption(optA);
+            question.addOption(optB);
+
+            // 회원 응답 1건: A 선택
+            SurveyResponse r1 = createResponseWithIdAndCreatedAt(1L, Instant.parse("2026-02-01T00:00:00Z"));
+            List<SurveyAnswer> answers = List.of(
+                    OptionSurveyAnswer.create(r1, question, optA)
+            );
+
+            // 외부인 응답 1건: B 선택
+            String extJson = "ext-option-json";
+            ExternalSurveyResponse ext = createExternalResponse(10L, extJson);
+
+            List<SubmitAnswerRequest> extAnswers = List.of(
+                    new SubmitAnswerRequest(100L, null, List.of(202L), null, null)
+            );
+            given(objectMapper.readValue(eq(extJson), any(TypeReference.class)))
+                    .willReturn(extAnswers);
+
+            setUpMocksWithExternal(List.of(r1), List.of(question), answers, List.of(ext));
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then
+            assertThat(result.totalResponseCount()).isEqualTo(2);
+
+            OptionQuestionStatistics optionStats = result.questionStatistics().getFirst().optionStatistics();
+            assertThat(optionStats).isNotNull();
+
+            OptionStatisticsItem itemA = optionStats.options().stream()
+                    .filter(o -> o.optionId().equals(201L)).findFirst().orElseThrow();
+            OptionStatisticsItem itemB = optionStats.options().stream()
+                    .filter(o -> o.optionId().equals(202L)).findFirst().orElseThrow();
+
+            assertThat(itemA.count()).isEqualTo(1); // 회원 1건
+            assertThat(itemB.count()).isEqualTo(1); // 외부인 1건
+            // 비율: totalResponseCount=2, A=1/2=50.0%, B=1/2=50.0%
+            assertThat(itemA.percentage()).isEqualByComparingTo(new BigDecimal("50.0"));
+            assertThat(itemB.percentage()).isEqualByComparingTo(new BigDecimal("50.0"));
+        }
+
+        @DisplayName("TC-EVTSRV-053: SCALE 유형 외부인 응답 파싱 정확성")
+        @Test
+        void getSurveyStatistics_WithExternalScaleResponses_ParsesCorrectly() throws Exception {
+            // given
+            LinearScaleSurveyQuestion question = LinearScaleSurveyQuestion.create(
+                    survey, SurveyQuestionType.LINEAR_SCALE, "만족도", null, true, 1);
+            question.setScaleRange(1, 5);
+            withId(question, 100L);
+
+            // 회원 응답 2건: 값 3, 5
+            SurveyResponse r1 = createResponseWithIdAndCreatedAt(1L, Instant.parse("2026-02-01T00:00:00Z"));
+            SurveyResponse r2 = createResponseWithIdAndCreatedAt(2L, Instant.parse("2026-02-02T00:00:00Z"));
+            List<SurveyAnswer> answers = List.of(
+                    NumericSurveyAnswer.create(r1, question, 3),
+                    NumericSurveyAnswer.create(r2, question, 5)
+            );
+
+            // 외부인 응답 1건: 값 1
+            String extJson = "ext-scale-json";
+            ExternalSurveyResponse ext = createExternalResponse(10L, extJson);
+
+            List<SubmitAnswerRequest> extAnswers = List.of(
+                    new SubmitAnswerRequest(100L, null, null, 1, null)
+            );
+            given(objectMapper.readValue(eq(extJson), any(TypeReference.class)))
+                    .willReturn(extAnswers);
+
+            setUpMocksWithExternal(List.of(r1, r2), List.of(question), answers, List.of(ext));
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then
+            assertThat(result.totalResponseCount()).isEqualTo(3);
+
+            ScaleQuestionStatistics scaleStats = result.questionStatistics().getFirst().scaleStatistics();
+            assertThat(scaleStats).isNotNull();
+            // 평균: (3 + 5 + 1) / 3 = 3.0
+            assertThat(scaleStats.average()).isEqualByComparingTo(new BigDecimal("3.0"));
+            assertThat(scaleStats.min()).isEqualTo(1);
+            assertThat(scaleStats.max()).isEqualTo(5);
+            // 분포: {1:1, 2:0, 3:1, 4:0, 5:1}
+            assertThat(scaleStats.distribution()).containsEntry(1, 1);
+            assertThat(scaleStats.distribution()).containsEntry(2, 0);
+            assertThat(scaleStats.distribution()).containsEntry(3, 1);
+            assertThat(scaleStats.distribution()).containsEntry(4, 0);
+            assertThat(scaleStats.distribution()).containsEntry(5, 1);
+        }
+
+        @DisplayName("TC-EVTSRV-054: GRID 유형 외부인 응답 파싱 정확성")
+        @Test
+        void getSurveyStatistics_WithExternalGridResponses_ParsesCorrectly() throws Exception {
+            // given
+            GridSurveyQuestion question = GridSurveyQuestion.create(
+                    survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, true, 1);
+            withId(question, 100L);
+
+            SurveyQuestionOption optSatisfied = SurveyQuestionOption.create(question, "만족", 1);
+            withId(optSatisfied, 201L);
+            SurveyQuestionOption optDissatisfied = SurveyQuestionOption.create(question, "불만족", 2);
+            withId(optDissatisfied, 202L);
+            question.addOption(optSatisfied);
+            question.addOption(optDissatisfied);
+
+            SurveyQuestionRow rowMath = SurveyQuestionRow.create(question, "수학", 1);
+            withId(rowMath, 301L);
+            SurveyQuestionRow rowEng = SurveyQuestionRow.create(question, "영어", 2);
+            withId(rowEng, 302L);
+            question.addRow(rowMath);
+            question.addRow(rowEng);
+
+            // 회원 응답 1건: 수학=만족, 영어=불만족
+            SurveyResponse r1 = createResponseWithIdAndCreatedAt(1L, Instant.parse("2026-02-01T00:00:00Z"));
+            List<SurveyAnswer> answers = List.of(
+                    GridSurveyAnswer.create(r1, question, rowMath, optSatisfied),
+                    GridSurveyAnswer.create(r1, question, rowEng, optDissatisfied)
+            );
+
+            // 외부인 응답 1건: 수학=불만족, 영어=만족
+            String extJson = "ext-grid-json";
+            ExternalSurveyResponse ext = createExternalResponse(10L, extJson);
+
+            List<SubmitAnswerRequest> extAnswers = List.of(
+                    new SubmitAnswerRequest(100L, null, null, null, List.of(
+                            new SubmitAnswerRequest.GridAnswerRequest(301L, List.of(202L)),
+                            new SubmitAnswerRequest.GridAnswerRequest(302L, List.of(201L))
+                    ))
+            );
+            given(objectMapper.readValue(eq(extJson), any(TypeReference.class)))
+                    .willReturn(extAnswers);
+
+            setUpMocksWithExternal(List.of(r1), List.of(question), answers, List.of(ext));
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then
+            assertThat(result.totalResponseCount()).isEqualTo(2);
+
+            GridQuestionStatistics gridStats = result.questionStatistics().getFirst().gridStatistics();
+            assertThat(gridStats).isNotNull();
+            assertThat(gridStats.rows()).hasSize(2);
+
+            // 수학: 만족=1(회원), 불만족=1(외부인)
+            GridRowStatistics mathRow = gridStats.rows().stream()
+                    .filter(r -> r.rowId().equals(301L)).findFirst().orElseThrow();
+            OptionStatisticsItem mathSatisfied = mathRow.options().stream()
+                    .filter(o -> o.optionId().equals(201L)).findFirst().orElseThrow();
+            OptionStatisticsItem mathDissatisfied = mathRow.options().stream()
+                    .filter(o -> o.optionId().equals(202L)).findFirst().orElseThrow();
+            assertThat(mathSatisfied.count()).isEqualTo(1);
+            assertThat(mathDissatisfied.count()).isEqualTo(1);
+
+            // 영어: 불만족=1(회원), 만족=1(외부인)
+            GridRowStatistics engRow = gridStats.rows().stream()
+                    .filter(r -> r.rowId().equals(302L)).findFirst().orElseThrow();
+            OptionStatisticsItem engSatisfied = engRow.options().stream()
+                    .filter(o -> o.optionId().equals(201L)).findFirst().orElseThrow();
+            OptionStatisticsItem engDissatisfied = engRow.options().stream()
+                    .filter(o -> o.optionId().equals(202L)).findFirst().orElseThrow();
+            assertThat(engSatisfied.count()).isEqualTo(1);
+            assertThat(engDissatisfied.count()).isEqualTo(1);
+        }
+
+        @DisplayName("TC-EVTSRV-056: 외부인만 5건 (회원 0건) -> totalResponseCount == 5")
+        @Test
+        void getSurveyStatistics_WithOnlyExternalResponses_ReturnsTotalCountFive() throws Exception {
+            // given: TEXT 질문 1개, 회원 응답 0건, 외부인 응답 5건
+            TextSurveyQuestion question = TextSurveyQuestion.create(
+                    survey, SurveyQuestionType.SHORT_ANSWER, "질문", null, true, 1);
+            withId(question, 100L);
+
+            List<ExternalSurveyResponse> externalResponses = new ArrayList<>();
+            for (int i = 1; i <= 5; i++) {
+                String extJson = "ext-json-" + i;
+                ExternalSurveyResponse ext = createExternalResponse((long) i, extJson);
+                externalResponses.add(ext);
+
+                List<SubmitAnswerRequest> extAnswers = List.of(
+                        new SubmitAnswerRequest(100L, "외부인답변" + i, null, null, null)
+                );
+                given(objectMapper.readValue(eq(extJson), any(TypeReference.class)))
+                        .willReturn(extAnswers);
+            }
+
+            setUpMocksWithExternal(List.of(), List.of(question), List.of(), externalResponses);
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then
+            assertThat(result.totalResponseCount()).isEqualTo(5);
+
+            QuestionStatisticsResponse qStat = result.questionStatistics().getFirst();
+            assertThat(qStat.responseCount()).isEqualTo(5);
+            assertThat(qStat.textStatistics().textResponses()).hasSize(5);
+
+            // 회원 응답 0건이므로 응답 기간은 null
+            assertThat(result.responseStartedAt()).isNull();
+            assertThat(result.responseEndedAt()).isNull();
+        }
+
+        @DisplayName("TC-EVTSRV-059: 잘못된 JSON 파싱 오류 시 해당 응답 skip + 나머지 정상 집계")
+        @Test
+        void getSurveyStatistics_WithInvalidExternalJson_SkipsBadAndAggregatesRest() throws Exception {
+            // given: TEXT 질문 1개, 회원 응답 1건, 외부인 응답 3건 (1건 JSON 파싱 실패)
+            TextSurveyQuestion question = TextSurveyQuestion.create(
+                    survey, SurveyQuestionType.SHORT_ANSWER, "질문", null, true, 1);
+            withId(question, 100L);
+
+            SurveyResponse r1 = createResponseWithIdAndCreatedAt(1L, Instant.parse("2026-02-01T00:00:00Z"));
+            List<SurveyAnswer> answers = List.of(
+                    TextSurveyAnswer.create(r1, question, "회원답변")
+            );
+
+            // 외부인 응답 3건
+            String validJson1 = "valid-json-1";
+            String invalidJson = "invalid-json";
+            String validJson2 = "valid-json-2";
+
+            ExternalSurveyResponse ext1 = createExternalResponse(10L, validJson1);
+            ExternalSurveyResponse ext2 = createExternalResponse(11L, invalidJson);
+            ExternalSurveyResponse ext3 = createExternalResponse(12L, validJson2);
+
+            List<SubmitAnswerRequest> validAnswers1 = List.of(
+                    new SubmitAnswerRequest(100L, "외부인정상1", null, null, null)
+            );
+            List<SubmitAnswerRequest> validAnswers2 = List.of(
+                    new SubmitAnswerRequest(100L, "외부인정상2", null, null, null)
+            );
+
+            given(objectMapper.readValue(eq(validJson1), any(TypeReference.class)))
+                    .willReturn(validAnswers1);
+            given(objectMapper.readValue(eq(invalidJson), any(TypeReference.class)))
+                    .willThrow(new JsonProcessingException("Malformed JSON") {});
+            given(objectMapper.readValue(eq(validJson2), any(TypeReference.class)))
+                    .willReturn(validAnswers2);
+
+            setUpMocksWithExternal(List.of(r1), List.of(question), answers, List.of(ext1, ext2, ext3));
+
+            // when
+            SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
+                    DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
+
+            // then: 회원 1건 + 외부인 정상 2건 = 3건 (파싱 실패 1건 skip)
+            assertThat(result.totalResponseCount()).isEqualTo(3);
+
+            QuestionStatisticsResponse qStat = result.questionStatistics().getFirst();
+            assertThat(qStat.responseCount()).isEqualTo(3);
+            assertThat(qStat.textStatistics().textResponses()).hasSize(3);
+            assertThat(qStat.textStatistics().textResponses())
+                    .extracting(TextResponseItem::text)
+                    .containsExactly("회원답변", "외부인정상1", "외부인정상2");
         }
     }
 }

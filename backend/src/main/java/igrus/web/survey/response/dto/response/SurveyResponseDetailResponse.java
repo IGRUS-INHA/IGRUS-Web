@@ -18,12 +18,17 @@ public record SurveyResponseDetailResponse(
         Instant createdAt
 ) {
 
-    public static SurveyResponseDetailResponse from(SurveyResponse response) {
-        // 질문별로 답변을 그룹핑 (순서 보존)
+    /**
+     * 설문 응답의 답변 목록을 질문별로 그룹핑하여 AnswerResponse 목록으로 변환합니다.
+     * 삭제된 질문의 답변은 제외합니다.
+     *
+     * @param answers 설문 답변 목록
+     * @return 질문별로 그룹핑된 AnswerResponse 목록
+     */
+    public static List<AnswerResponse> groupAnswersByQuestion(List<SurveyAnswer> answers) {
         Map<Long, List<SurveyAnswer>> answersByQuestion = new LinkedHashMap<>();
 
-        for (SurveyAnswer answer : response.getAnswers()) {
-            // 삭제된 질문의 답변은 제외
+        for (SurveyAnswer answer : answers) {
             if (answer.getQuestion().isDeleted()) {
                 continue;
             }
@@ -32,9 +37,13 @@ public record SurveyResponseDetailResponse(
                     .add(answer);
         }
 
-        List<AnswerResponse> answerResponses = answersByQuestion.values().stream()
+        return answersByQuestion.values().stream()
                 .map(AnswerResponse::from)
                 .toList();
+    }
+
+    public static SurveyResponseDetailResponse from(SurveyResponse response) {
+        List<AnswerResponse> answerResponses = groupAnswersByQuestion(response.getAnswers());
 
         return new SurveyResponseDetailResponse(
                 response.getId(),
