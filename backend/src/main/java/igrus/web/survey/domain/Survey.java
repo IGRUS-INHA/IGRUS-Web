@@ -201,6 +201,15 @@ public class Survey extends SoftDeletableEntity {
         }
     }
 
+    /**
+     * 설문 접근 권한을 PUBLIC으로 승격합니다.
+     * 외부인 허용 행사에 연결될 때 자동 호출됩니다.
+     * 이미 PUBLIC이면 아무 동작도 하지 않습니다. (멱등)
+     */
+    public void upgradeToPublic() {
+        this.accessLevel = SurveyAccessLevel.PUBLIC;
+    }
+
     // === 수정 메서드 ===
 
     /**

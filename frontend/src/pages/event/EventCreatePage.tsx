@@ -149,7 +149,7 @@ export default function EventCreatePage() {
     let surveyId: number | null = null;
 
     try {
-      surveyId = (await submitSurvey(data.title)) ?? null;
+      surveyId = (await submitSurvey(data.title, data.allowExternal)) ?? null;
     } catch {
       alert("설문 생성에 실패했습니다. 다시 시도해주세요.");
       return;
