@@ -26,6 +26,7 @@ import java.time.Instant;
  * @param registrationType    신청 방식 (선착순/선발제)
  * @param isRegistrable       신청 가능 여부
  * @param surveyId            연결된 설문 ID (null이면 설문 미연결)
+ * @param allowExternal       외부인 신청 허용 여부
  */
 public record EventListResponse(
         Long id,
@@ -41,7 +42,8 @@ public record EventListResponse(
         EventStatus eventStatus,
         EventRegistrationType registrationType,
         boolean isRegistrable,
-        Long surveyId
+        Long surveyId,
+        Boolean allowExternal
 ) {
     /**
      * Event 엔티티로부터 EventListResponse를 생성합니다.
@@ -64,7 +66,8 @@ public record EventListResponse(
                 event.getEventStatus(),
                 event.getRegistrationType(),
                 event.isRegistrable(),
-                event.getSurveyId()
+                event.getSurveyId(),
+                event.getAllowExternal()
         );
     }
 }

@@ -36,6 +36,7 @@ import java.util.List;
  * @param canEdit             현재 사용자가 수정 가능한지 여부
  * @param isRegistered        현재 사용자가 신청했는지 여부
  * @param surveyId            연결된 설문 ID (null이면 설문 미연결)
+ * @param allowExternal       외부인 신청 허용 여부
  */
 public record EventDetailResponse(
         Long id,
@@ -60,7 +61,8 @@ public record EventDetailResponse(
         boolean canEdit,
         boolean isRegistered,
         Long surveyId,
-        List<EventAttachmentDto> attachments
+        List<EventAttachmentDto> attachments,
+        Boolean allowExternal
 ) {
     /**
      * Event 엔티티로부터 EventDetailResponse를 생성합니다.
@@ -100,7 +102,8 @@ public record EventDetailResponse(
                 canEdit,
                 isRegistered,
                 event.getSurveyId(),
-                attachments
+                attachments,
+                event.getAllowExternal()
         );
     }
 

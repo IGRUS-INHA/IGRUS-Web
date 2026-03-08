@@ -118,7 +118,7 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
                 now.plus(6, ChronoUnit.DAYS),
                 30,
                 EventRegistrationType.AUTO_APPROVE,
-        null, null
+        null, null, null
         );
     }
 

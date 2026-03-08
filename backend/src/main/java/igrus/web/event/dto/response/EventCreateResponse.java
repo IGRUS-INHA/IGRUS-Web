@@ -11,13 +11,15 @@ import java.time.Instant;
  * @param id        생성된 행사 ID
  * @param title     행사 제목
  * @param createdAt 생성일시
- * @param surveyId  연결된 설문 ID (null이면 설문 미연결)
+ * @param surveyId       연결된 설문 ID (null이면 설문 미연결)
+ * @param allowExternal  외부인 신청 허용 여부
  */
 public record EventCreateResponse(
         Long id,
         String title,
         Instant createdAt,
-        Long surveyId
+        Long surveyId,
+        Boolean allowExternal
 ) {
     /**
      * Event 엔티티로부터 EventCreateResponse를 생성합니다.
@@ -30,7 +32,8 @@ public record EventCreateResponse(
                 event.getId(),
                 event.getTitle(),
                 event.getCreatedAt(),
-                event.getSurveyId()
+                event.getSurveyId(),
+                event.getAllowExternal()
         );
     }
 }
