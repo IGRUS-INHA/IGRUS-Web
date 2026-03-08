@@ -38,16 +38,17 @@ export default function PostListItem({ post, linkTo }: PostListItemProps) {
 
   const content = (
     <Card
-      className={`px-s6 py-s5 rounded-r4 border transition-all hover:border-primary/50 group cursor-pointer ${
+      className={`px-s4 py-s3 md:px-s6 md:py-s5 rounded-r4 border transition-all hover:border-primary/50 group cursor-pointer ${
         isDark ? "bg-card border-border" : "bg-card border-border shadow-sm"
       }`}
     >
-      <div className="flex justify-between items-start">
-        <h3 className="typo-h3 group-hover:text-primary transition-colors flex-1 flex items-center gap-s2">
+      <div className="flex justify-between items-start gap-s2">
+        <h3 className="text-base md:text-[22px] font-bold group-hover:text-primary transition-colors flex-1 flex items-center gap-s2 flex-wrap">
           {post.title}
+          {/* 데스크톱: 배지를 제목 옆에 표시 */}
           {post.isQuestion && (
             <span
-              className={`px-s3 py-s1 rounded-full typo-c2 font-bold uppercase tracking-widest ${
+              className={`hidden md:inline px-s3 py-s1 rounded-full typo-c2 font-bold uppercase tracking-widest ${
                 isDark
                   ? "bg-white/5 text-muted-foreground"
                   : "bg-muted text-muted-foreground"
@@ -58,7 +59,7 @@ export default function PostListItem({ post, linkTo }: PostListItemProps) {
           )}
           {post.isVisibleToAssociate && (
             <span
-              className={`px-s3 py-s1 rounded-full typo-c2 font-bold tracking-widest ${
+              className={`hidden md:inline px-s3 py-s1 rounded-full typo-c2 font-bold tracking-widest ${
                 isDark
                   ? "bg-white/5 text-muted-foreground"
                   : "bg-muted text-muted-foreground"
@@ -68,9 +69,43 @@ export default function PostListItem({ post, linkTo }: PostListItemProps) {
             </span>
           )}
         </h3>
-        <p className="typo-c1 text-muted-foreground ml-s4 whitespace-nowrap">
-          조회 {post.viewCount ?? 0} · {formatDate(post.createdAt)}
-        </p>
+        {/* 오른쪽 메타 영역 */}
+        <div className="flex flex-col items-end gap-s1 shrink-0">
+          {/* 모바일: 배지를 오른쪽 열에 표시 */}
+          {post.isQuestion && (
+            <span
+              className={`md:hidden px-s3 py-s1 rounded-full typo-c2 font-bold uppercase tracking-widest ${
+                isDark
+                  ? "bg-white/5 text-muted-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              Q&A
+            </span>
+          )}
+          {post.isVisibleToAssociate && (
+            <span
+              className={`md:hidden px-s3 py-s1 rounded-full typo-c2 font-bold tracking-widest ${
+                isDark
+                  ? "bg-white/5 text-muted-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              준회원 공개
+            </span>
+          )}
+          {/* 데스크톱: 한 줄로 표시 */}
+          <p className="hidden md:block typo-c1 text-muted-foreground whitespace-nowrap">
+            조회 {post.viewCount ?? 0} · {formatDate(post.createdAt)}
+          </p>
+          {/* 모바일: 조회수와 날짜를 세로로 분리 */}
+          <p className="md:hidden typo-c1 text-muted-foreground whitespace-nowrap">
+            조회 {post.viewCount ?? 0}
+          </p>
+          <p className="md:hidden typo-c1 text-muted-foreground whitespace-nowrap">
+            {formatDate(post.createdAt)}
+          </p>
+        </div>
       </div>
 
       <div className="flex justify-between items-center">

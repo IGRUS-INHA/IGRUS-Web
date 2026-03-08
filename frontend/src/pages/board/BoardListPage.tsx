@@ -114,8 +114,8 @@ export default function BoardListPage() {
         <p className="text-xs font-bold text-primary tracking-widest mb-s1">
           BOARD
         </p>
-        <h1 className="text-3xl font-bold mb-s2">IGRUS 게시판</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl md:text-3xl font-bold mb-s2">IGRUS 게시판</h1>
+        <p className="text-xs md:text-sm text-muted-foreground">
           아이그루스의 주요 공지와 안내 사항을 확인할 수 있는 공간입니다.
         </p>
       </div>
@@ -141,7 +141,7 @@ export default function BoardListPage() {
               onClick={() => navigate(`/board/${tab}`)}
               type="button"
               className={cn(
-                "px-s5 py-s2 rounded-full text-sm font-bold transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer",
+                "px-s4 py-s2 md:px-s5 rounded-full text-xs md:text-sm font-bold transition-all uppercase tracking-wider whitespace-nowrap cursor-pointer",
                 validBoardType === tab
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted",
