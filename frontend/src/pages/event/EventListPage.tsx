@@ -81,6 +81,13 @@ function mapToEvent(
     ...(apiEvent.thumbnailObjectKey && {
       thumbnailObjectKey: apiEvent.thumbnailObjectKey,
     }),
+    ...(apiEvent.allowExternal !== undefined && {
+      allowExternal: apiEvent.allowExternal,
+    }),
+    ...(apiEvent.isRegistrable !== undefined && {
+      isRegistrable: apiEvent.isRegistrable,
+    }),
+    ...(apiEvent.surveyId != null && { surveyId: apiEvent.surveyId }),
   };
 }
 
@@ -200,8 +207,8 @@ export default function EventListPage() {
         <p className="text-xs font-bold text-primary tracking-widest mb-s1">
           EVENTS
         </p>
-        <h1 className="text-3xl font-bold mb-s2">IGRUS 행사</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl md:text-3xl font-bold mb-s2">IGRUS 행사</h1>
+        <p className="text-xs md:text-sm text-muted-foreground">
           아이그루스에서 진행되는 다양한 활동을 확인해보세요.
         </p>
       </div>
@@ -216,7 +223,7 @@ export default function EventListPage() {
               key={tab}
               type="button"
               onClick={() => handleFilterChange(tab)}
-              className={`flex items-center gap-s2 px-s4 py-s2 rounded-full text-sm font-bold transition cursor-pointer ${
+              className={`flex items-center gap-s2 px-s3 md:px-s4 py-s1 md:py-s2 rounded-full text-xs md:text-sm font-bold transition cursor-pointer ${
                 isActive
                   ? "bg-primary text-primary-foreground"
                   : "border border-border text-foreground hover:bg-muted"
@@ -234,7 +241,7 @@ export default function EventListPage() {
           <button
             type="button"
             onClick={() => navigate("/events/create")}
-            className="ml-auto flex items-center gap-s2 px-s4 py-s2 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 cursor-pointer"
+            className="ml-auto flex items-center gap-s2 px-s3 md:px-s4 py-s1 md:py-s2 rounded-full bg-primary text-primary-foreground text-xs md:text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 cursor-pointer"
           >
             <Plus size={16} /> 행사 등록
           </button>

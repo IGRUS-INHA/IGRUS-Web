@@ -35,13 +35,14 @@ export default function EventCreatePage() {
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { files, addFiles, removeFile, uploadAll } = useImageUpload({
-    config: IMAGE_UPLOAD_CONFIG,
-    purpose: UPLOAD_PURPOSE.EVENT_IMAGE,
-    onValidationError: (errors) => {
-      errors.forEach((msg) => toast.error(msg));
-    },
-  });
+  const { files, addFiles, removeFile, reorderFiles, uploadAll } =
+    useImageUpload({
+      config: IMAGE_UPLOAD_CONFIG,
+      purpose: UPLOAD_PURPOSE.EVENT_IMAGE,
+      onValidationError: (errors) => {
+        errors.forEach((msg) => toast.error(msg));
+      },
+    });
 
   const {
     register,
@@ -250,6 +251,7 @@ export default function EventCreatePage() {
           files={files}
           onAddFiles={addFiles}
           onRemoveFile={removeFile}
+          onReorderFiles={reorderFiles}
           fileInputRef={fileInputRef}
         />
       </form>

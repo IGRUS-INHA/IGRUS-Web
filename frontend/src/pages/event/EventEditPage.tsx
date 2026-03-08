@@ -43,14 +43,20 @@ export default function EventEditPage() {
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { files, addFiles, removeFile, uploadAll, setExistingItems } =
-    useImageUpload({
-      config: IMAGE_UPLOAD_CONFIG,
-      purpose: UPLOAD_PURPOSE.EVENT_IMAGE,
-      onValidationError: (errors) => {
-        errors.forEach((msg) => toast.error(msg));
-      },
-    });
+  const {
+    files,
+    addFiles,
+    removeFile,
+    reorderFiles,
+    uploadAll,
+    setExistingItems,
+  } = useImageUpload({
+    config: IMAGE_UPLOAD_CONFIG,
+    purpose: UPLOAD_PURPOSE.EVENT_IMAGE,
+    onValidationError: (errors) => {
+      errors.forEach((msg) => toast.error(msg));
+    },
+  });
 
   const existingAttachments = useMemo(
     () => (event?.attachments ?? []).filter(Boolean),
@@ -378,6 +384,7 @@ export default function EventEditPage() {
           files={files}
           onAddFiles={addFiles}
           onRemoveFile={removeFile}
+          onReorderFiles={reorderFiles}
           fileInputRef={fileInputRef}
         />
       </form>

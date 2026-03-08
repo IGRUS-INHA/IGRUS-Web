@@ -24,6 +24,7 @@ interface UseImageUploadReturn {
   isUploading: boolean;
   addFiles: (fileList: FileList | File[]) => void;
   removeFile: (id: string) => void;
+  reorderFiles: (fromIndex: number, toIndex: number) => void;
   uploadAll: () => Promise<UploadResult[]>;
   getUploadResults: () => UploadResult[];
   reset: () => void;
@@ -100,6 +101,16 @@ export function useImageUpload(
     [config, onValidationError],
   );
 
+  const reorderFiles = useCallback((fromIndex: number, toIndex: number) => {
+    setFiles((prev) => {
+      const updated = [...prev];
+      const moved = updated.splice(fromIndex, 1)[0];
+      if (!moved) return prev;
+      updated.splice(toIndex, 0, moved);
+      return updated;
+    });
+  }, []);
+
   const removeFile = useCallback((id: string) => {
     setFiles((prev) => {
       const file = prev.find((f) => f.id === id);
@@ -125,18 +136,6 @@ export function useImageUpload(
 
   const uploadAll = useCallback(async (): Promise<UploadResult[]> => {
     const currentFiles = filesRef.current;
-    const results: UploadResult[] = [];
-
-    // 이미 성공한 파일의 결과도 포함
-    for (const f of currentFiles) {
-      if (f.status === UPLOAD_STATUS.SUCCESS && f.objectKey) {
-        results.push({
-          objectKey: f.objectKey,
-          fileName: f.file.name,
-          fileSize: f.file.size,
-        });
-      }
-    }
 
     const pendingFiles = currentFiles.filter(
       (f) => f.status === UPLOAD_STATUS.PENDING,
@@ -145,6 +144,9 @@ export function useImageUpload(
     const MAX_RETRIES = 2;
     const BACKOFF_BASE_MS = 1000; // 지수 백오프: 1s, 2s, 4s
     let failedCount = 0;
+
+    // id → objectKey 맵: PENDING 파일 업로드 후 저장
+    const uploadedObjectKeys = new Map<string, string>();
 
     for (const uploadFile of pendingFiles) {
       let lastError = "";
@@ -183,12 +185,7 @@ export function useImageUpload(
             objectKey,
           });
 
-          results.push({
-            objectKey,
-            fileName: uploadFile.file.name,
-            fileSize: uploadFile.file.size,
-          });
-
+          uploadedObjectKeys.set(uploadFile.id, objectKey);
           succeeded = true;
           break;
         } catch (error) {
@@ -209,6 +206,27 @@ export function useImageUpload(
       throw new Error(
         `이미지 업로드에 실패했습니다 (${failedCount}개). 다시 시도해주세요.`,
       );
+    }
+
+    // files 배열 순서대로 결과 조립 (순서 보존)
+    const results: UploadResult[] = [];
+    for (const f of currentFiles) {
+      if (f.status === UPLOAD_STATUS.SUCCESS && f.objectKey) {
+        results.push({
+          objectKey: f.objectKey,
+          fileName: f.file.name,
+          fileSize: f.file.size,
+        });
+      } else if (f.status === UPLOAD_STATUS.PENDING) {
+        const objectKey = uploadedObjectKeys.get(f.id);
+        if (objectKey) {
+          results.push({
+            objectKey,
+            fileName: f.file.name,
+            fileSize: f.file.size,
+          });
+        }
+      }
     }
 
     return results;
@@ -263,6 +281,7 @@ export function useImageUpload(
     isUploading,
     addFiles,
     removeFile,
+    reorderFiles,
     uploadAll,
     getUploadResults,
     reset,
