@@ -36,6 +36,7 @@ import {
   useReactivateEvent,
   useReopenRegistration,
 } from "@/api/model/event/event";
+import { useRegisterEventExternal } from "@/api/model/event-external-registration/event-external-registration";
 import {
   usePublishEvent,
   useUnpublishEvent,
@@ -52,6 +53,8 @@ import {
 import {
   getErrorMessage,
   isForbiddenError,
+  isConflictError,
+  isNotFoundError,
   isEventAlreadyRegistered,
   isEventCapacityFull,
   isEventRegistrationClosed,
@@ -89,6 +92,15 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [externalForm, setExternalForm] = useState({
+    name: "",
+    studentId: "",
+    phone: "",
+    department: "",
+  });
+  const [externalFormErrors, setExternalFormErrors] = useState<
+    Record<string, string>
+  >({});
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const [reasonDialog, setReasonDialog] = useState<{
     title: string;
@@ -97,16 +109,69 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
   const numericId = Number(event.id);
 
-  // Lazy fetch detail when expanded — 비인증 사용자는 API 호출하지 않음 (401 방지)
+  // Lazy fetch detail when expanded
+  // allowExternal=true 행사는 비인증 사용자도 상세 조회 가능
   const publicQuery = useEvent(
     numericId,
-    isExpanded && !isOperator && isAuthenticated,
+    isExpanded && !isOperator && (isAuthenticated || !!event.allowExternal),
   );
   const adminQuery = useAdminEvent(numericId, isExpanded && isOperator);
   const { data: detailResponse, isLoading: isDetailLoading } = isOperator
     ? adminQuery
     : publicQuery;
   const detail = detailResponse?.data;
+
+  // External registration mutation
+  const { mutate: registerExternal, isPending: isRegisteringExternal } =
+    useRegisterEventExternal({
+      mutation: {
+        onSuccess: () => {
+          alert("행사 신청이 완료되었습니다.");
+          setExternalForm({
+            name: "",
+            studentId: "",
+            phone: "",
+            department: "",
+          });
+          setExternalFormErrors({});
+        },
+        onError: (error: unknown) => {
+          if (isConflictError(error)) {
+            alert("이미 신청한 행사입니다. (동일 학번 또는 연락처)");
+          } else if (isNotFoundError(error)) {
+            alert("행사를 찾을 수 없습니다.");
+          } else {
+            alert(getErrorMessage(error));
+          }
+        },
+      },
+    });
+
+  const handleExternalApply = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const errors: Record<string, string> = {};
+    if (!externalForm.name.trim()) errors.name = "이름을 입력하세요";
+    if (!externalForm.studentId.trim()) errors.studentId = "학번을 입력하세요";
+    if (!externalForm.phone.trim()) errors.phone = "연락처를 입력하세요";
+    if (!externalForm.department.trim())
+      errors.department = "학과를 입력하세요";
+    if (Object.keys(errors).length > 0) {
+      setExternalFormErrors(errors);
+      return;
+    }
+    if (event.surveyId) {
+      const params = new URLSearchParams({
+        surveyId: String(event.surveyId),
+        name: externalForm.name,
+        studentId: externalForm.studentId,
+        phone: externalForm.phone,
+        department: externalForm.department,
+      });
+      navigate(`/events/${numericId}/apply/external?${params.toString()}`);
+      return;
+    }
+    registerExternal({ eventId: numericId, data: { ...externalForm } });
+  };
 
   // Mutations
   const { mutate: applyEvent, isPending: isApplying } = useApplyEvent();
@@ -343,16 +408,6 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const progressPercent =
     capacity > 0 ? Math.min((currentCount / capacity) * 100, 100) : 0;
 
-  // 썸네일 — collapsed 상태에서 제목 좌측에 표시
-  const thumbnailKeys = useMemo(
-    () => (event.thumbnailObjectKey ? [event.thumbnailObjectKey] : []),
-    [event.thumbnailObjectKey],
-  );
-  const { urls: thumbnailUrls } = useResolvedImageUrls(thumbnailKeys);
-  const thumbnailSrc = event.thumbnailObjectKey
-    ? thumbnailUrls.get(event.thumbnailObjectKey)
-    : undefined;
-
   // 이미지 — 확장 시 detail.attachments에서 objectKey 추출
   const imageObjectKeys = useMemo(
     () =>
@@ -360,6 +415,20 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
     [detail?.attachments],
   );
   const { urls: resolvedImageUrls } = useResolvedImageUrls(imageObjectKeys);
+
+  // 썸네일 — collapsed 상태에서 제목 좌측에 표시
+  // event.thumbnailObjectKey가 없으면 detail.attachments[0] 폴백 사용
+  // (resolvedImageUrls는 이미 위에서 계산되므로 추가 API 호출 없음)
+  const thumbnailKeys = useMemo(
+    () => (event.thumbnailObjectKey ? [event.thumbnailObjectKey] : []),
+    [event.thumbnailObjectKey],
+  );
+  const { urls: thumbnailUrls } = useResolvedImageUrls(thumbnailKeys);
+  const thumbnailSrc = event.thumbnailObjectKey
+    ? thumbnailUrls.get(event.thumbnailObjectKey)
+    : imageObjectKeys[0]
+      ? resolvedImageUrls.get(imageObjectKeys[0])
+      : undefined;
 
   return (
     <div
@@ -383,11 +452,14 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") setIsExpanded(!isExpanded);
         }}
-        className="relative w-full px-s5 py-s4 flex items-center gap-s4 text-left hover:bg-muted/30 transition cursor-pointer"
+        className={cn(
+          "relative w-full pl-s4 pr-s5 flex items-center gap-s4 text-left hover:bg-muted/30 transition cursor-pointer",
+          thumbnailSrc ? "py-s3" : "py-s4",
+        )}
       >
         {/* Thumbnail */}
         {thumbnailSrc && (
-          <div className="w-14 h-14 rounded-r3 overflow-hidden bg-muted/30 shrink-0">
+          <div className="w-[84px] h-[84px] rounded-r3 overflow-hidden bg-muted/30 shrink-0">
             <img
               src={thumbnailSrc}
               alt={event.title}
@@ -433,6 +505,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
                   {regStatusLabel}
+                </span>
+              )}
+              {/* 비회원 신청 가능 badge */}
+              {event.allowExternal && (
+                <span className="px-s2 py-0.5 rounded-full text-xs font-bold bg-secondary text-secondary-foreground">
+                  비회원 신청 가능
                 </span>
               )}
             </div>
@@ -658,7 +736,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                       e.stopPropagation();
                       setLightboxIndex(idx);
                     }}
-                    className="w-24 h-24 rounded-r3 overflow-hidden bg-muted/30 shrink-0 cursor-pointer"
+                    className="w-[84px] h-[84px] rounded-r3 overflow-hidden bg-muted/30 shrink-0 cursor-pointer"
                   >
                     <img
                       src={src}
@@ -674,7 +752,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           {/* Description */}
           {isDetailLoading ? (
             <p className="text-sm text-muted-foreground">불러오는 중...</p>
-          ) : !isAuthenticated ? (
+          ) : !isAuthenticated && !event.allowExternal ? (
             <p className="text-sm text-muted-foreground">
               로그인하면 상세 정보를 확인할 수 있습니다.
             </p>
@@ -711,20 +789,58 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
           {/* Action buttons */}
           <div className="space-y-s3">
-            {/* 비인증 외부인 신청 버튼 */}
+            {/* 비인증 외부인 신청 폼 */}
             {!isAuthenticated &&
               event.allowExternal &&
               event.registrationStatus === "OPEN" && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/events/${numericId}/apply/external`);
-                  }}
-                  className="w-full py-s3 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                <div
+                  className="space-y-s3"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  외부인 신청하기
-                </button>
+                  <div className="grid grid-cols-2 gap-s3">
+                    {(
+                      [
+                        { key: "name", placeholder: "이름" },
+                        { key: "studentId", placeholder: "학번" },
+                        { key: "phone", placeholder: "연락처" },
+                        { key: "department", placeholder: "학과" },
+                      ] as const
+                    ).map(({ key, placeholder }) => (
+                      <div key={key}>
+                        <input
+                          type="text"
+                          placeholder={placeholder}
+                          value={externalForm[key]}
+                          onChange={(e) =>
+                            setExternalForm((prev) => ({
+                              ...prev,
+                              [key]: e.target.value,
+                            }))
+                          }
+                          className={cn(
+                            "w-full px-s3 py-s2 text-sm border rounded-r3 bg-background focus:outline-none focus:ring-1 focus:ring-primary",
+                            externalFormErrors[key]
+                              ? "border-destructive"
+                              : "border-border",
+                          )}
+                        />
+                        {externalFormErrors[key] && (
+                          <p className="text-xs text-destructive mt-1">
+                            {externalFormErrors[key]}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleExternalApply}
+                    disabled={isRegisteringExternal}
+                    className="w-full py-s3 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isRegisteringExternal ? "신청 중..." : "신청하기"}
+                  </button>
+                </div>
               )}
             {/* 인증 사용자 신청/취소 버튼 */}
             {isAuthenticated && canApply && (
