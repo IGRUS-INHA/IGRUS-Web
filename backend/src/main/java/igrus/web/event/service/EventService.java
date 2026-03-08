@@ -234,8 +234,16 @@ public class EventService {
                     .toList();
         }
 
+        List<Long> eventIds = events.stream().map(Event::getId).toList();
+        Map<Long, String> thumbnailMap = eventAttachmentRepository.findFirstByEventIds(eventIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ea -> ea.getEvent().getId(),
+                        ea -> ea.getFileMetadata().getObjectKey()
+                ));
+
         return events.stream()
-                .map(EventListResponse::from)
+                .map(event -> EventListResponse.from(event, thumbnailMap.get(event.getId())))
                 .toList();
     }
 
@@ -548,8 +556,16 @@ public class EventService {
                     .toList();
         }
 
+        List<Long> eventIds = events.stream().map(Event::getId).toList();
+        Map<Long, String> thumbnailMap = eventAttachmentRepository.findFirstByEventIds(eventIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ea -> ea.getEvent().getId(),
+                        ea -> ea.getFileMetadata().getObjectKey()
+                ));
+
         return events.stream()
-                .map(EventListResponse::from)
+                .map(event -> EventListResponse.from(event, thumbnailMap.get(event.getId())))
                 .toList();
     }
 
@@ -759,7 +775,8 @@ public class EventService {
         }
 
         // 기존 전체 삭제 후 새로 생성 (단순 전체 교체)
-        eventAttachmentRepository.deleteAll(existing);
+        // deleteAllInBatch: DELETE SQL을 즉시 실행하여 후속 INSERT의 unique 충돌 방지
+        eventAttachmentRepository.deleteAllInBatch(existing);
 
         // 기존 파일 맵 (유지 대상용)
         Map<String, FileMetadata> existingFileMap = existing.stream()

@@ -126,6 +126,7 @@ export interface Event {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  thumbnailObjectKey?: string;
 }
 
 export interface EventDetail extends Event {

@@ -80,7 +80,7 @@ class EventResponseVisibilityTest {
         void from_UnpublishedEvent_MapsVisibilityCorrectly() {
             Event event = createMockEvent(EventVisibility.UNPUBLISHED);
 
-            EventListResponse response = EventListResponse.from(event);
+            EventListResponse response = EventListResponse.from(event, null);
 
             assertThat(response.visibility()).isEqualTo(EventVisibility.UNPUBLISHED);
         }
@@ -90,7 +90,7 @@ class EventResponseVisibilityTest {
         void from_PublishedEvent_MapsVisibilityCorrectly() {
             Event event = createMockEvent(EventVisibility.PUBLISHED);
 
-            EventListResponse response = EventListResponse.from(event);
+            EventListResponse response = EventListResponse.from(event, null);
 
             assertThat(response.visibility()).isEqualTo(EventVisibility.PUBLISHED);
         }

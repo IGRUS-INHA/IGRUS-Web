@@ -131,7 +131,7 @@ export default function BoardListPage() {
       >
         <div
           className={cn(
-            "flex gap-s4 overflow-x-auto md:justify-start",
+            "flex gap-s4 overflow-x-auto md:justify-start min-w-0",
             __FEATURE_COMMUNITY__ ? "justify-center" : "justify-start",
           )}
         >

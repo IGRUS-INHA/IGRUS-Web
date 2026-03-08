@@ -83,17 +83,19 @@ export function CommentSection({ postId }: CommentSectionProps) {
   return (
     <>
       {/* 댓글 섹션 헤더 */}
-      <h3 className="text-xl font-bold mb-s5">댓글 ({totalCount})</h3>
+      <h3 className="text-base md:text-xl font-bold mb-s2 md:mb-s5">
+        댓글 ({totalCount})
+      </h3>
 
       {/* 댓글 입력 */}
-      <div className="flex gap-s4 mb-s3">
+      <div className="flex gap-s3 md:gap-s4 mb-s3">
         <div
           className={cn(
-            "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+            "size-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0",
             isDark ? "bg-white/10" : "bg-muted",
           )}
         >
-          <UserIcon size={20} className="text-muted-foreground" />
+          <UserIcon className="size-4 md:size-5 text-muted-foreground" />
         </div>
         <div className="flex-1 space-y-s2">
           <div className="relative">
@@ -106,7 +108,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
               placeholder="댓글을 입력하세요..."
               disabled={!isAuthenticated || createComment.isPending}
               className={cn(
-                "w-full rounded-r4 px-s5 py-s3 pr-s7 border focus:outline-none focus:border-primary transition-all",
+                "w-full rounded-r4 px-s4 py-s2 md:px-s5 md:py-s3 pr-s7 border text-sm md:text-base focus:outline-none focus:border-primary transition-all",
                 isDark
                   ? "bg-white/5 border-border"
                   : "bg-muted/50 border-border",
@@ -128,7 +130,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                   "opacity-50 cursor-not-allowed hover:bg-transparent",
               )}
             >
-              <Send size={18} />
+              <Send className="size-4 md:size-[18px]" />
             </button>
           </div>
 

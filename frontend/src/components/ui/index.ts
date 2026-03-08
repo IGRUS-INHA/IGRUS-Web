@@ -10,3 +10,4 @@ export {
 } from "./card";
 export { Spinner, FullPageSpinner, ButtonSpinner } from "./spinner";
 export { ToastContainer } from "./toast";
+export { ImageLightbox } from "./ImageLightbox";
