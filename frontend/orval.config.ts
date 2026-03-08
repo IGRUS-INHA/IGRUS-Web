@@ -10,6 +10,7 @@ export default defineConfig({
       target: "./src/api/model/endpoints.ts",
       schemas: "./src/api/model/models",
       clean: ["./src/api/model"],
+      prettier: true,
       client: "react-query",
       override: {
         query: {

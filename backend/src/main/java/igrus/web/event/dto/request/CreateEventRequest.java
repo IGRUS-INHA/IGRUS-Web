@@ -59,7 +59,7 @@ public record CreateEventRequest(
         @Positive(message = "설문 ID는 양수여야 합니다")
         Long surveyId,
 
-        List<Long> attachmentFileIds,
+        List<String> attachmentObjectKeys,
 
         Boolean allowExternal
 ) {

@@ -46,13 +46,9 @@ export default function EventCard({ event }: EventCardProps) {
     <div className="rounded-r4 overflow-hidden border transition-all hover:scale-[1.01] bg-card border-border shadow-xl shadow-black/5 dark:shadow-none">
       <div className="h-48 relative bg-muted/30">
         <img
-          src={event.image || "/igruslogo2.png"}
+          src="/igruslogo2.png"
           alt={event.title}
-          className={
-            event.image
-              ? "w-full h-full object-cover opacity-80"
-              : "absolute inset-0 m-auto h-40 w-40 object-contain"
-          }
+          className="absolute inset-0 m-auto h-40 w-40 object-contain"
         />
         <div className="absolute top-s4 left-s4 flex gap-s2">
           {isUnpublished && (

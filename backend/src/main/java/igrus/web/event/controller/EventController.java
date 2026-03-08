@@ -62,7 +62,7 @@ public class EventController implements EventApi {
                 EnumUtils.fromStringOrNull(EventRegistrationType.class,
                         createEventRequest.getRegistrationType().getValue()),
                 createEventRequest.getSurveyId(),
-                createEventRequest.getAttachmentFileIds(),
+                createEventRequest.getAttachmentObjectKeys(),
                 createEventRequest.getAllowExternal()
         );
 
@@ -122,7 +122,7 @@ public class EventController implements EventApi {
                 updateEventRequest.getRegistrationEndAt(),
                 updateEventRequest.getCapacity(),
                 updateEventRequest.getSurveyId(),
-                updateEventRequest.getAttachmentFileIds(),
+                updateEventRequest.getAttachmentObjectKeys(),
                 updateEventRequest.getAllowExternal()
         );
 

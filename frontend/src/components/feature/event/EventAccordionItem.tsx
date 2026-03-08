@@ -60,6 +60,8 @@ import {
 } from "@/utils/error";
 import ReasonDialog from "@/components/feature/event/ReasonDialog";
 import { cn } from "@/lib/utils";
+import { useResolvedImageUrls } from "@/hooks/useResolvedImageUrls";
+import { useMemo } from "react";
 
 function formatShortDate(isoString?: string): string {
   if (!isoString) return "";
@@ -336,9 +338,13 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const progressPercent =
     capacity > 0 ? Math.min((currentCount / capacity) * 100, 100) : 0;
 
-  // Images (only when event.image exists)
-  const hasImage = !!event.image;
-  const expandedImages = hasImage ? [event.image as string] : [];
+  // 이미지 — 확장 시 detail.attachments에서 objectKey 추출
+  const imageObjectKeys = useMemo(
+    () =>
+      (detail?.attachments ?? []).map((a) => a.objectKey ?? "").filter(Boolean),
+    [detail?.attachments],
+  );
+  const { urls: resolvedImageUrls } = useResolvedImageUrls(imageObjectKeys);
 
   return (
     <div
@@ -364,17 +370,6 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
         }}
         className="relative w-full px-s5 py-s4 flex items-center gap-s4 text-left hover:bg-muted/30 transition cursor-pointer"
       >
-        {/* Thumbnail */}
-        {hasImage && (
-          <div className="w-20 h-20 shrink-0 rounded-r3 overflow-hidden bg-muted/30 flex items-center justify-center">
-            <img
-              src={event.image}
-              alt={event.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-
         {/* Info area */}
         <div className="flex-1 min-w-0">
           {/* Title + badges on same row */}
@@ -623,21 +618,25 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
               )}
             </div>
           )}
-          {/* Image thumbnails (only if event has image) */}
-          {expandedImages.length > 0 && (
+          {/* Image gallery (presigned URLs) */}
+          {imageObjectKeys.length > 0 && (
             <div className="flex gap-s3">
-              {expandedImages.map((src, idx) => (
-                <div
-                  key={idx}
-                  className="w-24 h-24 rounded-r3 overflow-hidden bg-muted/30 shrink-0"
-                >
-                  <img
-                    src={src}
-                    alt={`${event.title} ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
+              {imageObjectKeys.map((key, idx) => {
+                const src = resolvedImageUrls.get(key);
+                if (!src) return null;
+                return (
+                  <div
+                    key={key}
+                    className="w-24 h-24 rounded-r3 overflow-hidden bg-muted/30 shrink-0"
+                  >
+                    <img
+                      src={src}
+                      alt={`${event.title} ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
 
