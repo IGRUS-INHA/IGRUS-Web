@@ -17,6 +17,8 @@ import {
   RotateCcw,
   Trash2,
   Users,
+  ClipboardList,
+  FileText,
 } from "lucide-react";
 import { RichTextViewer } from "@/components/feature/editor";
 import type { Event } from "@/types/entities";
@@ -492,6 +494,23 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
       ? resolvedImageUrls.get(imageObjectKeys[0])
       : undefined;
 
+  // 라이트박스용 전체 이미지 배열: [썸네일, ...갤러리]
+  // thumbnailObjectKey가 없으면 thumbnailSrc == 첫 번째 갤러리 이미지이므로 중복 없음
+  const allLightboxSrcs = useMemo(() => {
+    const srcs: string[] = [];
+    if (thumbnailSrc && event.thumbnailObjectKey) {
+      srcs.push(thumbnailSrc);
+    }
+    for (const key of imageObjectKeys) {
+      const url = resolvedImageUrls.get(key);
+      if (url) srcs.push(url);
+    }
+    return srcs;
+  }, [thumbnailSrc, event.thumbnailObjectKey, imageObjectKeys, resolvedImageUrls]);
+
+  // 갤러리 이미지 클릭 시 라이트박스 인덱스 오프셋 (전용 썸네일이 배열 앞에 오는 경우)
+  const galleryLightboxOffset = event.thumbnailObjectKey ? 1 : 0;
+
   return (
     <div
       ref={itemRef}
@@ -522,13 +541,20 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
       >
         {/* Thumbnail */}
         {thumbnailSrc && (
-          <div className="w-[84px] h-[84px] rounded-r3 overflow-hidden bg-muted/30 shrink-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxIndex(0);
+            }}
+            className="w-[84px] h-[84px] rounded-r3 overflow-hidden bg-muted/30 shrink-0 cursor-zoom-in"
+          >
             <img
               src={thumbnailSrc}
               alt={event.title}
               className="w-full h-full object-cover"
             />
-          </div>
+          </button>
         )}
 
         {/* Info area */}
@@ -797,7 +823,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setLightboxIndex(idx);
+                      setLightboxIndex(galleryLightboxOffset + idx);
                     }}
                     className="w-[84px] h-[84px] rounded-r3 overflow-hidden bg-muted/30 shrink-0 cursor-pointer"
                   >
@@ -813,6 +839,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           )}
 
           {/* Description */}
+          <div className="flex items-center gap-1.5">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-foreground">
+              상세 정보
+            </span>
+          </div>
           {isDetailLoading ? (
             <p className="text-sm text-muted-foreground">불러오는 중...</p>
           ) : !isAuthenticated && !event.allowExternal ? (
@@ -834,9 +866,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           {capacity > 0 && (
             <div>
               <div className="flex items-center justify-between mb-s2">
-                <span className="text-sm font-medium text-muted-foreground">
-                  모집 현황
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-semibold text-foreground">
+                    모집 현황
+                  </span>
+                </div>
                 <span className="text-sm font-medium text-muted-foreground">
                   {currentCount} / {capacity}
                 </span>
@@ -860,6 +895,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                   className="space-y-s3"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  <div className="flex items-center gap-1.5">
+                    <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold text-foreground">
+                      비회원 신청 정보
+                    </span>
+                  </div>
                   <div className="grid grid-cols-2 gap-s3">
                     {(
                       [
@@ -1045,11 +1086,9 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
       )}
 
       {/* Image lightbox */}
-      {lightboxIndex !== null && (
+      {lightboxIndex !== null && allLightboxSrcs.length > 0 && (
         <ImageLightbox
-          images={imageObjectKeys
-            .map((key) => resolvedImageUrls.get(key))
-            .filter((src): src is string => !!src)}
+          images={allLightboxSrcs}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
         />
