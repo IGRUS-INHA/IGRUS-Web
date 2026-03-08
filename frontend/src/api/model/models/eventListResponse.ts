@@ -59,4 +59,9 @@ export interface EventListResponse {
   surveyId?: number | null;
   /** 외부인(비회원) 신청 허용 여부 */
   allowExternal?: boolean;
+  /**
+   * 첫 번째 첨부파일의 object key (썸네일 용도)
+   * @nullable
+   */
+  thumbnailObjectKey?: string | null;
 }
