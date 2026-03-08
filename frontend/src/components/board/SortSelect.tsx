@@ -16,11 +16,11 @@ export function SortSelect({ value, onChange }: SortSelectProps) {
   };
 
   return (
-    <div className="relative inline-block min-w-[100px]">
+    <div className="relative inline-block min-w-[80px] md:min-w-[100px]">
       <select
         value={value}
         onChange={handleChange}
-        className="h-9 pl-s4 pr-10 py-s2 rounded-full border border-input bg-background text-sm font-bold transition-all appearance-none cursor-pointer w-full"
+        className="h-8 md:h-9 pl-s3 md:pl-s4 pr-8 md:pr-10 py-s1 md:py-s2 rounded-full border border-input bg-background text-xs md:text-sm font-bold transition-all appearance-none cursor-pointer w-full"
       >
         {Object.entries(SORT_TYPE_LABELS).map(([sortValue, label]) => (
           <option key={sortValue} value={sortValue}>
