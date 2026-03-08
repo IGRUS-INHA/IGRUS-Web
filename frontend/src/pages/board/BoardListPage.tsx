@@ -5,7 +5,6 @@ import {
   Link,
   useSearchParams,
 } from "react-router-dom";
-import { PenTool } from "lucide-react";
 import { useGetPostList } from "@/api/model/post/post";
 import type { PostListPageResponse } from "@/api/model/models";
 import PostListItem from "@/components/feature/board/PostListItem";
@@ -126,7 +125,7 @@ export default function BoardListPage() {
           "flex border-b border-border pb-s4",
           __FEATURE_COMMUNITY__
             ? "flex-col md:flex-row md:justify-between md:items-center gap-s3"
-            : "flex-row justify-between items-center",
+            : "flex-row items-center gap-s2 md:justify-between",
         )}
       >
         <div
@@ -153,7 +152,7 @@ export default function BoardListPage() {
         </div>
         <div
           className={cn(
-            "flex items-center gap-s4",
+            "flex items-center gap-s2 md:gap-s4 max-md:flex-1",
             __FEATURE_COMMUNITY__ ? "self-start md:self-auto" : "self-auto",
           )}
         >
@@ -162,10 +161,9 @@ export default function BoardListPage() {
             <Button
               onClick={handleWriteClick}
               type="button"
-              className="flex items-center justify-center gap-s2 rounded-full h-9 px-4 py-2 min-w-[100px]"
+              className="flex items-center justify-center rounded-full h-8 md:h-9 px-3 md:px-4 py-1 md:py-2 text-xs md:text-sm font-bold min-w-[80px] md:min-w-[100px] ml-auto"
             >
-              <PenTool size={14} />{" "}
-              <span className="hidden sm:inline">글쓰기</span>
+              글쓰기
             </Button>
           )}
         </div>
