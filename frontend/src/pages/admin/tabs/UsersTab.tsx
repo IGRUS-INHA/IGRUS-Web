@@ -60,14 +60,14 @@ const ROLE_LABELS: Record<string, string> = {
   ASSOCIATE: "준회원",
 };
 
-const ROLE_STYLE: Record<string, string> = {
+const ROLE_STYLE: Record<string, string | undefined> = {
   ADMIN: styles.roleAdmin,
   OPERATOR: styles.roleOperator,
   MEMBER: styles.roleRegular,
   ASSOCIATE: styles.roleAssociate,
 };
 
-const STATUS_STYLE: Record<string, string> = {
+const STATUS_STYLE: Record<string, string | undefined> = {
   ACTIVE: styles.statusActive,
   SUSPENDED: styles.statusSuspended,
   WITHDRAWN: styles.statusWithdrawn,
@@ -140,7 +140,7 @@ const MOCK_ACTIVITIES = [
   },
 ];
 
-const TIMELINE_DOT_STYLE: Record<string, string> = {
+const TIMELINE_DOT_STYLE: Record<string, string | undefined> = {
   post: styles.timelineDotPost,
   attend: styles.timelineDotAttend,
   study: styles.timelineDotStudy,
