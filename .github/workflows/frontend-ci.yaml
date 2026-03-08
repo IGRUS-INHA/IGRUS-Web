@@ -5,7 +5,7 @@ on:
     branches: ["main"]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   check-changes:
@@ -44,8 +44,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -62,20 +60,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check and regenerate Orval API client
+      - name: Check Orval API client is up to date
         run: |
           pnpm api:generate
-          pnpm format
           if [ -n "$(git -C .. status --porcelain frontend/src/api/model)" ]; then
-            echo "::warning::Orval API client is outdated. Auto-committing regenerated files."
-            git -C .. config user.name "github-actions[bot]"
-            git -C .. config user.email "github-actions[bot]@users.noreply.github.com"
-            git -C .. add frontend/src/api/model
-            git -C .. commit -m "chore(frontend): Orval API 클라이언트 재생성"
-            git -C .. push
-          else
-            echo "Orval API client is up to date."
+            echo "::error::Orval API client is outdated. Run 'pnpm api:generate && pnpm format' locally and commit the result."
+            exit 1
           fi
+          echo "Orval API client is up to date."
 
       - name: Lint
         run: pnpm lint
