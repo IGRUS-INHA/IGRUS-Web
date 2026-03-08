@@ -38,7 +38,8 @@ public enum EventErrorCode implements ErrorCode {
     EXTERNAL_ALREADY_REGISTERED(409, "이미 신청한 외부인입니다"),
     REGISTERED_MEMBER_EXISTS(400, "해당 학번으로 가입된 회원이 존재하므로 로그인 후 신청하세요"),
     EVENT_AUTHENTICATION_REQUIRED(401, "이 행사를 조회하려면 로그인이 필요합니다"),
-    SURVEY_RESPONSE_SERIALIZATION_FAILED(500, "설문 응답 직렬화에 실패했습니다");
+    SURVEY_RESPONSE_SERIALIZATION_FAILED(500, "설문 응답 직렬화에 실패했습니다"),
+    SURVEY_ALREADY_LINKED_TO_EVENT(409, "이미 다른 행사에 연결된 설문입니다");
 
     private final int status;
     private final String message;
