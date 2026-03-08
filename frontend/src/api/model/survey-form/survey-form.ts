@@ -33,7 +33,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import { useQuery } from "@tanstack/react-query";
+import {
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -43,201 +45,150 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
-import type { SurveyDetailResponse } from ".././models";
+import type {
+  SurveyDetailResponse
+} from '.././models';
 
-import { customFetch } from "../../client";
+import { customFetch } from '../../client';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * 응답자가 설문 양식(질문·선택지·행)을 조회합니다. PUBLISHED + OPEN 상태이며 accessLevel 조건을 충족해야 합니다. 인증 필요.
  * @summary 설문 양식 조회 (회원용)
  */
 export type getSurveyFormResponse200 = {
-  data: SurveyDetailResponse;
-  status: 200;
-};
+  data: SurveyDetailResponse
+  status: 200
+}
 
 export type getSurveyFormResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type getSurveyFormResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type getSurveyFormResponse403 = {
-  data: void;
-  status: 403;
-};
+  data: void
+  status: 403
+}
 
 export type getSurveyFormResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type getSurveyFormResponseSuccess = getSurveyFormResponse200 & {
+  data: void
+  status: 404
+}
+    
+export type getSurveyFormResponseSuccess = (getSurveyFormResponse200) & {
   headers: Headers;
 };
-export type getSurveyFormResponseError = (
-  | getSurveyFormResponse400
-  | getSurveyFormResponse401
-  | getSurveyFormResponse403
-  | getSurveyFormResponse404
-) & {
+export type getSurveyFormResponseError = (getSurveyFormResponse400 | getSurveyFormResponse401 | getSurveyFormResponse403 | getSurveyFormResponse404) & {
   headers: Headers;
 };
 
-export type getSurveyFormResponse =
-  | getSurveyFormResponseSuccess
-  | getSurveyFormResponseError;
+export type getSurveyFormResponse = (getSurveyFormResponseSuccess | getSurveyFormResponseError)
 
-export const getGetSurveyFormUrl = (surveyId: number) => {
-  return `/api/v1/surveys/${surveyId}/form`;
-};
+export const getGetSurveyFormUrl = (surveyId: number,) => {
 
-export const getSurveyForm = async (
-  surveyId: number,
-  options?: RequestInit,
-): Promise<getSurveyFormResponse> => {
-  return customFetch<getSurveyFormResponse>(getGetSurveyFormUrl(surveyId), {
+
+  
+
+  return `/api/v1/surveys/${surveyId}/form`
+}
+
+export const getSurveyForm = async (surveyId: number, options?: RequestInit): Promise<getSurveyFormResponse> => {
+  
+  return customFetch<getSurveyFormResponse>(getGetSurveyFormUrl(surveyId),
+  {      
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetSurveyFormQueryKey = (surveyId: number) => {
-  return [`/api/v1/surveys/${surveyId}/form`] as const;
-};
 
-export const getGetSurveyFormQueryOptions = <
-  TData = Awaited<ReturnType<typeof getSurveyForm>>,
-  TError = void,
->(
-  surveyId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+
+
+
+export const getGetSurveyFormQueryKey = (surveyId: number,) => {
+    return [
+    `/api/v1/surveys/${surveyId}/form`
+    ] as const;
+    }
+
+    
+export const getGetSurveyFormQueryOptions = <TData = Awaited<ReturnType<typeof getSurveyForm>>, TError = void>(surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetSurveyFormQueryKey(surveyId);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSurveyForm>>> = ({
-    signal,
-  }) => getSurveyForm(surveyId, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetSurveyFormQueryKey(surveyId);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!surveyId,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getSurveyForm>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetSurveyFormQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getSurveyForm>>
->;
-export type GetSurveyFormQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSurveyForm>>> = ({ signal }) => getSurveyForm(surveyId, { signal, ...requestOptions });
 
-export function useGetSurveyForm<
-  TData = Awaited<ReturnType<typeof getSurveyForm>>,
-  TError = void,
->(
-  surveyId: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(surveyId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSurveyFormQueryResult = NonNullable<Awaited<ReturnType<typeof getSurveyForm>>>
+export type GetSurveyFormQueryError = void
+
+
+export function useGetSurveyForm<TData = Awaited<ReturnType<typeof getSurveyForm>>, TError = void>(
+ surveyId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSurveyForm>>,
           TError,
           Awaited<ReturnType<typeof getSurveyForm>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetSurveyForm<
-  TData = Awaited<ReturnType<typeof getSurveyForm>>,
-  TError = void,
->(
-  surveyId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSurveyForm<TData = Awaited<ReturnType<typeof getSurveyForm>>, TError = void>(
+ surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSurveyForm>>,
           TError,
           Awaited<ReturnType<typeof getSurveyForm>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetSurveyForm<
-  TData = Awaited<ReturnType<typeof getSurveyForm>>,
-  TError = void,
->(
-  surveyId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSurveyForm<TData = Awaited<ReturnType<typeof getSurveyForm>>, TError = void>(
+ surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 설문 양식 조회 (회원용)
  */
 
-export function useGetSurveyForm<
-  TData = Awaited<ReturnType<typeof getSurveyForm>>,
-  TError = void,
->(
-  surveyId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetSurveyFormQueryOptions(surveyId, options);
+export function useGetSurveyForm<TData = Awaited<ReturnType<typeof getSurveyForm>>, TError = void>(
+ surveyId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSurveyForm>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetSurveyFormQueryOptions(surveyId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+

@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AccountRecoveryResponseRole } from "./accountRecoveryResponseRole";
+import type { AccountRecoveryResponseRole } from './accountRecoveryResponseRole';
 
 /**
  * 계정 복구 응답

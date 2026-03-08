@@ -33,8 +33,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { UserListResponseRole } from "./userListResponseRole";
-import type { UserListResponseStatus } from "./userListResponseStatus";
+import type { UserListResponseRole } from './userListResponseRole';
+import type { UserListResponseStatus } from './userListResponseStatus';
 
 /**
  * 관리자용 회원 목록 응답
@@ -52,6 +52,10 @@ export interface UserListResponse {
   role?: UserListResponseRole;
   /** 상태 */
   status?: UserListResponseStatus;
+  /** 학과 */
+  department?: string;
+  /** 전화번호 */
+  phoneNumber?: string;
   /** 가입일 */
   createdAt?: string;
 }

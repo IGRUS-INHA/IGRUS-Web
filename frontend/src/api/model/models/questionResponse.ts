@@ -33,9 +33,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { OptionResponse } from "./optionResponse";
-import type { QuestionResponseQuestionType } from "./questionResponseQuestionType";
-import type { RowResponse } from "./rowResponse";
+import type { OptionResponse } from './optionResponse';
+import type { QuestionResponseQuestionType } from './questionResponseQuestionType';
+import type { RowResponse } from './rowResponse';
 
 export interface QuestionResponse {
   id?: number;

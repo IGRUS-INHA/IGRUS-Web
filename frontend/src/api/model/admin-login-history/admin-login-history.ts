@@ -33,7 +33,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import { useQuery } from "@tanstack/react-query";
+import {
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -43,225 +45,148 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
-import type { GetLoginHistoriesParams, Page } from ".././models";
+import type {
+  GetLoginHistoriesParams,
+  Page
+} from '.././models';
 
-import { customFetch } from "../../client";
+import { customFetch } from '../../client';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * 로그인 이력을 복합 필터로 조회합니다. 모든 필터는 선택적입니다. ADMIN 권한이 필요합니다.
  * @summary 로그인 이력 조회
  */
 export type getLoginHistoriesResponse200 = {
-  data: Page;
-  status: 200;
-};
+  data: Page
+  status: 200
+}
 
 export type getLoginHistoriesResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type getLoginHistoriesResponse403 = {
-  data: void;
-  status: 403;
-};
-
-export type getLoginHistoriesResponseSuccess = getLoginHistoriesResponse200 & {
+  data: void
+  status: 403
+}
+    
+export type getLoginHistoriesResponseSuccess = (getLoginHistoriesResponse200) & {
   headers: Headers;
 };
-export type getLoginHistoriesResponseError = (
-  | getLoginHistoriesResponse401
-  | getLoginHistoriesResponse403
-) & {
+export type getLoginHistoriesResponseError = (getLoginHistoriesResponse401 | getLoginHistoriesResponse403) & {
   headers: Headers;
 };
 
-export type getLoginHistoriesResponse =
-  | getLoginHistoriesResponseSuccess
-  | getLoginHistoriesResponseError;
+export type getLoginHistoriesResponse = (getLoginHistoriesResponseSuccess | getLoginHistoriesResponseError)
 
-export const getGetLoginHistoriesUrl = (params?: GetLoginHistoriesParams) => {
+export const getGetLoginHistoriesUrl = (params?: GetLoginHistoriesParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/v1/admin/login-histories?${stringifiedParams}`
-    : `/api/v1/admin/login-histories`;
-};
+  return stringifiedParams.length > 0 ? `/api/v1/admin/login-histories?${stringifiedParams}` : `/api/v1/admin/login-histories`
+}
 
-export const getLoginHistories = async (
-  params?: GetLoginHistoriesParams,
-  options?: RequestInit,
-): Promise<getLoginHistoriesResponse> => {
-  return customFetch<getLoginHistoriesResponse>(
-    getGetLoginHistoriesUrl(params),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
+export const getLoginHistories = async (params?: GetLoginHistoriesParams, options?: RequestInit): Promise<getLoginHistoriesResponse> => {
+  
+  return customFetch<getLoginHistoriesResponse>(getGetLoginHistoriesUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
 
-export const getGetLoginHistoriesQueryKey = (
-  params?: GetLoginHistoriesParams,
+
+
+
+
+export const getGetLoginHistoriesQueryKey = (params?: GetLoginHistoriesParams,) => {
+    return [
+    `/api/v1/admin/login-histories`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getGetLoginHistoriesQueryOptions = <TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = void>(params?: GetLoginHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  return [
-    `/api/v1/admin/login-histories`,
-    ...(params ? [params] : []),
-  ] as const;
-};
 
-export const getGetLoginHistoriesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getLoginHistories>>,
-  TError = void,
->(
-  params?: GetLoginHistoriesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getLoginHistories>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getGetLoginHistoriesQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetLoginHistoriesQueryKey(params);
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getLoginHistories>>
-  > = ({ signal }) => getLoginHistories(params, { signal, ...requestOptions });
+  
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getLoginHistories>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLoginHistories>>> = ({ signal }) => getLoginHistories(params, { signal, ...requestOptions });
 
-export type GetLoginHistoriesQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getLoginHistories>>
->;
-export type GetLoginHistoriesQueryError = void;
+      
 
-export function useGetLoginHistories<
-  TData = Awaited<ReturnType<typeof getLoginHistories>>,
-  TError = void,
->(
-  params: undefined | GetLoginHistoriesParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getLoginHistories>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetLoginHistoriesQueryResult = NonNullable<Awaited<ReturnType<typeof getLoginHistories>>>
+export type GetLoginHistoriesQueryError = void
+
+
+export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = void>(
+ params: undefined |  GetLoginHistoriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLoginHistories>>,
           TError,
           Awaited<ReturnType<typeof getLoginHistories>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetLoginHistories<
-  TData = Awaited<ReturnType<typeof getLoginHistories>>,
-  TError = void,
->(
-  params?: GetLoginHistoriesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getLoginHistories>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = void>(
+ params?: GetLoginHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLoginHistories>>,
           TError,
           Awaited<ReturnType<typeof getLoginHistories>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetLoginHistories<
-  TData = Awaited<ReturnType<typeof getLoginHistories>>,
-  TError = void,
->(
-  params?: GetLoginHistoriesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getLoginHistories>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = void>(
+ params?: GetLoginHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 로그인 이력 조회
  */
 
-export function useGetLoginHistories<
-  TData = Awaited<ReturnType<typeof getLoginHistories>>,
-  TError = void,
->(
-  params?: GetLoginHistoriesParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getLoginHistories>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetLoginHistoriesQueryOptions(params, options);
+export function useGetLoginHistories<TData = Awaited<ReturnType<typeof getLoginHistories>>, TError = void>(
+ params?: GetLoginHistoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLoginHistories>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetLoginHistoriesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+

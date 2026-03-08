@@ -33,8 +33,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AttachmentInfo } from "./attachmentInfo";
-import type { CreateMemberInquiryRequestType } from "./createMemberInquiryRequestType";
+import type { AttachmentInfo } from './attachmentInfo';
+import type { CreateMemberInquiryRequestType } from './createMemberInquiryRequestType';
 
 /**
  * 회원 문의 생성 요청

@@ -33,21 +33,21 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { GetAdminEventListEventStatus } from "./getAdminEventListEventStatus";
-import type { GetAdminEventListRegistrationStatus } from "./getAdminEventListRegistrationStatus";
-import type { GetAdminEventListVisibility } from "./getAdminEventListVisibility";
+import type { GetAdminEventListEventStatus } from './getAdminEventListEventStatus';
+import type { GetAdminEventListRegistrationStatus } from './getAdminEventListRegistrationStatus';
+import type { GetAdminEventListVisibility } from './getAdminEventListVisibility';
 
 export type GetAdminEventListParams = {
-  /**
-   * 공개 상태 필터 (PUBLISHED, UNPUBLISHED)
-   */
-  visibility?: GetAdminEventListVisibility;
-  /**
-   * 행사 진행 상태 필터 (UPCOMING, ONGOING, COMPLETED, CANCELED)
-   */
-  eventStatus?: GetAdminEventListEventStatus;
-  /**
-   * 등록 상태 필터 (NOT_STARTED, OPEN, CLOSED)
-   */
-  registrationStatus?: GetAdminEventListRegistrationStatus;
+/**
+ * 공개 상태 필터 (PUBLISHED, UNPUBLISHED)
+ */
+visibility?: GetAdminEventListVisibility;
+/**
+ * 행사 진행 상태 필터 (UPCOMING, ONGOING, COMPLETED, CANCELED)
+ */
+eventStatus?: GetAdminEventListEventStatus;
+/**
+ * 등록 상태 필터 (NOT_STARTED, OPEN, CLOSED)
+ */
+registrationStatus?: GetAdminEventListRegistrationStatus;
 };

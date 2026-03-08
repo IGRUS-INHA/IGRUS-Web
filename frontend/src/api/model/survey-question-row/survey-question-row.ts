@@ -33,7 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -46,625 +49,476 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
-import type { RowResponse, SaveQuestionRowRequest } from ".././models";
+import type {
+  RowResponse,
+  SaveQuestionRowRequest
+} from '.././models';
 
-import { customFetch } from "../../client";
+import { customFetch } from '../../client';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * 질문의 그리드 행 목록을 조회합니다. 운영진 이상 권한 필요.
  * @summary 행 목록 조회
  */
 export type getRowListResponse200 = {
-  data: RowResponse[];
-  status: 200;
-};
+  data: RowResponse[]
+  status: 200
+}
 
 export type getRowListResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type getRowListResponse403 = {
-  data: void;
-  status: 403;
-};
+  data: void
+  status: 403
+}
 
 export type getRowListResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type getRowListResponseSuccess = getRowListResponse200 & {
+  data: void
+  status: 404
+}
+    
+export type getRowListResponseSuccess = (getRowListResponse200) & {
   headers: Headers;
 };
-export type getRowListResponseError = (
-  | getRowListResponse401
-  | getRowListResponse403
-  | getRowListResponse404
-) & {
+export type getRowListResponseError = (getRowListResponse401 | getRowListResponse403 | getRowListResponse404) & {
   headers: Headers;
 };
 
-export type getRowListResponse =
-  | getRowListResponseSuccess
-  | getRowListResponseError;
+export type getRowListResponse = (getRowListResponseSuccess | getRowListResponseError)
 
-export const getGetRowListUrl = (surveyId: number, questionId: number) => {
-  return `/api/v1/surveys/${surveyId}/questions/${questionId}/rows`;
-};
+export const getGetRowListUrl = (surveyId: number,
+    questionId: number,) => {
 
-export const getRowList = async (
-  surveyId: number,
-  questionId: number,
-  options?: RequestInit,
-): Promise<getRowListResponse> => {
-  return customFetch<getRowListResponse>(
-    getGetRowListUrl(surveyId, questionId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
 
-export const getGetRowListQueryKey = (surveyId: number, questionId: number) => {
-  return [`/api/v1/surveys/${surveyId}/questions/${questionId}/rows`] as const;
-};
+  
 
-export const getGetRowListQueryOptions = <
-  TData = Awaited<ReturnType<typeof getRowList>>,
-  TError = void,
->(
-  surveyId: number,
-  questionId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+  return `/api/v1/surveys/${surveyId}/questions/${questionId}/rows`
+}
+
+export const getRowList = async (surveyId: number,
+    questionId: number, options?: RequestInit): Promise<getRowListResponse> => {
+  
+  return customFetch<getRowListResponse>(getGetRowListUrl(surveyId,questionId),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetRowListQueryKey = (surveyId: number,
+    questionId: number,) => {
+    return [
+    `/api/v1/surveys/${surveyId}/questions/${questionId}/rows`
+    ] as const;
+    }
+
+    
+export const getGetRowListQueryOptions = <TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(surveyId: number,
+    questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getGetRowListQueryKey(surveyId, questionId);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRowList>>> = ({
-    signal,
-  }) => getRowList(surveyId, questionId, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetRowListQueryKey(surveyId,questionId);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!(surveyId && questionId),
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getRowList>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  
 
-export type GetRowListQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getRowList>>
->;
-export type GetRowListQueryError = void;
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRowList>>> = ({ signal }) => getRowList(surveyId,questionId, { signal, ...requestOptions });
 
-export function useGetRowList<
-  TData = Awaited<ReturnType<typeof getRowList>>,
-  TError = void,
->(
-  surveyId: number,
-  questionId: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>
-    > &
-      Pick<
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(surveyId && questionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetRowListQueryResult = NonNullable<Awaited<ReturnType<typeof getRowList>>>
+export type GetRowListQueryError = void
+
+
+export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(
+ surveyId: number,
+    questionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRowList>>,
           TError,
           Awaited<ReturnType<typeof getRowList>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetRowList<
-  TData = Awaited<ReturnType<typeof getRowList>>,
-  TError = void,
->(
-  surveyId: number,
-  questionId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(
+ surveyId: number,
+    questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRowList>>,
           TError,
           Awaited<ReturnType<typeof getRowList>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetRowList<
-  TData = Awaited<ReturnType<typeof getRowList>>,
-  TError = void,
->(
-  surveyId: number,
-  questionId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(
+ surveyId: number,
+    questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary 행 목록 조회
  */
 
-export function useGetRowList<
-  TData = Awaited<ReturnType<typeof getRowList>>,
-  TError = void,
->(
-  surveyId: number,
-  questionId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGetRowListQueryOptions(surveyId, questionId, options);
+export function useGetRowList<TData = Awaited<ReturnType<typeof getRowList>>, TError = void>(
+ surveyId: number,
+    questionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRowList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  const queryOptions = getGetRowListQueryOptions(surveyId,questionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
 
 /**
  * 질문에 새로운 그리드 행을 추가합니다. 운영진 이상 권한 필요.
  * @summary 행 추가
  */
 export type createRowResponse201 = {
-  data: RowResponse[];
-  status: 201;
-};
+  data: RowResponse[]
+  status: 201
+}
 
 export type createRowResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type createRowResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type createRowResponse403 = {
-  data: void;
-  status: 403;
-};
+  data: void
+  status: 403
+}
 
 export type createRowResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type createRowResponseSuccess = createRowResponse201 & {
+  data: void
+  status: 404
+}
+    
+export type createRowResponseSuccess = (createRowResponse201) & {
   headers: Headers;
 };
-export type createRowResponseError = (
-  | createRowResponse400
-  | createRowResponse401
-  | createRowResponse403
-  | createRowResponse404
-) & {
+export type createRowResponseError = (createRowResponse400 | createRowResponse401 | createRowResponse403 | createRowResponse404) & {
   headers: Headers;
 };
 
-export type createRowResponse =
-  | createRowResponseSuccess
-  | createRowResponseError;
+export type createRowResponse = (createRowResponseSuccess | createRowResponseError)
 
-export const getCreateRowUrl = (surveyId: number, questionId: number) => {
-  return `/api/v1/surveys/${surveyId}/questions/${questionId}/rows`;
-};
+export const getCreateRowUrl = (surveyId: number,
+    questionId: number,) => {
 
-export const createRow = async (
-  surveyId: number,
-  questionId: number,
-  saveQuestionRowRequest: SaveQuestionRowRequest,
-  options?: RequestInit,
-): Promise<createRowResponse> => {
-  return customFetch<createRowResponse>(getCreateRowUrl(surveyId, questionId), {
+
+  
+
+  return `/api/v1/surveys/${surveyId}/questions/${questionId}/rows`
+}
+
+export const createRow = async (surveyId: number,
+    questionId: number,
+    saveQuestionRowRequest: SaveQuestionRowRequest, options?: RequestInit): Promise<createRowResponse> => {
+  
+  return customFetch<createRowResponse>(getCreateRowUrl(surveyId,questionId),
+  {      
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(saveQuestionRowRequest),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      saveQuestionRowRequest,)
+  }
+);}
 
-export const getCreateRowMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createRow>>,
-    TError,
-    { surveyId: number; questionId: number; data: SaveQuestionRowRequest },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createRow>>,
-  TError,
-  { surveyId: number; questionId: number; data: SaveQuestionRowRequest },
-  TContext
-> => {
-  const mutationKey = ["createRow"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createRow>>,
-    { surveyId: number; questionId: number; data: SaveQuestionRowRequest }
-  > = (props) => {
-    const { surveyId, questionId, data } = props ?? {};
 
-    return createRow(surveyId, questionId, data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getCreateRowMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRow>>, TError,{surveyId: number;questionId: number;data: SaveQuestionRowRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRow>>, TError,{surveyId: number;questionId: number;data: SaveQuestionRowRequest}, TContext> => {
 
-export type CreateRowMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createRow>>
->;
-export type CreateRowMutationBody = SaveQuestionRowRequest;
-export type CreateRowMutationError = void;
+const mutationKey = ['createRow'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-/**
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRow>>, {surveyId: number;questionId: number;data: SaveQuestionRowRequest}> = (props) => {
+          const {surveyId,questionId,data} = props ?? {};
+
+          return  createRow(surveyId,questionId,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRowMutationResult = NonNullable<Awaited<ReturnType<typeof createRow>>>
+    export type CreateRowMutationBody = SaveQuestionRowRequest
+    export type CreateRowMutationError = void
+
+    /**
  * @summary 행 추가
  */
-export const useCreateRow = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof createRow>>,
-      TError,
-      { surveyId: number; questionId: number; data: SaveQuestionRowRequest },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof createRow>>,
-  TError,
-  { surveyId: number; questionId: number; data: SaveQuestionRowRequest },
-  TContext
-> => {
-  return useMutation(getCreateRowMutationOptions(options), queryClient);
-};
-/**
+export const useCreateRow = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRow>>, TError,{surveyId: number;questionId: number;data: SaveQuestionRowRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createRow>>,
+        TError,
+        {surveyId: number;questionId: number;data: SaveQuestionRowRequest},
+        TContext
+      > => {
+      return useMutation(getCreateRowMutationOptions(options), queryClient);
+    }
+    /**
  * 그리드 행을 삭제합니다. 운영진 이상 권한 필요.
  * @summary 행 삭제
  */
 export type deleteRowResponse204 = {
-  data: void;
-  status: 204;
-};
+  data: void
+  status: 204
+}
 
 export type deleteRowResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type deleteRowResponse403 = {
-  data: void;
-  status: 403;
-};
+  data: void
+  status: 403
+}
 
 export type deleteRowResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type deleteRowResponseSuccess = deleteRowResponse204 & {
+  data: void
+  status: 404
+}
+    
+export type deleteRowResponseSuccess = (deleteRowResponse204) & {
   headers: Headers;
 };
-export type deleteRowResponseError = (
-  | deleteRowResponse401
-  | deleteRowResponse403
-  | deleteRowResponse404
-) & {
+export type deleteRowResponseError = (deleteRowResponse401 | deleteRowResponse403 | deleteRowResponse404) & {
   headers: Headers;
 };
 
-export type deleteRowResponse =
-  | deleteRowResponseSuccess
-  | deleteRowResponseError;
+export type deleteRowResponse = (deleteRowResponseSuccess | deleteRowResponseError)
 
-export const getDeleteRowUrl = (
-  surveyId: number,
-  questionId: number,
-  rowId: number,
-) => {
-  return `/api/v1/surveys/${surveyId}/questions/${questionId}/rows/${rowId}`;
-};
+export const getDeleteRowUrl = (surveyId: number,
+    questionId: number,
+    rowId: number,) => {
 
-export const deleteRow = async (
-  surveyId: number,
-  questionId: number,
-  rowId: number,
-  options?: RequestInit,
-): Promise<deleteRowResponse> => {
-  return customFetch<deleteRowResponse>(
-    getDeleteRowUrl(surveyId, questionId, rowId),
-    {
-      ...options,
-      method: "DELETE",
-    },
-  );
-};
 
-export const getDeleteRowMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteRow>>,
-    TError,
-    { surveyId: number; questionId: number; rowId: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteRow>>,
-  TError,
-  { surveyId: number; questionId: number; rowId: number },
-  TContext
-> => {
-  const mutationKey = ["deleteRow"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+  
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteRow>>,
-    { surveyId: number; questionId: number; rowId: number }
-  > = (props) => {
-    const { surveyId, questionId, rowId } = props ?? {};
+  return `/api/v1/surveys/${surveyId}/questions/${questionId}/rows/${rowId}`
+}
 
-    return deleteRow(surveyId, questionId, rowId, requestOptions);
-  };
+export const deleteRow = async (surveyId: number,
+    questionId: number,
+    rowId: number, options?: RequestInit): Promise<deleteRowResponse> => {
+  
+  return customFetch<deleteRowResponse>(getDeleteRowUrl(surveyId,questionId,rowId),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type DeleteRowMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteRow>>
->;
 
-export type DeleteRowMutationError = void;
 
-/**
+export const getDeleteRowMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRow>>, TError,{surveyId: number;questionId: number;rowId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRow>>, TError,{surveyId: number;questionId: number;rowId: number}, TContext> => {
+
+const mutationKey = ['deleteRow'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRow>>, {surveyId: number;questionId: number;rowId: number}> = (props) => {
+          const {surveyId,questionId,rowId} = props ?? {};
+
+          return  deleteRow(surveyId,questionId,rowId,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRowMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRow>>>
+    
+    export type DeleteRowMutationError = void
+
+    /**
  * @summary 행 삭제
  */
-export const useDeleteRow = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteRow>>,
-      TError,
-      { surveyId: number; questionId: number; rowId: number },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteRow>>,
-  TError,
-  { surveyId: number; questionId: number; rowId: number },
-  TContext
-> => {
-  return useMutation(getDeleteRowMutationOptions(options), queryClient);
-};
-/**
+export const useDeleteRow = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRow>>, TError,{surveyId: number;questionId: number;rowId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteRow>>,
+        TError,
+        {surveyId: number;questionId: number;rowId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteRowMutationOptions(options), queryClient);
+    }
+    /**
  * 그리드 행을 수정합니다. 운영진 이상 권한 필요.
  * @summary 행 수정
  */
 export type updateRowResponse200 = {
-  data: RowResponse[];
-  status: 200;
-};
+  data: RowResponse[]
+  status: 200
+}
 
 export type updateRowResponse400 = {
-  data: void;
-  status: 400;
-};
+  data: void
+  status: 400
+}
 
 export type updateRowResponse401 = {
-  data: void;
-  status: 401;
-};
+  data: void
+  status: 401
+}
 
 export type updateRowResponse403 = {
-  data: void;
-  status: 403;
-};
+  data: void
+  status: 403
+}
 
 export type updateRowResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type updateRowResponseSuccess = updateRowResponse200 & {
+  data: void
+  status: 404
+}
+    
+export type updateRowResponseSuccess = (updateRowResponse200) & {
   headers: Headers;
 };
-export type updateRowResponseError = (
-  | updateRowResponse400
-  | updateRowResponse401
-  | updateRowResponse403
-  | updateRowResponse404
-) & {
+export type updateRowResponseError = (updateRowResponse400 | updateRowResponse401 | updateRowResponse403 | updateRowResponse404) & {
   headers: Headers;
 };
 
-export type updateRowResponse =
-  | updateRowResponseSuccess
-  | updateRowResponseError;
+export type updateRowResponse = (updateRowResponseSuccess | updateRowResponseError)
 
-export const getUpdateRowUrl = (
-  surveyId: number,
-  questionId: number,
-  rowId: number,
-) => {
-  return `/api/v1/surveys/${surveyId}/questions/${questionId}/rows/${rowId}`;
-};
+export const getUpdateRowUrl = (surveyId: number,
+    questionId: number,
+    rowId: number,) => {
 
-export const updateRow = async (
-  surveyId: number,
-  questionId: number,
-  rowId: number,
-  saveQuestionRowRequest: SaveQuestionRowRequest,
-  options?: RequestInit,
-): Promise<updateRowResponse> => {
-  return customFetch<updateRowResponse>(
-    getUpdateRowUrl(surveyId, questionId, rowId),
-    {
-      ...options,
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(saveQuestionRowRequest),
-    },
-  );
-};
 
-export const getUpdateRowMutationOptions = <
-  TError = void,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateRow>>,
-    TError,
-    {
-      surveyId: number;
-      questionId: number;
-      rowId: number;
-      data: SaveQuestionRowRequest;
-    },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof updateRow>>,
-  TError,
-  {
-    surveyId: number;
-    questionId: number;
-    rowId: number;
-    data: SaveQuestionRowRequest;
-  },
-  TContext
-> => {
-  const mutationKey = ["updateRow"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+  
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof updateRow>>,
-    {
-      surveyId: number;
-      questionId: number;
-      rowId: number;
-      data: SaveQuestionRowRequest;
-    }
-  > = (props) => {
-    const { surveyId, questionId, rowId, data } = props ?? {};
+  return `/api/v1/surveys/${surveyId}/questions/${questionId}/rows/${rowId}`
+}
 
-    return updateRow(surveyId, questionId, rowId, data, requestOptions);
-  };
+export const updateRow = async (surveyId: number,
+    questionId: number,
+    rowId: number,
+    saveQuestionRowRequest: SaveQuestionRowRequest, options?: RequestInit): Promise<updateRowResponse> => {
+  
+  return customFetch<updateRowResponse>(getUpdateRowUrl(surveyId,questionId,rowId),
+  {      
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      saveQuestionRowRequest,)
+  }
+);}
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type UpdateRowMutationResult = NonNullable<
-  Awaited<ReturnType<typeof updateRow>>
->;
-export type UpdateRowMutationBody = SaveQuestionRowRequest;
-export type UpdateRowMutationError = void;
 
-/**
+
+export const getUpdateRowMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRow>>, TError,{surveyId: number;questionId: number;rowId: number;data: SaveQuestionRowRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRow>>, TError,{surveyId: number;questionId: number;rowId: number;data: SaveQuestionRowRequest}, TContext> => {
+
+const mutationKey = ['updateRow'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRow>>, {surveyId: number;questionId: number;rowId: number;data: SaveQuestionRowRequest}> = (props) => {
+          const {surveyId,questionId,rowId,data} = props ?? {};
+
+          return  updateRow(surveyId,questionId,rowId,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRowMutationResult = NonNullable<Awaited<ReturnType<typeof updateRow>>>
+    export type UpdateRowMutationBody = SaveQuestionRowRequest
+    export type UpdateRowMutationError = void
+
+    /**
  * @summary 행 수정
  */
-export const useUpdateRow = <TError = void, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof updateRow>>,
-      TError,
-      {
-        surveyId: number;
-        questionId: number;
-        rowId: number;
-        data: SaveQuestionRowRequest;
-      },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof updateRow>>,
-  TError,
-  {
-    surveyId: number;
-    questionId: number;
-    rowId: number;
-    data: SaveQuestionRowRequest;
-  },
-  TContext
-> => {
-  return useMutation(getUpdateRowMutationOptions(options), queryClient);
-};
+export const useUpdateRow = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRow>>, TError,{surveyId: number;questionId: number;rowId: number;data: SaveQuestionRowRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateRow>>,
+        TError,
+        {surveyId: number;questionId: number;rowId: number;data: SaveQuestionRowRequest},
+        TContext
+      > => {
+      return useMutation(getUpdateRowMutationOptions(options), queryClient);
+    }
+    

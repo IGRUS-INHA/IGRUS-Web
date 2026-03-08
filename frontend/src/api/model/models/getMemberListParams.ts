@@ -35,8 +35,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 export type GetMemberListParams = {
-  /**
-   * 검색 키워드 (학번, 이름)
-   */
-  keyword?: string;
+/**
+ * 검색 키워드 (학번, 이름)
+ */
+keyword?: string;
 };
