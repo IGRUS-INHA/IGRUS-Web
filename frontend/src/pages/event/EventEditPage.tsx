@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save } from "lucide-react";
@@ -18,12 +19,19 @@ import {
   isEventAccessDenied,
   isEventOperatorRequired,
 } from "@/utils/error";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useResolvedImageUrls } from "@/hooks/useResolvedImageUrls";
+import { useToast } from "@/hooks/useToast";
+import { IMAGE_UPLOAD_CONFIG } from "@/utils/upload";
+import { UPLOAD_PURPOSE } from "@/services/uploadService";
 import { useCreateSurvey } from "@/api/model/survey/survey";
 import {
   useCreateQuestion,
   useDeleteQuestion,
   useUpdateQuestion,
   useGetQuestionList,
+  getGetQuestionListQueryKey,
+  getQuestionList,
 } from "@/api/model/survey-question/survey-question";
 import {
   useCreateOption,
@@ -34,6 +42,7 @@ import type { DraftQuestion } from "@/components/feature/event/SurveyQuestionBui
 export default function EventEditPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const {
     data: eventResponse,
     isLoading,
@@ -45,12 +54,31 @@ export default function EventEditPage() {
   const [formReady, setFormReady] = useState(false);
   const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([]);
   const [capacityRaw, setCapacityRaw] = useState("30");
+  const [imagesInitialized, setImagesInitialized] = useState(false);
+
+  const toast = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { files, addFiles, removeFile, uploadAll, setExistingItems } =
+    useImageUpload({
+      config: IMAGE_UPLOAD_CONFIG,
+      purpose: UPLOAD_PURPOSE.EVENT_IMAGE,
+      onValidationError: (errors) => {
+        errors.forEach((msg) => toast.error(msg));
+      },
+    });
+
+  const existingObjectKeys = useMemo(
+    () => event?.imageUrls ?? [],
+    [event?.imageUrls],
+  );
+  const { urls: resolvedUrls } = useResolvedImageUrls(existingObjectKeys);
 
   const existingSurveyId = event?.surveyId ?? undefined;
-  const { data: questionListResponse } = useGetQuestionList(
-    existingSurveyId ?? 0,
-    { query: { enabled: !!existingSurveyId } },
-  );
+  const { data: questionListResponse, isFetching: isQuestionsFetching } =
+    useGetQuestionList(existingSurveyId ?? 0, {
+      query: { enabled: !!existingSurveyId },
+    });
   const { mutateAsync: createSurveyAsync } = useCreateSurvey();
   const { mutateAsync: createQuestionAsync } = useCreateQuestion();
   const { mutateAsync: deleteQuestionAsync } = useDeleteQuestion();
@@ -65,7 +93,7 @@ export default function EventEditPage() {
     control,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -149,6 +177,20 @@ export default function EventEditPage() {
     }
   }, [event, reset]);
 
+  // 기존 이미지 URL이 resolve되면 setExistingItems 호출
+  useEffect(() => {
+    if (imagesInitialized) return;
+    if (existingObjectKeys.length === 0) return;
+    if (resolvedUrls.size < existingObjectKeys.length) return;
+
+    const items = existingObjectKeys.map((key) => ({
+      objectKey: key,
+      previewUrl: resolvedUrls.get(key) ?? key,
+    }));
+    setExistingItems(items);
+    setImagesInitialized(true);
+  }, [existingObjectKeys, resolvedUrls, setExistingItems, imagesInitialized]);
+
   // 기존 설문 문항 로드
   useEffect(() => {
     if (questionListResponse?.status === 200) {
@@ -225,12 +267,12 @@ export default function EventEditPage() {
 
     try {
       if (existingSurveyId) {
-        const originalIds = new Set(
-          (questionListResponse?.status === 200
-            ? questionListResponse.data
-            : []
-          ).map((q) => q.id),
-        );
+        // 항상 서버에서 최신 데이터를 가져와 stale 캐시로 인한 오류 방지
+        const freshResponse = await getQuestionList(existingSurveyId);
+        const freshQuestions =
+          freshResponse.status === 200 ? freshResponse.data : [];
+
+        const originalIds = new Set(freshQuestions.map((q) => q.id));
         const currentServerIds = new Set(
           draftQuestions.filter((q) => q.serverId).map((q) => q.serverId),
         );
@@ -257,7 +299,7 @@ export default function EventEditPage() {
               },
             });
             if (q.options !== undefined) {
-              const originalQ = (questionListResponse?.data ?? []).find(
+              const originalQ = freshQuestions.find(
                 (oq) => oq.id === q.serverId,
               );
               for (const opt of originalQ?.options ?? []) {
@@ -342,9 +384,17 @@ export default function EventEditPage() {
         }
       }
     } catch {
+      if (existingSurveyId) {
+        void queryClient.invalidateQueries({
+          queryKey: getGetQuestionListQueryKey(existingSurveyId),
+        });
+      }
       alert("설문 처리에 실패했습니다. 다시 시도해주세요.");
       return;
     }
+
+    const uploadResults = await uploadAll();
+    const imageUrls = uploadResults.map((r) => r.objectKey);
 
     updateEvent(
       {
@@ -359,6 +409,7 @@ export default function EventEditPage() {
           registrationEndAt,
           capacity: data.capacity,
           surveyId: draftQuestions.length > 0 ? resolvedSurveyId : null,
+          imageUrls,
         },
       },
       {
@@ -429,10 +480,13 @@ export default function EventEditPage() {
           </button>
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || isSubmitting || isQuestionsFetching}
             className="bg-primary text-primary-foreground px-s5 py-s2 rounded-full text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 flex items-center gap-s2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save size={16} /> {isPending ? "수정 중..." : "수정 완료"}
+            <Save size={16} />{" "}
+            {isPending || isSubmitting || isQuestionsFetching
+              ? "수정 중..."
+              : "수정 완료"}
           </button>
         </div>
 
@@ -458,6 +512,10 @@ export default function EventEditPage() {
           onDraftQuestionsChange={setDraftQuestions}
           registrationTypeMode="readonly"
           editorReady={formReady}
+          files={files}
+          onAddFiles={addFiles}
+          onRemoveFile={removeFile}
+          fileInputRef={fileInputRef}
         />
       </form>
     </div>

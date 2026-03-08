@@ -10,6 +10,8 @@ import {
   ArrowLeft,
   RotateCcw,
   ArrowRight,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import { FullPageSpinner } from "@/components/ui";
 import { useEvent } from "@/hooks/queries/useEvents";
@@ -190,7 +192,7 @@ function MultipleChoiceRenderer({
   const selected = answer.selectedOptionIds?.[0];
   const options = question.options ?? [];
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-s3">
+    <div className="space-y-s3">
       {options.map((opt) => {
         const isSelected = selected === opt.id;
         return (
@@ -198,16 +200,24 @@ function MultipleChoiceRenderer({
             key={opt.id}
             type="button"
             onClick={() =>
-              onChange({ ...answer, selectedOptionIds: [opt.id!] })
+              onChange({
+                ...answer,
+                selectedOptionIds: isSelected ? [] : [opt.id ?? 0],
+              })
             }
-            className={cn(
-              "flex flex-col items-center gap-s2 p-s5 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer",
-              isSelected
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-border bg-background hover:border-primary/50 hover:bg-muted/50",
-            )}
+            className="flex items-center gap-s3 w-full text-left cursor-pointer"
           >
-            <span className="font-semibold">{opt.text}</span>
+            <div
+              className={cn(
+                "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
+                isSelected ? "border-primary" : "border-muted-foreground/50",
+              )}
+            >
+              {isSelected && (
+                <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+              )}
+            </div>
+            <span className="text-sm text-foreground">{opt.text}</span>
           </button>
         );
       })}
@@ -232,30 +242,29 @@ function CheckboxRenderer({
     onChange({ ...answer, selectedOptionIds: Array.from(next) });
   };
   return (
-    <div className="flex flex-wrap gap-s2">
+    <div className="space-y-s3">
       {options.map((opt) => {
-        const isSelected = selected.has(opt.id!);
+        const isSelected = selected.has(opt.id ?? 0);
         return (
           <button
             key={opt.id}
             type="button"
-            onClick={() => toggle(opt.id!)}
-            className={cn(
-              "flex items-center gap-s2 px-s4 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-              isSelected
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-background text-foreground hover:border-primary/50",
-            )}
+            onClick={() => toggle(opt.id ?? 0)}
+            className="flex items-center gap-s3 w-full text-left cursor-pointer"
           >
             <div
               className={cn(
-                "w-3 h-3 rounded-full border-2 shrink-0",
+                "w-5 h-5 rounded-sm border-2 flex items-center justify-center shrink-0",
                 isSelected
-                  ? "border-primary-foreground bg-primary-foreground"
-                  : "border-muted-foreground",
+                  ? "border-primary bg-primary"
+                  : "border-muted-foreground/50",
               )}
-            />
-            {opt.text}
+            >
+              {isSelected && (
+                <Check size={12} className="text-primary-foreground" />
+              )}
+            </div>
+            <span className="text-sm text-foreground">{opt.text}</span>
           </button>
         );
       })}
@@ -270,23 +279,29 @@ function DropdownRenderer({
 }: QuestionRendererProps) {
   const options = question.options ?? [];
   return (
-    <select
-      value={answer.selectedOptionIds?.[0] ?? ""}
-      onChange={(e) =>
-        onChange({
-          ...answer,
-          selectedOptionIds: e.target.value ? [Number(e.target.value)] : [],
-        })
-      }
-      className="w-full rounded-lg px-s4 py-s3 border border-border bg-muted/50 text-sm focus:outline-none focus:border-primary transition-colors"
-    >
-      <option value="">선택하세요</option>
-      {options.map((opt) => (
-        <option key={opt.id} value={opt.id}>
-          {opt.text}
-        </option>
-      ))}
-    </select>
+    <div className="relative inline-block min-w-40">
+      <select
+        value={answer.selectedOptionIds?.[0] ?? ""}
+        onChange={(e) =>
+          onChange({
+            ...answer,
+            selectedOptionIds: e.target.value ? [Number(e.target.value)] : [],
+          })
+        }
+        className="appearance-none w-full rounded-lg px-s4 py-s3 pr-10 border border-border bg-background text-sm focus:outline-none focus:border-primary transition-colors cursor-pointer"
+      >
+        <option value="">선택</option>
+        {options.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.text}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={16}
+        className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+      />
+    </div>
   );
 }
 
@@ -481,7 +496,7 @@ export default function EventApplyPage() {
   const handleSubmit = () => {
     // 필수 질문 미응답 체크
     const unansweredRequired = questions.filter(
-      (q) => q.required && !isAnswered(q, answers[q.id!] ?? {}),
+      (q) => q.required && !isAnswered(q, answers[q.id ?? 0] ?? {}),
     );
     if (unansweredRequired.length > 0) {
       alert(
@@ -491,7 +506,7 @@ export default function EventApplyPage() {
     }
 
     const surveyAnswers: SubmitAnswerRequest[] = questions.map((q) =>
-      buildSubmitAnswer(q, answers[q.id!] ?? {}),
+      buildSubmitAnswer(q, answers[q.id ?? 0] ?? {}),
     );
 
     register({
@@ -499,16 +514,6 @@ export default function EventApplyPage() {
       data: { surveyAnswers },
     });
   };
-
-  // ── 진행 상태 계산 ──
-  const requiredQuestions = questions.filter((q) => q.required);
-  const completedRequired = requiredQuestions.filter((q) =>
-    isAnswered(q, answers[q.id!] ?? {}),
-  );
-  const progressPercent =
-    requiredQuestions.length > 0
-      ? Math.round((completedRequired.length / requiredQuestions.length) * 100)
-      : 100;
 
   if (isEventLoading || (surveyId && isSurveyLoading)) {
     return <FullPageSpinner />;
@@ -626,7 +631,7 @@ export default function EventApplyPage() {
           <p className="typo-label font-semibold mb-s4">진행 상태</p>
           <div className="space-y-s3">
             {questions.map((q) => {
-              const answered = isAnswered(q, answers[q.id!] ?? {});
+              const answered = isAnswered(q, answers[q.id ?? 0] ?? {});
               return (
                 <div key={q.id} className="flex items-center gap-s2">
                   {answered ? (
@@ -648,20 +653,6 @@ export default function EventApplyPage() {
                 </div>
               );
             })}
-          </div>
-          <div className="mt-s5 pt-s4 border-t border-border">
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-s2">
-              <span>완료율</span>
-              <span className="font-semibold text-foreground">
-                {progressPercent}%
-              </span>
-            </div>
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -703,11 +694,11 @@ export default function EventApplyPage() {
               {/* 질문 입력 UI */}
               <QuestionRenderer
                 question={question}
-                answer={answers[question.id!] ?? {}}
+                answer={answers[question.id ?? 0] ?? {}}
                 onChange={(newAnswer) =>
                   setAnswers((prev) => ({
                     ...prev,
-                    [question.id!]: newAnswer,
+                    [question.id ?? 0]: newAnswer,
                   }))
                 }
               />
