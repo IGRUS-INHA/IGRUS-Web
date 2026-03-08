@@ -88,7 +88,7 @@ export default function EventCard({ event }: EventCardProps) {
             <span className="text-sm">{event.location}</span>
           </div>
           <div className="mt-s4">
-            <div className="flex items-center justify-between mb-s2">
+            <div className="flex items-center justify-between mb-s4">
               <span className="text-sm font-medium text-muted-foreground">
                 참여 인원
               </span>
