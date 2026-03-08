@@ -5,12 +5,14 @@ import igrus.web.common.util.SecurityUtils;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
+import igrus.web.event.dto.response.EventAttachmentDto;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.service.EventService;
 import igrus.web.generated.api.AdminEventApi;
-import igrus.web.generated.model.GetAdminEvent200Response;
-import igrus.web.generated.model.GetAdminEventList200ResponseInner;
+import igrus.web.generated.model.ApiAdminEventDetailResponse;
+import igrus.web.generated.model.ApiAdminEventListResponse;
+import igrus.web.generated.model.ApiEventAttachmentResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +36,7 @@ public class AdminEventController implements AdminEventApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<GetAdminEventList200ResponseInner>> getAdminEventList(
+    public ResponseEntity<List<ApiAdminEventListResponse>> getAdminEventList(
             String visibility,
             String eventStatus,
             String registrationStatus
@@ -50,7 +52,7 @@ public class AdminEventController implements AdminEventApi {
 
         List<EventListResponse> responses = eventService.getAdminEventList(
                 visibilityEnum, eventStatusEnum, registrationStatusEnum);
-        List<GetAdminEventList200ResponseInner> result = responses.stream()
+        List<ApiAdminEventListResponse> result = responses.stream()
                 .map(this::mapToAdminEventListResponse)
                 .toList();
         return ResponseEntity.ok(result);
@@ -58,7 +60,7 @@ public class AdminEventController implements AdminEventApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetAdminEvent200Response> getAdminEvent(Long eventId) {
+    public ResponseEntity<ApiAdminEventDetailResponse> getAdminEvent(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("[관리자] 행사 상세 조회 요청 - eventId: {}, userId: {}", eventId, user.userId());
         EventDetailResponse response = eventService.getAdminEvent(eventId, user.userId());
@@ -67,7 +69,7 @@ public class AdminEventController implements AdminEventApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetAdminEvent200Response> publishEvent(Long eventId) {
+    public ResponseEntity<ApiAdminEventDetailResponse> publishEvent(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 공개 요청 - eventId: {}, userId: {}", eventId, user.userId());
         EventDetailResponse response = eventService.publishEvent(eventId, user.userId());
@@ -76,7 +78,7 @@ public class AdminEventController implements AdminEventApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetAdminEvent200Response> unpublishEvent(Long eventId) {
+    public ResponseEntity<ApiAdminEventDetailResponse> unpublishEvent(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 비공개 요청 - eventId: {}, userId: {}", eventId, user.userId());
         EventDetailResponse response = eventService.unpublishEvent(eventId, user.userId());
@@ -85,8 +87,8 @@ public class AdminEventController implements AdminEventApi {
 
     // ===== 매핑 헬퍼 =====
 
-    private GetAdminEvent200Response mapToAdminEventDetailResponse(EventDetailResponse r) {
-        return new GetAdminEvent200Response()
+    private ApiAdminEventDetailResponse mapToAdminEventDetailResponse(EventDetailResponse r) {
+        ApiAdminEventDetailResponse response = new ApiAdminEventDetailResponse()
                 .id(r.id())
                 .title(r.title())
                 .description(r.description())
@@ -99,17 +101,17 @@ public class AdminEventController implements AdminEventApi {
                 .capacity(r.capacity())
                 .currentCount(r.currentCount())
                 .registrationStatus(r.registrationStatus() != null
-                        ? GetAdminEvent200Response.RegistrationStatusEnum.fromValue(
+                        ? ApiAdminEventDetailResponse.RegistrationStatusEnum.fromValue(
                                 r.registrationStatus().name())
                         : null)
                 .eventStatus(r.eventStatus() != null
-                        ? GetAdminEvent200Response.EventStatusEnum.fromValue(r.eventStatus().name())
+                        ? ApiAdminEventDetailResponse.EventStatusEnum.fromValue(r.eventStatus().name())
                         : null)
                 .closeReason(r.closeReason() != null
-                        ? GetAdminEvent200Response.CloseReasonEnum.fromValue(r.closeReason().name())
+                        ? ApiAdminEventDetailResponse.CloseReasonEnum.fromValue(r.closeReason().name())
                         : null)
                 .registrationType(r.registrationType() != null
-                        ? GetAdminEvent200Response.RegistrationTypeEnum.fromValue(
+                        ? ApiAdminEventDetailResponse.RegistrationTypeEnum.fromValue(
                                 r.registrationType().name())
                         : null)
                 .isRegistrable(r.isRegistrable())
@@ -118,13 +120,21 @@ public class AdminEventController implements AdminEventApi {
                 .canEdit(r.canEdit())
                 .isRegistered(r.isRegistered())
                 .visibility(r.visibility() != null
-                        ? GetAdminEvent200Response.VisibilityEnum.fromValue(r.visibility().name())
+                        ? ApiAdminEventDetailResponse.VisibilityEnum.fromValue(r.visibility().name())
                         : null)
                 .surveyId(r.surveyId());
+
+        if (r.attachments() != null) {
+            response.setAttachments(r.attachments().stream()
+                    .map(this::mapToAttachmentResponse)
+                    .toList());
+        }
+
+        return response;
     }
 
-    private GetAdminEventList200ResponseInner mapToAdminEventListResponse(EventListResponse r) {
-        return new GetAdminEventList200ResponseInner()
+    private ApiAdminEventListResponse mapToAdminEventListResponse(EventListResponse r) {
+        return new ApiAdminEventListResponse()
                 .id(r.id())
                 .title(r.title())
                 .location(r.location())
@@ -134,22 +144,31 @@ public class AdminEventController implements AdminEventApi {
                 .capacity(r.capacity())
                 .currentCount(r.currentCount())
                 .registrationStatus(r.registrationStatus() != null
-                        ? GetAdminEventList200ResponseInner.RegistrationStatusEnum.fromValue(
+                        ? ApiAdminEventListResponse.RegistrationStatusEnum.fromValue(
                                 r.registrationStatus().name())
                         : null)
                 .eventStatus(r.eventStatus() != null
-                        ? GetAdminEventList200ResponseInner.EventStatusEnum.fromValue(
+                        ? ApiAdminEventListResponse.EventStatusEnum.fromValue(
                                 r.eventStatus().name())
                         : null)
                 .registrationType(r.registrationType() != null
-                        ? GetAdminEventList200ResponseInner.RegistrationTypeEnum.fromValue(
+                        ? ApiAdminEventListResponse.RegistrationTypeEnum.fromValue(
                                 r.registrationType().name())
                         : null)
                 .isRegistrable(r.isRegistrable())
                 .visibility(r.visibility() != null
-                        ? GetAdminEventList200ResponseInner.VisibilityEnum.fromValue(
+                        ? ApiAdminEventListResponse.VisibilityEnum.fromValue(
                                 r.visibility().name())
                         : null)
                 .surveyId(r.surveyId());
+    }
+
+    private ApiEventAttachmentResponse mapToAttachmentResponse(EventAttachmentDto a) {
+        return new ApiEventAttachmentResponse()
+                .id(a.id())
+                .fileMetadataId(a.fileMetadataId())
+                .objectKey(a.objectKey())
+                .originalFileName(a.originalFileName())
+                .contentType(a.contentType());
     }
 }

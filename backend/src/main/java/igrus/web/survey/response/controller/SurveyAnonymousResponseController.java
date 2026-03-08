@@ -1,10 +1,10 @@
 package igrus.web.survey.response.controller;
 
 import igrus.web.generated.api.SurveyAnonymousResponseApi;
-import igrus.web.generated.model.GetMyResponse200Response;
-import igrus.web.generated.model.GetMyResponse200ResponseAnswersInner;
-import igrus.web.generated.model.GetMyResponse200ResponseAnswersInnerGridAnswersInner;
-import igrus.web.generated.model.UpdateMyResponseRequest;
+import igrus.web.generated.model.ApiAnswerResponse;
+import igrus.web.generated.model.ApiGridAnswerResponse;
+import igrus.web.generated.model.ApiSubmitSurveyResponseRequest;
+import igrus.web.generated.model.ApiSurveyResponseDetailResponse;
 import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import igrus.web.survey.response.dto.request.SubmitSurveyResponseRequest;
 import igrus.web.survey.response.dto.response.SurveyResponseDetailResponse;
@@ -30,16 +30,16 @@ public class SurveyAnonymousResponseController implements SurveyAnonymousRespons
     private final SurveyResponseService surveyResponseService;
 
     @Override
-    public ResponseEntity<GetMyResponse200Response> submitAnonymousResponse(
-            Long surveyId, UpdateMyResponseRequest updateMyResponseRequest) {
+    public ResponseEntity<ApiSurveyResponseDetailResponse> submitAnonymousResponse(
+            Long surveyId, ApiSubmitSurveyResponseRequest submitSurveyResponseRequest) {
         log.info("비회원 설문 응답 제출 요청 - surveyId: {}", surveyId);
 
-        SubmitSurveyResponseRequest internalRequest = mapToInternalRequest(updateMyResponseRequest);
+        SubmitSurveyResponseRequest internalRequest = mapToInternalRequest(submitSurveyResponseRequest);
         SurveyResponseDetailResponse result = surveyResponseService.submitAnonymousResponse(surveyId, internalRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(result));
     }
 
-    private SubmitSurveyResponseRequest mapToInternalRequest(UpdateMyResponseRequest request) {
+    private SubmitSurveyResponseRequest mapToInternalRequest(ApiSubmitSurveyResponseRequest request) {
         List<SubmitAnswerRequest> answers = request.getAnswers().stream()
                 .map(a -> new SubmitAnswerRequest(
                         a.getQuestionId(),
@@ -57,22 +57,22 @@ public class SurveyAnonymousResponseController implements SurveyAnonymousRespons
         return new SubmitSurveyResponseRequest(answers);
     }
 
-    private GetMyResponse200Response mapToResponse(SurveyResponseDetailResponse result) {
-        return new GetMyResponse200Response()
+    private ApiSurveyResponseDetailResponse mapToResponse(SurveyResponseDetailResponse result) {
+        return new ApiSurveyResponseDetailResponse()
                 .responseId(result.responseId())
                 .surveyId(result.surveyId())
                 .userId(result.userId())
                 .answers(result.answers().stream()
-                        .map(a -> new GetMyResponse200ResponseAnswersInner()
+                        .map(a -> new ApiAnswerResponse()
                                 .questionId(a.questionId())
-                                .questionType(GetMyResponse200ResponseAnswersInner.QuestionTypeEnum.fromValue(
+                                .questionType(ApiAnswerResponse.QuestionTypeEnum.fromValue(
                                         a.questionType().name()))
                                 .textValue(a.textValue())
                                 .selectedOptionIds(a.selectedOptionIds())
                                 .numericValue(a.numericValue())
                                 .gridAnswers(a.gridAnswers() != null
                                         ? a.gridAnswers().stream()
-                                        .map(g -> new GetMyResponse200ResponseAnswersInnerGridAnswersInner()
+                                        .map(g -> new ApiGridAnswerResponse()
                                                 .rowId(g.rowId())
                                                 .selectedOptionIds(g.selectedOptionIds()))
                                         .toList()

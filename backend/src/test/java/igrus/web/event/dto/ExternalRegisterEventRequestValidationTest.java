@@ -1,6 +1,6 @@
 package igrus.web.event.dto;
 
-import igrus.web.generated.model.RegisterEventExternalRequest;
+import igrus.web.generated.model.ApiExternalRegisterEventRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 테스트 케이스 문서: docs/test-case/event/external-event-registration-test-cases.md
  * 검증 기준: EXT-INV-10 (필수 필드 검증), Section 4-1 (BVA)
  *
- * @see igrus.web.generated.model.RegisterEventExternalRequest
+ * @see igrus.web.generated.model.ApiExternalRegisterEventRequest
  */
 @DisplayName("ExternalRegisterEventRequest Bean Validation")
 class ExternalRegisterEventRequestValidationTest {
@@ -33,8 +33,8 @@ class ExternalRegisterEventRequestValidationTest {
         }
     }
 
-    private RegisterEventExternalRequest validRequest() {
-        return new RegisterEventExternalRequest("홍길동", "12345678", "01012345678", "컴퓨터공학과");
+    private ApiExternalRegisterEventRequest validRequest() {
+        return new ApiExternalRegisterEventRequest("홍길동", "12345678", "01012345678", "컴퓨터공학과");
     }
 
     // ===== TC-022: 모든 필수 필드 유효값 =====
@@ -42,8 +42,8 @@ class ExternalRegisterEventRequestValidationTest {
     @Test
     @DisplayName("[TC-022] 모든 필수 필드를 유효한 값으로 제공 시 Validation 통과")
     void allFieldsValid_PassesValidation() {
-        RegisterEventExternalRequest request = validRequest();
-        Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+        ApiExternalRegisterEventRequest request = validRequest();
+        Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
         assertThat(violations).isEmpty();
     }
 
@@ -56,36 +56,36 @@ class ExternalRegisterEventRequestValidationTest {
         @Test
         @DisplayName("[TC-023] name이 null인 경우 Validation 위반")
         void name_Null_IsInvalid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setName(null);
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isNotEmpty();
         }
 
         @Test
         @DisplayName("[TC-041] name 1자 (최소 경계) 정상")
         void name_1Char_IsValid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setName("김");
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isEmpty();
         }
 
         @Test
         @DisplayName("[TC-042] name 50자 (최대 경계) 정상")
         void name_50Chars_IsValid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setName("가".repeat(50));
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isEmpty();
         }
 
         @Test
         @DisplayName("[TC-043] name 51자 (상한 초과) Validation 위반")
         void name_51Chars_IsInvalid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setName("가".repeat(51));
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isNotEmpty();
         }
     }
@@ -99,36 +99,36 @@ class ExternalRegisterEventRequestValidationTest {
         @Test
         @DisplayName("[TC-024] studentId가 빈 문자열인 경우 Validation 위반")
         void studentId_Empty_IsInvalid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setStudentId("");
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isNotEmpty();
         }
 
         @Test
         @DisplayName("[TC-044] studentId 1자 (최소 경계) 정상")
         void studentId_1Char_IsValid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setStudentId("1");
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isEmpty();
         }
 
         @Test
         @DisplayName("[TC-045] studentId 20자 (최대 경계) 정상")
         void studentId_20Chars_IsValid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setStudentId("12345678901234567890");
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isEmpty();
         }
 
         @Test
         @DisplayName("[TC-046] studentId 21자 (상한 초과) Validation 위반")
         void studentId_21Chars_IsInvalid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setStudentId("123456789012345678901");
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isNotEmpty();
         }
     }
@@ -142,36 +142,36 @@ class ExternalRegisterEventRequestValidationTest {
         @Test
         @DisplayName("[TC-025] phone이 null인 경우 Validation 위반")
         void phone_Null_IsInvalid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setPhone(null);
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isNotEmpty();
         }
 
         @Test
         @DisplayName("[TC-047] phone 1자 (최소 경계) 정상")
         void phone_1Char_IsValid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setPhone("1");
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isEmpty();
         }
 
         @Test
         @DisplayName("[TC-048] phone 20자 (최대 경계) 정상")
         void phone_20Chars_IsValid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setPhone("01012345678901234567");
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isEmpty();
         }
 
         @Test
         @DisplayName("[TC-049] phone 21자 (상한 초과) Validation 위반")
         void phone_21Chars_IsInvalid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setPhone("010123456789012345678");
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isNotEmpty();
         }
     }
@@ -185,36 +185,36 @@ class ExternalRegisterEventRequestValidationTest {
         @Test
         @DisplayName("[TC-026] department가 null인 경우 Validation 위반")
         void department_Null_IsInvalid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setDepartment(null);
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isNotEmpty();
         }
 
         @Test
         @DisplayName("[TC-050] department 1자 (최소 경계) 정상")
         void department_1Char_IsValid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setDepartment("공");
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isEmpty();
         }
 
         @Test
         @DisplayName("[TC-051] department 100자 (최대 경계) 정상")
         void department_100Chars_IsValid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setDepartment("가".repeat(100));
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isEmpty();
         }
 
         @Test
         @DisplayName("[TC-052] department 101자 (상한 초과) Validation 위반")
         void department_101Chars_IsInvalid() {
-            RegisterEventExternalRequest request = validRequest();
+            ApiExternalRegisterEventRequest request = validRequest();
             request.setDepartment("가".repeat(101));
-            Set<ConstraintViolation<RegisterEventExternalRequest>> violations = validator.validate(request);
+            Set<ConstraintViolation<ApiExternalRegisterEventRequest>> violations = validator.validate(request);
             assertThat(violations).isNotEmpty();
         }
     }

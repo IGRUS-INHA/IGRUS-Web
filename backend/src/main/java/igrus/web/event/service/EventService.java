@@ -1,6 +1,7 @@
 package igrus.web.event.service;
 
 import igrus.web.event.domain.Event;
+import igrus.web.event.domain.EventAttachment;
 import igrus.web.event.domain.EventChangeType;
 import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.EventStatus;
@@ -8,18 +9,26 @@ import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.UpdateEventRequest;
+import igrus.web.event.dto.response.EventAttachmentDto;
 import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.audit.EventStatusChanged;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventAccessDeniedException;
+import igrus.web.event.exception.EventAttachmentValidationException;
+import igrus.web.event.exception.EventErrorCode;
 import igrus.web.event.exception.EventNotDeletableException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.EventRegistrationNotReopenableException;
 import igrus.web.event.exception.InvalidEventDateException;
+import igrus.web.event.repository.EventAttachmentRepository;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventRegistrationRepository;
+import igrus.web.storage.domain.FileMetadata;
+import igrus.web.storage.domain.FileUploadStatus;
+import igrus.web.storage.exception.FileOwnershipMismatchException;
+import igrus.web.storage.repository.FileMetadataRepository;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.exception.SurveyNotFoundException;
 import igrus.web.survey.repository.SurveyRepository;
@@ -33,9 +42,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 
 /**
  * 행사 서비스.
@@ -74,8 +89,10 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
+    private final EventAttachmentRepository eventAttachmentRepository;
     private final UserRepository userRepository;
     private final SurveyRepository surveyRepository;
+    private final FileMetadataRepository fileMetadataRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -123,12 +140,19 @@ public class EventService {
         // 5. 저장
         Event savedEvent = eventRepository.save(event);
 
-        // 6. 설문 연결 행사 생성 로그 (TASK-015)
+        // 6. 첨부파일 처리
+        List<Long> attachmentFileIds = normalizeFileIds(request.attachmentFileIds());
+        if (!attachmentFileIds.isEmpty()) {
+            validateAndCreateAttachments(savedEvent, attachmentFileIds, userId);
+            log.info("행사 생성: eventId={}, attachmentCount={}", savedEvent.getId(), attachmentFileIds.size());
+        }
+
+        // 7. 설문 연결 행사 생성 로그 (TASK-015)
         if (request.surveyId() != null) {
             log.info("행사 생성 요청 - userId: {}, title: {}, surveyId: {}", userId, request.title(), request.surveyId());
         }
 
-        // 7. 응답 DTO 반환
+        // 8. 응답 DTO 반환
         return EventCreateResponse.from(savedEvent);
     }
 
@@ -163,7 +187,8 @@ public class EventService {
         boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
                 eventId, userId, ACTIVE_REGISTRATION_STATUSES);
 
-        return EventDetailResponse.from(event, canEdit, isRegistered);
+        List<EventAttachmentDto> attachmentDtos = getAttachmentDtos(eventId);
+        return EventDetailResponse.from(event, canEdit, isRegistered, attachmentDtos);
     }
 
     /**
@@ -261,8 +286,13 @@ public class EventService {
                 request.surveyId()
         );
 
-        // 7. 응답 반환 (dirty checking으로 자동 저장)
-        return EventDetailResponse.from(event);
+        // 9. 첨부파일 전체 교체
+        List<Long> attachmentFileIds = normalizeFileIds(request.attachmentFileIds());
+        List<EventAttachmentDto> attachmentDtos = resolveAttachments(
+                event, attachmentFileIds, userId);
+
+        // 10. 응답 반환 (dirty checking으로 자동 저장)
+        return EventDetailResponse.from(event, false, false, attachmentDtos);
     }
 
     /**
@@ -529,7 +559,8 @@ public class EventService {
         boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
                 eventId, userId, ACTIVE_REGISTRATION_STATUSES);
 
-        return EventDetailResponse.from(event, true, isRegistered);
+        List<EventAttachmentDto> attachmentDtos = getAttachmentDtos(eventId);
+        return EventDetailResponse.from(event, true, isRegistered, attachmentDtos);
     }
 
     // === Visibility 변경 메서드 ===
@@ -650,6 +681,144 @@ public class EventService {
         if (survey.getTrashedAt() != null) {
             throw new SurveyNotFoundException(surveyId);
         }
+    }
+
+    // === 첨부파일 관리 메서드 ===
+
+    /**
+     * null 또는 빈 배열을 빈 리스트로 정규화한다.
+     */
+    private List<Long> normalizeFileIds(List<Long> fileIds) {
+        return fileIds == null ? List.of() : fileIds;
+    }
+
+    /**
+     * 첨부파일을 검증하고 EventAttachment를 생성한다.
+     */
+    private void validateAndCreateAttachments(Event event, List<Long> fileIds, Long userId) {
+        validateNoDuplicateFileIds(fileIds);
+        List<FileMetadata> files = validateAndFetchFiles(fileIds, userId);
+
+        List<EventAttachment> attachments = files.stream()
+                .map(file -> EventAttachment.create(event, file))
+                .toList();
+
+        eventAttachmentRepository.saveAll(attachments);
+    }
+
+    /**
+     * 전체 교체(Full Replace) 방식으로 첨부파일을 관리한다.
+     */
+    private List<EventAttachmentDto> resolveAttachments(Event event, List<Long> newFileIds, Long userId) {
+        List<EventAttachment> existing = eventAttachmentRepository.findByEventIdWithFileMetadata(event.getId());
+
+        // 기존 파일 ID Set
+        Set<Long> existingFileIdSet = existing.stream()
+                .map(ea -> ea.getFileMetadata().getId())
+                .collect(Collectors.toSet());
+        Set<Long> newFileIdSet = new HashSet<>(newFileIds);
+
+        // 빈 배열이면 모두 삭제
+        if (newFileIds.isEmpty()) {
+            if (!existing.isEmpty()) {
+                eventAttachmentRepository.deleteAll(existing);
+            }
+            return List.of();
+        }
+
+        validateNoDuplicateFileIds(newFileIds);
+
+        // 변경이 없으면 기존 그대로 반환
+        if (existingFileIdSet.equals(newFileIdSet)) {
+            return existing.stream().map(EventAttachmentDto::from).toList();
+        }
+
+        // 추가 대상 파일 검증
+        Set<Long> toAdd = new HashSet<>(newFileIdSet);
+        toAdd.removeAll(existingFileIdSet);
+
+        Map<Long, FileMetadata> newFileMap = new LinkedHashMap<>();
+        if (!toAdd.isEmpty()) {
+            List<FileMetadata> newFiles = validateAndFetchFiles(new ArrayList<>(toAdd), userId);
+            newFiles.forEach(f -> newFileMap.put(f.getId(), f));
+        }
+
+        // 기존 전체 삭제 후 새로 생성 (단순 전체 교체)
+        eventAttachmentRepository.deleteAll(existing);
+
+        // 기존 파일 맵 (유지 대상용)
+        Map<Long, FileMetadata> existingFileMap = existing.stream()
+                .collect(Collectors.toMap(
+                        ea -> ea.getFileMetadata().getId(),
+                        EventAttachment::getFileMetadata,
+                        (a, b) -> a
+                ));
+
+        List<EventAttachment> newAttachments = newFileIds.stream()
+                .map(fileId -> {
+                    FileMetadata fm = newFileMap.containsKey(fileId)
+                            ? newFileMap.get(fileId)
+                            : existingFileMap.get(fileId);
+                    return EventAttachment.create(event, fm);
+                })
+                .toList();
+
+        eventAttachmentRepository.saveAll(newAttachments);
+
+        log.info("행사 수정 - eventId: {}, 첨부파일 전체 교체: {}개", event.getId(), newFileIds.size());
+
+        return newAttachments.stream().map(EventAttachmentDto::from).toList();
+    }
+
+    /**
+     * 중복 파일 ID를 검증한다.
+     */
+    private void validateNoDuplicateFileIds(List<Long> fileIds) {
+        Set<Long> uniqueIds = new HashSet<>(fileIds);
+        if (uniqueIds.size() != fileIds.size()) {
+            throw new EventAttachmentValidationException(EventErrorCode.EVENT_ATTACHMENT_DUPLICATE_FILE);
+        }
+    }
+
+    /**
+     * 파일 ID 목록의 파일들을 조회하고 상태/소유권을 검증한다.
+     */
+    private List<FileMetadata> validateAndFetchFiles(List<Long> fileIds, Long userId) {
+        List<FileMetadata> files = new ArrayList<>();
+        for (Long fileId : fileIds) {
+            FileMetadata file = fileMetadataRepository.findById(fileId)
+                    .filter(f -> !f.isDeleted())
+                    .orElseThrow(() -> {
+                        log.warn("파일 상태 검증 실패: fileId={}, status=NOT_FOUND", fileId);
+                        return new EventAttachmentValidationException(EventErrorCode.EVENT_ATTACHMENT_FILE_NOT_FOUND,
+                                "파일을 찾을 수 없습니다: fileId=" + fileId);
+                    });
+
+            if (file.getStatus() != FileUploadStatus.COMPLETED) {
+                log.warn("파일 상태 검증 실패: fileId={}, status={}", fileId, file.getStatus());
+                throw new EventAttachmentValidationException(EventErrorCode.EVENT_ATTACHMENT_FILE_NOT_COMPLETED,
+                        "업로드가 완료되지 않은 파일입니다: fileId=" + fileId + ", status=" + file.getStatus());
+            }
+
+            if (!file.getUploaderUserId().equals(userId)) {
+                log.warn("파일 소유권 불일치: fileId={}, uploaderUserId={}, requestUserId={}",
+                        fileId, file.getUploaderUserId(), userId);
+                throw new FileOwnershipMismatchException();
+            }
+
+            files.add(file);
+        }
+        return files;
+    }
+
+    /**
+     * 행사의 첨부파일 DTO 목록을 조회한다.
+     */
+    private List<EventAttachmentDto> getAttachmentDtos(Long eventId) {
+        return eventAttachmentRepository.findByEventIdWithFileMetadata(eventId)
+                .stream()
+                .map(EventAttachmentDto::from)
+                .toList();
     }
 
     /**

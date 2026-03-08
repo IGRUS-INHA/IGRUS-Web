@@ -5,15 +5,6 @@ import igrus.web.common.util.PageableUtils;
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.inquiry.domain.InquiryStatus;
 import igrus.web.inquiry.domain.InquiryType;
-import igrus.web.inquiry.dto.request.CreateInquiryMemoRequest;
-import igrus.web.inquiry.dto.request.CreateInquiryReplyRequest;
-import igrus.web.inquiry.dto.request.UpdateInquiryReplyRequest;
-import igrus.web.inquiry.dto.response.AttachmentResponse;
-import igrus.web.inquiry.dto.response.InquiryDetailResponse;
-import igrus.web.inquiry.dto.response.InquiryListPageResponse;
-import igrus.web.inquiry.dto.response.InquiryListResponse;
-import igrus.web.inquiry.dto.response.InquiryMemoResponse;
-import igrus.web.inquiry.dto.response.InquiryReplyResponse;
 import igrus.web.inquiry.service.manage.CreateInquiryMemoService;
 import igrus.web.inquiry.service.manage.CreateInquiryReplyService;
 import igrus.web.inquiry.service.manage.DeleteInquiryService;
@@ -21,20 +12,29 @@ import igrus.web.inquiry.service.manage.UpdateInquiryReplyService;
 import igrus.web.inquiry.service.manage.UpdateInquiryStatusService;
 import igrus.web.inquiry.service.read.GetAllInquiriesService;
 import igrus.web.inquiry.service.read.GetInquiryDetailService;
+import igrus.web.inquiry.dto.request.CreateInquiryMemoRequest;
+import igrus.web.inquiry.dto.request.CreateInquiryReplyRequest;
+import igrus.web.inquiry.dto.request.UpdateInquiryReplyRequest;
+import igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest;
+import igrus.web.inquiry.dto.response.AttachmentResponse;
+import igrus.web.inquiry.dto.response.InquiryDetailResponse;
+import igrus.web.inquiry.dto.response.InquiryListPageResponse;
+import igrus.web.inquiry.dto.response.InquiryListResponse;
+import igrus.web.inquiry.dto.response.InquiryMemoResponse;
+import igrus.web.inquiry.dto.response.InquiryReplyResponse;
 import igrus.web.generated.api.AdminInquiryApi;
-import igrus.web.generated.model.CreateMemo201Response;
-import igrus.web.generated.model.CreateMemoRequest;
-import igrus.web.generated.model.CreateReplyRequest;
-import igrus.web.generated.model.GetAllInquiries200Response;
-import igrus.web.generated.model.GetAllInquiries200ResponseInquiriesInner;
-import igrus.web.generated.model.GetInquiryDetail200Response;
-import igrus.web.generated.model.LookupGuestInquiry200ResponseAttachmentsInner;
-import igrus.web.generated.model.LookupGuestInquiry200ResponseReply;
-import igrus.web.generated.model.UpdateReply200Response;
-import igrus.web.generated.model.UpdateReplyRequest;
+import igrus.web.generated.model.ApiAttachmentResponse;
+import igrus.web.generated.model.ApiCreateInquiryMemoRequest;
+import igrus.web.generated.model.ApiCreateInquiryReplyRequest;
+import igrus.web.generated.model.ApiInquiryDetailResponse;
+import igrus.web.generated.model.ApiInquiryListPageResponse;
+import igrus.web.generated.model.ApiInquiryListResponse;
+import igrus.web.generated.model.ApiInquiryMemoResponse;
+import igrus.web.generated.model.ApiInquiryReplyResponse;
+import igrus.web.generated.model.ApiUpdateInquiryReplyRequest;
+import igrus.web.generated.model.ApiUpdateInquiryStatusRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,7 +61,7 @@ public class AdminInquiryController implements AdminInquiryApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetAllInquiries200Response> getAllInquiries(
+    public ResponseEntity<ApiInquiryListPageResponse> getAllInquiries(
             String type,
             String status,
             Integer page,
@@ -72,11 +72,11 @@ public class AdminInquiryController implements AdminInquiryApi {
         InquiryStatus statusEnum = EnumUtils.fromStringOrNull(InquiryStatus.class, status);
         Pageable pageable = PageableUtils.of(page, size, sort);
 
-        Page<InquiryListResponse> responsePage = getAllInquiriesService.getAllInquiries(
+        var responsePage = getAllInquiriesService.getAllInquiries(
                 typeEnum, statusEnum, pageable);
-        InquiryListPageResponse pageResponse = InquiryListPageResponse.from(responsePage);
+        var pageResponse = InquiryListPageResponse.from(responsePage);
 
-        GetAllInquiries200Response result = new GetAllInquiries200Response()
+        ApiInquiryListPageResponse result = new ApiInquiryListPageResponse()
                 .inquiries(pageResponse.inquiries().stream()
                         .map(this::mapToInquiriesInner)
                         .toList())
@@ -89,8 +89,8 @@ public class AdminInquiryController implements AdminInquiryApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetInquiryDetail200Response> getInquiryDetail(Long id) {
-        InquiryDetailResponse response = getInquiryDetailService.getInquiryDetail(id);
+    public ResponseEntity<ApiInquiryDetailResponse> getInquiryDetail(Long id) {
+        var response = getInquiryDetailService.getInquiryDetail(id);
         return ResponseEntity.ok(mapToInquiryDetail200Response(response));
     }
 
@@ -98,11 +98,11 @@ public class AdminInquiryController implements AdminInquiryApi {
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<Void> updateInquiryStatus(
             Long id,
-            igrus.web.generated.model.UpdateInquiryStatusRequest updateInquiryStatusRequest
+            ApiUpdateInquiryStatusRequest updateInquiryStatusRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
-        igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest internalRequest =
-                igrus.web.inquiry.dto.request.UpdateInquiryStatusRequest.builder()
+        var internalRequest =
+                UpdateInquiryStatusRequest.builder()
                         .status(EnumUtils.fromStringOrNull(InquiryStatus.class, updateInquiryStatusRequest.getStatus().getValue()))
                         .build();
         updateInquiryStatusService.updateInquiryStatus(id, internalRequest, user.userId());
@@ -111,17 +111,17 @@ public class AdminInquiryController implements AdminInquiryApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<UpdateReply200Response> createReply(
+    public ResponseEntity<ApiInquiryReplyResponse> createReply(
             Long id,
-            CreateReplyRequest createReplyRequest
+            ApiCreateInquiryReplyRequest createInquiryReplyRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
-        CreateInquiryReplyRequest internalRequest = CreateInquiryReplyRequest.builder()
-                .content(createReplyRequest.getContent())
+        var internalRequest = CreateInquiryReplyRequest.builder()
+                .content(createInquiryReplyRequest.getContent())
                 .build();
-        InquiryReplyResponse response = createInquiryReplyService.createReply(
+        var response = createInquiryReplyService.createReply(
                 id, internalRequest, user.userId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new UpdateReply200Response()
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiInquiryReplyResponse()
                 .id(response.getId())
                 .content(response.getContent())
                 .repliedByName(response.getRepliedByName())
@@ -130,17 +130,17 @@ public class AdminInquiryController implements AdminInquiryApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<UpdateReply200Response> updateReply(
+    public ResponseEntity<ApiInquiryReplyResponse> updateReply(
             Long id,
-            UpdateReplyRequest updateReplyRequest
+            ApiUpdateInquiryReplyRequest updateInquiryReplyRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
-        UpdateInquiryReplyRequest internalRequest = UpdateInquiryReplyRequest.builder()
-                .content(updateReplyRequest.getContent())
+        var internalRequest = UpdateInquiryReplyRequest.builder()
+                .content(updateInquiryReplyRequest.getContent())
                 .build();
-        InquiryReplyResponse response = updateInquiryReplyService.updateReply(
+        var response = updateInquiryReplyService.updateReply(
                 id, internalRequest, user.userId());
-        return ResponseEntity.ok(new UpdateReply200Response()
+        return ResponseEntity.ok(new ApiInquiryReplyResponse()
                 .id(response.getId())
                 .content(response.getContent())
                 .repliedByName(response.getRepliedByName())
@@ -149,17 +149,17 @@ public class AdminInquiryController implements AdminInquiryApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<CreateMemo201Response> createMemo(
+    public ResponseEntity<ApiInquiryMemoResponse> createMemo(
             Long id,
-            CreateMemoRequest createMemoRequest
+            ApiCreateInquiryMemoRequest createInquiryMemoRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
-        CreateInquiryMemoRequest internalRequest = CreateInquiryMemoRequest.builder()
-                .content(createMemoRequest.getContent())
+        var internalRequest = CreateInquiryMemoRequest.builder()
+                .content(createInquiryMemoRequest.getContent())
                 .build();
-        InquiryMemoResponse response = createInquiryMemoService.createMemo(
+        var response = createInquiryMemoService.createMemo(
                 id, internalRequest, user.userId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new CreateMemo201Response()
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiInquiryMemoResponse()
                 .id(response.getId())
                 .content(response.getContent())
                 .writtenByName(response.getWrittenByName())
@@ -176,16 +176,16 @@ public class AdminInquiryController implements AdminInquiryApi {
 
     // ===== 매핑 헬퍼 =====
 
-    private GetAllInquiries200ResponseInquiriesInner mapToInquiriesInner(InquiryListResponse r) {
-        return new GetAllInquiries200ResponseInquiriesInner()
+    private ApiInquiryListResponse mapToInquiriesInner(InquiryListResponse r) {
+        return new ApiInquiryListResponse()
                 .id(r.getId())
                 .inquiryNumber(r.getInquiryNumber())
                 .type(r.getType() != null
-                        ? GetAllInquiries200ResponseInquiriesInner.TypeEnum.fromValue(r.getType().name())
+                        ? ApiInquiryListResponse.TypeEnum.fromValue(r.getType().name())
                         : null)
                 .typeDescription(r.getTypeDescription())
                 .status(r.getStatus() != null
-                        ? GetAllInquiries200ResponseInquiriesInner.StatusEnum.fromValue(r.getStatus().name())
+                        ? ApiInquiryListResponse.StatusEnum.fromValue(r.getStatus().name())
                         : null)
                 .statusDescription(r.getStatusDescription())
                 .title(r.getTitle())
@@ -196,16 +196,16 @@ public class AdminInquiryController implements AdminInquiryApi {
                 .createdAt(r.getCreatedAt());
     }
 
-    private GetInquiryDetail200Response mapToInquiryDetail200Response(InquiryDetailResponse r) {
-        return new GetInquiryDetail200Response()
+    private ApiInquiryDetailResponse mapToInquiryDetail200Response(InquiryDetailResponse r) {
+        return new ApiInquiryDetailResponse()
                 .id(r.getId())
                 .inquiryNumber(r.getInquiryNumber())
                 .type(r.getType() != null
-                        ? GetInquiryDetail200Response.TypeEnum.fromValue(r.getType().name())
+                        ? ApiInquiryDetailResponse.TypeEnum.fromValue(r.getType().name())
                         : null)
                 .typeDescription(r.getTypeDescription())
                 .status(r.getStatus() != null
-                        ? GetInquiryDetail200Response.StatusEnum.fromValue(r.getStatus().name())
+                        ? ApiInquiryDetailResponse.StatusEnum.fromValue(r.getStatus().name())
                         : null)
                 .statusDescription(r.getStatusDescription())
                 .title(r.getTitle())
@@ -229,24 +229,24 @@ public class AdminInquiryController implements AdminInquiryApi {
                 .updatedAt(r.getUpdatedAt());
     }
 
-    private LookupGuestInquiry200ResponseAttachmentsInner mapToAttachment(AttachmentResponse a) {
-        return new LookupGuestInquiry200ResponseAttachmentsInner()
+    private ApiAttachmentResponse mapToAttachment(AttachmentResponse a) {
+        return new ApiAttachmentResponse()
                 .id(a.getId())
                 .fileUrl(a.getFileUrl())
                 .fileName(a.getFileName())
                 .fileSize(a.getFileSize());
     }
 
-    private LookupGuestInquiry200ResponseReply mapToReply(InquiryReplyResponse r) {
-        return new LookupGuestInquiry200ResponseReply()
+    private ApiInquiryReplyResponse mapToReply(InquiryReplyResponse r) {
+        return new ApiInquiryReplyResponse()
                 .id(r.getId())
                 .content(r.getContent())
                 .repliedByName(r.getRepliedByName())
                 .createdAt(r.getCreatedAt());
     }
 
-    private CreateMemo201Response mapToMemo(InquiryMemoResponse m) {
-        return new CreateMemo201Response()
+    private ApiInquiryMemoResponse mapToMemo(InquiryMemoResponse m) {
+        return new ApiInquiryMemoResponse()
                 .id(m.getId())
                 .content(m.getContent())
                 .writtenByName(m.getWrittenByName())

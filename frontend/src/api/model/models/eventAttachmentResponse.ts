@@ -34,35 +34,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export interface UpdateEventRequest {
-  /**
-   * @minLength 0
-   * @maxLength 100
-   */
-  title: string;
-  /** @minLength 1 */
-  description: string;
-  /**
-   * @minLength 0
-   * @maxLength 200
-   */
-  location: string;
-  eventStartAt: string;
-  eventEndAt: string;
-  registrationStartAt: string;
-  registrationEndAt: string;
-  /** @minimum 1 */
-  capacity: number;
-  /**
-   * 연결할 설문 ID (null이면 설문 미연결)
-   * @nullable
-   */
-  surveyId?: number | null;
-  /**
-   * 첨부파일 ID 목록 (전체 교체 방식)
-   * @nullable
-   */
-  attachmentFileIds?: number[] | null;
-  /** 외부인(비회원) 신청 허용 여부 */
-  allowExternal?: boolean;
+/**
+ * 행사 첨부파일 응답
+ */
+export interface EventAttachmentResponse {
+  /** 첨부파일 연결 ID */
+  id?: number;
+  /** 파일 메타데이터 ID */
+  fileMetadataId?: number;
+  /** S3 Object Key */
+  objectKey?: string;
+  /** 원본 파일명 */
+  originalFileName?: string;
+  /** 파일 MIME 타입 */
+  contentType?: string;
 }

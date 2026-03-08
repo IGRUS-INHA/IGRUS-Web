@@ -10,9 +10,10 @@ import igrus.web.community.comment.service.write.CreateCommentReplyService;
 import igrus.web.community.comment.service.write.CreateCommentService;
 import igrus.web.community.comment.service.write.DeleteCommentService;
 import igrus.web.generated.api.CommentApi;
-import igrus.web.generated.model.GetComments200Response;
-import igrus.web.generated.model.GetComments200ResponseCommentsInner;
-import igrus.web.generated.model.GetComments200ResponseCommentsInnerRepliesInner;
+import igrus.web.generated.model.ApiCommentListResponse;
+import igrus.web.generated.model.ApiCommentWithRepliesResponse;
+import igrus.web.generated.model.ApiCommentResponse;
+import igrus.web.generated.model.ApiCreateCommentRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +38,9 @@ public class CommentController implements CommentApi {
 
     @Override
     @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetComments200ResponseCommentsInnerRepliesInner> createComment(
+    public ResponseEntity<ApiCommentResponse> createComment(
             Long postId,
-            igrus.web.generated.model.CreateCommentRequest createCommentRequest
+            ApiCreateCommentRequest createCommentRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("댓글 작성 요청 - postId: {}, userId: {}, isAnonymous: {}",
@@ -56,10 +57,10 @@ public class CommentController implements CommentApi {
 
     @Override
     @PreAuthorize("hasAnyRole('MEMBER', 'OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetComments200ResponseCommentsInnerRepliesInner> createReply1(
+    public ResponseEntity<ApiCommentResponse> createReply1(
             Long postId,
             Long commentId,
-            igrus.web.generated.model.CreateCommentRequest createCommentRequest
+            ApiCreateCommentRequest createCommentRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("대댓글 작성 요청 - postId: {}, parentCommentId: {}, userId: {}, isAnonymous: {}",
@@ -76,13 +77,13 @@ public class CommentController implements CommentApi {
 
     @Override
     @PreAuthorize("hasAnyRole('ASSOCIATE', 'MEMBER', 'OPERATOR', 'ADMIN')")
-    public ResponseEntity<GetComments200Response> getComments(Long postId) {
+    public ResponseEntity<ApiCommentListResponse> getComments(Long postId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("댓글 목록 조회 요청 - postId: {}, userId: {}",
                 postId, user.userId());
 
         CommentListResponse result = getCommentsByPostService.getCommentsByPostId(postId, user.userId());
-        return ResponseEntity.ok(new GetComments200Response()
+        return ResponseEntity.ok(new ApiCommentListResponse()
                 .comments(result.getComments().stream()
                         .map(this::mapToCommentsInner)
                         .toList())
@@ -100,8 +101,8 @@ public class CommentController implements CommentApi {
         return ResponseEntity.noContent().build();
     }
 
-    private GetComments200ResponseCommentsInnerRepliesInner mapToReplyInner(CommentResponse r) {
-        return new GetComments200ResponseCommentsInnerRepliesInner()
+    private ApiCommentResponse mapToReplyInner(CommentResponse r) {
+        return new ApiCommentResponse()
                 .id(r.getId())
                 .postId(r.getPostId())
                 .parentCommentId(r.getParentCommentId())
@@ -115,8 +116,8 @@ public class CommentController implements CommentApi {
                 .createdAt(r.getCreatedAt());
     }
 
-    private GetComments200ResponseCommentsInner mapToCommentsInner(CommentWithRepliesResponse c) {
-        return new GetComments200ResponseCommentsInner()
+    private ApiCommentWithRepliesResponse mapToCommentsInner(CommentWithRepliesResponse c) {
+        return new ApiCommentWithRepliesResponse()
                 .id(c.getId())
                 .postId(c.getPostId())
                 .content(c.getContent())

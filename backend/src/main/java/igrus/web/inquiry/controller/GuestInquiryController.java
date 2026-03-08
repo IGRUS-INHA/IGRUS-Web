@@ -6,17 +6,17 @@ import igrus.web.inquiry.dto.request.AttachmentInfo;
 import igrus.web.inquiry.dto.request.CreateGuestInquiryRequest;
 import igrus.web.inquiry.dto.request.GuestInquiryLookupRequest;
 import igrus.web.inquiry.dto.response.AttachmentResponse;
-import igrus.web.inquiry.dto.response.InquiryCreateResponse;
 import igrus.web.inquiry.dto.response.InquiryReplyResponse;
 import igrus.web.inquiry.dto.response.InquiryResponse;
 import igrus.web.inquiry.service.create.CreateGuestInquiryService;
 import igrus.web.inquiry.service.read.LookupGuestInquiryService;
 import igrus.web.generated.api.GuestInquiryApi;
-import igrus.web.generated.model.CreateMemberInquiry201Response;
-import igrus.web.generated.model.LookupGuestInquiry200Response;
-import igrus.web.generated.model.LookupGuestInquiry200ResponseAttachmentsInner;
-import igrus.web.generated.model.LookupGuestInquiry200ResponseReply;
-import igrus.web.generated.model.LookupGuestInquiryRequest;
+import igrus.web.generated.model.ApiAttachmentResponse;
+import igrus.web.generated.model.ApiGuestInquiryLookupRequest;
+import igrus.web.generated.model.ApiInquiryCreateResponse;
+import igrus.web.generated.model.ApiInquiryReplyResponse;
+import igrus.web.generated.model.ApiInquiryResponse;
+import igrus.web.generated.model.ApiCreateGuestInquiryRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,10 +36,10 @@ public class GuestInquiryController implements GuestInquiryApi {
     private final LookupGuestInquiryService lookupGuestInquiryService;
 
     @Override
-    public ResponseEntity<CreateMemberInquiry201Response> createGuestInquiry(
-            igrus.web.generated.model.CreateGuestInquiryRequest createGuestInquiryRequest
+    public ResponseEntity<ApiInquiryCreateResponse> createGuestInquiry(
+            ApiCreateGuestInquiryRequest createGuestInquiryRequest
     ) {
-        CreateGuestInquiryRequest internalRequest = CreateGuestInquiryRequest.builder()
+        var internalRequest = CreateGuestInquiryRequest.builder()
                 .type(EnumUtils.fromStringOrNull(InquiryType.class, createGuestInquiryRequest.getType().getValue()))
                 .title(createGuestInquiryRequest.getTitle())
                 .content(createGuestInquiryRequest.getContent())
@@ -57,39 +57,39 @@ public class GuestInquiryController implements GuestInquiryApi {
                         : null)
                 .build();
 
-        InquiryCreateResponse response = createGuestInquiryService.createGuestInquiry(internalRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new CreateMemberInquiry201Response()
+        var response = createGuestInquiryService.createGuestInquiry(internalRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiInquiryCreateResponse()
                 .id(response.getId())
                 .inquiryNumber(response.getInquiryNumber())
                 .message(response.getMessage()));
     }
 
     @Override
-    public ResponseEntity<LookupGuestInquiry200Response> lookupGuestInquiry(
-            LookupGuestInquiryRequest lookupGuestInquiryRequest
+    public ResponseEntity<ApiInquiryResponse> lookupGuestInquiry(
+            ApiGuestInquiryLookupRequest guestInquiryLookupRequest
     ) {
-        GuestInquiryLookupRequest internalRequest = GuestInquiryLookupRequest.builder()
-                .inquiryNumber(lookupGuestInquiryRequest.getInquiryNumber())
-                .email(lookupGuestInquiryRequest.getEmail())
-                .password(lookupGuestInquiryRequest.getPassword())
+        var internalRequest = GuestInquiryLookupRequest.builder()
+                .inquiryNumber(guestInquiryLookupRequest.getInquiryNumber())
+                .email(guestInquiryLookupRequest.getEmail())
+                .password(guestInquiryLookupRequest.getPassword())
                 .build();
 
-        InquiryResponse response = lookupGuestInquiryService.lookupGuestInquiry(internalRequest);
-        return ResponseEntity.ok(mapToLookupGuestInquiry200Response(response));
+        var response = lookupGuestInquiryService.lookupGuestInquiry(internalRequest);
+        return ResponseEntity.ok(mapToInquiryResponse(response));
     }
 
     // ===== 매핑 헬퍼 =====
 
-    private LookupGuestInquiry200Response mapToLookupGuestInquiry200Response(InquiryResponse r) {
-        return new LookupGuestInquiry200Response()
+    private ApiInquiryResponse mapToInquiryResponse(InquiryResponse r) {
+        return new ApiInquiryResponse()
                 .id(r.getId())
                 .inquiryNumber(r.getInquiryNumber())
                 .type(r.getType() != null
-                        ? LookupGuestInquiry200Response.TypeEnum.fromValue(r.getType().name())
+                        ? ApiInquiryResponse.TypeEnum.fromValue(r.getType().name())
                         : null)
                 .typeDescription(r.getTypeDescription())
                 .status(r.getStatus() != null
-                        ? LookupGuestInquiry200Response.StatusEnum.fromValue(r.getStatus().name())
+                        ? ApiInquiryResponse.StatusEnum.fromValue(r.getStatus().name())
                         : null)
                 .statusDescription(r.getStatusDescription())
                 .title(r.getTitle())
@@ -107,16 +107,16 @@ public class GuestInquiryController implements GuestInquiryApi {
                 .updatedAt(r.getUpdatedAt());
     }
 
-    private LookupGuestInquiry200ResponseAttachmentsInner mapToAttachment(AttachmentResponse a) {
-        return new LookupGuestInquiry200ResponseAttachmentsInner()
+    private ApiAttachmentResponse mapToAttachment(AttachmentResponse a) {
+        return new ApiAttachmentResponse()
                 .id(a.getId())
                 .fileUrl(a.getFileUrl())
                 .fileName(a.getFileName())
                 .fileSize(a.getFileSize());
     }
 
-    private LookupGuestInquiry200ResponseReply mapToReply(InquiryReplyResponse r) {
-        return new LookupGuestInquiry200ResponseReply()
+    private ApiInquiryReplyResponse mapToReply(InquiryReplyResponse r) {
+        return new ApiInquiryReplyResponse()
                 .id(r.getId())
                 .content(r.getContent())
                 .repliedByName(r.getRepliedByName())

@@ -127,6 +127,7 @@ export * from "./duplicateCheckResponse";
 export * from "./emailNotVerifiedErrorResponse";
 export * from "./emailVerificationRequest";
 export * from "./errorResponse";
+export * from "./eventAttachmentResponse";
 export * from "./eventCreateResponse";
 export * from "./eventDetailResponse";
 export * from "./eventDetailResponseCloseReason";

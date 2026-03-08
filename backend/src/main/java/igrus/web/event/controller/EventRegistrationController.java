@@ -3,23 +3,21 @@ package igrus.web.event.controller;
 import igrus.web.common.util.PageResponseMapper;
 import igrus.web.common.util.PageableUtils;
 import igrus.web.common.util.SecurityUtils;
-import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.dto.response.RegistrationListResponse;
-import igrus.web.event.dto.response.RegistrationResponse;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.generated.api.EventRegistrationApi;
-import igrus.web.generated.model.GetMyRegistrations200ResponseInner;
-import igrus.web.generated.model.GetRegistrationList200Response;
-import igrus.web.generated.model.GetRegistrationList200ResponseContentInner;
-import igrus.web.generated.model.RegisterEventRequest;
-import igrus.web.generated.model.CancelRegistrationByAdmin200Response;
-import igrus.web.generated.model.UpdateMyResponseRequestAnswersInner;
-import igrus.web.generated.model.UpdateMyResponseRequestAnswersInnerGridAnswersInner;
-import igrus.web.security.auth.common.domain.AuthenticatedUser;
+import igrus.web.generated.model.ApiMyRegistrationResponse;
+import igrus.web.generated.model.ApiPageRegistrationListResponse;
+import igrus.web.generated.model.ApiRegistrationListResponse;
+import igrus.web.generated.model.ApiRegisterEventRequest;
+import igrus.web.generated.model.ApiRegistrationResponse;
+import igrus.web.generated.model.ApiSubmitAnswerRequest;
+import igrus.web.generated.model.ApiGridAnswerRequest;
 import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
+import igrus.web.survey.response.dto.request.SubmitAnswerRequest.GridAnswerRequest;
+import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,33 +41,33 @@ public class EventRegistrationController implements EventRegistrationApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CancelRegistrationByAdmin200Response> registerEvent(
+    public ResponseEntity<ApiRegistrationResponse> registerEvent(
             Long eventId,
-            RegisterEventRequest registerEventRequest
+            ApiRegisterEventRequest registerEventRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 신청 요청 - eventId: {}, userId: {}", eventId, user.userId());
-        List<SubmitAnswerRequest> surveyAnswers = mapToSubmitAnswerRequests(registerEventRequest);
-        RegistrationResponse response = eventRegistrationService.registerEvent(eventId, user.userId(), surveyAnswers);
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapToCancelRegistrationByAdmin200Response(response));
+        var surveyAnswers = mapToSubmitAnswerRequests(registerEventRequest);
+        var response = eventRegistrationService.registerEvent(eventId, user.userId(), surveyAnswers);
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapToRegistrationResponse(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CancelRegistrationByAdmin200Response> cancelRegistration(Long eventId) {
+    public ResponseEntity<ApiRegistrationResponse> cancelRegistration(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 취소 요청 - eventId: {}, userId: {}", eventId, user.userId());
-        RegistrationResponse response = eventRegistrationService.cancelRegistration(eventId, user.userId());
-        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
+        var response = eventRegistrationService.cancelRegistration(eventId, user.userId());
+        return ResponseEntity.ok(mapToRegistrationResponse(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<GetMyRegistrations200ResponseInner>> getMyRegistrations1() {
+    public ResponseEntity<List<ApiMyRegistrationResponse>> getMyRegistrations1() {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("내 신청 목록 조회 요청 - userId: {}", user.userId());
-        List<MyRegistrationResponse> responses = eventRegistrationService.getMyRegistrations(user.userId());
-        List<GetMyRegistrations200ResponseInner> result = responses.stream()
+        var responses = eventRegistrationService.getMyRegistrations(user.userId());
+        List<ApiMyRegistrationResponse> result = responses.stream()
                 .map(this::mapToMyRegistration200ResponseInner)
                 .toList();
         return ResponseEntity.ok(result);
@@ -79,7 +77,7 @@ public class EventRegistrationController implements EventRegistrationApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetRegistrationList200Response> getRegistrationList(
+    public ResponseEntity<ApiPageRegistrationListResponse> getRegistrationList(
             Long eventId,
             Integer page,
             Integer size,
@@ -88,13 +86,13 @@ public class EventRegistrationController implements EventRegistrationApi {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청자 목록 조회 요청 - eventId: {}, userId: {}", eventId, user.userId());
         Pageable pageable = PageableUtils.of(page, size, sort);
-        Page<RegistrationListResponse> responsePage = eventRegistrationService.getRegistrationList(
+        var responsePage = eventRegistrationService.getRegistrationList(
                 eventId, user.userId(), pageable);
 
-        GetRegistrationList200Response result = PageResponseMapper.toSpringPageResponse(
+        ApiPageRegistrationListResponse result = PageResponseMapper.toSpringPageResponse(
                 responsePage,
                 this::mapToRegistrationListContentInner,
-                GetRegistrationList200Response::new,
+                ApiPageRegistrationListResponse::new,
                 (r, content, meta) -> r
                         .content(content)
                         .totalElements(meta.totalElements())
@@ -113,42 +111,42 @@ public class EventRegistrationController implements EventRegistrationApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CancelRegistrationByAdmin200Response> approveRegistration(Long registrationId) {
+    public ResponseEntity<ApiRegistrationResponse> approveRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 승인 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
-        RegistrationResponse response = eventRegistrationService.approveRegistration(
+        var response = eventRegistrationService.approveRegistration(
                 registrationId, user.userId());
-        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
+        return ResponseEntity.ok(mapToRegistrationResponse(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CancelRegistrationByAdmin200Response> rejectRegistration(Long registrationId) {
+    public ResponseEntity<ApiRegistrationResponse> rejectRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 거절 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
-        RegistrationResponse response = eventRegistrationService.rejectRegistration(
+        var response = eventRegistrationService.rejectRegistration(
                 registrationId, user.userId());
-        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
+        return ResponseEntity.ok(mapToRegistrationResponse(response));
     }
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CancelRegistrationByAdmin200Response> revertRegistration(Long registrationId) {
+    public ResponseEntity<ApiRegistrationResponse> revertRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("승인/거절 되돌리기 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
-        RegistrationResponse response = eventRegistrationService.revertRegistration(
+        var response = eventRegistrationService.revertRegistration(
                 registrationId, user.userId());
-        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
+        return ResponseEntity.ok(mapToRegistrationResponse(response));
     }
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<CancelRegistrationByAdmin200Response> cancelRegistrationByAdmin(Long registrationId) {
+    public ResponseEntity<ApiRegistrationResponse> cancelRegistrationByAdmin(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("관리자 행사 신청 취소 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
-        RegistrationResponse response = eventRegistrationService.cancelRegistrationByAdmin(
+        var response = eventRegistrationService.cancelRegistrationByAdmin(
                 registrationId, user.userId());
-        return ResponseEntity.ok(mapToCancelRegistrationByAdmin200Response(response));
+        return ResponseEntity.ok(mapToRegistrationResponse(response));
     }
 
     // ===== 매핑 헬퍼 =====
@@ -157,7 +155,7 @@ public class EventRegistrationController implements EventRegistrationApi {
      * Generated 모델의 RegisterEventRequest에서 서비스 내부 DTO인 SubmitAnswerRequest 목록으로 변환합니다.
      * 요청 본문이 없거나 surveyAnswers가 비어있으면 빈 리스트를 반환합니다.
      */
-    private List<SubmitAnswerRequest> mapToSubmitAnswerRequests(RegisterEventRequest request) {
+    private List<SubmitAnswerRequest> mapToSubmitAnswerRequests(ApiRegisterEventRequest request) {
         if (request == null || request.getSurveyAnswers() == null || request.getSurveyAnswers().isEmpty()) {
             return List.of();
         }
@@ -166,11 +164,11 @@ public class EventRegistrationController implements EventRegistrationApi {
                 .toList();
     }
 
-    private SubmitAnswerRequest mapToSubmitAnswerRequest(UpdateMyResponseRequestAnswersInner a) {
-        List<SubmitAnswerRequest.GridAnswerRequest> gridAnswers = null;
+    private SubmitAnswerRequest mapToSubmitAnswerRequest(ApiSubmitAnswerRequest a) {
+        List<GridAnswerRequest> gridAnswers = null;
         if (a.getGridAnswers() != null && !a.getGridAnswers().isEmpty()) {
             gridAnswers = a.getGridAnswers().stream()
-                    .map(g -> new SubmitAnswerRequest.GridAnswerRequest(
+                    .map(g -> new GridAnswerRequest(
                             g.getRowId(),
                             g.getSelectedOptionIds()
                     ))
@@ -185,30 +183,30 @@ public class EventRegistrationController implements EventRegistrationApi {
         );
     }
 
-    private CancelRegistrationByAdmin200Response mapToCancelRegistrationByAdmin200Response(RegistrationResponse r) {
-        return new CancelRegistrationByAdmin200Response()
+    private ApiRegistrationResponse mapToRegistrationResponse(igrus.web.event.dto.response.RegistrationResponse r) {
+        return new ApiRegistrationResponse()
                 .registrationId(r.registrationId())
                 .status(r.status() != null
-                        ? CancelRegistrationByAdmin200Response.StatusEnum.fromValue(r.status().name())
+                        ? ApiRegistrationResponse.StatusEnum.fromValue(r.status().name())
                         : null)
                 .isRegistered(r.isRegistered());
     }
 
-    private GetMyRegistrations200ResponseInner mapToMyRegistration200ResponseInner(MyRegistrationResponse r) {
-        return new GetMyRegistrations200ResponseInner()
+    private ApiMyRegistrationResponse mapToMyRegistration200ResponseInner(igrus.web.event.dto.response.MyRegistrationResponse r) {
+        return new ApiMyRegistrationResponse()
                 .registrationId(r.registrationId())
                 .eventId(r.eventId())
                 .eventTitle(r.eventTitle())
                 .eventStartAt(r.eventStartAt())
                 .status(r.status() != null
-                        ? GetMyRegistrations200ResponseInner.StatusEnum.fromValue(r.status().name())
+                        ? ApiMyRegistrationResponse.StatusEnum.fromValue(r.status().name())
                         : null)
                 .registeredAt(r.registeredAt());
     }
 
-    private GetRegistrationList200ResponseContentInner mapToRegistrationListContentInner(
+    private ApiRegistrationListResponse mapToRegistrationListContentInner(
             RegistrationListResponse r) {
-        return new GetRegistrationList200ResponseContentInner()
+        return new ApiRegistrationListResponse()
                 .registrationId(r.registrationId())
                 .userId(r.userId())
                 .userName(r.userName())
@@ -218,7 +216,7 @@ public class EventRegistrationController implements EventRegistrationApi {
                 .userGrade(r.userGrade())
                 .userDepartment(r.userDepartment())
                 .status(r.status() != null
-                        ? GetRegistrationList200ResponseContentInner.StatusEnum.fromValue(r.status().name())
+                        ? ApiRegistrationListResponse.StatusEnum.fromValue(r.status().name())
                         : null)
                 .registeredAt(r.registeredAt())
                 .isExternal(r.isExternal())

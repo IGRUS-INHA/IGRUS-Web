@@ -8,6 +8,7 @@ import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 행사 상세 조회 응답 DTO.
@@ -58,7 +59,8 @@ public record EventDetailResponse(
         Instant updatedAt,
         boolean canEdit,
         boolean isRegistered,
-        Long surveyId
+        Long surveyId,
+        List<EventAttachmentDto> attachments
 ) {
     /**
      * Event 엔티티로부터 EventDetailResponse를 생성합니다.
@@ -70,6 +72,11 @@ public record EventDetailResponse(
      * @return EventDetailResponse
      */
     public static EventDetailResponse from(Event event, boolean canEdit, boolean isRegistered) {
+        return from(event, canEdit, isRegistered, List.of());
+    }
+
+    public static EventDetailResponse from(Event event, boolean canEdit, boolean isRegistered,
+                                            List<EventAttachmentDto> attachments) {
         return new EventDetailResponse(
                 event.getId(),
                 event.getTitle(),
@@ -92,7 +99,8 @@ public record EventDetailResponse(
                 event.getUpdatedAt(),
                 canEdit,
                 isRegistered,
-                event.getSurveyId()
+                event.getSurveyId(),
+                attachments
         );
     }
 
@@ -104,6 +112,6 @@ public record EventDetailResponse(
      * @return EventDetailResponse
      */
     public static EventDetailResponse from(Event event) {
-        return from(event, false, false);
+        return from(event, false, false, List.of());
     }
 }

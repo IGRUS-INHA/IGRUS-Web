@@ -3,9 +3,9 @@ package igrus.web.event.controller;
 import igrus.web.event.dto.response.RegistrationResponse;
 import igrus.web.event.service.ExternalEventRegistrationService;
 import igrus.web.generated.api.EventExternalRegistrationApi;
-import igrus.web.generated.model.CancelRegistrationByAdmin200Response;
-import igrus.web.generated.model.RegisterEventExternalRequest;
-import igrus.web.generated.model.UpdateMyResponseRequestAnswersInner;
+import igrus.web.generated.model.ApiExternalRegisterEventRequest;
+import igrus.web.generated.model.ApiRegistrationResponse;
+import igrus.web.generated.model.ApiSubmitAnswerRequest;
 import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,35 +28,35 @@ public class ExternalEventRegistrationController implements EventExternalRegistr
     private final ExternalEventRegistrationService externalEventRegistrationService;
 
     @Override
-    public ResponseEntity<CancelRegistrationByAdmin200Response> registerEventExternal(
+    public ResponseEntity<ApiRegistrationResponse> registerEventExternal(
             Long eventId,
-            RegisterEventExternalRequest registerEventExternalRequest
+            ApiExternalRegisterEventRequest apiExternalRegisterEventRequest
     ) {
         log.info("외부인 행사 신청 요청 - eventId: {}, name: {}, studentId: {}",
-                eventId, registerEventExternalRequest.getName(), registerEventExternalRequest.getStudentId());
+                eventId, apiExternalRegisterEventRequest.getName(), apiExternalRegisterEventRequest.getStudentId());
 
-        List<SubmitAnswerRequest> surveyAnswers = mapToSubmitAnswerRequests(registerEventExternalRequest);
+        List<SubmitAnswerRequest> surveyAnswers = mapToSubmitAnswerRequests(apiExternalRegisterEventRequest);
 
         RegistrationResponse response = externalEventRegistrationService.registerExternal(
                 eventId,
-                registerEventExternalRequest.getName(),
-                registerEventExternalRequest.getStudentId(),
-                registerEventExternalRequest.getPhone(),
-                registerEventExternalRequest.getDepartment(),
+                apiExternalRegisterEventRequest.getName(),
+                apiExternalRegisterEventRequest.getStudentId(),
+                apiExternalRegisterEventRequest.getPhone(),
+                apiExternalRegisterEventRequest.getDepartment(),
                 surveyAnswers
         );
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(mapToCancelRegistrationByAdmin200Response(response));
+                .body(mapToApiRegistrationResponse(response));
     }
 
     // ===== 매핑 헬퍼 =====
 
     /**
-     * Generated 모델의 RegisterEventExternalRequest에서 서비스 내부 DTO인 SubmitAnswerRequest 목록으로 변환합니다.
+     * Generated 모델의 ApiExternalRegisterEventRequest에서 서비스 내부 DTO인 SubmitAnswerRequest 목록으로 변환합니다.
      * surveyAnswers가 null이거나 비어있으면 빈 리스트를 반환합니다.
      */
-    private List<SubmitAnswerRequest> mapToSubmitAnswerRequests(RegisterEventExternalRequest request) {
+    private List<SubmitAnswerRequest> mapToSubmitAnswerRequests(ApiExternalRegisterEventRequest request) {
         if (request.getSurveyAnswers() == null || request.getSurveyAnswers().isEmpty()) {
             return List.of();
         }
@@ -65,7 +65,7 @@ public class ExternalEventRegistrationController implements EventExternalRegistr
                 .toList();
     }
 
-    private SubmitAnswerRequest mapToSubmitAnswerRequest(UpdateMyResponseRequestAnswersInner a) {
+    private SubmitAnswerRequest mapToSubmitAnswerRequest(ApiSubmitAnswerRequest a) {
         List<SubmitAnswerRequest.GridAnswerRequest> gridAnswers = null;
         if (a.getGridAnswers() != null && !a.getGridAnswers().isEmpty()) {
             gridAnswers = a.getGridAnswers().stream()
@@ -84,11 +84,11 @@ public class ExternalEventRegistrationController implements EventExternalRegistr
         );
     }
 
-    private CancelRegistrationByAdmin200Response mapToCancelRegistrationByAdmin200Response(RegistrationResponse r) {
-        return new CancelRegistrationByAdmin200Response()
+    private ApiRegistrationResponse mapToApiRegistrationResponse(RegistrationResponse r) {
+        return new ApiRegistrationResponse()
                 .registrationId(r.registrationId())
                 .status(r.status() != null
-                        ? CancelRegistrationByAdmin200Response.StatusEnum.fromValue(r.status().name())
+                        ? ApiRegistrationResponse.StatusEnum.fromValue(r.status().name())
                         : null)
                 .isRegistered(r.isRegistered());
     }

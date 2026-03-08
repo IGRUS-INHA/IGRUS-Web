@@ -2,7 +2,8 @@ package igrus.web.survey.question.controller;
 
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.SurveyQuestionOptionApi;
-import igrus.web.generated.model.GetSurveyDetail200ResponseQuestionsInnerOptionsInner;
+import igrus.web.generated.model.ApiOptionResponse;
+import igrus.web.generated.model.ApiSaveQuestionOptionRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.question.dto.request.SaveQuestionOptionRequest;
@@ -29,10 +30,10 @@ public class SurveyQuestionOptionController implements SurveyQuestionOptionApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerOptionsInner>> createOption(
+    public ResponseEntity<List<ApiOptionResponse>> createOption(
             Long surveyId,
             Long questionId,
-            igrus.web.generated.model.CreateOptionRequest createOptionRequest
+            ApiSaveQuestionOptionRequest createOptionRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("선택지 추가 요청 - surveyId: {}, questionId: {}, userId: {}", surveyId, questionId, user.userId());
@@ -48,7 +49,7 @@ public class SurveyQuestionOptionController implements SurveyQuestionOptionApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerOptionsInner>> getOptionList(
+    public ResponseEntity<List<ApiOptionResponse>> getOptionList(
             Long surveyId,
             Long questionId
     ) {
@@ -61,11 +62,11 @@ public class SurveyQuestionOptionController implements SurveyQuestionOptionApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
-    public ResponseEntity<List<GetSurveyDetail200ResponseQuestionsInnerOptionsInner>> updateOption(
+    public ResponseEntity<List<ApiOptionResponse>> updateOption(
             Long surveyId,
             Long questionId,
             Long optionId,
-            igrus.web.generated.model.CreateOptionRequest createOptionRequest
+            ApiSaveQuestionOptionRequest createOptionRequest
     ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("선택지 수정 요청 - surveyId: {}, questionId: {}, optionId: {}, userId: {}", surveyId, questionId, optionId, user.userId());
@@ -91,11 +92,11 @@ public class SurveyQuestionOptionController implements SurveyQuestionOptionApi {
 
     // === Private helper methods ===
 
-    private List<GetSurveyDetail200ResponseQuestionsInnerOptionsInner> mapToOptionList(
+    private List<ApiOptionResponse> mapToOptionList(
             List<SurveyDetailResponse.OptionResponse> options
     ) {
         return options.stream()
-                .map(o -> new GetSurveyDetail200ResponseQuestionsInnerOptionsInner()
+                .map(o -> new ApiOptionResponse()
                         .id(o.id())
                         .text(o.text())
                         .displayOrder(o.displayOrder()))

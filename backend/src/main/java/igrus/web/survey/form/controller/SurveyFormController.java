@@ -2,7 +2,7 @@ package igrus.web.survey.form.controller;
 
 import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.SurveyFormApi;
-import igrus.web.generated.model.GetSurveyDetail200Response;
+import igrus.web.generated.model.ApiSurveyDetailResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.dto.response.SurveyDetailResponse;
 import igrus.web.survey.dto.response.SurveyDetailResponseMapper;
@@ -26,7 +26,7 @@ public class SurveyFormController implements SurveyFormApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GetSurveyDetail200Response> getSurveyForm(Long surveyId) {
+    public ResponseEntity<ApiSurveyDetailResponse> getSurveyForm(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("설문 양식 조회 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
 

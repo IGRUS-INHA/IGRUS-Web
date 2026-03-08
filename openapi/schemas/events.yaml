@@ -34,6 +34,14 @@ UpdateEventRequest:
         - 'null'
       format: int64
       description: 연결할 설문 ID (null이면 설문 미연결)
+    attachmentFileIds:
+      type:
+        - array
+        - 'null'
+      description: 첨부파일 ID 목록 (전체 교체 방식)
+      items:
+        type: integer
+        format: int64
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
@@ -128,6 +136,13 @@ EventDetailResponse:
         - 'null'
       format: int64
       description: 연결된 설문 ID (null이면 설문 미연결)
+    attachments:
+      type:
+        - array
+        - 'null'
+      description: 첨부파일 목록
+      items:
+        $ref: '#/EventAttachmentResponse'
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
@@ -188,6 +203,14 @@ CreateEventRequest:
         - 'null'
       format: int64
       description: 연결할 설문 ID (null이면 설문 미연결)
+    attachmentFileIds:
+      type:
+        - array
+        - 'null'
+      description: 첨부파일 ID 목록
+      items:
+        type: integer
+        format: int64
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
@@ -458,6 +481,13 @@ AdminEventDetailResponse:
         - 'null'
       format: int64
       description: 연결된 설문 ID (null이면 설문 미연결)
+    attachments:
+      type:
+        - array
+        - 'null'
+      description: 첨부파일 목록
+      items:
+        $ref: '#/EventAttachmentResponse'
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
@@ -564,6 +594,27 @@ RegistrationListResponse:
     registeredAt:
       type: string
       format: date-time
+EventAttachmentResponse:
+  type: object
+  description: 행사 첨부파일 응답
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: 첨부파일 연결 ID
+    fileMetadataId:
+      type: integer
+      format: int64
+      description: 파일 메타데이터 ID
+    objectKey:
+      type: string
+      description: S3 Object Key
+    originalFileName:
+      type: string
+      description: 원본 파일명
+    contentType:
+      type: string
+      description: 파일 MIME 타입
 ExternalRegisterEventRequest:
   type: object
   description: |
