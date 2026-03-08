@@ -1,7 +1,6 @@
 package igrus.web.event.dto.response;
 
 import igrus.web.event.domain.Event;
-import igrus.web.event.domain.EventImage;
 import igrus.web.event.domain.EventRegistrationType;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.EventVisibility;
@@ -53,10 +52,9 @@ public record EventListResponse(
      * @param event 행사 엔티티
      * @return EventListResponse
      */
-    public static EventListResponse from(Event event) {
-        List<String> imageUrls = event.getImages().stream()
-                .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
-                .map(EventImage::getImageUrl)
+    public static EventListResponse from(Event event, List<EventAttachmentDto> attachments) {
+        List<String> imageUrls = attachments.stream()
+                .map(EventAttachmentDto::objectKey)
                 .toList();
         return new EventListResponse(
                 event.getId(),
