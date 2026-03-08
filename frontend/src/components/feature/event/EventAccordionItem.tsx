@@ -145,6 +145,16 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
             customDepartment: "",
           });
           setExternalFormErrors({});
+          void queryClient.invalidateQueries({
+            queryKey: eventKeys.detail(numericId),
+          });
+          void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+          void queryClient.invalidateQueries({
+            queryKey: adminEventKeys.detail(numericId),
+          });
+          void queryClient.invalidateQueries({
+            queryKey: adminEventKeys.lists(),
+          });
         },
         onError: (error: unknown) => {
           if (isConflictError(error)) {
