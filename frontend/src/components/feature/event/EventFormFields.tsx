@@ -496,56 +496,61 @@ export function EventFormFields({
       </div>
 
       {/* 이미지 업로드 */}
-      <div>
-        <div
-          className="rounded-r4 border-2 border-dashed border-border bg-card shadow-sm px-s6 py-s8 flex flex-col items-center justify-center gap-s3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
-          onClick={() => fileInputRef.current?.click()}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            if (e.dataTransfer.files.length > 0) {
-              onAddFiles(e.dataTransfer.files);
-            }
-          }}
-        >
-          {files.length > 0 ? (
-            <div className="w-full space-y-s2">
-              {files.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center justify-between text-sm"
+      <div className="space-y-s3">
+        {files.length > 0 ? (
+          <div className="flex flex-wrap gap-s3">
+            {files.map((file) => (
+              <div key={file.id} className="relative group w-48 h-48 shrink-0">
+                <img
+                  src={file.previewUrl}
+                  alt={file.file.name}
+                  className="w-full h-full object-cover rounded-r3 border border-border"
+                />
+                <button
+                  type="button"
+                  onClick={() => onRemoveFile(file.id)}
+                  className="absolute top-s1 right-s1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer text-xs leading-none"
                 >
-                  <span className="text-foreground truncate max-w-[80%]">
-                    {file.file.name}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveFile(file.id);
-                    }}
-                    className="text-muted-foreground hover:text-destructive transition cursor-pointer text-xs ml-s2"
-                  >
-                    삭제
-                  </button>
-                </div>
-              ))}
-              <p className="text-xs text-muted-foreground text-center pt-s2">
-                클릭하여 이미지 추가 · {files.length}개
-              </p>
-            </div>
-          ) : (
-            <>
-              <ImageIcon size={32} className="text-muted-foreground/50" />
-              <p className="text-sm font-medium text-muted-foreground">
-                클릭하여 이미지 업로드
-              </p>
-              <p className="typo-c1 text-muted-foreground/70">
-                JPG, PNG, GIF, WebP · 최대 10MB
-              </p>
-            </>
-          )}
-        </div>
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="w-48 h-48 shrink-0 rounded-r3 border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files.length > 0) {
+                  onAddFiles(e.dataTransfer.files);
+                }
+              }}
+            >
+              <Plus size={24} className="text-muted-foreground/50" />
+            </button>
+          </div>
+        ) : (
+          <div
+            className="rounded-r4 border-2 border-dashed border-border bg-card shadow-sm px-s6 py-s8 flex flex-col items-center justify-center gap-s3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (e.dataTransfer.files.length > 0) {
+                onAddFiles(e.dataTransfer.files);
+              }
+            }}
+          >
+            <ImageIcon size={32} className="text-muted-foreground/50" />
+            <p className="text-sm font-medium text-muted-foreground">
+              클릭하여 이미지 업로드
+            </p>
+            <p className="typo-c1 text-muted-foreground/70">
+              JPG, PNG, GIF, WebP · 최대 10MB
+            </p>
+          </div>
+        )}
         <input
           ref={fileInputRef}
           type="file"
