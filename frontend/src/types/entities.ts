@@ -127,6 +127,8 @@ export interface Event {
   createdAt?: string;
   updatedAt?: string;
   thumbnailObjectKey?: string;
+  allowExternal?: boolean;
+  isRegistrable?: boolean;
 }
 
 export interface EventDetail extends Event {

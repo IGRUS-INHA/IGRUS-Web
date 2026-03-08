@@ -83,7 +83,7 @@ interface EventAccordionItemProps {
 export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const isOperator = user?.role === "OPERATOR" || user?.role === "ADMIN";
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -97,8 +97,11 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
   const numericId = Number(event.id);
 
-  // Lazy fetch detail when expanded
-  const publicQuery = useEvent(numericId, isExpanded && !isOperator);
+  // Lazy fetch detail when expanded — 비인증 사용자는 API 호출하지 않음 (401 방지)
+  const publicQuery = useEvent(
+    numericId,
+    isExpanded && !isOperator && isAuthenticated,
+  );
   const adminQuery = useAdminEvent(numericId, isExpanded && isOperator);
   const { data: detailResponse, isLoading: isDetailLoading } = isOperator
     ? adminQuery
@@ -202,7 +205,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
     showRegStatus && regStatus ? REG_STATUS_LABEL[regStatus] : null;
 
   // Action state
-  const isRegistrable = detail?.isRegistrable ?? false;
+  const isRegistrable = detail?.isRegistrable ?? event.isRegistrable ?? false;
   const hasApplied = detail?.isRegistered ?? false;
   const isUnpublished =
     (detail?.visibility ?? event.visibility) === "UNPUBLISHED";
@@ -671,6 +674,10 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           {/* Description */}
           {isDetailLoading ? (
             <p className="text-sm text-muted-foreground">불러오는 중...</p>
+          ) : !isAuthenticated ? (
+            <p className="text-sm text-muted-foreground">
+              로그인하면 상세 정보를 확인할 수 있습니다.
+            </p>
           ) : detail?.description ? (
             <RichTextViewer
               content={detail.description}
@@ -704,7 +711,23 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
           {/* Action buttons */}
           <div className="space-y-s3">
-            {canApply && (
+            {/* 비인증 외부인 신청 버튼 */}
+            {!isAuthenticated &&
+              event.allowExternal &&
+              event.registrationStatus === "OPEN" && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/events/${numericId}/apply/external`);
+                  }}
+                  className="w-full py-s3 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                >
+                  외부인 신청하기
+                </button>
+              )}
+            {/* 인증 사용자 신청/취소 버튼 */}
+            {isAuthenticated && canApply && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -717,7 +740,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                 {isApplying ? "신청 중..." : "신청하기"}
               </button>
             )}
-            {canCancel && (
+            {isAuthenticated && canCancel && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -730,7 +753,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                 {isCanceling ? "취소 중..." : "신청 취소"}
               </button>
             )}
-            {!canApply && !canCancel && (
+            {isAuthenticated && !canApply && !canCancel && (
               <button
                 type="button"
                 disabled
