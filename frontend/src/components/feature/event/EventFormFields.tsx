@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
+import { ImageLightbox } from "@/components/ui";
 import {
   Control,
   Controller,
@@ -131,6 +132,7 @@ export function EventFormFields({
   fileInputRef,
 }: EventFormFieldsProps) {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const locationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -540,13 +542,19 @@ export function EventFormFields({
       <div className="space-y-s3">
         {files.length > 0 ? (
           <div className="flex flex-wrap gap-s3">
-            {files.map((file) => (
+            {files.map((file, idx) => (
               <div key={file.id} className="relative group w-48 h-48 shrink-0">
-                <img
-                  src={file.previewUrl}
-                  alt={file.file.name}
-                  className="w-full h-full object-cover rounded-r3 border border-border"
-                />
+                <button
+                  type="button"
+                  onClick={() => setLightboxIndex(idx)}
+                  className="w-full h-full cursor-pointer"
+                >
+                  <img
+                    src={file.previewUrl}
+                    alt={file.file.name}
+                    className="w-full h-full object-cover rounded-r3 border border-border"
+                  />
+                </button>
                 <button
                   type="button"
                   onClick={() => onRemoveFile(file.id)}
@@ -606,6 +614,13 @@ export function EventFormFields({
           className="hidden"
         />
       </div>
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={files.map((f) => f.previewUrl)}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </div>
   );
 }

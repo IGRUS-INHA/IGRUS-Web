@@ -27,6 +27,7 @@ import java.time.Instant;
  * @param isRegistrable       신청 가능 여부
  * @param surveyId            연결된 설문 ID (null이면 설문 미연결)
  * @param allowExternal       외부인(비회원) 신청 허용 여부
+ * @param thumbnailObjectKey  첫 번째 첨부파일의 object key (썸네일 용도, null이면 첨부파일 없음)
  */
 public record EventListResponse(
         Long id,
@@ -43,15 +44,17 @@ public record EventListResponse(
         EventRegistrationType registrationType,
         boolean isRegistrable,
         Long surveyId,
-        Boolean allowExternal
+        Boolean allowExternal,
+        String thumbnailObjectKey
 ) {
     /**
      * Event 엔티티로부터 EventListResponse를 생성합니다.
      *
-     * @param event 행사 엔티티
+     * @param event              행사 엔티티
+     * @param thumbnailObjectKey 첫 번째 첨부파일의 object key (없으면 null)
      * @return EventListResponse
      */
-    public static EventListResponse from(Event event) {
+    public static EventListResponse from(Event event, String thumbnailObjectKey) {
         return new EventListResponse(
                 event.getId(),
                 event.getTitle(),
@@ -67,7 +70,8 @@ public record EventListResponse(
                 event.getRegistrationType(),
                 event.isRegistrable(),
                 event.getSurveyId(),
-                event.getAllowExternal()
+                event.getAllowExternal(),
+                thumbnailObjectKey
         );
     }
 }

@@ -355,19 +355,19 @@ export default function PostDetailPage() {
         onClick={handleBack}
         type="button"
         className={cn(
-          "mb-s6 flex items-center gap-s2 text-sm font-bold transition-colors cursor-pointer",
+          "mb-s6 flex items-center gap-s2 text-xs md:text-sm font-bold transition-colors cursor-pointer",
           isDark
             ? "text-muted-foreground hover:text-foreground"
             : "text-muted-foreground hover:text-foreground",
         )}
       >
-        <ArrowLeft size={18} /> 목록으로
+        <ArrowLeft className="size-3.5 md:size-4 lg:size-[18px]" /> 목록으로
       </button>
 
       {/* Main Post Card */}
       <article
         className={cn(
-          "p-s8 md:p-12 rounded-[2.5rem] border mb-s8 relative",
+          "p-s5 md:p-s8 lg:p-12 rounded-[1.5rem] md:rounded-[2rem] lg:rounded-[2.5rem] border mb-s8 relative",
           isDark ? "bg-card border-border" : "bg-card border-border shadow-sm",
         )}
       >
@@ -481,9 +481,9 @@ export default function PostDetailPage() {
             </div>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold leading-tight">
+          <p className="text-xl md:text-2xl lg:text-[28px] font-bold leading-tight">
             {post.title}
-          </h1>
+          </p>
 
           <div className="flex items-center gap-s3">
             <div
@@ -507,10 +507,8 @@ export default function PostDetailPage() {
         {/* Content */}
         <div
           className={cn(
-            "prose max-w-none mb-s6",
-            isDark
-              ? "prose-invert text-muted-foreground"
-              : "text-muted-foreground",
+            "max-w-none mb-s6",
+            isDark ? "text-muted-foreground" : "text-muted-foreground",
           )}
         >
           {post.imageUrls?.[0] && resolvedImageUrls.get(post.imageUrls[0]) && (
@@ -524,17 +522,17 @@ export default function PostDetailPage() {
           )}
           <RichTextViewer
             content={post.content ?? ""}
-            className="text-lg leading-relaxed"
+            className="post-detail-body"
           />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-s4 border-t border-border pt-s7">
+        <div className="flex items-center gap-s3 md:gap-s4 border-t border-border pt-s7">
           <button
             onClick={handleLike}
             type="button"
             className={cn(
-              "flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer",
+              "flex items-center gap-s2 px-s4 py-s2 md:px-s5 md:py-s3 lg:px-s6 rounded-r3 text-xs md:text-sm font-bold transition-all cursor-pointer",
               post.liked
                 ? "bg-red-500/10 text-red-500"
                 : isDark
@@ -542,7 +540,12 @@ export default function PostDetailPage() {
                   : "bg-muted text-muted-foreground hover:bg-muted/80",
             )}
           >
-            <Heart size={20} className={post.liked ? "fill-current" : ""} />
+            <Heart
+              className={cn(
+                "size-4 md:size-[18px] lg:size-5",
+                post.liked && "fill-current",
+              )}
+            />
             {post.likeCount ?? 0}
           </button>
 
@@ -550,13 +553,13 @@ export default function PostDetailPage() {
             onClick={handleCommentClick}
             type="button"
             className={cn(
-              "flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer",
+              "flex items-center gap-s2 px-s4 py-s2 md:px-s5 md:py-s3 lg:px-s6 rounded-r3 text-xs md:text-sm font-bold transition-all cursor-pointer",
               isDark
                 ? "bg-white/5 text-muted-foreground hover:bg-white/10"
                 : "bg-muted text-muted-foreground hover:bg-muted/80",
             )}
           >
-            <MessageCircle size={20} />
+            <MessageCircle className="size-4 md:size-[18px] lg:size-5" />
             {(post && "commentCount" in post ? post.commentCount : 0) ?? 0}
           </button>
 
@@ -564,7 +567,7 @@ export default function PostDetailPage() {
             onClick={handleScrap}
             type="button"
             className={cn(
-              "flex items-center gap-s2 px-s6 py-s3 rounded-r3 font-bold transition-all cursor-pointer",
+              "flex items-center gap-s2 px-s4 py-s2 md:px-s5 md:py-s3 lg:px-s6 rounded-r3 text-xs md:text-sm font-bold transition-all cursor-pointer",
               isBookmarked
                 ? "bg-primary/10 text-primary"
                 : isDark
@@ -573,8 +576,10 @@ export default function PostDetailPage() {
             )}
           >
             <Bookmark
-              size={20}
-              className={isBookmarked ? "fill-current" : ""}
+              className={cn(
+                "size-4 md:size-[18px] lg:size-5",
+                isBookmarked && "fill-current",
+              )}
             />
             {post.bookmarkCount ?? 0}
           </button>
@@ -584,7 +589,7 @@ export default function PostDetailPage() {
       {/* Comments Section */}
       <Card
         className={cn(
-          "p-s8 rounded-[2.5rem] border",
+          "p-s5 md:p-s8 lg:p-12 rounded-[1.5rem] md:rounded-[2rem] lg:rounded-[2.5rem] border",
           isDark ? "bg-card border-border" : "bg-card border-border shadow-sm",
         )}
       >
