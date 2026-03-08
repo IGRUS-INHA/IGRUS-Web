@@ -16,6 +16,7 @@ import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.audit.EventStatusChanged;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventAccessDeniedException;
+import igrus.web.event.exception.EventAuthenticationRequiredException;
 import igrus.web.event.exception.EventAttachmentValidationException;
 import igrus.web.event.exception.EventErrorCode;
 import igrus.web.event.exception.EventNotDeletableException;
@@ -161,12 +162,14 @@ public class EventService {
      * 행사를 단건 조회합니다. (공개 API)
      * PUBLISHED 행사만 조회 가능합니다. UNPUBLISHED 행사 접근 시 EventNotFoundException을 반환합니다.
      * 조회 시 현재 시간에 따라 행사 상태가 자동 갱신됩니다. (Lazy Evaluation)
+     * 비인증 사용자는 allowExternal=true인 행사만 조회할 수 있습니다.
      *
      * @param eventId 행사 ID
-     * @param userId  현재 사용자 ID
+     * @param userId  현재 사용자 ID (비인증 시 null)
      * @return 행사 상세 응답 DTO
-     * @throws EventNotFoundException             행사를 찾을 수 없는 경우 (UNPUBLISHED 포함)
-     * @throws AssociateMemberNotAllowedException 준회원인 경우
+     * @throws EventNotFoundException                행사를 찾을 수 없는 경우 (UNPUBLISHED 포함)
+     * @throws EventAuthenticationRequiredException   비인증 사용자가 allowExternal=false 행사 접근 시
+     * @throws AssociateMemberNotAllowedException     준회원인 경우
      */
     public EventDetailResponse getEvent(Long eventId, Long userId) {
         Event event = eventRepository.findByIdAndVisibility(eventId, EventVisibility.PUBLISHED)
@@ -175,6 +178,16 @@ public class EventService {
         // 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
         event.updateStatusIfNeeded(Instant.now());
 
+        // 비인증 사용자 처리
+        if (userId == null) {
+            if (!Boolean.TRUE.equals(event.getAllowExternal())) {
+                throw new EventAuthenticationRequiredException();
+            }
+            List<EventAttachmentDto> attachmentDtos = getAttachmentDtos(eventId);
+            return EventDetailResponse.from(event, false, false, attachmentDtos);
+        }
+
+        // 인증된 사용자 처리
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
