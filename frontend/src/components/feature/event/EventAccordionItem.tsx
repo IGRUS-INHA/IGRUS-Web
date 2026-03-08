@@ -506,7 +506,12 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
       if (url) srcs.push(url);
     }
     return srcs;
-  }, [thumbnailSrc, event.thumbnailObjectKey, imageObjectKeys, resolvedImageUrls]);
+  }, [
+    thumbnailSrc,
+    event.thumbnailObjectKey,
+    imageObjectKeys,
+    resolvedImageUrls,
+  ]);
 
   // 갤러리 이미지 클릭 시 라이트박스 인덱스 오프셋 (전용 썸네일이 배열 앞에 오는 경우)
   const galleryLightboxOffset = event.thumbnailObjectKey ? 1 : 0;
@@ -547,7 +552,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
               e.stopPropagation();
               setLightboxIndex(0);
             }}
-            className="w-[84px] h-[84px] rounded-r3 overflow-hidden bg-muted/30 shrink-0 cursor-zoom-in"
+            className="w-[84px] h-[84px] overflow-hidden bg-muted/30 shrink-0 cursor-zoom-in"
           >
             <img
               src={thumbnailSrc}
@@ -825,7 +830,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                       e.stopPropagation();
                       setLightboxIndex(galleryLightboxOffset + idx);
                     }}
-                    className="w-[84px] h-[84px] rounded-r3 overflow-hidden bg-muted/30 shrink-0 cursor-pointer"
+                    className="w-[84px] h-[84px] overflow-hidden bg-muted/30 shrink-0 cursor-pointer"
                   >
                     <img
                       src={src}
