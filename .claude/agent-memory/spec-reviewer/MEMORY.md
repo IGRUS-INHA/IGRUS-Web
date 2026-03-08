@@ -99,6 +99,12 @@ See `review-history.md` for detailed per-review results.
 4. TC-015 maps to CLOSED #5 (not OPEN) due to actual code branch logic -- accept if reasoning is documented
 5. TC-060 (concurrency) is high difficulty and acceptable as Recommended, not Critical
 
+### Admin API SecurityConfig Pattern
+- `/api/v1/admin/**` catch-all in ApiSecurityConfig defaults to `hasRole("ADMIN")`
+- New admin APIs for OPERATOR+ MUST be explicitly added to the specific-path list (lines 63-69)
+- `@PreAuthorize` on controller is bypassed if SecurityConfig filter chain rejects first
+- Always check SecurityConfig when reviewing admin API RBAC requirements
+
 ## Review Results Summary
 
 | Domain | Group | TASKs | Result | Date |
@@ -114,3 +120,4 @@ See `review-history.md` for detailed per-review results.
 | Survey-Event Reg | Group 3 | 008/009/010/015 | PASS | 2026-03-02 |
 | Survey-Event Reg | Group 4 | 012/013/014 | PASS | 2026-03-02 |
 | Survey-Event Reg | Group 5 (Test) | 016/017/018/019/020 | R1 FAIL -> R2 PASS | 2026-03-03 |
+| Event-Survey Imp | Phase 3 | 016/017/018/019/020 | R1 FAIL | 2026-03-08 |

@@ -11,6 +11,7 @@ import igrus.web.survey.exception.SurveyAccessDeniedException;
 import igrus.web.survey.exception.SurveyNotFoundException;
 import igrus.web.survey.exception.SurveyPublishValidationException;
 import igrus.web.survey.repository.SurveyRepository;
+import igrus.web.survey.response.repository.SurveyResponseRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -21,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 설문 서비스.
@@ -50,6 +53,7 @@ import java.util.List;
 public class SurveyService {
 
     private final SurveyRepository surveyRepository;
+    private final SurveyResponseRepository surveyResponseRepository;
     private final UserRepository userRepository;
 
     /**
@@ -73,7 +77,7 @@ public class SurveyService {
 
         Survey savedSurvey = surveyRepository.save(survey);
 
-        return SurveyDetailResponse.from(savedSurvey);
+        return SurveyDetailResponse.from(savedSurvey, 0);
     }
 
     /**
@@ -100,7 +104,7 @@ public class SurveyService {
                 request.deadline()
         );
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, getResponseCount(surveyId));
     }
 
     /**
@@ -167,7 +171,7 @@ public class SurveyService {
         Survey survey = surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
         survey.updateStatusIfNeeded(Instant.now());
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, getResponseCount(surveyId));
     }
 
     /**
@@ -184,8 +188,12 @@ public class SurveyService {
         Instant now = Instant.now();
         List<Survey> surveys = surveyRepository.findByDeletedFalseAndTrashedAtIsNull();
         surveys.forEach(s -> s.updateStatusIfNeeded(now));
+
+        Map<Long, Integer> responseCountMap = getResponseCountMap(
+                surveys.stream().map(Survey::getId).toList());
+
         return surveys.stream()
-                .map(SurveyListResponse::from)
+                .map(s -> SurveyListResponse.from(s, responseCountMap.getOrDefault(s.getId(), 0)))
                 .toList();
     }
 
@@ -201,8 +209,13 @@ public class SurveyService {
                 .orElseThrow(() -> new UserNotFoundException(authenticatedUser.userId()));
         validateOperatorPermission(user);
 
-        return surveyRepository.findByDeletedFalseAndTrashedAtIsNotNull().stream()
-                .map(SurveyListResponse::from)
+        List<Survey> trashedSurveys = surveyRepository.findByDeletedFalseAndTrashedAtIsNotNull();
+
+        Map<Long, Integer> responseCountMap = getResponseCountMap(
+                trashedSurveys.stream().map(Survey::getId).toList());
+
+        return trashedSurveys.stream()
+                .map(s -> SurveyListResponse.from(s, responseCountMap.getOrDefault(s.getId(), 0)))
                 .toList();
     }
 
@@ -228,7 +241,7 @@ public class SurveyService {
         validatePublishPreConditions(survey);
         survey.publish();
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, getResponseCount(surveyId));
     }
 
     /**
@@ -250,7 +263,7 @@ public class SurveyService {
 
         survey.unpublish();
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, getResponseCount(surveyId));
     }
 
     /**
@@ -272,7 +285,7 @@ public class SurveyService {
 
         survey.openResponse();
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, getResponseCount(surveyId));
     }
 
     /**
@@ -293,7 +306,7 @@ public class SurveyService {
 
         survey.closeResponse();
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, getResponseCount(surveyId));
     }
 
     /**
@@ -317,10 +330,37 @@ public class SurveyService {
         validatePublishPreConditions(survey);
         survey.publishAndOpen();
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, getResponseCount(surveyId));
     }
 
     // === Private helper methods ===
+
+    /**
+     * 단건 설문의 유효 응답 수를 조회합니다.
+     *
+     * @param surveyId 설문 ID
+     * @return 유효 응답 수 (int)
+     */
+    private int getResponseCount(Long surveyId) {
+        return (int) surveyResponseRepository.countBySurveyIdAndDeletedFalse(surveyId);
+    }
+
+    /**
+     * 여러 설문의 유효 응답 수를 배치로 조회합니다. N+1 방지용.
+     *
+     * @param surveyIds 설문 ID 목록
+     * @return 설문 ID → 응답 수 맵
+     */
+    private Map<Long, Integer> getResponseCountMap(List<Long> surveyIds) {
+        if (surveyIds.isEmpty()) {
+            return Map.of();
+        }
+        return surveyResponseRepository.countBySurveyIdInAndDeletedFalse(surveyIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+    }
 
     private void validateOperatorPermission(User user) {
         if (!user.isOperatorOrAbove()) {

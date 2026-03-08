@@ -83,7 +83,7 @@ public class SurveyQuestionService {
         survey.getQuestions().add(question);
         questionRepository.save(question);
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, 0);
     }
 
     /**
@@ -118,7 +118,7 @@ public class SurveyQuestionService {
                 request.displayOrder()
         );
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, 0);
     }
 
     /**

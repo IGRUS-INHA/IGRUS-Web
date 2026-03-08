@@ -84,6 +84,25 @@
 - event-verification-criteria.md: GAP 항목을 기존/신규로 나눠 추적, "해결됨" 상태 업데이트 관례
 - 3자 시스템 경계 ASCII 다이어그램 + 단계별 번호와 API 흐름 표 대응 방식 (storage 문서의 강점)
 
+## 행사/설문 기능 보완 도메인 특이사항 (2026-03-08, 2라운드 리뷰 PASS)
+- 파일 위치: docs/criteria/event/event-survey-improvements-verification-criteria.md
+- 범위: 6개 Phase — Phase 1(allowExternal 버그), Phase 2(응답 수), Phase 3(관리자 응답 목록), Phase 4(응답 삭제), Phase 5(외부인 통계), Phase 6(코드 중복)
+- 1라운드 심각 3건 모두 해소:
+  1. CRIT-01 해소: EVTSRV-027/034에서 204 No Content로 확정, EVTSRV-044에서 검증 절차 4번에 204 명시
+  2. CRIT-02 해소: EVTSRV-029/034에서 SurveyClosedException + 409 Conflict로 확정
+  3. CRIT-03 해소: EVTSRV-043(관리자 응답 목록), EVTSRV-044(응답 삭제) 추가
+- 2라운드 잔존 주의 이슈 (PASS 유지, 향후 권장):
+  - WARN-01 잔존: EVTSRV-030 4단계에 "승인된 신청이었던 경우"라는 조건이 있으나, APPROVED 외 다른 상태(WAITING, PENDING) 시 currentCount 변화 없음을 검증하는 별도 케이스 없음
+  - WARN-02 잔존: 행사 신청 취소 상태 확인 API(`GET /api/v1/events/{eventId}/registrations/me` 등)가 EVTSRV-030 검증 절차에 미명시
+  - WARN-03 해소(부분): EVTSRV-039 비고에 "구현 정책에 따름"으로 언급하나 DECISION 표 부재 — 미결 정책임을 표기하는 수준은 개선됨
+  - WARN-04 잔존: Phase 5 권한 검증 항목이 여전히 없음 — 통계 API `GET /api/v1/admin/surveys/{surveyId}/statistics` 접근 권한 RBAC 표 없음
+  - WARN-05 잔존: EVTSRV-028 비고에 404 반환은 기술했으나 설계 의도(정보 은닉) 명시 없음
+  - WARN-06 잔존: EVTSRV-021/043에서 "응답자 정보"가 여전히 모호 — userId, userName 필드명 명시 없음
+- 검증 기준 문서 내 OpenAPI 스펙 미등록 상태: surveys.yaml에 DELETE /surveys/{surveyId}/responses 및 GET /admin/surveys/{surveyId}/responses 모두 미등록 — 구현 전이므로 검증 항목(EVTSRV-043, EVTSRV-044)이 이를 검증함
+- 2라운드 추가 발견 주의 이슈:
+  - WARN-07: EVTSRV-030에서 설문 응답 삭제 후 responseCount 감소 여부 검증 항목이 EVTSRV-018 경계값 표에 없음 (EVTSRV-018의 마지막 행이 "삭제 후 카운트 감소"를 다루긴 하지만 삭제 API 실행 시나리오로 연결되지 않음)
+  - WARN-08: EVTSRV-043 검증 절차가 스펙 등록 확인에만 초점 — 응답 스키마(SurveyAdminResponseListItem 등 신규 스키마명)가 surveys.yaml에 정의되어야 함을 명시하지 않음
+
 ## 행사 그룹(EventGroup) 도메인 특이사항 (3라운드 PASS, 2026-03-03)
 - 핵심 설계: Event.groupId(Long, nullable, FK 없음) — DECISION-01(C) 약한 참조, surveyId 패턴과 동일
 - 1라운드 심각 4건 모두 해소, 2라운드 심각 1건 해소, 3라운드 PASS.

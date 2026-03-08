@@ -57,6 +57,7 @@ export * from "./adminEventListResponseEventStatus";
 export * from "./adminEventListResponseRegistrationStatus";
 export * from "./adminEventListResponseRegistrationType";
 export * from "./adminEventListResponseVisibility";
+export * from "./adminSurveyResponseListItem";
 export * from "./answerResponse";
 export * from "./answerResponseQuestionType";
 export * from "./associateInfoPageResponse";

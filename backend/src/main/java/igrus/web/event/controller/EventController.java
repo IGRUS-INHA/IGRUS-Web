@@ -62,7 +62,8 @@ public class EventController implements EventApi {
                 EnumUtils.fromStringOrNull(EventRegistrationType.class,
                         createEventRequest.getRegistrationType().getValue()),
                 createEventRequest.getSurveyId(),
-                createEventRequest.getAttachmentFileIds()
+                createEventRequest.getAttachmentFileIds(),
+                createEventRequest.getAllowExternal()
         );
 
         var result = eventService.createEvent(request, user.userId());
@@ -70,7 +71,8 @@ public class EventController implements EventApi {
                 .id(result.id())
                 .title(result.title())
                 .createdAt(result.createdAt())
-                .surveyId(result.surveyId()));
+                .surveyId(result.surveyId())
+                .allowExternal(result.allowExternal()));
     }
 
     @Override
@@ -120,7 +122,8 @@ public class EventController implements EventApi {
                 updateEventRequest.getRegistrationEndAt(),
                 updateEventRequest.getCapacity(),
                 updateEventRequest.getSurveyId(),
-                updateEventRequest.getAttachmentFileIds()
+                updateEventRequest.getAttachmentFileIds(),
+                updateEventRequest.getAllowExternal()
         );
 
         var response = eventService.updateEvent(eventId, request, user.userId());
@@ -229,7 +232,8 @@ public class EventController implements EventApi {
                 .updatedAt(r.updatedAt())
                 .canEdit(r.canEdit())
                 .isRegistered(r.isRegistered())
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .allowExternal(r.allowExternal());
 
         if (r.attachments() != null) {
             response.setAttachments(r.attachments().stream()
@@ -265,7 +269,8 @@ public class EventController implements EventApi {
                                 r.registrationType().name())
                         : null)
                 .isRegistrable(r.isRegistrable())
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .allowExternal(r.allowExternal());
     }
 
     private ApiEventAttachmentResponse mapToAttachmentResponse(EventAttachmentDto a) {

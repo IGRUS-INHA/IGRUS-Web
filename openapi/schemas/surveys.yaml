@@ -128,6 +128,10 @@ SurveyDetailResponse:
       type: array
       items:
         $ref: '#/QuestionResponse'
+    responseCount:
+      type: integer
+      format: int32
+      description: 제출된 응답 수 (soft-delete 제외)
 SubmitSurveyResponseRequest:
   type: object
   properties:
@@ -302,6 +306,10 @@ SurveyListResponse:
     createdAt:
       type: string
       format: date-time
+    responseCount:
+      type: integer
+      format: int32
+      description: 제출된 응답 수 (soft-delete 제외)
 SubmitAnswerRequest:
   type: object
   properties:
@@ -384,3 +392,27 @@ GridAnswerRequest:
   required:
   - rowId
   - selectedOptionIds
+AdminSurveyResponseListItem:
+  type: object
+  description: 관리자 설문 응답 목록 항목
+  properties:
+    responseId:
+      type: integer
+      format: int64
+      description: 응답 ID
+    userId:
+      type: integer
+      format: int64
+      description: 응답자 사용자 ID (비회원 응답 시 null)
+    userName:
+      type: string
+      description: 응답자 이름 (비회원 응답 시 null)
+    submittedAt:
+      type: string
+      format: date-time
+      description: 응답 제출 시각
+    answers:
+      type: array
+      description: 답변 목록
+      items:
+        $ref: '#/AnswerResponse'

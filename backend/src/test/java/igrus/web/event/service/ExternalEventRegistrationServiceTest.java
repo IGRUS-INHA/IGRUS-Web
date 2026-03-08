@@ -74,6 +74,9 @@ class ExternalEventRegistrationServiceTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private EventStatusHelper eventStatusHelper;
+
     @InjectMocks
     private ExternalEventRegistrationService service;
 

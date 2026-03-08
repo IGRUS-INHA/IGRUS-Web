@@ -64,6 +64,7 @@ public class ApiSecurityConfig {
                         "/api/v1/admin/dashboard",
                         "/api/v1/admin/users/**",
                         "/api/v1/admin/events/**",
+                        "/api/v1/admin/surveys/**",
                         "/api/v1/registrations/*/cancel",
                         "/api/v1/admin/comment-reports/**"
                 ).hasAnyRole("OPERATOR", "ADMIN")

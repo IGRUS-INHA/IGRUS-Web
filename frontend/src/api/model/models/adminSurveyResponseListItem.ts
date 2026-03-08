@@ -33,18 +33,20 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { SurveyListResponseAccessLevel } from "./surveyListResponseAccessLevel";
-import type { SurveyListResponseResponseStatus } from "./surveyListResponseResponseStatus";
-import type { SurveyListResponseVisibility } from "./surveyListResponseVisibility";
+import type { AnswerResponse } from "./answerResponse";
 
-export interface SurveyListResponse {
-  id?: number;
-  title?: string;
-  visibility?: SurveyListResponseVisibility;
-  responseStatus?: SurveyListResponseResponseStatus;
-  accessLevel?: SurveyListResponseAccessLevel;
-  deadline?: string;
-  createdAt?: string;
-  /** 제출된 응답 수 (soft-delete 제외) */
-  responseCount?: number;
+/**
+ * 관리자 설문 응답 목록 항목
+ */
+export interface AdminSurveyResponseListItem {
+  /** 응답 ID */
+  responseId?: number;
+  /** 응답자 사용자 ID (비회원 응답 시 null) */
+  userId?: number;
+  /** 응답자 이름 (비회원 응답 시 null) */
+  userName?: string;
+  /** 응답 제출 시각 */
+  submittedAt?: string;
+  /** 답변 목록 */
+  answers?: AnswerResponse[];
 }

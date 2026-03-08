@@ -198,6 +198,7 @@ public class SurveyController implements SurveyApi {
                 .accessLevel(s.accessLevel() != null
                         ? ApiSurveyListResponse.AccessLevelEnum.fromValue(s.accessLevel().name()) : null)
                 .deadline(s.deadline())
-                .createdAt(s.createdAt());
+                .createdAt(s.createdAt())
+                .responseCount(s.responseCount());
     }
 }

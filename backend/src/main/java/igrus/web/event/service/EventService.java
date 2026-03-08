@@ -134,7 +134,8 @@ public class EventService {
                 request.registrationEndAt(),
                 request.capacity(),
                 request.registrationType(),
-                request.surveyId()
+                request.surveyId(),
+                request.allowExternal()
         );
 
         // 5. 저장
@@ -221,7 +222,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(event -> EventListResponse.from(event, getAttachmentDtos(event.getId())))
+                .map(event -> EventListResponse.from(event))
                 .toList();
     }
 
@@ -283,7 +284,8 @@ public class EventService {
                 request.registrationStartAt(),
                 request.registrationEndAt(),
                 request.capacity(),
-                request.surveyId()
+                request.surveyId(),
+                request.allowExternal() != null ? request.allowExternal() : event.getAllowExternal()
         );
 
         // 9. 첨부파일 전체 교체
@@ -534,7 +536,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(event -> EventListResponse.from(event, getAttachmentDtos(event.getId())))
+                .map(event -> EventListResponse.from(event))
                 .toList();
     }
 
