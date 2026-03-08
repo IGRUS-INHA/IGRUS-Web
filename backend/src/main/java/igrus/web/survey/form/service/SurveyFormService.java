@@ -55,7 +55,7 @@ public class SurveyFormService {
 
         validateAccessLevel(survey.getAccessLevel(), user);
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, 0);
     }
 
     /**
@@ -79,7 +79,7 @@ public class SurveyFormService {
             throw new SurveyNotAcceptingResponsesException();
         }
 
-        return SurveyDetailResponse.from(survey);
+        return SurveyDetailResponse.from(survey, 0);
     }
 
     private void validateAccessLevel(SurveyAccessLevel accessLevel, User user) {

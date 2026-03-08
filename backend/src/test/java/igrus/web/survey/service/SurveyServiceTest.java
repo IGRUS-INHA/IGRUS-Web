@@ -11,6 +11,7 @@ import igrus.web.survey.exception.SurveyAccessDeniedException;
 import igrus.web.survey.exception.SurveyNotFoundException;
 import igrus.web.survey.exception.SurveyPublishValidationException;
 import igrus.web.survey.repository.SurveyRepository;
+import igrus.web.survey.response.repository.SurveyResponseRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -49,6 +50,9 @@ class SurveyServiceTest {
 
     @Mock
     private SurveyRepository surveyRepository;
+
+    @Mock
+    private SurveyResponseRepository surveyResponseRepository;
 
     @Mock
     private UserRepository userRepository;

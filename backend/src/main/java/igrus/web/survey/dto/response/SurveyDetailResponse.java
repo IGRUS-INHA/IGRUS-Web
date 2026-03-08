@@ -21,6 +21,7 @@ import java.util.List;
  * @param createdAt      생성 시각
  * @param updatedAt      수정 시각
  * @param questions      질문 목록 (삭제되지 않은 질문만 포함)
+ * @param responseCount  제출된 응답 수 (soft-delete 제외)
  */
 public record SurveyDetailResponse(
         Long id,
@@ -32,15 +33,17 @@ public record SurveyDetailResponse(
         Instant deadline,
         Instant createdAt,
         Instant updatedAt,
-        List<QuestionResponse> questions
+        List<QuestionResponse> questions,
+        int responseCount
 ) {
     /**
-     * Survey 엔티티로부터 SurveyDetailResponse를 생성합니다.
+     * Survey 엔티티와 응답 수로부터 SurveyDetailResponse를 생성합니다.
      *
-     * @param survey 설문 엔티티
+     * @param survey        설문 엔티티
+     * @param responseCount 응답 수
      * @return SurveyDetailResponse
      */
-    public static SurveyDetailResponse from(Survey survey) {
+    public static SurveyDetailResponse from(Survey survey, int responseCount) {
         List<QuestionResponse> questions = survey.getQuestions().stream()
                 .filter(q -> !q.isDeleted())
                 .map(QuestionResponse::from)
@@ -56,7 +59,8 @@ public record SurveyDetailResponse(
                 survey.getDeadline(),
                 survey.getCreatedAt(),
                 survey.getUpdatedAt(),
-                questions
+                questions,
+                responseCount
         );
     }
 
