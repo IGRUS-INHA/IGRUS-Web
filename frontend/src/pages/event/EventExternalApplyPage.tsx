@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check, ChevronDown } from "lucide-react";
 import { useRegisterEventExternal } from "@/api/model/event-external-registration/event-external-registration";
-import { useGetSurveyDetail } from "@/api/model/survey/survey";
+import { useGetAnonymousSurveyForm } from "@/api/model/survey-anonymous-form/survey-anonymous-form";
 import type { QuestionResponse } from "@/api/model/models/questionResponse";
 import type { SubmitAnswerRequest } from "@/api/model/models/submitAnswerRequest";
 import { cn } from "@/lib/utils";
@@ -405,7 +405,7 @@ export default function EventExternalApplyPage() {
   const department = searchParams.get("department") ?? "";
 
   const { data: surveyResponse, isLoading: isSurveyLoading } =
-    useGetSurveyDetail(surveyId ?? 0, {
+    useGetAnonymousSurveyForm(surveyId ?? 0, {
       query: { enabled: !!surveyId },
     });
   const survey = surveyResponse?.data;

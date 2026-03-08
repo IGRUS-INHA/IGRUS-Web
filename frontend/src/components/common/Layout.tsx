@@ -47,7 +47,9 @@ export default function Layout() {
         </div>
 
         {/* Page Content */}
-        <main className={`px-s5 pb-s5 flex-1 ${isHome ? "" : "pt-s5"}`}>
+        <main
+          className={`px-s5 pb-s5 flex-1 overflow-x-hidden ${isHome ? "" : "pt-s5"}`}
+        >
           <div className="max-w-7xl mx-auto h-full">
             <Outlet />
           </div>

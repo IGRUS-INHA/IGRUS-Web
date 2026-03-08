@@ -1,6 +1,12 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Users, List, BarChart3 } from "lucide-react";
+import {
+  ArrowLeft,
+  Users,
+  List,
+  BarChart3,
+  ClipboardCheck,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FullPageSpinner } from "@/components/ui";
@@ -21,6 +27,7 @@ import {
 } from "@/utils/error";
 import { formatDate } from "@/utils/date";
 import RegistrationChart from "@/components/feature/event/RegistrationChart";
+import SurveyResultsTab from "@/components/feature/event/SurveyResultsTab";
 import {
   aggregateByGender,
   aggregateByGrade,
@@ -29,7 +36,7 @@ import {
 } from "@/utils/chart";
 import type { RegistrationListResponse } from "@/api/model/models";
 
-type ActiveTab = "list" | "dashboard";
+type ActiveTab = "list" | "dashboard" | "survey";
 
 const PAGE_SIZE = 20;
 
@@ -46,10 +53,16 @@ const REGISTRATION_TYPE_LABEL: Record<string, string> = {
   MANUAL_APPROVE: "선발제",
 };
 
-const TABS: { key: ActiveTab; label: string; icon: typeof List }[] = [
+const BASE_TABS: { key: ActiveTab; label: string; icon: typeof List }[] = [
   { key: "list", label: "리스트", icon: List },
   { key: "dashboard", label: "대시보드", icon: BarChart3 },
 ];
+
+const SURVEY_TAB: { key: ActiveTab; label: string; icon: typeof List } = {
+  key: "survey",
+  label: "설문 확인",
+  icon: ClipboardCheck,
+};
 
 export default function EventRegistrationsPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -82,6 +95,12 @@ export default function EventRegistrationsPage() {
   const isBusy = isApproving || isRejecting || isReverting;
 
   const event = eventResponse?.data;
+
+  const tabs = useMemo(
+    () => (event?.surveyId ? [...BASE_TABS, SURVEY_TAB] : BASE_TABS),
+    [event?.surveyId],
+  );
+
   const allRegistrations =
     registrationsResponse?.status === 200
       ? (registrationsResponse.data.content ?? [])
@@ -279,7 +298,7 @@ export default function EventRegistrationsPage() {
 
       {/* 탭 */}
       <div className="flex gap-s2 mb-s6 border-b border-border pb-s2">
-        {TABS.map(({ key, label, icon: Icon }) => (
+        {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             type="button"
@@ -299,7 +318,7 @@ export default function EventRegistrationsPage() {
 
       {/* 탭 콘텐츠 */}
       <div className="animate-in fade-in duration-200">
-        {activeTab === "list" ? (
+        {activeTab === "list" && (
           <>
             {/* 테이블 */}
             <Card className="p-s5 overflow-x-auto">
@@ -378,7 +397,9 @@ export default function EventRegistrationsPage() {
               </div>
             )}
           </>
-        ) : (
+        )}
+
+        {activeTab === "dashboard" && (
           <>
             {allRegistrations.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
@@ -413,6 +434,10 @@ export default function EventRegistrationsPage() {
               </div>
             )}
           </>
+        )}
+
+        {activeTab === "survey" && event?.surveyId && (
+          <SurveyResultsTab surveyId={event.surveyId} />
         )}
       </div>
     </div>

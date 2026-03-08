@@ -870,7 +870,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           {/* Progress bar */}
           {capacity > 0 && (
             <div>
-              <div className="flex items-center justify-between mb-s2">
+              <div className="flex items-center justify-between mb-s4">
                 <div className="flex items-center gap-1.5">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-semibold text-foreground">
