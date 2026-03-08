@@ -140,6 +140,8 @@ public class AdminUserController implements AdminUserManagementApi {
                                 .email(u.email())
                                 .role(ApiUserListResponse.RoleEnum.fromValue(u.role().name()))
                                 .status(ApiUserListResponse.StatusEnum.fromValue(u.status().name()))
+                                .department(u.department())
+                                .phoneNumber(u.phoneNumber())
                                 .createdAt(u.createdAt()))
                         .toList())
                 .totalElements(resultPage.getTotalElements())

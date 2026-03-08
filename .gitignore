@@ -54,6 +54,7 @@ docker-data/
 
 # Claude
 .claude/settings.local.json
+.omc/
 
 nul
 

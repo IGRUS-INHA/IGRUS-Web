@@ -44,8 +44,11 @@ public class ApiSecurityConfig {
                 // 고정 게시글 목록 조회 (GET만 공개, POST/PUT/DELETE는 인증 필요)
                 .requestMatchers(HttpMethod.GET, "/api/v1/pinned-posts").permitAll()
 
-                // 행사 목록 조회 (GET만 공개, 상세/POST/PUT/DELETE는 인증 필요)
+                // 행사 목록 조회 (GET만 공개)
                 .requestMatchers(HttpMethod.GET, "/api/v1/events").permitAll()
+
+                // 행사 상세 조회 (GET만 공개 - allowExternal 검증은 서비스 레이어에서 수행)
+                .requestMatchers(HttpMethod.GET, "/api/v1/events/*").permitAll()
 
                 // 외부인 행사 신청 (인증 불필요)
                 .requestMatchers(HttpMethod.POST, "/api/v1/events/*/registrations/external").permitAll()

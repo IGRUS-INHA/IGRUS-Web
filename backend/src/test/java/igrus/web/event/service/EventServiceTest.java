@@ -516,6 +516,37 @@ class EventServiceTest {
 
             assertThat(response.canEdit()).isTrue();
         }
+
+        /**
+         * SVC-EVT-010a: 비인증 사용자 + allowExternal=true → 조회 성공
+         */
+        @Test
+        @DisplayName("[SVC-EVT-010a] 비인증 사용자가 allowExternal=true 행사를 조회하면 성공한다")
+        void getEvent_Unauthenticated_AllowExternalTrue_Success() {
+            when(mockEvent.getAllowExternal()).thenReturn(true);
+            when(eventRepository.findByIdAndVisibility(EVENT_ID, EventVisibility.PUBLISHED)).thenReturn(Optional.of(mockEvent));
+
+            EventDetailResponse response = eventService.getEvent(EVENT_ID, null);
+
+            assertThat(response).isNotNull();
+            assertThat(response.id()).isEqualTo(EVENT_ID);
+            assertThat(response.canEdit()).isFalse();
+            assertThat(response.isRegistered()).isFalse();
+            verify(mockEvent).updateStatusIfNeeded(any(Instant.class));
+        }
+
+        /**
+         * SVC-EVT-010b: 비인증 사용자 + allowExternal=false → 인증 필요 예외
+         */
+        @Test
+        @DisplayName("[SVC-EVT-010b] 비인증 사용자가 allowExternal=false 행사를 조회하면 EventAuthenticationRequiredException 발생")
+        void getEvent_Unauthenticated_AllowExternalFalse_ThrowsException() {
+            when(mockEvent.getAllowExternal()).thenReturn(false);
+            when(eventRepository.findByIdAndVisibility(EVENT_ID, EventVisibility.PUBLISHED)).thenReturn(Optional.of(mockEvent));
+
+            assertThatThrownBy(() -> eventService.getEvent(EVENT_ID, null))
+                    .isInstanceOf(EventAuthenticationRequiredException.class);
+        }
     }
 
     // ========== getEventList ==========

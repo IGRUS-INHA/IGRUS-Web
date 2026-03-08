@@ -19,6 +19,10 @@ public record UserListResponse(
 
         UserStatus status,
 
+        String department,
+
+        String phoneNumber,
+
         Instant createdAt
 ) {
     public static UserListResponse from(User user) {
@@ -29,6 +33,8 @@ public record UserListResponse(
                 user.getEmail(),
                 user.getRole(),
                 user.getStatus(),
+                user.getDepartment(),
+                user.getPhoneNumber(),
                 user.getCreatedAt()
         );
     }
