@@ -781,7 +781,7 @@ export function useGetRejectedAssociates<
 }
 
 /**
- * 승인 대기 중인 준회원 목록을 페이지네이션하여 조회합니다. OPERATOR 이상 권한이 필요합니다.
+ * 승인 대기 중인 준회원 목록을 페이지네이션하여 조회합니다. ADMIN 권한이 필요합니다.
  * @summary 승인 대기 준회원 목록 조회
  */
 export type getPendingAssociatesResponse200 = {

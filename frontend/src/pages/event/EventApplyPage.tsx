@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { FullPageSpinner } from "@/components/ui";
 import { useEvent } from "@/hooks/queries/useEvents";
-import { useGetSurveyDetail } from "@/api/model/survey/survey";
+import { useGetSurveyForm } from "@/api/model/survey-form/survey-form";
 import { useRegisterEvent } from "@/api/model/event-registration/event-registration";
 import type { QuestionResponse } from "@/api/model/models/questionResponse";
 import type { SubmitAnswerRequest } from "@/api/model/models/submitAnswerRequest";
@@ -445,8 +445,10 @@ export default function EventApplyPage() {
 
   const surveyId = event?.surveyId ?? undefined;
 
-  const { data: surveyResponse, isLoading: isSurveyLoading } =
-    useGetSurveyDetail(surveyId!, { query: { enabled: !!surveyId } });
+  const { data: surveyResponse, isLoading: isSurveyLoading } = useGetSurveyForm(
+    surveyId ?? 0,
+    { query: { enabled: !!surveyId } },
+  );
   const survey = surveyResponse?.data;
   const questions = [...(survey?.questions ?? [])].sort(
     (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
