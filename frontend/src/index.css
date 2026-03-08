@@ -1030,8 +1030,14 @@
 
 @media (max-width: 767px) {
   .hero-section {
-    padding-top: 32px;
-    padding-bottom: 32px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+  .btn-hero-primary,
+  .btn-hero-outline {
+    padding: 8px 16px;
+    font-size: 12px;
+    border-radius: 6px;
   }
   .hero-heading {
     font-size: clamp(28px, 7vw, 36px);
