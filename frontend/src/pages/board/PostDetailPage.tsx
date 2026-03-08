@@ -31,9 +31,7 @@ import { CommentSection } from "@/components/feature/comment";
 import type { BoardType } from "@/types/common";
 import type { PostDetailResponse } from "@/api/model/models";
 import { cn } from "@/lib/utils";
-import MarkdownPreview from "@uiw/react-markdown-preview";
-import { useMockData } from "@/hooks/useMockData";
-import { useMockPostDetail } from "@/hooks/queries/useMockPosts";
+import { RichTextViewer } from "@/components/feature/editor";
 import { usePermission } from "@/hooks/usePermission";
 import {
   isForbiddenError,
@@ -54,21 +52,14 @@ export default function PostDetailPage() {
   const navigate = useNavigate();
   const { theme } = useUIStore();
   const isDark = theme === "dark";
-  const isMockMode = useMockData();
   const { isAuthenticated, isOperator } = usePermission();
   const canManagePins = isOperator();
-
-  // Fetch post data (Mock 또는 실제 API)
-  const realQuery = useGetPostDetail(boardType as string, Number(postId), {
-    query: { enabled: !isMockMode },
-  });
-  const mockQuery = useMockPostDetail(boardType as string, Number(postId));
 
   const {
     data: response,
     isLoading,
     error,
-  } = isMockMode ? mockQuery : realQuery;
+  } = useGetPostDetail(boardType as string, Number(postId));
   // client.ts에서 에러 응답을 throw하므로 data는 항상 PostDetailResponse
   const post = response?.data as PostDetailResponse | undefined;
 
@@ -97,14 +88,14 @@ export default function PostDetailPage() {
   const { data: bookmarkStatusResponse } = useGetBookmarkStatus(
     Number(postId),
     {
-      query: { enabled: !isMockMode && !!postId && isAuthenticated },
+      query: { enabled: !!postId && isAuthenticated },
     },
   );
   const isBookmarked = bookmarkStatusResponse?.data?.bookmarked ?? false;
 
   // 고정 게시글 상태 조회
   const { data: pinnedResponse } = useGetPinnedPostList({
-    query: { enabled: !isMockMode && canManagePins },
+    query: { enabled: canManagePins },
   });
   const pinnedPosts = (pinnedResponse?.data ?? []) as PinnedPostListResponse[];
   const pinnedInfo = pinnedPosts.find((p) => p.post?.id === Number(postId));
@@ -381,7 +372,7 @@ export default function PostDetailPage() {
         )}
       >
         {/* Header */}
-        <div className="flex flex-col gap-s6 mb-s8 border-b border-border pb-s8">
+        <div className="flex flex-col gap-s5 mb-s6 border-b border-border pb-s6">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-s2">
               <span
@@ -516,7 +507,7 @@ export default function PostDetailPage() {
         {/* Content */}
         <div
           className={cn(
-            "prose max-w-none mb-10",
+            "prose max-w-none mb-s6",
             isDark
               ? "prose-invert text-muted-foreground"
               : "text-muted-foreground",
@@ -531,16 +522,14 @@ export default function PostDetailPage() {
               />
             </div>
           )}
-          <div data-color-mode={isDark ? "dark" : "light"}>
-            <MarkdownPreview
-              source={post.content?.replace(/\n/g, "  \n") ?? ""}
-              className="!text-lg !leading-relaxed"
-            />
-          </div>
+          <RichTextViewer
+            content={post.content ?? ""}
+            className="text-lg leading-relaxed"
+          />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-s4 border-t border-border pt-s8">
+        <div className="flex items-center gap-s4 border-t border-border pt-s7">
           <button
             onClick={handleLike}
             type="button"
