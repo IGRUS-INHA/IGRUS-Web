@@ -34,6 +34,7 @@
 - `docs/criteria/event/event-registration-verification-criteria.md`
 - `docs/criteria/event/survey-event-registration-verification-criteria.md`
 - `docs/criteria/event/external-event-registration-verification-criteria.md`
+- `docs/criteria/event/event-survey-improvements-verification-criteria.md`
 - `docs/criteria/inquiry-verification-criteria.md`
 - `docs/criteria/verification-criteria.md` (회원가입/승인/강등)
 - `docs/criteria/user/signup/interests-join-route-verification-criteria.md`
@@ -43,6 +44,7 @@
 - `docs/test-case/storage/image-presigned-url-test-cases.md` (62개 TC)
 - `docs/test-case/event/survey-event-registration-test-cases.md` (72개 TC)
 - `docs/test-case/event/external-event-registration-test-cases.md` (80개 TC)
+- `docs/test-case/event/event-survey-improvements-test-cases.md` (62개 TC)
 
 ## 외부인 행사 신청 TC 패턴
 - 불변조건 ID: `EXT-INV-XX`, 보안: `SEC-EXT-XX`
