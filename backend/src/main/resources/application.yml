@@ -1,4 +1,9 @@
+server:
+  shutdown: graceful
+
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 15s
   profiles:
     active: ${SPRING_ACTIVE_PROFILE}
   data:
