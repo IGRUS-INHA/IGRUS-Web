@@ -158,6 +158,8 @@ paths:
     $ref: ./paths/storage.yaml#/storagePresignedUrl
   /api/v1/storage/confirm:
     $ref: ./paths/storage.yaml#/storageConfirm
+  /api/v1/registrations/{registrationId}/cancel:
+    $ref: ./paths/events.yaml#/registrationsByRegistrationIdCancel
   /api/v1/registrations/{registrationId}/revert:
     $ref: ./paths/events.yaml#/registrationsByRegistrationIdRevert
   /api/v1/registrations/{registrationId}/reject:

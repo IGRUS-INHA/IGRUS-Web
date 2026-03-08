@@ -118,3 +118,39 @@
 - **HTTP method rationale required**: PUT vs PATCH must be explicitly decided with reference to backend/CLAUDE.md ("PUT: 전체 수정, PATCH: 부분 수정").
 - **Audit fields documentation**: SoftDeletableEntity -> BaseEntity provides 7 audit fields (createdAt, updatedAt, createdBy, updatedBy, deleted, deletedAt, deletedBy). Document in EGRP-INV-05 (initial state) and 5-2 (observability).
 - **API response status codes**: Document 201 Created for resource creation, 204 No Content for deletion. Don't leave ambiguous.
+- **DECISION status vs INV body language**: When DECISION items are "권장안" (not confirmed), INV body text must NOT use definitive language as if the decision is already made. Either: (1) convert DECISIONs to "확정:" or (2) add "(DECISION-0N 확정 후 갱신 필요)" annotation to each dependent INV. Add a disclaimer note at the top of Section 1.
+- **DB UNIQUE race condition exception conversion**: When DB UNIQUE constraints are used for dedup, always document the `DataIntegrityViolationException` -> business exception conversion policy for race conditions. Reference REG-INV-01 pattern.
+- **Business exception names**: Always specify the expected exception class name (e.g., `ExternalRegistrationNotAllowedException`), not just the HTTP status code.
+- **FSM forbidden transitions table**: For every FSM, include a "금지된 전이" table listing invalid state transitions with reasons. Especially important when external actors have different capabilities (e.g., no reRegister for externals).
+- **ACTION REQUIRED -> GAP registration**: Every [ACTION REQUIRED] item in Section 0/9 must have a corresponding GAP-{DOMAIN}-{NN} entry in the GAP table (Section 7-3).
+- **Missing endpoint detection**: When an INV references an operation (e.g., "관리자만 취소 가능"), verify the corresponding endpoint exists in OpenAPI spec AND in the endpoint table (Section 3-3). If missing, add it with [ACTION REQUIRED].
+- **Permission matrix DECISION linkage**: When a row in the permission matrix depends on an unresolved DECISION, annotate the row with "(DECISION-XX 확정 후 갱신 필요)" instead of fixed values like "N/A".
+
+## Key Design Decisions (External Event Registration)
+- allowExternal: Boolean field on Event entity, default false, DB column `event_allow_external BOOLEAN NOT NULL DEFAULT FALSE`
+- External endpoint: `POST /api/v1/events/{eventId}/registrations/external`, security: [] (no auth)
+- ExternalRegisterEventRequest: name(1-50), studentId(1-20), phone(1-20), department(1-100), surveyAnswers(optional)
+- Duplicate prevention: studentId and phone each independently checked per event (not combined)
+- Capacity sharing: member + external share same capacity/currentCount, same atomic UPDATE queries
+- ASSOCIATE conditional: allowExternal=true -> ASSOCIATE can register via existing `/registrations` endpoint
+- External cancel: OPERATOR+ only (no self-cancel for externals, no auth means)
+- ID prefixes: EXT-INV-{NN}, SEC-EXT-{NN}
+- 8 DECISION items (DECISION-01~08): data model (single table vs separate), duplicate DB constraint, cancel policy, survey response storage, default value, time overlap, manual approve handling, cancel endpoint design
+- DECISION-01 confirmed: Option A (single table, user nullable)
+- DECISION-03 confirmed: Option A (admin-only cancel)
+- DECISION-08 confirmed: Option A (extend existing admin API pattern: POST /registrations/{id}/cancel)
+- MySQL 8 Generated Column for CANCELED-excluded UNIQUE: `IF(status != 'CANCELED', student_id, NULL) STORED`
+- Existing doc impact: REG-INV-04 (ASSOCIATE block -> conditional), SEC-REG-01 (403 -> conditional)
+- RegistrationListResponse schema changes: userId/userEmail/userGender/userGrade nullable, phone+isExternal added
+- Section 0 "기존 문서 영향 분석" pattern: document cross-doc changes with [ACTION REQUIRED] for post-implementation updates
+
+## Key Design Decisions (Post/Inquiry S3 Integration)
+- PostImage.imageUrl and InquiryAttachment.fileUrl store S3 Object Key, NOT actual URLs -- field naming mismatch
+- AttachmentInfo.fileUrl has `@Pattern(regexp = "^https?://...")` URL validation -- INCOMPATIBLE with Object Key format, must be removed
+- Post: multi-image (1:N via PostImage, max 5), BaseEntity (no soft delete on PostImage itself)
+- Inquiry: multi-attachment (1:N via InquiryAttachment, max 3), no edit after creation
+- PostFileReferenceChecker: must join PostImage -> Post to check Post.deleted (PostImage has no soft delete)
+- InquiryFileReferenceChecker: Inquiry has @SQLRestriction, but explicit JPQL safer for cross-entity join
+- Guest inquiry attachment download problem: SEC-STOR-04 requires auth for download URL, guests can't download their own attachments
+- ID prefixes: POST-IMG-INV-{NN}, INQ-ATT-INV-{NN}, COMMON-S3-INV-{NN}, SEC-POST-IMG-{NN}, SEC-INQ-ATT-{NN}
+- 8 DECISION items (DECISION-01~08) covering prefix validation, ownership, validation order, inquiry purpose, fileName/fileSize source, duplicate keys, guest download, field renaming

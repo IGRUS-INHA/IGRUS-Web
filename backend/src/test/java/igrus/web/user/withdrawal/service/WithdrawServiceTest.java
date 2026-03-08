@@ -9,7 +9,7 @@ import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserStatus;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.withdrawal.domain.WithdrawalLog;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.repository.WithdrawalLogRepository;
@@ -106,7 +106,7 @@ class WithdrawServiceTest {
             assertThat(credential.isDeleted()).isTrue();
             verify(refreshTokenRepository).revokeAllByUserId(userId);
             verify(withdrawalLogRepository).save(any(WithdrawalLog.class));
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
 
         @DisplayName("WD-002: 비밀번호 불일치 시 InvalidCredentialsException 발생")

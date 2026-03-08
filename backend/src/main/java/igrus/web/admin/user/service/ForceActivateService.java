@@ -6,7 +6,7 @@ import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserStatus;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class ForceActivateService {
 
         emailVerificationRepository.deleteByEmail(targetUser.getEmail());
 
-        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+        eventPublisher.publishEvent(new AccountStatusChanged(
                 targetUserId, currentUserId, AccountChangeType.FORCE_ACTIVATION,
                 previousStatus, UserStatus.ACTIVE.name(),
                 "관리자에 의한 강제 활성화 (이메일 인증 우회)"

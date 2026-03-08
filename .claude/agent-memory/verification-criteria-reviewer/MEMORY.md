@@ -52,6 +52,8 @@
 12. DECISION으로 등록되지 않은 미확정 정책이 불변조건 주의사항에 묻혀 있음 ("DECISION 필요"라는 표현이 DECISION 표가 아닌 본문에 산재)
 13. 불변조건 본문과 입력 도메인 분할 섹션(3절)에 중복으로 기술된 검증 로직이 불변조건 본문에서는 빠지는 패턴 (예: 수정 시 자기 자신 제외)
 14. DECISION 표를 신설하더라도 "권장안" 컬럼으로만 운영하면 불변조건 본문의 "~에 따라 다름: 권장안(A)" 표현이 남아 구현 기준 불명확 — DECISION 표의 컬럼명을 "결정(확정)"으로 바꾸고 불변조건 본문도 확정 언어로 교체해야 함
+15. 신규 기능의 취소/삭제 엔드포인트가 OpenAPI 스펙 및 문서의 엔드포인트 분리 표 양쪽에서 동시에 누락되는 패턴 — 특히 "관리자만 취소 가능" 정책처럼 기존 회원 본인 취소와 다른 권한 구조일 때 별도 엔드포인트 또는 기존 엔드포인트 권한 변경 명세가 빠지기 쉬움
+16. 서비스 레벨 중복 검증 + DB UNIQUE 제약을 모두 명시하면서도 두 계층 사이 경합 시 예외 변환 정책(DataIntegrityViolationException → 비즈니스 예외)을 기술하지 않는 패턴
 
 ## 설문 연동 행사 신청 도메인 특이사항 (3라운드 리뷰 반영, 2026-03-02)
 - 핵심 설계: Event.surveyId(Long, 약한 참조) → 두 도메인 FK 없이 서비스 레벨에서 참조 무결성 관리
@@ -103,3 +105,41 @@
 - 업로드 URL 만료: 5분(STOR-INV-03) vs 15분(상태전이표, 4-2절) 불일치 존재
 - "공개/비공개 이미지" 구분 개념이 접근 제어 매트릭스에서 사용되나 도메인 규칙에 미정의
 - 완료 알림 멱등성(4-3절 성공 반환) vs 입력 검증(5-4절 COMPLETED Key는 무효) 간 충돌
+
+## 외부인 행사 신청 도메인 특이사항 (2026-03-06, 3라운드 리뷰 FAIL)
+- 파일 위치: docs/criteria/event/external-event-registration-verification-criteria.md
+- 핵심 설계: Event.allowExternal(Boolean, NOT NULL DEFAULT FALSE) + 외부인 전용 엔드포인트(security: []) + 기존 EventRegistration 테이블 확장(DECISION-01 확정 A)
+- 역할 계층: 외부인(비인증) < ASSOCIATE < MEMBER < OPERATOR < ADMIN — 준회원이 allowExternal=true 행사에서 조건부 허용(REG-INV-04 변경)
+- DECISION 확정 현황 (3라운드 기준): 01(A-단일테이블), 03(A-관리자만취소), 05(기본값false), 08(A-기존API확장) — 4건 확정. 02, 04, 06, 07 — 4건 미확정(권장안).
+- 1라운드 ~ 2라운드 해결 이슈:
+  - EXT-INV-02/03 DB UNIQUE 경합 → DataIntegrityViolationException → 409 변환 정책 명시
+  - Section 3-3-1 신설, DECISION-08 신규 등록(확정), GAP-EXT-03/05/06 등록
+  - DECISION-01, 03 확정 전환, EXT-INV-04/09 등 불변조건 본문 확정 언어 교체
+- 3라운드 잔존 심각 이슈 (FAIL 원인):
+  - OpenAPI 스펙(`openapi/openapi.yaml` + `openapi/paths/events.yaml`)에 `POST /api/v1/registrations/{registrationId}/cancel` 경로 미등록. DECISION-08 확정 후에도 GAP-EXT-03 미해결. approve/reject/revert 패턴과 동일하게 스펙 추가 필요.
+- 3라운드 잔존 주의 이슈:
+  1. EXT-INV-01 allowExternal=false → 400 근거(프로젝트 관례) 미명시
+  2. 4-1절 surveyAnswers 유효/무효 컬럼이 "DECISION-04에 따라 다름" — "미결"로 통일 필요
+  3. Section 2-1 선발제 금지된 전이 표 — WAITING | cancel() (외부인 본인) 결과에 "401 Unauthorized" 미명시
+  4. GAP-EXT-06 내용에 DECISION-08 확정 반영 누락
+  5. EXT-INV-08 EVT-INV-18 번호 정확성 미검증
+- 잘 작성된 부분: DECISION-01/03/08 확정 전환 및 불변조건 본문 일관 교체, EXT-INV-02/03 경합 정책 연동(불변조건→중복표→로그→동시성테스트), Section 3-3-1 취소 엔드포인트 상세 표
+
+## 게시글/문의 S3 연계 도메인 특이사항 (2026-03-05, 3라운드 리뷰 PASS)
+- 파일 위치: docs/criteria/storage/post-inquiry-s3-integration-verification-criteria.md
+- 핵심 아키텍처: PostImage.imageUrl(String, FK없음) / InquiryAttachment.fileUrl(String, FK없음) — EVT-IMG 패턴과 동일한 약한 참조
+- 1라운드 FAIL → 2라운드 FAIL → 3라운드 PASS.
+- 3라운드에서 해결된 이슈:
+  1. COMMON-S3-INV-01 완전 삭제 — 불변조건 1-3절에서 제거됨 (DECISION-05 항목 본문 부연/GAP에 흡수)
+  2. INQ-ATT-INV-02 플레이스홀더 처리 확정 — 헤더에 "DECISION-04 미확정: 프리픽스 값" 명시, 본문 전체가 플레이스홀더 구조로 교체
+  3. 4-1/4-2절 중복 Key 행이 "미결 (DECISION-06 확정 후 결정)"으로 수정
+  4. 4-2절 Inquiry 입력값 표에 CONFIRMING 상태 Key 행 추가 (N-17로도 대응)
+  5. 2-2절에 이미지 교체 메커니즘 주석 추가 (clearImages → orphanRemoval DELETE 후 INSERT)
+  6. 9-3절에 @Pattern 제거와 OpenAPI pattern 제거 연동 필수 변경 명시
+- 3라운드 잔존 주의 이슈 (PASS 유지, 향후 권장):
+  1. 7-3절 N-표 일부 행(N-02, N-03, N-04, N-07, N-11, N-18 등)에 HTTP 상태코드 누락
+  2. DECISION-04 영향 범위 표에 "4-2절 다른 도메인 Key 행, N-15" 미등재 — 반복 패턴
+  3. 9-5절 구현 스니펫 메서드명 불일치 (existsByImageUrlAndPostDeletedFalse vs existsByImageUrlAndPostNotDeleted) 잔존 (주석에서 실제 JPQL 쿼리 메서드명과 다름)
+  4. 2-3절 문의 CONFIRMING 시나리오 (문의 생성 중 파일 상태 변경) 명시 없음 — 단방향 상태전이 특성상 첨부 불가 경우만 간단히 언급
+- DECISION 현황: 확정 3건(01~03), 미확정 5건(04~08)
+- 특이사항: COMMON-S3-INV-01 완전 삭제로 1-3절 소제목 없이 1-1(Post), 1-2(Inquiry) 두 절로만 구성 — 향후 공통 불변조건 신설 시 1-3절 번호 재사용 가능

@@ -41,9 +41,9 @@ public class EventRegistration extends BaseEntity {
     @JoinColumn(name = "event_registrations_event_id", nullable = false)
     private Event event;
 
-    /** 신청한 사용자 */
+    /** 신청한 사용자 (외부인 신청의 경우 null) */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_registrations_user_id", nullable = false)
+    @JoinColumn(name = "event_registrations_user_id")
     private User user;
 
     /** 신청 시각 */
@@ -55,10 +55,30 @@ public class EventRegistration extends BaseEntity {
     @Column(name = "event_registrations_status", nullable = false, length = 20)
     private EventRegistrationStatus status = EventRegistrationStatus.WAITING;
 
+    /** 외부인 신청 여부 (기본값 false) */
+    @Column(name = "event_registrations_is_external", nullable = false)
+    private Boolean isExternal = false;
+
+    /** 외부인 이름 */
+    @Column(name = "event_registrations_external_name", length = 50)
+    private String externalName;
+
+    /** 외부인 학번 */
+    @Column(name = "event_registrations_external_student_id", length = 20)
+    private String externalStudentId;
+
+    /** 외부인 전화번호 */
+    @Column(name = "event_registrations_external_phone", length = 20)
+    private String externalPhone;
+
+    /** 외부인 학과 */
+    @Column(name = "event_registrations_external_department", length = 100)
+    private String externalDepartment;
+
     // === 정적 팩토리 메서드 ===
 
     /**
-     * 행사 신청을 생성합니다.
+     * 행사 신청을 생성합니다. (회원 신청)
      * 자동 승인(AUTO_APPROVE): 바로 REGISTERED
      * 수동 승인(MANUAL_APPROVE): WAITING (승인 대기)
      */
@@ -67,6 +87,35 @@ public class EventRegistration extends BaseEntity {
         registration.event = event;
         registration.user = user;
         registration.registeredAt = Instant.now();
+        registration.isExternal = false;
+        registration.status = event.isAutoApprove()
+                ? EventRegistrationStatus.REGISTERED
+                : EventRegistrationStatus.WAITING;
+        return registration;
+    }
+
+    /**
+     * 외부인 행사 신청을 생성합니다. (DECISION-01: 단일 테이블)
+     * 자동 승인(AUTO_APPROVE): 바로 REGISTERED
+     * 수동 승인(MANUAL_APPROVE): WAITING (승인 대기)
+     *
+     * @param event      신청 대상 행사
+     * @param name       외부인 이름
+     * @param studentId  외부인 학번
+     * @param phone      외부인 전화번호
+     * @param department 외부인 학과
+     */
+    public static EventRegistration createExternal(Event event, String name, String studentId,
+                                                    String phone, String department) {
+        EventRegistration registration = new EventRegistration();
+        registration.event = event;
+        registration.user = null;
+        registration.registeredAt = Instant.now();
+        registration.isExternal = true;
+        registration.externalName = name;
+        registration.externalStudentId = studentId;
+        registration.externalPhone = phone;
+        registration.externalDepartment = department;
         registration.status = event.isAutoApprove()
                 ? EventRegistrationStatus.REGISTERED
                 : EventRegistrationStatus.WAITING;

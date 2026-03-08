@@ -7,7 +7,7 @@ import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserStatus;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -88,11 +88,11 @@ class ForceActivateServiceTest {
             forceActivateService.forceActivate(targetUserId, currentUserId);
 
             // then
-            ArgumentCaptor<AccountStatusChangeEvent> captor =
-                    ArgumentCaptor.forClass(AccountStatusChangeEvent.class);
+            ArgumentCaptor<AccountStatusChanged> captor =
+                    ArgumentCaptor.forClass(AccountStatusChanged.class);
             verify(eventPublisher).publishEvent(captor.capture());
 
-            AccountStatusChangeEvent event = captor.getValue();
+            AccountStatusChanged event = captor.getValue();
             assertThat(event.userId()).isEqualTo(targetUserId);
             assertThat(event.changedByUserId()).isEqualTo(currentUserId);
             assertThat(event.changeType()).isEqualTo(AccountChangeType.FORCE_ACTIVATION);
@@ -117,7 +117,7 @@ class ForceActivateServiceTest {
             // then
             assertThat(targetUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
             verify(emailVerificationRepository).deleteByEmail(targetUser.getEmail());
-            verify(eventPublisher).publishEvent(any(AccountStatusChangeEvent.class));
+            verify(eventPublisher).publishEvent(any(AccountStatusChanged.class));
         }
     }
 

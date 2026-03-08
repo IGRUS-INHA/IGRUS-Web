@@ -5,7 +5,7 @@ import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.AccountStatusChangeHistory;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.repository.AccountStatusChangeHistoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +42,7 @@ class RecordAccountStatusChangeServiceTest extends ServiceIntegrationTestBase {
     @DisplayName("APPROVAL 이벤트 수신 시 이력이 저장된다")
     void handleAccountStatusChange_Approval_SavesHistory() {
         transactionTemplate.execute(status -> {
-            AccountStatusChangeEvent event = new AccountStatusChangeEvent(
+            AccountStatusChanged event = new AccountStatusChanged(
                     targetUser.getId(), adminUser.getId(), AccountChangeType.APPROVAL,
                     "ASSOCIATE", "MEMBER", "관리자 승인"
             );
@@ -69,7 +69,7 @@ class RecordAccountStatusChangeServiceTest extends ServiceIntegrationTestBase {
     @DisplayName("ROLE_CHANGE 이벤트 수신 시 이력이 저장된다")
     void handleAccountStatusChange_RoleChange_SavesHistory() {
         transactionTemplate.execute(status -> {
-            AccountStatusChangeEvent event = new AccountStatusChangeEvent(
+            AccountStatusChanged event = new AccountStatusChanged(
                     targetUser.getId(), adminUser.getId(), AccountChangeType.ROLE_CHANGE,
                     "MEMBER", "OPERATOR", "관리자에 의한 역할 변경"
             );
@@ -89,7 +89,7 @@ class RecordAccountStatusChangeServiceTest extends ServiceIntegrationTestBase {
     @DisplayName("SUSPENSION 이벤트 수신 시 이력이 저장된다")
     void handleAccountStatusChange_Suspension_SavesHistory() {
         transactionTemplate.execute(status -> {
-            AccountStatusChangeEvent event = new AccountStatusChangeEvent(
+            AccountStatusChanged event = new AccountStatusChanged(
                     targetUser.getId(), adminUser.getId(), AccountChangeType.SUSPENSION,
                     "ACTIVE", "SUSPENDED", "규정 위반"
             );
@@ -107,7 +107,7 @@ class RecordAccountStatusChangeServiceTest extends ServiceIntegrationTestBase {
     @DisplayName("SUSPENSION_LIFT 이벤트 수신 시 이력이 저장된다")
     void handleAccountStatusChange_SuspensionLift_SavesHistory() {
         transactionTemplate.execute(status -> {
-            AccountStatusChangeEvent event = new AccountStatusChangeEvent(
+            AccountStatusChanged event = new AccountStatusChanged(
                     targetUser.getId(), adminUser.getId(), AccountChangeType.SUSPENSION_LIFT,
                     "SUSPENDED", "ACTIVE", null
             );
@@ -126,7 +126,7 @@ class RecordAccountStatusChangeServiceTest extends ServiceIntegrationTestBase {
     @DisplayName("WITHDRAWAL 이벤트 수신 시 이력이 저장된다")
     void handleAccountStatusChange_Withdrawal_SavesHistory() {
         transactionTemplate.execute(status -> {
-            AccountStatusChangeEvent event = new AccountStatusChangeEvent(
+            AccountStatusChanged event = new AccountStatusChanged(
                     targetUser.getId(), targetUser.getId(), AccountChangeType.WITHDRAWAL,
                     "ACTIVE", "WITHDRAWN", "개인 사유"
             );
@@ -144,7 +144,7 @@ class RecordAccountStatusChangeServiceTest extends ServiceIntegrationTestBase {
     @DisplayName("changedByUserId가 null인 경우에도 이력이 저장된다")
     void handleAccountStatusChange_NullChangedBy_SavesHistory() {
         transactionTemplate.execute(status -> {
-            AccountStatusChangeEvent event = new AccountStatusChangeEvent(
+            AccountStatusChanged event = new AccountStatusChanged(
                     targetUser.getId(), null, AccountChangeType.APPROVAL,
                     "PENDING_VERIFICATION", "ACTIVE", null
             );

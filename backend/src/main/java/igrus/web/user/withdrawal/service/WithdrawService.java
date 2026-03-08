@@ -13,7 +13,7 @@ import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
 import igrus.web.user.withdrawal.repository.WithdrawalLogRepository;
 import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.UserStatus;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -74,7 +74,7 @@ public class WithdrawService {
         refreshTokenRepository.revokeAllByUserId(userId);
 
         // 9. 감사 이력 이벤트 발행
-        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+        eventPublisher.publishEvent(new AccountStatusChanged(
                 userId, userId, AccountChangeType.WITHDRAWAL,
                 previousStatus, UserStatus.WITHDRAWN.name(),
                 request.reason()

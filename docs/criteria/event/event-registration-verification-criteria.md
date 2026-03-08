@@ -1,7 +1,7 @@
 # 행사 신청 (Event Registration) 검증 기준서
 
 > **Status**: Draft
-> **Last Updated**: 2026-02-20
+> **Last Updated**: 2026-03-06
 > **Scope**: 행사 신청(Register), 취소(Cancel), 재신청(Re-Register), 승인(Approve), 거절(Reject), 되돌리기(Revert), 동시성 제어(Concurrency), 2축 모델 연동
 > **상태 모델**: 2축 모델 연동 (registrationStatus + eventStatus) — [행사 검증 기준서](./event-verification-criteria.md) 참조
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
@@ -57,13 +57,14 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **관련 코드** `(현재 구현 일치)`: `EventRegistration:70-72`
 - **검증 방법**: 선발제 행사 신청 후 상태 assertion
 
-### REG-INV-04: 준회원(ASSOCIATE) 신청 불가
+### REG-INV-04: 준회원(ASSOCIATE) 조건부 신청 제한
 
-> `UserRole.ASSOCIATE` 사용자는 행사에 신청할 수 없다.
+> `UserRole.ASSOCIATE` 사용자는 `allowExternal == false`인 행사에 신청할 수 없다. `allowExternal == true`인 행사에서는 준회원도 기존 `/registrations` 엔드포인트를 통해 신청할 수 있다.
 
-- **사전조건**: `user.isAssociate() == false`
+- **사전조건**: `!(user.isAssociate() && !event.getAllowExternal())`
 - **위반 시 예외**: `AssociateMemberNotAllowedException`
-- **관련 코드** `(현재 구현 일치)`: `EventRegistrationService:103-105`
+- **관련 코드** `(현재 구현 일치)`: `EventRegistrationService` — `user.isAssociate() && !event.getAllowExternal()` 조건부 차단
+- **변경 이력**: 외부인 행사 신청 기능 도입으로 무조건 차단에서 조건부 차단으로 변경 ([외부인 행사 신청 검증 기준서](./external-event-registration-verification-criteria.md) Section 0-1, EXT-INV-05 참조)
 
 ### REG-INV-05: registrationStatus == OPEN + 신청 기간 내에서만 신청 가능
 
@@ -349,19 +350,25 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | 작업 | 비인증 | ASSOCIATE | MEMBER | OPERATOR | ADMIN |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| 행사 신청 | 401 | **403** | **O** | **O** | **O** |
+| 행사 신청 (allowExternal=false) | 401 | **403** | **O** | **O** | **O** |
+| 행사 신청 (allowExternal=true) | 401 | **O** | **O** | **O** | **O** |
+| 외부인 신청 (`/external`) | **O** (인증 불필요) | N/A | N/A | N/A | N/A |
 | 신청 취소 (본인) | 401 | O | O | O | O |
+| 신청 취소 (관리자, `/cancel`) | 401 | 403 | 403 | **O** | **O** |
 | 내 신청 목록 조회 | 401 | O | O | O | O |
 | 신청자 목록 조회 | 401 | 403 | 403 | **O** | **O** |
 | 신청 승인 (선발제) | 401 | 403 | 403 | **O** | **O** |
 | 신청 거절 (선발제) | 401 | 403 | 403 | **O** | **O** |
 | 승인/거절 되돌리기 | 401 | 403 | 403 | **O** | **O** |
 
+> **변경 이력**: 외부인 행사 신청 기능 도입으로 행사 신청 행이 allowExternal 조건별로 분리되었고, 외부인 신청 행과 관리자 취소 행이 추가됨 ([외부인 행사 신청 검증 기준서](./external-event-registration-verification-criteria.md) Section 5-1 참조)
+
 ### 5-2. 권한 검증 체크리스트
 
 | ID | 검증 항목 | 예상 결과 | 검증 위치 |
 |----|----------|----------|----------|
-| SEC-REG-01 | 준회원이 행사 신청 시도 | `AssociateMemberNotAllowedException` (403) | `EventRegistrationService:103-105` |
+| SEC-REG-01 | 준회원이 allowExternal=false 행사에 신청 시도 | `AssociateMemberNotAllowedException` (403) | `EventRegistrationService` — `user.isAssociate() && !event.getAllowExternal()` |
+| SEC-REG-01a | 준회원이 allowExternal=true 행사에 신청 시도 | 201 Created (정상 신청) | `EventRegistrationService` — 조건부 허용 |
 | SEC-REG-02 | 일반 회원이 신청자 목록 조회 시도 | `OperatorPermissionRequiredException` (403) | `EventRegistrationService:223-224` |
 | SEC-REG-03 | 일반 회원이 신청 승인 시도 | `OperatorPermissionRequiredException` (403) | `EventRegistrationService:261-263` |
 | SEC-REG-04 | 일반 회원이 신청 거절 시도 | `OperatorPermissionRequiredException` (403) | `EventRegistrationService:319-321` |
@@ -372,7 +379,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | 서비스 메서드 | 검증 방식 | 검증 예외 |
 |-------------|---------|----------|
-| `registerEvent` | `user.isAssociate()` 직접 확인 | `AssociateMemberNotAllowedException` |
+| `registerEvent` | `user.isAssociate() && !event.getAllowExternal()` 조건부 확인 | `AssociateMemberNotAllowedException` |
 | `cancelRegistration` | **검증 없음** (인증된 사용자 본인의 신청만 조회 가능) | - |
 | `getMyRegistrations` | **검증 없음** (인증된 사용자 본인 데이터) | - |
 | `getRegistrationList` | `validateOperatorPermission(user)` | `OperatorPermissionRequiredException` |

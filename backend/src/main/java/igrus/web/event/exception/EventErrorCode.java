@@ -30,7 +30,11 @@ public enum EventErrorCode implements ErrorCode {
     EVENT_REOPEN_REASON_REQUIRED(400, "재오픈 사유는 필수입니다"),
     EVENT_NOT_DELETABLE(400, "신청자가 있는 행사는 삭제할 수 없습니다"),
     EVENT_SURVEY_RESPONSE_REQUIRED(400, "설문 응답이 필요합니다"),
-    EVENT_SURVEY_NOT_READY(400, "설문이 아직 시작되지 않았습니다");
+    EVENT_SURVEY_NOT_READY(400, "설문이 아직 시작되지 않았습니다"),
+    EXTERNAL_REGISTRATION_NOT_ALLOWED(400, "외부인 신청이 허용되지 않은 행사입니다"),
+    EXTERNAL_ALREADY_REGISTERED(409, "이미 신청한 외부인입니다"),
+    REGISTERED_MEMBER_EXISTS(400, "해당 학번으로 가입된 회원이 존재하므로 로그인 후 신청하세요"),
+    SURVEY_RESPONSE_SERIALIZATION_FAILED(500, "설문 응답 직렬화에 실패했습니다");
 
     private final int status;
     private final String message;
