@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
+import { ImageLightbox } from "@/components/ui";
 import {
   Control,
   Controller,
@@ -17,6 +18,8 @@ import {
   Image as ImageIcon,
   Minus,
   Plus,
+  UserCheck,
+  Check,
 } from "lucide-react";
 import type { UploadFile } from "@/types/upload";
 import { WysiwygEditor } from "@/components/feature/editor";
@@ -41,6 +44,7 @@ export const eventFormSchema = z
     location: z.string().min(1, "장소를 입력하세요"),
     capacity: z.number().min(1, "최대 인원은 1명 이상이어야 합니다"),
     registrationType: z.enum(["AUTO_APPROVE", "MANUAL_APPROVE"]),
+    allowExternal: z.boolean(),
     registrationPreset: z.enum(["default", "short", "custom"]),
     registrationStartDate: z.string().min(1, "신청 시작일을 선택하세요"),
     registrationStartTime: z.string().min(1, "신청 시작 시간을 선택하세요"),
@@ -88,6 +92,7 @@ interface EventFormFieldsProps {
   capacity: number;
   capacityRaw: string;
   onCapacityRawChange: (v: string) => void;
+  allowExternal: boolean;
   draftQuestions: DraftQuestion[];
   onDraftQuestionsChange: (q: DraftQuestion[]) => void;
   registrationTypeMode: "editable" | "readonly";
@@ -116,6 +121,7 @@ export function EventFormFields({
   capacity,
   capacityRaw,
   onCapacityRawChange,
+  allowExternal,
   draftQuestions,
   onDraftQuestionsChange,
   registrationTypeMode,
@@ -126,6 +132,7 @@ export function EventFormFields({
   fileInputRef,
 }: EventFormFieldsProps) {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const locationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -258,6 +265,42 @@ export function EventFormFields({
               </p>
             )}
           </div>
+        </div>
+        <div className="border-t border-border px-s5 py-s4">
+          <label className="typo-c1 text-muted-foreground mb-s2 block flex items-center gap-s1">
+            <UserCheck size={12} /> 외부인 신청
+          </label>
+          <button
+            type="button"
+            onClick={() => setValue("allowExternal", !allowExternal)}
+            className={cn(
+              "w-full rounded-r3 px-s4 py-s3 border text-left text-sm transition-colors cursor-pointer",
+              allowExternal
+                ? "border-brand-l4 bg-brand-l4/30"
+                : "border-border bg-muted/50",
+            )}
+          >
+            <div className="flex items-center gap-s3">
+              <div
+                className={cn(
+                  "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0",
+                  allowExternal
+                    ? "border-brand-l4 bg-brand-l4"
+                    : "border-muted-foreground/40",
+                )}
+              >
+                {allowExternal && (
+                  <Check size={10} className="text-primary-foreground" />
+                )}
+              </div>
+              <div>
+                <p className="font-medium">비회원 신청 허용</p>
+                <p className="typo-c1 text-muted-foreground">
+                  아이그루스 회원이 아니어도 신청 가능합니다
+                </p>
+              </div>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -496,56 +539,67 @@ export function EventFormFields({
       </div>
 
       {/* 이미지 업로드 */}
-      <div>
-        <div
-          className="rounded-r4 border-2 border-dashed border-border bg-card shadow-sm px-s6 py-s8 flex flex-col items-center justify-center gap-s3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
-          onClick={() => fileInputRef.current?.click()}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            if (e.dataTransfer.files.length > 0) {
-              onAddFiles(e.dataTransfer.files);
-            }
-          }}
-        >
-          {files.length > 0 ? (
-            <div className="w-full space-y-s2">
-              {files.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center justify-between text-sm"
+      <div className="space-y-s3">
+        {files.length > 0 ? (
+          <div className="flex flex-wrap gap-s3">
+            {files.map((file, idx) => (
+              <div key={file.id} className="relative group w-48 h-48 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setLightboxIndex(idx)}
+                  className="w-full h-full cursor-pointer"
                 >
-                  <span className="text-foreground truncate max-w-[80%]">
-                    {file.file.name}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveFile(file.id);
-                    }}
-                    className="text-muted-foreground hover:text-destructive transition cursor-pointer text-xs ml-s2"
-                  >
-                    삭제
-                  </button>
-                </div>
-              ))}
-              <p className="text-xs text-muted-foreground text-center pt-s2">
-                클릭하여 이미지 추가 · {files.length}개
-              </p>
-            </div>
-          ) : (
-            <>
-              <ImageIcon size={32} className="text-muted-foreground/50" />
-              <p className="text-sm font-medium text-muted-foreground">
-                클릭하여 이미지 업로드
-              </p>
-              <p className="typo-c1 text-muted-foreground/70">
-                JPG, PNG, GIF, WebP · 최대 10MB
-              </p>
-            </>
-          )}
-        </div>
+                  <img
+                    src={file.previewUrl}
+                    alt={file.file.name}
+                    className="w-full h-full object-cover rounded-r3 border border-border"
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRemoveFile(file.id)}
+                  className="absolute top-s1 right-s1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer text-xs leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="w-48 h-48 shrink-0 rounded-r3 border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files.length > 0) {
+                  onAddFiles(e.dataTransfer.files);
+                }
+              }}
+            >
+              <Plus size={24} className="text-muted-foreground/50" />
+            </button>
+          </div>
+        ) : (
+          <div
+            className="rounded-r4 border-2 border-dashed border-border bg-card shadow-sm px-s6 py-s8 flex flex-col items-center justify-center gap-s3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (e.dataTransfer.files.length > 0) {
+                onAddFiles(e.dataTransfer.files);
+              }
+            }}
+          >
+            <ImageIcon size={32} className="text-muted-foreground/50" />
+            <p className="text-sm font-medium text-muted-foreground">
+              클릭하여 이미지 업로드
+            </p>
+            <p className="typo-c1 text-muted-foreground/70">
+              JPG, PNG, GIF, WebP · 최대 10MB
+            </p>
+          </div>
+        )}
         <input
           ref={fileInputRef}
           type="file"
@@ -560,6 +614,13 @@ export function EventFormFields({
           className="hidden"
         />
       </div>
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={files.map((f) => f.previewUrl)}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </div>
   );
 }

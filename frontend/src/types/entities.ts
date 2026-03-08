@@ -115,7 +115,6 @@ export interface Event {
   startDate?: string;
   endDate?: string;
   location: string;
-  image?: string;
   status: EventStatus;
   capacity?: number;
   maxCapacity?: number;
@@ -127,6 +126,7 @@ export interface Event {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  thumbnailObjectKey?: string;
 }
 
 export interface EventDetail extends Event {

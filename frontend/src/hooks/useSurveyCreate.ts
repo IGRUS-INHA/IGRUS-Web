@@ -36,7 +36,11 @@ export function useSurveyCreate() {
         },
       });
       const newQuestionId =
-        qRes.status === 201 ? (qRes.data?.id ?? undefined) : undefined;
+        qRes.status === 201
+          ? (qRes.data?.questions?.find(
+              (question) => question.displayOrder === q.displayOrder,
+            )?.id ?? undefined)
+          : undefined;
       if (newQuestionId && q.options?.length) {
         for (const [i, text] of q.options.entries()) {
           if (text.trim()) {
