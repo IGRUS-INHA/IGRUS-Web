@@ -68,6 +68,7 @@ public class ExternalEventRegistrationService {
     private final SurveyRepository surveyRepository;
     private final SurveyAnswerValidator surveyAnswerValidator;
     private final ObjectMapper objectMapper;
+    private final EventStatusHelper eventStatusHelper;
 
     /**
      * 외부인 행사 신청을 처리합니다.
@@ -165,7 +166,7 @@ public class ExternalEventRegistrationService {
             if (updated == 0) {
                 throw new EventCapacityFullException();
             }
-            updateEventStatusAfterIncrement(eventId);
+            eventStatusHelper.updateEventStatusAfterIncrement(eventId);
             // clearAutomatically=true로 인해 기존 event가 detached 상태이므로 재조회
             event = eventRepository.findByIdAndNotDeleted(eventId)
                     .orElseThrow(() -> new EventNotFoundException(eventId));
@@ -225,17 +226,4 @@ public class ExternalEventRegistrationService {
         }
     }
 
-    /**
-     * 신청자 수 증가 후 등록 상태를 업데이트합니다.
-     */
-    private void updateEventStatusAfterIncrement(Long eventId) {
-        Event event = eventRepository.findByIdAndNotDeleted(eventId).orElse(null);
-        if (event == null) {
-            log.warn("행사 상태 갱신 실패: 원자적 UPDATE 이후 행사를 찾을 수 없음. eventId={}", eventId);
-            return;
-        }
-        if (event.isFull()) {
-            event.closeRegistrationByCapacity();
-        }
-    }
 }

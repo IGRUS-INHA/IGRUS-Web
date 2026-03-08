@@ -81,6 +81,9 @@ class EventRegistrationServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private EventStatusHelper eventStatusHelper;
+
     @InjectMocks
     private EventRegistrationService eventRegistrationService;
 
@@ -1322,8 +1325,8 @@ class EventRegistrationServiceTest {
             assertThat(response).isNotNull();
             verify(registration).cancel();
             verify(eventRepository).decrementCurrentCount(EVENT_ID);
-            // updateEventStatusAfterDecrement에서 reopenIfNeeded 호출 확인
-            verify(ongoingEvent).reopenIfNeeded(any(Instant.class));
+            // updateEventStatusAfterDecrement 공통 헬퍼 호출 확인
+            verify(eventStatusHelper).updateEventStatusAfterDecrement(EVENT_ID);
         }
 
         /**

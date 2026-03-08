@@ -88,6 +88,7 @@ public class EventRegistrationService {
     private final SurveyAnswerValidator surveyAnswerValidator;
     private final SurveyAnswerFactory surveyAnswerFactory;
     private final ApplicationEventPublisher eventPublisher;
+    private final EventStatusHelper eventStatusHelper;
 
     /**
      * 행사에 신청합니다.
@@ -178,7 +179,7 @@ public class EventRegistrationService {
                 throw new EventCapacityFullException();
             }
             // 정원이 찼으면 상태 변경
-            updateEventStatusAfterIncrement(eventId);
+            eventStatusHelper.updateEventStatusAfterIncrement(eventId);
         }
 
         // 10. 신청 생성 및 저장
@@ -234,7 +235,7 @@ public class EventRegistrationService {
                 log.error("신청자 수 감소 실패 (이미 0): eventId={}", eventId);
             }
             // 자리가 생겼으면 상태 변경 (정원 마감 → OPEN)
-            updateEventStatusAfterDecrement(eventId);
+            eventStatusHelper.updateEventStatusAfterDecrement(eventId);
         }
 
         // 7. 응답 반환
@@ -359,7 +360,7 @@ public class EventRegistrationService {
         eventRegistrationRepository.save(registration);
 
         // 12. 정원이 찼으면 상태 변경
-        updateEventStatusAfterIncrement(eventId);
+        eventStatusHelper.updateEventStatusAfterIncrement(eventId);
 
         // 13. 응답 반환 (영속성 컨텍스트 초기화 후이므로 다시 조회)
         EventRegistration updatedRegistration = eventRegistrationRepository.findById(registrationId)
@@ -487,7 +488,7 @@ public class EventRegistrationService {
             if (decremented == 0) {
                 log.error("신청자 수 감소 실패 (이미 0): eventId={}, registrationId={}", eventId, registrationId);
             }
-            updateEventStatusAfterDecrement(eventId);
+            eventStatusHelper.updateEventStatusAfterDecrement(eventId);
         }
 
         // 12. 응답 반환 (영속성 컨텍스트 초기화 후이므로 다시 조회)
@@ -538,7 +539,7 @@ public class EventRegistrationService {
             if (decremented == 0) {
                 log.error("신청자 수 감소 실패 (이미 0): eventId={}, registrationId={}", eventId, registrationId);
             }
-            updateEventStatusAfterDecrement(eventId);
+            eventStatusHelper.updateEventStatusAfterDecrement(eventId);
         }
 
         // 7. 감사 이력 이벤트 발행
@@ -657,7 +658,7 @@ public class EventRegistrationService {
             if (updated == 0) {
                 throw new EventCapacityFullException();
             }
-            updateEventStatusAfterIncrement(eventId);
+            eventStatusHelper.updateEventStatusAfterIncrement(eventId);
         }
 
         // 12. 신청 생성 및 저장
@@ -752,7 +753,7 @@ public class EventRegistrationService {
                 throw new EventCapacityFullException();
             }
             // 정원이 찼으면 상태 변경
-            updateEventStatusAfterIncrement(eventId);
+            eventStatusHelper.updateEventStatusAfterIncrement(eventId);
         }
 
         // 재신청 처리 (clear 이후 detached 상태이므로 명시적 save 필요)
@@ -826,38 +827,6 @@ public class EventRegistrationService {
         if (hasOverlap) {
             throw new EventTimeOverlapException();
         }
-    }
-
-    /**
-     * 신청자 수 증가 후 등록 상태를 업데이트합니다.
-     * 정원이 찼으면 CLOSED 상태로 변경합니다.
-     *
-     * @param eventId 행사 ID
-     */
-    private void updateEventStatusAfterIncrement(Long eventId) {
-        Event event = eventRepository.findByIdAndNotDeleted(eventId).orElse(null);
-        if (event == null) {
-            log.warn("행사 상태 갱신 실패: 원자적 UPDATE 이후 행사를 찾을 수 없음. eventId={}", eventId);
-            return;
-        }
-        if (event.isFull()) {
-            event.closeRegistrationByCapacity();
-        }
-    }
-
-    /**
-     * 신청자 수 감소 후 등록 상태를 업데이트합니다.
-     * 정원 마감 상태에서 자리가 생기면 OPEN 상태로 변경합니다.
-     *
-     * @param eventId 행사 ID
-     */
-    private void updateEventStatusAfterDecrement(Long eventId) {
-        Event event = eventRepository.findByIdAndNotDeleted(eventId).orElse(null);
-        if (event == null) {
-            log.warn("행사 상태 갱신 실패: 원자적 UPDATE 이후 행사를 찾을 수 없음. eventId={}", eventId);
-            return;
-        }
-        event.reopenIfNeeded(Instant.now());
     }
 
     /**
