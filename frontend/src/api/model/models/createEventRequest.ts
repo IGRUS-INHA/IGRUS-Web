@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { CreateEventRequestRegistrationType } from './createEventRequestRegistrationType';
+import type { CreateEventRequestRegistrationType } from "./createEventRequestRegistrationType";
 
 export interface CreateEventRequest {
   /**

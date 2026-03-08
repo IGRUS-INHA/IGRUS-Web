@@ -33,213 +33,252 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import {
-  useMutation
-} from '@tanstack/react-query';
+import { useMutation } from "@tanstack/react-query";
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
-  UseMutationResult
-} from '@tanstack/react-query';
+  UseMutationResult,
+} from "@tanstack/react-query";
 
 import type {
   CreateGuestInquiryRequest,
   GuestInquiryLookupRequest,
   InquiryCreateResponse,
-  InquiryResponse
-} from '.././models';
+  InquiryResponse,
+} from ".././models";
 
-import { customFetch } from '../../client';
-
+import { customFetch } from "../../client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 /**
  * 문의번호, 이메일, 비밀번호로 비회원 문의를 조회합니다.
  * @summary 비회원 문의 조회
  */
 export type lookupGuestInquiryResponse200 = {
-  data: InquiryResponse
-  status: 200
-}
+  data: InquiryResponse;
+  status: 200;
+};
 
 export type lookupGuestInquiryResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type lookupGuestInquiryResponse404 = {
-  data: void
-  status: 404
-}
-    
-export type lookupGuestInquiryResponseSuccess = (lookupGuestInquiryResponse200) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
-export type lookupGuestInquiryResponseError = (lookupGuestInquiryResponse401 | lookupGuestInquiryResponse404) & {
+
+export type lookupGuestInquiryResponseSuccess =
+  lookupGuestInquiryResponse200 & {
+    headers: Headers;
+  };
+export type lookupGuestInquiryResponseError = (
+  | lookupGuestInquiryResponse401
+  | lookupGuestInquiryResponse404
+) & {
   headers: Headers;
 };
 
-export type lookupGuestInquiryResponse = (lookupGuestInquiryResponseSuccess | lookupGuestInquiryResponseError)
+export type lookupGuestInquiryResponse =
+  | lookupGuestInquiryResponseSuccess
+  | lookupGuestInquiryResponseError;
 
 export const getLookupGuestInquiryUrl = () => {
+  return `/api/v1/inquiries/lookup`;
+};
 
-
-  
-
-  return `/api/v1/inquiries/lookup`
-}
-
-export const lookupGuestInquiry = async (guestInquiryLookupRequest: GuestInquiryLookupRequest, options?: RequestInit): Promise<lookupGuestInquiryResponse> => {
-  
-  return customFetch<lookupGuestInquiryResponse>(getLookupGuestInquiryUrl(),
-  {      
+export const lookupGuestInquiry = async (
+  guestInquiryLookupRequest: GuestInquiryLookupRequest,
+  options?: RequestInit,
+): Promise<lookupGuestInquiryResponse> => {
+  return customFetch<lookupGuestInquiryResponse>(getLookupGuestInquiryUrl(), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      guestInquiryLookupRequest,)
-  }
-);}
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(guestInquiryLookupRequest),
+  });
+};
 
+export const getLookupGuestInquiryMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof lookupGuestInquiry>>,
+    TError,
+    { data: GuestInquiryLookupRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof lookupGuestInquiry>>,
+  TError,
+  { data: GuestInquiryLookupRequest },
+  TContext
+> => {
+  const mutationKey = ["lookupGuestInquiry"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof lookupGuestInquiry>>,
+    { data: GuestInquiryLookupRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return lookupGuestInquiry(data, requestOptions);
+  };
 
-export const getLookupGuestInquiryMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lookupGuestInquiry>>, TError,{data: GuestInquiryLookupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof lookupGuestInquiry>>, TError,{data: GuestInquiryLookupRequest}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['lookupGuestInquiry'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type LookupGuestInquiryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof lookupGuestInquiry>>
+>;
+export type LookupGuestInquiryMutationBody = GuestInquiryLookupRequest;
+export type LookupGuestInquiryMutationError = void;
 
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof lookupGuestInquiry>>, {data: GuestInquiryLookupRequest}> = (props) => {
-          const {data} = props ?? {};
-
-          return  lookupGuestInquiry(data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type LookupGuestInquiryMutationResult = NonNullable<Awaited<ReturnType<typeof lookupGuestInquiry>>>
-    export type LookupGuestInquiryMutationBody = GuestInquiryLookupRequest
-    export type LookupGuestInquiryMutationError = void
-
-    /**
+/**
  * @summary 비회원 문의 조회
  */
-export const useLookupGuestInquiry = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lookupGuestInquiry>>, TError,{data: GuestInquiryLookupRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof lookupGuestInquiry>>,
-        TError,
-        {data: GuestInquiryLookupRequest},
-        TContext
-      > => {
-      return useMutation(getLookupGuestInquiryMutationOptions(options), queryClient);
-    }
-    /**
+export const useLookupGuestInquiry = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof lookupGuestInquiry>>,
+      TError,
+      { data: GuestInquiryLookupRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof lookupGuestInquiry>>,
+  TError,
+  { data: GuestInquiryLookupRequest },
+  TContext
+> => {
+  return useMutation(
+    getLookupGuestInquiryMutationOptions(options),
+    queryClient,
+  );
+};
+/**
  * 비회원이 문의를 작성합니다. 이메일, 이름, 비밀번호가 필수입니다.
  * @summary 비회원 문의 작성
  */
 export type createGuestInquiryResponse201 = {
-  data: InquiryCreateResponse
-  status: 201
-}
+  data: InquiryCreateResponse;
+  status: 201;
+};
 
 export type createGuestInquiryResponse400 = {
-  data: void
-  status: 400
-}
-    
-export type createGuestInquiryResponseSuccess = (createGuestInquiryResponse201) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
-export type createGuestInquiryResponseError = (createGuestInquiryResponse400) & {
+
+export type createGuestInquiryResponseSuccess =
+  createGuestInquiryResponse201 & {
+    headers: Headers;
+  };
+export type createGuestInquiryResponseError = createGuestInquiryResponse400 & {
   headers: Headers;
 };
 
-export type createGuestInquiryResponse = (createGuestInquiryResponseSuccess | createGuestInquiryResponseError)
+export type createGuestInquiryResponse =
+  | createGuestInquiryResponseSuccess
+  | createGuestInquiryResponseError;
 
 export const getCreateGuestInquiryUrl = () => {
+  return `/api/v1/inquiries/guest`;
+};
 
-
-  
-
-  return `/api/v1/inquiries/guest`
-}
-
-export const createGuestInquiry = async (createGuestInquiryRequest: CreateGuestInquiryRequest, options?: RequestInit): Promise<createGuestInquiryResponse> => {
-  
-  return customFetch<createGuestInquiryResponse>(getCreateGuestInquiryUrl(),
-  {      
+export const createGuestInquiry = async (
+  createGuestInquiryRequest: CreateGuestInquiryRequest,
+  options?: RequestInit,
+): Promise<createGuestInquiryResponse> => {
+  return customFetch<createGuestInquiryResponse>(getCreateGuestInquiryUrl(), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      createGuestInquiryRequest,)
-  }
-);}
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createGuestInquiryRequest),
+  });
+};
 
+export const getCreateGuestInquiryMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGuestInquiry>>,
+    TError,
+    { data: CreateGuestInquiryRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createGuestInquiry>>,
+  TError,
+  { data: CreateGuestInquiryRequest },
+  TContext
+> => {
+  const mutationKey = ["createGuestInquiry"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createGuestInquiry>>,
+    { data: CreateGuestInquiryRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return createGuestInquiry(data, requestOptions);
+  };
 
-export const getCreateGuestInquiryMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuestInquiry>>, TError,{data: CreateGuestInquiryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createGuestInquiry>>, TError,{data: CreateGuestInquiryRequest}, TContext> => {
+  return { mutationFn, ...mutationOptions };
+};
 
-const mutationKey = ['createGuestInquiry'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export type CreateGuestInquiryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createGuestInquiry>>
+>;
+export type CreateGuestInquiryMutationBody = CreateGuestInquiryRequest;
+export type CreateGuestInquiryMutationError = void;
 
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createGuestInquiry>>, {data: CreateGuestInquiryRequest}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createGuestInquiry(data,requestOptions)
-        }
-
-
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateGuestInquiryMutationResult = NonNullable<Awaited<ReturnType<typeof createGuestInquiry>>>
-    export type CreateGuestInquiryMutationBody = CreateGuestInquiryRequest
-    export type CreateGuestInquiryMutationError = void
-
-    /**
+/**
  * @summary 비회원 문의 작성
  */
-export const useCreateGuestInquiry = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuestInquiry>>, TError,{data: CreateGuestInquiryRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createGuestInquiry>>,
-        TError,
-        {data: CreateGuestInquiryRequest},
-        TContext
-      > => {
-      return useMutation(getCreateGuestInquiryMutationOptions(options), queryClient);
-    }
-    
+export const useCreateGuestInquiry = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createGuestInquiry>>,
+      TError,
+      { data: CreateGuestInquiryRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createGuestInquiry>>,
+  TError,
+  { data: CreateGuestInquiryRequest },
+  TContext
+> => {
+  return useMutation(
+    getCreateGuestInquiryMutationOptions(options),
+    queryClient,
+  );
+};

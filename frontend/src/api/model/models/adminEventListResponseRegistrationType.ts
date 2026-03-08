@@ -34,10 +34,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type AdminEventListResponseRegistrationType = typeof AdminEventListResponseRegistrationType[keyof typeof AdminEventListResponseRegistrationType];
-
+export type AdminEventListResponseRegistrationType =
+  (typeof AdminEventListResponseRegistrationType)[keyof typeof AdminEventListResponseRegistrationType];
 
 export const AdminEventListResponseRegistrationType = {
-  AUTO_APPROVE: 'AUTO_APPROVE',
-  MANUAL_APPROVE: 'MANUAL_APPROVE',
+  AUTO_APPROVE: "AUTO_APPROVE",
+  MANUAL_APPROVE: "MANUAL_APPROVE",
 } as const;

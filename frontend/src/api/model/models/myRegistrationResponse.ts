@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { MyRegistrationResponseStatus } from './myRegistrationResponseStatus';
+import type { MyRegistrationResponseStatus } from "./myRegistrationResponseStatus";
 
 export interface MyRegistrationResponse {
   registrationId?: number;

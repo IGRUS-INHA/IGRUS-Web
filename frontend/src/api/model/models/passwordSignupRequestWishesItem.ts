@@ -34,13 +34,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type PasswordSignupRequestWishesItem = typeof PasswordSignupRequestWishesItem[keyof typeof PasswordSignupRequestWishesItem];
-
+export type PasswordSignupRequestWishesItem =
+  (typeof PasswordSignupRequestWishesItem)[keyof typeof PasswordSignupRequestWishesItem];
 
 export const PasswordSignupRequestWishesItem = {
-  NETWORKING: 'NETWORKING',
-  STUDY: 'STUDY',
-  PROJECT: 'PROJECT',
-  CAREER: 'CAREER',
-  PROGRAMMING: 'PROGRAMMING',
+  NETWORKING: "NETWORKING",
+  STUDY: "STUDY",
+  PROJECT: "PROJECT",
+  CAREER: "CAREER",
+  PROGRAMMING: "PROGRAMMING",
 } as const;

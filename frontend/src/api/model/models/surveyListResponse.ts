@@ -33,9 +33,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { SurveyListResponseAccessLevel } from './surveyListResponseAccessLevel';
-import type { SurveyListResponseResponseStatus } from './surveyListResponseResponseStatus';
-import type { SurveyListResponseVisibility } from './surveyListResponseVisibility';
+import type { SurveyListResponseAccessLevel } from "./surveyListResponseAccessLevel";
+import type { SurveyListResponseResponseStatus } from "./surveyListResponseResponseStatus";
+import type { SurveyListResponseVisibility } from "./surveyListResponseVisibility";
 
 export interface SurveyListResponse {
   id?: number;

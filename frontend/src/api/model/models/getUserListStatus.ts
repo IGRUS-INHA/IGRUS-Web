@@ -34,12 +34,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type GetUserListStatus = typeof GetUserListStatus[keyof typeof GetUserListStatus];
-
+export type GetUserListStatus =
+  (typeof GetUserListStatus)[keyof typeof GetUserListStatus];
 
 export const GetUserListStatus = {
-  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
-  ACTIVE: 'ACTIVE',
-  SUSPENDED: 'SUSPENDED',
-  WITHDRAWN: 'WITHDRAWN',
+  PENDING_VERIFICATION: "PENDING_VERIFICATION",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  WITHDRAWN: "WITHDRAWN",
 } as const;

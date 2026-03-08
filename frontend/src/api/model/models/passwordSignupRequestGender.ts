@@ -37,10 +37,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 성별
  */
-export type PasswordSignupRequestGender = typeof PasswordSignupRequestGender[keyof typeof PasswordSignupRequestGender];
-
+export type PasswordSignupRequestGender =
+  (typeof PasswordSignupRequestGender)[keyof typeof PasswordSignupRequestGender];
 
 export const PasswordSignupRequestGender = {
-  MALE: 'MALE',
-  FEMALE: 'FEMALE',
+  MALE: "MALE",
+  FEMALE: "FEMALE",
 } as const;

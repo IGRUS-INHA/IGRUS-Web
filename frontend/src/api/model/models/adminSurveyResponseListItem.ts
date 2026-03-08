@@ -33,7 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { AnswerResponse } from './answerResponse';
+import type { AnswerResponse } from "./answerResponse";
 
 /**
  * 관리자 설문 응답 목록 항목

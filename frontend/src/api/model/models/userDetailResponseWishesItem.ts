@@ -34,13 +34,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type UserDetailResponseWishesItem = typeof UserDetailResponseWishesItem[keyof typeof UserDetailResponseWishesItem];
-
+export type UserDetailResponseWishesItem =
+  (typeof UserDetailResponseWishesItem)[keyof typeof UserDetailResponseWishesItem];
 
 export const UserDetailResponseWishesItem = {
-  NETWORKING: 'NETWORKING',
-  STUDY: 'STUDY',
-  PROJECT: 'PROJECT',
-  CAREER: 'CAREER',
-  PROGRAMMING: 'PROGRAMMING',
+  NETWORKING: "NETWORKING",
+  STUDY: "STUDY",
+  PROJECT: "PROJECT",
+  CAREER: "CAREER",
+  PROGRAMMING: "PROGRAMMING",
 } as const;

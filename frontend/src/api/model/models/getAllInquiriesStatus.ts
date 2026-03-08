@@ -34,11 +34,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  * OpenAPI spec version: ec724ff
  */
 
-export type GetAllInquiriesStatus = typeof GetAllInquiriesStatus[keyof typeof GetAllInquiriesStatus];
-
+export type GetAllInquiriesStatus =
+  (typeof GetAllInquiriesStatus)[keyof typeof GetAllInquiriesStatus];
 
 export const GetAllInquiriesStatus = {
-  PENDING: 'PENDING',
-  IN_PROGRESS: 'IN_PROGRESS',
-  COMPLETED: 'COMPLETED',
+  PENDING: "PENDING",
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
 } as const;

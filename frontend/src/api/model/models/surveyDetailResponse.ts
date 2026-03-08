@@ -33,10 +33,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { QuestionResponse } from './questionResponse';
-import type { SurveyDetailResponseAccessLevel } from './surveyDetailResponseAccessLevel';
-import type { SurveyDetailResponseResponseStatus } from './surveyDetailResponseResponseStatus';
-import type { SurveyDetailResponseVisibility } from './surveyDetailResponseVisibility';
+import type { QuestionResponse } from "./questionResponse";
+import type { SurveyDetailResponseAccessLevel } from "./surveyDetailResponseAccessLevel";
+import type { SurveyDetailResponseResponseStatus } from "./surveyDetailResponseResponseStatus";
+import type { SurveyDetailResponseVisibility } from "./surveyDetailResponseVisibility";
 
 export interface SurveyDetailResponse {
   id?: number;

@@ -37,10 +37,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 /**
  * 수행할 행위
  */
-export type ChangeUserStatusRequestAction = typeof ChangeUserStatusRequestAction[keyof typeof ChangeUserStatusRequestAction];
-
+export type ChangeUserStatusRequestAction =
+  (typeof ChangeUserStatusRequestAction)[keyof typeof ChangeUserStatusRequestAction];
 
 export const ChangeUserStatusRequestAction = {
-  SUSPEND: 'SUSPEND',
-  LIFT: 'LIFT',
+  SUSPEND: "SUSPEND",
+  LIFT: "LIFT",
 } as const;
