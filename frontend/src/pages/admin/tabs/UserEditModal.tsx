@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
@@ -6,8 +6,10 @@ import Swal from "sweetalert2";
 import {
   useGetUserDetail,
   useEditUserInfo,
+  useChangeUserRole,
 } from "@/api/model/admin-user-management/admin-user-management";
 import type { AdminEditUserInfoRequest } from "@/api/model/models/adminEditUserInfoRequest";
+import type { ChangeUserRoleRequestRole } from "@/api/model/models/changeUserRoleRequestRole";
 import type { UserDetailResponse } from "@/api/model/models/userDetailResponse";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +30,13 @@ const ENROLLMENT_OPTIONS = [
 const GENDER_OPTIONS = [
   { value: "MALE", label: "남" },
   { value: "FEMALE", label: "여" },
+] as const;
+
+const ROLE_OPTIONS = [
+  { value: "ASSOCIATE", label: "준회원" },
+  { value: "MEMBER", label: "정회원" },
+  { value: "OPERATOR", label: "운영진" },
+  { value: "ADMIN", label: "관리자" },
 ] as const;
 
 const GRADE_OPTIONS = [1, 2, 3, 4] as const;
@@ -66,8 +75,27 @@ export default function UserEditModal({ userId, onClose }: UserEditModalProps) {
   const addToast = useUIStore((s) => s.addToast);
   const queryClient = useQueryClient();
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   const { data: response, isLoading } = useGetUserDetail(userId);
   const detail = response?.status === 200 ? response.data : undefined;
+
+  const [selectedRole, setSelectedRole] = useState<
+    ChangeUserRoleRequestRole | undefined
+  >(undefined);
+
+  // Sync role state when detail loads
+  useEffect(() => {
+    if (detail?.role) {
+      setSelectedRole(detail.role as ChangeUserRoleRequestRole);
+    }
+  }, [detail]);
 
   const {
     register,
@@ -130,6 +158,28 @@ export default function UserEditModal({ userId, onClose }: UserEditModalProps) {
     },
   });
 
+  const { mutate: changeUserRole, isPending: isRoleChangePending } =
+    useChangeUserRole({
+      mutation: {
+        onSuccess: () => {
+          addToast({
+            type: "success",
+            title: "권한 변경 완료",
+            message: "회원 권한이 변경되었습니다.",
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/v1/admin/users"] });
+          onClose();
+        },
+        onError: (error: unknown) => {
+          addToast({
+            type: "error",
+            title: "권한 변경 실패",
+            message: getErrorMessage(error),
+          });
+        },
+      },
+    });
+
   const selectedGrade = watch("grade");
   const selectedEnrollment = watch("enrollmentStatus");
   const selectedGender = watch("gender");
@@ -138,8 +188,11 @@ export default function UserEditModal({ userId, onClose }: UserEditModalProps) {
     if (!detail) return;
 
     const payload = buildPatchPayload(detail, data);
+    const hasInfoChanges = Object.keys(payload).length > 0;
+    const hasRoleChange =
+      selectedRole !== undefined && selectedRole !== detail.role;
 
-    if (Object.keys(payload).length === 0) {
+    if (!hasInfoChanges && !hasRoleChange) {
       addToast({ type: "default", message: "변경된 항목이 없습니다." });
       return;
     }
@@ -158,7 +211,15 @@ export default function UserEditModal({ userId, onClose }: UserEditModalProps) {
     });
 
     if (result.isConfirmed) {
-      editUserInfo({ userId, data: payload });
+      if (hasInfoChanges) {
+        editUserInfo({ userId, data: payload });
+      }
+      if (hasRoleChange) {
+        changeUserRole({ userId, data: { role: selectedRole } });
+      }
+      if (!hasInfoChanges && hasRoleChange) {
+        // If only role changed, onClose is handled by changeUserRole onSuccess
+      }
     }
   };
 
@@ -300,13 +361,39 @@ export default function UserEditModal({ userId, onClose }: UserEditModalProps) {
           </div>
         </FormField>
 
+        {/* 권한 */}
+        <FormField label="권한" error={undefined}>
+          <div className="flex gap-s2">
+            {ROLE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() =>
+                  setSelectedRole(opt.value as ChangeUserRoleRequestRole)
+                }
+                className={cn(
+                  "flex-1 py-s2 rounded-r2 text-sm font-medium border transition-colors cursor-pointer",
+                  selectedRole === opt.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-foreground border-input hover:bg-muted",
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </FormField>
+
         {/* 버튼 */}
         <div className="flex justify-end gap-s3 pt-s4">
           <Button type="button" variant="outline" onClick={onClose}>
             취소
           </Button>
-          <Button type="submit" disabled={isSubmitting || isPending}>
-            {isPending ? "수정 중..." : "수정"}
+          <Button
+            type="submit"
+            disabled={isSubmitting || isPending || isRoleChangePending}
+          >
+            {isPending || isRoleChangePending ? "수정 중..." : "수정"}
           </Button>
         </div>
       </form>
@@ -316,7 +403,7 @@ export default function UserEditModal({ userId, onClose }: UserEditModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-r3 bg-background p-s6 shadow-xl border border-border max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-lg rounded-r3 bg-background p-s6 shadow-xl border border-border max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-white [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-sm">
         <div className="flex items-center justify-between mb-s5">
           <h2 className="typo-h3 font-bold">회원 정보 수정</h2>
           <button

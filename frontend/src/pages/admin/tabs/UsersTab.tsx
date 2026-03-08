@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { keepPreviousData } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import {
   Search,
+  User,
   UserCheck,
   MessageSquare,
   ChevronRight,
@@ -17,9 +19,11 @@ import {
   useGetUserList,
   useGetUserDetail,
 } from "@/api/model/admin-user-management/admin-user-management";
+import { useGetPendingAssociates } from "@/api/model/admin-associate-approval/admin-associate-approval";
+import { useGetAllInquiries } from "@/api/model/admin-inquiry/admin-inquiry";
 import type { GetUserListRole } from "@/api/model/models/getUserListRole";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks";
+import { useAuth, usePermission } from "@/hooks";
 import { cn } from "@/lib/utils";
 import UserEditModal from "./UserEditModal";
 import styles from "./UsersTab.module.css";
@@ -134,15 +138,6 @@ const TIMELINE_ICONS = {
 };
 
 const PAGE_SIZE = 20;
-
-/* ===== Helper ===== */
-
-function getInitials(name: string): string {
-  if (!name) return "?";
-  const parts = name.trim().split("");
-  if (parts.length >= 2) return parts[0] + parts[parts.length - 1];
-  return parts[0];
-}
 
 /* ===== Sub-components ===== */
 
@@ -406,13 +401,17 @@ function NavButtonCell({
   icon,
   label,
   title,
+  count,
   onClick,
+  disabled,
 }: {
   area: string;
   icon: React.ReactNode;
   label: string;
   title: string;
+  count: number;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   const areaClass =
     area === "stat1" ? styles.bentoCellStat1 : styles.bentoCellStat2;
@@ -422,18 +421,28 @@ function NavButtonCell({
       : "bg-[rgba(220,53,69,0.1)] text-[#DC3545]";
 
   return (
-    <div className={cn(styles.bentoCell, areaClass)}>
+    <div
+      className={cn(
+        styles.bentoCell,
+        areaClass,
+        disabled && styles.bentoCellDisabled,
+      )}
+    >
       <button
         type="button"
-        className={cn(styles.navButton, "cursor-pointer")}
-        onClick={onClick}
+        className={cn(styles.navButton, !disabled && "cursor-pointer")}
+        onClick={disabled ? undefined : onClick}
+        disabled={disabled}
       >
         <div className={cn(styles.navButtonIcon, iconBg)}>{icon}</div>
         <div className={styles.navButtonLabel}>{label}</div>
-        <div className={styles.navButtonTitle}>{title}</div>
-        <div className={styles.navButtonArrow}>
-          바로가기 <ChevronRight size={14} />
-        </div>
+        <div className={styles.navButtonTitle}>{count}</div>
+        <div className={styles.navButtonCount}>{title}</div>
+        {!disabled && (
+          <div className={styles.navButtonArrow}>
+            바로가기 <ChevronRight size={14} />
+          </div>
+        )}
       </button>
     </div>
   );
@@ -473,14 +482,15 @@ function DetailPanel({
     );
   }
 
-  const initials = getInitials(detail.name ?? "");
   const roleLabel = ROLE_LABELS[detail.role ?? ""] ?? detail.role ?? "-";
 
   return (
     <div className={styles.detailPanel} key={userId}>
       {/* Top gradient section */}
       <div className={styles.detailTop}>
-        <div className={styles.detailAvatar}>{initials}</div>
+        <div className={styles.detailAvatar}>
+          <User size={28} />
+        </div>
         <div className={styles.detailName}>{detail.name}</div>
         <div className={styles.detailRoleBadge}>{roleLabel}</div>
       </div>
@@ -638,6 +648,28 @@ function EmptyDetailPanel() {
 export default function UsersTab() {
   const [, setSearchParams] = useSearchParams();
   const { user: currentUser } = useAuth();
+  const { canApproveAssociate } = usePermission();
+
+  // 승인 대기 준회원 수 (size=1로 최소 데이터만, totalElements만 사용)
+  const { data: pendingAssociatesRes } = useGetPendingAssociates({
+    page: 0,
+    size: 1,
+  });
+  const pendingAssociateCount =
+    pendingAssociatesRes?.status === 200
+      ? (pendingAssociatesRes.data?.totalElements ?? 0)
+      : 0;
+
+  // 대기 중 문의 수 (status=PENDING, size=1)
+  const { data: pendingInquiriesRes } = useGetAllInquiries({
+    status: "PENDING",
+    page: 0,
+    size: 1,
+  });
+  const pendingInquiryCount =
+    pendingInquiriesRes?.status === 200
+      ? (pendingInquiriesRes.data?.totalElements ?? 0)
+      : 0;
   const [keyword, setKeyword] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [roleFilter, setRoleFilter] = useState<GetUserListRole | "">("");
@@ -648,9 +680,7 @@ export default function UsersTab() {
   const [editModalUserId, setEditModalUserId] = useState<number | undefined>(
     undefined,
   );
-  const [isCompact, setIsCompact] = useState(
-    () => window.innerWidth < 1200,
-  );
+  const [isCompact, setIsCompact] = useState(() => window.innerWidth < 1200);
 
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1199px)");
@@ -659,12 +689,29 @@ export default function UsersTab() {
     return () => mql.removeEventListener("change", handler);
   }, []);
 
-  const { data: response, isLoading } = useGetUserList({
-    ...(searchKeyword && { keyword: searchKeyword }),
-    ...(roleFilter && { role: roleFilter }),
-    page: page - 1,
-    size: PAGE_SIZE,
-  });
+  // Lock body scroll when compact detail modal is open
+  useEffect(() => {
+    if (isCompact && selectedUserId !== undefined) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [isCompact, selectedUserId]);
+
+  const {
+    data: response,
+    isLoading,
+    isFetching,
+  } = useGetUserList(
+    {
+      ...(searchKeyword && { keyword: searchKeyword }),
+      ...(roleFilter && { role: roleFilter }),
+      page: page - 1,
+      size: PAGE_SIZE,
+    },
+    { query: { placeholderData: keepPreviousData } },
+  );
 
   const data = response?.status === 200 ? response.data : undefined;
   const users = data?.users ?? [];
@@ -711,7 +758,9 @@ export default function UsersTab() {
           icon={<UserCheck size={24} />}
           label="Associate Approval"
           title="준회원 승인"
+          count={pendingAssociateCount}
           onClick={() => setSearchParams({ tab: "associates" })}
+          disabled={!canApproveAssociate()}
         />
         <BentoChartRegistrations />
         <NavButtonCell
@@ -719,6 +768,7 @@ export default function UsersTab() {
           icon={<MessageSquare size={24} />}
           label="Inquiry Management"
           title="문의 관리"
+          count={pendingInquiryCount}
           onClick={() => setSearchParams({ tab: "inquiries" })}
         />
       </div>
@@ -761,7 +811,14 @@ export default function UsersTab() {
           </div>
 
           {/* Table */}
-          <div style={{ overflowX: "auto", flex: 1 }}>
+          <div
+            style={{
+              overflowX: "auto",
+              flex: 1,
+              opacity: isFetching ? 0.6 : 1,
+              transition: "opacity 0.15s ease",
+            }}
+          >
             <table className={styles.memberTable}>
               <thead>
                 <tr>
@@ -825,9 +882,7 @@ export default function UsersTab() {
                         </span>
                       </td>
                       <td>
-                        <span className="text-sm">
-                          {u.phoneNumber ?? "-"}
-                        </span>
+                        <span className="text-sm">{u.phoneNumber ?? "-"}</span>
                       </td>
                     </tr>
                   );

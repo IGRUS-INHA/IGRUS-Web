@@ -72,6 +72,16 @@
   background: #28a745;
 }
 
+/* 비활성 셀: hover 효과 제거 */
+.bentoCellDisabled {
+  opacity: 0.6;
+}
+
+.bentoCellDisabled:hover {
+  border-color: var(--color-border);
+  transform: none;
+}
+
 .bentoChartContent {
   padding: var(--spacing-s5);
   padding-top: calc(var(--spacing-s5) + 3px);
@@ -116,6 +126,12 @@
   font-size: 18px;
   font-weight: 700;
   color: var(--color-foreground);
+}
+
+.navButtonCount {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
 }
 
 .navButtonArrow {
@@ -483,6 +499,19 @@
   overflow-y: auto;
 }
 
+.detailBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detailBody::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+.detailBody::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
 .detailSectionLabel {
   font-size: 11px;
   font-weight: 600;
@@ -695,7 +724,22 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
+.detailModalContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detailModalContent::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+.detailModalContent::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
 .detailModalContent .detailPanel {
+  display: flex;
+  flex: none;
   animation: none;
   border: none;
 }
