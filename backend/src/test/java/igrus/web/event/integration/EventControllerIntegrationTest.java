@@ -126,6 +126,28 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
      * 테스트용 행사를 생성하고 저장합니다.
      * 행사 상태: UPCOMING, 등록 상태: OPEN
      */
+    private Event createAndSaveOpenEventWithAllowExternal() {
+        return transactionTemplate.execute(status -> {
+            Instant now = Instant.now();
+            Event event = Event.create(
+                    operator,
+                    "외부인 허용 행사",
+                    "설명",
+                    "장소",
+                    now.plus(7, ChronoUnit.DAYS),
+                    now.plus(8, ChronoUnit.DAYS),
+                    now.minus(1, ChronoUnit.DAYS),
+                    now.plus(6, ChronoUnit.DAYS),
+                    10,
+                    EventRegistrationType.AUTO_APPROVE,
+                    null,
+                    true
+            );
+            event.publish();
+            return eventRepository.save(event);
+        });
+    }
+
     private Event createAndSaveOpenEvent() {
         return transactionTemplate.execute(status -> {
             Instant now = Instant.now();
@@ -295,12 +317,27 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
     // ==================== INT-024 ====================
 
     @Test
-    @DisplayName("[INT-024] 비인증 사용자 행사 상세 조회 → 401")
-    void getEvent_Unauthenticated_Returns401() throws Exception {
+    @DisplayName("[INT-024] 비인증 사용자가 allowExternal=false 행사 상세 조회 → 401")
+    void getEvent_Unauthenticated_AllowExternalFalse_Returns401() throws Exception {
         Event event = createAndSaveOpenEvent();
 
         mockMvc.perform(get("/api/v1/events/" + event.getId()))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // ==================== INT-024a ====================
+
+    @Test
+    @DisplayName("[INT-024a] 비인증 사용자가 allowExternal=true 행사 상세 조회 → 200")
+    void getEvent_Unauthenticated_AllowExternalTrue_Returns200() throws Exception {
+        Event event = createAndSaveOpenEventWithAllowExternal();
+
+        mockMvc.perform(get("/api/v1/events/" + event.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(event.getId()))
+                .andExpect(jsonPath("$.canEdit").value(false))
+                .andExpect(jsonPath("$.isRegistered").value(false))
+                .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
     }
 
     // ==================== INT-025 ====================
