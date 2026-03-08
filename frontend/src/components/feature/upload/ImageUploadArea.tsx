@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 interface ImageUploadAreaProps {
   onFilesSelected: (files: FileList) => void;
-  maxFiles: number;
+  maxFiles?: number;
   currentCount: number;
   accept?: string;
   disabled?: boolean;
@@ -22,7 +22,7 @@ export default function ImageUploadArea({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const isFull = currentCount >= maxFiles;
+  const isFull = maxFiles !== undefined && currentCount >= maxFiles;
 
   const handleClick = () => {
     if (!disabled && !isFull) {
@@ -86,7 +86,9 @@ export default function ImageUploadArea({
         <span className="typo-c1 text-muted-foreground">
           {isFull
             ? `최대 ${maxFiles}개 첨부됨`
-            : `이미지를 선택하거나 드래그하세요 (${currentCount}/${maxFiles})`}
+            : maxFiles !== undefined
+              ? `이미지를 선택하거나 드래그하세요 (${currentCount}/${maxFiles})`
+              : "이미지를 선택하거나 드래그하세요"}
         </span>
       </button>
 

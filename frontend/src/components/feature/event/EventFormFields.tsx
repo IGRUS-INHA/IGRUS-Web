@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { RefObject } from "react";
 import {
   Control,
   Controller,
@@ -13,9 +14,11 @@ import {
   Users,
   CheckSquare,
   FileText,
+  Image as ImageIcon,
   Minus,
   Plus,
 } from "lucide-react";
+import type { UploadFile } from "@/types/upload";
 import { WysiwygEditor } from "@/components/feature/editor";
 import { RegistrationPeriodSelector } from "@/components/feature/event/RegistrationPeriodSelector";
 import { EventDateTimePicker } from "@/components/feature/event/EventDateTimePicker";
@@ -89,6 +92,10 @@ interface EventFormFieldsProps {
   onDraftQuestionsChange: (q: DraftQuestion[]) => void;
   registrationTypeMode: "editable" | "readonly";
   editorReady?: boolean;
+  files: UploadFile[];
+  onAddFiles: (files: FileList) => void;
+  onRemoveFile: (id: string) => void;
+  fileInputRef: RefObject<HTMLInputElement | null>;
 }
 
 export function EventFormFields({
@@ -113,6 +120,10 @@ export function EventFormFields({
   onDraftQuestionsChange,
   registrationTypeMode,
   editorReady = true,
+  files,
+  onAddFiles,
+  onRemoveFile,
+  fileInputRef,
 }: EventFormFieldsProps) {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const locationRef = useRef<HTMLDivElement>(null);
@@ -482,6 +493,72 @@ export function EventFormFields({
             {errors.description.message}
           </p>
         )}
+      </div>
+
+      {/* 이미지 업로드 */}
+      <div>
+        <div
+          className="rounded-r4 border-2 border-dashed border-border bg-card shadow-sm px-s6 py-s8 flex flex-col items-center justify-center gap-s3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+              onAddFiles(e.dataTransfer.files);
+            }
+          }}
+        >
+          {files.length > 0 ? (
+            <div className="w-full space-y-s2">
+              {files.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="text-foreground truncate max-w-[80%]">
+                    {file.file.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveFile(file.id);
+                    }}
+                    className="text-muted-foreground hover:text-destructive transition cursor-pointer text-xs ml-s2"
+                  >
+                    삭제
+                  </button>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground text-center pt-s2">
+                클릭하여 이미지 추가 · {files.length}개
+              </p>
+            </div>
+          ) : (
+            <>
+              <ImageIcon size={32} className="text-muted-foreground/50" />
+              <p className="text-sm font-medium text-muted-foreground">
+                클릭하여 이미지 업로드
+              </p>
+              <p className="typo-c1 text-muted-foreground/70">
+                JPG, PNG, GIF, WebP · 최대 10MB
+              </p>
+            </>
+          )}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) {
+              onAddFiles(e.target.files);
+              e.target.value = "";
+            }
+          }}
+          className="hidden"
+        />
       </div>
     </div>
   );

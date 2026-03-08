@@ -18,8 +18,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import MarkdownPreview from "@uiw/react-markdown-preview";
-import remarkBreaks from "remark-breaks";
+import { RichTextViewer } from "@/components/feature/editor";
 import type { Event } from "@/types/entities";
 import { useAuth } from "@/hooks";
 import {
@@ -646,13 +645,10 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           {isDetailLoading ? (
             <p className="text-sm text-muted-foreground">불러오는 중...</p>
           ) : detail?.description ? (
-            <div className="[&_.wmde-markdown]:!text-sm [&_.wmde-markdown_*]:!text-sm">
-              <MarkdownPreview
-                source={detail.description}
-                remarkPlugins={[remarkBreaks]}
-                className="!leading-relaxed"
-              />
-            </div>
+            <RichTextViewer
+              content={detail.description}
+              className="text-sm leading-relaxed"
+            />
           ) : (
             <p className="text-sm text-muted-foreground">
               상세 설명이 없습니다.

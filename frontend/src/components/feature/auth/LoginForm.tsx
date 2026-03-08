@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { User, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export default function LoginForm({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit?.({ studentId, password });
   };
@@ -39,9 +39,9 @@ export default function LoginForm({
         <div className="login-brand-panel relative flex flex-col justify-between overflow-hidden p-s6 lg:col-span-2 lg:p-s7">
           {/* Decorative circles */}
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-white/10" />
-            <div className="absolute -left-8 top-1/3 h-24 w-24 rounded-full border border-white/8" />
-            <div className="absolute -bottom-6 right-1/4 h-32 w-32 rounded-full border border-white/5" />
+            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-primary/20" />
+            <div className="absolute -left-8 top-1/3 h-24 w-24 rounded-full border border-primary/15" />
+            <div className="absolute -bottom-6 right-1/4 h-32 w-32 rounded-full border border-primary/10" />
             {/* Dot grid overlay */}
             <div className="login-dot-grid absolute inset-0" />
           </div>
@@ -54,27 +54,25 @@ export default function LoginForm({
                 alt="IGRUS"
                 className="h-9 w-9 lg:h-11 lg:w-11"
               />
-              <span className="text-lg font-bold tracking-tight text-white/90">
+              <span className="text-lg font-bold tracking-tight text-primary">
                 IGRUS
               </span>
             </div>
 
-            <h1 className="mb-s2 hidden text-4xl font-extrabold leading-tight text-white lg:block">
+            <h1 className="mb-s2 hidden text-4xl font-extrabold leading-tight text-foreground lg:block">
               Welcome
             </h1>
-            <p className="hidden text-white/60 typo-b1 lg:block">
-              IGRUS에
-              <br />
-              오신 것을 환영합니다.
+            <p className="hidden text-foreground/80 typo-b2 lg:block">
+              IGRUS에 오신 것을 환영합니다.
             </p>
 
             {/* Mobile-only compact text */}
-            <p className="text-white/80 typo-b2 lg:hidden">
+            <p className="text-foreground/80 typo-b2 lg:hidden">
               IGRUS에 오신 것을 환영합니다.
             </p>
           </div>
 
-          <p className="relative z-10 hidden text-white/40 typo-c1 lg:block">
+          <p className="relative z-10 hidden text-foreground/60 typo-c1 lg:block">
             인하대학교 IT 동아리
           </p>
         </div>

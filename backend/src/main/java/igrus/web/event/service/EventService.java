@@ -222,7 +222,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(EventListResponse::from)
+                .map(event -> EventListResponse.from(event))
                 .toList();
     }
 
@@ -536,7 +536,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(EventListResponse::from)
+                .map(event -> EventListResponse.from(event))
                 .toList();
     }
 

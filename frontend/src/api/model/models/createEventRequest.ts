@@ -67,4 +67,10 @@ export interface CreateEventRequest {
   attachmentFileIds?: number[] | null;
   /** 외부인(비회원) 신청 허용 여부 */
   allowExternal?: boolean;
+  /**
+   * 행사 이미지 URL 목록 (최대 5개)
+   * @minItems 0
+   * @maxItems 5
+   */
+  imageUrls?: string[];
 }

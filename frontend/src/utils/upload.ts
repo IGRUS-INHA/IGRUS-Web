@@ -2,7 +2,6 @@ import type { UploadConfig } from "@/types/upload";
 
 /** 게시글 이미지 업로드 설정 */
 export const IMAGE_UPLOAD_CONFIG: UploadConfig = {
-  maxFiles: 5,
   maxFileSize: 10 * 1024 * 1024, // 10MB
   acceptedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
 };
@@ -30,14 +29,16 @@ export function validateFiles(
 ): FileValidationError[] {
   const errors: FileValidationError[] = [];
 
-  const allowable = Math.max(0, config.maxFiles - currentCount);
-  if (files.length > allowable) {
-    files.slice(allowable).forEach((file) => {
-      errors.push({
-        file,
-        reason: `최대 ${config.maxFiles}개까지 업로드 가능합니다`,
+  if (config.maxFiles !== undefined) {
+    const allowable = Math.max(0, config.maxFiles - currentCount);
+    if (files.length > allowable) {
+      files.slice(allowable).forEach((file) => {
+        errors.push({
+          file,
+          reason: `최대 ${config.maxFiles}개까지 업로드 가능합니다`,
+        });
       });
-    });
+    }
   }
 
   for (const file of files) {
