@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => {
       __FEATURE_PROFILE_EDIT__: env.FEATURE_PROFILE_EDIT !== "false",
       __FEATURE_EVENTS__: env.FEATURE_EVENTS !== "false",
       __FEATURE_INSTAGRAM__: env.FEATURE_INSTAGRAM !== "false",
+      __FEATURE_DARK_MODE__: env.FEATURE_DARK_MODE !== "false",
     },
     server: {
       proxy: {

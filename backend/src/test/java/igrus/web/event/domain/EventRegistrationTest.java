@@ -575,6 +575,84 @@ class EventRegistrationTest {
         }
     }
 
+    @Nested
+    @DisplayName("EventRegistration.createExternal 정적 팩토리 메서드")
+    class CreateExternalRegistrationTest {
+
+        /**
+         * TC-031: 선착순 행사에 외부인 신청 시 즉시 REGISTERED 상태
+         */
+        @Test
+        @DisplayName("[TC-031] 선착순 행사에 외부인 신청 시 REGISTERED 상태로 생성")
+        void createExternal_WithAutoApproveEvent_ReturnsRegisteredStatus() {
+            // given
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
+
+            // when
+            EventRegistration registration = EventRegistration.createExternal(
+                    event, "홍길동", "12345678", "01012345678", "컴퓨터공학과");
+
+            // then
+            assertThat(registration).isNotNull();
+            assertThat(registration.getEvent()).isEqualTo(event);
+            assertThat(registration.getUser()).isNull();
+            assertThat(registration.getIsExternal()).isTrue();
+            assertThat(registration.getExternalName()).isEqualTo("홍길동");
+            assertThat(registration.getExternalStudentId()).isEqualTo("12345678");
+            assertThat(registration.getExternalPhone()).isEqualTo("01012345678");
+            assertThat(registration.getExternalDepartment()).isEqualTo("컴퓨터공학과");
+            assertThat(registration.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+            assertThat(registration.isRegistered()).isTrue();
+            assertThat(registration.isActive()).isTrue();
+            assertThat(registration.getRegisteredAt()).isNotNull();
+        }
+
+        /**
+         * TC-033: 선발제 행사에 외부인 신청 시 WAITING 상태
+         */
+        @Test
+        @DisplayName("[TC-033] 선발제 행사에 외부인 신청 시 WAITING 상태로 생성")
+        void createExternal_WithManualApproveEvent_ReturnsWaitingStatus() {
+            // given
+            Event event = createEvent(EventRegistrationType.MANUAL_APPROVE);
+
+            // when
+            EventRegistration registration = EventRegistration.createExternal(
+                    event, "홍길동", "12345678", "01012345678", "컴퓨터공학과");
+
+            // then
+            assertThat(registration).isNotNull();
+            assertThat(registration.getEvent()).isEqualTo(event);
+            assertThat(registration.getUser()).isNull();
+            assertThat(registration.getIsExternal()).isTrue();
+            assertThat(registration.getStatus()).isEqualTo(EventRegistrationStatus.WAITING);
+            assertThat(registration.isWaiting()).isTrue();
+            assertThat(registration.isActive()).isFalse();
+        }
+
+        /**
+         * 회원 신청(create)과 외부인 신청(createExternal) isExternal 차이 검증
+         */
+        @Test
+        @DisplayName("회원 신청 create()는 isExternal=false, 외부인 createExternal()는 isExternal=true")
+        void create_vs_createExternal_IsExternalDifference() {
+            // given
+            Event event = createEvent(EventRegistrationType.AUTO_APPROVE);
+            User user = createMockUser(2L, "회원");
+
+            // when
+            EventRegistration memberReg = EventRegistration.create(event, user);
+            EventRegistration externalReg = EventRegistration.createExternal(
+                    event, "외부인", "99999999", "01099999999", "경영학과");
+
+            // then
+            assertThat(memberReg.getIsExternal()).isFalse();
+            assertThat(memberReg.getUser()).isEqualTo(user);
+            assertThat(externalReg.getIsExternal()).isTrue();
+            assertThat(externalReg.getUser()).isNull();
+        }
+    }
+
     // === Helper Methods ===
 
     private User createMockUser(Long id, String name) {

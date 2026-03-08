@@ -12,7 +12,7 @@ import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.repository.UserRoleHistoryRepository;
 import igrus.web.user.domain.AccountChangeType;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -65,7 +65,7 @@ public class ChangeUserRoleService {
         refreshTokenRepository.revokeAllByUserId(targetUserId);
         log.info("권한 변경으로 인한 리프레시 토큰 만료: targetUserId={}", targetUserId);
 
-        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+        eventPublisher.publishEvent(new AccountStatusChanged(
                 targetUserId, currentUserId, AccountChangeType.ROLE_CHANGE,
                 previousRole.name(), newRole.name(),
                 "관리자에 의한 역할 변경"

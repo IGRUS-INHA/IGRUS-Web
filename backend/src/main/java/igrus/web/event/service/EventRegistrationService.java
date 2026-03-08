@@ -1,6 +1,8 @@
 package igrus.web.event.service;
 
+import igrus.web.event.audit.EventStatusChanged;
 import igrus.web.event.domain.Event;
+import igrus.web.event.domain.EventChangeType;
 import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.EventStatus;
@@ -43,6 +45,7 @@ import igrus.web.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,6 +87,7 @@ public class EventRegistrationService {
     private final SurveyResponseRepository surveyResponseRepository;
     private final SurveyAnswerValidator surveyAnswerValidator;
     private final SurveyAnswerFactory surveyAnswerFactory;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 행사에 신청합니다.
@@ -137,8 +141,8 @@ public class EventRegistrationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        // 3. 권한 확인 (정회원 이상)
-        if (user.isAssociate()) {
+        // 3. 권한 확인 (정회원 이상, 단 allowExternal=true 행사에서는 준회원도 허용)
+        if (user.isAssociate() && !Boolean.TRUE.equals(event.getAllowExternal())) {
             throw new AssociateMemberNotAllowedException();
         }
 
@@ -335,7 +339,13 @@ public class EventRegistrationService {
         }
 
         // 9. 시간 겹침 검증 (승인 대상 사용자의 기존 확정 신청과 겹치는지 확인)
-        validateNoTimeOverlap(registration.getUser().getId(), event);
+        if (Boolean.TRUE.equals(registration.getIsExternal())) {
+            // 외부인 신청: studentId 기반 시간 겹침 검증 (DECISION-06)
+            validateNoExternalTimeOverlap(registration.getExternalStudentId(), event);
+        } else {
+            // 회원 신청: userId 기반 시간 겹침 검증
+            validateNoTimeOverlap(registration.getUser().getId(), event);
+        }
 
         // 10. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
         // 선발제 승인은 신청 기간 종료 후에도 가능해야 하므로 상태와 관계없이 정원만 체크
@@ -486,6 +496,63 @@ public class EventRegistrationService {
         return RegistrationResponse.from(updatedRegistration);
     }
 
+    /**
+     * 관리자가 신청(회원/외부인)을 취소합니다.
+     * DECISION-03: 외부인 신청은 관리자만 취소 가능.
+     * DECISION-08: 회원 신청에 대해서도 관리자 취소 가능.
+     *
+     * <p>동시성 제어: 원자적 UPDATE 방식 사용</p>
+     *
+     * @param registrationId 신청 ID
+     * @param operatorUserId 요청자 ID (운영진/관리자)
+     * @return 취소된 신청 응답 DTO
+     * @throws EventRegistrationNotFoundException 신청을 찾을 수 없는 경우
+     * @throws UserNotFoundException              사용자를 찾을 수 없는 경우
+     * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
+     * @throws AlreadyCanceledException           이미 취소된 신청인 경우
+     */
+    public RegistrationResponse cancelRegistrationByAdmin(Long registrationId, Long operatorUserId) {
+        // 1. 신청 조회
+        EventRegistration registration = eventRegistrationRepository.findById(registrationId)
+                .orElseThrow(EventRegistrationNotFoundException::new);
+
+        Long eventId = registration.getEvent().getId();
+
+        // 2. 요청자 조회 및 권한 확인 (운영진 이상)
+        User operator = userRepository.findById(operatorUserId)
+                .orElseThrow(() -> new UserNotFoundException(operatorUserId));
+        validateOperatorPermission(operator);
+
+        // 3. 취소 전 상태 저장
+        String previousStatus = registration.getStatus().name();
+
+        // 4. 신청자 수 감소 여부 판단 (취소 전에 확인)
+        boolean shouldDecrementCount = registration.isActive();
+
+        // 5. 신청 취소 (이미 CANCELED면 예외)
+        registration.cancel();
+
+        // 6. 신청자 수 감소 (원자적 UPDATE)
+        if (shouldDecrementCount) {
+            int decremented = eventRepository.decrementCurrentCount(eventId);
+            if (decremented == 0) {
+                log.error("신청자 수 감소 실패 (이미 0): eventId={}, registrationId={}", eventId, registrationId);
+            }
+            updateEventStatusAfterDecrement(eventId);
+        }
+
+        // 7. 감사 이력 이벤트 발행
+        eventPublisher.publishEvent(new EventStatusChanged(
+                eventId, operatorUserId, EventChangeType.REGISTRATION_CANCELED_BY_ADMIN,
+                previousStatus, "CANCELED", null));
+
+        log.info("관리자 행사 신청 취소 - eventId: {}, registrationId: {}, operatorId: {}",
+                eventId, registrationId, operatorUserId);
+
+        // 8. 응답 반환
+        return RegistrationResponse.from(registration);
+    }
+
     // === Private 메서드 ===
 
     /**
@@ -618,6 +685,11 @@ public class EventRegistrationService {
      */
     private RegistrationResponse handleReRegistration(EventRegistration registration, Event event, Long eventId,
                                                        List<SubmitAnswerRequest> surveyAnswers) {
+        // 외부인 신청은 재신청 경로를 사용할 수 없음 (인증 수단 없음, CANCELED 후 새 신청은 registerExternal() 사용)
+        if (Boolean.TRUE.equals(registration.getIsExternal())) {
+            throw new AlreadyRegisteredException();
+        }
+
         // 취소 상태가 아니면 이미 신청 중
         if (!registration.isCanceled()) {
             throw new AlreadyRegisteredException();
@@ -729,6 +801,27 @@ public class EventRegistrationService {
                 event.getEventStartAt(),
                 event.getEventEndAt(),
                 Set.of(EventRegistrationStatus.REGISTERED, EventRegistrationStatus.APPROVED)
+        );
+        if (hasOverlap) {
+            throw new EventTimeOverlapException();
+        }
+    }
+
+    /**
+     * 외부인의 확정된 신청(CANCELED 제외) 중
+     * 신청하려는 행사의 진행 시간과 겹치는 신청이 없는지 검증합니다.
+     * DECISION-06: studentId 기반 시간 겹침 검증.
+     *
+     * @param studentId 외부인 학번
+     * @param event     신청하려는 행사
+     * @throws EventTimeOverlapException 시간이 겹치는 신청이 있는 경우
+     */
+    private void validateNoExternalTimeOverlap(String studentId, Event event) {
+        boolean hasOverlap = eventRegistrationRepository.existsOverlappingExternalRegistration(
+                studentId,
+                event.getEventStartAt(),
+                event.getEventEndAt(),
+                EventRegistrationStatus.CANCELED
         );
         if (hasOverlap) {
             throw new EventTimeOverlapException();

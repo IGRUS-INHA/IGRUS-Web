@@ -31,6 +31,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -76,6 +77,9 @@ class EventRegistrationServiceTest {
 
     @Mock
     private SurveyAnswerFactory surveyAnswerFactory;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private EventRegistrationService eventRegistrationService;
@@ -315,6 +319,26 @@ class EventRegistrationServiceTest {
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
             when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(0); // 원자적 UPDATE 실패
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null))
+                    .isInstanceOf(EventCapacityFullException.class);
+        }
+
+        /**
+         * TC-011: 외부인만으로 정원 가득 찬 경우 회원 신청도 차단됨 (EXT-INV-04)
+         * 정원 공유 검증: capacity 5, currentCount 5 (전부 외부인) -> 회원 registerEvent() 호출 시
+         * incrementCurrentCountIfAvailable 원자적 UPDATE 실패(0) -> EventCapacityFullException
+         */
+        @Test
+        @DisplayName("[TC-011] 외부인만으로 정원 가득 찬 경우 회원 신청 시 EventCapacityFullException")
+        void registerEvent_ExternalsFull_MemberBlocked() {
+            // given: allowExternal=true 행사, 정원 5 전부 외부인으로 차 있음
+            when(autoApproveEvent.getAllowExternal()).thenReturn(true);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(0); // 정원 가득 -> 원자적 UPDATE 실패
 
             // when & then
             assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null))
@@ -2482,6 +2506,324 @@ class EventRegistrationServiceTest {
             assertThat(response).isNotNull();
             verify(surveyRepository, never()).findById(any());
             verify(surveyResponseRepository, never()).existsBySurveyIdAndUserId(any(), any());
+        }
+    }
+
+    // ==================== TC-012, TC-013, TC-078, TC-079: 준회원 조건부 허용 회귀 테스트 ====================
+
+    @Nested
+    @DisplayName("registerEvent - 준회원 조건부 허용 (EXT-INV-05)")
+    class AssociateConditionalAllowTest {
+
+        /**
+         * TC-012: 준회원이 allowExternal=true 행사에 신청 성공
+         */
+        @Test
+        @DisplayName("[TC-012] 준회원이 allowExternal=true 행사에 신청하면 성공")
+        void registerEvent_Associate_AllowExternalTrue_Success() {
+            // given
+            when(autoApproveEvent.getAllowExternal()).thenReturn(true);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(4L)).thenReturn(Optional.of(associateMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, 4L)).thenReturn(Optional.empty());
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
+
+            EventRegistration savedRegistration = mock(EventRegistration.class);
+            when(savedRegistration.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
+            when(savedRegistration.getRegisteredAt()).thenReturn(Instant.now());
+            when(savedRegistration.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.save(any(EventRegistration.class))).thenReturn(savedRegistration);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, 4L, null);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(eventRegistrationRepository).save(any(EventRegistration.class));
+        }
+
+        /**
+         * TC-013: 준회원이 allowExternal=false 행사에 신청 시 403
+         */
+        @Test
+        @DisplayName("[TC-013] 준회원이 allowExternal=false 행사에 신청하면 AssociateMemberNotAllowedException")
+        void registerEvent_Associate_AllowExternalFalse_ThrowsException() {
+            // given
+            when(autoApproveEvent.getAllowExternal()).thenReturn(false);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(4L)).thenReturn(Optional.of(associateMember));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, 4L, null))
+                    .isInstanceOf(AssociateMemberNotAllowedException.class);
+        }
+
+        /**
+         * TC-078: MEMBER + allowExternal=false -> 신청 성공 (회귀)
+         */
+        @Test
+        @DisplayName("[TC-078] 정회원이 allowExternal=false 행사에 신청하면 기존처럼 성공")
+        void registerEvent_Member_AllowExternalFalse_Success() {
+            // given
+            when(autoApproveEvent.getAllowExternal()).thenReturn(false);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
+            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
+
+            EventRegistration savedRegistration = mock(EventRegistration.class);
+            when(savedRegistration.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
+            when(savedRegistration.getRegisteredAt()).thenReturn(Instant.now());
+            when(savedRegistration.getId()).thenReturn(REGISTRATION_ID);
+            when(eventRegistrationRepository.save(any(EventRegistration.class))).thenReturn(savedRegistration);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null);
+
+            // then
+            assertThat(response).isNotNull();
+        }
+
+        /**
+         * TC-079: ASSOCIATE + allowExternal=false -> 403 (회귀)
+         */
+        @Test
+        @DisplayName("[TC-079] 준회원이 allowExternal=false 행사에 신청하면 기존 동작(403)이 유지됨")
+        void registerEvent_Associate_AllowExternalFalse_RegressionCheck() {
+            // given
+            when(autoApproveEvent.getAllowExternal()).thenReturn(false);
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+            when(userRepository.findById(4L)).thenReturn(Optional.of(associateMember));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, 4L, null))
+                    .isInstanceOf(AssociateMemberNotAllowedException.class);
+        }
+    }
+
+    // ==================== TC-019, TC-020, TC-032, TC-036, TC-077: 관리자 취소 ====================
+
+    @Nested
+    @DisplayName("cancelRegistrationByAdmin - 관리자 신청 취소 (EXT-INV-09)")
+    class CancelRegistrationByAdminTest {
+
+        private EventRegistration registeredRegistration;
+        private EventRegistration approvedRegistration;
+        private EventRegistration canceledRegistration;
+        private EventRegistration waitingRegistration;
+
+        @BeforeEach
+        void setUpRegistrations() {
+            // REGISTERED 상태 외부인 신청 Mock
+            registeredRegistration = mock(EventRegistration.class);
+            when(registeredRegistration.getId()).thenReturn(REGISTRATION_ID);
+            when(registeredRegistration.getEvent()).thenReturn(autoApproveEvent);
+            when(registeredRegistration.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
+            when(registeredRegistration.isActive()).thenReturn(true);
+            when(registeredRegistration.isCanceled()).thenReturn(false);
+            when(registeredRegistration.getIsExternal()).thenReturn(true);
+            when(registeredRegistration.getRegisteredAt()).thenReturn(Instant.now());
+
+            // APPROVED 상태 외부인 신청 Mock
+            approvedRegistration = mock(EventRegistration.class);
+            when(approvedRegistration.getId()).thenReturn(20L);
+            when(approvedRegistration.getEvent()).thenReturn(manualApproveEvent);
+            when(approvedRegistration.getStatus()).thenReturn(EventRegistrationStatus.APPROVED);
+            when(approvedRegistration.isActive()).thenReturn(true);
+            when(approvedRegistration.isCanceled()).thenReturn(false);
+            when(approvedRegistration.getIsExternal()).thenReturn(true);
+            when(approvedRegistration.getRegisteredAt()).thenReturn(Instant.now());
+
+            // CANCELED 상태 신청 Mock
+            canceledRegistration = mock(EventRegistration.class);
+            when(canceledRegistration.getId()).thenReturn(30L);
+            when(canceledRegistration.getEvent()).thenReturn(autoApproveEvent);
+            when(canceledRegistration.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
+            when(canceledRegistration.isActive()).thenReturn(false);
+            when(canceledRegistration.isCanceled()).thenReturn(true);
+            when(canceledRegistration.getIsExternal()).thenReturn(true);
+            when(canceledRegistration.getRegisteredAt()).thenReturn(Instant.now());
+
+            // WAITING 상태 외부인 신청 Mock
+            waitingRegistration = mock(EventRegistration.class);
+            when(waitingRegistration.getId()).thenReturn(40L);
+            when(waitingRegistration.getEvent()).thenReturn(manualApproveEvent);
+            when(waitingRegistration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
+            when(waitingRegistration.isActive()).thenReturn(false);
+            when(waitingRegistration.isCanceled()).thenReturn(false);
+            when(waitingRegistration.getIsExternal()).thenReturn(true);
+            when(waitingRegistration.getRegisteredAt()).thenReturn(Instant.now());
+        }
+
+        /**
+         * TC-019: OPERATOR가 외부인 REGISTERED 신청 취소 성공
+         */
+        @Test
+        @DisplayName("[TC-019] OPERATOR가 외부인 REGISTERED 신청 취소 시 CANCELED + currentCount 감소")
+        void cancelByAdmin_Operator_RegisteredExternal_Success() {
+            // given
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registeredRegistration));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.cancelRegistrationByAdmin(REGISTRATION_ID, OPERATOR_ID);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(registeredRegistration).cancel();
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
+            verify(eventPublisher).publishEvent(any(igrus.web.event.audit.EventStatusChanged.class));
+        }
+
+        /**
+         * TC-020: ADMIN이 외부인 신청 취소 성공
+         */
+        @Test
+        @DisplayName("[TC-020] ADMIN이 외부인 REGISTERED 신청 취소 시 성공")
+        void cancelByAdmin_Admin_RegisteredExternal_Success() {
+            // given
+            User admin = mock(User.class);
+            when(admin.getId()).thenReturn(5L);
+            when(admin.isOperatorOrAbove()).thenReturn(true);
+
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registeredRegistration));
+            when(userRepository.findById(5L)).thenReturn(Optional.of(admin));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            // when
+            RegistrationResponse response = eventRegistrationService.cancelRegistrationByAdmin(REGISTRATION_ID, 5L);
+
+            // then
+            assertThat(response).isNotNull();
+            verify(registeredRegistration).cancel();
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
+        }
+
+        /**
+         * TC-032: 선착순 행사에서 관리자가 외부인 REGISTERED 신청 취소 시 CANCELED + currentCount 감소
+         */
+        @Test
+        @DisplayName("[TC-032] 선착순 행사 외부인 REGISTERED 취소 -> CANCELED + currentCount 감소")
+        void cancelByAdmin_AutoApprove_RegisteredExternal_DecrementCount() {
+            // given
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registeredRegistration));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            // when
+            eventRegistrationService.cancelRegistrationByAdmin(REGISTRATION_ID, OPERATOR_ID);
+
+            // then
+            verify(registeredRegistration).cancel();
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
+        }
+
+        /**
+         * TC-036: 선발제 행사에서 APPROVED 외부인 취소 시 CANCELED + currentCount 감소
+         */
+        @Test
+        @DisplayName("[TC-036] 선발제 APPROVED 외부인 취소 -> CANCELED + currentCount 감소")
+        void cancelByAdmin_ManualApprove_ApprovedExternal_DecrementCount() {
+            // given
+            when(eventRegistrationRepository.findById(20L)).thenReturn(Optional.of(approvedRegistration));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            // when
+            eventRegistrationService.cancelRegistrationByAdmin(20L, OPERATOR_ID);
+
+            // then
+            verify(approvedRegistration).cancel();
+            verify(eventRepository).decrementCurrentCount(EVENT_ID);
+        }
+
+        /**
+         * WAITING 상태 외부인 신청 취소 시 currentCount 변경 없음
+         */
+        @Test
+        @DisplayName("WAITING 상태 외부인 취소 -> CANCELED, currentCount 변경 없음")
+        void cancelByAdmin_WaitingExternal_NoDecrementCount() {
+            // given
+            when(eventRegistrationRepository.findById(40L)).thenReturn(Optional.of(waitingRegistration));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+
+            // when
+            eventRegistrationService.cancelRegistrationByAdmin(40L, OPERATOR_ID);
+
+            // then
+            verify(waitingRegistration).cancel();
+            verify(eventRepository, never()).decrementCurrentCount(any());
+        }
+
+        /**
+         * 이미 CANCELED 상태인 신청 취소 시 예외
+         */
+        @Test
+        @DisplayName("이미 CANCELED 상태인 신청 취소 시도 -> 예외 발생")
+        void cancelByAdmin_AlreadyCanceled_ThrowsException() {
+            // given
+            when(eventRegistrationRepository.findById(30L)).thenReturn(Optional.of(canceledRegistration));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            doThrow(new InvalidRegistrationStatusException()).when(canceledRegistration).cancel();
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.cancelRegistrationByAdmin(30L, OPERATOR_ID))
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
+        }
+
+        /**
+         * 존재하지 않는 registrationId로 취소 시 404
+         */
+        @Test
+        @DisplayName("존재하지 않는 registrationId로 취소 시 EventRegistrationNotFoundException")
+        void cancelByAdmin_NonExistentRegistration_ThrowsNotFoundException() {
+            // given
+            when(eventRegistrationRepository.findById(999L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.cancelRegistrationByAdmin(999L, OPERATOR_ID))
+                    .isInstanceOf(EventRegistrationNotFoundException.class);
+        }
+
+        /**
+         * MEMBER가 취소 시도하면 OperatorPermissionRequiredException
+         */
+        @Test
+        @DisplayName("MEMBER가 관리자 취소 시도 시 OperatorPermissionRequiredException")
+        void cancelByAdmin_MemberRole_ThrowsPermissionException() {
+            // given
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registeredRegistration));
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
+
+            // when & then
+            assertThatThrownBy(() -> eventRegistrationService.cancelRegistrationByAdmin(REGISTRATION_ID, USER_ID))
+                    .isInstanceOf(OperatorPermissionRequiredException.class);
+        }
+
+        /**
+         * TC-077: 관리자 취소 시 EventStatusChanged 감사 이벤트 발행 확인
+         */
+        @Test
+        @DisplayName("[TC-077] 관리자 취소 시 EventStatusChanged 이벤트에 이전 상태와 변경 유형 포함")
+        void cancelByAdmin_PublishesEventStatusChanged_WithPreviousStatus() {
+            // given
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registeredRegistration));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            // when
+            eventRegistrationService.cancelRegistrationByAdmin(REGISTRATION_ID, OPERATOR_ID);
+
+            // then
+            var captor = org.mockito.ArgumentCaptor.forClass(igrus.web.event.audit.EventStatusChanged.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            igrus.web.event.audit.EventStatusChanged changed = captor.getValue();
+            assertThat(changed.eventId()).isEqualTo(EVENT_ID);
+            assertThat(changed.changedByUserId()).isEqualTo(OPERATOR_ID);
+            assertThat(changed.changeType()).isEqualTo(igrus.web.event.domain.EventChangeType.REGISTRATION_CANCELED_BY_ADMIN);
+            assertThat(changed.previousValue()).isEqualTo("REGISTERED");
+            assertThat(changed.newValue()).isEqualTo("CANCELED");
         }
     }
 }

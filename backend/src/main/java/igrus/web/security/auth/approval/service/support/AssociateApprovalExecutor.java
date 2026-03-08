@@ -7,7 +7,7 @@ import igrus.web.user.domain.AccountChangeType;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserRoleHistory;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.repository.UserRoleHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +54,7 @@ public class AssociateApprovalExecutor {
         refreshTokenRepository.revokeAllByUserId(user.getId());
         log.info("승인으로 인한 리프레시 토큰 만료: userId={}", user.getId());
 
-        eventPublisher.publishEvent(new AccountStatusChangeEvent(
+        eventPublisher.publishEvent(new AccountStatusChanged(
                 user.getId(), approverId, AccountChangeType.APPROVAL,
                 previousRole.name(), UserRole.MEMBER.name(), reason
         ));

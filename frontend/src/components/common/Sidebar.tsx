@@ -145,24 +145,26 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Bottom Navigation */}
         <div className="mt-auto flex flex-col gap-s1">
           {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className={`flex items-center gap-s3 w-full px-s4 py-s3 rounded-r3 transition-all mb-s3 ${
-              isDark
-                ? "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-            type="button"
-          >
-            {isDark ? (
-              <Sun size={20} className="text-warning" />
-            ) : (
-              <Moon size={20} className="text-primary" />
-            )}
-            <span className="typo-label">
-              {isDark ? "라이트 모드" : "다크 모드"}
-            </span>
-          </button>
+          {__FEATURE_DARK_MODE__ && (
+            <button
+              onClick={toggleTheme}
+              className={`flex items-center gap-s3 w-full px-s4 py-s3 rounded-r3 transition-all mb-s3 ${
+                isDark
+                  ? "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+              type="button"
+            >
+              {isDark ? (
+                <Sun size={20} className="text-warning" />
+              ) : (
+                <Moon size={20} className="text-primary" />
+              )}
+              <span className="typo-label">
+                {isDark ? "라이트 모드" : "다크 모드"}
+              </span>
+            </button>
+          )}
 
           {isAuthenticated ? (
             <>

@@ -17,5 +17,7 @@ public enum EventChangeType {
     /** 행사 공개. */
     EVENT_PUBLISHED,
     /** 행사 비공개. */
-    EVENT_UNPUBLISHED
+    EVENT_UNPUBLISHED,
+    /** 관리자에 의한 신청 취소. */
+    REGISTRATION_CANCELED_BY_ADMIN
 }

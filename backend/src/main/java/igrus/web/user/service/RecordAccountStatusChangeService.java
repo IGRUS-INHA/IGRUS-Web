@@ -1,7 +1,7 @@
 package igrus.web.user.service;
 
 import igrus.web.user.domain.AccountStatusChangeHistory;
-import igrus.web.user.event.AccountStatusChangeEvent;
+import igrus.web.user.audit.AccountStatusChanged;
 import igrus.web.user.repository.AccountStatusChangeHistoryRepository;
 import igrus.web.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ public class RecordAccountStatusChangeService {
     }
 
     @EventListener
-    public void handleAccountStatusChange(AccountStatusChangeEvent event) {
+    public void handleAccountStatusChange(AccountStatusChanged event) {
         log.info("계정 상태 변경 이력 저장: userId={}, changeType={}, {} -> {}",
                 event.userId(), event.changeType(), event.previousValue(), event.newValue());
 

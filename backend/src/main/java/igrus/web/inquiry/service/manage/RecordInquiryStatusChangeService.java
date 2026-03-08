@@ -1,7 +1,7 @@
 package igrus.web.inquiry.service.manage;
 
 import igrus.web.inquiry.domain.InquiryStatusChangeHistory;
-import igrus.web.inquiry.event.InquiryStatusChangeEvent;
+import igrus.web.inquiry.audit.InquiryStatusChanged;
 import igrus.web.inquiry.repository.InquiryStatusChangeHistoryRepository;
 import igrus.web.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ public class RecordInquiryStatusChangeService {
     }
 
     @EventListener
-    public void handleInquiryStatusChange(InquiryStatusChangeEvent event) {
+    public void handleInquiryStatusChange(InquiryStatusChanged event) {
         log.info("문의 상태 변경 이력 저장: inquiryId={}, changeType={}, {} -> {}",
                 event.inquiryId(), event.changeType(), event.previousValue(), event.newValue());
 

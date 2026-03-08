@@ -103,6 +103,26 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **SurveyVisibility 패턴 일관성**: `Survey.create()`도 `visibility = UNPUBLISHED`로 초기화 (동일 패턴)
 - **JPA 기본값 vs DB 기본값**: JPA 엔티티의 `Event.create()`에서 `visibility = UNPUBLISHED`를 명시적으로 설정한다 (신규 생성 행사). DB 마이그레이션에서는 `event_visibility` 컬럼 기본값이 `'PUBLISHED'`이다 (기존 데이터 보호, EVT-INV-23 참조). **적용 시점 차이**: 새로운 행사 생성 시 JPA 엔티티 값(`UNPUBLISHED`)이 INSERT 시 사용되어 DB 기본값을 덮어씀. DB 기본값(`PUBLISHED`)은 Flyway 마이그레이션 시 기존 행사 데이터에 적용됨
 
+### EVT-INV-24: allowExternal 필드 (신규)
+
+> `Event` 엔티티에 `allowExternal` (Boolean, 기본값 false) 필드가 존재한다. 이 필드는 외부인(비회원) 행사 신청 허용 여부를 제어하며, 준회원(ASSOCIATE) 신청 허용 여부에도 영향을 준다.
+
+- **기본값**: `false` — 외부인 신청 비허용이 기본
+- **DB 컬럼**: `event_allow_external BOOLEAN NOT NULL DEFAULT FALSE`
+- **JPA 매핑**: `@Column(name = "event_allow_external", nullable = false)`, `Boolean` 타입
+- **관련 코드** `(현재 구현 일치)`:
+  - `Event.create()` — `allowExternal` 파라미터 (null이면 false)
+  - `Event.update()` — `allowExternal` 변경 지원
+- **영향 범위**:
+  - `allowExternal == true` → 외부인 신청(`/registrations/external`) 허용, 준회원 기존 신청(`/registrations`) 허용
+  - `allowExternal == false` → 외부인 신청 차단 (400), 준회원 신청 차단 (403)
+- **교차 참조**: [외부인 행사 신청 검증 기준서](./external-event-registration-verification-criteria.md) EXT-INV-01, EXT-INV-05, EXT-INV-06
+- **DTO 반영**:
+  - `CreateEventRequest` — `allowExternal` 필드 (optional, 미지정 시 false)
+  - `UpdateEventRequest` — `allowExternal` 필드 (optional)
+  - `EventDetailResponse` — `allowExternal` 필드 포함 (행사 상세 응답)
+  - `EventListResponse` — `allowExternal` 필드 포함 (행사 목록 응답)
+
 ### EVT-INV-06: COMPLETED 종단 상태
 
 > `eventStatus == COMPLETED`에서는 어떤 eventStatus로도 전이할 수 없다.
@@ -392,6 +412,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
   - `EventListResponse` -- visibility 필드 추가
 - **주의사항**: 공개 API(`/api/v1/events/**`)의 응답에서도 visibility 필드가 포함되지만, 공개 API에서는 항상 `PUBLISHED`만 반환됨 (EVT-INV-18에 의해 UNPUBLISHED 행사는 접근 불가)
 - **검증 방법**: 응답 JSON에 `visibility` 필드가 포함되는지 확인, 공개 API에서는 항상 PUBLISHED 값만 반환되는지 확인
+- **추가 필드**: `allowExternal` (Boolean) 필드도 `EventDetailResponse`, `EventListResponse`에 포함됨 (EVT-INV-24 참조)
 
 ### EVT-INV-23: DB 마이그레이션 기존 데이터 정합성 (신규)
 
@@ -621,14 +642,16 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 | `registrationEndAt` | `registrationStartAt` 이후, `eventEndAt` 이전 또는 동일 | null, `registrationStartAt` 이전, `eventEndAt` 이후 | `eventStartAt`과 동일 (허용), `eventEndAt`과 동일 (허용) | `@NotNull` |
 | `capacity` | 1 이상 정수 | null, 0, 음수 | 1 (최소 유효), 0 (최대 무효) | `@NotNull`, `@Min(1)` |
 | `registrationType` | `AUTO_APPROVE` 또는 `MANUAL_APPROVE` | null, 유효하지 않은 값 | - | `@NotNull` |
+| `allowExternal` | `true` 또는 `false` | - | - | optional (미지정 시 `false`) |
 
-**참고**: `visibility`는 CreateEventRequest에 포함되지 않음. 생성 시 기본값 UNPUBLISHED가 적용됨 (EVT-INV-05).
+**참고**: `visibility`는 CreateEventRequest에 포함되지 않음. 생성 시 기본값 UNPUBLISHED가 적용됨 (EVT-INV-05). `allowExternal`은 optional이며 미지정 시 `false`가 적용됨 (EVT-INV-24).
 
 ### 3-2. 행사 수정 입력값 (UpdateEventRequest)
 
 `CreateEventRequest`와 동일하되, 다음 차이점:
 - `registrationType` 필드 **없음** (생성 시 결정, 수정 불가)
 - `visibility` 필드 **없음** (publish/unpublish API로만 변경, EVT-INV-16)
+- `allowExternal` 필드 **포함** (수정 시 외부인 허용 여부 변경 가능, EVT-INV-24)
 - `registrationStartAt`에 대한 미래 제약 **없음** (기존 값 보존 가능)
 - 수정 범위는 `eventStatus`에 따라 다름 (EVT-INV-07). COMPLETED에서는 수정 불가, ONGOING에서는 `eventStartAt`/`registrationStartAt` 변경 불가
 

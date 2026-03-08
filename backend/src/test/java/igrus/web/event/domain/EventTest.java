@@ -1668,6 +1668,151 @@ class EventTest {
         }
     }
 
+    // === 외부인 신청 허용 (allowExternal) ===
+
+    @Nested
+    @DisplayName("allowExternal 필드")
+    class AllowExternalTest {
+
+        /**
+         * TC-014: Event 생성 시 allowExternal 미지정하면 기본값 false
+         */
+        @Test
+        @DisplayName("[TC-014] Event.create() allowExternal 미지정 시 기본값 false")
+        void create_WithoutAllowExternal_DefaultsFalse() {
+            // given
+            User mockUser = createMockUser();
+
+            // when
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null);
+
+            // then
+            assertThat(event.getAllowExternal()).isFalse();
+        }
+
+        /**
+         * TC-014 보충: Event.create() allowExternal=null 전달 시 기본값 false
+         */
+        @Test
+        @DisplayName("[TC-014] Event.create() allowExternal=null 전달 시 기본값 false")
+        void create_WithNullAllowExternal_DefaultsFalse() {
+            // given
+            User mockUser = createMockUser();
+
+            // when
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null, null);
+
+            // then
+            assertThat(event.getAllowExternal()).isFalse();
+        }
+
+        /**
+         * TC-015: Event 생성 시 allowExternal=true 명시적 설정
+         */
+        @Test
+        @DisplayName("[TC-015] Event.create() allowExternal=true 설정")
+        void create_WithAllowExternalTrue_SetsTrue() {
+            // given
+            User mockUser = createMockUser();
+
+            // when
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null, true);
+
+            // then
+            assertThat(event.getAllowExternal()).isTrue();
+        }
+
+        /**
+         * TC-015 보충: Event.create() allowExternal=false 명시적 설정
+         */
+        @Test
+        @DisplayName("[TC-015] Event.create() allowExternal=false 명시적 설정")
+        void create_WithAllowExternalFalse_SetsFalse() {
+            // given
+            User mockUser = createMockUser();
+
+            // when
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null, false);
+
+            // then
+            assertThat(event.getAllowExternal()).isFalse();
+        }
+
+        /**
+         * Event.update()로 allowExternal 변경 테스트
+         */
+        @Test
+        @DisplayName("Event.update()로 allowExternal false -> true 변경")
+        void update_AllowExternalFromFalseToTrue() {
+            // given
+            User mockUser = createMockUser();
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null, false);
+            assertThat(event.getAllowExternal()).isFalse();
+
+            // when
+            event.update(TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, null, true);
+
+            // then
+            assertThat(event.getAllowExternal()).isTrue();
+        }
+
+        /**
+         * Event.update()로 allowExternal true -> false 변경 테스트
+         */
+        @Test
+        @DisplayName("Event.update()로 allowExternal true -> false 변경")
+        void update_AllowExternalFromTrueToFalse() {
+            // given
+            User mockUser = createMockUser();
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null, true);
+            assertThat(event.getAllowExternal()).isTrue();
+
+            // when
+            event.update(TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, null, false);
+
+            // then
+            assertThat(event.getAllowExternal()).isFalse();
+        }
+
+        /**
+         * Event.update() allowExternal 없는 오버로드로 호출 시 기존 값 유지
+         */
+        @Test
+        @DisplayName("Event.update() allowExternal 없는 오버로드 호출 시 기존 값 유지")
+        void update_WithoutAllowExternal_KeepsExistingValue() {
+            // given
+            User mockUser = createMockUser();
+            Event event = Event.create(mockUser, TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, EventRegistrationType.AUTO_APPROVE, null, true);
+            assertThat(event.getAllowExternal()).isTrue();
+
+            // when
+            event.update(TITLE, DESCRIPTION, LOCATION,
+                    EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
+                    CAPACITY, null);
+
+            // then
+            assertThat(event.getAllowExternal()).isTrue();
+        }
+    }
+
     // === Helper Methods ===
 
     private User createMockUser() {

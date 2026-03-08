@@ -108,7 +108,18 @@ export default function BoardListPage() {
   };
 
   return (
-    <div className="space-y-s8 animate-in fade-in duration-300">
+    <div className="space-y-s6 animate-in fade-in duration-300">
+      {/* Page header */}
+      <div>
+        <p className="text-xs font-bold text-primary tracking-widest mb-s1">
+          BOARD
+        </p>
+        <h1 className="text-3xl font-bold mb-s2">IGRUS 게시판</h1>
+        <p className="text-sm text-muted-foreground">
+          아이그루스의 주요 공지와 안내 사항을 확인할 수 있는 공간입니다.
+        </p>
+      </div>
+
       {/* Header with Tabs and Write Button */}
       <div
         className={cn(

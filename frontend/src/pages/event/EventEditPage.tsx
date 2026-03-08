@@ -1,108 +1,62 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { FullPageSpinner } from "@/components/ui";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import {
-  ArrowLeft,
-  Calendar,
-  MapPin,
-  Users,
-  Save,
-  Image as ImageIcon,
-  ListChecks,
-} from "lucide-react";
-import { WysiwygEditor } from "@/components/feature/editor";
-import {
-  LocationSelector,
-  DIRECT_INPUT_VALUE,
-} from "@/components/feature/event/LocationSelector";
-import { RegistrationPeriodSelector } from "@/components/feature/event/RegistrationPeriodSelector";
-import { useEvent, useUpdateEvent } from "@/hooks/queries/useEvents";
-import { EventDateTimePicker } from "@/components/feature/event/EventDateTimePicker";
-import { EventCalendarPreview } from "@/components/feature/event/EventCalendarPreview";
-import { REGISTRATION_PERIOD_PRESETS } from "@/constants/event";
-
-import {
-  parseLocation,
-  combineLocation,
-  detectRegistrationPreset,
-  formatDateLocal,
-} from "@/utils/event";
-import { cn } from "@/lib/utils";
-import { useUIStore } from "@/stores";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Save } from "lucide-react";
+import { FullPageSpinner } from "@/components/ui";
+import {
+  EventFormFields,
+  eventFormSchema,
+  type EventFormValues,
+} from "@/components/feature/event/EventFormFields";
+import { useAdminEvent, useUpdateEvent } from "@/hooks/queries/useEvents";
+import { REGISTRATION_PERIOD_PRESETS } from "@/constants/event";
+import { detectRegistrationPreset, formatDateLocal } from "@/utils/event";
 import {
   getErrorMessage,
   isForbiddenError,
   isEventAccessDenied,
   isEventOperatorRequired,
 } from "@/utils/error";
-
-const eventSchema = z
-  .object({
-    title: z.string().min(1, "행사 제목을 입력하세요"),
-    description: z.string().min(1, "행사 설명을 입력하세요"),
-    date: z.string().min(1, "행사 시작 날짜를 선택하세요"),
-    time: z.string().min(1, "행사 시작 시간을 선택하세요"),
-    endDate: z.string().min(1, "행사 종료 날짜를 선택하세요"),
-    endTime: z.string().min(1, "행사 종료 시간을 선택하세요"),
-    locationPreset: z.string(),
-    locationDetail: z.string().optional(),
-    capacity: z.number().min(1, "최대 인원은 1명 이상이어야 합니다"),
-    registrationPreset: z.enum(["default", "short", "custom"]),
-    registrationStartDate: z.string().min(1, "신청 시작일을 선택하세요"),
-    registrationStartTime: z.string().min(1, "신청 시작 시간을 선택하세요"),
-    registrationDeadlineDate: z.string().min(1, "신청 마감일을 선택하세요"),
-    registrationDeadlineTime: z.string().min(1, "신청 마감 시간을 선택하세요"),
-  })
-  .refine(
-    (data) => {
-      if (data.locationPreset && data.locationPreset !== DIRECT_INPUT_VALUE)
-        return true;
-      if (
-        data.locationPreset === DIRECT_INPUT_VALUE &&
-        data.locationDetail &&
-        data.locationDetail.trim().length > 0
-      )
-        return true;
-      return false;
-    },
-    { message: "장소를 입력하세요", path: ["locationPreset"] },
-  )
-  .refine(
-    (data) => {
-      if (
-        !data.registrationDeadlineDate ||
-        !data.registrationDeadlineTime ||
-        !data.date ||
-        !data.time
-      )
-        return true;
-      const regEnd = new Date(
-        `${data.registrationDeadlineDate}T${data.registrationDeadlineTime}:00`,
-      );
-      const eventStart = new Date(`${data.date}T${data.time}:00`);
-      return regEnd <= eventStart;
-    },
-    {
-      message: "신청 마감은 행사 시작 이전이어야 합니다",
-      path: ["registrationDeadlineDate"],
-    },
-  );
-
-type EventForm = z.infer<typeof eventSchema>;
+import { useCreateSurvey } from "@/api/model/survey/survey";
+import {
+  useCreateQuestion,
+  useDeleteQuestion,
+  useUpdateQuestion,
+  useGetQuestionList,
+} from "@/api/model/survey-question/survey-question";
+import {
+  useCreateOption,
+  useDeleteOption,
+} from "@/api/model/survey-question-option/survey-question-option";
+import type { DraftQuestion } from "@/components/feature/event/SurveyQuestionBuilder";
 
 export default function EventEditPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
-  const { theme } = useUIStore();
-  const isDark = theme === "dark";
-  const { data: eventResponse, isLoading, error } = useEvent(Number(eventId));
+  const {
+    data: eventResponse,
+    isLoading,
+    error,
+  } = useAdminEvent(Number(eventId));
   const { mutate: updateEvent, isPending } = useUpdateEvent();
   const event = eventResponse?.data;
   const isInitialized = useRef(false);
   const [formReady, setFormReady] = useState(false);
+  const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([]);
+  const [capacityRaw, setCapacityRaw] = useState("30");
+
+  const existingSurveyId = event?.surveyId ?? undefined;
+  const { data: questionListResponse } = useGetQuestionList(
+    existingSurveyId ?? 0,
+    { query: { enabled: !!existingSurveyId } },
+  );
+  const { mutateAsync: createSurveyAsync } = useCreateSurvey();
+  const { mutateAsync: createQuestionAsync } = useCreateQuestion();
+  const { mutateAsync: deleteQuestionAsync } = useDeleteQuestion();
+  const { mutateAsync: updateQuestionAsync } = useUpdateQuestion();
+  const { mutateAsync: createOptionAsync } = useCreateOption();
+  const { mutateAsync: deleteOptionAsync } = useDeleteOption();
 
   const {
     register,
@@ -112,34 +66,34 @@ export default function EventEditPage() {
     watch,
     setValue,
     formState: { errors },
-  } = useForm<EventForm>({
-    resolver: zodResolver(eventSchema),
+  } = useForm<EventFormValues>({
+    resolver: zodResolver(eventFormSchema),
     defaultValues: {
       capacity: 30,
       registrationPreset: "custom",
-      locationPreset: "",
-      locationDetail: "",
+      location: "",
+      registrationType: "AUTO_APPROVE",
     },
   });
 
-  const eventTime = watch("time");
+  const registrationType = watch("registrationType");
   const eventDate = watch("date");
+  const eventTime = watch("time");
   const endDate = watch("endDate");
   const endTime = watch("endTime");
   const registrationPreset = watch("registrationPreset");
-  const locationPreset = watch("locationPreset");
-  const locationDetail = watch("locationDetail") ?? "";
   const registrationStartDate = watch("registrationStartDate");
   const registrationStartTime = watch("registrationStartTime");
   const registrationDeadlineDate = watch("registrationDeadlineDate");
   const registrationDeadlineTime = watch("registrationDeadlineTime");
+  const capacity = watch("capacity");
 
-  // 권한 체크 (권한 없으면 상세 페이지로 리다이렉트)
+  // 권한 체크
   useEffect(() => {
     if (event && !event.canEdit) {
-      navigate(`/events/${eventId}`);
+      navigate("/events");
     }
-  }, [event, eventId, navigate]);
+  }, [event, navigate]);
 
   // 기존 데이터로 폼 초기화
   useEffect(() => {
@@ -159,7 +113,6 @@ export default function EventEditPage() {
       const regStartDateTime = parseDateTime(event.registrationStartAt);
       const regEndDateTime = parseDateTime(event.registrationEndAt);
 
-      const { preset, detail } = parseLocation(event.location || "");
       const detectedPreset = detectRegistrationPreset(
         eventDateTime.date ?? "",
         regStartDateTime.date ?? "",
@@ -169,6 +122,8 @@ export default function EventEditPage() {
         eventDateTime.time ?? "",
       );
 
+      const loadedCapacity = event.capacity || 30;
+
       reset({
         title: event.title || "",
         description: event.description || "",
@@ -176,9 +131,11 @@ export default function EventEditPage() {
         time: eventDateTime.time ?? "",
         endDate: eventEndDateTime.date || eventDateTime.date || "",
         endTime: eventEndDateTime.time || eventDateTime.time || "",
-        locationPreset: preset || DIRECT_INPUT_VALUE,
-        locationDetail: detail,
-        capacity: event.capacity || 30,
+        location: event.location || "",
+        capacity: loadedCapacity,
+        registrationType:
+          (event.registrationType as "AUTO_APPROVE" | "MANUAL_APPROVE") ??
+          "AUTO_APPROVE",
         registrationPreset: detectedPreset,
         registrationStartDate: regStartDateTime.date ?? "",
         registrationStartTime: regStartDateTime.time ?? "",
@@ -186,10 +143,32 @@ export default function EventEditPage() {
         registrationDeadlineTime: regEndDateTime.time ?? "",
       });
 
+      setCapacityRaw(String(loadedCapacity));
       isInitialized.current = true;
       setFormReady(true);
     }
   }, [event, reset]);
+
+  // 기존 설문 문항 로드
+  useEffect(() => {
+    if (questionListResponse?.status === 200) {
+      const existing = questionListResponse.data;
+      setDraftQuestions(
+        existing.map((q, i) => ({
+          localId: String(q.id ?? i),
+          serverId: q.id,
+          questionType: q.questionType ?? "SHORT_ANSWER",
+          title: q.title ?? "",
+          required: q.required ?? false,
+          displayOrder: q.displayOrder ?? i + 1,
+          options:
+            q.options && q.options.length > 0
+              ? q.options.map((o) => o.text ?? "")
+              : undefined,
+        })),
+      );
+    }
+  }, [questionListResponse]);
 
   // 신청 기간 자동 계산 (초기 로드 시에는 건너뜀)
   useEffect(() => {
@@ -205,13 +184,12 @@ export default function EventEditPage() {
     const month = dateParts[1] ?? 1;
     const day = dateParts[2] ?? 1;
     const startDate = new Date(year, month - 1, day - preset.startDaysBefore);
-    const endDate = new Date(year, month - 1, day - preset.endDaysBefore);
+    const endDateCalc = new Date(year, month - 1, day - preset.endDaysBefore);
 
     setValue("registrationStartDate", formatDateLocal(startDate));
     setValue("registrationStartTime", preset.startTime);
-    setValue("registrationDeadlineDate", formatDateLocal(endDate));
+    setValue("registrationDeadlineDate", formatDateLocal(endDateCalc));
 
-    // 동적 마감 시간: endTimeOffsetHours가 있고 행사 시간이 설정된 경우
     if ("endTimeOffsetHours" in preset && eventTime) {
       const tp = eventTime.split(":").map(Number);
       const totalMinutes = Math.max(
@@ -229,13 +207,8 @@ export default function EventEditPage() {
     }
   }, [eventDate, eventTime, registrationPreset, setValue]);
 
-  const onSubmit = (data: EventForm) => {
+  const onSubmit = async (data: EventFormValues) => {
     if (!eventId) return;
-
-    const location = combineLocation(
-      data.locationPreset === DIRECT_INPUT_VALUE ? "" : data.locationPreset,
-      data.locationDetail ?? "",
-    );
 
     const eventStartAt = new Date(`${data.date}T${data.time}:00`).toISOString();
     const eventEndAt = new Date(
@@ -248,24 +221,150 @@ export default function EventEditPage() {
       `${data.registrationDeadlineDate}T${data.registrationDeadlineTime}:00`,
     ).toISOString();
 
+    let resolvedSurveyId: number | null = existingSurveyId ?? null;
+
+    try {
+      if (existingSurveyId) {
+        const originalIds = new Set(
+          (questionListResponse?.status === 200
+            ? questionListResponse.data
+            : []
+          ).map((q) => q.id),
+        );
+        const currentServerIds = new Set(
+          draftQuestions.filter((q) => q.serverId).map((q) => q.serverId),
+        );
+
+        for (const id of originalIds) {
+          if (id !== undefined && !currentServerIds.has(id)) {
+            await deleteQuestionAsync({
+              surveyId: existingSurveyId,
+              questionId: id,
+            });
+          }
+        }
+
+        for (const q of draftQuestions) {
+          if (q.serverId) {
+            await updateQuestionAsync({
+              surveyId: existingSurveyId,
+              questionId: q.serverId,
+              data: {
+                questionType: q.questionType,
+                title: q.title || "질문",
+                required: q.required,
+                displayOrder: q.displayOrder,
+              },
+            });
+            if (q.options !== undefined) {
+              const originalQ = (questionListResponse?.data ?? []).find(
+                (oq) => oq.id === q.serverId,
+              );
+              for (const opt of originalQ?.options ?? []) {
+                if (opt.id) {
+                  await deleteOptionAsync({
+                    surveyId: existingSurveyId,
+                    questionId: q.serverId,
+                    optionId: opt.id,
+                  });
+                }
+              }
+              for (const [i, text] of q.options.entries()) {
+                if (text.trim()) {
+                  await createOptionAsync({
+                    surveyId: existingSurveyId,
+                    questionId: q.serverId,
+                    data: { text: text.trim(), displayOrder: i + 1 },
+                  });
+                }
+              }
+            }
+          } else {
+            const qRes = await createQuestionAsync({
+              surveyId: existingSurveyId,
+              data: {
+                questionType: q.questionType,
+                title: q.title || "질문",
+                required: q.required,
+                displayOrder: q.displayOrder,
+              },
+            });
+            const newQuestionId =
+              qRes.status === 201 ? (qRes.data?.id ?? null) : null;
+            if (newQuestionId && q.options?.length) {
+              for (const [i, text] of q.options.entries()) {
+                if (text.trim()) {
+                  await createOptionAsync({
+                    surveyId: existingSurveyId,
+                    questionId: newQuestionId,
+                    data: { text: text.trim(), displayOrder: i + 1 },
+                  });
+                }
+              }
+            }
+          }
+        }
+      } else if (draftQuestions.length > 0) {
+        const surveyRes = await createSurveyAsync({
+          data: {
+            title: `${data.title} 신청 설문`,
+            accessLevel: "MEMBER",
+          },
+        });
+        const newSurveyId =
+          surveyRes.status === 201 ? (surveyRes.data.id ?? null) : null;
+        if (newSurveyId) {
+          resolvedSurveyId = newSurveyId;
+          for (const q of draftQuestions) {
+            const qRes = await createQuestionAsync({
+              surveyId: newSurveyId,
+              data: {
+                questionType: q.questionType,
+                title: q.title || "질문",
+                required: q.required,
+                displayOrder: q.displayOrder,
+              },
+            });
+            const newQuestionId =
+              qRes.status === 201 ? (qRes.data?.id ?? null) : null;
+            if (newQuestionId && q.options?.length) {
+              for (const [i, text] of q.options.entries()) {
+                if (text.trim()) {
+                  await createOptionAsync({
+                    surveyId: newSurveyId,
+                    questionId: newQuestionId,
+                    data: { text: text.trim(), displayOrder: i + 1 },
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      alert("설문 처리에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
+
     updateEvent(
       {
         eventId: Number(eventId),
         data: {
           title: data.title,
           description: data.description,
-          location,
+          location: data.location,
           eventStartAt,
           eventEndAt,
           registrationStartAt,
           registrationEndAt,
           capacity: data.capacity,
+          surveyId: draftQuestions.length > 0 ? resolvedSurveyId : null,
         },
       },
       {
         onSuccess: () => {
           alert("행사가 수정되었습니다.");
-          navigate(`/events/${eventId}`);
+          navigate("/events");
         },
         onError: (error: unknown) => {
           if (isForbiddenError(error) || isEventOperatorRequired(error)) {
@@ -317,13 +416,13 @@ export default function EventEditPage() {
   }
 
   return (
-    <div className="animate-in slide-in-from-bottom-8 duration-300">
+    <div className="animate-in slide-in-from-bottom-8 duration-300 max-w-2xl mx-auto">
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Sticky Top Bar */}
-        <div className="flex justify-between items-center mb-s6 sticky top-0 z-10 py-s4 backdrop-blur-md bg-background/80">
+        <div className="flex justify-between items-center mb-s5 sticky top-0 z-10 py-s4 backdrop-blur-md bg-background/80">
           <button
             type="button"
-            onClick={() => navigate(`/events/${eventId}`)}
+            onClick={() => navigate("/events")}
             className="flex items-center gap-s2 text-sm font-bold transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <ArrowLeft size={18} /> 취소
@@ -331,243 +430,35 @@ export default function EventEditPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="bg-primary text-primary-foreground px-s6 py-s2 rounded-full text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 flex items-center gap-s2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-primary text-primary-foreground px-s5 py-s2 rounded-full text-sm font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 flex items-center gap-s2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save size={16} /> {isPending ? "수정 중..." : "수정 완료"}
           </button>
         </div>
 
-        {/* 2-Column Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-s6">
-          {/* Left Column - Title + MDEditor + Bottom Toolbar */}
-          <div className="md:col-span-2 rounded-r4 border bg-card border-border shadow-sm flex flex-col">
-            {/* 행사 제목 */}
-            <div className="px-s6 py-s5 border-b border-border">
-              <input
-                type="text"
-                {...register("title")}
-                className={cn(
-                  "w-full text-2xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/50",
-                  errors.title && "border-b-2 border-b-destructive",
-                )}
-                placeholder="행사 제목을 입력하세요"
-              />
-              {errors.title && (
-                <p className="typo-c1 text-destructive mt-s2">
-                  {errors.title.message}
-                </p>
-              )}
-            </div>
-
-            {/* WYSIWYG Editor */}
-            <div className="flex-1">
-              {formReady && (
-                <Controller
-                  name="description"
-                  control={control}
-                  render={({ field }) => (
-                    <WysiwygEditor
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      hasError={!!errors.description}
-                      className="border-0 rounded-none"
-                    />
-                  )}
-                />
-              )}
-              {errors.description && (
-                <p className="typo-c1 text-destructive px-s6 pb-s2">
-                  {errors.description.message}
-                </p>
-              )}
-            </div>
-
-            {/* Bottom Toolbar */}
-            <div className="px-s6 py-s5 border-t border-border flex items-center">
-              <button
-                type="button"
-                className={cn(
-                  "p-2 rounded-lg transition cursor-pointer",
-                  isDark
-                    ? "text-gray-400 hover:bg-white/10"
-                    : "text-gray-500 hover:bg-gray-100",
-                )}
-              >
-                <ImageIcon size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Right Column - Location / Capacity / Registration Type / Registration Period / Event Period / Calendar */}
-          <div className="rounded-r4 border bg-card border-border shadow-sm">
-            {/* 장소 */}
-            <div className="px-s5 py-s5 border-b border-border">
-              <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
-                <MapPin size={14} /> 장소
-              </label>
-              <LocationSelector
-                selectedPreset={locationPreset}
-                detail={locationDetail}
-                onPresetChange={(v) => setValue("locationPreset", v)}
-                onDetailChange={(v) => setValue("locationDetail", v)}
-                error={errors.locationPreset?.message ?? ""}
-              />
-            </div>
-
-            {/* 최대 인원 */}
-            <div className="px-s5 py-s5 border-b border-border">
-              <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
-                <Users size={14} /> 최대 인원
-              </label>
-              <input
-                type="number"
-                {...register("capacity", { valueAsNumber: true })}
-                className={cn(
-                  "w-full rounded-r3 px-s4 py-s3 border bg-muted/50 border-border text-sm",
-                  "focus:outline-none focus:border-primary",
-                  errors.capacity && "border-destructive",
-                )}
-              />
-              {errors.capacity && (
-                <p className="typo-c1 text-destructive mt-s1">
-                  {errors.capacity.message}
-                </p>
-              )}
-            </div>
-
-            {/* 신청 방식 (읽기 전용) */}
-            <div className="px-s5 py-s5 border-b border-border">
-              <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
-                <ListChecks size={14} /> 신청 방식
-              </label>
-              <div className="space-y-s2 pointer-events-none opacity-60">
-                <div
-                  className={cn(
-                    "w-full rounded-r3 px-s4 py-s3 border text-sm",
-                    event.registrationType === "AUTO_APPROVE"
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-muted/50",
-                  )}
-                >
-                  <div className="flex items-center gap-s3">
-                    <div
-                      className={cn(
-                        "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                        event.registrationType === "AUTO_APPROVE"
-                          ? "border-primary"
-                          : "border-muted-foreground/40",
-                      )}
-                    >
-                      {event.registrationType === "AUTO_APPROVE" && (
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">선착순 (자동 승인)</p>
-                      <p className="typo-c1 text-muted-foreground">
-                        신청 즉시 승인됩니다
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className={cn(
-                    "w-full rounded-r3 px-s4 py-s3 border text-sm",
-                    event.registrationType === "MANUAL_APPROVE"
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-muted/50",
-                  )}
-                >
-                  <div className="flex items-center gap-s3">
-                    <div
-                      className={cn(
-                        "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                        event.registrationType === "MANUAL_APPROVE"
-                          ? "border-primary"
-                          : "border-muted-foreground/40",
-                      )}
-                    >
-                      {event.registrationType === "MANUAL_APPROVE" && (
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">선발제 (수동 승인)</p>
-                      <p className="typo-c1 text-muted-foreground">
-                        관리자가 승인해야 합니다
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="typo-c1 text-muted-foreground mt-s2">
-                생성 후 변경할 수 없습니다
-              </p>
-            </div>
-
-            {/* 신청 기간 */}
-            <div className="border-b border-border">
-              <RegistrationPeriodSelector
-                preset={registrationPreset}
-                registrationStartDate={registrationStartDate}
-                registrationStartTime={registrationStartTime}
-                registrationDeadlineDate={registrationDeadlineDate}
-                registrationDeadlineTime={registrationDeadlineTime}
-                onPresetChange={(v) => setValue("registrationPreset", v)}
-                onFieldChange={(field, value) =>
-                  setValue(field as keyof EventForm, value)
-                }
-                errors={errors}
-              />
-            </div>
-
-            {/* 행사 기간 */}
-            <div className="px-s5 py-s5 border-b border-border">
-              <label className="flex items-center gap-s2 typo-label text-muted-foreground mb-s3">
-                <Calendar size={14} /> 행사 기간
-              </label>
-              <EventDateTimePicker
-                date={eventDate}
-                time={eventTime}
-                endDate={endDate}
-                endTime={endTime}
-                onDateChange={(v) => {
-                  setValue("date", v);
-                  if (endDate && v > endDate) setValue("endDate", v);
-                }}
-                onTimeChange={(v) => setValue("time", v)}
-                onEndDateChange={(v) => {
-                  setValue("endDate", v);
-                  if (eventDate && v < eventDate) setValue("date", v);
-                }}
-                onEndTimeChange={(v) => setValue("endTime", v)}
-                dateError={errors.date?.message}
-                timeError={errors.time?.message}
-                endDateError={errors.endDate?.message}
-                endTimeError={errors.endTime?.message}
-              />
-            </div>
-
-            {/* 캘린더 */}
-            <EventCalendarPreview
-              eventStartDate={eventDate}
-              eventEndDate={endDate}
-              registrationStartDate={registrationStartDate}
-              registrationEndDate={registrationDeadlineDate}
-              onEventDateChange={(start, end) => {
-                setValue("date", start);
-                setValue("endDate", end);
-              }}
-              onRegistrationDateChange={(start, end) => {
-                setValue("registrationStartDate", start);
-                setValue("registrationDeadlineDate", end);
-              }}
-              onRegistrationPresetChange={() =>
-                setValue("registrationPreset", "custom")
-              }
-            />
-          </div>
-        </div>
+        <EventFormFields
+          register={register}
+          control={control}
+          errors={errors}
+          setValue={setValue}
+          registrationType={registrationType}
+          eventDate={eventDate}
+          eventTime={eventTime}
+          endDate={endDate}
+          endTime={endTime}
+          registrationPreset={registrationPreset}
+          registrationStartDate={registrationStartDate}
+          registrationStartTime={registrationStartTime}
+          registrationDeadlineDate={registrationDeadlineDate}
+          registrationDeadlineTime={registrationDeadlineTime}
+          capacity={capacity}
+          capacityRaw={capacityRaw}
+          onCapacityRawChange={setCapacityRaw}
+          draftQuestions={draftQuestions}
+          onDraftQuestionsChange={setDraftQuestions}
+          registrationTypeMode="readonly"
+          editorReady={formReady}
+        />
       </form>
     </div>
   );

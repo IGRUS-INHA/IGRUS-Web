@@ -139,6 +139,16 @@ public class EventRegistrationController implements EventRegistrationApi {
         return ResponseEntity.ok(mapToRegistrationResponse(response));
     }
 
+    @Override
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<ApiRegistrationResponse> cancelRegistrationByAdmin(Long registrationId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("관리자 행사 신청 취소 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
+        var response = eventRegistrationService.cancelRegistrationByAdmin(
+                registrationId, user.userId());
+        return ResponseEntity.ok(mapToRegistrationResponse(response));
+    }
+
     // ===== 매핑 헬퍼 =====
 
     /**
@@ -208,6 +218,8 @@ public class EventRegistrationController implements EventRegistrationApi {
                 .status(r.status() != null
                         ? ApiRegistrationListResponse.StatusEnum.fromValue(r.status().name())
                         : null)
-                .registeredAt(r.registeredAt());
+                .registeredAt(r.registeredAt())
+                .isExternal(r.isExternal())
+                .phone(r.phone());
     }
 }

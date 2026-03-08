@@ -57,6 +57,7 @@ jobs:
           FEATURE_PROFILE_EDIT: 'false'
           FEATURE_EVENTS: 'false'
           FEATURE_INSTAGRAM: 'false'
+          FEATURE_DARK_MODE: 'false'
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

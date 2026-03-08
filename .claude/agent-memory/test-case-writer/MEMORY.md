@@ -33,6 +33,7 @@
 - `docs/criteria/event/event-verification-criteria.md`
 - `docs/criteria/event/event-registration-verification-criteria.md`
 - `docs/criteria/event/survey-event-registration-verification-criteria.md`
+- `docs/criteria/event/external-event-registration-verification-criteria.md`
 - `docs/criteria/inquiry-verification-criteria.md`
 - `docs/criteria/verification-criteria.md` (회원가입/승인/강등)
 - `docs/criteria/user/signup/interests-join-route-verification-criteria.md`
@@ -41,6 +42,14 @@
 ## 테스트 케이스 문서 목록 (작성 완료)
 - `docs/test-case/storage/image-presigned-url-test-cases.md` (62개 TC)
 - `docs/test-case/event/survey-event-registration-test-cases.md` (72개 TC)
+- `docs/test-case/event/external-event-registration-test-cases.md` (80개 TC)
+
+## 외부인 행사 신청 TC 패턴
+- 불변조건 ID: `EXT-INV-XX`, 보안: `SEC-EXT-XX`
+- DECISION 확정 참조가 중요: 8개 DECISION이 TC 설계에 영향
+- 동시성 TC: DB UNIQUE 없는 경우(DECISION-02) 극히 드문 중복 허용 시나리오 포함
+- allowExternal 동치 분할: 6가지 조합 (true/false x 외부인/준회원/정회원)
+- 기존 불변조건 변경(REG-INV-04, SEC-REG-01) 회귀 테스트 필수
 
 ## 교차 도메인 테스트 케이스 패턴 (설문-행사 연동)
 - 불변조건 ID: `SEVT-INV-XX`, 보안: `SEC-SEVT-XX`

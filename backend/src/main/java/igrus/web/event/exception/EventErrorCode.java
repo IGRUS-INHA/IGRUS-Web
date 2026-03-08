@@ -33,7 +33,11 @@ public enum EventErrorCode implements ErrorCode {
     EVENT_SURVEY_NOT_READY(400, "설문이 아직 시작되지 않았습니다"),
     EVENT_ATTACHMENT_FILE_NOT_FOUND(404, "첨부파일을 찾을 수 없습니다"),
     EVENT_ATTACHMENT_FILE_NOT_COMPLETED(400, "업로드가 완료되지 않은 파일입니다"),
-    EVENT_ATTACHMENT_DUPLICATE_FILE(400, "중복된 첨부파일 ID가 포함되어 있습니다");
+    EVENT_ATTACHMENT_DUPLICATE_FILE(400, "중복된 첨부파일 ID가 포함되어 있습니다"),
+    EXTERNAL_REGISTRATION_NOT_ALLOWED(400, "외부인 신청이 허용되지 않은 행사입니다"),
+    EXTERNAL_ALREADY_REGISTERED(409, "이미 신청한 외부인입니다"),
+    REGISTERED_MEMBER_EXISTS(400, "해당 학번으로 가입된 회원이 존재하므로 로그인 후 신청하세요"),
+    SURVEY_RESPONSE_SERIALIZATION_FAILED(500, "설문 응답 직렬화에 실패했습니다");
 
     private final int status;
     private final String message;

@@ -90,6 +90,36 @@ eventsByEventId:
         description: 행사를 찾을 수 없음
     security:
     - BearerAuthentication: []
+registrationsByRegistrationIdCancel:
+  post:
+    tags:
+    - Event Registration
+    summary: 관리자 신청 취소
+    description: 관리자가 신청(회원/외부인)을 취소합니다. 운영진 이상만 가능합니다.
+    operationId: cancelRegistrationByAdmin
+    parameters:
+    - name: registrationId
+      in: path
+      description: 신청 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    responses:
+      '200':
+        description: 취소 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/events.yaml#/RegistrationResponse
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음
+      '404':
+        description: 신청을 찾을 수 없음
+    security:
+    - BearerAuthentication: []
 registrationsByRegistrationIdRevert:
   post:
     tags:

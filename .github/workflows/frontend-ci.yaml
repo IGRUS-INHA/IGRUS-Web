@@ -95,3 +95,4 @@ jobs:
           FEATURE_PROFILE_EDIT: 'false'
           FEATURE_EVENTS: 'false'
           FEATURE_INSTAGRAM: 'false'
+          FEATURE_DARK_MODE: 'false'
