@@ -34,7 +34,8 @@ public final class SurveyDetailResponseMapper {
                         ? response.questions().stream()
                                 .map(SurveyDetailResponseMapper::toQuestionInner)
                                 .toList()
-                        : List.of());
+                        : List.of())
+                .responseCount(response.responseCount());
     }
 
     public static ApiQuestionResponse toQuestionInner(SurveyDetailResponse.QuestionResponse q) {

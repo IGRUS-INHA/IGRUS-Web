@@ -17,6 +17,8 @@ import {
   Image as ImageIcon,
   Minus,
   Plus,
+  UserCheck,
+  Check,
 } from "lucide-react";
 import type { UploadFile } from "@/types/upload";
 import { WysiwygEditor } from "@/components/feature/editor";
@@ -41,6 +43,7 @@ export const eventFormSchema = z
     location: z.string().min(1, "장소를 입력하세요"),
     capacity: z.number().min(1, "최대 인원은 1명 이상이어야 합니다"),
     registrationType: z.enum(["AUTO_APPROVE", "MANUAL_APPROVE"]),
+    allowExternal: z.boolean(),
     registrationPreset: z.enum(["default", "short", "custom"]),
     registrationStartDate: z.string().min(1, "신청 시작일을 선택하세요"),
     registrationStartTime: z.string().min(1, "신청 시작 시간을 선택하세요"),
@@ -88,6 +91,7 @@ interface EventFormFieldsProps {
   capacity: number;
   capacityRaw: string;
   onCapacityRawChange: (v: string) => void;
+  allowExternal: boolean;
   draftQuestions: DraftQuestion[];
   onDraftQuestionsChange: (q: DraftQuestion[]) => void;
   registrationTypeMode: "editable" | "readonly";
@@ -116,6 +120,7 @@ export function EventFormFields({
   capacity,
   capacityRaw,
   onCapacityRawChange,
+  allowExternal,
   draftQuestions,
   onDraftQuestionsChange,
   registrationTypeMode,
@@ -258,6 +263,42 @@ export function EventFormFields({
               </p>
             )}
           </div>
+        </div>
+        <div className="border-t border-border px-s5 py-s4">
+          <label className="typo-c1 text-muted-foreground mb-s2 block flex items-center gap-s1">
+            <UserCheck size={12} /> 외부인 신청
+          </label>
+          <button
+            type="button"
+            onClick={() => setValue("allowExternal", !allowExternal)}
+            className={cn(
+              "w-full rounded-r3 px-s4 py-s3 border text-left text-sm transition-colors cursor-pointer",
+              allowExternal
+                ? "border-brand-l4 bg-brand-l4/30"
+                : "border-border bg-muted/50",
+            )}
+          >
+            <div className="flex items-center gap-s3">
+              <div
+                className={cn(
+                  "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0",
+                  allowExternal
+                    ? "border-brand-l4 bg-brand-l4"
+                    : "border-muted-foreground/40",
+                )}
+              >
+                {allowExternal && (
+                  <Check size={10} className="text-primary-foreground" />
+                )}
+              </div>
+              <div>
+                <p className="font-medium">비회원 신청 허용</p>
+                <p className="typo-c1 text-muted-foreground">
+                  아이그루스 회원이 아니어도 신청 가능합니다
+                </p>
+              </div>
+            </div>
+          </button>
         </div>
       </div>
 

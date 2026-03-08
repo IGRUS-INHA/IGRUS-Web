@@ -20,6 +20,7 @@ import java.util.List;
  * @param registrationStartAt 신청 시작일 (필수)
  * @param registrationEndAt   신청 마감일 (필수)
  * @param capacity            정원 (필수, 1 이상)
+ * @param allowExternal       외부인 신청 허용 여부 (선택, null이면 기존 값 유지)
  */
 public record UpdateEventRequest(
         @NotBlank(message = "행사 제목을 입력해 주세요")
@@ -52,6 +53,8 @@ public record UpdateEventRequest(
         @Positive(message = "설문 ID는 양수여야 합니다")
         Long surveyId,
 
-        List<String> attachmentObjectKeys
+        List<String> attachmentObjectKeys,
+
+        Boolean allowExternal
 ) {
 }

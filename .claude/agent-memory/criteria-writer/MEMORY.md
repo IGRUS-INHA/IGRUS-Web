@@ -144,6 +144,23 @@
 - RegistrationListResponse schema changes: userId/userEmail/userGender/userGrade nullable, phone+isExternal added
 - Section 0 "기존 문서 영향 분석" pattern: document cross-doc changes with [ACTION REQUIRED] for post-implementation updates
 
+## Multi-Phase Bug Fix / Improvement Criteria Pattern
+- When a criteria doc covers multiple phases (bug fix + new features + refactoring), use `EVTSRV-{NNN}` style sequential IDs across all phases
+- Map each criterion to TASK-IDs from the task plan
+- Include a summary table at the end with ID, Phase, description, TASK, verification type
+- For OpenAPI-DTO field mapping bugs: verify field presence in DTO, `from()` mapping, controller mapping (Generated DTO <-> internal DTO), and build success
+- For cross-domain side effects (e.g., survey response delete -> event registration cancel): document both the positive case (with linked event) and negative case (independent entity)
+- For N+1 prevention: explicitly call out batch query strategy in criteria
+
+## Key Design Decisions (Event-Survey Improvements)
+- allowExternal bug: field exists in OpenAPI (7 schemas) and Event entity, but missing from Java DTOs and controller mappings
+- Survey responseCount: currently not exposed in any DTO or OpenAPI schema
+- Admin survey response list API: `GET /api/v1/admin/surveys/{surveyId}/responses` -- OPERATOR+ only
+- Survey response delete policy (confirmed): CLOSED survey responses cannot be deleted; OPEN only
+- Survey response delete cascade (confirmed): deleting survey response auto-cancels linked event registration
+- SurveyStatisticsService only aggregates survey_responses, not external_survey_responses
+- updateEventStatusAfterIncrement/Decrement: duplicated between EventRegistrationService and ExternalEventRegistrationService
+
 ## Key Design Decisions (Post/Inquiry S3 Integration)
 - PostImage.imageUrl and InquiryAttachment.fileUrl store S3 Object Key, NOT actual URLs -- field naming mismatch
 - AttachmentInfo.fileUrl has `@Pattern(regexp = "^https?://...")` URL validation -- INCOMPATIBLE with Object Key format, must be removed

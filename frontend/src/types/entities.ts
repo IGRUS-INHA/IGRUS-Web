@@ -115,7 +115,6 @@ export interface Event {
   startDate?: string;
   endDate?: string;
   location: string;
-  image?: string;
   status: EventStatus;
   capacity?: number;
   maxCapacity?: number;

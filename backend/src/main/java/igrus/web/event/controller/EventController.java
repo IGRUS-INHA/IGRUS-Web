@@ -62,7 +62,8 @@ public class EventController implements EventApi {
                 EnumUtils.fromStringOrNull(EventRegistrationType.class,
                         createEventRequest.getRegistrationType().getValue()),
                 createEventRequest.getSurveyId(),
-                createEventRequest.getAttachmentObjectKeys()
+                createEventRequest.getAttachmentObjectKeys(),
+                createEventRequest.getAllowExternal()
         );
 
         var result = eventService.createEvent(request, user.userId());
@@ -70,7 +71,8 @@ public class EventController implements EventApi {
                 .id(result.id())
                 .title(result.title())
                 .createdAt(result.createdAt())
-                .surveyId(result.surveyId()));
+                .surveyId(result.surveyId())
+                .allowExternal(result.allowExternal()));
     }
 
     @Override
@@ -120,7 +122,8 @@ public class EventController implements EventApi {
                 updateEventRequest.getRegistrationEndAt(),
                 updateEventRequest.getCapacity(),
                 updateEventRequest.getSurveyId(),
-                updateEventRequest.getAttachmentObjectKeys()
+                updateEventRequest.getAttachmentObjectKeys(),
+                updateEventRequest.getAllowExternal()
         );
 
         var response = eventService.updateEvent(eventId, request, user.userId());

@@ -1,5 +1,10 @@
 package igrus.web.survey.statistics.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import igrus.web.event.domain.ExternalSurveyResponse;
+import igrus.web.event.repository.ExternalSurveyResponseRepository;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.domain.SurveyAccessLevel;
 import igrus.web.survey.exception.SurveyNotFoundException;
@@ -8,6 +13,7 @@ import igrus.web.survey.question.domain.*;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.survey.response.domain.*;
+import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import igrus.web.survey.response.repository.SurveyAnswerRepository;
 import igrus.web.survey.response.repository.SurveyResponseRepository;
 import igrus.web.survey.statistics.dto.response.*;
@@ -37,6 +43,8 @@ public class SurveyStatisticsService {
     private final SurveyResponseRepository surveyResponseRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
     private final SurveyQuestionRepository surveyQuestionRepository;
+    private final ExternalSurveyResponseRepository externalSurveyResponseRepository;
+    private final ObjectMapper objectMapper;
 
     /**
      * 설문 통계를 조회합니다.
@@ -67,6 +75,9 @@ public class SurveyStatisticsService {
         int totalResponseCount = validResponses.size();
 
         // 4. 응답 기간 계산 (min/max createdAt, 0건이면 null)
+        //    NOTE: 응답 기간은 회원 응답(SurveyResponse)의 createdAt만 기준으로 계산합니다.
+        //    외부인 응답(ExternalSurveyResponse)의 createdAt은 포함하지 않습니다.
+        //    외부인 응답은 행사 신청 시 함께 저장되므로 설문 응답 기간과 성격이 다릅니다.
         Instant responseStartedAt = null;
         Instant responseEndedAt = null;
         if (!validResponses.isEmpty()) {
@@ -99,16 +110,43 @@ public class SurveyStatisticsService {
         Map<Long, List<SurveyAnswer>> answersByQuestionId = validAnswers.stream()
                 .collect(Collectors.groupingBy(a -> a.getQuestion().getId()));
 
-        // 8. 질문별 통계 계산
+        // 8. 외부인 응답 통합 (ExternalSurveyResponse JSON 파싱)
+        List<ExternalSurveyResponse> externalResponses = externalSurveyResponseRepository.findBySurveyId(surveyId);
+        int externalResponseCount = 0;
+        Map<Long, List<ExternalAnswerData>> externalAnswersByQuestionId = new HashMap<>();
+
+        for (ExternalSurveyResponse externalResponse : externalResponses) {
+            try {
+                List<SubmitAnswerRequest> parsedAnswers = objectMapper.readValue(
+                        externalResponse.getAnswers(),
+                        new TypeReference<>() {}
+                );
+                externalResponseCount++;
+                for (SubmitAnswerRequest answer : parsedAnswers) {
+                    externalAnswersByQuestionId
+                            .computeIfAbsent(answer.questionId(), k -> new ArrayList<>())
+                            .add(ExternalAnswerData.from(answer));
+                }
+            } catch (JsonProcessingException e) {
+                log.warn("외부인 응답 JSON 파싱 실패, 건너뜀: externalResponseId={}, surveyId={}, error={}",
+                        externalResponse.getId(), surveyId, e.getMessage());
+            }
+        }
+
+        int combinedTotalResponseCount = totalResponseCount + externalResponseCount;
+
+        // 9. 질문별 통계 계산 (회원 + 외부인 합산)
         List<QuestionStatisticsResponse> questionStatistics = allQuestions.stream()
                 .map(question -> buildQuestionStatistics(
-                        question, answersByQuestionId, totalResponseCount, includeRespondentInfo))
+                        question, answersByQuestionId, externalAnswersByQuestionId,
+                        combinedTotalResponseCount, includeRespondentInfo))
                 .toList();
 
-        log.info("설문 통계 조회 완료: surveyId={}, 총 응답 수={}", surveyId, totalResponseCount);
+        log.info("설문 통계 조회 완료: surveyId={}, 회원 응답 수={}, 외부인 응답 수={}, 총 응답 수={}",
+                surveyId, totalResponseCount, externalResponseCount, combinedTotalResponseCount);
 
         return new SurveyStatisticsResponse(
-                totalResponseCount,
+                combinedTotalResponseCount,
                 responseStartedAt,
                 responseEndedAt,
                 respondents,
@@ -119,15 +157,17 @@ public class SurveyStatisticsService {
     // ==================== Private helpers ====================
 
     /**
-     * 질문별 통계를 생성합니다.
+     * 질문별 통계를 생성합니다. 회원 응답(SurveyAnswer)과 외부인 응답(ExternalAnswerData)을 합산합니다.
      */
     private QuestionStatisticsResponse buildQuestionStatistics(
             SurveyQuestion question,
             Map<Long, List<SurveyAnswer>> answersByQuestionId,
+            Map<Long, List<ExternalAnswerData>> externalAnswersByQuestionId,
             int totalResponseCount,
             boolean includeRespondentInfo) {
 
         List<SurveyAnswer> answers = answersByQuestionId.getOrDefault(question.getId(), List.of());
+        List<ExternalAnswerData> externalAnswers = externalAnswersByQuestionId.getOrDefault(question.getId(), List.of());
         int responseCount = answers.size();
 
         String category = question.getQuestionType().getCategory();
@@ -138,20 +178,29 @@ public class SurveyStatisticsService {
         GridQuestionStatistics gridStatistics = null;
 
         switch (category) {
-            case "TEXT" -> textStatistics = buildTextStatistics(answers, includeRespondentInfo);
-            case "SCALE" -> scaleStatistics = buildScaleStatistics(question, answers);
+            case "TEXT" -> {
+                responseCount += externalAnswers.size();
+                textStatistics = buildTextStatistics(answers, externalAnswers, includeRespondentInfo);
+            }
+            case "SCALE" -> {
+                responseCount += externalAnswers.size();
+                scaleStatistics = buildScaleStatistics(question, answers, externalAnswers);
+            }
             case "OPTION" -> {
                 // OPTION 카테고리에는 MC, CHECKBOX, DROPDOWN이 포함
                 // CHECKBOX는 응답자당 여러 OptionSurveyAnswer가 생성되므로 responseCount 보정 필요
                 if (question.getQuestionType() == SurveyQuestionType.CHECKBOX) {
                     responseCount = countDistinctResponses(answers);
                 }
-                optionStatistics = buildOptionStatistics(question, answers, totalResponseCount);
+                // 외부인 OPTION: 한 응답당 selectedOptionIds 목록을 제출하므로 1명으로 카운트
+                responseCount += externalAnswers.size();
+                optionStatistics = buildOptionStatistics(question, answers, externalAnswers, totalResponseCount);
             }
             case "GRID" -> {
                 // GRID는 행x옵션 조합당 1개의 GridSurveyAnswer이므로 responseCount 보정 필요
                 responseCount = countDistinctResponses(answers);
-                gridStatistics = buildGridStatistics(question, answers, totalResponseCount);
+                responseCount += externalAnswers.size();
+                gridStatistics = buildGridStatistics(question, answers, externalAnswers, totalResponseCount);
             }
         }
 
@@ -180,14 +229,16 @@ public class SurveyStatisticsService {
 
     /**
      * TEXT 카테고리 통계를 생성합니다.
-     * 텍스트 응답 항목 목록을 SurveyResponse.createdAt 오름차순으로 반환합니다.
+     * 회원 텍스트 응답은 SurveyResponse.createdAt 오름차순으로, 외부인 응답은 그 뒤에 추가됩니다.
      *
-     * @param answers               답변 목록
+     * @param answers               회원 답변 목록
+     * @param externalAnswers       외부인 답변 목록
      * @param includeRespondentInfo 응답자 정보 포함 여부 (비PUBLIC 설문이면 true)
      */
     private TextQuestionStatistics buildTextStatistics(List<SurveyAnswer> answers,
+                                                       List<ExternalAnswerData> externalAnswers,
                                                        boolean includeRespondentInfo) {
-        List<TextResponseItem> textResponses = answers.stream()
+        List<TextResponseItem> textResponses = new ArrayList<>(answers.stream()
                 .sorted(Comparator.comparing(a -> a.getResponse().getCreatedAt()))
                 .map(a -> {
                     if (!(a instanceof TextSurveyAnswer textAnswer)) {
@@ -205,7 +256,14 @@ public class SurveyStatisticsService {
                     }
                     return new TextResponseItem(text, respondent);
                 })
-                .toList();
+                .toList());
+
+        // 외부인 텍스트 응답 추가 (응답자 정보 없음)
+        for (ExternalAnswerData ext : externalAnswers) {
+            if (ext.textValue() != null) {
+                textResponses.add(new TextResponseItem(ext.textValue(), null));
+            }
+        }
 
         return new TextQuestionStatistics(textResponses);
     }
@@ -213,8 +271,11 @@ public class SurveyStatisticsService {
     /**
      * SCALE 카테고리 통계를 생성합니다.
      * 평균(HALF_UP, scale=1), 최솟값, 최댓값, 값별 분포를 계산합니다.
+     * 회원 응답과 외부인 응답을 합산합니다.
      */
-    private ScaleQuestionStatistics buildScaleStatistics(SurveyQuestion question, List<SurveyAnswer> answers) {
+    private ScaleQuestionStatistics buildScaleStatistics(SurveyQuestion question,
+                                                          List<SurveyAnswer> answers,
+                                                          List<ExternalAnswerData> externalAnswers) {
         if (!(question instanceof LinearScaleSurveyQuestion scaleQuestion)) {
             throw new SurveyStatisticsAggregationException(
                     "SCALE 질문에 잘못된 질문 유형: questionId=" + question.getId()
@@ -229,16 +290,8 @@ public class SurveyStatisticsService {
             distribution.put(i, 0);
         }
 
-        if (answers.isEmpty()) {
-            return new ScaleQuestionStatistics(
-                    BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP),
-                    0,
-                    0,
-                    distribution
-            );
-        }
-
-        List<Integer> values = answers.stream()
+        // 회원 응답 값 추출
+        List<Integer> values = new ArrayList<>(answers.stream()
                 .map(a -> {
                     if (!(a instanceof NumericSurveyAnswer numericAnswer)) {
                         throw new SurveyStatisticsAggregationException(
@@ -247,7 +300,23 @@ public class SurveyStatisticsService {
                     }
                     return numericAnswer.getNumericValue();
                 })
-                .toList();
+                .toList());
+
+        // 외부인 응답 값 추가
+        for (ExternalAnswerData ext : externalAnswers) {
+            if (ext.numericValue() != null) {
+                values.add(ext.numericValue());
+            }
+        }
+
+        if (values.isEmpty()) {
+            return new ScaleQuestionStatistics(
+                    BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP),
+                    0,
+                    0,
+                    distribution
+            );
+        }
 
         // 분포 계산
         for (Integer value : values) {
@@ -268,11 +337,12 @@ public class SurveyStatisticsService {
 
     /**
      * OPTION/CHECKBOX 카테고리 통계를 생성합니다.
-     * 옵션별 선택 수와 비율을 계산합니다.
+     * 옵션별 선택 수와 비율을 계산합니다. 회원 응답과 외부인 응답을 합산합니다.
      */
     private OptionQuestionStatistics buildOptionStatistics(
             SurveyQuestion question,
             List<SurveyAnswer> answers,
+            List<ExternalAnswerData> externalAnswers,
             int totalResponseCount) {
 
         // 질문의 삭제되지 않은 옵션만 조회
@@ -300,6 +370,15 @@ public class SurveyStatisticsService {
             optionCounts.merge(optionId, 1, Integer::sum);
         }
 
+        // 외부인 응답의 옵션 선택 합산
+        for (ExternalAnswerData ext : externalAnswers) {
+            if (ext.selectedOptionIds() != null) {
+                for (Long optionId : ext.selectedOptionIds()) {
+                    optionCounts.merge(optionId, 1, Integer::sum);
+                }
+            }
+        }
+
         // 옵션별 통계 생성
         List<OptionStatisticsItem> optionItems = activeOptions.stream()
                 .map(option -> new OptionStatisticsItem(
@@ -316,10 +395,12 @@ public class SurveyStatisticsService {
     /**
      * GRID 카테고리 통계를 생성합니다.
      * 행별 옵션 분포를 계산합니다. 비율 분모는 전체 설문 응답자 수(totalResponseCount)입니다.
+     * 회원 응답과 외부인 응답을 합산합니다.
      */
     private GridQuestionStatistics buildGridStatistics(
             SurveyQuestion question,
             List<SurveyAnswer> answers,
+            List<ExternalAnswerData> externalAnswers,
             int totalResponseCount) {
 
         if (!(question instanceof GridSurveyQuestion gridQuestion)) {
@@ -356,6 +437,21 @@ public class SurveyStatisticsService {
                     .merge(optionId, 1, Integer::sum);
         }
 
+        // 외부인 GRID 응답 합산
+        for (ExternalAnswerData ext : externalAnswers) {
+            if (ext.gridAnswers() != null) {
+                for (ExternalGridAnswerData gridAnswer : ext.gridAnswers()) {
+                    Long rowId = gridAnswer.rowId();
+                    if (gridAnswer.selectedOptionIds() != null) {
+                        for (Long optionId : gridAnswer.selectedOptionIds()) {
+                            rowOptionCounts.computeIfAbsent(rowId, k -> new LinkedHashMap<>())
+                                    .merge(optionId, 1, Integer::sum);
+                        }
+                    }
+                }
+            }
+        }
+
         // 행별 통계 생성
         List<GridRowStatistics> rowStatistics = activeRows.stream()
                 .map(row -> {
@@ -390,5 +486,53 @@ public class SurveyStatisticsService {
         return BigDecimal.valueOf(count)
                 .multiply(BigDecimal.valueOf(100))
                 .divide(BigDecimal.valueOf(total), 1, RoundingMode.HALF_UP);
+    }
+
+    // ==================== 외부인 응답 데이터 구조 ====================
+
+    /**
+     * 외부인 설문 응답 JSON에서 파싱된 개별 답변 데이터.
+     * {@link SubmitAnswerRequest}의 JSON 구조와 1:1 대응합니다.
+     *
+     * @param questionId        질문 ID
+     * @param textValue         텍스트 응답 값 (TEXT 카테고리)
+     * @param selectedOptionIds 선택된 옵션 ID 목록 (OPTION 카테고리)
+     * @param numericValue      숫자 값 (SCALE 카테고리)
+     * @param gridAnswers       그리드 답변 목록 (GRID 카테고리)
+     */
+    private record ExternalAnswerData(
+            Long questionId,
+            String textValue,
+            List<Long> selectedOptionIds,
+            Integer numericValue,
+            List<ExternalGridAnswerData> gridAnswers
+    ) {
+        static ExternalAnswerData from(SubmitAnswerRequest request) {
+            List<ExternalGridAnswerData> gridAnswerDataList = null;
+            if (request.gridAnswers() != null) {
+                gridAnswerDataList = request.gridAnswers().stream()
+                        .map(g -> new ExternalGridAnswerData(g.rowId(), g.selectedOptionIds()))
+                        .toList();
+            }
+            return new ExternalAnswerData(
+                    request.questionId(),
+                    request.textValue(),
+                    request.selectedOptionIds(),
+                    request.numericValue(),
+                    gridAnswerDataList
+            );
+        }
+    }
+
+    /**
+     * 외부인 그리드 답변 데이터.
+     *
+     * @param rowId             행 ID
+     * @param selectedOptionIds 선택된 옵션 ID 목록
+     */
+    private record ExternalGridAnswerData(
+            Long rowId,
+            List<Long> selectedOptionIds
+    ) {
     }
 }

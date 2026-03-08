@@ -93,6 +93,11 @@
 - Call `user.changeRole(role)` separately after create
 - Bean name verification: `applicationContext.containsBean("beanMethodName")` instead of type-based check
 
+### Mockito Default Return Values
+- Mockito mock returns `false` (not `null`) for `Boolean` return type by default
+- This matters when verify-ing exact argument values in tests that depend on mock.getXxx() results
+- When adding a new field and using `event.getAllowExternal()` as fallback in service, mock returns `false` not `null`
+
 ### Signature Change Propagation
 - When adding fields to record DTOs (e.g., `CreateEventRequest`, `UpdateEventRequest`), ALL call sites must be updated: controllers, services, tests, and integration tests
 - `replace_all` on constructor patterns must be carefully scoped: `isEqualTo(EnumType.VALUE)` can match `EnumType.VALUE);` pattern and get corrupted (e.g., `isEqualTo(EnumType.VALUE, null)`)

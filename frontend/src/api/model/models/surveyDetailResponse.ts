@@ -49,4 +49,6 @@ export interface SurveyDetailResponse {
   createdAt?: string;
   updatedAt?: string;
   questions?: QuestionResponse[];
+  /** 제출된 응답 수 (soft-delete 제외) */
+  responseCount?: number;
 }

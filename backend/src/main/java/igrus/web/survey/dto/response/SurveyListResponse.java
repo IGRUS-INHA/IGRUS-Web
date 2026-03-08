@@ -18,6 +18,7 @@ import java.time.Instant;
  * @param accessLevel    응답 대상 권한
  * @param deadline       설문 마감일
  * @param createdAt      생성 시각
+ * @param responseCount  제출된 응답 수 (soft-delete 제외)
  */
 public record SurveyListResponse(
         Long id,
@@ -26,15 +27,17 @@ public record SurveyListResponse(
         SurveyResponseStatus responseStatus,
         SurveyAccessLevel accessLevel,
         Instant deadline,
-        Instant createdAt
+        Instant createdAt,
+        int responseCount
 ) {
     /**
-     * Survey 엔티티로부터 SurveyListResponse를 생성합니다.
+     * Survey 엔티티와 응답 수로부터 SurveyListResponse를 생성합니다.
      *
-     * @param survey 설문 엔티티
+     * @param survey        설문 엔티티
+     * @param responseCount 응답 수
      * @return SurveyListResponse
      */
-    public static SurveyListResponse from(Survey survey) {
+    public static SurveyListResponse from(Survey survey, int responseCount) {
         return new SurveyListResponse(
                 survey.getId(),
                 survey.getTitle(),
@@ -42,7 +45,8 @@ public record SurveyListResponse(
                 survey.getResponseStatus(),
                 survey.getAccessLevel(),
                 survey.getDeadline(),
-                survey.getCreatedAt()
+                survey.getCreatedAt(),
+                responseCount
         );
     }
 }
