@@ -23,6 +23,7 @@ import igrus.web.event.exception.EventNotDeletableException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.EventRegistrationNotReopenableException;
 import igrus.web.event.exception.InvalidEventDateException;
+import igrus.web.event.exception.SurveyAlreadyLinkedToEventException;
 import igrus.web.event.repository.EventAttachmentRepository;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventRegistrationRepository;
@@ -118,9 +119,14 @@ public class EventService {
         validateEventDates(request.eventStartAt(), request.eventEndAt(),
                 request.registrationStartAt(), request.registrationEndAt());
 
-        // 4. 설문 존재 검증 (surveyId가 제공된 경우)
+        // 4. 설문 존재 검증 및 1:1 연결 검증 (surveyId가 제공된 경우)
         if (request.surveyId() != null) {
-            validateSurveyExists(request.surveyId());
+            Survey survey = validateAndGetSurvey(request.surveyId());
+            validateSurveyNotLinkedToOtherEvent(request.surveyId());
+            if (Boolean.TRUE.equals(request.allowExternal())) {
+                survey.upgradeToPublic();
+                log.info("외부인 허용 행사 생성 - 설문 접근 권한 PUBLIC 자동 변경: surveyId={}", request.surveyId());
+            }
         }
 
         // 5. Event 도메인 객체 생성
@@ -276,9 +282,18 @@ public class EventService {
         validateEventDates(request.eventStartAt(), request.eventEndAt(),
                 request.registrationStartAt(), request.registrationEndAt());
 
-        // 6. 설문 존재 검증 (새 surveyId가 non-null인 경우)
+        // 6. 설문 존재 검증 및 1:1 연결 검증 + 외부인 허용 시 설문 접근 권한 PUBLIC 자동 승격
         if (request.surveyId() != null) {
-            validateSurveyExists(request.surveyId());
+            Survey survey = validateAndGetSurvey(request.surveyId());
+            validateSurveyNotLinkedToOtherEvent(request.surveyId(), eventId);
+            boolean effectiveAllowExternal = request.allowExternal() != null
+                    ? request.allowExternal()
+                    : event.getAllowExternal();
+            if (Boolean.TRUE.equals(effectiveAllowExternal)) {
+                survey.upgradeToPublic();
+                log.info("행사 수정 - 외부인 허용 행사에 설문 연결, 설문 접근 권한 PUBLIC 자동 변경: eventId={}, surveyId={}",
+                        eventId, request.surveyId());
+            }
         }
 
         // 7. 설문 변경 로그 (surveyId가 변경된 경우)
@@ -699,18 +714,45 @@ public class EventService {
     }
 
     /**
-     * 설문의 존재 및 활성 상태를 검증합니다.
+     * 설문의 존재 및 활성 상태를 검증하고 Survey 엔티티를 반환합니다.
      * SEVT-INV-04: 설문이 존재하고 deleted == false이고 trashedAt == null이어야 합니다.
      * 연결 시점에 visibility나 responseStatus는 검증하지 않습니다.
      *
      * @param surveyId 설문 ID
+     * @return 검증된 Survey 엔티티
      * @throws SurveyNotFoundException 설문이 존재하지 않거나 삭제/휴지통 상태인 경우
      */
-    private void validateSurveyExists(Long surveyId) {
+    private Survey validateAndGetSurvey(Long surveyId) {
         Survey survey = surveyRepository.findByIdAndDeletedFalse(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
         if (survey.getTrashedAt() != null) {
             throw new SurveyNotFoundException(surveyId);
+        }
+        return survey;
+    }
+
+    /**
+     * 설문이 다른 행사에 이미 연결되어 있는지 검증합니다. (생성 시)
+     *
+     * @param surveyId 설문 ID
+     * @throws SurveyAlreadyLinkedToEventException 이미 다른 행사에 연결된 경우
+     */
+    private void validateSurveyNotLinkedToOtherEvent(Long surveyId) {
+        eventRepository.findBySurveyId(surveyId).ifPresent(existingEvent -> {
+            throw new SurveyAlreadyLinkedToEventException(surveyId);
+        });
+    }
+
+    /**
+     * 설문이 다른 행사에 이미 연결되어 있는지 검증합니다. (수정 시, 자기 자신 제외)
+     *
+     * @param surveyId 설문 ID
+     * @param eventId  현재 수정 중인 행사 ID
+     * @throws SurveyAlreadyLinkedToEventException 이미 다른 행사에 연결된 경우
+     */
+    private void validateSurveyNotLinkedToOtherEvent(Long surveyId, Long eventId) {
+        if (eventRepository.existsBySurveyIdAndIdNot(surveyId, eventId)) {
+            throw new SurveyAlreadyLinkedToEventException(surveyId);
         }
     }
 

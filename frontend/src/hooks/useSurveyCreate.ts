@@ -15,11 +15,15 @@ export function useSurveyCreate() {
   // 실패 시 throw하여 호출자가 처리.
   const submitSurvey = async (
     eventTitle: string,
+    allowExternal?: boolean,
   ): Promise<number | undefined> => {
     if (draftQuestions.length === 0) return undefined;
 
     const surveyRes = await createSurveyAsync({
-      data: { title: `${eventTitle} 신청 설문`, accessLevel: "MEMBER" },
+      data: {
+        title: `${eventTitle} 신청 설문`,
+        accessLevel: allowExternal ? "PUBLIC" : "MEMBER",
+      },
     });
     const newSurveyId =
       surveyRes.status === 201 ? (surveyRes.data.id ?? undefined) : undefined;

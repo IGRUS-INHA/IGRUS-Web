@@ -129,6 +129,15 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      */
     Optional<Event> findBySurveyId(Long surveyId);
 
+    /**
+     * 특정 설문이 다른 행사에 이미 연결되어 있는지 확인합니다. (수정 시 자기 자신 제외)
+     *
+     * @param surveyId 설문 ID
+     * @param eventId  제외할 행사 ID (자기 자신)
+     * @return 다른 행사에 이미 연결되어 있으면 true
+     */
+    boolean existsBySurveyIdAndIdNot(Long surveyId, Long eventId);
+
     // === 원자적 UPDATE (@SQLRestriction 미적용, 명시적 deleted 조건 필요) ===
 
     /**
