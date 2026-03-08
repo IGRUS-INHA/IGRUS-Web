@@ -28,7 +28,10 @@ interface UseImageUploadReturn {
   getUploadResults: () => UploadResult[];
   reset: () => void;
   setExistingItems: (
-    items: Array<{ objectKey: string; previewUrl: string }>,
+    items: Array<{
+      objectKey: string;
+      previewUrl: string;
+    }>,
   ) => void;
 }
 
@@ -141,6 +144,7 @@ export function useImageUpload(
 
     const MAX_RETRIES = 2;
     const BACKOFF_BASE_MS = 1000; // 지수 백오프: 1s, 2s, 4s
+    let failedCount = 0;
 
     for (const uploadFile of pendingFiles) {
       let lastError = "";
@@ -197,7 +201,14 @@ export function useImageUpload(
           status: UPLOAD_STATUS.ERROR,
           error: lastError,
         });
+        failedCount++;
       }
+    }
+
+    if (failedCount > 0) {
+      throw new Error(
+        `이미지 업로드에 실패했습니다 (${failedCount}개). 다시 시도해주세요.`,
+      );
     }
 
     return results;
@@ -228,7 +239,12 @@ export function useImageUpload(
   }, []);
 
   const setExistingItems = useCallback(
-    (items: Array<{ objectKey: string; previewUrl: string }>) => {
+    (
+      items: Array<{
+        objectKey: string;
+        previewUrl: string;
+      }>,
+    ) => {
       const existingFiles: UploadFile[] = items.map((item) => ({
         id: generateUploadId(),
         file: new File([], item.objectKey.split("/").pop() ?? "image"),

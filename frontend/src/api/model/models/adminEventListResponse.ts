@@ -63,6 +63,4 @@ export interface AdminEventListResponse {
   surveyId?: number | null;
   /** 외부인(비회원) 신청 허용 여부 */
   allowExternal?: boolean;
-  /** 행사 이미지 URL 목록 */
-  imageUrls?: string[];
 }

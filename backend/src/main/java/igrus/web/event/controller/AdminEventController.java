@@ -122,7 +122,8 @@ public class AdminEventController implements AdminEventApi {
                 .visibility(r.visibility() != null
                         ? ApiAdminEventDetailResponse.VisibilityEnum.fromValue(r.visibility().name())
                         : null)
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .allowExternal(r.allowExternal());
 
         if (r.attachments() != null) {
             response.setAttachments(r.attachments().stream()
@@ -160,7 +161,8 @@ public class AdminEventController implements AdminEventApi {
                         ? ApiAdminEventListResponse.VisibilityEnum.fromValue(
                                 r.visibility().name())
                         : null)
-                .surveyId(r.surveyId());
+                .surveyId(r.surveyId())
+                .allowExternal(r.allowExternal());
     }
 
     private ApiEventAttachmentResponse mapToAttachmentResponse(EventAttachmentDto a) {

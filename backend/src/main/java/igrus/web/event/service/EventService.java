@@ -141,10 +141,10 @@ public class EventService {
         Event savedEvent = eventRepository.save(event);
 
         // 6. 첨부파일 처리
-        List<Long> attachmentFileIds = normalizeFileIds(request.attachmentFileIds());
-        if (!attachmentFileIds.isEmpty()) {
-            validateAndCreateAttachments(savedEvent, attachmentFileIds, userId);
-            log.info("행사 생성: eventId={}, attachmentCount={}", savedEvent.getId(), attachmentFileIds.size());
+        List<String> attachmentObjectKeys = normalizeObjectKeys(request.attachmentObjectKeys());
+        if (!attachmentObjectKeys.isEmpty()) {
+            validateAndCreateAttachments(savedEvent, attachmentObjectKeys, userId);
+            log.info("행사 생성: eventId={}, attachmentCount={}", savedEvent.getId(), attachmentObjectKeys.size());
         }
 
         // 7. 설문 연결 행사 생성 로그 (TASK-015)
@@ -221,7 +221,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(event -> EventListResponse.from(event, getAttachmentDtos(event.getId())))
+                .map(EventListResponse::from)
                 .toList();
     }
 
@@ -287,9 +287,9 @@ public class EventService {
         );
 
         // 9. 첨부파일 전체 교체
-        List<Long> attachmentFileIds = normalizeFileIds(request.attachmentFileIds());
+        List<String> attachmentObjectKeys = normalizeObjectKeys(request.attachmentObjectKeys());
         List<EventAttachmentDto> attachmentDtos = resolveAttachments(
-                event, attachmentFileIds, userId);
+                event, attachmentObjectKeys, userId);
 
         // 10. 응답 반환 (dirty checking으로 자동 저장)
         return EventDetailResponse.from(event, false, false, attachmentDtos);
@@ -534,7 +534,7 @@ public class EventService {
         }
 
         return events.stream()
-                .map(event -> EventListResponse.from(event, getAttachmentDtos(event.getId())))
+                .map(EventListResponse::from)
                 .toList();
     }
 
@@ -688,16 +688,16 @@ public class EventService {
     /**
      * null 또는 빈 배열을 빈 리스트로 정규화한다.
      */
-    private List<Long> normalizeFileIds(List<Long> fileIds) {
-        return fileIds == null ? List.of() : fileIds;
+    private List<String> normalizeObjectKeys(List<String> objectKeys) {
+        return objectKeys == null ? List.of() : objectKeys;
     }
 
     /**
      * 첨부파일을 검증하고 EventAttachment를 생성한다.
      */
-    private void validateAndCreateAttachments(Event event, List<Long> fileIds, Long userId) {
-        validateNoDuplicateFileIds(fileIds);
-        List<FileMetadata> files = validateAndFetchFiles(fileIds, userId);
+    private void validateAndCreateAttachments(Event event, List<String> objectKeys, Long userId) {
+        validateNoDuplicateObjectKeys(objectKeys);
+        List<FileMetadata> files = validateAndFetchFilesByObjectKeys(objectKeys, userId);
 
         List<EventAttachment> attachments = files.stream()
                 .map(file -> EventAttachment.create(event, file))
@@ -709,100 +709,99 @@ public class EventService {
     /**
      * 전체 교체(Full Replace) 방식으로 첨부파일을 관리한다.
      */
-    private List<EventAttachmentDto> resolveAttachments(Event event, List<Long> newFileIds, Long userId) {
+    private List<EventAttachmentDto> resolveAttachments(Event event, List<String> newObjectKeys, Long userId) {
         List<EventAttachment> existing = eventAttachmentRepository.findByEventIdWithFileMetadata(event.getId());
 
-        // 기존 파일 ID Set
-        Set<Long> existingFileIdSet = existing.stream()
-                .map(ea -> ea.getFileMetadata().getId())
+        // 기존 objectKey Set
+        Set<String> existingObjectKeySet = existing.stream()
+                .map(ea -> ea.getFileMetadata().getObjectKey())
                 .collect(Collectors.toSet());
-        Set<Long> newFileIdSet = new HashSet<>(newFileIds);
+        Set<String> newObjectKeySet = new HashSet<>(newObjectKeys);
 
         // 빈 배열이면 모두 삭제
-        if (newFileIds.isEmpty()) {
+        if (newObjectKeys.isEmpty()) {
             if (!existing.isEmpty()) {
                 eventAttachmentRepository.deleteAll(existing);
             }
             return List.of();
         }
 
-        validateNoDuplicateFileIds(newFileIds);
+        validateNoDuplicateObjectKeys(newObjectKeys);
 
         // 변경이 없으면 기존 그대로 반환
-        if (existingFileIdSet.equals(newFileIdSet)) {
+        if (existingObjectKeySet.equals(newObjectKeySet)) {
             return existing.stream().map(EventAttachmentDto::from).toList();
         }
 
-        // 추가 대상 파일 검증
-        Set<Long> toAdd = new HashSet<>(newFileIdSet);
-        toAdd.removeAll(existingFileIdSet);
+        // 추가 대상 objectKey 검증
+        Set<String> toAdd = new HashSet<>(newObjectKeySet);
+        toAdd.removeAll(existingObjectKeySet);
 
-        Map<Long, FileMetadata> newFileMap = new LinkedHashMap<>();
+        Map<String, FileMetadata> newFileMap = new LinkedHashMap<>();
         if (!toAdd.isEmpty()) {
-            List<FileMetadata> newFiles = validateAndFetchFiles(new ArrayList<>(toAdd), userId);
-            newFiles.forEach(f -> newFileMap.put(f.getId(), f));
+            List<FileMetadata> newFiles = validateAndFetchFilesByObjectKeys(new ArrayList<>(toAdd), userId);
+            newFiles.forEach(f -> newFileMap.put(f.getObjectKey(), f));
         }
 
         // 기존 전체 삭제 후 새로 생성 (단순 전체 교체)
         eventAttachmentRepository.deleteAll(existing);
 
         // 기존 파일 맵 (유지 대상용)
-        Map<Long, FileMetadata> existingFileMap = existing.stream()
+        Map<String, FileMetadata> existingFileMap = existing.stream()
                 .collect(Collectors.toMap(
-                        ea -> ea.getFileMetadata().getId(),
+                        ea -> ea.getFileMetadata().getObjectKey(),
                         EventAttachment::getFileMetadata,
                         (a, b) -> a
                 ));
 
-        List<EventAttachment> newAttachments = newFileIds.stream()
-                .map(fileId -> {
-                    FileMetadata fm = newFileMap.containsKey(fileId)
-                            ? newFileMap.get(fileId)
-                            : existingFileMap.get(fileId);
+        List<EventAttachment> newAttachments = newObjectKeys.stream()
+                .map(objectKey -> {
+                    FileMetadata fm = newFileMap.containsKey(objectKey)
+                            ? newFileMap.get(objectKey)
+                            : existingFileMap.get(objectKey);
                     return EventAttachment.create(event, fm);
                 })
                 .toList();
 
         eventAttachmentRepository.saveAll(newAttachments);
 
-        log.info("행사 수정 - eventId: {}, 첨부파일 전체 교체: {}개", event.getId(), newFileIds.size());
+        log.info("행사 수정 - eventId: {}, 첨부파일 전체 교체: {}개", event.getId(), newObjectKeys.size());
 
         return newAttachments.stream().map(EventAttachmentDto::from).toList();
     }
 
     /**
-     * 중복 파일 ID를 검증한다.
+     * 중복 objectKey를 검증한다.
      */
-    private void validateNoDuplicateFileIds(List<Long> fileIds) {
-        Set<Long> uniqueIds = new HashSet<>(fileIds);
-        if (uniqueIds.size() != fileIds.size()) {
+    private void validateNoDuplicateObjectKeys(List<String> objectKeys) {
+        Set<String> uniqueKeys = new HashSet<>(objectKeys);
+        if (uniqueKeys.size() != objectKeys.size()) {
             throw new EventAttachmentValidationException(EventErrorCode.EVENT_ATTACHMENT_DUPLICATE_FILE);
         }
     }
 
     /**
-     * 파일 ID 목록의 파일들을 조회하고 상태/소유권을 검증한다.
+     * objectKey 목록의 파일들을 조회하고 상태/소유권을 검증한다.
      */
-    private List<FileMetadata> validateAndFetchFiles(List<Long> fileIds, Long userId) {
+    private List<FileMetadata> validateAndFetchFilesByObjectKeys(List<String> objectKeys, Long userId) {
         List<FileMetadata> files = new ArrayList<>();
-        for (Long fileId : fileIds) {
-            FileMetadata file = fileMetadataRepository.findById(fileId)
-                    .filter(f -> !f.isDeleted())
+        for (String objectKey : objectKeys) {
+            FileMetadata file = fileMetadataRepository.findByObjectKeyAndDeletedFalse(objectKey)
                     .orElseThrow(() -> {
-                        log.warn("파일 상태 검증 실패: fileId={}, status=NOT_FOUND", fileId);
+                        log.warn("파일 상태 검증 실패: objectKey={}, status=NOT_FOUND", objectKey);
                         return new EventAttachmentValidationException(EventErrorCode.EVENT_ATTACHMENT_FILE_NOT_FOUND,
-                                "파일을 찾을 수 없습니다: fileId=" + fileId);
+                                "파일을 찾을 수 없습니다: objectKey=" + objectKey);
                     });
 
             if (file.getStatus() != FileUploadStatus.COMPLETED) {
-                log.warn("파일 상태 검증 실패: fileId={}, status={}", fileId, file.getStatus());
+                log.warn("파일 상태 검증 실패: objectKey={}, status={}", objectKey, file.getStatus());
                 throw new EventAttachmentValidationException(EventErrorCode.EVENT_ATTACHMENT_FILE_NOT_COMPLETED,
-                        "업로드가 완료되지 않은 파일입니다: fileId=" + fileId + ", status=" + file.getStatus());
+                        "업로드가 완료되지 않은 파일입니다: objectKey=" + objectKey + ", status=" + file.getStatus());
             }
 
             if (!file.getUploaderUserId().equals(userId)) {
-                log.warn("파일 소유권 불일치: fileId={}, uploaderUserId={}, requestUserId={}",
-                        fileId, file.getUploaderUserId(), userId);
+                log.warn("파일 소유권 불일치: objectKey={}, uploaderUserId={}, requestUserId={}",
+                        objectKey, file.getUploaderUserId(), userId);
                 throw new FileOwnershipMismatchException();
             }
 

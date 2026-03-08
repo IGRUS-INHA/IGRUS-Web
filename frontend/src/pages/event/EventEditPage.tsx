@@ -52,9 +52,13 @@ export default function EventEditPage() {
       },
     });
 
+  const existingAttachments = useMemo(
+    () => (event?.attachments ?? []).filter(Boolean),
+    [event?.attachments],
+  );
   const existingObjectKeys = useMemo(
-    () => event?.imageUrls ?? [],
-    [event?.imageUrls],
+    () => existingAttachments.map((a) => a.objectKey ?? "").filter(Boolean),
+    [existingAttachments],
   );
   const { urls: resolvedUrls } = useResolvedImageUrls(existingObjectKeys);
 
@@ -95,6 +99,7 @@ export default function EventEditPage() {
   const registrationDeadlineDate = watch("registrationDeadlineDate");
   const registrationDeadlineTime = watch("registrationDeadlineTime");
   const capacity = watch("capacity");
+  const allowExternal = watch("allowExternal");
 
   // 권한 체크
   useEffect(() => {
@@ -149,6 +154,7 @@ export default function EventEditPage() {
         registrationStartTime: regStartDateTime.time ?? "",
         registrationDeadlineDate: regEndDateTime.date ?? "",
         registrationDeadlineTime: regEndDateTime.time ?? "",
+        allowExternal: event.allowExternal ?? false,
       });
 
       setCapacityRaw(String(loadedCapacity));
@@ -160,16 +166,22 @@ export default function EventEditPage() {
   // 기존 이미지 URL이 resolve되면 setExistingItems 호출
   useEffect(() => {
     if (imagesInitialized) return;
-    if (existingObjectKeys.length === 0) return;
+    if (existingAttachments.length === 0) return;
     if (resolvedUrls.size < existingObjectKeys.length) return;
 
-    const items = existingObjectKeys.map((key) => ({
-      objectKey: key,
-      previewUrl: resolvedUrls.get(key) ?? key,
+    const items = existingAttachments.map((att) => ({
+      objectKey: att.objectKey ?? "",
+      previewUrl: resolvedUrls.get(att.objectKey ?? "") ?? att.objectKey ?? "",
     }));
     setExistingItems(items);
     setImagesInitialized(true);
-  }, [existingObjectKeys, resolvedUrls, setExistingItems, imagesInitialized]);
+  }, [
+    existingAttachments,
+    existingObjectKeys,
+    resolvedUrls,
+    setExistingItems,
+    imagesInitialized,
+  ]);
 
   // 신청 기간 자동 계산 (초기 로드 시에는 건너뜀)
   useEffect(() => {
@@ -231,8 +243,18 @@ export default function EventEditPage() {
       return;
     }
 
-    const uploadResults = await uploadAll();
-    const imageUrls = uploadResults.map((r) => r.objectKey);
+    let uploadResults;
+    try {
+      uploadResults = await uploadAll();
+    } catch (uploadError) {
+      alert(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "이미지 업로드에 실패했습니다.",
+      );
+      return;
+    }
+    const attachmentObjectKeys = uploadResults.map((r) => r.objectKey);
 
     updateEvent(
       {
@@ -247,7 +269,8 @@ export default function EventEditPage() {
           registrationEndAt,
           capacity: data.capacity,
           surveyId: resolvedSurveyId,
-          imageUrls,
+          attachmentObjectKeys,
+          allowExternal: data.allowExternal,
         },
       },
       {
@@ -346,6 +369,7 @@ export default function EventEditPage() {
           capacity={capacity}
           capacityRaw={capacityRaw}
           onCapacityRawChange={setCapacityRaw}
+          allowExternal={allowExternal}
           draftQuestions={draftQuestions}
           onDraftQuestionsChange={setDraftQuestions}
           registrationTypeMode="readonly"

@@ -34,25 +34,16 @@ UpdateEventRequest:
         - 'null'
       format: int64
       description: 연결할 설문 ID (null이면 설문 미연결)
-    attachmentFileIds:
+    attachmentObjectKeys:
       type:
         - array
         - 'null'
-      description: 첨부파일 ID 목록 (전체 교체 방식)
+      description: 첨부파일 S3 Object Key 목록 (전체 교체 방식)
       items:
-        type: integer
-        format: int64
+        type: string
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
-    imageUrls:
-      type: array
-      items:
-        type: string
-      maxItems: 5
-      minItems: 0
-      default: []
-      description: 행사 이미지 URL 목록 (최대 5개)
   required:
   - capacity
   - description
@@ -154,11 +145,6 @@ EventDetailResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
-    imageUrls:
-      type: array
-      items:
-        type: string
-      description: 행사 이미지 URL 목록
 RegistrationResponse:
   type: object
   properties:
@@ -216,25 +202,16 @@ CreateEventRequest:
         - 'null'
       format: int64
       description: 연결할 설문 ID (null이면 설문 미연결)
-    attachmentFileIds:
+    attachmentObjectKeys:
       type:
         - array
         - 'null'
-      description: 첨부파일 ID 목록
+      description: 첨부파일 S3 Object Key 목록
       items:
-        type: integer
-        format: int64
+        type: string
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
-    imageUrls:
-      type: array
-      items:
-        type: string
-      maxItems: 5
-      minItems: 0
-      default: []
-      description: 행사 이미지 URL 목록 (최대 5개)
   required:
   - capacity
   - description
@@ -357,11 +334,6 @@ EventListResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
-    imageUrls:
-      type: array
-      items:
-        type: string
-      description: 행사 이미지 URL 목록
 AdminEventListResponse:
   type: object
   description: 관리자용 행사 목록 응답 (visibility 포함)
@@ -423,11 +395,6 @@ AdminEventListResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
-    imageUrls:
-      type: array
-      items:
-        type: string
-      description: 행사 이미지 URL 목록
 AdminEventDetailResponse:
   type: object
   description: 관리자용 행사 상세 응답 (visibility 포함)
@@ -522,11 +489,6 @@ AdminEventDetailResponse:
     allowExternal:
       type: boolean
       description: 외부인(비회원) 신청 허용 여부
-    imageUrls:
-      type: array
-      items:
-        type: string
-      description: 행사 이미지 URL 목록
 PageRegistrationListResponse:
   type: object
   properties:

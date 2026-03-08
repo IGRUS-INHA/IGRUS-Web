@@ -62,6 +62,7 @@ export default function EventCreatePage() {
       location: "",
       capacity: 30,
       registrationType: "AUTO_APPROVE",
+      allowExternal: false,
       registrationPreset: "default",
       registrationStartDate: "",
       registrationStartTime: "",
@@ -81,6 +82,7 @@ export default function EventCreatePage() {
   const registrationDeadlineDate = watch("registrationDeadlineDate");
   const registrationDeadlineTime = watch("registrationDeadlineTime");
   const capacity = watch("capacity");
+  const allowExternal = watch("allowExternal");
 
   const [capacityRaw, setCapacityRaw] = useState("30");
   const { draftQuestions, setDraftQuestions, submitSurvey } = useSurveyCreate();
@@ -152,8 +154,18 @@ export default function EventCreatePage() {
       return;
     }
 
-    const uploadResults = await uploadAll();
-    const imageUrls = uploadResults.map((r) => r.objectKey);
+    let uploadResults;
+    try {
+      uploadResults = await uploadAll();
+    } catch (uploadError) {
+      alert(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "이미지 업로드에 실패했습니다.",
+      );
+      return;
+    }
+    const attachmentObjectKeys = uploadResults.map((r) => r.objectKey);
 
     createEvent(
       {
@@ -169,7 +181,8 @@ export default function EventCreatePage() {
           registrationType:
             data.registrationType as CreateEventRequestRegistrationType,
           surveyId,
-          imageUrls,
+          attachmentObjectKeys,
+          allowExternal: data.allowExternal,
         },
       },
       {
@@ -230,6 +243,7 @@ export default function EventCreatePage() {
           capacity={capacity}
           capacityRaw={capacityRaw}
           onCapacityRawChange={setCapacityRaw}
+          allowExternal={allowExternal}
           draftQuestions={draftQuestions}
           onDraftQuestionsChange={setDraftQuestions}
           registrationTypeMode="editable"
