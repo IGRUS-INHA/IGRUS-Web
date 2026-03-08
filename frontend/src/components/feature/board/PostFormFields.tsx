@@ -34,14 +34,14 @@ interface PostFormFieldsProps {
   allowVisibleToAssociate: boolean;
 
   // watch된 값
-  isAnonymous: boolean;
-  isQuestion: boolean;
-  isVisibleToAssociate: boolean;
+  isAnonymous: boolean | undefined;
+  isQuestion: boolean | undefined;
+  isVisibleToAssociate: boolean | undefined;
   content: string | undefined;
 
   // 이미지
   files: UploadFile[];
-  fileInputRef: RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   onRemoveFile: (id: string) => void;
   onImageButtonClick: () => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
