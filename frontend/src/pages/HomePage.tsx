@@ -95,10 +95,12 @@ function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
       <div className="hero-ring hero-ring-1" />
       <div className="hero-ring hero-ring-2" />
       <div className="hero-ring hero-ring-3" />
-      <div className="relative z-[1] max-w-[1280px] mx-auto px-s6 max-md:px-s2">
+      <div className="relative z-[1] max-w-[1280px] mx-auto px-s6 max-md:px-[20px]">
         <div className="grid grid-cols-2 gap-s7 items-center max-lg:grid-cols-1">
           <HeroText isAuthenticated={isAuthenticated} />
-          <BubbleOrbit />
+          <div className="hidden md:block">
+            <BubbleOrbit />
+          </div>
         </div>
       </div>
     </section>
@@ -140,13 +142,13 @@ function HeroText({ isAuthenticated }: { isAuthenticated: boolean }) {
     <div>
       <p
         ref={setRef(0)}
-        className="hero-reveal typo-c1 font-semibold text-primary uppercase tracking-[0.06em] mb-s5"
+        className="hero-reveal typo-c1 font-semibold text-primary uppercase tracking-[0.06em] mb-[14px] md:mb-s5"
       >
         Inha Computer Club — Since 2000
       </p>
       <h1
         ref={setRef(1)}
-        className="hero-reveal hero-heading text-foreground mb-s5"
+        className="hero-reveal hero-heading text-foreground mb-[14px] md:mb-s5"
         style={{ wordBreak: "keep-all" }}
       >
         성장과 낭만의 동아리,
@@ -155,13 +157,16 @@ function HeroText({ isAuthenticated }: { isAuthenticated: boolean }) {
       </h1>
       <p
         ref={setRef(2)}
-        className="hero-reveal typo-b1 text-muted-foreground leading-[1.7] max-w-[520px] mb-s6"
+        className="hero-reveal text-xs md:text-base text-muted-foreground leading-[1.7] max-w-[520px] mb-[14px] md:mb-s6"
       >
         인하대학교 정보통신처 직속 컴퓨터 학술 자치회.
         <br />
         26년간 실력으로 증명해온 커뮤니티입니다.
       </p>
-      <div ref={setRef(3)} className="hero-reveal flex gap-s3 items-center">
+      <div
+        ref={setRef(3)}
+        className="hero-reveal flex gap-s2 md:gap-s3 items-center"
+      >
         {isAuthenticated ? (
           <Link
             to={__FEATURE_COMMUNITY__ ? "/board/general" : "/board/notices"}
@@ -444,14 +449,14 @@ function NoticeSection({
   isLoading: boolean;
 }) {
   return (
-    <section className="pt-s6 pb-s8 border-t border-border">
+    <section className="pt-s6 pb-s8">
       <div className="max-w-[1280px] mx-auto px-s6 max-md:px-s4">
-        <div className="flex items-baseline justify-between mb-s6 max-md:flex-col max-md:gap-s2 max-md:mb-s5">
+        <div className="flex items-baseline justify-between mb-s6 max-md:mb-s5">
           <div className="flex items-baseline gap-s3">
-            <span className="typo-c1 font-semibold text-primary uppercase tracking-[0.08em]">
+            <span className="typo-b2 font-semibold text-primary uppercase tracking-[0.08em]">
               Notice
             </span>
-            <h2 className="typo-h3 text-foreground">공지사항</h2>
+            <h2 className="typo-b2 font-semibold text-foreground">공지사항</h2>
           </div>
           <Link
             to="/board/notices"
@@ -560,12 +565,14 @@ function EventTimeline({
 }) {
   return (
     <>
-      <div className="flex items-baseline justify-between mb-s6 max-md:flex-col max-md:gap-s2 max-md:mb-s5">
+      <div className="flex items-baseline justify-between mb-s6 max-md:mb-s5">
         <div className="flex items-baseline gap-s3">
-          <span className="typo-c1 font-semibold text-primary uppercase tracking-[0.08em]">
+          <span className="typo-b2 font-semibold text-primary uppercase tracking-[0.08em]">
             Events
           </span>
-          <h2 className="typo-h3 text-foreground">다가오는 행사</h2>
+          <h2 className="typo-b2 font-semibold text-foreground">
+            다가오는 행사
+          </h2>
         </div>
         <Link
           to="/events"
