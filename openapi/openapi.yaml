@@ -99,6 +99,8 @@ tags:
   description: 설문 양식 조회 API (응답자용)
 - name: Survey Anonymous Form
   description: 비회원 설문 양식 조회 API
+- name: Admin Survey Response
+  description: 관리자 설문 응답 조회 API (OPERATOR 이상)
 - name: Survey
   description: 설문 API
 - name: Comment Like
@@ -260,6 +262,8 @@ paths:
     $ref: ./paths/users.yaml#/usersMeLikes
   /api/v1/users/me/bookmarks:
     $ref: ./paths/users.yaml#/usersMeBookmarks
+  /api/v1/admin/surveys/{surveyId}/responses:
+    $ref: ./paths/surveys.yaml#/adminSurveysBySurveyIdResponses
   /api/v1/surveys/trash:
     $ref: ./paths/surveys.yaml#/surveysTrash
   /api/v1/storage/download-url:
@@ -686,6 +690,8 @@ components:
       $ref: './schemas/surveys.yaml#/GridAnswerResponse'
     GridAnswerRequest:
       $ref: './schemas/surveys.yaml#/GridAnswerRequest'
+    AdminSurveyResponseListItem:
+      $ref: './schemas/surveys.yaml#/AdminSurveyResponseListItem'
   securitySchemes:
     BearerAuthentication:
       type: http

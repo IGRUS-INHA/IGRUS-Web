@@ -120,6 +120,15 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("eventStatus") EventStatus eventStatus,
             @Param("registrationStatus") RegistrationStatus registrationStatus);
 
+    /**
+     * 특정 설문과 연결된 행사를 조회합니다.
+     * 설문 응답 삭제 시 연결된 행사 신청 취소용.
+     *
+     * @param surveyId 설문 ID
+     * @return 연결된 행사 (없으면 empty)
+     */
+    Optional<Event> findBySurveyId(Long surveyId);
+
     // === 원자적 UPDATE (@SQLRestriction 미적용, 명시적 deleted 조건 필요) ===
 
     /**

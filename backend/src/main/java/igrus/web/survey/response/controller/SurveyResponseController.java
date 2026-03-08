@@ -57,6 +57,16 @@ public class SurveyResponseController implements SurveyResponseApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteMyResponse(Long surveyId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("본인 응답 삭제 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
+
+        surveyResponseService.deleteMyResponse(surveyId, user);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiSurveyResponseDetailResponse> getMyResponse(Long surveyId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("본인 응답 조회 요청 - surveyId: {}, userId: {}", surveyId, user.userId());
