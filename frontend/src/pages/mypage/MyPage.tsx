@@ -369,7 +369,7 @@ export default function MyPage() {
                     <div
                       key={reg.registrationId}
                       onClick={() =>
-                        reg.eventId && navigate(`/events/${reg.eventId}`)
+                        reg.eventId && navigate(`/events#event-${reg.eventId}`)
                       }
                       className="p-s6 rounded-r4 border border-primary/30 bg-primary/5 cursor-pointer transition-all hover:scale-[1.01]"
                     >

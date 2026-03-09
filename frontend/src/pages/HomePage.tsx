@@ -593,27 +593,35 @@ function EventTimeline({
           </div>
         ) : (
           <div className="event-timeline pointer-events-none">
-            {events.map((event, idx) => (
-              <div key={event.id} className="timeline-item">
-                <div className="timeline-dot" />
-                <div
-                  className={cn(
-                    "typo-c1 font-semibold mb-s2 tabular-nums",
-                    idx === 0 ? "text-primary" : "text-muted-foreground",
+            {events.map((event) => {
+              const isOpen = event.registrationStatus === "OPEN";
+              return (
+                <div key={event.id} className="timeline-item">
+                  <div
+                    className={cn(
+                      "timeline-dot",
+                      isOpen && "timeline-dot--open",
+                    )}
+                  />
+                  <div
+                    className={cn(
+                      "typo-c1 font-semibold mb-s2 tabular-nums",
+                      isOpen ? "text-primary" : "text-muted-foreground",
+                    )}
+                  >
+                    {formatDateDot(event.eventStartAt)}
+                  </div>
+                  <h3 className="typo-b1 font-semibold text-foreground mb-s1 leading-snug">
+                    {event.title}
+                  </h3>
+                  {event.location && (
+                    <p className="typo-b2 text-muted-foreground leading-relaxed">
+                      {event.location}
+                    </p>
                   )}
-                >
-                  {formatDateDot(event.eventStartAt)}
                 </div>
-                <h3 className="typo-b1 font-semibold text-foreground mb-s1 leading-snug">
-                  {event.title}
-                </h3>
-                {event.location && (
-                  <p className="typo-b2 text-muted-foreground leading-relaxed">
-                    {event.location}
-                  </p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
