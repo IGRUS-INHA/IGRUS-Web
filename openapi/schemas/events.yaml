@@ -291,6 +291,10 @@ EventListResponse:
     eventEndAt:
       type: string
       format: date-time
+    registrationStartAt:
+      type: string
+      format: date-time
+      description: 신청 시작일시
     registrationEndAt:
       type: string
       format: date-time
@@ -356,6 +360,10 @@ AdminEventListResponse:
     eventEndAt:
       type: string
       format: date-time
+    registrationStartAt:
+      type: string
+      format: date-time
+      description: 신청 시작일시
     registrationEndAt:
       type: string
       format: date-time
