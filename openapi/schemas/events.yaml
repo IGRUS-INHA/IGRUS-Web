@@ -788,3 +788,11 @@ ExternalRegisterEventRequest:
   - studentId
   - phone
   - department
+
+EventImageDownloadUrlResponse:
+  type: object
+  description: 행사 이미지 다운로드 URL 응답
+  properties:
+    presignedUrl:
+      type: string
+      description: presigned download URL

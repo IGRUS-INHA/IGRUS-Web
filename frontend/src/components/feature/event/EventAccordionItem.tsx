@@ -499,7 +499,11 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
         .filter((key) => Boolean(key) && key !== event.thumbnailObjectKey),
     [detail?.attachments, event.thumbnailObjectKey],
   );
-  const { urls: resolvedImageUrls } = useResolvedImageUrls(imageObjectKeys);
+  const eventIdNum = Number(event.id);
+  const { urls: resolvedImageUrls } = useResolvedImageUrls(
+    imageObjectKeys,
+    eventIdNum,
+  );
 
   // 썸네일 — collapsed 상태에서 제목 좌측에 표시
   // event.thumbnailObjectKey가 없으면 detail.attachments[0] 폴백 사용
@@ -508,7 +512,10 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
     () => (event.thumbnailObjectKey ? [event.thumbnailObjectKey] : []),
     [event.thumbnailObjectKey],
   );
-  const { urls: thumbnailUrls } = useResolvedImageUrls(thumbnailKeys);
+  const { urls: thumbnailUrls } = useResolvedImageUrls(
+    thumbnailKeys,
+    eventIdNum,
+  );
   const thumbnailSrc = event.thumbnailObjectKey
     ? thumbnailUrls.get(event.thumbnailObjectKey)
     : imageObjectKeys[0]

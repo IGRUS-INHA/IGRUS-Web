@@ -3,6 +3,7 @@ import {
   confirmUpload,
   createDownloadUrl,
 } from "@/api/model/storage/storage";
+import { getEventImageDownloadUrl } from "@/api/model/event/event";
 
 /** 업로드 용도 상수 */
 export const UPLOAD_PURPOSE = {
@@ -112,6 +113,27 @@ export async function getImageDownloadUrl(objectKey: string): Promise<string> {
   }
 
   const response = await createDownloadUrl({ objectKey });
+
+  if (response.status !== 200 || !response.data.presignedUrl) {
+    throw new Error("다운로드 URL 발급에 실패했습니다");
+  }
+
+  return response.data.presignedUrl;
+}
+
+/**
+ * 행사에 속한 이미지의 presigned download URL을 발급받는다. (인증 불필요)
+ */
+export async function getEventImageDownloadUrlPublic(
+  eventId: number,
+  objectKey: string,
+): Promise<string> {
+  const mockUploadUrl = import.meta.env.VITE_MOCK_UPLOAD_URL;
+  if (mockUploadUrl) {
+    return `${mockUploadUrl}/${objectKey}`;
+  }
+
+  const response = await getEventImageDownloadUrl(eventId, { objectKey });
 
   if (response.status !== 200 || !response.data.presignedUrl) {
     throw new Error("다운로드 URL 발급에 실패했습니다");
