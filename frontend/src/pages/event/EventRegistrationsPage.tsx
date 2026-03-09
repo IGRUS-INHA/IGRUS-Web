@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -6,6 +6,7 @@ import {
   List,
   BarChart3,
   ClipboardCheck,
+  ChevronDown,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
 import { formatDate } from "@/utils/date";
 import RegistrationChart from "@/components/feature/event/RegistrationChart";
 import SurveyResultsTab from "@/components/feature/event/SurveyResultsTab";
+import SurveyAnswerPanel from "@/components/feature/event/SurveyAnswerPanel";
 import {
   aggregateByGender,
   aggregateByGrade,
@@ -35,6 +37,10 @@ import {
   aggregateByStatus,
 } from "@/utils/chart";
 import type { RegistrationListResponse } from "@/api/model/models";
+import type { AdminSurveyResponseListItem } from "@/api/model/models/adminSurveyResponseListItem";
+import type { SurveyDetailResponse } from "@/api/model/models/surveyDetailResponse";
+import { useGetSurveyDetail } from "@/api/model/survey/survey";
+import { useGetAdminSurveyResponses } from "@/api/model/admin-survey-response/admin-survey-response";
 
 type ActiveTab = "list" | "dashboard" | "survey";
 
@@ -72,6 +78,16 @@ export default function EventRegistrationsPage() {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("list");
   const [page, setPage] = useState(1);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+
+  const toggleExpanded = (id: number) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const {
     data: eventResponse,
@@ -94,6 +110,20 @@ export default function EventRegistrationsPage() {
     useRevertEventRegistration(numericEventId);
   const isBusy = isApproving || isRejecting || isReverting;
 
+  // 설문 관련 훅 (hooks는 항상 호출, enabled로 조건 제어)
+  const surveyId =
+    eventResponse?.status === 200
+      ? (eventResponse.data?.surveyId ?? undefined)
+      : undefined;
+
+  const { data: surveyDetailResponse } = useGetSurveyDetail(surveyId ?? 0, {
+    query: { enabled: !!surveyId },
+  });
+  const { data: surveyResponsesData } = useGetAdminSurveyResponses(
+    surveyId ?? 0,
+    { query: { enabled: !!surveyId } },
+  );
+
   const event = eventResponse?.data;
 
   const tabs = useMemo(
@@ -106,6 +136,24 @@ export default function EventRegistrationsPage() {
       ? (registrationsResponse.data.content ?? [])
       : [];
   const isManualApprove = event?.registrationType === "MANUAL_APPROVE";
+
+  // userId → 설문 응답 매핑
+  const userIdToResponse = useMemo(() => {
+    const map = new Map<number, AdminSurveyResponseListItem>();
+    const responses =
+      surveyResponsesData?.status === 200 ? surveyResponsesData.data : [];
+    for (const r of responses) {
+      if (r.userId !== undefined && r.userId !== null) {
+        map.set(r.userId, r);
+      }
+    }
+    return map;
+  }, [surveyResponsesData]);
+
+  const surveyDetail =
+    surveyDetailResponse?.status === 200
+      ? (surveyDetailResponse.data as SurveyDetailResponse)
+      : undefined;
 
   // 페이지네이션
   const totalPages = Math.ceil(allRegistrations.length / PAGE_SIZE);
@@ -325,6 +373,7 @@ export default function EventRegistrationsPage() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="typo-c1 text-muted-foreground uppercase tracking-widest border-b border-border">
+                    {event.surveyId && <th className="pb-s4 w-8" />}
                     <th className="pb-s4 font-bold">학번</th>
                     <th className="pb-s4 font-bold">이름</th>
                     <th className="pb-s4 font-bold hidden lg:table-cell">
@@ -340,42 +389,95 @@ export default function EventRegistrationsPage() {
                 <tbody className="divide-y divide-border">
                   {paginatedRegistrations.map((r) => {
                     const badge = r.status ? STATUS_BADGE[r.status] : undefined;
+                    const isExpanded =
+                      r.registrationId !== undefined &&
+                      expandedIds.has(r.registrationId);
+                    const surveyResponse =
+                      event.surveyId &&
+                      r.userId !== undefined &&
+                      r.userId !== null
+                        ? userIdToResponse.get(r.userId)
+                        : undefined;
+                    // 펼쳐진 행의 colspan: 기본 5열 + 설문열(1) + 작업열(1, if manual)
+                    const totalCols =
+                      5 + (event.surveyId ? 1 : 0) + (isManualApprove ? 1 : 0);
+
+                    const regId = r.registrationId;
+
                     return (
-                      <tr key={r.registrationId}>
-                        <td className="py-s4 typo-b2 font-medium">
-                          {r.studentId ?? "-"}
-                        </td>
-                        <td className="py-s4 typo-b2 font-bold">
-                          {r.userName ?? "-"}
-                        </td>
-                        <td className="py-s4 typo-b2 text-muted-foreground hidden lg:table-cell">
-                          {r.userEmail ?? "-"}
-                        </td>
-                        <td className="py-s4">
-                          {badge ? (
-                            <span
-                              className={cn(
-                                "px-s2 py-0.5 rounded-r2 typo-c2 font-bold",
-                                badge.className,
-                              )}
-                            >
-                              {badge.label}
-                            </span>
-                          ) : (
-                            <span className="typo-c2 text-muted-foreground">
-                              -
-                            </span>
+                      <React.Fragment key={regId}>
+                        <tr
+                          onClick={
+                            event.surveyId && regId !== undefined
+                              ? () => toggleExpanded(regId)
+                              : undefined
+                          }
+                          className={cn(
+                            event.surveyId &&
+                              "cursor-pointer hover:bg-muted/30 transition-colors",
                           )}
-                        </td>
-                        <td className="py-s4 typo-b2 text-muted-foreground">
-                          {formatDate(r.registeredAt)}
-                        </td>
-                        {isManualApprove && (
-                          <td className="py-s4 text-right">
-                            {renderActions(r)}
+                        >
+                          {event.surveyId && (
+                            <td className="py-s4 w-8">
+                              <ChevronDown
+                                size={16}
+                                className={cn(
+                                  "text-muted-foreground transition-transform duration-200",
+                                  isExpanded && "rotate-180",
+                                )}
+                              />
+                            </td>
+                          )}
+                          <td className="py-s4 typo-b2 font-medium">
+                            {r.studentId ?? "-"}
                           </td>
+                          <td className="py-s4 typo-b2 font-bold">
+                            {r.userName ?? "-"}
+                          </td>
+                          <td className="py-s4 typo-b2 text-muted-foreground hidden lg:table-cell">
+                            {r.userEmail ?? "-"}
+                          </td>
+                          <td className="py-s4">
+                            {badge ? (
+                              <span
+                                className={cn(
+                                  "px-s2 py-0.5 rounded-r2 typo-c2 font-bold",
+                                  badge.className,
+                                )}
+                              >
+                                {badge.label}
+                              </span>
+                            ) : (
+                              <span className="typo-c2 text-muted-foreground">
+                                -
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-s4 typo-b2 text-muted-foreground">
+                            {formatDate(r.registeredAt)}
+                          </td>
+                          {isManualApprove && (
+                            <td
+                              className="py-s4 text-right"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {renderActions(r)}
+                            </td>
+                          )}
+                        </tr>
+
+                        {event.surveyId && isExpanded && (
+                          <tr>
+                            <td colSpan={totalCols} className="p-0">
+                              <SurveyAnswerPanel
+                                survey={surveyDetail}
+                                response={surveyResponse}
+                                userName={r.userName}
+                              />
+                            </td>
+                          </tr>
                         )}
-                      </tr>
+                      </React.Fragment>
                     );
                   })}
                 </tbody>

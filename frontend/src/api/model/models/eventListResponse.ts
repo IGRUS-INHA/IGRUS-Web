@@ -44,6 +44,8 @@ export interface EventListResponse {
   location?: string;
   eventStartAt?: string;
   eventEndAt?: string;
+  /** 신청 시작일시 */
+  registrationStartAt?: string;
   registrationEndAt?: string;
   capacity?: number;
   currentCount?: number;

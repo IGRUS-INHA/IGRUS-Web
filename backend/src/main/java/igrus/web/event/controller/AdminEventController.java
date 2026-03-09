@@ -141,6 +141,7 @@ public class AdminEventController implements AdminEventApi {
                 .location(r.location())
                 .eventStartAt(r.eventStartAt())
                 .eventEndAt(r.eventEndAt())
+                .registrationStartAt(r.registrationStartAt())
                 .registrationEndAt(r.registrationEndAt())
                 .capacity(r.capacity())
                 .currentCount(r.currentCount())

@@ -122,7 +122,7 @@ export default function EventEditPage() {
         const d = new Date(isoString);
         if (isNaN(d.getTime())) return { date: "", time: "" };
         return {
-          date: d.toISOString().split("T")[0],
+          date: formatDateLocal(d),
           time: d.toTimeString().slice(0, 5),
         };
       };

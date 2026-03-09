@@ -122,6 +122,7 @@ export interface Event {
   attendees?: number;
   visibility?: string;
   registrationStatus?: string;
+  registrationStartAt?: string;
   registrationDeadline?: string;
   createdBy?: string;
   createdAt?: string;

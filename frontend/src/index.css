@@ -1298,6 +1298,12 @@
   color: var(--foreground) !important;
 }
 
+/* Suppress default today styling — data-driven highlights below override this */
+.cal-preview-wrapper .react-datepicker__day--today {
+  background-color: transparent !important;
+  color: var(--foreground) !important;
+}
+
 /* Registration period highlight (brand-l2) */
 .cal-preview-wrapper .react-datepicker__day.cal-preview-reg {
   background-color: var(--brand-l2) !important;
