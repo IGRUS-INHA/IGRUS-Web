@@ -602,6 +602,124 @@ RegistrationListResponse:
     registeredAt:
       type: string
       format: date-time
+CreateEventWithSurveyRequest:
+  type: object
+  description: 행사 + 설문 원자적 생성 요청. 행사와 설문(질문+선택지)을 하나의 트랜잭션으로 생성합니다.
+  properties:
+    title:
+      type: string
+      maxLength: 100
+      minLength: 0
+    description:
+      type: string
+      minLength: 1
+    location:
+      type: string
+      maxLength: 200
+      minLength: 0
+    eventStartAt:
+      type: string
+      format: date-time
+    eventEndAt:
+      type: string
+      format: date-time
+    registrationStartAt:
+      type: string
+      format: date-time
+    registrationEndAt:
+      type: string
+      format: date-time
+    capacity:
+      type: integer
+      format: int32
+      minimum: 1
+    registrationType:
+      type: string
+      enum:
+      - AUTO_APPROVE
+      - MANUAL_APPROVE
+    attachmentObjectKeys:
+      type:
+        - array
+        - 'null'
+      description: 첨부파일 S3 Object Key 목록
+      items:
+        type: string
+    allowExternal:
+      type: boolean
+      description: 외부인(비회원) 신청 허용 여부
+    survey:
+      $ref: '#/CreateEventSurveyRequest'
+  required:
+  - capacity
+  - description
+  - eventEndAt
+  - eventStartAt
+  - location
+  - registrationEndAt
+  - registrationStartAt
+  - registrationType
+  - survey
+  - title
+CreateEventSurveyRequest:
+  type: object
+  description: 행사와 함께 생성할 설문 정보
+  properties:
+    title:
+      type: string
+      maxLength: 100
+      minLength: 1
+      description: 설문 제목
+    description:
+      type: string
+      maxLength: 500
+      description: 설문 설명
+    questions:
+      type: array
+      minItems: 1
+      maxItems: 50
+      description: 설문 질문 목록
+      items:
+        $ref: '#/CreateEventSurveyQuestionRequest'
+  required:
+  - title
+  - questions
+CreateEventSurveyQuestionRequest:
+  type: object
+  description: 행사 설문 질문 정보
+  properties:
+    questionType:
+      type: string
+      enum:
+      - SHORT_ANSWER
+      - PARAGRAPH
+      - MULTIPLE_CHOICE
+      - CHECKBOX
+      - DROPDOWN
+      description: 질문 유형
+    title:
+      type: string
+      maxLength: 200
+      minLength: 1
+      description: 질문 제목
+    required:
+      type: boolean
+      description: 필수 응답 여부
+    displayOrder:
+      type: integer
+      format: int32
+      description: 표시 순서
+    options:
+      type:
+        - array
+        - 'null'
+      description: 선택지 목록 (MULTIPLE_CHOICE, CHECKBOX, DROPDOWN에서 사용)
+      items:
+        type: string
+        maxLength: 200
+  required:
+  - questionType
+  - title
 EventAttachmentResponse:
   type: object
   description: 행사 첨부파일 응답
