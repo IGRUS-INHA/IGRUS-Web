@@ -72,6 +72,9 @@ class EventServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private EventStatusHelper eventStatusHelper;
+
     @InjectMocks
     private EventService eventService;
 
@@ -113,6 +116,21 @@ class EventServiceTest {
 
         // EventAttachment 관련 기본 스텁 (첨부파일 없는 기본 상태)
         when(eventAttachmentRepository.findByEventIdWithFileMetadata(anyLong())).thenReturn(List.of());
+
+        // EventStatusHelper mock: 실제 updateStatusIfNeeded에 위임
+        doAnswer(invocation -> {
+            Event e = invocation.getArgument(0);
+            Instant now = invocation.getArgument(1);
+            e.updateStatusIfNeeded(now);
+            return null;
+        }).when(eventStatusHelper).updateStatusIfNeeded(any(Event.class), any(Instant.class));
+
+        doAnswer(invocation -> {
+            List<Event> events = invocation.getArgument(0);
+            Instant now = invocation.getArgument(1);
+            events.forEach(e -> e.updateStatusIfNeeded(now));
+            return null;
+        }).when(eventStatusHelper).updateStatusIfNeeded(anyList(), any(Instant.class));
     }
 
     private Event createMockEvent() {

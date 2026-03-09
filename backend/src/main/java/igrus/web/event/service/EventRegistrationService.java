@@ -23,7 +23,7 @@ import igrus.web.event.exception.EventNotOpenException;
 import igrus.web.event.exception.EventRegistrationNotFoundException;
 import igrus.web.event.exception.InvalidRegistrationStatusException;
 import igrus.web.event.exception.NotManualApproveEventException;
-import igrus.web.event.exception.EventTimeOverlapException;
+
 import igrus.web.event.exception.OperatorPermissionRequiredException;
 import igrus.web.event.exception.SurveyNotReadyException;
 import igrus.web.event.exception.SurveyResponseRequiredException;
@@ -148,7 +148,7 @@ public class EventRegistrationService {
         }
 
         // 4. Lazy Evaluation (registrationStatus 갱신 후 신청 가능 여부 판단)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 5. 기존 신청 기록 확인 (재신청 여부 판단)
         var existingRegistration = eventRegistrationRepository.findByEventIdAndUserId(eventId, userId);
@@ -169,10 +169,7 @@ public class EventRegistrationService {
 
         // === 설문 미연결 행사: 기존 로직 그대로 ===
 
-        // 8. 다른 행사와 시간 겹침 확인
-        validateNoTimeOverlap(userId, event);
-
-        // 9. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
+        // 8. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
         if (event.isAutoApprove()) {
             int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
             if (updated == 0) {
@@ -322,7 +319,7 @@ public class EventRegistrationService {
         validateOperatorPermission(user);
 
         // 5. Lazy Evaluation (REG-INV-14: eventStatus 갱신 후 승인 가능 여부 판단)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 6. REG-INV-14: COMPLETED 또는 CANCELED 상태에서는 승인 불가
         if (event.getEventStatus() == EventStatus.COMPLETED || event.getEventStatus() == EventStatus.CANCELED) {
@@ -339,16 +336,7 @@ public class EventRegistrationService {
             throw new InvalidRegistrationStatusException();
         }
 
-        // 9. 시간 겹침 검증 (승인 대상 사용자의 기존 확정 신청과 겹치는지 확인)
-        if (Boolean.TRUE.equals(registration.getIsExternal())) {
-            // 외부인 신청: studentId 기반 시간 겹침 검증 (DECISION-06)
-            validateNoExternalTimeOverlap(registration.getExternalStudentId(), event);
-        } else {
-            // 회원 신청: userId 기반 시간 겹침 검증
-            validateNoTimeOverlap(registration.getUser().getId(), event);
-        }
-
-        // 10. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
+        // 9. 원자적 UPDATE로 신청자 수 증가 (정원 체크 포함, 상태 체크 없음)
         // 선발제 승인은 신청 기간 종료 후에도 가능해야 하므로 상태와 관계없이 정원만 체크
         int updated = eventRepository.incrementCurrentCountForApproval(eventId);
         if (updated == 0) {
@@ -399,7 +387,7 @@ public class EventRegistrationService {
         validateOperatorPermission(user);
 
         // 5. Lazy Evaluation (REG-INV-14: eventStatus 갱신 후 거절 가능 여부 판단)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 6. REG-INV-14: COMPLETED 또는 CANCELED 상태에서는 거절 불가
         if (event.getEventStatus() == EventStatus.COMPLETED || event.getEventStatus() == EventStatus.CANCELED) {
@@ -458,7 +446,7 @@ public class EventRegistrationService {
         validateOperatorPermission(user);
 
         // 5. Lazy Evaluation (REG-INV-10: eventStatus 갱신 후 되돌리기 가능 여부 판단)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 6. REG-INV-10: 행사가 UPCOMING 상태일 때만 되돌리기 가능
         if (event.getEventStatus() != EventStatus.UPCOMING) {
@@ -649,10 +637,7 @@ public class EventRegistrationService {
         log.debug("설문 응답 확인 완료 - eventId: {}, userId: {}, surveyId: {}",
                 eventId, user.getId(), event.getSurveyId());
 
-        // 10. 다른 행사와 시간 겹침 확인
-        validateNoTimeOverlap(user.getId(), event);
-
-        // 11. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
+        // 10. 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
         if (event.isAutoApprove()) {
             int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
             if (updated == 0) {
@@ -743,9 +728,6 @@ public class EventRegistrationService {
                     eventId, userId, event.getSurveyId());
         }
 
-        // 다른 행사와 시간 겹침 확인
-        validateNoTimeOverlap(registration.getUser().getId(), event);
-
         // 선착순인 경우: 원자적 UPDATE로 신청자 수 증가
         if (event.isAutoApprove()) {
             int updated = eventRepository.incrementCurrentCountIfAvailable(eventId);
@@ -785,47 +767,6 @@ public class EventRegistrationService {
         Instant now = Instant.now();
         if (now.isBefore(event.getRegistrationStartAt()) || now.isAfter(event.getRegistrationEndAt())) {
             throw new EventNotInRegistrationPeriodException();
-        }
-    }
-
-    /**
-     * 사용자의 확정된 신청(REGISTERED, APPROVED) 중
-     * 신청하려는 행사의 진행 시간과 겹치는 신청이 없는지 검증합니다.
-     *
-     * @param userId 사용자 ID
-     * @param event  신청하려는 행사
-     * @throws EventTimeOverlapException 시간이 겹치는 신청이 있는 경우
-     */
-    private void validateNoTimeOverlap(Long userId, Event event) {
-        boolean hasOverlap = eventRegistrationRepository.existsOverlappingRegistration(
-                userId,
-                event.getEventStartAt(),
-                event.getEventEndAt(),
-                Set.of(EventRegistrationStatus.REGISTERED, EventRegistrationStatus.APPROVED)
-        );
-        if (hasOverlap) {
-            throw new EventTimeOverlapException();
-        }
-    }
-
-    /**
-     * 외부인의 확정된 신청(CANCELED 제외) 중
-     * 신청하려는 행사의 진행 시간과 겹치는 신청이 없는지 검증합니다.
-     * DECISION-06: studentId 기반 시간 겹침 검증.
-     *
-     * @param studentId 외부인 학번
-     * @param event     신청하려는 행사
-     * @throws EventTimeOverlapException 시간이 겹치는 신청이 있는 경우
-     */
-    private void validateNoExternalTimeOverlap(String studentId, Event event) {
-        boolean hasOverlap = eventRegistrationRepository.existsOverlappingExternalRegistration(
-                studentId,
-                event.getEventStartAt(),
-                event.getEventEndAt(),
-                EventRegistrationStatus.CANCELED
-        );
-        if (hasOverlap) {
-            throw new EventTimeOverlapException();
         }
     }
 

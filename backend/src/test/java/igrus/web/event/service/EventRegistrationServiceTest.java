@@ -367,8 +367,6 @@ class EventRegistrationServiceTest {
             when(canceledRegistration.getUser()).thenReturn(regularMember);
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.of(canceledRegistration));
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(false);
 
             // when
             RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null);
@@ -614,8 +612,6 @@ class EventRegistrationServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.incrementCurrentCountForApproval(EVENT_ID)).thenReturn(1);
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(false);
 
             // Mock approve 후 상태 변경
             doAnswer(invocation -> {
@@ -630,33 +626,6 @@ class EventRegistrationServiceTest {
             assertThat(response).isNotNull();
             verify(registration).approve();
             verify(eventRepository).incrementCurrentCountForApproval(EVENT_ID);
-            verify(eventRegistrationRepository).existsOverlappingRegistration(eq(USER_ID), any(), any(), any());
-        }
-
-        /**
-         * SVC-030-2: 승인 시 시간 겹침 검증
-         */
-        @Test
-        @DisplayName("[SVC-030-2] 승인 시 시간이 겹치는 확정 신청이 있으면 EventTimeOverlapException 발생")
-        void approveRegistration_TimeOverlap_ThrowsException() {
-            // given
-            User applicant = mock(User.class);
-            when(applicant.getId()).thenReturn(USER_ID);
-
-            EventRegistration registration = mock(EventRegistration.class);
-            when(registration.getEvent()).thenReturn(manualApproveEvent);
-            when(registration.getUser()).thenReturn(applicant);
-            when(registration.getStatus()).thenReturn(EventRegistrationStatus.WAITING);
-
-            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
-            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> eventRegistrationService.approveRegistration(REGISTRATION_ID, OPERATOR_ID))
-                    .isInstanceOf(EventTimeOverlapException.class);
         }
 
         /**
@@ -717,8 +686,6 @@ class EventRegistrationServiceTest {
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(false);
             when(eventRepository.incrementCurrentCountForApproval(EVENT_ID)).thenReturn(0); // 원자적 UPDATE 실패
 
             // when & then
@@ -1011,80 +978,6 @@ class EventRegistrationServiceTest {
     }
 
     @Nested
-    @DisplayName("시간 겹침 검증")
-    class TimeOverlapValidationTest {
-
-        /**
-         * SVC-060: 시간 겹치는 행사 신청 거부
-         */
-        @Test
-        @DisplayName("[SVC-060] 시간이 겹치는 다른 행사에 신청하면 EventTimeOverlapException 발생")
-        void registerEvent_TimeOverlap_ThrowsException() {
-            // given
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null))
-                    .isInstanceOf(EventTimeOverlapException.class);
-        }
-
-        /**
-         * SVC-061: 시간 안 겹치는 행사 신청 성공
-         */
-        @Test
-        @DisplayName("[SVC-061] 시간이 겹치지 않으면 정상 신청")
-        void registerEvent_NoTimeOverlap_Succeeds() {
-            // given
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(false);
-            when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
-
-            EventRegistration savedRegistration = mock(EventRegistration.class);
-            when(savedRegistration.getStatus()).thenReturn(EventRegistrationStatus.REGISTERED);
-            when(savedRegistration.getRegisteredAt()).thenReturn(Instant.now());
-            when(savedRegistration.getId()).thenReturn(REGISTRATION_ID);
-            when(eventRegistrationRepository.save(any(EventRegistration.class))).thenReturn(savedRegistration);
-
-            // when
-            RegistrationResponse response = eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null);
-
-            // then
-            assertThat(response).isNotNull();
-            verify(eventRegistrationRepository).existsOverlappingRegistration(eq(USER_ID), any(), any(), any());
-        }
-
-        /**
-         * SVC-062: 재신청 시 시간 겹침 거부
-         */
-        @Test
-        @DisplayName("[SVC-062] 재신청 시 시간이 겹치면 EventTimeOverlapException 발생")
-        void reRegister_TimeOverlap_ThrowsException() {
-            // given
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
-
-            EventRegistration canceledRegistration = mock(EventRegistration.class);
-            when(canceledRegistration.isCanceled()).thenReturn(true);
-            when(canceledRegistration.getUser()).thenReturn(regularMember);
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
-                    .thenReturn(Optional.of(canceledRegistration));
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null))
-                    .isInstanceOf(EventTimeOverlapException.class);
-        }
-    }
-
-    @Nested
     @DisplayName("2축 모델 연동 — 서비스 테스트")
     class TwoAxisModelIntegrationTest {
 
@@ -1102,8 +995,6 @@ class EventRegistrationServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(ongoingOpenEvent));
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(false);
             when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
 
             EventRegistration savedRegistration = mock(EventRegistration.class);
@@ -1392,8 +1283,6 @@ class EventRegistrationServiceTest {
             when(canceledRegistration.getUser()).thenReturn(regularMember);
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.of(canceledRegistration));
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(false);
             when(eventRegistrationRepository.save(any(EventRegistration.class))).thenReturn(canceledRegistration);
 
             // when
@@ -1432,8 +1321,6 @@ class EventRegistrationServiceTest {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(closedEvent));
             when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
             when(eventRepository.incrementCurrentCountForApproval(EVENT_ID)).thenReturn(1);
-            when(eventRegistrationRepository.existsOverlappingRegistration(eq(USER_ID), any(), any(), any()))
-                    .thenReturn(false);
 
             // Mock approve 후 상태 변경
             doAnswer(invocation -> {
@@ -2244,32 +2131,6 @@ class EventRegistrationServiceTest {
             assertThat(responseB).isNotNull();
         }
 
-        // --- TC-046: 동일 설문 두 행사 중 시간 겹침 시 두 번째 신청 실패 ---
-
-        @Test
-        @DisplayName("[TC-046] 동일 설문 두 행사 중 시간 겹침 시 두 번째 신청 실패")
-        void registerWithSurvey_TimeOverlap_SecondFails() {
-            // given
-            Event event = createSurveyLinkedEvent(EventRegistrationType.AUTO_APPROVE);
-            Instant eventStart = Instant.now().plus(7, ChronoUnit.DAYS);
-            Instant eventEnd = Instant.now().plus(8, ChronoUnit.DAYS);
-            when(event.getEventStartAt()).thenReturn(eventStart);
-            when(event.getEventEndAt()).thenReturn(eventEnd);
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(event));
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(regularMember));
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID)).thenReturn(Optional.empty());
-            setupSurveyOpen();
-            when(surveyResponseRepository.existsBySurveyIdAndUserId(SURVEY_ID, USER_ID)).thenReturn(true);
-
-            // 시간 겹침 검증에서 실패
-            when(eventRegistrationRepository.existsOverlappingRegistration(
-                    eq(USER_ID), any(Instant.class), any(Instant.class), any())).thenReturn(true);
-
-            // when/then
-            assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null))
-                    .isInstanceOf(EventTimeOverlapException.class);
-        }
-
         // --- TC-053: 설문 accessLevel 부족 사용자가 응답 부재로 차단 ---
 
         @Test
@@ -2354,8 +2215,7 @@ class EventRegistrationServiceTest {
             // when/then: SurveyNotReadyException이 정원 확인보다 먼저 발생
             assertThatThrownBy(() -> eventRegistrationService.registerEvent(EVENT_ID, USER_ID, null))
                     .isInstanceOf(SurveyNotReadyException.class);
-            // 시간 겹침/정원 확인 호출 없음
-            verify(eventRegistrationRepository, never()).existsOverlappingRegistration(any(), any(), any(), any());
+            // 정원 확인 호출 없음
             verify(eventRepository, never()).incrementCurrentCountIfAvailable(any());
         }
     }

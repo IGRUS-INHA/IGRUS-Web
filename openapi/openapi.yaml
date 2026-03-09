@@ -190,6 +190,8 @@ paths:
     $ref: ./paths/inquiries.yaml#/inquiriesLookup
   /api/v1/inquiries/guest:
     $ref: ./paths/inquiries.yaml#/inquiriesGuest
+  /api/v1/events/with-survey:
+    $ref: ./paths/events.yaml#/eventsWithSurvey
   /api/v1/events:
     $ref: ./paths/events.yaml#/events
   /api/v1/events/{eventId}/reopen-registration:
@@ -528,6 +530,12 @@ components:
       $ref: './schemas/events.yaml#/RegistrationResponse'
     CreateEventRequest:
       $ref: './schemas/events.yaml#/CreateEventRequest'
+    CreateEventWithSurveyRequest:
+      $ref: './schemas/events.yaml#/CreateEventWithSurveyRequest'
+    CreateEventSurveyRequest:
+      $ref: './schemas/events.yaml#/CreateEventSurveyRequest'
+    CreateEventSurveyQuestionRequest:
+      $ref: './schemas/events.yaml#/CreateEventSurveyQuestionRequest'
     EventCreateResponse:
       $ref: './schemas/events.yaml#/EventCreateResponse'
     EventStatusChangeReasonRequest:

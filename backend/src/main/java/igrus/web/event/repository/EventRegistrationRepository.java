@@ -5,13 +5,9 @@ import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -122,29 +118,6 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
     long countByEventIdAndStatus(Long eventId, EventRegistrationStatus status);
 
 
-    /**
-     * 특정 사용자의 확정된 신청(REGISTERED, APPROVED) 중
-     * 주어진 행사 시간과 겹치는 신청이 있는지 확인합니다.
-     * 겹침 조건: 기존 행사 시작 < 새 행사 종료 AND 기존 행사 종료 > 새 행사 시작
-     *
-     * @param userId       사용자 ID
-     * @param eventStartAt 신청하려는 행사 시작 시간
-     * @param eventEndAt   신청하려는 행사 종료 시간
-     * @param statuses     확인 대상 신청 상태 목록 (REGISTERED, APPROVED)
-     * @return 시간이 겹치는 신청이 있으면 true
-     */
-    @Query("SELECT COUNT(r) > 0 FROM EventRegistration r " +
-            "WHERE r.user.id = :userId " +
-            "AND r.status IN :statuses " +
-            "AND r.event.eventStartAt < :eventEndAt " +
-            "AND r.event.eventEndAt > :eventStartAt")
-    boolean existsOverlappingRegistration(
-            @Param("userId") Long userId,
-            @Param("eventStartAt") Instant eventStartAt,
-            @Param("eventEndAt") Instant eventEndAt,
-            @Param("statuses") Collection<EventRegistrationStatus> statuses);
-
-
     // === 외부인 중복 검사 쿼리 (DECISION-02: 서비스 레벨만) ===
 
     /**
@@ -171,25 +144,4 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
     boolean existsByEventAndExternalPhoneAndStatusNot(Event event, String phone,
                                                       EventRegistrationStatus excludedStatus);
 
-    /**
-     * 동일 studentId의 외부인 신청 중 시간이 겹치는 활성 신청이 존재하는지 확인합니다.
-     * DECISION-06: studentId 기반 시간 겹침 검증.
-     *
-     * @param studentId      외부인 학번
-     * @param eventStartAt   신청하려는 행사 시작 시간
-     * @param eventEndAt     신청하려는 행사 종료 시간
-     * @param excludedStatus 제외할 상태 (CANCELED)
-     * @return 시간이 겹치는 신청이 있으면 true
-     */
-    @Query("SELECT COUNT(r) > 0 FROM EventRegistration r " +
-            "WHERE r.externalStudentId = :studentId " +
-            "AND r.isExternal = true " +
-            "AND r.status <> :excludedStatus " +
-            "AND r.event.eventStartAt < :eventEndAt " +
-            "AND r.event.eventEndAt > :eventStartAt")
-    boolean existsOverlappingExternalRegistration(
-            @Param("studentId") String studentId,
-            @Param("eventStartAt") Instant eventStartAt,
-            @Param("eventEndAt") Instant eventEndAt,
-            @Param("excludedStatus") EventRegistrationStatus excludedStatus);
 }

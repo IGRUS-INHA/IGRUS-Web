@@ -342,6 +342,69 @@ class EventSurveySyncServiceTest {
     }
 
     @Nested
+    @DisplayName("openSurveyForRegistration - 등록 시작 시 설문 공개 + 응답 수집 시작")
+    class OpenSurveyForRegistration {
+
+        @Test
+        @DisplayName("설문이 UNPUBLISHED + NOT_STARTED이면 PUBLISHED + OPEN으로 전환")
+        void unpublishedNotStarted_publishAndOpen() {
+            Event event = createEventWithSurvey(SURVEY_ID);
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(event));
+
+            Survey survey = createSurvey(SurveyVisibility.UNPUBLISHED, SurveyResponseStatus.NOT_STARTED);
+            when(surveyRepository.findByIdAndDeletedFalse(SURVEY_ID)).thenReturn(Optional.of(survey));
+
+            surveySyncService.openSurveyForRegistration(EVENT_ID);
+
+            assertThat(survey.getVisibility()).isEqualTo(SurveyVisibility.PUBLISHED);
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
+        }
+
+        @Test
+        @DisplayName("설문이 PUBLISHED + NOT_STARTED이면 OPEN으로 전환")
+        void publishedNotStarted_open() {
+            Event event = createEventWithSurvey(SURVEY_ID);
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(event));
+
+            Survey survey = createSurvey(SurveyVisibility.PUBLISHED, SurveyResponseStatus.NOT_STARTED);
+            when(surveyRepository.findByIdAndDeletedFalse(SURVEY_ID)).thenReturn(Optional.of(survey));
+
+            surveySyncService.openSurveyForRegistration(EVENT_ID);
+
+            assertThat(survey.getVisibility()).isEqualTo(SurveyVisibility.PUBLISHED);
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
+        }
+
+        @Test
+        @DisplayName("설문이 이미 OPEN이면 변경 없음")
+        void alreadyOpen_noChange() {
+            Event event = createEventWithSurvey(SURVEY_ID);
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(event));
+
+            Survey survey = createSurvey(SurveyVisibility.PUBLISHED, SurveyResponseStatus.OPEN);
+            when(surveyRepository.findByIdAndDeletedFalse(SURVEY_ID)).thenReturn(Optional.of(survey));
+
+            surveySyncService.openSurveyForRegistration(EVENT_ID);
+
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.OPEN);
+        }
+
+        @Test
+        @DisplayName("설문이 CLOSED이면 변경 없음")
+        void closed_noChange() {
+            Event event = createEventWithSurvey(SURVEY_ID);
+            when(eventRepository.findById(EVENT_ID)).thenReturn(Optional.of(event));
+
+            Survey survey = createSurvey(SurveyVisibility.PUBLISHED, SurveyResponseStatus.CLOSED);
+            when(surveyRepository.findByIdAndDeletedFalse(SURVEY_ID)).thenReturn(Optional.of(survey));
+
+            surveySyncService.openSurveyForRegistration(EVENT_ID);
+
+            assertThat(survey.getResponseStatus()).isEqualTo(SurveyResponseStatus.CLOSED);
+        }
+    }
+
+    @Nested
     @DisplayName("REGISTRATION_CANCELED_BY_ADMIN - 개별 신청 취소")
     class RegistrationCanceledByAdmin {
 

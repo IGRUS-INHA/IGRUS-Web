@@ -4,6 +4,7 @@ import igrus.web.event.audit.EventStatusChanged;
 import igrus.web.event.domain.Event;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.survey.domain.Survey;
+import igrus.web.survey.domain.SurveyResponseStatus;
 import igrus.web.survey.repository.SurveyRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -147,5 +148,45 @@ public class EventSurveySyncService {
     private void reactivateSurvey(Survey survey) {
         publishSurveyIfUnpublished(survey);
         openSurveyResponseIfClosed(survey);
+    }
+
+    /**
+     * 등록 시작(NOT_STARTED → OPEN) 시 연결된 설문을 공개하고 응답 수집을 시작합니다.
+     * {@link EventStatusHelper}에서 Lazy Evaluation 전이 감지 시 직접 호출됩니다.
+     *
+     * <p>설문이 NOT_STARTED 상태일 때만 동작합니다.
+     * 이미 OPEN이거나 CLOSED 상태이면 변경하지 않습니다.</p>
+     *
+     * <p>best-effort 방식: 실패 시 로그만 기록하고 행사 작업에는 영향 없음.</p>
+     *
+     * @param eventId 행사 ID
+     */
+    public void openSurveyForRegistration(Long eventId) {
+        try {
+            transactionTemplate.executeWithoutResult(status -> {
+                Event eventEntity = eventRepository.findById(eventId).orElse(null);
+                if (eventEntity == null || eventEntity.getSurveyId() == null) {
+                    return;
+                }
+
+                Survey survey = surveyRepository.findByIdAndDeletedFalse(eventEntity.getSurveyId())
+                        .orElse(null);
+                if (survey == null || survey.isTrashed()) {
+                    return;
+                }
+
+                if (survey.getResponseStatus() != SurveyResponseStatus.NOT_STARTED) {
+                    log.debug("설문이 NOT_STARTED 상태가 아님, 동기화 건너뜀: surveyId={}, status={}",
+                            survey.getId(), survey.getResponseStatus());
+                    return;
+                }
+
+                publishSurveyIfUnpublished(survey);
+                survey.openResponse();
+                log.info("등록 시작에 따른 설문 응답 수집 시작: eventId={}, surveyId={}", eventId, survey.getId());
+            });
+        } catch (Exception e) {
+            log.error("등록 시작 시 설문 동기화 실패: eventId={}", eventId, e);
+        }
     }
 }

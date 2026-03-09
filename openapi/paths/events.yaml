@@ -280,6 +280,34 @@ events:
         description: 권한 없음
     security:
     - BearerAuthentication: []
+eventsWithSurvey:
+  post:
+    tags:
+    - Event
+    summary: 행사 + 설문 원자적 생성
+    description: 행사와 설문(질문+선택지)을 하나의 트랜잭션으로 원자적으로 생성합니다. 운영진 이상 권한 필요.
+    operationId: createEventWithSurvey
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/events.yaml#/CreateEventWithSurveyRequest
+      required: true
+    responses:
+      '201':
+        description: 행사+설문 생성 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/events.yaml#/EventCreateResponse
+      '400':
+        description: 잘못된 요청
+      '401':
+        description: 인증 필요
+      '403':
+        description: 권한 없음
+    security:
+    - BearerAuthentication: []
 eventsByEventIdReopenRegistration:
   post:
     tags:

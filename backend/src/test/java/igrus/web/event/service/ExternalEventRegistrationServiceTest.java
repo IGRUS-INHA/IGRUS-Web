@@ -122,8 +122,7 @@ class ExternalEventRegistrationServiceTest {
                 any(), eq(STUDENT_ID), eq(EventRegistrationStatus.CANCELED))).thenReturn(false);
         when(eventRegistrationRepository.existsByEventAndExternalPhoneAndStatusNot(
                 any(), eq(PHONE), eq(EventRegistrationStatus.CANCELED))).thenReturn(false);
-        when(eventRegistrationRepository.existsOverlappingExternalRegistration(
-                eq(STUDENT_ID), any(), any(), eq(EventRegistrationStatus.CANCELED))).thenReturn(false);
+
         when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
         // After increment, event is re-fetched
         when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
@@ -169,8 +168,7 @@ class ExternalEventRegistrationServiceTest {
                     eq(eventB), eq(STUDENT_ID), any())).thenReturn(false);
             when(eventRegistrationRepository.existsByEventAndExternalPhoneAndStatusNot(
                     eq(eventB), eq(PHONE), any())).thenReturn(false);
-            when(eventRegistrationRepository.existsOverlappingExternalRegistration(
-                    eq(STUDENT_ID), any(), any(), any())).thenReturn(false);
+
             when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID_B)).thenReturn(1);
 
             EventRegistration saved = mock(EventRegistration.class);
@@ -194,8 +192,7 @@ class ExternalEventRegistrationServiceTest {
             when(userRepository.findByStudentId("99999999")).thenReturn(Optional.empty());
             when(eventRegistrationRepository.existsByEventAndExternalStudentIdAndStatusNot(
                     any(), eq("99999999"), any())).thenReturn(false);
-            when(eventRegistrationRepository.existsOverlappingExternalRegistration(
-                    eq("99999999"), any(), any(), any())).thenReturn(false);
+
 
             // when
             RegistrationResponse response = service.registerExternal(
@@ -343,8 +340,7 @@ class ExternalEventRegistrationServiceTest {
                     any(), any(), any())).thenReturn(false);
             when(eventRegistrationRepository.existsByEventAndExternalPhoneAndStatusNot(
                     any(), any(), any())).thenReturn(false);
-            when(eventRegistrationRepository.existsOverlappingExternalRegistration(
-                    any(), any(), any(), any())).thenReturn(false);
+
             when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(0);
 
             // when & then
@@ -378,8 +374,7 @@ class ExternalEventRegistrationServiceTest {
                     any(), any(), any())).thenReturn(false);
             when(eventRegistrationRepository.existsByEventAndExternalPhoneAndStatusNot(
                     any(), any(), any())).thenReturn(false);
-            when(eventRegistrationRepository.existsOverlappingExternalRegistration(
-                    any(), any(), any(), any())).thenReturn(false);
+
             when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(0);
 
             // when & then
@@ -489,8 +484,7 @@ class ExternalEventRegistrationServiceTest {
                     any(), any(), any())).thenReturn(false);
             when(eventRegistrationRepository.existsByEventAndExternalPhoneAndStatusNot(
                     any(), any(), any())).thenReturn(false);
-            when(eventRegistrationRepository.existsOverlappingExternalRegistration(
-                    any(), any(), any(), any())).thenReturn(false);
+
             when(eventRepository.incrementCurrentCountIfAvailable(EVENT_ID)).thenReturn(1);
 
             Survey survey = mock(Survey.class);
@@ -529,8 +523,7 @@ class ExternalEventRegistrationServiceTest {
                     any(), any(), any())).thenReturn(false);
             when(eventRegistrationRepository.existsByEventAndExternalPhoneAndStatusNot(
                     any(), any(), any())).thenReturn(false);
-            when(eventRegistrationRepository.existsOverlappingExternalRegistration(
-                    any(), any(), any(), any())).thenReturn(false);
+
 
             Survey survey = mock(Survey.class);
             when(survey.isDeleted()).thenReturn(false);
@@ -614,8 +607,7 @@ class ExternalEventRegistrationServiceTest {
                     any(), any(), any())).thenReturn(false);
             when(eventRegistrationRepository.existsByEventAndExternalPhoneAndStatusNot(
                     any(), any(), any())).thenReturn(false);
-            when(eventRegistrationRepository.existsOverlappingExternalRegistration(
-                    any(), any(), any(), any())).thenReturn(false);
+
 
             EventRegistration saved = mock(EventRegistration.class);
             when(saved.getId()).thenReturn(REGISTRATION_ID);
@@ -732,29 +724,4 @@ class ExternalEventRegistrationServiceTest {
         }
     }
 
-    // ==================== 시간 겹침 검증 ====================
-
-    @Nested
-    @DisplayName("시간 겹침 검증")
-    class TimeOverlapTest {
-
-        @Test
-        @DisplayName("시간 겹침 시 EventTimeOverlapException 발생")
-        void registerExternal_TimeOverlap_ThrowsException() {
-            // given
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
-            when(userRepository.findByStudentId(STUDENT_ID)).thenReturn(Optional.empty());
-            when(eventRegistrationRepository.existsByEventAndExternalStudentIdAndStatusNot(
-                    any(), any(), any())).thenReturn(false);
-            when(eventRegistrationRepository.existsByEventAndExternalPhoneAndStatusNot(
-                    any(), any(), any())).thenReturn(false);
-            when(eventRegistrationRepository.existsOverlappingExternalRegistration(
-                    eq(STUDENT_ID), any(), any(), eq(EventRegistrationStatus.CANCELED))).thenReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> service.registerExternal(
-                    EVENT_ID, NAME, STUDENT_ID, PHONE, DEPARTMENT, null))
-                    .isInstanceOf(EventTimeOverlapException.class);
-        }
-    }
 }

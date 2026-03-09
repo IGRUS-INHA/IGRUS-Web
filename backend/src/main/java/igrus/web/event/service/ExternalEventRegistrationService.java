@@ -13,7 +13,7 @@ import igrus.web.event.exception.EventCapacityFullException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.EventNotInRegistrationPeriodException;
 import igrus.web.event.exception.EventNotOpenException;
-import igrus.web.event.exception.EventTimeOverlapException;
+
 import igrus.web.event.exception.ExternalAlreadyRegisteredException;
 import igrus.web.event.exception.ExternalRegistrationNotAllowedException;
 import igrus.web.event.exception.RegisteredMemberExistsException;
@@ -120,7 +120,7 @@ public class ExternalEventRegistrationService {
         }
 
         // 6. Lazy Evaluation (registrationStatus 갱신)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 7. OPEN 상태 확인 (EXT-INV-07)
         if (event.getRegistrationStatus() != RegistrationStatus.OPEN) {
@@ -133,18 +133,7 @@ public class ExternalEventRegistrationService {
             throw new EventNotInRegistrationPeriodException();
         }
 
-        // 9. 시간 겹침 검증 -- studentId 기반 (DECISION-06)
-        boolean hasOverlap = eventRegistrationRepository.existsOverlappingExternalRegistration(
-                studentId,
-                event.getEventStartAt(),
-                event.getEventEndAt(),
-                EventRegistrationStatus.CANCELED
-        );
-        if (hasOverlap) {
-            throw new EventTimeOverlapException();
-        }
-
-        // 10. 설문 연동 처리 (EXT-INV-11)
+        // 9. 설문 연동 처리 (EXT-INV-11)
         if (event.hasSurvey()) {
             Survey survey = surveyRepository.findById(event.getSurveyId())
                     .orElseThrow(SurveyNotFoundException::new);

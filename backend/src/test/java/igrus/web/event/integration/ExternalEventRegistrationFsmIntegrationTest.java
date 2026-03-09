@@ -105,22 +105,26 @@ class ExternalEventRegistrationFsmIntegrationTest extends ServiceIntegrationTest
 
         /**
          * TC-034: 선발제 행사에서 외부인 신청 승인 시 APPROVED + currentCount 증가
-         * 현재 validateNoExternalTimeOverlap 쿼리가 자기 자신의 행사 신청도 겹침으로 감지합니다.
-         * 이 테스트는 승인 시 자기 행사 제외 로직 추가 후 성공할 예정입니다.
-         * 현재는 EventTimeOverlapException 발생을 확인합니다.
          */
         @Test
-        @DisplayName("[TC-034] 선발제 외부인 WAITING 승인 시 자기 행사 시간 겹침 감지 (known issue)")
-        void approveExternal_ManualApprove_ThrowsTimeOverlapDueToSelf() {
+        @DisplayName("[TC-034] 선발제 외부인 WAITING 승인 -> APPROVED, currentCount 증가")
+        void approveExternal_ManualApprove_ApprovedAndCountIncreased() {
             // given
             Event event = createAndSaveOpenEvent(EventRegistrationType.MANUAL_APPROVE, 10);
             var regResponse = externalEventRegistrationService.registerExternal(
                     event.getId(), "외부인2", "22222222", "01022222222", "경영학과", null);
 
-            // when & then: 현재는 자기 행사와 시간 겹침으로 인해 예외 발생 (known issue)
-            assertThatThrownBy(() -> eventRegistrationService.approveRegistration(
-                    regResponse.registrationId(), operator.getId()))
-                    .isInstanceOf(igrus.web.event.exception.EventTimeOverlapException.class);
+            // when
+            var approveResponse = eventRegistrationService.approveRegistration(
+                    regResponse.registrationId(), operator.getId());
+
+            // then
+            assertThat(approveResponse).isNotNull();
+            EventRegistration registration = eventRegistrationRepository.findById(regResponse.registrationId()).orElseThrow();
+            assertThat(registration.getStatus()).isEqualTo(EventRegistrationStatus.APPROVED);
+
+            Event updatedEvent = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
+            assertThat(updatedEvent.getCurrentCount()).isEqualTo(1);
         }
 
         /**

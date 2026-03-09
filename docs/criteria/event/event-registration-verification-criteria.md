@@ -19,7 +19,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 1 | 도메인 규칙과 불변조건 | 중복 신청 방지, 신청 방식별 초기 상태, 권한 제약, 2축 모델 교차 불변조건 |
 | 2 | 상태 모델 | EventRegistrationStatus FSM (선착순/선발제 분기), 행사 2축 상태와의 연동 |
 | 3 | 시스템 경계와 책임 분리 | 원자적 UPDATE 동시성 제어, flush/clear 영속성 컨텍스트 관리 |
-| 4 | 입력 도메인 분할과 경계값 | 신청 시점, 정원 경계, 시간 겹침 경계 |
+| 4 | 입력 도메인 분할과 경계값 | 신청 시점, 정원 경계 |
 | 5 | 권한/보안 정책 | RBAC (ASSOCIATE 차단, OPERATOR+ 관리), 본인 취소 |
 | 6 | 관측 가능성 | 컨트롤러/서비스 로그, 원자적 UPDATE 실패 로그 |
 | 7 | 테스트 전략 | 테스트-검증 항목 매핑, 커버리지 현황, 누락 식별 |
@@ -80,17 +80,12 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 - **2축 모델 참고**: `registrationStatus == OPEN && eventStatus == ONGOING` (행사 진행 중 등록)도 유효한 신청 상태이다 (EVT-INV-12 참조). 2축 모델에서 `registrationStatus`만으로 신청 가능 여부를 판단하므로, `eventStatus`와 무관하게 `registrationStatus == OPEN`이면 신청 가능하다.
 - **주의사항**: 선발제 **승인**은 신청 기간 종료 후에도 가능 (별도 정책)
 
-### REG-INV-06: 시간 겹침 행사 동시 신청 불가
+### ~~REG-INV-06: 시간 겹침 행사 동시 신청 불가~~ (제거됨)
 
-> 사용자의 확정된 신청(REGISTERED, APPROVED) 중 신청하려는 행사의 진행 시간과 겹치는 신청이 있으면 신청할 수 없다.
+> ~~사용자의 확정된 신청(REGISTERED, APPROVED) 중 신청하려는 행사의 진행 시간과 겹치는 신청이 있으면 신청할 수 없다.~~
 
-- **겹침 조건**: `기존 행사 시작 < 새 행사 종료 AND 기존 행사 종료 > 새 행사 시작`
-- **대상 상태**: `REGISTERED`, `APPROVED` (확정된 신청만)
-- **위반 시 예외**: `EventTimeOverlapException`
-- **관련 코드** `(현재 구현 일치)`:
-  - `EventRegistrationRepository:124-133` - `existsOverlappingRegistration()` JPQL 쿼리
-  - `EventRegistrationService:500-510` - `validateNoTimeOverlap()`
-- **적용 시점**: 신청, 재신청, 승인 시 모두 검증
+- **상태**: 제거됨 — 행사 시간이 겹쳐도 자유롭게 신청할 수 있도록 제약이 완화되었다.
+- **제거된 코드**: `validateNoTimeOverlap()`, `validateNoExternalTimeOverlap()`, `existsOverlappingRegistration()`, `existsOverlappingExternalRegistration()`, `EventTimeOverlapException`
 
 ### REG-INV-07: 승인/거절은 선발제(MANUAL_APPROVE)에서만 가능
 
@@ -220,7 +215,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 전이 | 트리거 | 사전조건 | 사후조건 | 관련 코드 |
 |------|--------|---------|---------|----------|
 | (생성) → WAITING | `EventRegistration.create()` | 선발제 행사 | `status = WAITING`, `registeredAt = now` | `EventRegistration:70-72` |
-| WAITING → APPROVED | `registration.approve()` | OPERATOR+ 권한, 선발제, 정원 여유, 시간 미겹침, `eventStatus ∉ {COMPLETED, CANCELED}` `(현재 구현 일치)` | `status = APPROVED`, 행사 `currentCount++` | `EventRegistration:81-83`, `EventRegistrationService:285-288` |
+| WAITING → APPROVED | `registration.approve()` | OPERATOR+ 권한, 선발제, 정원 여유, `eventStatus ∉ {COMPLETED, CANCELED}` `(현재 구현 일치)` | `status = APPROVED`, 행사 `currentCount++` | `EventRegistration:81-83`, `EventRegistrationService:285-288` |
 | WAITING → REJECTED | `registration.reject()` | OPERATOR+ 권한, 선발제, `eventStatus ∉ {COMPLETED, CANCELED}` `(현재 구현 일치)` | `status = REJECTED` | `EventRegistration:88-90`, `EventRegistrationService:333` |
 | APPROVED → WAITING | `registration.revertToWaiting()` | OPERATOR+ 권한, 선발제, `eventStatus == UPCOMING` `(현재 구현 일치)` | `status = WAITING`, 행사 `currentCount--` | `EventRegistration:104-108`, `EventRegistrationService:390-399` |
 | REJECTED → WAITING | `registration.revertToWaiting()` | OPERATOR+ 권한, 선발제, `eventStatus == UPCOMING` `(현재 구현 일치)` | `status = WAITING` (카운트 변경 없음) | `EventRegistration:104-108`, `EventRegistrationService:390-400` |
@@ -319,19 +314,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 마지막 1자리 | `capacity - 1` | 성공, REGISTERED | `registrationStatus`: OPEN → CLOSED (CAPACITY_FULL) |
 | 정원 초과 | `capacity` | `EventCapacityFullException` | 없음 (`registrationStatus == CLOSED` 또는 `incrementCurrentCountIfAvailable` 실패) |
 
-### 4-3. 시간 겹침 경계값
+### ~~4-3. 시간 겹침 경계값~~ (제거됨)
 
-| 기존 행사 | 새 행사 | 겹침 여부 | 관련 테스트 |
-|----------|--------|:---:|----------|
-| [10:00 - 12:00] | [12:00 - 14:00] | **아니오** (경계) | `EventTest:EVT-047` |
-| [10:00 - 12:00] | [11:59 - 14:00] | **예** (1분 겹침) | - |
-| [10:00 - 12:00] | [08:00 - 10:00] | **아니오** (경계) | `EventTest:EVT-046` |
-| [10:00 - 12:00] | [08:00 - 10:01] | **예** (1분 겹침) | - |
-| [10:00 - 12:00] | [10:00 - 12:00] | **예** (완전 동일) | `EventTest:EVT-040` |
-| [10:00 - 12:00] | [09:00 - 13:00] | **예** (완전 포함) | `EventTest:EVT-041,042` |
-| [10:00 - 12:00] | [14:00 - 16:00] | **아니오** | `EventTest:EVT-045` |
-
-**겹침 판정 쿼리**: `기존.eventStartAt < 새.eventEndAt AND 기존.eventEndAt > 새.eventStartAt`
+> 시간 겹침 검증이 제거되어 더 이상 적용되지 않는다.
 
 ### 4-4. 취소 시 카운트 변경 분기
 
@@ -418,7 +403,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 신청 완료 로그 | **없음** (요청 로그만 존재) | 성공/실패 구분 불가 |
 | 승인/거절 완료 로그 | **없음** (요청 로그만 존재) | 운영 감사 추적 불가 |
 | 정원 마감 자동 전이 로그 | **없음** | 정원 마감 시점 추적 불가 |
-| 시간 겹침으로 인한 거부 로그 | **없음** | 거부 사유 추적 불가 |
+| ~~시간 겹침으로 인한 거부 로그~~ | 제거됨 (시간 겹침 검증 제거) | - |
 
 ---
 
@@ -436,7 +421,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | 테스트 클래스 | 테스트 수 | 범위 |
 |-------------|---------|------|
-| `EventRegistrationServiceTest` | 33개 | registerEvent(11), cancelRegistration(4), getMyRegistrations(2), getRegistrationList(2), approveRegistration(6), rejectRegistration(4), revertRegistration(7), 시간 겹침(3) - 중첩 클래스 구조 |
+| `EventRegistrationServiceTest` | 29개 | registerEvent(11), cancelRegistration(4), getMyRegistrations(2), getRegistrationList(2), approveRegistration(5), rejectRegistration(4), revertRegistration(7) - 중첩 클래스 구조 |
 
 **통합 테스트** (`@SpringBootTest`, non-transactional):
 
@@ -455,7 +440,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | REG-INV-03 (선발제 WAITING) | `EventRegistrationTest:REG-002`, `EventRegistrationServiceTest:SVC-002` | **커버됨** |
 | REG-INV-04 (준회원 차단) | `EventRegistrationServiceTest:SVC-003` | **커버됨** |
 | REG-INV-05 (registrationStatus OPEN + 기간 내) | `EventRegistrationServiceTest:SVC-007,008,009` | **커버됨** (현재 단일 축 기준, 2축 모델 리팩토링 후 검증 방식 업데이트 필요) |
-| REG-INV-06 (시간 겹침) | `EventRegistrationServiceTest:SVC-060,061,062` | **커버됨** |
+| ~~REG-INV-06 (시간 겹침)~~ | 제거됨 (시간 겹침 검증 제거) | - |
 | REG-INV-07 (선발제 전용) | `EventRegistrationServiceTest:SVC-031,036,053` | **커버됨** |
 | REG-INV-08 (WAITING 상태) | `EventRegistrationServiceTest:SVC-032,037` | **커버됨** |
 | REG-INV-09 (APPROVED/REJECTED 되돌리기) | `EventRegistrationTest:REG-040~044`, `EventRegistrationServiceTest:SVC-052` | **커버됨** |
@@ -518,7 +503,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | GAP-REG-03 | 동시성 테스트 부재 (여러 사용자 동시 신청 시 정원 초과 방지) | **높음** | 미해결 |
 | GAP-REG-04 | 비인가 접근 시 DB 상태 변경 없음 명시적 테스트 부재 | **중간** | 미해결 |
 | GAP-REG-05 | 컨트롤러 레벨 RBAC 검증 테스트 (MockMvc) 부재 | **중간** | 미해결 |
-| GAP-REG-06 | 시간 겹침 경계값(정확히 경계에서 시작/끝나는 경우) 통합 테스트 부재 | **낮음** | 미해결 |
+| ~~GAP-REG-06~~ | ~~시간 겹침 경계값~~ 제거됨 (시간 겹침 검증 제거) | - | 해당 없음 |
 | GAP-REG-07 | 선발제 재신청(CANCELED → WAITING) 서비스 레벨 테스트 부재 | **낮음** | 미해결 (도메인 테스트 REG-021은 존재) |
 | GAP-REG-08 | APPROVED 상태 취소 서비스 레벨 테스트 부재 | **낮음** | 미해결 (도메인 테스트 REG-013은 존재) |
 

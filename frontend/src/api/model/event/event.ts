@@ -51,6 +51,7 @@ import type {
 
 import type {
   CreateEventRequest,
+  CreateEventWithSurveyRequest,
   EventCreateResponse,
   EventDetailResponse,
   EventListResponse,
@@ -490,6 +491,134 @@ export const useDeleteEvent = <TError = void, TContext = unknown>(
   TContext
 > => {
   return useMutation(getDeleteEventMutationOptions(options), queryClient);
+};
+/**
+ * 행사와 설문(질문+선택지)을 하나의 트랜잭션으로 원자적으로 생성합니다. 운영진 이상 권한 필요.
+ * @summary 행사 + 설문 원자적 생성
+ */
+export type createEventWithSurveyResponse201 = {
+  data: EventCreateResponse;
+  status: 201;
+};
+
+export type createEventWithSurveyResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type createEventWithSurveyResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type createEventWithSurveyResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type createEventWithSurveyResponseSuccess =
+  createEventWithSurveyResponse201 & {
+    headers: Headers;
+  };
+export type createEventWithSurveyResponseError = (
+  | createEventWithSurveyResponse400
+  | createEventWithSurveyResponse401
+  | createEventWithSurveyResponse403
+) & {
+  headers: Headers;
+};
+
+export type createEventWithSurveyResponse =
+  | createEventWithSurveyResponseSuccess
+  | createEventWithSurveyResponseError;
+
+export const getCreateEventWithSurveyUrl = () => {
+  return `/api/v1/events/with-survey`;
+};
+
+export const createEventWithSurvey = async (
+  createEventWithSurveyRequest: CreateEventWithSurveyRequest,
+  options?: RequestInit,
+): Promise<createEventWithSurveyResponse> => {
+  return customFetch<createEventWithSurveyResponse>(
+    getCreateEventWithSurveyUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createEventWithSurveyRequest),
+    },
+  );
+};
+
+export const getCreateEventWithSurveyMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createEventWithSurvey>>,
+    TError,
+    { data: CreateEventWithSurveyRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createEventWithSurvey>>,
+  TError,
+  { data: CreateEventWithSurveyRequest },
+  TContext
+> => {
+  const mutationKey = ["createEventWithSurvey"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createEventWithSurvey>>,
+    { data: CreateEventWithSurveyRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createEventWithSurvey(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateEventWithSurveyMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createEventWithSurvey>>
+>;
+export type CreateEventWithSurveyMutationBody = CreateEventWithSurveyRequest;
+export type CreateEventWithSurveyMutationError = void;
+
+/**
+ * @summary 행사 + 설문 원자적 생성
+ */
+export const useCreateEventWithSurvey = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createEventWithSurvey>>,
+      TError,
+      { data: CreateEventWithSurveyRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createEventWithSurvey>>,
+  TError,
+  { data: CreateEventWithSurveyRequest },
+  TContext
+> => {
+  return useMutation(
+    getCreateEventWithSurveyMutationOptions(options),
+    queryClient,
+  );
 };
 /**
  * 행사 목록을 조회합니다. 행사 진행 상태 및 등록 상태별 필터링이 가능합니다.

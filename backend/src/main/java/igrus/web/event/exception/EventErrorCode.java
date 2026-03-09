@@ -23,7 +23,7 @@ public enum EventErrorCode implements ErrorCode {
     EVENT_NOT_IN_REGISTRATION_PERIOD(400, "신청 기간이 아닙니다"),
     EVENT_NOT_EDITABLE(400, "수정 불가능한 상태의 행사입니다"),
     EVENT_INVALID_STATE_TRANSITION(400, "허용되지 않은 행사 상태 변경입니다"),
-    EVENT_TIME_OVERLAP(409, "이미 신청한 다른 행사와 시간이 겹칩니다"),
+
     EVENT_NOT_CANCELABLE(400, "취소할 수 없는 상태의 행사입니다"),
     EVENT_NOT_REACTIVATABLE(400, "재활성화할 수 없는 상태의 행사입니다"),
     EVENT_REGISTRATION_NOT_REOPENABLE(400, "등록을 재오픈할 수 없습니다"),
