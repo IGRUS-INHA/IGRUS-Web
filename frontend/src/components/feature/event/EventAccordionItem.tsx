@@ -529,6 +529,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   return (
     <div
       ref={itemRef}
+      id={hashId}
       className={cn(
         "border border-border rounded-r4 bg-card overflow-hidden scroll-mt-20",
         event.status === "CANCELED" && "opacity-60 grayscale",
