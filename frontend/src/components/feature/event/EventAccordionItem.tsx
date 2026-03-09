@@ -145,6 +145,16 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
             customDepartment: "",
           });
           setExternalFormErrors({});
+          void queryClient.invalidateQueries({
+            queryKey: eventKeys.detail(numericId),
+          });
+          void queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+          void queryClient.invalidateQueries({
+            queryKey: adminEventKeys.detail(numericId),
+          });
+          void queryClient.invalidateQueries({
+            queryKey: adminEventKeys.lists(),
+          });
         },
         onError: (error: unknown) => {
           if (isConflictError(error)) {
@@ -519,6 +529,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   return (
     <div
       ref={itemRef}
+      id={hashId}
       className={cn(
         "border border-border rounded-r4 bg-card overflow-hidden scroll-mt-20",
         event.status === "CANCELED" && "opacity-60 grayscale",

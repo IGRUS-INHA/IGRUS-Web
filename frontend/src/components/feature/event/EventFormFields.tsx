@@ -57,18 +57,18 @@ export const eventFormSchema = z
       if (
         !data.registrationDeadlineDate ||
         !data.registrationDeadlineTime ||
-        !data.date ||
-        !data.time
+        !data.endDate ||
+        !data.endTime
       )
         return true;
       const regEnd = new Date(
         `${data.registrationDeadlineDate}T${data.registrationDeadlineTime}:00`,
       );
-      const eventStart = new Date(`${data.date}T${data.time}:00`);
-      return regEnd <= eventStart;
+      const eventEnd = new Date(`${data.endDate}T${data.endTime}:00`);
+      return regEnd <= eventEnd;
     },
     {
-      message: "신청 마감은 행사 시작 이전이어야 합니다",
+      message: "신청 마감은 행사 종료 이전이어야 합니다",
       path: ["registrationDeadlineDate"],
     },
   );
