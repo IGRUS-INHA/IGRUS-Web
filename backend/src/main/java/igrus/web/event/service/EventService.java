@@ -96,6 +96,7 @@ public class EventService {
     private final SurveyRepository surveyRepository;
     private final FileMetadataRepository fileMetadataRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EventStatusHelper eventStatusHelper;
 
     /**
      * 행사를 생성합니다.
@@ -116,7 +117,7 @@ public class EventService {
         if (request.registrationStartAt().isBefore(Instant.now())) {
             throw new InvalidEventDateException("신청 시작일은 현재 시간 이후여야 합니다");
         }
-        validateEventDates(request.eventStartAt(), request.eventEndAt(),
+        EventDateValidator.validate(request.eventStartAt(), request.eventEndAt(),
                 request.registrationStartAt(), request.registrationEndAt());
 
         // 4. 설문 존재 검증 및 1:1 연결 검증 (surveyId가 제공된 경우)
@@ -182,7 +183,7 @@ public class EventService {
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 비인증 사용자 처리
         if (userId == null) {
@@ -226,7 +227,7 @@ public class EventService {
 
         // 각 행사의 상태를 시간에 따라 자동 갱신 (Lazy Evaluation)
         Instant now = Instant.now();
-        events.forEach(event -> event.updateStatusIfNeeded(now));
+        eventStatusHelper.updateStatusIfNeeded(events, now);
 
         // Lazy 갱신 후 상태가 변경되었을 수 있으므로, 필터가 있으면 다시 적용
         if (eventStatus != null) {
@@ -276,10 +277,10 @@ public class EventService {
         validateEditPermission(user);
 
         // 4. Lazy Evaluation (EVT-INV-07: 상태별 수정 정책 적용 전 상태 갱신)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 5. 날짜 유효성 검증
-        validateEventDates(request.eventStartAt(), request.eventEndAt(),
+        EventDateValidator.validate(request.eventStartAt(), request.eventEndAt(),
                 request.registrationStartAt(), request.registrationEndAt());
 
         // 6. 설문 존재 검증 및 1:1 연결 검증 + 외부인 허용 시 설문 접근 권한 PUBLIC 자동 승격
@@ -388,7 +389,7 @@ public class EventService {
         validateEditPermission(user);
 
         // 4. Lazy Evaluation (상태 갱신 후 마감 처리)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 5. 등록 마감 (도메인 메서드 호출)
         String previousRegStatus = event.getRegistrationStatus().name();
@@ -426,7 +427,7 @@ public class EventService {
         validateEditPermission(user);
 
         // 4. Lazy Evaluation (EVT-INV-06: COMPLETED 종단 상태 체크를 위해 상태 갱신)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 5. 행사 취소 (도메인 메서드 호출)
         String previousEventStatus = event.getEventStatus().name();
@@ -506,7 +507,7 @@ public class EventService {
 
         // 4. Lazy Evaluation (EVT-INV-13 조건 판단 전 상태 갱신)
         Instant now = Instant.now();
-        event.updateStatusIfNeeded(now);
+        eventStatusHelper.updateStatusIfNeeded(event, now);
 
         // 5. EVT-INV-13 조건 검증
         if (event.getRegistrationStatus() != RegistrationStatus.CLOSED) {
@@ -557,7 +558,7 @@ public class EventService {
 
         // 각 행사의 상태를 시간에 따라 자동 갱신 (Lazy Evaluation)
         Instant now = Instant.now();
-        events.forEach(event -> event.updateStatusIfNeeded(now));
+        eventStatusHelper.updateStatusIfNeeded(events, now);
 
         // Lazy 갱신 후 상태가 변경되었을 수 있으므로, 필터가 있으면 다시 적용
         if (eventStatus != null) {
@@ -599,7 +600,7 @@ public class EventService {
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 관리자 API에서는 canEdit=true, isRegistered는 확인하지 않음
         boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
@@ -627,7 +628,7 @@ public class EventService {
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 3. 행사 공개 (도메인 메서드 호출)
         String previousVisibility = event.getVisibility().name();
@@ -661,7 +662,7 @@ public class EventService {
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
         // 2. 시간에 따른 상태 자동 갱신 (Lazy Evaluation)
-        event.updateStatusIfNeeded(Instant.now());
+        eventStatusHelper.updateStatusIfNeeded(event, Instant.now());
 
         // 3. 행사 비공개 (도메인 메서드 호출 — OPEN이면 CLOSED 자동 마감)
         String previousVisibility = event.getVisibility().name();
@@ -892,42 +893,6 @@ public class EventService {
                 .stream()
                 .map(EventAttachmentDto::from)
                 .toList();
-    }
-
-    /**
-     * 행사 날짜 유효성을 검증합니다. (내부 공통 로직)
-     * 2축 상태 모델 날짜 검증:
-     * - regStart < regEnd
-     * - regStart < eventStart (등록 시작은 행사 시작 전)
-     * - regEnd <= eventEnd (등록 마감은 행사 종료 이전 또는 동일)
-     * - eventStart < eventEnd
-     *
-     * @param eventStart 행사 시작일
-     * @param eventEnd   행사 종료일
-     * @param regStart   신청 시작일
-     * @param regEnd     신청 마감일
-     * @throws InvalidEventDateException 날짜 조건이 맞지 않을 경우
-     */
-    private void validateEventDates(Instant eventStart, Instant eventEnd, Instant regStart, Instant regEnd) {
-        // 신청 시작일 < 신청 마감일
-        if (!regStart.isBefore(regEnd)) {
-            throw new InvalidEventDateException("신청 마감일은 신청 시작일 이후여야 합니다");
-        }
-
-        // 신청 시작일 < 행사 시작일 (등록 시작은 행사 시작 전이어야 함)
-        if (!regStart.isBefore(eventStart)) {
-            throw new InvalidEventDateException("신청 시작일은 행사 시작일 이전이어야 합니다");
-        }
-
-        // 신청 마감일 <= 행사 종료일
-        if (regEnd.isAfter(eventEnd)) {
-            throw new InvalidEventDateException("신청 마감일은 행사 종료일 이전이거나 같아야 합니다");
-        }
-
-        // 행사 시작일 <= 행사 종료일 (non-strict, EVT-INV-02)
-        if (eventStart.isAfter(eventEnd)) {
-            throw new InvalidEventDateException("행사 종료일은 시작일 이후이거나 같아야 합니다");
-        }
     }
 
 }

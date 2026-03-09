@@ -35,7 +35,7 @@ public class AdminEventController implements AdminEventApi {
     private final EventService eventService;
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<List<ApiAdminEventListResponse>> getAdminEventList(
             String visibility,
             String eventStatus,
@@ -59,7 +59,7 @@ public class AdminEventController implements AdminEventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiAdminEventDetailResponse> getAdminEvent(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("[관리자] 행사 상세 조회 요청 - eventId: {}, userId: {}", eventId, user.userId());
@@ -68,7 +68,7 @@ public class AdminEventController implements AdminEventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiAdminEventDetailResponse> publishEvent(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 공개 요청 - eventId: {}, userId: {}", eventId, user.userId());
@@ -77,7 +77,7 @@ public class AdminEventController implements AdminEventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiAdminEventDetailResponse> unpublishEvent(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 비공개 요청 - eventId: {}, userId: {}", eventId, user.userId());

@@ -76,7 +76,7 @@ public class EventRegistrationController implements EventRegistrationApi {
     // ===== 관리자용 API =====
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiPageRegistrationListResponse> getRegistrationList(
             Long eventId,
             Integer page,
@@ -110,7 +110,7 @@ public class EventRegistrationController implements EventRegistrationApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiRegistrationResponse> approveRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 승인 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
@@ -120,7 +120,7 @@ public class EventRegistrationController implements EventRegistrationApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiRegistrationResponse> rejectRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 거절 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
@@ -130,7 +130,7 @@ public class EventRegistrationController implements EventRegistrationApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiRegistrationResponse> revertRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("승인/거절 되돌리기 요청 - registrationId: {}, userId: {}", registrationId, user.userId());

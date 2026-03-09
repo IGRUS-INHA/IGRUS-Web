@@ -5,12 +5,16 @@ import igrus.web.common.util.SecurityUtils;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.EventRegistrationType;
 import igrus.web.event.domain.RegistrationStatus;
+import igrus.web.survey.question.domain.SurveyQuestionType;
+import igrus.web.survey.question.exception.SurveyQuestionValidationException;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.UpdateEventRequest;
 import igrus.web.event.dto.response.EventAttachmentDto;
 import igrus.web.event.service.EventService;
+import igrus.web.event.service.EventWithSurveyService;
+import igrus.web.event.service.EventWithSurveyService.CreateEventWithSurveyRequest;
 import igrus.web.generated.api.EventApi;
 import igrus.web.generated.model.ApiEventCreateResponse;
 import igrus.web.generated.model.ApiEventDetailResponse;
@@ -18,6 +22,8 @@ import igrus.web.generated.model.ApiEventAttachmentResponse;
 import igrus.web.generated.model.ApiEventListResponse;
 import igrus.web.generated.model.ApiEventStatusChangeReasonRequest;
 import igrus.web.generated.model.ApiCreateEventRequest;
+import igrus.web.generated.model.ApiCreateEventWithSurveyRequest;
+import igrus.web.generated.model.ApiCreateEventSurveyQuestionRequest;
 import igrus.web.generated.model.ApiUpdateEventRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +45,12 @@ import java.util.List;
 public class EventController implements EventApi {
 
     private final EventService eventService;
+    private final EventWithSurveyService eventWithSurveyService;
 
     // ===== 행사 CRUD =====
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiEventCreateResponse> createEvent(
             ApiCreateEventRequest createEventRequest
     ) {
@@ -104,7 +111,7 @@ public class EventController implements EventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiEventDetailResponse> updateEvent(
             Long eventId,
             ApiUpdateEventRequest updateEventRequest
@@ -131,7 +138,7 @@ public class EventController implements EventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<Void> deleteEvent(Long eventId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("행사 삭제 요청 - eventId: {}, userId: {}", eventId, user.userId());
@@ -142,7 +149,7 @@ public class EventController implements EventApi {
     // ===== 행사 상태 관리 =====
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiEventDetailResponse> closeEvent(
             Long eventId,
             ApiEventStatusChangeReasonRequest eventStatusChangeReasonRequest
@@ -156,7 +163,7 @@ public class EventController implements EventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiEventDetailResponse> cancelEvent(
             Long eventId,
             ApiEventStatusChangeReasonRequest eventStatusChangeReasonRequest
@@ -170,7 +177,7 @@ public class EventController implements EventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiEventDetailResponse> reactivateEvent(
             Long eventId,
             ApiEventStatusChangeReasonRequest eventStatusChangeReasonRequest
@@ -184,7 +191,7 @@ public class EventController implements EventApi {
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiEventDetailResponse> reopenRegistration(
             Long eventId,
             ApiEventStatusChangeReasonRequest eventStatusChangeReasonRequest
@@ -272,6 +279,55 @@ public class EventController implements EventApi {
                 .surveyId(r.surveyId())
                 .allowExternal(r.allowExternal())
                 .thumbnailObjectKey(r.thumbnailObjectKey());
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<ApiEventCreateResponse> createEventWithSurvey(
+            ApiCreateEventWithSurveyRequest req) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("행사+설문 원자적 생성 요청 - userId: {}, title: {}", user.userId(), req.getTitle());
+
+        // Defense-in-depth: Bean Validation(@NotNull)이 차단하지만, 직접 호출 시 NPE 방지
+        if (req.getSurvey() == null || req.getSurvey().getQuestions() == null) {
+            throw new SurveyQuestionValidationException("설문 정보와 질문 목록은 필수입니다");
+        }
+
+        List<CreateEventWithSurveyRequest.QuestionData> questions = req.getSurvey().getQuestions().stream()
+                .map(q -> new CreateEventWithSurveyRequest.QuestionData(
+                        EnumUtils.fromStringOrNull(SurveyQuestionType.class, q.getQuestionType().getValue()),
+                        q.getTitle(),
+                        Boolean.TRUE.equals(q.getRequired()),
+                        q.getDisplayOrder() != null ? q.getDisplayOrder() : 0,
+                        q.getOptions()
+                ))
+                .toList();
+
+        CreateEventWithSurveyRequest request = new CreateEventWithSurveyRequest(
+                req.getTitle(),
+                req.getDescription(),
+                req.getLocation(),
+                req.getEventStartAt(),
+                req.getEventEndAt(),
+                req.getRegistrationStartAt(),
+                req.getRegistrationEndAt(),
+                req.getCapacity(),
+                EnumUtils.fromStringOrNull(EventRegistrationType.class,
+                        req.getRegistrationType().getValue()),
+                req.getAttachmentObjectKeys(),
+                req.getAllowExternal(),
+                req.getSurvey().getTitle(),
+                req.getSurvey().getDescription(),
+                questions
+        );
+
+        var result = eventWithSurveyService.createEventWithSurvey(request, user.userId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiEventCreateResponse()
+                .id(result.id())
+                .title(result.title())
+                .createdAt(result.createdAt())
+                .surveyId(result.surveyId())
+                .allowExternal(result.allowExternal()));
     }
 
     private ApiEventAttachmentResponse mapToAttachmentResponse(EventAttachmentDto a) {

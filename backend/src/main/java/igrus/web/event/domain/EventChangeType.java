@@ -2,8 +2,7 @@ package igrus.web.event.domain;
 
 /**
  * 행사 상태 변경 유형.
- * 사용자가 직접 수행한 상태 변경만 기록합니다.
- * 시간 기반 자동 전이(Lazy Evaluation)는 기록하지 않습니다.
+ * 사용자가 직접 수행한 상태 변경과 시간 기반 자동 전이를 기록합니다.
  */
 public enum EventChangeType {
     /** 행사 취소. */
