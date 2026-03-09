@@ -5,6 +5,7 @@ import {
   useGetEventList,
   useGetEvent,
   useCreateEvent as useCreateEventMutation,
+  useCreateEventWithSurvey as useCreateEventWithSurveyMutation,
   useUpdateEvent as useUpdateEventMutation,
   useDeleteEvent as useDeleteEventMutation,
   useCloseEvent as useCloseEventMutation,
@@ -120,6 +121,19 @@ export function useCreateEvent() {
   const queryClient = useQueryClient();
 
   return useCreateEventMutation({
+    mutation: {
+      onSuccess: () => {
+        invalidateEventQueries(queryClient);
+      },
+    },
+  });
+}
+
+// 행사 + 설문 원자적 생성 (실제 API 사용)
+export function useCreateEventWithSurvey() {
+  const queryClient = useQueryClient();
+
+  return useCreateEventWithSurveyMutation({
     mutation: {
       onSuccess: () => {
         invalidateEventQueries(queryClient);

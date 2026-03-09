@@ -8,9 +8,16 @@ import {
   eventFormSchema,
   type EventFormValues,
 } from "@/components/feature/event/EventFormFields";
-import { useCreateEvent } from "@/hooks/queries/useEvents";
+import {
+  useCreateEvent,
+  useCreateEventWithSurvey,
+} from "@/hooks/queries/useEvents";
 import { useSurveyCreate } from "@/hooks/useSurveyCreate";
-import { CreateEventRequestRegistrationType } from "@/api/model/models";
+import {
+  CreateEventRequestRegistrationType,
+  CreateEventWithSurveyRequestRegistrationType,
+} from "@/api/model/models";
+import type { CreateEventSurveyQuestionRequestQuestionType } from "@/api/model/models";
 import { REGISTRATION_PERIOD_PRESETS } from "@/constants/event";
 import { formatDateLocal } from "@/utils/event";
 import {
@@ -31,7 +38,12 @@ const TODAY = new Date().toLocaleDateString("ko-KR", {
 
 export default function EventCreatePage() {
   const navigate = useNavigate();
-  const { mutate: createEvent, isPending } = useCreateEvent();
+  const { mutate: createEvent, isPending: isCreatePending } = useCreateEvent();
+  const {
+    mutate: createEventWithSurvey,
+    isPending: isCreateWithSurveyPending,
+  } = useCreateEventWithSurvey();
+  const isPending = isCreatePending || isCreateWithSurveyPending;
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +98,7 @@ export default function EventCreatePage() {
   const allowExternal = watch("allowExternal");
 
   const [capacityRaw, setCapacityRaw] = useState("30");
-  const { draftQuestions, setDraftQuestions, submitSurvey } = useSurveyCreate();
+  const { draftQuestions, setDraftQuestions } = useSurveyCreate();
 
   // 신청 기간 자동 계산
   useEffect(() => {
@@ -146,15 +158,6 @@ export default function EventCreatePage() {
       `${data.registrationDeadlineDate}T${data.registrationDeadlineTime}:00`,
     ).toISOString();
 
-    let surveyId: number | null = null;
-
-    try {
-      surveyId = (await submitSurvey(data.title, data.allowExternal)) ?? null;
-    } catch {
-      alert("설문 생성에 실패했습니다. 다시 시도해주세요.");
-      return;
-    }
-
     let uploadResults;
     try {
       uploadResults = await uploadAll();
@@ -168,38 +171,82 @@ export default function EventCreatePage() {
     }
     const attachmentObjectKeys = uploadResults.map((r) => r.objectKey);
 
-    createEvent(
-      {
-        data: {
-          title: data.title,
-          description: data.description,
-          location: data.location,
-          eventStartAt,
-          eventEndAt,
-          registrationStartAt,
-          registrationEndAt,
-          capacity: data.capacity,
-          registrationType:
-            data.registrationType as CreateEventRequestRegistrationType,
-          surveyId,
-          attachmentObjectKeys,
-          allowExternal: data.allowExternal,
-        },
+    const mutationCallbacks = {
+      onSuccess: () => {
+        alert("행사가 등록되었습니다.");
+        navigate("/events");
       },
-      {
-        onSuccess: () => {
-          alert("행사가 등록되었습니다.");
-          navigate("/events");
-        },
-        onError: (error: unknown) => {
-          if (isForbiddenError(error) || isEventOperatorRequired(error)) {
-            alert("행사 등록 권한이 없습니다.");
-          } else {
-            alert(getErrorMessage(error));
-          }
-        },
+      onError: (error: unknown) => {
+        if (isForbiddenError(error) || isEventOperatorRequired(error)) {
+          alert("행사 등록 권한이 없습니다.");
+        } else {
+          alert(getErrorMessage(error));
+        }
       },
-    );
+    };
+
+    if (draftQuestions.length > 0) {
+      // 설문이 있으면 원자적 엔드포인트 사용 (고아 설문 방지)
+      createEventWithSurvey(
+        {
+          data: {
+            title: data.title,
+            description: data.description,
+            location: data.location,
+            eventStartAt,
+            eventEndAt,
+            registrationStartAt,
+            registrationEndAt,
+            capacity: data.capacity,
+            registrationType:
+              data.registrationType as CreateEventWithSurveyRequestRegistrationType,
+            attachmentObjectKeys,
+            allowExternal: data.allowExternal,
+            survey: {
+              title: `${data.title} 신청 설문`,
+              questions: draftQuestions.map((q) => {
+                const filteredOptions = q.options?.filter((o) => o.trim());
+                return {
+                  // Exception: as cast - SurveyQuestionBuilder.QUESTION_TYPES가 5개 타입만 제공하며,
+                  // CreateEventSurveyQuestionRequestQuestionType과 정확히 일치. IO 경계 1회 허용.
+                  questionType:
+                    q.questionType as CreateEventSurveyQuestionRequestQuestionType,
+                  title: q.title || "질문",
+                  required: q.required,
+                  displayOrder: q.displayOrder,
+                  options: filteredOptions?.length
+                    ? filteredOptions
+                    : undefined,
+                };
+              }),
+            },
+          },
+        },
+        mutationCallbacks,
+      );
+    } else {
+      // 설문 없으면 기존 엔드포인트 사용
+      createEvent(
+        {
+          data: {
+            title: data.title,
+            description: data.description,
+            location: data.location,
+            eventStartAt,
+            eventEndAt,
+            registrationStartAt,
+            registrationEndAt,
+            capacity: data.capacity,
+            registrationType:
+              data.registrationType as CreateEventRequestRegistrationType,
+            surveyId: null,
+            attachmentObjectKeys,
+            allowExternal: data.allowExternal,
+          },
+        },
+        mutationCallbacks,
+      );
+    }
   };
 
   return (
