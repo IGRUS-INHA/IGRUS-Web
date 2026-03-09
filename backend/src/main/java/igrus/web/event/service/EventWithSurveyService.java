@@ -7,7 +7,6 @@ import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.exception.EventAccessDeniedException;
 import igrus.web.event.exception.EventAttachmentValidationException;
 import igrus.web.event.exception.EventErrorCode;
-import igrus.web.event.exception.InvalidEventDateException;
 import igrus.web.event.repository.EventAttachmentRepository;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.storage.domain.FileMetadata;
@@ -73,9 +72,6 @@ public class EventWithSurveyService {
         validateOperatorPermission(user);
 
         // 2. 행사 날짜 유효성 검증
-        if (request.registrationStartAt().isBefore(Instant.now())) {
-            throw new InvalidEventDateException("신청 시작일은 현재 시간 이후여야 합니다");
-        }
         EventDateValidator.validate(request.eventStartAt(), request.eventEndAt(),
                 request.registrationStartAt(), request.registrationEndAt());
 

@@ -287,28 +287,6 @@ class EventServiceTest {
         }
 
         /**
-         * SVC-EVT-032: 신청 시작일 미래 제약 검증
-         */
-        @Test
-        @DisplayName("[SVC-EVT-032] 신청 시작일이 현재 시간 이전이면 InvalidEventDateException 발생")
-        void createEvent_WithRegStartInPast_ThrowsException() {
-            Instant pastRegStart = Instant.now().minus(1, ChronoUnit.DAYS);
-            Instant pastRegEnd = Instant.now().plus(5, ChronoUnit.DAYS);
-            Instant futureEventStart = Instant.now().plus(10, ChronoUnit.DAYS);
-            Instant futureEventEnd = Instant.now().plus(11, ChronoUnit.DAYS);
-            CreateEventRequest request = new CreateEventRequest(
-                    "테스트 행사", "설명", "장소",
-                    futureEventStart, futureEventEnd, pastRegStart, pastRegEnd,
-                    30, EventRegistrationType.AUTO_APPROVE,
-                    null, null, null
-            );
-            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
-
-            assertThatThrownBy(() -> eventService.createEvent(request, OPERATOR_ID))
-                    .isInstanceOf(InvalidEventDateException.class);
-        }
-
-        /**
          * EVT-130: regStart == eventStart (무효, 경계값)
          */
         @Test

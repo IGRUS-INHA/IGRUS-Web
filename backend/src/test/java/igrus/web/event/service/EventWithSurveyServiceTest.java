@@ -221,28 +221,6 @@ class EventWithSurveyServiceTest extends ServiceIntegrationTestBase {
     class DateValidationFailure {
 
         @Test
-        @DisplayName("신청 시작일이 현재 이전이면 실패한다")
-        void createEventWithSurvey_RegistrationStartInPast() {
-            Instant now = Instant.now();
-            var request = new EventWithSurveyService.CreateEventWithSurveyRequest(
-                    "테스트 행사", "설명", "장소",
-                    now.plus(3, ChronoUnit.DAYS),
-                    now.plus(4, ChronoUnit.DAYS),
-                    now.minus(1, ChronoUnit.HOURS), // 과거
-                    now.plus(2, ChronoUnit.DAYS),
-                    30, EventRegistrationType.AUTO_APPROVE,
-                    null, false,
-                    "설문 제목", null,
-                    List.of(new EventWithSurveyService.CreateEventWithSurveyRequest.QuestionData(
-                            SurveyQuestionType.SHORT_ANSWER, "질문", true, 1, null))
-            );
-
-            assertThatThrownBy(() ->
-                    eventWithSurveyService.createEventWithSurvey(request, operator.getId()))
-                    .isInstanceOf(InvalidEventDateException.class);
-        }
-
-        @Test
         @DisplayName("날짜 검증 실패 시 설문도 생성되지 않는다 (롤백)")
         void createEventWithSurvey_DateFail_NoSurveyCreated() {
             Instant now = Instant.now();
@@ -250,8 +228,8 @@ class EventWithSurveyServiceTest extends ServiceIntegrationTestBase {
                     "테스트 행사", "설명", "장소",
                     now.plus(3, ChronoUnit.DAYS),
                     now.plus(4, ChronoUnit.DAYS),
-                    now.minus(1, ChronoUnit.HOURS), // 과거
-                    now.plus(2, ChronoUnit.DAYS),
+                    now.plus(1, ChronoUnit.DAYS),    // regStart
+                    now.plus(5, ChronoUnit.DAYS),    // regEnd > eventEnd (무효)
                     30, EventRegistrationType.AUTO_APPROVE,
                     null, false,
                     "설문 제목", null,

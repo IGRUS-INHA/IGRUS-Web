@@ -255,7 +255,7 @@
 | SVC-EVT-040 | 재활성화 후 감사 이력에 reason 기록 검증 | OPERATOR, CANCELED | `reactivateEvent(eventId, operatorId, reason)` 후 이벤트 캡처 | EventStatusChangeEvent.reason() == 전달한 reason | ✅ |
 | SVC-EVT-030 | 운영진 수동 재오픈 성공 | OPERATOR, 5가지 조건 충족 | `reopenRegistration(eventId, operatorId, reason)` | registrationStatus=OPEN | ✅ |
 | SVC-EVT-031 | 일반 회원 수동 재오픈 거부 | MEMBER | `reopenRegistration(...)` | `EventAccessDeniedException` | ✅ |
-| SVC-EVT-032 | 생성 시 registrationStartAt 미래 제약 | regStart < now | `createEvent(...)` | `InvalidEventDateException` | ✅ |
+| SVC-EVT-032 | ~~생성 시 registrationStartAt 미래 제약~~ | ~~regStart < now~~ | ~~`createEvent(...)`~~ | ~~`InvalidEventDateException`~~ | 제거됨 (과거 신청 시작일 허용) |
 | SVC-EVT-033 | regStart < eventStart 새 제약 검증 | regStart >= eventStart | `createEvent(...)` | `InvalidEventDateException` | ✅ |
 | SVC-EVT-034 | regEnd <= eventEnd 새 제약 검증 | regEnd > eventEnd | `createEvent(...)` | `InvalidEventDateException` | ✅ |
 | SVC-EVT-035 | 비인가 접근 시 DB 상태 변경 없음 | MEMBER가 생성/수정/삭제 시도 | 예외 발생 후 DB 확인 | DB 변경 없음 | ⬜ |
@@ -270,7 +270,7 @@
 |----------|-------------|------|
 | EVT-INV-01 (신청자 수 범위) | EVT-020~024, EVT-108 | ✅ |
 | EVT-INV-02 (날짜 순서, 2축 모델) | EVT-130~138, SVC-EVT-004,005,033,034 | ✅ (서비스) + ✅ (도메인 경계값 대부분, EVT-134/136 ⬜) |
-| EVT-INV-03 (생성 시 미래 제약) | SVC-EVT-032 | ✅ |
+| EVT-INV-03 (생성 시 미래 제약) | ~~SVC-EVT-032~~ | 제거됨 (과거 신청 시작일 허용) |
 | EVT-INV-04 (정원 최소값) | EVT-003~005, EVT-054, EVT-063,064 | ✅ |
 | EVT-INV-05 (초기 상태 2축) | EVT-062 | ✅ |
 | EVT-INV-06 (COMPLETED 종단) | EVT-084, EVT-086, EVT-087, EVT-113 | ✅ |
