@@ -316,8 +316,13 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | `EVENT_REACTIVATED` (행사 재활성화) | UNPUBLISHED → PUBLISHED + CLOSED → OPEN | 재활성화 시 설문도 공개 + 응답 재개 |
 | `REGISTRATION_CANCELED_BY_ADMIN` (개별 신청 취소) | **변경 없음** | 개별 신청 취소이므로 설문 무관 |
 | 행사 삭제 (soft delete) | **변경 없음** | 삭제는 도메인 이벤트를 발행하지 않음 |
+| Lazy Evaluation에 의한 등록 시작 (NOT_STARTED → OPEN) | NOT_STARTED → PUBLISHED + OPEN (`publishSurveyIfUnpublished()` + `openResponse()`) | `EventStatusHelper`가 전이 감지 시 `EventSurveySyncService.openSurveyForRegistration(eventId)` 직접 호출 |
 
-**동기화 방식**: `@EventListener` + `TransactionTemplate(PROPAGATION_REQUIRES_NEW)` — `RecordEventStatusChangeService`와 동일 패턴. best-effort 방식으로 동기화 실패 시 로그만 기록하고 행사 작업에 영향 없음.
+**동기화 방식**:
+- **명시적 상태 변경** (사용자 액션): `@EventListener` + `TransactionTemplate(PROPAGATION_REQUIRES_NEW)` — `RecordEventStatusChangeService`와 동일 패턴
+- **Lazy Evaluation 전이** (시간 기반 자동 전이): `EventStatusHelper`가 NOT_STARTED→OPEN 전이 감지 시 `EventSurveySyncService.openSurveyForRegistration(eventId)`를 직접 호출. 도메인 이벤트를 발행하지 않고 직접 호출하는 이유는 Helper가 이벤트를 발행하면 SRP 위반이며, 트랜잭션 커밋 전 이벤트 발행으로 인한 불일치 가능성이 있기 때문
+
+두 방식 모두 best-effort: 동기화 실패 시 로그만 기록하고 행사 작업에 영향 없음.
 
 **엣지 케이스**:
 - `surveyId == null`: 아무 동작 안 함
@@ -350,7 +355,7 @@ Event 도메인                      Survey 도메인
 - **Event → Survey**: Event 엔티티가 `surveyId` (Long)로 설문을 참조. JPA 연관관계(`@ManyToOne`) 없이 ID만 보유
 - **Survey → Event**: Survey는 Event의 존재를 모름. 어떤 참조도 없음
 - **의존 방향 근거**: "설문이 행사 신청의 전제조건"이므로, 행사 도메인이 설문 도메인을 조회하는 것이 자연스러움
-- **상태 동기화**: `EventSurveySyncService`가 `EventStatusChanged` 도메인 이벤트를 수신하여 설문 상태를 동기화. 행사 도메인이 설문 도메인의 상태 전이 메서드(`publish()`, `unpublish()`, `openResponse()`, `closeResponse()`)를 호출하는 단방향 의존을 유지
+- **상태 동기화**: `EventSurveySyncService`가 설문 상태를 동기화. 명시적 상태 변경은 `EventStatusChanged` 도메인 이벤트를 수신하여 처리하고, Lazy Evaluation 전이(NOT_STARTED→OPEN)는 `EventStatusHelper`가 직접 호출하여 처리. 행사 도메인이 설문 도메인의 상태 전이 메서드(`publish()`, `unpublish()`, `openResponse()`, `closeResponse()`)를 호출하는 단방향 의존을 유지
 
 #### 약한 참조 (Weak Reference) 채택 이유
 
