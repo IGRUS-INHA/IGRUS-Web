@@ -952,7 +952,7 @@
   z-index: 1;
 }
 
-.timeline-item:first-child .timeline-dot {
+.timeline-dot--open {
   border-color: var(--primary);
   background: var(--primary);
 }
