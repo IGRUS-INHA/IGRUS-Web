@@ -22,7 +22,6 @@ import igrus.web.event.exception.EventErrorCode;
 import igrus.web.event.exception.EventNotDeletableException;
 import igrus.web.event.exception.EventNotFoundException;
 import igrus.web.event.exception.EventRegistrationNotReopenableException;
-import igrus.web.event.exception.InvalidEventDateException;
 import igrus.web.event.exception.SurveyAlreadyLinkedToEventException;
 import igrus.web.event.repository.EventAttachmentRepository;
 import igrus.web.event.repository.EventRepository;
@@ -114,9 +113,6 @@ public class EventService {
         validateOperatorPermission(user);
 
         // 3. 날짜 유효성 검증
-        if (request.registrationStartAt().isBefore(Instant.now())) {
-            throw new InvalidEventDateException("신청 시작일은 현재 시간 이후여야 합니다");
-        }
         EventDateValidator.validate(request.eventStartAt(), request.eventEndAt(),
                 request.registrationStartAt(), request.registrationEndAt());
 
