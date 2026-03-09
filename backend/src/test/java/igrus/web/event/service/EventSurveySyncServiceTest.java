@@ -67,7 +67,10 @@ class EventSurveySyncServiceTest {
 
     private Event createEventWithSurvey(Long surveyId) {
         Event event = mock(Event.class);
-        when(event.getSurveyId()).thenReturn(surveyId);
+        when(event.hasSurvey()).thenReturn(surveyId != null);
+        if (surveyId != null) {
+            when(event.getSurveyId()).thenReturn(surveyId);
+        }
         return event;
     }
 

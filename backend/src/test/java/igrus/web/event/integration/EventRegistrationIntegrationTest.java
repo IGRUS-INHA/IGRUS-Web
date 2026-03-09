@@ -568,7 +568,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         e.getEventStartAt(), e.getEventEndAt(),
                         e.getRegistrationStartAt(),
                         Instant.now().plus(3, ChronoUnit.DAYS), // regEnd 연장
-                        10, null);
+                        10, (Survey) null);
                 return null;
             });
 
@@ -830,7 +830,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         /**
          * 설문 연결된 선착순(AUTO_APPROVE) 행사를 생성합니다.
          */
-        private Event createAndSaveSurveyLinkedAutoEvent(Long surveyId) {
+        private Event createAndSaveSurveyLinkedAutoEvent(Survey survey) {
             return transactionTemplate.execute(status -> {
                 Instant now = Instant.now();
                 Event event = Event.create(
@@ -841,7 +841,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         now.plus(6, ChronoUnit.DAYS),
                         10,
                         EventRegistrationType.AUTO_APPROVE,
-                        surveyId
+                        survey
                 );
                 event.publish();
                 event.openRegistration();
@@ -852,7 +852,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         /**
          * 설문 연결된 선발제(MANUAL_APPROVE) 행사를 생성합니다.
          */
-        private Event createAndSaveSurveyLinkedManualEvent(Long surveyId) {
+        private Event createAndSaveSurveyLinkedManualEvent(Survey survey) {
             return transactionTemplate.execute(status -> {
                 Instant now = Instant.now();
                 Event event = Event.create(
@@ -863,7 +863,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         now.plus(6, ChronoUnit.DAYS),
                         10,
                         EventRegistrationType.MANUAL_APPROVE,
-                        surveyId
+                        survey
                 );
                 event.publish();
                 event.openRegistration();
@@ -874,7 +874,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         /**
          * 설문 연결된 선착순 행사를 지정 정원으로 생성합니다.
          */
-        private Event createAndSaveSurveyLinkedAutoEventWithCapacity(Long surveyId, int capacity) {
+        private Event createAndSaveSurveyLinkedAutoEventWithCapacity(Survey survey, int capacity) {
             return transactionTemplate.execute(status -> {
                 Instant now = Instant.now();
                 Event event = Event.create(
@@ -885,7 +885,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         now.plus(6, ChronoUnit.DAYS),
                         capacity,
                         EventRegistrationType.AUTO_APPROVE,
-                        surveyId
+                        survey
                 );
                 event.publish();
                 event.openRegistration();
@@ -946,7 +946,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             // given: capacity=1 설문 연동 선착순 행사, 다른 사용자가 이미 신청
             Survey survey = createAndSaveOpenSurvey();
             Long questionId = getQuestionId(survey);
-            Event event = createAndSaveSurveyLinkedAutoEventWithCapacity(survey.getId(), 1);
+            Event event = createAndSaveSurveyLinkedAutoEventWithCapacity(survey, 1);
 
             // member2가 먼저 신청하여 정원 소진 → AUTO_APPROVE이므로 정원 마감 시 registrationStatus가 CLOSED로 전환됨
             createAndSaveSurveyResponse(survey, member2);
@@ -977,7 +977,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             // given: 설문 OPEN 상태에서 응답 + 행사 신청 완료
             Survey survey = createAndSaveOpenSurvey();
             Long questionId = getQuestionId(survey);
-            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey);
 
             List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
             eventRegistrationService.registerEvent(event.getId(), member.getId(), answers);
@@ -1004,7 +1004,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             // given: 설문(PUBLISHED+OPEN) 연결 선착순 행사
             Survey survey = createAndSaveOpenSurvey();
             Long questionId = getQuestionId(survey);
-            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey);
 
             // when: surveyAnswers 포함하여 신청
             List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
@@ -1030,7 +1030,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             // given: 설문(PUBLISHED+OPEN) 연결 선발제 행사
             Survey survey = createAndSaveOpenSurvey();
             Long questionId = getQuestionId(survey);
-            Event event = createAndSaveSurveyLinkedManualEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedManualEvent(survey);
 
             // when: surveyAnswers 포함하여 신청
             List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
@@ -1057,7 +1057,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             Survey survey = createAndSaveOpenSurvey();
             Long questionId = getQuestionId(survey);
 
-            Event eventA = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+            Event eventA = createAndSaveSurveyLinkedAutoEvent(survey);
             // 행사 B는 시간 미겹침으로 생성
             Event eventB = transactionTemplate.execute(status -> {
                 Instant now = Instant.now();
@@ -1069,7 +1069,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                         now.plus(6, ChronoUnit.DAYS),
                         10,
                         EventRegistrationType.AUTO_APPROVE,
-                        survey.getId()
+                        survey
                 );
                 e.publish();
                 e.openRegistration();
@@ -1107,7 +1107,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         void registerEvent_SurveyDeletedAfterResponse_Fails() {
             // given: 설문 응답 완료
             Survey survey = createAndSaveOpenSurvey();
-            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey);
             createAndSaveSurveyResponse(survey, member);
 
             // when: 설문 영구 삭제 (trash -> permanentDelete)
@@ -1132,7 +1132,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             // given: 설문 응답 + 행사 신청 완료
             Survey survey = createAndSaveOpenSurvey();
             Long questionId = getQuestionId(survey);
-            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey);
 
             List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
             eventRegistrationService.registerEvent(event.getId(), member.getId(), answers);
@@ -1160,7 +1160,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             // given: 설문A 응답 + 행사 신청
             Survey surveyA = createAndSaveOpenSurvey();
             Long questionIdA = getQuestionId(surveyA);
-            Event event = createAndSaveSurveyLinkedAutoEvent(surveyA.getId());
+            Event event = createAndSaveSurveyLinkedAutoEvent(surveyA);
 
             List<SubmitAnswerRequest> answersA = createSurveyAnswers(questionIdA);
             eventRegistrationService.registerEvent(event.getId(), member.getId(), answersA);
@@ -1175,7 +1175,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                 e.update(e.getTitle(), e.getDescription(), e.getLocation(),
                         e.getEventStartAt(), e.getEventEndAt(),
                         e.getRegistrationStartAt(), e.getRegistrationEndAt(),
-                        e.getCapacity(), surveyB.getId());
+                        e.getCapacity(), surveyB);
                 return null;
             });
 
@@ -1200,7 +1200,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             // given: 설문A 응답 + 행사 신청 -> 취소
             Survey surveyA = createAndSaveOpenSurvey();
             Long questionIdA = getQuestionId(surveyA);
-            Event event = createAndSaveSurveyLinkedAutoEvent(surveyA.getId());
+            Event event = createAndSaveSurveyLinkedAutoEvent(surveyA);
 
             List<SubmitAnswerRequest> answersA = createSurveyAnswers(questionIdA);
             eventRegistrationService.registerEvent(event.getId(), member.getId(), answersA);
@@ -1213,7 +1213,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                 e.update(e.getTitle(), e.getDescription(), e.getLocation(),
                         e.getEventStartAt(), e.getEventEndAt(),
                         e.getRegistrationStartAt(), e.getRegistrationEndAt(),
-                        e.getCapacity(), surveyB.getId());
+                        e.getCapacity(), surveyB);
                 return null;
             });
 
@@ -1231,7 +1231,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             // given: 설문 응답 + 선발제 행사 신청 (WAITING)
             Survey survey = createAndSaveOpenSurvey();
             Long questionId = getQuestionId(survey);
-            Event event = createAndSaveSurveyLinkedManualEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedManualEvent(survey);
 
             List<SubmitAnswerRequest> answers = createSurveyAnswers(questionId);
             eventRegistrationService.registerEvent(event.getId(), member.getId(), answers);
@@ -1266,7 +1266,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         void surveyResponseSubmit_DoesNotTriggerEventRegistration() {
             // given: 설문 연결된 행사, 사용자 미신청
             Survey survey = createAndSaveOpenSurvey();
-            Event event = createAndSaveSurveyLinkedAutoEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey);
 
             // when: 설문 응답 직접 저장 (설문 단독 API 시뮬레이션)
             createAndSaveSurveyResponse(survey, member);

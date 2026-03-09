@@ -666,6 +666,6 @@ class EventRegistrationTest {
         User operator = createMockUser(1L, "운영자");
         return Event.create(operator, TITLE, DESCRIPTION, LOCATION,
                 EVENT_START_AT, EVENT_END_AT, REGISTRATION_START_AT, REGISTRATION_END_AT,
-                CAPACITY, type, null);
+                CAPACITY, type, (igrus.web.survey.domain.Survey) null);
     }
 }

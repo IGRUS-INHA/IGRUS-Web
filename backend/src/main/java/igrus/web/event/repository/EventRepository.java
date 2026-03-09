@@ -127,7 +127,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      * @param surveyId 설문 ID
      * @return 연결된 행사 (없으면 empty)
      */
-    Optional<Event> findBySurveyId(Long surveyId);
+    @Query("SELECT e FROM Event e WHERE e.survey.id = :surveyId")
+    Optional<Event> findBySurveyId(@Param("surveyId") Long surveyId);
 
     /**
      * 특정 설문이 다른 행사에 이미 연결되어 있는지 확인합니다. (수정 시 자기 자신 제외)
@@ -136,7 +137,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      * @param eventId  제외할 행사 ID (자기 자신)
      * @return 다른 행사에 이미 연결되어 있으면 true
      */
-    boolean existsBySurveyIdAndIdNot(Long surveyId, Long eventId);
+    @Query("SELECT COUNT(e) > 0 FROM Event e WHERE e.survey.id = :surveyId AND e.id <> :eventId")
+    boolean existsBySurveyIdAndIdNot(@Param("surveyId") Long surveyId, @Param("eventId") Long eventId);
 
     // === 원자적 UPDATE (@SQLRestriction 미적용, 명시적 deleted 조건 필요) ===
 

@@ -1510,6 +1510,7 @@ class EventRegistrationServiceTest {
             Event event = createMockEvent(type);
             when(event.hasSurvey()).thenReturn(true);
             when(event.getSurveyId()).thenReturn(SURVEY_ID);
+            when(event.getSurvey()).thenAnswer(inv -> mockSurvey);
             return event;
         }
 
@@ -2227,11 +2228,13 @@ class EventRegistrationServiceTest {
     class SurveyReRegistrationTest {
 
         private static final Long SURVEY_ID = 100L;
+        private Survey mockSurvey;
 
         private Event createSurveyLinkedEvent(EventRegistrationType type) {
             Event event = createMockEvent(type);
             when(event.hasSurvey()).thenReturn(true);
             when(event.getSurveyId()).thenReturn(SURVEY_ID);
+            when(event.getSurvey()).thenAnswer(inv -> mockSurvey);
             return event;
         }
 
@@ -2252,7 +2255,7 @@ class EventRegistrationServiceTest {
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.of(canceledReg));
 
-            Survey mockSurvey = mock(Survey.class);
+            mockSurvey = mock(Survey.class);
             when(mockSurvey.getResponseStatus()).thenReturn(SurveyResponseStatus.OPEN);
             when(mockSurvey.isDeleted()).thenReturn(false);
             when(mockSurvey.getTrashedAt()).thenReturn(null);
@@ -2286,7 +2289,7 @@ class EventRegistrationServiceTest {
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.of(canceledReg));
 
-            Survey mockSurvey = mock(Survey.class);
+            mockSurvey = mock(Survey.class);
             when(mockSurvey.getResponseStatus()).thenReturn(SurveyResponseStatus.OPEN);
             when(mockSurvey.isDeleted()).thenReturn(false);
             when(mockSurvey.getTrashedAt()).thenReturn(null);
@@ -2315,7 +2318,7 @@ class EventRegistrationServiceTest {
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.of(canceledReg));
 
-            Survey mockSurvey = mock(Survey.class);
+            mockSurvey = mock(Survey.class);
             when(mockSurvey.getResponseStatus()).thenReturn(SurveyResponseStatus.OPEN);
             when(mockSurvey.isDeleted()).thenReturn(false);
             when(mockSurvey.getTrashedAt()).thenReturn(null);

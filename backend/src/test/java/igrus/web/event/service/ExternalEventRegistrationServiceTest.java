@@ -492,6 +492,7 @@ class ExternalEventRegistrationServiceTest {
             when(survey.getTrashedAt()).thenReturn(null);
             when(survey.getResponseStatus()).thenReturn(SurveyResponseStatus.OPEN);
             when(surveyRepository.findById(100L)).thenReturn(Optional.of(survey));
+            when(surveyEvent.getSurvey()).thenReturn(survey);
 
             List<SubmitAnswerRequest> answers = List.of(mock(SubmitAnswerRequest.class));
             when(objectMapper.writeValueAsString(answers)).thenReturn("[{\"questionId\":1}]");
@@ -530,6 +531,7 @@ class ExternalEventRegistrationServiceTest {
             when(survey.getTrashedAt()).thenReturn(null);
             when(survey.getResponseStatus()).thenReturn(SurveyResponseStatus.OPEN);
             when(surveyRepository.findById(100L)).thenReturn(Optional.of(survey));
+            when(surveyEvent.getSurvey()).thenReturn(survey);
 
             // when & then
             assertThatThrownBy(() -> service.registerExternal(

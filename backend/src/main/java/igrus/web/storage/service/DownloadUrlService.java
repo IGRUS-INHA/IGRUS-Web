@@ -51,7 +51,29 @@ public class DownloadUrlService {
      */
     public DownloadUrlResponse createDownloadUrl(String objectKey, Long userId) {
         log.info("다운로드 URL 생성 요청: objectKey={}, userId={}", objectKey, userId);
+        DownloadUrlResponse response = generatePresignedDownloadUrl(objectKey);
+        log.info("다운로드 URL 생성 완료: objectKey={}, userId={}", objectKey, userId);
+        return response;
+    }
 
+    /**
+     * 공개 다운로드용 Presigned URL을 생성한다. (인증 불필요)
+     * 호출 전에 objectKey의 접근 권한은 호출자(서비스 레이어)가 검증해야 한다.
+     *
+     * @param objectKey 다운로드 대상 Object Key
+     * @return 다운로드용 Presigned URL 응답
+     * @throws FileMetadataNotFoundException       COMPLETED 상태의 파일이 존재하지 않는 경우
+     * @throws InvalidFileStatusTransitionException 파일이 COMPLETED 상태가 아닌 경우
+     * @throws S3OperationFailedException           S3 SDK 장애 시
+     */
+    public DownloadUrlResponse createPublicDownloadUrl(String objectKey) {
+        log.info("공개 다운로드 URL 생성 요청: objectKey={}", objectKey);
+        DownloadUrlResponse response = generatePresignedDownloadUrl(objectKey);
+        log.info("공개 다운로드 URL 생성 완료: objectKey={}", objectKey);
+        return response;
+    }
+
+    private DownloadUrlResponse generatePresignedDownloadUrl(String objectKey) {
         FileMetadata fileMetadata = fileMetadataRepository.findByObjectKeyAndDeletedFalse(objectKey)
                 .orElseThrow(() -> new FileMetadataNotFoundException(objectKey));
 
@@ -72,11 +94,7 @@ public class DownloadUrlService {
                     .build();
 
             PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
-            String presignedUrl = presignedRequest.url().toString();
-
-            log.info("다운로드 URL 생성 완료: objectKey={}, userId={}", objectKey, userId);
-
-            return new DownloadUrlResponse(presignedUrl);
+            return new DownloadUrlResponse(presignedRequest.url().toString());
         } catch (Exception e) {
             log.error("다운로드 URL 생성 실패: objectKey={}, error={}", objectKey, e.getMessage(), e);
             throw new S3OperationFailedException(e);

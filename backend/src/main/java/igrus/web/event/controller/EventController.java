@@ -19,6 +19,7 @@ import igrus.web.generated.api.EventApi;
 import igrus.web.generated.model.ApiEventCreateResponse;
 import igrus.web.generated.model.ApiEventDetailResponse;
 import igrus.web.generated.model.ApiEventAttachmentResponse;
+import igrus.web.generated.model.ApiEventImageDownloadUrlResponse;
 import igrus.web.generated.model.ApiEventListResponse;
 import igrus.web.generated.model.ApiEventStatusChangeReasonRequest;
 import igrus.web.generated.model.ApiCreateEventRequest;
@@ -328,6 +329,15 @@ public class EventController implements EventApi {
                 .createdAt(result.createdAt())
                 .surveyId(result.surveyId())
                 .allowExternal(result.allowExternal()));
+    }
+
+    @Override
+    public ResponseEntity<ApiEventImageDownloadUrlResponse> getEventImageDownloadUrl(
+            Long eventId, String objectKey) {
+        log.info("행사 이미지 다운로드 URL 요청 - eventId: {}, objectKey: {}", eventId, objectKey);
+        var result = eventService.getEventImageDownloadUrl(eventId, objectKey);
+        return ResponseEntity.ok(new ApiEventImageDownloadUrlResponse()
+                .presignedUrl(result.presignedUrl()));
     }
 
     private ApiEventAttachmentResponse mapToAttachmentResponse(EventAttachmentDto a) {

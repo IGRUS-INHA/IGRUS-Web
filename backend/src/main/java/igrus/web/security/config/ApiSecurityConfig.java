@@ -50,6 +50,9 @@ public class ApiSecurityConfig {
                 // 행사 상세 조회 (GET만 공개 - allowExternal 검증은 서비스 레이어에서 수행)
                 .requestMatchers(HttpMethod.GET, "/api/v1/events/*").permitAll()
 
+                // 행사 이미지 다운로드 URL (GET만 공개 - 인증 불필요)
+                .requestMatchers(HttpMethod.GET, "/api/v1/events/*/images/download-url").permitAll()
+
                 // 외부인 행사 신청 (인증 불필요)
                 .requestMatchers(HttpMethod.POST, "/api/v1/events/*/registrations/external").permitAll()
 

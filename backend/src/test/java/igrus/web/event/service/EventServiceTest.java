@@ -1831,7 +1831,7 @@ class EventServiceTest {
             verify(surveyRepository).findByIdAndDeletedFalse(SURVEY_ID);
             verify(mockEvent).update(anyString(), anyString(), anyString(),
                     any(Instant.class), any(Instant.class), any(Instant.class), any(Instant.class),
-                    anyInt(), eq(SURVEY_ID), any());
+                    anyInt(), eq(mockSurvey), any());
         }
 
         @Test
@@ -1860,7 +1860,7 @@ class EventServiceTest {
             verify(surveyRepository).findByIdAndDeletedFalse(newSurveyId);
             verify(mockEvent).update(anyString(), anyString(), anyString(),
                     any(Instant.class), any(Instant.class), any(Instant.class), any(Instant.class),
-                    anyInt(), eq(newSurveyId), any());
+                    anyInt(), eq(newSurvey), any());
         }
 
         @Test

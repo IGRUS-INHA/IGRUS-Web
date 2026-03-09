@@ -132,7 +132,7 @@ public class EventWithSurveyService {
                 request.registrationEndAt(),
                 request.capacity(),
                 request.registrationType(),
-                savedSurvey.getId(),
+                savedSurvey,
                 request.allowExternal()
         );
         Event savedEvent = eventRepository.save(event);
