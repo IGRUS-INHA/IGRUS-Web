@@ -120,19 +120,22 @@ public abstract class ServiceIntegrationTestBase {
             entityManager.createNativeQuery("DELETE FROM member_inquiries").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM inquiries").executeUpdate();
 
-            // Phase 1.3: Survey 계층 (자식 먼저)
+            // Phase 1.3: Survey 응답 (자식 먼저)
             entityManager.createNativeQuery("DELETE FROM survey_answers").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM survey_responses").executeUpdate();
+
+            // Phase 1.5: Event 계층 (events가 surveys FK 참조하므로 surveys보다 먼저)
+            entityManager.createNativeQuery("DELETE FROM external_survey_responses").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM event_status_change_histories").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM event_registrations").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM event_attachment").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM events").executeUpdate();
+
+            // Phase 1.6: Survey 구조 (events 삭제 후)
             entityManager.createNativeQuery("DELETE FROM survey_question_rows").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM survey_question_options").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM survey_questions").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM surveys").executeUpdate();
-
-            // Phase 1.5: Event 계층 (자식 먼저)
-            entityManager.createNativeQuery("DELETE FROM external_survey_responses").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM event_status_change_histories").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM event_registrations").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM events").executeUpdate();
 
             // Phase 2: Community 계층 (자식 먼저)
             entityManager.createNativeQuery("DELETE FROM comment_reports").executeUpdate();

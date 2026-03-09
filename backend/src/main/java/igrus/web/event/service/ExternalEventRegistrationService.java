@@ -25,7 +25,6 @@ import igrus.web.event.repository.ExternalSurveyResponseRepository;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.domain.SurveyResponseStatus;
 import igrus.web.survey.exception.SurveyNotFoundException;
-import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import igrus.web.survey.response.service.SurveyAnswerValidator;
 import igrus.web.user.repository.UserRepository;
@@ -65,7 +64,6 @@ public class ExternalEventRegistrationService {
     private final EventRegistrationRepository eventRegistrationRepository;
     private final UserRepository userRepository;
     private final ExternalSurveyResponseRepository externalSurveyResponseRepository;
-    private final SurveyRepository surveyRepository;
     private final SurveyAnswerValidator surveyAnswerValidator;
     private final ObjectMapper objectMapper;
     private final EventStatusHelper eventStatusHelper;
@@ -135,8 +133,7 @@ public class ExternalEventRegistrationService {
 
         // 9. 설문 연동 처리 (EXT-INV-11)
         if (event.hasSurvey()) {
-            Survey survey = surveyRepository.findById(event.getSurveyId())
-                    .orElseThrow(SurveyNotFoundException::new);
+            Survey survey = event.getSurvey();
             validateExternalSurveyState(survey, eventId);
 
             if (answers.isEmpty()) {
@@ -170,8 +167,8 @@ public class ExternalEventRegistrationService {
         if (event.hasSurvey() && !answers.isEmpty()) {
             String answersJson = serializeSurveyAnswers(answers);
             ExternalSurveyResponse surveyResponse = ExternalSurveyResponse.create(
-                    event.getSurveyId(),
-                    savedRegistration.getId(),
+                    event.getSurvey(),
+                    savedRegistration,
                     studentId,
                     answersJson
             );

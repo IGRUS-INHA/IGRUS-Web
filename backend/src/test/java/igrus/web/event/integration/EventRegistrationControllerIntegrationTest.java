@@ -306,7 +306,7 @@ class EventRegistrationControllerIntegrationTest extends ServiceIntegrationTestB
             });
         }
 
-        private Event createAndSaveSurveyLinkedEvent(Long surveyId) {
+        private Event createAndSaveSurveyLinkedEvent(Survey survey) {
             return transactionTemplate.execute(status -> {
                 Instant now = Instant.now();
                 Event event = Event.create(
@@ -317,7 +317,7 @@ class EventRegistrationControllerIntegrationTest extends ServiceIntegrationTestB
                         now.plus(6, ChronoUnit.DAYS),
                         10,
                         EventRegistrationType.AUTO_APPROVE,
-                        surveyId
+                        survey
                 );
                 event.publish();
                 event.openRegistration();
@@ -339,7 +339,7 @@ class EventRegistrationControllerIntegrationTest extends ServiceIntegrationTestB
         void registerSurveyEvent_AssociateRole_Returns403() throws Exception {
             Survey survey = createAndSaveOpenSurvey();
             Long questionId = getQuestionId(survey);
-            Event event = createAndSaveSurveyLinkedEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedEvent(survey);
             String token = generateToken(associate);
 
             String requestBody = """
@@ -444,7 +444,7 @@ class EventRegistrationControllerIntegrationTest extends ServiceIntegrationTestB
         void registerSurveyEvent_AssociateRole_NoSurveyResponseSaved() throws Exception {
             Survey survey = createAndSaveOpenSurvey();
             Long questionId = getQuestionId(survey);
-            Event event = createAndSaveSurveyLinkedEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedEvent(survey);
             String token = generateToken(associate);
 
             String requestBody = """
@@ -476,7 +476,7 @@ class EventRegistrationControllerIntegrationTest extends ServiceIntegrationTestB
         @DisplayName("[TC-052] 설문 응답 미존재 상태에서 설문 연결 행사 신청 시 400")
         void registerSurveyEvent_NoSurveyResponse_Returns400() throws Exception {
             Survey survey = createAndSaveOpenSurvey();
-            Event event = createAndSaveSurveyLinkedEvent(survey.getId());
+            Event event = createAndSaveSurveyLinkedEvent(survey);
 
             // surveyAnswers 미포함 (기존 응답도 없음) -> SurveyResponseRequiredException -> 400
             mockMvc.perform(post("/api/v1/events/" + event.getId() + "/registrations")

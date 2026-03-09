@@ -790,3 +790,37 @@ eventsByEventIdRegistrationsExternal:
       '409':
         description: 이미 신청함 (동일 학번 또는 동일 전화번호로 중복 신청)
     security: []
+
+eventsByEventIdImagesDownloadUrl:
+  get:
+    tags:
+    - Event
+    summary: 행사 이미지 다운로드 URL 조회
+    description: |-
+      공개(PUBLISHED) 행사에 첨부된 이미지의 presigned download URL을 발급합니다.
+      인증 없이 접근 가능합니다. objectKey가 해당 행사에 속하는지 검증합니다.
+    operationId: getEventImageDownloadUrl
+    parameters:
+    - name: eventId
+      in: path
+      description: 행사 ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    - name: objectKey
+      in: query
+      description: 다운로드 대상 S3 Object Key
+      required: true
+      schema:
+        type: string
+    responses:
+      '200':
+        description: 다운로드 URL 발급 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/events.yaml#/EventImageDownloadUrlResponse
+      '404':
+        description: 행사를 찾을 수 없거나 해당 objectKey가 행사에 속하지 않음
+    security: []

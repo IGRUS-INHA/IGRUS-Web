@@ -1,6 +1,7 @@
 package igrus.web.survey.statistics.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.ExternalSurveyResponse;
 import igrus.web.event.repository.ExternalSurveyResponseRepository;
 import igrus.web.survey.domain.Survey;
@@ -42,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 /**
  * SurveyStatisticsService 단위 테스트.
@@ -2077,8 +2079,9 @@ class SurveyStatisticsServiceTest {
          * ExternalSurveyResponse Mock 객체를 생성합니다.
          */
         private ExternalSurveyResponse createExternalResponse(Long id, String answersJson) {
+            EventRegistration mockRegistration = mock(EventRegistration.class);
             ExternalSurveyResponse extResponse = ExternalSurveyResponse.create(
-                    DEFAULT_SURVEY_ID, 100L + id, "ext-student-" + id, answersJson);
+                    survey, mockRegistration, "ext-student-" + id, answersJson);
             withId(extResponse, id);
             return extResponse;
         }

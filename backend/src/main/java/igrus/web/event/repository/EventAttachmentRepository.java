@@ -42,6 +42,18 @@ public interface EventAttachmentRepository extends JpaRepository<EventAttachment
     List<EventAttachment> findByEventIdWithFileMetadata(@Param("eventId") Long eventId);
 
     /**
+     * 공개(PUBLISHED) 행사에 해당 objectKey의 첨부파일이 존재하는지 확인한다.
+     */
+    @Query("SELECT CASE WHEN COUNT(ea) > 0 THEN true ELSE false END " +
+            "FROM EventAttachment ea " +
+            "WHERE ea.event.id = :eventId " +
+            "AND ea.fileMetadata.objectKey = :objectKey " +
+            "AND ea.event.visibility = igrus.web.event.domain.EventVisibility.PUBLISHED " +
+            "AND ea.event.deleted = false")
+    boolean existsByEventIdAndObjectKeyAndEventPublished(
+            @Param("eventId") Long eventId, @Param("objectKey") String objectKey);
+
+    /**
      * 여러 행사 ID에 대해 각 행사의 첫 번째 첨부파일(id 기준)을 한 번에 조회한다 (N+1 방지).
      */
     @Query("SELECT ea FROM EventAttachment ea " +

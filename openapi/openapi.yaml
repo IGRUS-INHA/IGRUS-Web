@@ -204,6 +204,8 @@ paths:
     $ref: ./paths/events.yaml#/eventsByEventIdReactivate
   /api/v1/events/{eventId}/close:
     $ref: ./paths/events.yaml#/eventsByEventIdClose
+  /api/v1/events/{eventId}/images/download-url:
+    $ref: ./paths/events.yaml#/eventsByEventIdImagesDownloadUrl
   /api/v1/events/{eventId}/cancel:
     $ref: ./paths/events.yaml#/eventsByEventIdCancel
   /api/v1/comments/{commentId}/reports:
@@ -546,6 +548,8 @@ components:
       $ref: './schemas/events.yaml#/AdminEventListResponse'
     AdminEventDetailResponse:
       $ref: './schemas/events.yaml#/AdminEventDetailResponse'
+    EventImageDownloadUrlResponse:
+      $ref: './schemas/events.yaml#/EventImageDownloadUrlResponse'
     EventListResponse:
       $ref: './schemas/events.yaml#/EventListResponse'
     RegisterEventRequest:

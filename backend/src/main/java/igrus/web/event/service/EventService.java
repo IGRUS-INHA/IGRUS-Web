@@ -28,8 +28,10 @@ import igrus.web.event.repository.EventRepository;
 import igrus.web.event.repository.EventRegistrationRepository;
 import igrus.web.storage.domain.FileMetadata;
 import igrus.web.storage.domain.FileUploadStatus;
+import igrus.web.storage.dto.DownloadUrlResponse;
 import igrus.web.storage.exception.FileOwnershipMismatchException;
 import igrus.web.storage.repository.FileMetadataRepository;
+import igrus.web.storage.service.DownloadUrlService;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.exception.SurveyNotFoundException;
 import igrus.web.survey.repository.SurveyRepository;
@@ -96,6 +98,7 @@ public class EventService {
     private final FileMetadataRepository fileMetadataRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final EventStatusHelper eventStatusHelper;
+    private final DownloadUrlService downloadUrlService;
 
     /**
      * 행사를 생성합니다.
@@ -117,8 +120,9 @@ public class EventService {
                 request.registrationStartAt(), request.registrationEndAt());
 
         // 4. 설문 존재 검증 및 1:1 연결 검증 (surveyId가 제공된 경우)
+        Survey survey = null;
         if (request.surveyId() != null) {
-            Survey survey = validateAndGetSurvey(request.surveyId());
+            survey = validateAndGetSurvey(request.surveyId());
             validateSurveyNotLinkedToOtherEvent(request.surveyId());
             if (Boolean.TRUE.equals(request.allowExternal())) {
                 survey.upgradeToPublic();
@@ -138,7 +142,7 @@ public class EventService {
                 request.registrationEndAt(),
                 request.capacity(),
                 request.registrationType(),
-                request.surveyId(),
+                survey,
                 request.allowExternal()
         );
 
@@ -280,14 +284,15 @@ public class EventService {
                 request.registrationStartAt(), request.registrationEndAt());
 
         // 6. 설문 존재 검증 및 1:1 연결 검증 + 외부인 허용 시 설문 접근 권한 PUBLIC 자동 승격
+        Survey newSurvey = null;
         if (request.surveyId() != null) {
-            Survey survey = validateAndGetSurvey(request.surveyId());
+            newSurvey = validateAndGetSurvey(request.surveyId());
             validateSurveyNotLinkedToOtherEvent(request.surveyId(), eventId);
             boolean effectiveAllowExternal = request.allowExternal() != null
                     ? request.allowExternal()
                     : event.getAllowExternal();
             if (Boolean.TRUE.equals(effectiveAllowExternal)) {
-                survey.upgradeToPublic();
+                newSurvey.upgradeToPublic();
                 log.info("행사 수정 - 외부인 허용 행사에 설문 연결, 설문 접근 권한 PUBLIC 자동 변경: eventId={}, surveyId={}",
                         eventId, request.surveyId());
             }
@@ -317,7 +322,7 @@ public class EventService {
                 request.registrationStartAt(),
                 request.registrationEndAt(),
                 request.capacity(),
-                request.surveyId(),
+                newSurvey,
                 request.allowExternal() != null ? request.allowExternal() : event.getAllowExternal()
         );
 
@@ -889,6 +894,29 @@ public class EventService {
                 .stream()
                 .map(EventAttachmentDto::from)
                 .toList();
+    }
+
+    /**
+     * 공개 행사의 이미지에 대한 다운로드 URL을 생성합니다. (인증 불필요)
+     * PUBLISHED 상태 행사에 속한 첨부파일만 허용합니다.
+     *
+     * @param eventId   행사 ID
+     * @param objectKey S3 Object Key
+     * @return presigned download URL 응답
+     * @throws EventNotFoundException objectKey가 해당 공개 행사에 속하지 않는 경우
+     */
+    @Transactional(readOnly = true)
+    public DownloadUrlResponse getEventImageDownloadUrl(Long eventId, String objectKey) {
+        log.info("행사 이미지 다운로드 URL 요청 - eventId: {}, objectKey: {}", eventId, objectKey);
+
+        boolean belongs = eventAttachmentRepository
+                .existsByEventIdAndObjectKeyAndEventPublished(eventId, objectKey);
+
+        if (!belongs) {
+            throw new EventNotFoundException(eventId);
+        }
+
+        return downloadUrlService.createPublicDownloadUrl(objectKey);
     }
 
 }

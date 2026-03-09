@@ -2,6 +2,8 @@ package igrus.web.event.repository;
 
 import igrus.web.event.domain.ExternalSurveyResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -16,5 +18,6 @@ public interface ExternalSurveyResponseRepository extends JpaRepository<External
      * @param surveyId 설문 ID
      * @return 외부인 설문 응답 목록
      */
-    List<ExternalSurveyResponse> findBySurveyId(Long surveyId);
+    @Query("SELECT r FROM ExternalSurveyResponse r WHERE r.survey.id = :surveyId")
+    List<ExternalSurveyResponse> findBySurveyId(@Param("surveyId") Long surveyId);
 }

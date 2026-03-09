@@ -32,7 +32,6 @@ import igrus.web.event.repository.EventRegistrationRepository;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.domain.SurveyResponseStatus;
 import igrus.web.survey.exception.SurveyNotFoundException;
-import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.survey.response.domain.SurveyResponse;
 import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import igrus.web.survey.response.exception.SurveyResponseDuplicateException;
@@ -83,7 +82,6 @@ public class EventRegistrationService {
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
     private final UserRepository userRepository;
-    private final SurveyRepository surveyRepository;
     private final SurveyResponseRepository surveyResponseRepository;
     private final SurveyAnswerValidator surveyAnswerValidator;
     private final SurveyAnswerFactory surveyAnswerFactory;
@@ -587,8 +585,7 @@ public class EventRegistrationService {
         Long eventId = event.getId();
 
         // 8. 설문 상태 검증 (SEVT-INV-10, 11)
-        Survey survey = surveyRepository.findById(event.getSurveyId())
-                .orElseThrow(SurveyNotFoundException::new);
+        Survey survey = event.getSurvey();
         validateSurveyState(survey, eventId, user.getId());
 
         // 9. 설문 응답 처리 (SEVT-INV-06) -- 분기 매트릭스 적용
@@ -692,8 +689,7 @@ public class EventRegistrationService {
             Long userId = registration.getUser().getId();
 
             // 설문 상태 검증
-            Survey survey = surveyRepository.findById(event.getSurveyId())
-                    .orElseThrow(SurveyNotFoundException::new);
+            Survey survey = event.getSurvey();
             validateSurveyState(survey, eventId, userId);
 
             // 설문 응답 존재 확인

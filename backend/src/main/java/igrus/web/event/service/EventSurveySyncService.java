@@ -62,7 +62,7 @@ public class EventSurveySyncService {
 
     private void syncSurveyStatus(EventStatusChanged event) {
         Event eventEntity = eventRepository.findById(event.eventId()).orElse(null);
-        if (eventEntity == null || eventEntity.getSurveyId() == null) {
+        if (eventEntity == null || !eventEntity.hasSurvey()) {
             return;
         }
 
@@ -165,7 +165,7 @@ public class EventSurveySyncService {
         try {
             transactionTemplate.executeWithoutResult(status -> {
                 Event eventEntity = eventRepository.findById(eventId).orElse(null);
-                if (eventEntity == null || eventEntity.getSurveyId() == null) {
+                if (eventEntity == null || !eventEntity.hasSurvey()) {
                     return;
                 }
 
