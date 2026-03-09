@@ -17,6 +17,7 @@ import java.time.Instant;
  * @param location            행사 장소
  * @param eventStartAt        행사 시작일시
  * @param eventEndAt          행사 종료일시
+ * @param registrationStartAt 신청 시작일시
  * @param registrationEndAt   신청 마감일시
  * @param capacity            정원
  * @param currentCount        현재 신청자 수
@@ -35,6 +36,7 @@ public record EventListResponse(
         String location,
         Instant eventStartAt,
         Instant eventEndAt,
+        Instant registrationStartAt,
         Instant registrationEndAt,
         int capacity,
         int currentCount,
@@ -61,6 +63,7 @@ public record EventListResponse(
                 event.getLocation(),
                 event.getEventStartAt(),
                 event.getEventEndAt(),
+                event.getRegistrationStartAt(),
                 event.getRegistrationEndAt(),
                 event.getCapacity(),
                 event.getCurrentCount(),

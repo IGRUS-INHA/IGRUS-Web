@@ -75,6 +75,9 @@ function mapToEvent(
     ...(apiEvent.currentCount !== undefined && {
       currentCount: apiEvent.currentCount,
     }),
+    ...(apiEvent.registrationStartAt && {
+      registrationStartAt: apiEvent.registrationStartAt,
+    }),
     ...(apiEvent.registrationEndAt && {
       registrationDeadline: apiEvent.registrationEndAt,
     }),

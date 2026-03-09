@@ -393,7 +393,9 @@ export default function EventRegistrationsPage() {
                       r.registrationId !== undefined &&
                       expandedIds.has(r.registrationId);
                     const surveyResponse =
-                      event.surveyId && r.userId !== undefined && r.userId !== null
+                      event.surveyId &&
+                      r.userId !== undefined &&
+                      r.userId !== null
                         ? userIdToResponse.get(r.userId)
                         : undefined;
                     // 펼쳐진 행의 colspan: 기본 5열 + 설문열(1) + 작업열(1, if manual)

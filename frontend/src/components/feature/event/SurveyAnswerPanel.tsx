@@ -46,7 +46,11 @@ function renderAnswer(
   }
 }
 
-export default function SurveyAnswerPanel({ survey, response, userName }: Props) {
+export default function SurveyAnswerPanel({
+  survey,
+  response,
+  userName,
+}: Props) {
   const questions = useMemo(
     () =>
       [...(survey?.questions ?? [])].sort(

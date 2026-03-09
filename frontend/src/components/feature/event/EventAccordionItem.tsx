@@ -7,6 +7,7 @@ import {
   ChevronUp,
   MapPin,
   Calendar,
+  CalendarClock,
   MoreHorizontal,
   Edit,
   Eye,
@@ -474,6 +475,16 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
       ? `${startLabel} ~ ${endLabel}`
       : startLabel;
 
+  // Registration period label
+  const regStart = event.registrationStartAt;
+  const regEnd = event.registrationDeadline;
+  const regRangeLabel =
+    regStart && regEnd
+      ? `${formatShortDate(regStart)} ~ ${formatShortDate(regEnd)}`
+      : regEnd
+        ? formatShortDate(regEnd)
+        : undefined;
+
   // Progress
   const currentCount = detail?.currentCount ?? event.currentCount ?? 0;
   const capacity = detail?.capacity ?? event.capacity ?? 0;
@@ -623,7 +634,14 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
           {/* Date + location */}
           <div className="flex flex-col gap-s1 mt-s2">
-            <span className="text-sm text-muted-foreground flex items-center gap-s1">
+            <span className="text-sm text-muted-foreground flex items-center gap-s1 flex-wrap">
+              {regRangeLabel && (
+                <>
+                  <CalendarClock size={13} className="text-primary shrink-0" />
+                  <span className="whitespace-nowrap">{regRangeLabel}</span>
+                  <span className="text-muted-foreground/50">/</span>
+                </>
+              )}
               <Calendar size={13} className="text-primary shrink-0" />
               <span className="whitespace-nowrap">{dateRangeLabel}</span>
             </span>
