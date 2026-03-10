@@ -41,6 +41,8 @@ import type { AnswerResponse } from "./answerResponse";
 export interface AdminSurveyResponseListItem {
   /** 응답 ID */
   responseId?: number;
+  /** 행사 신청 ID (외부인 응답 시 설정, 회원 응답 시 null) */
+  registrationId?: number;
   /** 응답자 사용자 ID (비회원 응답 시 null) */
   userId?: number;
   /** 응답자 이름 (비회원 응답 시 null) */

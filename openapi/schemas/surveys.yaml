@@ -400,6 +400,10 @@ AdminSurveyResponseListItem:
       type: integer
       format: int64
       description: 응답 ID
+    registrationId:
+      type: integer
+      format: int64
+      description: 행사 신청 ID (외부인 응답 시 설정, 회원 응답 시 null)
     userId:
       type: integer
       format: int64

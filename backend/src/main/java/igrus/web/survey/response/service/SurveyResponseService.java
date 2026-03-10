@@ -1,17 +1,24 @@
 package igrus.web.survey.response.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
+import igrus.web.event.domain.ExternalSurveyResponse;
 import igrus.web.event.repository.EventRegistrationRepository;
 import igrus.web.event.repository.EventRepository;
+import igrus.web.event.repository.ExternalSurveyResponseRepository;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.domain.SurveyAccessLevel;
 import igrus.web.survey.domain.SurveyResponseStatus;
 import igrus.web.survey.exception.SurveyNotFoundException;
+import igrus.web.survey.question.domain.SurveyQuestionType;
 import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.survey.response.domain.SurveyResponse;
+import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
 import igrus.web.survey.response.dto.request.SubmitSurveyResponseRequest;
 import igrus.web.survey.response.dto.response.AdminSurveyResponseListItem;
 import igrus.web.survey.response.dto.response.SurveyResponseDetailResponse;
@@ -28,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +58,8 @@ public class SurveyResponseService {
     private final SurveyAnswerFactory surveyAnswerFactory;
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
+    private final ExternalSurveyResponseRepository externalSurveyResponseRepository;
+    private final ObjectMapper objectMapper;
 
     /**
      * 회원 응답을 제출합니다.
@@ -195,16 +205,43 @@ public class SurveyResponseService {
      */
     @Transactional(readOnly = true)
     public List<AdminSurveyResponseListItem> getResponsesBySurveyId(Long surveyId) {
-        surveyRepository.findByIdAndDeletedFalse(surveyId)
+        Survey survey = surveyRepository.findByIdAndDeletedFalse(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
+        // 1. 회원 응답 조회
         List<SurveyResponse> responses = surveyResponseRepository
                 .findValidResponsesWithUserAndAnswersBySurveyId(surveyId);
+        List<AdminSurveyResponseListItem> result = new ArrayList<>(
+                responses.stream().map(AdminSurveyResponseListItem::from).toList());
 
-        log.info("관리자 응답 목록 조회 - surveyId: {}, count: {}", surveyId, responses.size());
-        return responses.stream()
-                .map(AdminSurveyResponseListItem::from)
-                .toList();
+        // 2. 외부인 응답 조회 및 변환
+        List<ExternalSurveyResponse> externalResponses =
+                externalSurveyResponseRepository.findBySurveyId(surveyId);
+        if (!externalResponses.isEmpty()) {
+            Map<Long, SurveyQuestionType> questionTypeMap = survey.getQuestions().stream()
+                    .filter(q -> !q.isDeleted())
+                    .collect(Collectors.toMap(q -> q.getId(), q -> q.getQuestionType()));
+
+            for (ExternalSurveyResponse ext : externalResponses) {
+                try {
+                    List<SubmitAnswerRequest> parsedAnswers = objectMapper.readValue(
+                            ext.getAnswers(), new TypeReference<>() {});
+                    List<SurveyResponseDetailResponse.AnswerResponse> answerResponses =
+                            parsedAnswers.stream()
+                                    .filter(a -> questionTypeMap.containsKey(a.questionId()))
+                                    .map(a -> convertExternalAnswer(a, questionTypeMap))
+                                    .toList();
+                    result.add(AdminSurveyResponseListItem.fromExternal(ext, answerResponses));
+                } catch (JsonProcessingException e) {
+                    log.warn("외부인 설문 응답 JSON 파싱 실패 - externalResponseId: {}, surveyId: {}",
+                            ext.getId(), surveyId, e);
+                }
+            }
+        }
+
+        log.info("관리자 응답 목록 조회 - surveyId: {}, 회원: {}, 외부인: {}",
+                surveyId, responses.size(), externalResponses.size());
+        return result;
     }
 
     /**
@@ -290,6 +327,30 @@ public class SurveyResponseService {
         if (!allowed) {
             throw new SurveyResponseAccessDeniedException();
         }
+    }
+
+    /**
+     * 외부인 설문 응답의 개별 답변을 AnswerResponse로 변환합니다.
+     * SubmitAnswerRequest에는 questionType이 없으므로 questionTypeMap에서 조회합니다.
+     */
+    private SurveyResponseDetailResponse.AnswerResponse convertExternalAnswer(
+            SubmitAnswerRequest answer, Map<Long, SurveyQuestionType> questionTypeMap) {
+        SurveyQuestionType questionType = questionTypeMap.get(answer.questionId());
+        List<SurveyResponseDetailResponse.GridAnswerResponse> gridAnswers = null;
+        if (answer.gridAnswers() != null && !answer.gridAnswers().isEmpty()) {
+            gridAnswers = answer.gridAnswers().stream()
+                    .map(g -> new SurveyResponseDetailResponse.GridAnswerResponse(
+                            g.rowId(), g.selectedOptionIds()))
+                    .toList();
+        }
+        return new SurveyResponseDetailResponse.AnswerResponse(
+                answer.questionId(),
+                questionType,
+                answer.textValue(),
+                answer.selectedOptionIds(),
+                answer.numericValue(),
+                gridAnswers
+        );
     }
 
     private static final String SURVEY_RESPONSE_UNIQUE_CONSTRAINT = "uk_survey_responses_survey_user";
