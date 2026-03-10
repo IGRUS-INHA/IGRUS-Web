@@ -43,6 +43,7 @@ public class AdminSurveyResponseController implements AdminSurveyResponseApi {
     private ApiAdminSurveyResponseListItem mapToApiResponse(AdminSurveyResponseListItem item) {
         return new ApiAdminSurveyResponseListItem()
                 .responseId(item.responseId())
+                .registrationId(item.registrationId())
                 .userId(item.userId())
                 .userName(item.userName())
                 .submittedAt(item.submittedAt())
