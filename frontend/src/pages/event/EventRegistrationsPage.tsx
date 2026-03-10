@@ -137,17 +137,21 @@ export default function EventRegistrationsPage() {
       : [];
   const isManualApprove = event?.registrationType === "MANUAL_APPROVE";
 
-  // userId → 설문 응답 매핑
-  const userIdToResponse = useMemo(() => {
-    const map = new Map<number, AdminSurveyResponseListItem>();
+  // 설문 응답 매핑 (회원: userId, 외부인: registrationId)
+  const responseMap = useMemo(() => {
+    const byUserId = new Map<number, AdminSurveyResponseListItem>();
+    const byRegistrationId = new Map<number, AdminSurveyResponseListItem>();
     const responses =
       surveyResponsesData?.status === 200 ? surveyResponsesData.data : [];
     for (const r of responses) {
       if (r.userId !== undefined && r.userId !== null) {
-        map.set(r.userId, r);
+        byUserId.set(r.userId, r);
+      }
+      if (r.registrationId !== undefined && r.registrationId !== null) {
+        byRegistrationId.set(r.registrationId, r);
       }
     }
-    return map;
+    return { byUserId, byRegistrationId };
   }, [surveyResponsesData]);
 
   const surveyDetail =
@@ -392,12 +396,15 @@ export default function EventRegistrationsPage() {
                     const isExpanded =
                       r.registrationId !== undefined &&
                       expandedIds.has(r.registrationId);
-                    const surveyResponse =
-                      event.surveyId &&
-                      r.userId !== undefined &&
-                      r.userId !== null
-                        ? userIdToResponse.get(r.userId)
-                        : undefined;
+                    const surveyResponse = event.surveyId
+                      ? r.isExternal
+                        ? r.registrationId !== undefined
+                          ? responseMap.byRegistrationId.get(r.registrationId)
+                          : undefined
+                        : r.userId !== undefined && r.userId !== null
+                          ? responseMap.byUserId.get(r.userId)
+                          : undefined
+                      : undefined;
                     // 펼쳐진 행의 colspan: 기본 5열 + 설문열(1) + 작업열(1, if manual)
                     const totalCols =
                       5 + (event.surveyId ? 1 : 0) + (isManualApprove ? 1 : 0);
