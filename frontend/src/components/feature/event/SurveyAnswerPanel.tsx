@@ -24,15 +24,12 @@ function renderAnswer(
 
     case "MULTIPLE_CHOICE":
     case "DROPDOWN": {
-      const selectedId = answer.selectedOptionIds?.[0];
-      const option = question.options?.find((o) => o.id === selectedId);
-      return option?.text ?? "미응답";
+      const text = answer.selectedOptions?.[0]?.text;
+      return text ?? "미응답";
     }
 
     case "CHECKBOX": {
-      const labels = (answer.selectedOptionIds ?? [])
-        .map((id) => question.options?.find((o) => o.id === id)?.text)
-        .filter((t): t is string => t !== undefined);
+      const labels = (answer.selectedOptions ?? []).map((o) => o.text);
       return labels.length > 0 ? labels.join(", ") : "미응답";
     }
 
@@ -40,6 +37,21 @@ function renderAnswer(
       return answer.numericValue !== undefined
         ? `${answer.numericValue} / ${question.scaleMax ?? 5}`
         : "미응답";
+
+    case "MULTIPLE_CHOICE_GRID":
+    case "CHECKBOX_GRID": {
+      const grid = answer.gridAnswers ?? [];
+      if (grid.length === 0) return "미응답";
+      return grid
+        .map((g) => {
+          const rowLabel = g.row?.label ?? "";
+          const optionTexts = (g.selectedOptions ?? [])
+            .map((o) => o.text)
+            .join(", ");
+          return `${rowLabel}: ${optionTexts}`;
+        })
+        .join(" / ");
+    }
 
     default:
       return "표시할 수 없는 형식";
