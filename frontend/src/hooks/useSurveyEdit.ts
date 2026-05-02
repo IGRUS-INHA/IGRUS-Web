@@ -60,6 +60,8 @@ export function useSurveyEdit(existingSurveyId?: number) {
     allowExternal?: boolean,
   ): Promise<number | undefined> => {
     try {
+      let resolvedSurveyId: number | undefined;
+
       if (existingSurveyId) {
         // 항상 서버에서 최신 데이터를 가져와 stale 캐시로 인한 오류 방지
         const freshResponse = await getQuestionList(existingSurveyId);
@@ -141,7 +143,8 @@ export function useSurveyEdit(existingSurveyId?: number) {
           }
         }
 
-        return draftQuestions.length > 0 ? existingSurveyId : undefined;
+        resolvedSurveyId =
+          draftQuestions.length > 0 ? existingSurveyId : undefined;
       } else if (draftQuestions.length > 0) {
         // 기존 설문 없음 & 새 문항 있음 → 신규 생성
         const surveyRes = await createSurveyAsync({
@@ -154,37 +157,44 @@ export function useSurveyEdit(existingSurveyId?: number) {
           surveyRes.status === 201
             ? (surveyRes.data.id ?? undefined)
             : undefined;
-        if (!newSurveyId) return undefined;
-
-        for (const q of draftQuestions) {
-          const qRes = await createQuestionAsync({
-            surveyId: newSurveyId,
-            data: {
-              questionType: q.questionType,
-              title: q.title || "질문",
-              required: q.required,
-              displayOrder: q.displayOrder,
-            },
-          });
-          const newQuestionId =
-            qRes.status === 201 ? (qRes.data?.id ?? undefined) : undefined;
-          if (newQuestionId && q.options?.length) {
-            for (const [i, text] of q.options.entries()) {
-              if (text.trim()) {
-                await createOptionAsync({
-                  surveyId: newSurveyId,
-                  questionId: newQuestionId,
-                  data: { text: text.trim(), displayOrder: i + 1 },
-                });
+        if (newSurveyId) {
+          for (const q of draftQuestions) {
+            const qRes = await createQuestionAsync({
+              surveyId: newSurveyId,
+              data: {
+                questionType: q.questionType,
+                title: q.title || "질문",
+                required: q.required,
+                displayOrder: q.displayOrder,
+              },
+            });
+            const newQuestionId =
+              qRes.status === 201 ? (qRes.data?.id ?? undefined) : undefined;
+            if (newQuestionId && q.options?.length) {
+              for (const [i, text] of q.options.entries()) {
+                if (text.trim()) {
+                  await createOptionAsync({
+                    surveyId: newSurveyId,
+                    questionId: newQuestionId,
+                    data: { text: text.trim(), displayOrder: i + 1 },
+                  });
+                }
               }
             }
           }
+          resolvedSurveyId = newSurveyId;
         }
-
-        return newSurveyId;
       }
 
-      return undefined;
+      // 성공 종료 시 question list 캐시 무효화 → 재진입 시 NEW 데이터 보장
+      const invalidationTarget = resolvedSurveyId ?? existingSurveyId;
+      if (invalidationTarget) {
+        await queryClient.invalidateQueries({
+          queryKey: getGetQuestionListQueryKey(invalidationTarget),
+        });
+      }
+
+      return resolvedSurveyId;
     } catch (err) {
       // 부분 변경 후 실패 시 캐시 무효화
       if (existingSurveyId) {
