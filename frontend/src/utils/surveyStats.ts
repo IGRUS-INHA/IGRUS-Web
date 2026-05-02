@@ -46,9 +46,9 @@ export function aggregateChoiceAnswers(
   }
 
   for (const answer of answers) {
-    if (answer.selectedOptionIds) {
-      for (const optId of answer.selectedOptionIds) {
-        countMap.set(optId, (countMap.get(optId) ?? 0) + 1);
+    if (answer.selectedOptions) {
+      for (const opt of answer.selectedOptions) {
+        countMap.set(opt.id, (countMap.get(opt.id) ?? 0) + 1);
       }
     }
   }

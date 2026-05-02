@@ -700,6 +700,10 @@ components:
       $ref: './schemas/surveys.yaml#/AnswerResponse'
     GridAnswerResponse:
       $ref: './schemas/surveys.yaml#/GridAnswerResponse'
+    SelectedOptionResponse:
+      $ref: './schemas/surveys.yaml#/SelectedOptionResponse'
+    SelectedRowResponse:
+      $ref: './schemas/surveys.yaml#/SelectedRowResponse'
     GridAnswerRequest:
       $ref: './schemas/surveys.yaml#/GridAnswerRequest'
     AdminSurveyResponseListItem:

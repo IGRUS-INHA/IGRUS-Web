@@ -605,6 +605,40 @@ class SurveyResponseServiceTest {
                     .isInstanceOf(SurveyResponseNotFoundException.class);
         }
 
+        @DisplayName("archived 옵션의 텍스트도 응답에 포함되어 표시됨")
+        @Test
+        void getMyResponse_IncludesArchivedOptionText() {
+            // given: 옵션 1개를 archive 처리한 상태에서 그 옵션을 선택한 응답이 존재
+            Survey survey = withId(createPublishedAndOpenSurvey(), DEFAULT_SURVEY_ID);
+            OptionSurveyQuestion question = OptionSurveyQuestion.create(
+                    survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1);
+            withId(question, 100L);
+            SurveyQuestionOption archivedOption = SurveyQuestionOption.create(question, "원래 옵션", 1);
+            withId(archivedOption, 200L);
+            archivedOption.archive(1L);
+            question.addOption(archivedOption);
+            survey.getQuestions().add(question);
+
+            SurveyResponse existingResponse = SurveyResponse.create(survey, memberUser);
+            withId(existingResponse, 1L);
+            existingResponse.addAnswer(OptionSurveyAnswer.create(existingResponse, question, archivedOption));
+
+            given(userRepository.findById(DEFAULT_MEMBER_ID)).willReturn(Optional.of(memberUser));
+            given(surveyResponseRepository.findBySurveyIdAndUserIdWithAnswers(DEFAULT_SURVEY_ID, DEFAULT_MEMBER_ID))
+                    .willReturn(Optional.of(existingResponse));
+
+            // when
+            SurveyResponseDetailResponse result = surveyResponseService.getMyResponse(
+                    DEFAULT_SURVEY_ID, memberAuth);
+
+            // then: archived 옵션의 텍스트가 응답에 포함되어 "미응답"으로 표시되지 않음
+            assertThat(result.answers()).hasSize(1);
+            SurveyResponseDetailResponse.AnswerResponse answer = result.answers().getFirst();
+            assertThat(answer.selectedOptions()).hasSize(1);
+            assertThat(answer.selectedOptions().getFirst().id()).isEqualTo(200L);
+            assertThat(answer.selectedOptions().getFirst().text()).isEqualTo("원래 옵션");
+        }
+
         @DisplayName("archived 질문의 답변도 응답 조회에 포함됨")
         @Test
         void getMyResponse_IncludesArchivedQuestionAnswers() {

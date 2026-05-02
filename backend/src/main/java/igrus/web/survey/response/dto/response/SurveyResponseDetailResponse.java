@@ -1,6 +1,8 @@
 package igrus.web.survey.response.dto.response;
 
 import igrus.web.survey.question.domain.SurveyQuestion;
+import igrus.web.survey.question.domain.SurveyQuestionOption;
+import igrus.web.survey.question.domain.SurveyQuestionRow;
 import igrus.web.survey.question.domain.SurveyQuestionType;
 import igrus.web.survey.response.domain.*;
 
@@ -51,11 +53,31 @@ public record SurveyResponseDetailResponse(
         );
     }
 
+    /**
+     * 응답에 선택된 옵션 (id + 표시용 text).
+     * archived 옵션도 응답 보존을 위해 텍스트가 채워집니다.
+     */
+    public record SelectedOptionResponse(Long id, String text) {
+        public static SelectedOptionResponse from(SurveyQuestionOption option) {
+            return new SelectedOptionResponse(option.getId(), option.getText());
+        }
+    }
+
+    /**
+     * 응답에 선택된 그리드 행 (id + 표시용 label).
+     * archived 행도 응답 보존을 위해 라벨이 채워집니다.
+     */
+    public record SelectedRowResponse(Long id, String label) {
+        public static SelectedRowResponse from(SurveyQuestionRow row) {
+            return new SelectedRowResponse(row.getId(), row.getLabel());
+        }
+    }
+
     public record AnswerResponse(
             Long questionId,
             SurveyQuestionType questionType,
             String textValue,
-            List<Long> selectedOptionIds,
+            List<SelectedOptionResponse> selectedOptions,
             Integer numericValue,
             List<GridAnswerResponse> gridAnswers
     ) {
@@ -76,7 +98,7 @@ public record SurveyResponseDetailResponse(
                         question.getId(), type,
                         null,
                         answers.stream()
-                                .map(a -> ((OptionSurveyAnswer) a).getSelectedOption().getId())
+                                .map(a -> SelectedOptionResponse.from(((OptionSurveyAnswer) a).getSelectedOption()))
                                 .toList(),
                         null, null
                 );
@@ -87,16 +109,22 @@ public record SurveyResponseDetailResponse(
                         null
                 );
                 case "GRID" -> {
-                    // 행별로 그룹핑
-                    Map<Long, List<Long>> optionsByRow = new LinkedHashMap<>();
+                    // 행별로 그룹핑 (행 ID 기준, 행 엔티티는 첫 답변에서 추출)
+                    Map<Long, SurveyQuestionRow> rowsById = new LinkedHashMap<>();
+                    Map<Long, List<SelectedOptionResponse>> optionsByRow = new LinkedHashMap<>();
                     for (SurveyAnswer a : answers) {
                         GridSurveyAnswer ga = (GridSurveyAnswer) a;
+                        SurveyQuestionRow row = ga.getSelectedRow();
+                        rowsById.putIfAbsent(row.getId(), row);
                         optionsByRow
-                                .computeIfAbsent(ga.getSelectedRow().getId(), k -> new ArrayList<>())
-                                .add(ga.getSelectedOption().getId());
+                                .computeIfAbsent(row.getId(), k -> new ArrayList<>())
+                                .add(SelectedOptionResponse.from(ga.getSelectedOption()));
                     }
                     List<GridAnswerResponse> gridAnswers = optionsByRow.entrySet().stream()
-                            .map(e -> new GridAnswerResponse(e.getKey(), e.getValue()))
+                            .map(e -> new GridAnswerResponse(
+                                    SelectedRowResponse.from(rowsById.get(e.getKey())),
+                                    e.getValue()
+                            ))
                             .toList();
                     yield new AnswerResponse(
                             question.getId(), type,
@@ -109,8 +137,8 @@ public record SurveyResponseDetailResponse(
     }
 
     public record GridAnswerResponse(
-            Long rowId,
-            List<Long> selectedOptionIds
+            SelectedRowResponse row,
+            List<SelectedOptionResponse> selectedOptions
     ) {
     }
 }

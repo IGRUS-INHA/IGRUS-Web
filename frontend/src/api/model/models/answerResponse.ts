@@ -35,12 +35,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 import type { AnswerResponseQuestionType } from "./answerResponseQuestionType";
 import type { GridAnswerResponse } from "./gridAnswerResponse";
+import type { SelectedOptionResponse } from "./selectedOptionResponse";
 
 export interface AnswerResponse {
   questionId?: number;
   questionType?: AnswerResponseQuestionType;
   textValue?: string;
-  selectedOptionIds?: number[];
+  /** 선택된 옵션 (id + text). archived 옵션도 텍스트 포함. */
+  selectedOptions?: SelectedOptionResponse[];
   numericValue?: number;
   gridAnswers?: GridAnswerResponse[];
 }
