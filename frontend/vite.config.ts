@@ -14,7 +14,31 @@ export default defineConfig(({ mode }) => {
     env.VITE_API_TARGET || "https://staging-api.igrus.co.kr:8080";
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      {
+        name: "staging-noindex",
+        transformIndexHtml(html) {
+          if (env.VITE_NOINDEX === "true") {
+            return html.replace(
+              "</head>",
+              '    <meta name="robots" content="noindex, nofollow">\n  </head>',
+            );
+          }
+          return html;
+        },
+        generateBundle() {
+          if (env.VITE_NOINDEX === "true") {
+            this.emitFile({
+              type: "asset",
+              fileName: "robots.txt",
+              source: "User-agent: *\nDisallow: /\n",
+            });
+          }
+        },
+      },
+    ],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
