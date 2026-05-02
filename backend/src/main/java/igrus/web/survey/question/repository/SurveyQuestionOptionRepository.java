@@ -12,18 +12,18 @@ import java.util.Optional;
 public interface SurveyQuestionOptionRepository extends JpaRepository<SurveyQuestionOption, Long> {
 
     /**
-     * 삭제되지 않은 선택지를 ID로 조회합니다.
+     * 활성(아카이브되지 않은) 선택지를 ID로 조회합니다.
      *
      * @param id 선택지 ID
      * @return 선택지 Optional
      */
-    Optional<SurveyQuestionOption> findByIdAndDeletedFalse(Long id);
+    Optional<SurveyQuestionOption> findByIdAndArchivedAtIsNull(Long id);
 
     /**
-     * 특정 질문의 삭제되지 않은 선택지 목록을 표시 순서로 조회합니다.
+     * 특정 질문의 활성 선택지 목록을 표시 순서로 조회합니다.
      *
      * @param questionId 질문 ID
      * @return 선택지 목록
      */
-    List<SurveyQuestionOption> findByQuestionIdAndDeletedFalseOrderByDisplayOrderAsc(Long questionId);
+    List<SurveyQuestionOption> findByQuestionIdAndArchivedAtIsNullOrderByDisplayOrderAsc(Long questionId);
 }

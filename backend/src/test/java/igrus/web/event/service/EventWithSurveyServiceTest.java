@@ -114,7 +114,7 @@ class EventWithSurveyServiceTest extends ServiceIntegrationTestBase {
             assertThat(surveyRepository.findById(response.surveyId())).isPresent();
 
             // 질문 2개가 생성되었는지 확인
-            assertThat(questionRepository.findBySurveyIdAndDeletedFalseOrderByDisplayOrderAsc(response.surveyId())).hasSize(2);
+            assertThat(questionRepository.findBySurveyIdAndArchivedAtIsNullOrderByDisplayOrderAsc(response.surveyId())).hasSize(2);
         }
 
         @Test
@@ -126,7 +126,7 @@ class EventWithSurveyServiceTest extends ServiceIntegrationTestBase {
 
             // then - 옵션 lazy loading을 위해 트랜잭션 내에서 검증
             transactionTemplate.execute(status -> {
-                var questions = questionRepository.findBySurveyIdAndDeletedFalseOrderByDisplayOrderAsc(response.surveyId());
+                var questions = questionRepository.findBySurveyIdAndArchivedAtIsNullOrderByDisplayOrderAsc(response.surveyId());
                 assertThat(questions).hasSize(2);
 
                 // 첫 번째 질문: 단답형 (TEXT)

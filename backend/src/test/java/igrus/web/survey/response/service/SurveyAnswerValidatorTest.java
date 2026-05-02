@@ -212,15 +212,15 @@ class SurveyAnswerValidatorTest {
                     .isInstanceOf(SurveyResponseValidationException.class);
         }
 
-        @DisplayName("삭제된 옵션 ID로 응답 시 실패")
+        @DisplayName("archived 옵션 ID로 응답 시 실패")
         @Test
-        void validate_DeletedOptionId_ThrowsException() {
+        void validate_ArchivedOptionId_ThrowsException() {
             Survey survey = withId(createPublishedAndOpenSurvey(), DEFAULT_SURVEY_ID);
             OptionSurveyQuestion question = createMultipleChoiceQuestion(survey, 1);
             withId(question, 100L);
             SurveyQuestionOption option = question.getOptions().getFirst();
             withId(option, 200L);
-            option.delete(1L); // soft delete
+            option.archive(1L);
             survey.getQuestions().add(question);
 
             List<SubmitAnswerRequest> answers = List.of(
@@ -516,33 +516,33 @@ class SurveyAnswerValidatorTest {
                     .doesNotThrowAnyException();
         }
 
-        @DisplayName("삭제된 질문에 대한 응답은 무시됨")
+        @DisplayName("archived 질문에 대한 응답은 무시됨")
         @Test
-        void validate_DeletedQuestionIgnored_Success() {
+        void validate_ArchivedQuestionIgnored_Success() {
             Survey survey = withId(createPublishedAndOpenSurvey(), DEFAULT_SURVEY_ID);
             TextSurveyQuestion question = createShortAnswerQuestion(survey, 1);
             makeRequired(question);
             withId(question, 100L);
-            question.delete(1L); // soft delete
+            question.archive(1L);
             survey.getQuestions().add(question);
 
-            // 삭제된 질문이므로 필수여도 응답 안 해도 됨
+            // archived 질문이므로 필수여도 응답 안 해도 됨
             List<SubmitAnswerRequest> answers = List.of();
 
             assertThatCode(() -> validator.validate(survey, answers))
                     .doesNotThrowAnyException();
         }
 
-        @DisplayName("삭제된 질문 ID로 답변 제출 시 실패 (R2-007)")
+        @DisplayName("archived 질문 ID로 답변 제출 시 실패 (R2-007)")
         @Test
-        void validate_DeletedQuestionIdAnswer_ThrowsException() {
+        void validate_ArchivedQuestionIdAnswer_ThrowsException() {
             Survey survey = withId(createPublishedAndOpenSurvey(), DEFAULT_SURVEY_ID);
             TextSurveyQuestion question = createShortAnswerQuestion(survey, 1);
             withId(question, 100L);
-            question.delete(1L); // soft delete
+            question.archive(1L);
             survey.getQuestions().add(question);
 
-            // 삭제된 질문의 ID로 답변을 제출하면 활성 질문 맵에 없으므로 "존재하지 않는 질문" 예외
+            // archived 질문의 ID로 답변을 제출하면 활성 질문 맵에 없으므로 "존재하지 않는 질문" 예외
             List<SubmitAnswerRequest> answers = List.of(
                     new SubmitAnswerRequest(100L, "답변", null, null, null)
             );

@@ -20,7 +20,7 @@ import java.util.List;
  * @param deadline       설문 마감일
  * @param createdAt      생성 시각
  * @param updatedAt      수정 시각
- * @param questions      질문 목록 (삭제되지 않은 질문만 포함)
+ * @param questions      질문 목록 (활성 질문만 포함, archived 제외)
  * @param responseCount  제출된 응답 수 (soft-delete 제외)
  */
 public record SurveyDetailResponse(
@@ -45,7 +45,7 @@ public record SurveyDetailResponse(
      */
     public static SurveyDetailResponse from(Survey survey, int responseCount) {
         List<QuestionResponse> questions = survey.getQuestions().stream()
-                .filter(q -> !q.isDeleted())
+                .filter(q -> !q.isArchived())
                 .map(QuestionResponse::from)
                 .toList();
 
@@ -101,16 +101,16 @@ public record SurveyDetailResponse(
                 scaleMax = scaleQ.getScaleMax();
             } else if (question instanceof GridSurveyQuestion gridQ) {
                 options = gridQ.getOptions().stream()
-                        .filter(o -> !o.isDeleted())
+                        .filter(o -> !o.isArchived())
                         .map(OptionResponse::from)
                         .toList();
                 rows = gridQ.getRows().stream()
-                        .filter(r -> !r.isDeleted())
+                        .filter(r -> !r.isArchived())
                         .map(RowResponse::from)
                         .toList();
             } else if (question instanceof OptionSurveyQuestion optionQ) {
                 options = optionQ.getOptions().stream()
-                        .filter(o -> !o.isDeleted())
+                        .filter(o -> !o.isArchived())
                         .map(OptionResponse::from)
                         .toList();
             }

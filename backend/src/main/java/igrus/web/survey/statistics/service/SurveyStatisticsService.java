@@ -345,14 +345,14 @@ public class SurveyStatisticsService {
             List<ExternalAnswerData> externalAnswers,
             int totalResponseCount) {
 
-        // 질문의 삭제되지 않은 옵션만 조회
+        // 질문의 archived되지 않은 옵션만 조회
         if (!(question instanceof OptionSurveyQuestion optionQuestion)) {
             throw new SurveyStatisticsAggregationException(
                     "OPTION 질문에 잘못된 질문 유형: questionId=" + question.getId()
                             + ", actualType=" + question.getClass().getSimpleName());
         }
         List<SurveyQuestionOption> activeOptions = optionQuestion.getOptions().stream()
-                .filter(option -> !option.isDeleted())
+                .filter(option -> !option.isArchived())
                 .toList();
 
         // 옵션별 선택 수 집계
@@ -409,10 +409,10 @@ public class SurveyStatisticsService {
                             + ", actualType=" + question.getClass().getSimpleName());
         }
         List<SurveyQuestionOption> activeOptions = gridQuestion.getOptions().stream()
-                .filter(option -> !option.isDeleted())
+                .filter(option -> !option.isArchived())
                 .toList();
         List<SurveyQuestionRow> activeRows = gridQuestion.getRows().stream()
-                .filter(row -> !row.isDeleted())
+                .filter(row -> !row.isArchived())
                 .toList();
 
         // 행별 옵션별 선택 수 집계: Map<rowId, Map<optionId, count>>

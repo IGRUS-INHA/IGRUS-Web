@@ -1565,20 +1565,20 @@ class SurveyStatisticsServiceTest {
         }
     }
 
-    // ==================== TASK-018: soft delete 통계 (TC-STAT-080~083) ====================
+    // ==================== TASK-018: archived 통계 (TC-STAT-080~083) ====================
 
     @Nested
-    @DisplayName("soft delete된 질문/선택지/행은 통계에서 제외")
-    class SoftDeleteStatistics {
+    @DisplayName("archived된 질문/선택지/행은 통계에서 제외")
+    class ArchivedStatistics {
 
-        @DisplayName("TC-STAT-080: soft delete된 질문은 통계에서 제외")
+        @DisplayName("TC-STAT-080: archived된 질문은 통계에서 제외")
         @Test
-        void getSurveyStatistics_WithSoftDeletedQuestion_ExcludedFromStatistics() {
-            // given - 삭제된 질문과 활성 질문 각 1개
-            OptionSurveyQuestion deletedQuestion = OptionSurveyQuestion.create(
-                    survey, SurveyQuestionType.MULTIPLE_CHOICE, "삭제된 질문", null, true, 0);
-            withId(deletedQuestion, 100L);
-            deletedQuestion.delete(DEFAULT_OPERATOR_ID);
+        void getSurveyStatistics_WithArchivedQuestion_ExcludedFromStatistics() {
+            // given - archived 질문과 활성 질문 각 1개
+            OptionSurveyQuestion archivedQuestion = OptionSurveyQuestion.create(
+                    survey, SurveyQuestionType.MULTIPLE_CHOICE, "archived 질문", null, true, 0);
+            withId(archivedQuestion, 100L);
+            archivedQuestion.archive(DEFAULT_OPERATOR_ID);
 
             OptionSurveyQuestion activeQuestion = OptionSurveyQuestion.create(
                     survey, SurveyQuestionType.MULTIPLE_CHOICE, "활성 질문", null, true, 1);
@@ -1593,21 +1593,21 @@ class SurveyStatisticsServiceTest {
                     OptionSurveyAnswer.create(r1, activeQuestion, optA)
             );
 
-            // 삭제된 질문은 Repository에서 이미 필터링되므로 activeQuestion만 전달
+            // archived된 질문은 Repository에서 이미 필터링되므로 activeQuestion만 전달
             setUpMocks(List.of(r1), List.of(activeQuestion), answers);
 
             // when
             SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
                     DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
 
-            // then - 삭제된 질문은 통계에 포함되지 않음
+            // then - archived 질문은 통계에 포함되지 않음
             assertThat(result.questionStatistics()).hasSize(1);
             assertThat(result.questionStatistics().getFirst().questionId()).isEqualTo(200L);
         }
 
-        @DisplayName("TC-STAT-081: soft delete된 선택지는 통계에서 제외")
+        @DisplayName("TC-STAT-081: archived된 선택지는 통계에서 제외")
         @Test
-        void getSurveyStatistics_WithSoftDeletedOption_ExcludedFromStatistics() {
+        void getSurveyStatistics_WithArchivedOption_ExcludedFromStatistics() {
             // given
             OptionSurveyQuestion mcQuestion = OptionSurveyQuestion.create(
                     survey, SurveyQuestionType.MULTIPLE_CHOICE, "MC 질문", null, true, 0);
@@ -1619,7 +1619,7 @@ class SurveyStatisticsServiceTest {
             withId(optB, 102L);
             SurveyQuestionOption optC = SurveyQuestionOption.create(mcQuestion, "C", 3);
             withId(optC, 103L);
-            optC.delete(DEFAULT_OPERATOR_ID); // C를 soft delete
+            optC.archive(DEFAULT_OPERATOR_ID); // C를 archive
 
             mcQuestion.addOption(optA);
             mcQuestion.addOption(optB);
@@ -1647,7 +1647,7 @@ class SurveyStatisticsServiceTest {
             SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
                     DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
 
-            // then - 삭제된 선택지 C는 통계에 포함되지 않음
+            // then - archived된 선택지 C는 통계에 포함되지 않음
             QuestionStatisticsResponse mcStat = result.questionStatistics().getFirst();
             List<OptionStatisticsItem> options = mcStat.optionStatistics().options();
             assertThat(options).hasSize(2); // A, B만
@@ -1663,9 +1663,9 @@ class SurveyStatisticsServiceTest {
             assertThat(itemB.count()).isEqualTo(1);
         }
 
-        @DisplayName("TC-STAT-082: soft delete된 행은 통계에서 제외")
+        @DisplayName("TC-STAT-082: archived된 행은 통계에서 제외")
         @Test
-        void getSurveyStatistics_WithSoftDeletedRow_ExcludedFromStatistics() {
+        void getSurveyStatistics_WithArchivedRow_ExcludedFromStatistics() {
             // given
             GridSurveyQuestion gridQuestion = GridSurveyQuestion.create(
                     survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "GRID 질문", null, true, 0);
@@ -1680,7 +1680,7 @@ class SurveyStatisticsServiceTest {
 
             SurveyQuestionRow rowMath = SurveyQuestionRow.create(gridQuestion, "수학", 1);
             withId(rowMath, 201L);
-            rowMath.delete(DEFAULT_OPERATOR_ID); // 수학 행 soft delete
+            rowMath.archive(DEFAULT_OPERATOR_ID); // 수학 행 archive
 
             SurveyQuestionRow rowEnglish = SurveyQuestionRow.create(gridQuestion, "영어", 2);
             withId(rowEnglish, 202L);
@@ -1704,7 +1704,7 @@ class SurveyStatisticsServiceTest {
             SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
                     DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
 
-            // then - 삭제된 수학 행은 통계에서 제외
+            // then - archived된 수학 행은 통계에서 제외
             GridQuestionStatistics gridStats = result.questionStatistics().getFirst().gridStatistics();
             assertThat(gridStats).isNotNull();
             assertThat(gridStats.rows()).hasSize(1); // 영어만
@@ -1721,9 +1721,9 @@ class SurveyStatisticsServiceTest {
             assertThat(engDissatisfied.count()).isZero();
         }
 
-        @DisplayName("TC-STAT-083: 모든 선택지가 soft delete된 질문 - 빈 옵션 목록")
+        @DisplayName("TC-STAT-083: 모든 선택지가 archived된 질문 - 빈 옵션 목록")
         @Test
-        void getSurveyStatistics_WithAllOptionsSoftDeleted_ReturnsEmptyOptionList() {
+        void getSurveyStatistics_WithAllOptionsArchived_ReturnsEmptyOptionList() {
             // given
             OptionSurveyQuestion mcQuestion = OptionSurveyQuestion.create(
                     survey, SurveyQuestionType.MULTIPLE_CHOICE, "MC 질문", null, true, 0);
@@ -1731,10 +1731,10 @@ class SurveyStatisticsServiceTest {
 
             SurveyQuestionOption optA = SurveyQuestionOption.create(mcQuestion, "A", 1);
             withId(optA, 101L);
-            optA.delete(DEFAULT_OPERATOR_ID);
+            optA.archive(DEFAULT_OPERATOR_ID);
             SurveyQuestionOption optB = SurveyQuestionOption.create(mcQuestion, "B", 2);
             withId(optB, 102L);
-            optB.delete(DEFAULT_OPERATOR_ID);
+            optB.archive(DEFAULT_OPERATOR_ID);
 
             mcQuestion.addOption(optA);
             mcQuestion.addOption(optB);
@@ -1753,7 +1753,7 @@ class SurveyStatisticsServiceTest {
             SurveyStatisticsResponse result = surveyStatisticsService.getSurveyStatistics(
                     DEFAULT_SURVEY_ID, DEFAULT_OPERATOR_ID);
 
-            // then - 모든 선택지가 삭제되었으므로 빈 옵션 목록
+            // then - 모든 선택지가 archived되었으므로 빈 옵션 목록
             QuestionStatisticsResponse mcStat = result.questionStatistics().getFirst();
             assertThat(mcStat.optionStatistics().options()).isEmpty();
         }

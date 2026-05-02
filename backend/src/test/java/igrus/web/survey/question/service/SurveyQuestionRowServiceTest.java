@@ -12,6 +12,7 @@ import igrus.web.survey.question.exception.SurveyRowNotFoundException;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
 import igrus.web.survey.question.repository.SurveyQuestionRowRepository;
 import igrus.web.survey.repository.SurveyRepository;
+import igrus.web.survey.response.repository.SurveyAnswerRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -57,6 +58,9 @@ class SurveyQuestionRowServiceTest {
     private SurveyQuestionRowRepository rowRepository;
 
     @Mock
+    private SurveyAnswerRepository surveyAnswerRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @InjectMocks
@@ -97,7 +101,7 @@ class SurveyQuestionRowServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
             given(rowRepository.save(any(SurveyQuestionRow.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
@@ -136,7 +140,7 @@ class SurveyQuestionRowServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -158,7 +162,7 @@ class SurveyQuestionRowServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
 
             // when & then
@@ -216,9 +220,9 @@ class SurveyQuestionRowServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(rowRepository.findByIdAndDeletedFalse(ROW_ID))
+            given(rowRepository.findByIdAndArchivedAtIsNull(ROW_ID))
                     .willReturn(Optional.of(row));
 
             // when
@@ -244,9 +248,9 @@ class SurveyQuestionRowServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(rowRepository.findByIdAndDeletedFalse(ROW_ID))
+            given(rowRepository.findByIdAndArchivedAtIsNull(ROW_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -274,9 +278,9 @@ class SurveyQuestionRowServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(rowRepository.findByIdAndDeletedFalse(ROW_ID))
+            given(rowRepository.findByIdAndArchivedAtIsNull(ROW_ID))
                     .willReturn(Optional.of(row));
 
             // when & then
@@ -294,7 +298,7 @@ class SurveyQuestionRowServiceTest {
 
         @DisplayName("운영진 행 삭제(soft delete) 성공")
         @Test
-        void deleteRow_ByOperator_Success() {
+        void deleteRow_ByOperator_WithAnswers_Archives() {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
@@ -307,16 +311,47 @@ class SurveyQuestionRowServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(rowRepository.findByIdAndDeletedFalse(ROW_ID))
+            given(rowRepository.findByIdAndArchivedAtIsNull(ROW_ID))
                     .willReturn(Optional.of(row));
+            given(surveyAnswerRepository.existsBySelectedRowId(ROW_ID)).willReturn(true);
 
             // when
             rowService.deleteRow(DEFAULT_SURVEY_ID, QUESTION_ID, ROW_ID, operatorAuth);
 
             // then
-            assertThat(row.isDeleted()).isTrue();
+            assertThat(row.isArchived()).isTrue();
+            verify(rowRepository, org.mockito.Mockito.never()).delete(row);
+        }
+
+        @DisplayName("응답이 없는 행 삭제 시 hard delete")
+        @Test
+        void deleteRow_ByOperator_NoAnswers_HardDeletes() {
+            // given
+            Survey survey = createSurveyWithId();
+            SurveyQuestion question = withId(
+                    GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
+                    QUESTION_ID);
+            SurveyQuestionRow row = withId(
+                    SurveyQuestionRow.create(question, "행", 1),
+                    ROW_ID);
+
+            given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
+            given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
+                    .willReturn(Optional.of(survey));
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
+                    .willReturn(Optional.of(question));
+            given(rowRepository.findByIdAndArchivedAtIsNull(ROW_ID))
+                    .willReturn(Optional.of(row));
+            given(surveyAnswerRepository.existsBySelectedRowId(ROW_ID)).willReturn(false);
+
+            // when
+            rowService.deleteRow(DEFAULT_SURVEY_ID, QUESTION_ID, ROW_ID, operatorAuth);
+
+            // then
+            verify(rowRepository).delete(row);
+            assertThat(row.isArchived()).isFalse();
         }
 
         @DisplayName("존재하지 않는 행 삭제 시 SurveyRowNotFoundException")
@@ -331,9 +366,9 @@ class SurveyQuestionRowServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(rowRepository.findByIdAndDeletedFalse(ROW_ID))
+            given(rowRepository.findByIdAndArchivedAtIsNull(ROW_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -375,7 +410,7 @@ class SurveyQuestionRowServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
 
             // when
@@ -386,24 +421,24 @@ class SurveyQuestionRowServiceTest {
             assertThat(result).hasSize(2);
         }
 
-        @DisplayName("삭제된 행은 목록에서 제외")
+        @DisplayName("archived 행은 목록에서 제외")
         @Test
-        void getRowList_ExcludesDeletedRows() {
+        void getRowList_ExcludesArchivedRows() {
             // given
             Survey survey = createSurveyWithId();
             GridSurveyQuestion question = withId(
                     GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID, "그리드 질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionRow activeRow = SurveyQuestionRow.create(question, "활성 행", 1);
-            SurveyQuestionRow deletedRow = SurveyQuestionRow.create(question, "삭제된 행", 2);
-            deletedRow.delete(operatorAuth.userId());
+            SurveyQuestionRow archivedRow = SurveyQuestionRow.create(question, "archived 행", 2);
+            archivedRow.archive(operatorAuth.userId());
             question.addRow(activeRow);
-            question.addRow(deletedRow);
+            question.addRow(archivedRow);
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
 
             // when

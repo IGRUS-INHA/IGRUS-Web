@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -196,13 +195,13 @@ class SurveyAnswerFactoryTest {
     }
 
     @Test
-    @DisplayName("삭제된 질문은 questionMap에서 제외됨")
-    void createAnswers_DeletedQuestion_Excluded() {
+    @DisplayName("archived 질문은 questionMap에서 제외됨")
+    void createAnswers_ArchivedQuestion_Excluded() {
         // given
         Survey survey = withId(createPublishedAndOpenSurvey(), DEFAULT_SURVEY_ID);
         TextSurveyQuestion question = createShortAnswerQuestion(survey, 1);
         withId(question, 100L);
-        ReflectionTestUtils.setField(question, "deleted", true); // 질문 삭제
+        question.archive(1L); // 질문 archive
         survey.getQuestions().add(question);
 
         SurveyResponse response = createMockResponse(survey);

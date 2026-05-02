@@ -376,7 +376,7 @@ public class SurveyService {
      */
     private void validatePublishPreConditions(Survey survey) {
         List<SurveyQuestion> activeQuestions = survey.getQuestions().stream()
-                .filter(q -> !q.isDeleted())
+                .filter(q -> !q.isArchived())
                 .toList();
 
         if (activeQuestions.isEmpty()) {
@@ -405,14 +405,14 @@ public class SurveyService {
                         String.format("질문 '%s'의 최솟값은 최댓값보다 작아야 합니다.", question.getTitle()));
             }
         } else if (question instanceof GridSurveyQuestion gridQ) {
-            long activeOptionCount = gridQ.getOptions().stream().filter(o -> !o.isDeleted()).count();
-            long activeRowCount = gridQ.getRows().stream().filter(r -> !r.isDeleted()).count();
+            long activeOptionCount = gridQ.getOptions().stream().filter(o -> !o.isArchived()).count();
+            long activeRowCount = gridQ.getRows().stream().filter(r -> !r.isArchived()).count();
             if (activeRowCount == 0 || activeOptionCount == 0) {
                 throw new SurveyPublishValidationException(
                         String.format("질문 '%s'에 행과 선택지가 각각 1개 이상 필요합니다.", question.getTitle()));
             }
         } else if (question instanceof OptionSurveyQuestion optionQ) {
-            long activeOptionCount = optionQ.getOptions().stream().filter(o -> !o.isDeleted()).count();
+            long activeOptionCount = optionQ.getOptions().stream().filter(o -> !o.isArchived()).count();
             if (activeOptionCount == 0) {
                 throw new SurveyPublishValidationException(
                         String.format("질문 '%s'에 선택지가 1개 이상 필요합니다.", question.getTitle()));

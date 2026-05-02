@@ -1,6 +1,6 @@
 package igrus.web.survey.question.domain;
 
-import igrus.web.common.domain.SoftDeletableEntity;
+import igrus.web.common.domain.BaseEntity;
 import igrus.web.survey.domain.Survey;
 import igrus.web.survey.exception.SurveyInvalidStateTransitionException;
 import jakarta.persistence.*;
@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DiscriminatorFormula;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,8 @@ import java.util.List;
  *   <li>{@link OptionSurveyQuestion} - MULTIPLE_CHOICE, CHECKBOX, DROPDOWN</li>
  *   <li>{@link GridSurveyQuestion} - MULTIPLE_CHOICE_GRID, CHECKBOX_GRID</li>
  * </ul>
+ *
+ * <p>응답이 1건이라도 존재하는 질문은 hard delete 대신 archive 처리되어, 과거 응답에서 참조 가능 상태로 유지됩니다.</p>
  */
 @Entity
 @Table(name = "survey_questions")
@@ -36,13 +39,10 @@ import java.util.List;
         @AttributeOverride(name = "createdAt", column = @Column(name = "survey_questions_created_at", nullable = false, updatable = false)),
         @AttributeOverride(name = "updatedAt", column = @Column(name = "survey_questions_updated_at", nullable = false)),
         @AttributeOverride(name = "createdBy", column = @Column(name = "survey_questions_created_by", updatable = false)),
-        @AttributeOverride(name = "updatedBy", column = @Column(name = "survey_questions_updated_by")),
-        @AttributeOverride(name = "deleted", column = @Column(name = "survey_questions_deleted", nullable = false)),
-        @AttributeOverride(name = "deletedAt", column = @Column(name = "survey_questions_deleted_at")),
-        @AttributeOverride(name = "deletedBy", column = @Column(name = "survey_questions_deleted_by"))
+        @AttributeOverride(name = "updatedBy", column = @Column(name = "survey_questions_updated_by"))
 })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public abstract class SurveyQuestion extends SoftDeletableEntity {
+public abstract class SurveyQuestion extends BaseEntity {
 
     /** 질문 고유 식별자 */
     @Id
@@ -83,6 +83,16 @@ public abstract class SurveyQuestion extends SoftDeletableEntity {
     @Getter
     private int displayOrder;
 
+    /** 아카이브 시각 (null이면 활성 질문, 값이 있으면 폼에서 제외됨) */
+    @Column(name = "survey_questions_archived_at")
+    @Getter
+    private Instant archivedAt;
+
+    /** 아카이브 수행자 ID */
+    @Column(name = "survey_questions_archived_by")
+    @Getter
+    private Long archivedBy;
+
     // === 서브클래스 전용 필드 (JPA 매핑용, getter는 서브클래스에서만 노출) ===
 
     /** 선형 배율 최솟값 (LINEAR_SCALE 유형에서만 사용) */
@@ -93,12 +103,12 @@ public abstract class SurveyQuestion extends SoftDeletableEntity {
     @Column(name = "survey_questions_scale_max")
     protected Integer scaleMax;
 
-    /** 선택지 목록 (MULTIPLE_CHOICE, CHECKBOX, DROPDOWN, 그리드의 열, soft delete 대상이므로 orphanRemoval 미사용) */
+    /** 선택지 목록 (MULTIPLE_CHOICE, CHECKBOX, DROPDOWN, 그리드의 열). archive 대상이므로 orphanRemoval 미사용. */
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL)
     @OrderBy("displayOrder ASC")
     protected List<SurveyQuestionOption> options = new ArrayList<>();
 
-    /** 그리드 행 목록 (MULTIPLE_CHOICE_GRID, CHECKBOX_GRID에서만 사용, soft delete 대상이므로 orphanRemoval 미사용) */
+    /** 그리드 행 목록 (MULTIPLE_CHOICE_GRID, CHECKBOX_GRID에서만 사용). archive 대상이므로 orphanRemoval 미사용. */
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL)
     @OrderBy("displayOrder ASC")
     protected List<SurveyQuestionRow> rows = new ArrayList<>();
@@ -140,5 +150,24 @@ public abstract class SurveyQuestion extends SoftDeletableEntity {
         this.description = description;
         this.required = required;
         this.displayOrder = displayOrder;
+    }
+
+    /**
+     * 질문을 아카이브 처리합니다 (응답이 존재할 때 사용).
+     * 아카이브된 질문은 폼·신규 응답 검증에서 제외되지만, 기존 응답·통계에서는 유지됩니다.
+     */
+    public void archive(Long userId) {
+        this.archivedAt = Instant.now();
+        this.archivedBy = userId;
+    }
+
+    /** 아카이브 해제 */
+    public void unarchive() {
+        this.archivedAt = null;
+        this.archivedBy = null;
+    }
+
+    public boolean isArchived() {
+        return archivedAt != null;
     }
 }

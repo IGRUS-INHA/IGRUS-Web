@@ -219,7 +219,7 @@ public class SurveyResponseService {
                 externalSurveyResponseRepository.findBySurveyId(surveyId);
         if (!externalResponses.isEmpty()) {
             Map<Long, SurveyQuestionType> questionTypeMap = survey.getQuestions().stream()
-                    .filter(q -> !q.isDeleted())
+                    .filter(q -> !q.isArchived())
                     .collect(Collectors.toMap(q -> q.getId(), q -> q.getQuestionType()));
 
             for (ExternalSurveyResponse ext : externalResponses) {

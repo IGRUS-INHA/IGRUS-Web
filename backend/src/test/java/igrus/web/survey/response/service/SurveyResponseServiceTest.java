@@ -605,9 +605,9 @@ class SurveyResponseServiceTest {
                     .isInstanceOf(SurveyResponseNotFoundException.class);
         }
 
-        @DisplayName("삭제된 질문의 답변은 제외")
+        @DisplayName("archived된 질문의 답변은 제외")
         @Test
-        void getMyResponse_ExcludesDeletedQuestionAnswers() {
+        void getMyResponse_ExcludesArchivedQuestionAnswers() {
             // given
             Survey survey = withId(createPublishedAndOpenSurvey(), DEFAULT_SURVEY_ID);
             TextSurveyQuestion question1 = createShortAnswerQuestion(survey, 1);
@@ -616,7 +616,7 @@ class SurveyResponseServiceTest {
 
             TextSurveyQuestion question2 = createShortAnswerQuestion(survey, 2);
             withId(question2, 101L);
-            question2.delete(1L); // soft delete
+            question2.archive(1L);
             survey.getQuestions().add(question2);
 
             SurveyResponse existingResponse = SurveyResponse.create(survey, memberUser);

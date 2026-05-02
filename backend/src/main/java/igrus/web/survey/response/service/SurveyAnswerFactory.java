@@ -27,7 +27,7 @@ public class SurveyAnswerFactory {
      */
     public void createAnswers(SurveyResponse response, Survey survey, List<SubmitAnswerRequest> answers) {
         Map<Long, SurveyQuestion> questionMap = survey.getQuestions().stream()
-                .filter(q -> !q.isDeleted())
+                .filter(q -> !q.isArchived())
                 .collect(Collectors.toMap(SurveyQuestion::getId, q -> q));
 
         for (SubmitAnswerRequest answerReq : answers) {
@@ -69,7 +69,7 @@ public class SurveyAnswerFactory {
 
         OptionSurveyQuestion osq = (OptionSurveyQuestion) question;
         Map<Long, SurveyQuestionOption> optionMap = osq.getOptions().stream()
-                .filter(o -> !o.isDeleted())
+                .filter(o -> !o.isArchived())
                 .collect(Collectors.toMap(SurveyQuestionOption::getId, o -> o));
 
         for (Long optionId : answerReq.selectedOptionIds()) {
@@ -91,10 +91,10 @@ public class SurveyAnswerFactory {
 
         GridSurveyQuestion gsq = (GridSurveyQuestion) question;
         Map<Long, SurveyQuestionOption> optionMap = gsq.getOptions().stream()
-                .filter(o -> !o.isDeleted())
+                .filter(o -> !o.isArchived())
                 .collect(Collectors.toMap(SurveyQuestionOption::getId, o -> o));
         Map<Long, SurveyQuestionRow> rowMap = gsq.getRows().stream()
-                .filter(r -> !r.isDeleted())
+                .filter(r -> !r.isArchived())
                 .collect(Collectors.toMap(SurveyQuestionRow::getId, r -> r));
 
         for (SubmitAnswerRequest.GridAnswerRequest ga : answerReq.gridAnswers()) {
