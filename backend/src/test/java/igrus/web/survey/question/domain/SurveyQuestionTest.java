@@ -232,7 +232,7 @@ class SurveyQuestionTest {
             Survey survey = createSurvey();
             OptionSurveyQuestion question = createMultipleChoiceQuestion(survey, 1);
             assertThat(question.getOptions()).isNotEmpty();
-            assertThat(question.getOptions().stream().filter(o -> !o.isDeleted()).count()).isGreaterThanOrEqualTo(1);
+            assertThat(question.getOptions().stream().filter(o -> !o.isArchived()).count()).isGreaterThanOrEqualTo(1);
         }
 
         @DisplayName("QST-034: MULTIPLE_CHOICE_GRID 행 0개 -> 발행 시 구성 미충족")
@@ -267,8 +267,8 @@ class SurveyQuestionTest {
             Survey survey = createSurvey();
             GridSurveyQuestion question = createGridQuestion(survey, 1);
 
-            long activeOptionCount = question.getOptions().stream().filter(o -> !o.isDeleted()).count();
-            long activeRowCount = question.getRows().stream().filter(r -> !r.isDeleted()).count();
+            long activeOptionCount = question.getOptions().stream().filter(o -> !o.isArchived()).count();
+            long activeRowCount = question.getRows().stream().filter(r -> !r.isArchived()).count();
 
             assertThat(activeOptionCount).isGreaterThanOrEqualTo(1);
             assertThat(activeRowCount).isGreaterThanOrEqualTo(1);
@@ -297,8 +297,8 @@ class SurveyQuestionTest {
             SurveyQuestionRow row = SurveyQuestionRow.create(question, "행 1", 1);
             question.addRow(row);
 
-            long activeOptionCount = question.getOptions().stream().filter(o -> !o.isDeleted()).count();
-            long activeRowCount = question.getRows().stream().filter(r -> !r.isDeleted()).count();
+            long activeOptionCount = question.getOptions().stream().filter(o -> !o.isArchived()).count();
+            long activeRowCount = question.getRows().stream().filter(r -> !r.isArchived()).count();
 
             assertThat(activeOptionCount).isEqualTo(1);
             assertThat(activeRowCount).isEqualTo(1);
@@ -510,97 +510,97 @@ class SurveyQuestionTest {
         }
     }
 
-    // ==================== 3.7 Soft Delete ====================
+    // ==================== 3.7 Archive ====================
 
     @Nested
-    @DisplayName("Soft Delete")
-    class SoftDelete {
+    @DisplayName("Archive")
+    class Archive {
 
-        @DisplayName("QST-060: 질문 soft delete 후 deleted=true")
+        @DisplayName("QST-060: 질문 archive 후 archivedAt 설정")
         @Test
-        void deleteQuestion_SoftDelete_Success() {
+        void archiveQuestion_Success() {
             Survey survey = createSurvey();
             TextSurveyQuestion question = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "질문", null, false, 1);
 
-            question.delete(1L);
+            question.archive(1L);
 
-            assertThat(question.isDeleted()).isTrue();
+            assertThat(question.isArchived()).isTrue();
         }
 
-        @DisplayName("QST-062: 선택지 soft delete 후 deleted=true")
+        @DisplayName("QST-062: 선택지 archive 후 archivedAt 설정")
         @Test
-        void deleteOption_SoftDelete_Success() {
+        void archiveOption_Success() {
             Survey survey = createSurvey();
             OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "질문", null, false, 1);
             SurveyQuestionOption option = SurveyQuestionOption.create(question, "선택지", 1);
 
-            option.delete(1L);
+            option.archive(1L);
 
-            assertThat(option.isDeleted()).isTrue();
+            assertThat(option.isArchived()).isTrue();
         }
 
-        @DisplayName("QST-063: 행 soft delete 후 deleted=true")
+        @DisplayName("QST-063: 행 archive 후 archivedAt 설정")
         @Test
-        void deleteRow_SoftDelete_Success() {
+        void archiveRow_Success() {
             Survey survey = createSurvey();
             GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "질문", null, false, 1);
             SurveyQuestionRow row = SurveyQuestionRow.create(question, "행", 1);
 
-            row.delete(1L);
+            row.archive(1L);
 
-            assertThat(row.isDeleted()).isTrue();
+            assertThat(row.isArchived()).isTrue();
         }
 
-        @DisplayName("삭제된 질문은 활성 질문 필터링 시 제외됨")
+        @DisplayName("archived 질문은 활성 질문 필터링 시 제외됨")
         @Test
-        void deletedQuestion_FilteredOut() {
+        void archivedQuestion_FilteredOut() {
             Survey survey = createSurvey();
             TextSurveyQuestion active = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
                     "활성 질문", null, false, 1);
-            TextSurveyQuestion deleted = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
-                    "삭제 질문", null, false, 2);
+            TextSurveyQuestion archived = TextSurveyQuestion.create(survey, SurveyQuestionType.SHORT_ANSWER,
+                    "archive 질문", null, false, 2);
             survey.getQuestions().add(active);
-            survey.getQuestions().add(deleted);
-            deleted.delete(1L);
+            survey.getQuestions().add(archived);
+            archived.archive(1L);
 
-            long activeCount = survey.getQuestions().stream().filter(q -> !q.isDeleted()).count();
+            long activeCount = survey.getQuestions().stream().filter(q -> !q.isArchived()).count();
 
             assertThat(activeCount).isEqualTo(1);
         }
 
-        @DisplayName("삭제된 선택지는 활성 선택지 필터링 시 제외됨")
+        @DisplayName("archived 선택지는 활성 선택지 필터링 시 제외됨")
         @Test
-        void deletedOption_FilteredOut() {
+        void archivedOption_FilteredOut() {
             Survey survey = createSurvey();
             OptionSurveyQuestion question = OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE,
                     "질문", null, false, 1);
             SurveyQuestionOption active = SurveyQuestionOption.create(question, "활성", 1);
-            SurveyQuestionOption deleted = SurveyQuestionOption.create(question, "삭제", 2);
+            SurveyQuestionOption archived = SurveyQuestionOption.create(question, "archived", 2);
             question.addOption(active);
-            question.addOption(deleted);
-            deleted.delete(1L);
+            question.addOption(archived);
+            archived.archive(1L);
 
-            long activeCount = question.getOptions().stream().filter(o -> !o.isDeleted()).count();
+            long activeCount = question.getOptions().stream().filter(o -> !o.isArchived()).count();
 
             assertThat(activeCount).isEqualTo(1);
         }
 
-        @DisplayName("삭제된 행은 활성 행 필터링 시 제외됨")
+        @DisplayName("archived 행은 활성 행 필터링 시 제외됨")
         @Test
-        void deletedRow_FilteredOut() {
+        void archivedRow_FilteredOut() {
             Survey survey = createSurvey();
             GridSurveyQuestion question = GridSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE_GRID,
                     "질문", null, false, 1);
             SurveyQuestionRow active = SurveyQuestionRow.create(question, "활성", 1);
-            SurveyQuestionRow deleted = SurveyQuestionRow.create(question, "삭제", 2);
+            SurveyQuestionRow archived = SurveyQuestionRow.create(question, "archived", 2);
             question.addRow(active);
-            question.addRow(deleted);
-            deleted.delete(1L);
+            question.addRow(archived);
+            archived.archive(1L);
 
-            long activeCount = question.getRows().stream().filter(r -> !r.isDeleted()).count();
+            long activeCount = question.getRows().stream().filter(r -> !r.isArchived()).count();
 
             assertThat(activeCount).isEqualTo(1);
         }

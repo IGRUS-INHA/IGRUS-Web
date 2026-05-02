@@ -27,9 +27,9 @@ public class SurveyAnswerValidator {
      * @throws SurveyResponseValidationException 검증 실패 시
      */
     public void validate(Survey survey, List<SubmitAnswerRequest> answers) {
-        // 활성 질문만 추출
+        // 활성 질문만 추출 (archived 제외)
         List<SurveyQuestion> activeQuestions = survey.getQuestions().stream()
-                .filter(q -> !q.isDeleted())
+                .filter(q -> !q.isArchived())
                 .toList();
 
         Map<Long, SurveyQuestion> questionMap = activeQuestions.stream()
@@ -86,9 +86,9 @@ public class SurveyAnswerValidator {
         OptionSurveyQuestion osq = (OptionSurveyQuestion) question;
         List<Long> selectedIds = answer.selectedOptionIds();
 
-        // 유효한(삭제되지 않은) 옵션 ID 집합
+        // 유효한(활성) 옵션 ID 집합
         Set<Long> validOptionIds = osq.getOptions().stream()
-                .filter(o -> !o.isDeleted())
+                .filter(o -> !o.isArchived())
                 .map(SurveyQuestionOption::getId)
                 .collect(Collectors.toSet());
 
@@ -157,14 +157,14 @@ public class SurveyAnswerValidator {
     private void validateGridAnswer(SurveyQuestion question, SubmitAnswerRequest answer) {
         GridSurveyQuestion gsq = (GridSurveyQuestion) question;
 
-        // 유효한 옵션/행 ID 집합
+        // 유효한(활성) 옵션/행 ID 집합
         Set<Long> validOptionIds = gsq.getOptions().stream()
-                .filter(o -> !o.isDeleted())
+                .filter(o -> !o.isArchived())
                 .map(SurveyQuestionOption::getId)
                 .collect(Collectors.toSet());
 
         Set<Long> validRowIds = gsq.getRows().stream()
-                .filter(r -> !r.isDeleted())
+                .filter(r -> !r.isArchived())
                 .map(SurveyQuestionRow::getId)
                 .collect(Collectors.toSet());
 

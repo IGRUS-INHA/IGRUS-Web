@@ -14,6 +14,7 @@ import igrus.web.survey.question.exception.SurveyRowNotFoundException;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
 import igrus.web.survey.question.repository.SurveyQuestionRowRepository;
 import igrus.web.survey.repository.SurveyRepository;
+import igrus.web.survey.response.repository.SurveyAnswerRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -45,6 +46,7 @@ public class SurveyQuestionRowService {
     private final SurveyRepository surveyRepository;
     private final SurveyQuestionRepository questionRepository;
     private final SurveyQuestionRowRepository rowRepository;
+    private final SurveyAnswerRepository surveyAnswerRepository;
     private final UserRepository userRepository;
 
     /**
@@ -66,7 +68,7 @@ public class SurveyQuestionRowService {
         surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
@@ -81,7 +83,7 @@ public class SurveyQuestionRowService {
         rows.add(row);
 
         return rows.stream()
-                .filter(r -> !r.isDeleted())
+                .filter(r -> !r.isArchived())
                 .map(SurveyDetailResponse.RowResponse::from)
                 .toList();
     }
@@ -106,24 +108,25 @@ public class SurveyQuestionRowService {
         surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
-        SurveyQuestionRow row = rowRepository.findByIdAndDeletedFalse(rowId)
+        SurveyQuestionRow row = rowRepository.findByIdAndArchivedAtIsNull(rowId)
                 .orElseThrow(() -> new SurveyRowNotFoundException(rowId));
         validateRowBelongsToQuestion(row, questionId);
 
         row.update(request.label(), request.displayOrder());
 
         return getRowsFromQuestion(question).stream()
-                .filter(r -> !r.isDeleted())
+                .filter(r -> !r.isArchived())
                 .map(SurveyDetailResponse.RowResponse::from)
                 .toList();
     }
 
     /**
-     * 그리드 행을 삭제(soft delete)합니다.
+     * 그리드 행을 삭제합니다.
+     * 응답이 1건이라도 존재하면 archive 처리, 없으면 hard delete합니다.
      *
      * @param surveyId          설문 ID
      * @param questionId        질문 ID
@@ -139,15 +142,19 @@ public class SurveyQuestionRowService {
         surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
-        SurveyQuestionRow row = rowRepository.findByIdAndDeletedFalse(rowId)
+        SurveyQuestionRow row = rowRepository.findByIdAndArchivedAtIsNull(rowId)
                 .orElseThrow(() -> new SurveyRowNotFoundException(rowId));
         validateRowBelongsToQuestion(row, questionId);
 
-        row.delete(authenticatedUser.userId());
+        if (surveyAnswerRepository.existsBySelectedRowId(rowId)) {
+            row.archive(authenticatedUser.userId());
+        } else {
+            rowRepository.delete(row);
+        }
     }
 
     /**
@@ -168,12 +175,12 @@ public class SurveyQuestionRowService {
         surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
         return getRowsFromQuestion(question).stream()
-                .filter(r -> !r.isDeleted())
+                .filter(r -> !r.isArchived())
                 .map(SurveyDetailResponse.RowResponse::from)
                 .toList();
     }

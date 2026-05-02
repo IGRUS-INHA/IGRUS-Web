@@ -20,7 +20,7 @@ public record SurveyResponseDetailResponse(
 
     /**
      * 설문 응답의 답변 목록을 질문별로 그룹핑하여 AnswerResponse 목록으로 변환합니다.
-     * 삭제된 질문의 답변은 제외합니다.
+     * archived 질문의 답변도 포함되어 과거 응답이 그대로 표시됩니다.
      *
      * @param answers 설문 답변 목록
      * @return 질문별로 그룹핑된 AnswerResponse 목록
@@ -29,9 +29,6 @@ public record SurveyResponseDetailResponse(
         Map<Long, List<SurveyAnswer>> answersByQuestion = new LinkedHashMap<>();
 
         for (SurveyAnswer answer : answers) {
-            if (answer.getQuestion().isDeleted()) {
-                continue;
-            }
             answersByQuestion
                     .computeIfAbsent(answer.getQuestion().getId(), k -> new ArrayList<>())
                     .add(answer);

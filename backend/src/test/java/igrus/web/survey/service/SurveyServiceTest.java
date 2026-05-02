@@ -376,14 +376,14 @@ class SurveyServiceTest {
                     .isInstanceOf(SurveyPublishValidationException.class);
         }
 
-        @DisplayName("모든 질문이 soft delete된 경우 SurveyPublishValidationException")
+        @DisplayName("모든 질문이 archived인 경우 SurveyPublishValidationException")
         @Test
-        void publishSurvey_AllQuestionsDeleted_ThrowsValidationException() {
+        void publishSurvey_AllQuestionsArchived_ThrowsValidationException() {
             // given
             Survey survey = createSurveyWithId();
-            SurveyQuestion deletedQuestion = createShortAnswerQuestion(survey, 1);
-            deletedQuestion.delete(operatorAuth.userId());
-            survey.getQuestions().add(deletedQuestion);
+            SurveyQuestion archivedQuestion = createShortAnswerQuestion(survey, 1);
+            archivedQuestion.archive(operatorAuth.userId());
+            survey.getQuestions().add(archivedQuestion);
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))

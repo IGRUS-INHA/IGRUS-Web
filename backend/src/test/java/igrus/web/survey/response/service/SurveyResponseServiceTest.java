@@ -605,9 +605,9 @@ class SurveyResponseServiceTest {
                     .isInstanceOf(SurveyResponseNotFoundException.class);
         }
 
-        @DisplayName("삭제된 질문의 답변은 제외")
+        @DisplayName("archived 질문의 답변도 응답 조회에 포함됨")
         @Test
-        void getMyResponse_ExcludesDeletedQuestionAnswers() {
+        void getMyResponse_IncludesArchivedQuestionAnswers() {
             // given
             Survey survey = withId(createPublishedAndOpenSurvey(), DEFAULT_SURVEY_ID);
             TextSurveyQuestion question1 = createShortAnswerQuestion(survey, 1);
@@ -616,7 +616,7 @@ class SurveyResponseServiceTest {
 
             TextSurveyQuestion question2 = createShortAnswerQuestion(survey, 2);
             withId(question2, 101L);
-            question2.delete(1L); // soft delete
+            question2.archive(1L);
             survey.getQuestions().add(question2);
 
             SurveyResponse existingResponse = SurveyResponse.create(survey, memberUser);
@@ -632,9 +632,10 @@ class SurveyResponseServiceTest {
             SurveyResponseDetailResponse result = surveyResponseService.getMyResponse(
                     DEFAULT_SURVEY_ID, memberAuth);
 
-            // then
-            assertThat(result.answers()).hasSize(1);
-            assertThat(result.answers().getFirst().questionId()).isEqualTo(100L);
+            // then: archived 질문의 답변도 historical record로 포함됨
+            assertThat(result.answers()).hasSize(2);
+            assertThat(result.answers()).extracting(SurveyResponseDetailResponse.AnswerResponse::questionId)
+                    .containsExactlyInAnyOrder(100L, 101L);
         }
 
         @DisplayName("accessLevel이 OPERATOR로 변경된 설문에서 MEMBER가 본인 응답 조회 가능")

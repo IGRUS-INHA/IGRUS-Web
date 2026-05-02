@@ -345,19 +345,17 @@ public class SurveyStatisticsService {
             List<ExternalAnswerData> externalAnswers,
             int totalResponseCount) {
 
-        // 질문의 삭제되지 않은 옵션만 조회
+        // archived 옵션도 통계에 포함 (과거 응답의 분포가 누락되지 않도록)
         if (!(question instanceof OptionSurveyQuestion optionQuestion)) {
             throw new SurveyStatisticsAggregationException(
                     "OPTION 질문에 잘못된 질문 유형: questionId=" + question.getId()
                             + ", actualType=" + question.getClass().getSimpleName());
         }
-        List<SurveyQuestionOption> activeOptions = optionQuestion.getOptions().stream()
-                .filter(option -> !option.isDeleted())
-                .toList();
+        List<SurveyQuestionOption> allOptions = optionQuestion.getOptions();
 
         // 옵션별 선택 수 집계
         Map<Long, Integer> optionCounts = new HashMap<>();
-        for (SurveyQuestionOption option : activeOptions) {
+        for (SurveyQuestionOption option : allOptions) {
             optionCounts.put(option.getId(), 0);
         }
         for (SurveyAnswer answer : answers) {
@@ -379,8 +377,8 @@ public class SurveyStatisticsService {
             }
         }
 
-        // 옵션별 통계 생성
-        List<OptionStatisticsItem> optionItems = activeOptions.stream()
+        // 옵션별 통계 생성 (archived 옵션도 포함)
+        List<OptionStatisticsItem> optionItems = allOptions.stream()
                 .map(option -> new OptionStatisticsItem(
                         option.getId(),
                         option.getText(),
@@ -408,18 +406,15 @@ public class SurveyStatisticsService {
                     "GRID 질문에 잘못된 질문 유형: questionId=" + question.getId()
                             + ", actualType=" + question.getClass().getSimpleName());
         }
-        List<SurveyQuestionOption> activeOptions = gridQuestion.getOptions().stream()
-                .filter(option -> !option.isDeleted())
-                .toList();
-        List<SurveyQuestionRow> activeRows = gridQuestion.getRows().stream()
-                .filter(row -> !row.isDeleted())
-                .toList();
+        // archived 옵션·행도 통계에 포함
+        List<SurveyQuestionOption> allOptions = gridQuestion.getOptions();
+        List<SurveyQuestionRow> allRows = gridQuestion.getRows();
 
         // 행별 옵션별 선택 수 집계: Map<rowId, Map<optionId, count>>
         Map<Long, Map<Long, Integer>> rowOptionCounts = new HashMap<>();
-        for (SurveyQuestionRow row : activeRows) {
+        for (SurveyQuestionRow row : allRows) {
             Map<Long, Integer> optionCounts = new LinkedHashMap<>();
-            for (SurveyQuestionOption option : activeOptions) {
+            for (SurveyQuestionOption option : allOptions) {
                 optionCounts.put(option.getId(), 0);
             }
             rowOptionCounts.put(row.getId(), optionCounts);
@@ -452,11 +447,11 @@ public class SurveyStatisticsService {
             }
         }
 
-        // 행별 통계 생성
-        List<GridRowStatistics> rowStatistics = activeRows.stream()
+        // 행별 통계 생성 (archived 행/옵션도 포함)
+        List<GridRowStatistics> rowStatistics = allRows.stream()
                 .map(row -> {
                     Map<Long, Integer> optionCounts = rowOptionCounts.getOrDefault(row.getId(), Map.of());
-                    List<OptionStatisticsItem> optionItems = activeOptions.stream()
+                    List<OptionStatisticsItem> optionItems = allOptions.stream()
                             .map(option -> new OptionStatisticsItem(
                                     option.getId(),
                                     option.getText(),

@@ -12,6 +12,7 @@ import igrus.web.survey.question.exception.SurveyQuestionNotFoundException;
 import igrus.web.survey.question.repository.SurveyQuestionOptionRepository;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyRepository;
+import igrus.web.survey.response.repository.SurveyAnswerRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -57,6 +58,9 @@ class SurveyQuestionOptionServiceTest {
     private SurveyQuestionOptionRepository optionRepository;
 
     @Mock
+    private SurveyAnswerRepository surveyAnswerRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @InjectMocks
@@ -97,7 +101,7 @@ class SurveyQuestionOptionServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
             given(optionRepository.save(any(SurveyQuestionOption.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
@@ -136,7 +140,7 @@ class SurveyQuestionOptionServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -158,7 +162,7 @@ class SurveyQuestionOptionServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
 
             // when & then
@@ -216,9 +220,9 @@ class SurveyQuestionOptionServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(optionRepository.findByIdAndDeletedFalse(OPTION_ID))
+            given(optionRepository.findByIdAndArchivedAtIsNull(OPTION_ID))
                     .willReturn(Optional.of(option));
 
             // when
@@ -244,9 +248,9 @@ class SurveyQuestionOptionServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(optionRepository.findByIdAndDeletedFalse(OPTION_ID))
+            given(optionRepository.findByIdAndArchivedAtIsNull(OPTION_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -274,9 +278,9 @@ class SurveyQuestionOptionServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(optionRepository.findByIdAndDeletedFalse(OPTION_ID))
+            given(optionRepository.findByIdAndArchivedAtIsNull(OPTION_ID))
                     .willReturn(Optional.of(option));
 
             // when & then
@@ -294,7 +298,7 @@ class SurveyQuestionOptionServiceTest {
 
         @DisplayName("운영진 선택지 삭제(soft delete) 성공")
         @Test
-        void deleteOption_ByOperator_Success() {
+        void deleteOption_ByOperator_WithAnswers_Archives() {
             // given
             Survey survey = createSurveyWithId();
             SurveyQuestion question = withId(
@@ -307,16 +311,47 @@ class SurveyQuestionOptionServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(optionRepository.findByIdAndDeletedFalse(OPTION_ID))
+            given(optionRepository.findByIdAndArchivedAtIsNull(OPTION_ID))
                     .willReturn(Optional.of(option));
+            given(surveyAnswerRepository.existsBySelectedOptionId(OPTION_ID)).willReturn(true);
 
             // when
             optionService.deleteOption(DEFAULT_SURVEY_ID, QUESTION_ID, OPTION_ID, operatorAuth);
 
             // then
-            assertThat(option.isDeleted()).isTrue();
+            assertThat(option.isArchived()).isTrue();
+            verify(optionRepository, org.mockito.Mockito.never()).delete(option);
+        }
+
+        @DisplayName("응답이 없는 선택지 삭제 시 hard delete")
+        @Test
+        void deleteOption_ByOperator_NoAnswers_HardDeletes() {
+            // given
+            Survey survey = createSurveyWithId();
+            SurveyQuestion question = withId(
+                    OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
+                    QUESTION_ID);
+            SurveyQuestionOption option = withId(
+                    SurveyQuestionOption.create(question, "선택지", 1),
+                    OPTION_ID);
+
+            given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
+            given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
+                    .willReturn(Optional.of(survey));
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
+                    .willReturn(Optional.of(question));
+            given(optionRepository.findByIdAndArchivedAtIsNull(OPTION_ID))
+                    .willReturn(Optional.of(option));
+            given(surveyAnswerRepository.existsBySelectedOptionId(OPTION_ID)).willReturn(false);
+
+            // when
+            optionService.deleteOption(DEFAULT_SURVEY_ID, QUESTION_ID, OPTION_ID, operatorAuth);
+
+            // then
+            verify(optionRepository).delete(option);
+            assertThat(option.isArchived()).isFalse();
         }
 
         @DisplayName("존재하지 않는 선택지 삭제 시 SurveyOptionNotFoundException")
@@ -331,9 +366,9 @@ class SurveyQuestionOptionServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
-            given(optionRepository.findByIdAndDeletedFalse(OPTION_ID))
+            given(optionRepository.findByIdAndArchivedAtIsNull(OPTION_ID))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -377,7 +412,7 @@ class SurveyQuestionOptionServiceTest {
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
 
             // when
@@ -388,24 +423,24 @@ class SurveyQuestionOptionServiceTest {
             assertThat(result).hasSize(2);
         }
 
-        @DisplayName("삭제된 선택지는 목록에서 제외")
+        @DisplayName("archived 선택지는 목록에서 제외")
         @Test
-        void getOptionList_ExcludesDeletedOptions() {
+        void getOptionList_ExcludesArchivedOptions() {
             // given
             Survey survey = createSurveyWithId();
             OptionSurveyQuestion question = withId(
                     OptionSurveyQuestion.create(survey, SurveyQuestionType.MULTIPLE_CHOICE, "질문", null, false, 1),
                     QUESTION_ID);
             SurveyQuestionOption activeOption = SurveyQuestionOption.create(question, "활성 선택지", 1);
-            SurveyQuestionOption deletedOption = SurveyQuestionOption.create(question, "삭제된 선택지", 2);
-            deletedOption.delete(operatorAuth.userId());
+            SurveyQuestionOption archivedOption = SurveyQuestionOption.create(question, "archived 선택지", 2);
+            archivedOption.archive(operatorAuth.userId());
             question.addOption(activeOption);
-            question.addOption(deletedOption);
+            question.addOption(archivedOption);
 
             given(userRepository.findById(operatorAuth.userId())).willReturn(Optional.of(operatorUser));
             given(surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(DEFAULT_SURVEY_ID))
                     .willReturn(Optional.of(survey));
-            given(questionRepository.findByIdAndDeletedFalse(QUESTION_ID))
+            given(questionRepository.findByIdAndArchivedAtIsNull(QUESTION_ID))
                     .willReturn(Optional.of(question));
 
             // when

@@ -13,6 +13,7 @@ import igrus.web.survey.question.exception.SurveyQuestionNotFoundException;
 import igrus.web.survey.question.exception.SurveyQuestionValidationException;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyRepository;
+import igrus.web.survey.response.repository.SurveyAnswerRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -44,6 +45,7 @@ public class SurveyQuestionService {
 
     private final SurveyRepository surveyRepository;
     private final SurveyQuestionRepository questionRepository;
+    private final SurveyAnswerRepository surveyAnswerRepository;
     private final UserRepository userRepository;
 
     private static final int MAX_QUESTIONS = 50;
@@ -66,7 +68,7 @@ public class SurveyQuestionService {
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
         survey.updateStatusIfNeeded(Instant.now());
 
-        long count = questionRepository.countBySurveyIdAndDeletedFalse(surveyId);
+        long count = questionRepository.countBySurveyIdAndArchivedAtIsNull(surveyId);
         if (count >= MAX_QUESTIONS) {
             throw new SurveyQuestionLimitExceededException();
         }
@@ -106,7 +108,7 @@ public class SurveyQuestionService {
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
         survey.updateStatusIfNeeded(Instant.now());
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
@@ -122,7 +124,8 @@ public class SurveyQuestionService {
     }
 
     /**
-     * 질문을 삭제(soft delete)합니다. 모든 상태에서 삭제 가능합니다.
+     * 질문을 삭제합니다. 모든 상태에서 삭제 가능합니다.
+     * 응답이 1건이라도 존재하면 archive 처리, 없으면 hard delete합니다 (자식 옵션·행은 FK CASCADE로 함께 삭제).
      *
      * @param surveyId          설문 ID
      * @param questionId        질문 ID
@@ -136,11 +139,15 @@ public class SurveyQuestionService {
         surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
-        question.delete(authenticatedUser.userId());
+        if (surveyAnswerRepository.existsByQuestionId(questionId)) {
+            question.archive(authenticatedUser.userId());
+        } else {
+            questionRepository.delete(question);
+        }
     }
 
     /**
@@ -161,7 +168,7 @@ public class SurveyQuestionService {
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
         return survey.getQuestions().stream()
-                .filter(q -> !q.isDeleted())
+                .filter(q -> !q.isArchived())
                 .map(SurveyDetailResponse.QuestionResponse::from)
                 .toList();
     }

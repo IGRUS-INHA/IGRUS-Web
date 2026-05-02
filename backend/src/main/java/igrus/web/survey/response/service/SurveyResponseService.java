@@ -218,8 +218,8 @@ public class SurveyResponseService {
         List<ExternalSurveyResponse> externalResponses =
                 externalSurveyResponseRepository.findBySurveyId(surveyId);
         if (!externalResponses.isEmpty()) {
+            // archived 질문도 포함: 과거 외부인 응답이 archived 질문을 참조할 수 있음
             Map<Long, SurveyQuestionType> questionTypeMap = survey.getQuestions().stream()
-                    .filter(q -> !q.isDeleted())
                     .collect(Collectors.toMap(q -> q.getId(), q -> q.getQuestionType()));
 
             for (ExternalSurveyResponse ext : externalResponses) {

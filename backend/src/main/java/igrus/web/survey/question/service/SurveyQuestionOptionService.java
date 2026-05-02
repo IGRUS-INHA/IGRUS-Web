@@ -12,6 +12,7 @@ import igrus.web.survey.question.exception.SurveyQuestionTypeNotSupportedExcepti
 import igrus.web.survey.question.repository.SurveyQuestionOptionRepository;
 import igrus.web.survey.question.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyRepository;
+import igrus.web.survey.response.repository.SurveyAnswerRepository;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
@@ -43,6 +44,7 @@ public class SurveyQuestionOptionService {
     private final SurveyRepository surveyRepository;
     private final SurveyQuestionRepository questionRepository;
     private final SurveyQuestionOptionRepository optionRepository;
+    private final SurveyAnswerRepository surveyAnswerRepository;
     private final UserRepository userRepository;
 
     /**
@@ -64,7 +66,7 @@ public class SurveyQuestionOptionService {
         surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
@@ -79,7 +81,7 @@ public class SurveyQuestionOptionService {
         options.add(option);
 
         return options.stream()
-                .filter(o -> !o.isDeleted())
+                .filter(o -> !o.isArchived())
                 .map(SurveyDetailResponse.OptionResponse::from)
                 .toList();
     }
@@ -104,24 +106,25 @@ public class SurveyQuestionOptionService {
         surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
-        SurveyQuestionOption option = optionRepository.findByIdAndDeletedFalse(optionId)
+        SurveyQuestionOption option = optionRepository.findByIdAndArchivedAtIsNull(optionId)
                 .orElseThrow(() -> new SurveyOptionNotFoundException(optionId));
         validateOptionBelongsToQuestion(option, questionId);
 
         option.update(request.text(), request.displayOrder());
 
         return getOptionsFromQuestion(question).stream()
-                .filter(o -> !o.isDeleted())
+                .filter(o -> !o.isArchived())
                 .map(SurveyDetailResponse.OptionResponse::from)
                 .toList();
     }
 
     /**
-     * 선택지를 삭제(soft delete)합니다.
+     * 선택지를 삭제합니다.
+     * 응답이 1건이라도 존재하면 archive 처리, 없으면 hard delete합니다.
      *
      * @param surveyId          설문 ID
      * @param questionId        질문 ID
@@ -137,15 +140,19 @@ public class SurveyQuestionOptionService {
         surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
-        SurveyQuestionOption option = optionRepository.findByIdAndDeletedFalse(optionId)
+        SurveyQuestionOption option = optionRepository.findByIdAndArchivedAtIsNull(optionId)
                 .orElseThrow(() -> new SurveyOptionNotFoundException(optionId));
         validateOptionBelongsToQuestion(option, questionId);
 
-        option.delete(authenticatedUser.userId());
+        if (surveyAnswerRepository.existsBySelectedOptionId(optionId)) {
+            option.archive(authenticatedUser.userId());
+        } else {
+            optionRepository.delete(option);
+        }
     }
 
     /**
@@ -166,12 +173,12 @@ public class SurveyQuestionOptionService {
         surveyRepository.findByIdAndDeletedFalseAndTrashedAtIsNull(surveyId)
                 .orElseThrow(() -> new SurveyNotFoundException(surveyId));
 
-        SurveyQuestion question = questionRepository.findByIdAndDeletedFalse(questionId)
+        SurveyQuestion question = questionRepository.findByIdAndArchivedAtIsNull(questionId)
                 .orElseThrow(() -> new SurveyQuestionNotFoundException(questionId));
         validateQuestionBelongsToSurvey(question, surveyId);
 
         return getOptionsFromQuestion(question).stream()
-                .filter(o -> !o.isDeleted())
+                .filter(o -> !o.isArchived())
                 .map(SurveyDetailResponse.OptionResponse::from)
                 .toList();
     }
