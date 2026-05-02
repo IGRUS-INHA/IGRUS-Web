@@ -5,6 +5,8 @@ import igrus.web.generated.api.AdminSurveyResponseApi;
 import igrus.web.generated.model.ApiAdminSurveyResponseListItem;
 import igrus.web.generated.model.ApiAnswerResponse;
 import igrus.web.generated.model.ApiGridAnswerResponse;
+import igrus.web.generated.model.ApiSelectedOptionResponse;
+import igrus.web.generated.model.ApiSelectedRowResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.survey.response.dto.response.AdminSurveyResponseListItem;
 import igrus.web.survey.response.dto.response.SurveyResponseDetailResponse;
@@ -57,14 +59,32 @@ public class AdminSurveyResponseController implements AdminSurveyResponseApi {
                 .questionId(a.questionId())
                 .questionType(ApiAnswerResponse.QuestionTypeEnum.fromValue(a.questionType().name()))
                 .textValue(a.textValue())
-                .selectedOptionIds(a.selectedOptionIds())
+                .selectedOptions(mapSelectedOptions(a.selectedOptions()))
                 .numericValue(a.numericValue())
                 .gridAnswers(a.gridAnswers() != null
                         ? a.gridAnswers().stream()
                         .map(g -> new ApiGridAnswerResponse()
-                                .rowId(g.rowId())
-                                .selectedOptionIds(g.selectedOptionIds()))
+                                .row(mapSelectedRow(g.row()))
+                                .selectedOptions(mapSelectedOptions(g.selectedOptions())))
                         .toList()
                         : null);
+    }
+
+    private List<ApiSelectedOptionResponse> mapSelectedOptions(
+            List<SurveyResponseDetailResponse.SelectedOptionResponse> selectedOptions) {
+        if (selectedOptions == null) {
+            return null;
+        }
+        return selectedOptions.stream()
+                .map(o -> new ApiSelectedOptionResponse().id(o.id()).text(o.text()))
+                .toList();
+    }
+
+    private ApiSelectedRowResponse mapSelectedRow(
+            SurveyResponseDetailResponse.SelectedRowResponse row) {
+        if (row == null) {
+            return null;
+        }
+        return new ApiSelectedRowResponse().id(row.id()).label(row.label());
     }
 }

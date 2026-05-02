@@ -4,6 +4,8 @@ import igrus.web.common.util.SecurityUtils;
 import igrus.web.generated.api.SurveyResponseApi;
 import igrus.web.generated.model.ApiAnswerResponse;
 import igrus.web.generated.model.ApiGridAnswerResponse;
+import igrus.web.generated.model.ApiSelectedOptionResponse;
+import igrus.web.generated.model.ApiSelectedRowResponse;
 import igrus.web.generated.model.ApiSubmitSurveyResponseRequest;
 import igrus.web.generated.model.ApiSurveyResponseDetailResponse;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
@@ -104,16 +106,34 @@ public class SurveyResponseController implements SurveyResponseApi {
                                 .questionType(ApiAnswerResponse.QuestionTypeEnum.fromValue(
                                         a.questionType().name()))
                                 .textValue(a.textValue())
-                                .selectedOptionIds(a.selectedOptionIds())
+                                .selectedOptions(mapSelectedOptions(a.selectedOptions()))
                                 .numericValue(a.numericValue())
                                 .gridAnswers(a.gridAnswers() != null
                                         ? a.gridAnswers().stream()
                                         .map(g -> new ApiGridAnswerResponse()
-                                                .rowId(g.rowId())
-                                                .selectedOptionIds(g.selectedOptionIds()))
+                                                .row(mapSelectedRow(g.row()))
+                                                .selectedOptions(mapSelectedOptions(g.selectedOptions())))
                                         .toList()
                                         : null))
                         .toList())
                 .createdAt(result.createdAt());
+    }
+
+    private List<ApiSelectedOptionResponse> mapSelectedOptions(
+            List<SurveyResponseDetailResponse.SelectedOptionResponse> selectedOptions) {
+        if (selectedOptions == null) {
+            return null;
+        }
+        return selectedOptions.stream()
+                .map(o -> new ApiSelectedOptionResponse().id(o.id()).text(o.text()))
+                .toList();
+    }
+
+    private ApiSelectedRowResponse mapSelectedRow(
+            SurveyResponseDetailResponse.SelectedRowResponse row) {
+        if (row == null) {
+            return null;
+        }
+        return new ApiSelectedRowResponse().id(row.id()).label(row.label());
     }
 }

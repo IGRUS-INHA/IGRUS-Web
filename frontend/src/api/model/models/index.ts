@@ -270,6 +270,8 @@ export * from "./resendVerificationRequest";
 export * from "./rowResponse";
 export * from "./saveQuestionOptionRequest";
 export * from "./saveQuestionRowRequest";
+export * from "./selectedOptionResponse";
+export * from "./selectedRowResponse";
 export * from "./semesterMemberListResponse";
 export * from "./semesterMemberListResponseRole";
 export * from "./semesterSummaryResponse";

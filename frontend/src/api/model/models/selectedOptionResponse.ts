@@ -33,11 +33,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { SelectedOptionResponse } from "./selectedOptionResponse";
-import type { SelectedRowResponse } from "./selectedRowResponse";
 
-export interface GridAnswerResponse {
-  row?: SelectedRowResponse;
-  /** 선택된 옵션 (id + text). archived 옵션도 텍스트 포함. */
-  selectedOptions?: SelectedOptionResponse[];
+/**
+ * 응답에 선택된 옵션 (id + 표시용 text). archived 옵션도 응답 보존을 위해 텍스트가 채워짐.
+ */
+export interface SelectedOptionResponse {
+  id: number;
+  text: string;
 }

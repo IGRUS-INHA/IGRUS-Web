@@ -15,6 +15,10 @@ import igrus.web.survey.domain.Survey;
 import igrus.web.survey.domain.SurveyAccessLevel;
 import igrus.web.survey.domain.SurveyResponseStatus;
 import igrus.web.survey.exception.SurveyNotFoundException;
+import igrus.web.survey.question.domain.GridSurveyQuestion;
+import igrus.web.survey.question.domain.OptionSurveyQuestion;
+import igrus.web.survey.question.domain.SurveyQuestionOption;
+import igrus.web.survey.question.domain.SurveyQuestionRow;
 import igrus.web.survey.question.domain.SurveyQuestionType;
 import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.survey.response.domain.SurveyResponse;
@@ -218,9 +222,11 @@ public class SurveyResponseService {
         List<ExternalSurveyResponse> externalResponses =
                 externalSurveyResponseRepository.findBySurveyId(surveyId);
         if (!externalResponses.isEmpty()) {
-            // archived 질문도 포함: 과거 외부인 응답이 archived 질문을 참조할 수 있음
+            // archived 질문/옵션/행도 포함: 과거 외부인 응답이 archived 데이터를 참조할 수 있음
             Map<Long, SurveyQuestionType> questionTypeMap = survey.getQuestions().stream()
                     .collect(Collectors.toMap(q -> q.getId(), q -> q.getQuestionType()));
+            Map<Long, SurveyQuestionOption> optionMap = buildOptionMap(survey);
+            Map<Long, SurveyQuestionRow> rowMap = buildRowMap(survey);
 
             for (ExternalSurveyResponse ext : externalResponses) {
                 try {
@@ -229,7 +235,7 @@ public class SurveyResponseService {
                     List<SurveyResponseDetailResponse.AnswerResponse> answerResponses =
                             parsedAnswers.stream()
                                     .filter(a -> questionTypeMap.containsKey(a.questionId()))
-                                    .map(a -> convertExternalAnswer(a, questionTypeMap))
+                                    .map(a -> convertExternalAnswer(a, questionTypeMap, optionMap, rowMap))
                                     .toList();
                     result.add(AdminSurveyResponseListItem.fromExternal(ext, answerResponses));
                 } catch (JsonProcessingException e) {
@@ -332,25 +338,94 @@ public class SurveyResponseService {
     /**
      * 외부인 설문 응답의 개별 답변을 AnswerResponse로 변환합니다.
      * SubmitAnswerRequest에는 questionType이 없으므로 questionTypeMap에서 조회합니다.
+     * optionMap/rowMap은 archived 항목을 포함하여 과거 응답의 텍스트를 복원합니다.
+     * hard-delete된 항목은 map에 없으므로 fallback 텍스트를 사용합니다.
      */
     private SurveyResponseDetailResponse.AnswerResponse convertExternalAnswer(
-            SubmitAnswerRequest answer, Map<Long, SurveyQuestionType> questionTypeMap) {
+            SubmitAnswerRequest answer,
+            Map<Long, SurveyQuestionType> questionTypeMap,
+            Map<Long, SurveyQuestionOption> optionMap,
+            Map<Long, SurveyQuestionRow> rowMap) {
         SurveyQuestionType questionType = questionTypeMap.get(answer.questionId());
+
+        List<SurveyResponseDetailResponse.SelectedOptionResponse> selectedOptions = null;
+        if (answer.selectedOptionIds() != null && !answer.selectedOptionIds().isEmpty()) {
+            selectedOptions = answer.selectedOptionIds().stream()
+                    .map(id -> resolveOption(id, optionMap))
+                    .toList();
+        }
+
         List<SurveyResponseDetailResponse.GridAnswerResponse> gridAnswers = null;
         if (answer.gridAnswers() != null && !answer.gridAnswers().isEmpty()) {
             gridAnswers = answer.gridAnswers().stream()
                     .map(g -> new SurveyResponseDetailResponse.GridAnswerResponse(
-                            g.rowId(), g.selectedOptionIds()))
+                            resolveRow(g.rowId(), rowMap),
+                            g.selectedOptionIds().stream()
+                                    .map(id -> resolveOption(id, optionMap))
+                                    .toList()))
                     .toList();
         }
+
         return new SurveyResponseDetailResponse.AnswerResponse(
                 answer.questionId(),
                 questionType,
                 answer.textValue(),
-                answer.selectedOptionIds(),
+                selectedOptions,
                 answer.numericValue(),
                 gridAnswers
         );
+    }
+
+    private SurveyResponseDetailResponse.SelectedOptionResponse resolveOption(
+            Long optionId, Map<Long, SurveyQuestionOption> optionMap) {
+        SurveyQuestionOption option = optionMap.get(optionId);
+        if (option == null) {
+            return new SurveyResponseDetailResponse.SelectedOptionResponse(optionId, "(삭제된 선택지)");
+        }
+        return SurveyResponseDetailResponse.SelectedOptionResponse.from(option);
+    }
+
+    private SurveyResponseDetailResponse.SelectedRowResponse resolveRow(
+            Long rowId, Map<Long, SurveyQuestionRow> rowMap) {
+        SurveyQuestionRow row = rowMap.get(rowId);
+        if (row == null) {
+            return new SurveyResponseDetailResponse.SelectedRowResponse(rowId, "(삭제된 행)");
+        }
+        return SurveyResponseDetailResponse.SelectedRowResponse.from(row);
+    }
+
+    /**
+     * 설문의 모든 옵션(archived 포함)을 ID로 인덱싱한 맵을 빌드합니다.
+     */
+    private Map<Long, SurveyQuestionOption> buildOptionMap(Survey survey) {
+        Map<Long, SurveyQuestionOption> map = new java.util.HashMap<>();
+        for (var question : survey.getQuestions()) {
+            if (question instanceof OptionSurveyQuestion optionQ) {
+                for (SurveyQuestionOption option : optionQ.getOptions()) {
+                    map.put(option.getId(), option);
+                }
+            } else if (question instanceof GridSurveyQuestion gridQ) {
+                for (SurveyQuestionOption option : gridQ.getOptions()) {
+                    map.put(option.getId(), option);
+                }
+            }
+        }
+        return map;
+    }
+
+    /**
+     * 설문의 모든 그리드 행(archived 포함)을 ID로 인덱싱한 맵을 빌드합니다.
+     */
+    private Map<Long, SurveyQuestionRow> buildRowMap(Survey survey) {
+        Map<Long, SurveyQuestionRow> map = new java.util.HashMap<>();
+        for (var question : survey.getQuestions()) {
+            if (question instanceof GridSurveyQuestion gridQ) {
+                for (SurveyQuestionRow row : gridQ.getRows()) {
+                    map.put(row.getId(), row);
+                }
+            }
+        }
+        return map;
     }
 
     private static final String SURVEY_RESPONSE_UNIQUE_CONSTRAINT = "uk_survey_responses_survey_user";
