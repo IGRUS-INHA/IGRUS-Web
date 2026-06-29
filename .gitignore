@@ -64,3 +64,7 @@ nul
 # OpenAPI bundled output
 openapi/bundled.yaml
 backend/src/main/resources/static/openapi.yaml
+
+
+MEMO.md
+TODO.md
