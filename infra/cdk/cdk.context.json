@@ -1,0 +1,44 @@
+{
+  "vpc-provider:account=218736972976:filter.isDefault=true:region=ap-northeast-2:returnAsymmetricSubnets=true": {
+    "vpcId": "vpc-080c2e37bfb101330",
+    "vpcCidrBlock": "172.31.0.0/16",
+    "ownerAccountId": "218736972976",
+    "availabilityZones": [],
+    "subnetGroups": [
+      {
+        "name": "Public",
+        "type": "Public",
+        "subnets": [
+          {
+            "subnetId": "subnet-09535c185c502ea8a",
+            "cidr": "172.31.0.0/20",
+            "availabilityZone": "ap-northeast-2a",
+            "routeTableId": "rtb-0169778030796aefa"
+          },
+          {
+            "subnetId": "subnet-0bd9b2c3a91b40403",
+            "cidr": "172.31.16.0/20",
+            "availabilityZone": "ap-northeast-2b",
+            "routeTableId": "rtb-0169778030796aefa"
+          },
+          {
+            "subnetId": "subnet-00da68a66fb7c8263",
+            "cidr": "172.31.32.0/20",
+            "availabilityZone": "ap-northeast-2c",
+            "routeTableId": "rtb-0169778030796aefa"
+          },
+          {
+            "subnetId": "subnet-013296ecddddb328c",
+            "cidr": "172.31.48.0/20",
+            "availabilityZone": "ap-northeast-2d",
+            "routeTableId": "rtb-0169778030796aefa"
+          }
+        ]
+      }
+    ]
+  },
+  "hosted-zone:account=218736972976:domainName=igrus.co.kr:region=ap-northeast-2": {
+    "Id": "/hostedzone/Z0288891201KKBESMOAHJ",
+    "Name": "igrus.co.kr."
+  }
+}

@@ -17,6 +17,7 @@ logs/
 .env
 .env.local
 .env.*.local
+.env.staging
 
 # ==== Backend (Spring Boot / Java) ====
 backend/build/
