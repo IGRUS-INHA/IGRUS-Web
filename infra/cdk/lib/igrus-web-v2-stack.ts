@@ -25,7 +25,6 @@ interface AppEnvConfig {
   family: string;
   containerName: string;
   image: string;
-  storageBucket: string; // app.storage.s3.bucket-name override (v2 전용 버킷)
   logGroupName: string;
   attachDefaultSgToService: boolean; // prod=true, staging=false (운영 현황 그대로)
   // RDS (기존 DB 스냅샷에서 복원 → 데이터 그대로 복제)
@@ -143,7 +142,6 @@ export class IgrusWebV2Stack extends cdk.Stack {
         family: 'igrus-web-server-task-def-v2',
         containerName: 'IGRUS-WEB-SPRING-SERVER',
         image: '218736972976.dkr.ecr.ap-northeast-2.amazonaws.com/igrus/web/spring:v1.1.8',
-        storageBucket: 'igrus-web-file-storage-bucket-v2',
         logGroupName: '/ecs/igrus-web-server-task-def-v2',
         attachDefaultSgToService: true,
         rdsId: 'igrus-web-mysql-rds-v2',
@@ -167,7 +165,6 @@ export class IgrusWebV2Stack extends cdk.Stack {
         containerName: 'IGRUS-WEB-SPRING-STAGING-SERVER',
         image:
           '218736972976.dkr.ecr.ap-northeast-2.amazonaws.com/igrus/web/staging/spring:6b34009e2deac8c65c6d31f4d62c34a07343a8f7',
-        storageBucket: 'igrus-web-staging-file-storage-bucket-v2',
         logGroupName: '/ecs/igrus-web-server-staging-task-def-v2',
         attachDefaultSgToService: false,
         rdsId: 'igrus-web-staging-mysql-rds-v2',
@@ -378,8 +375,7 @@ export class IgrusWebV2Stack extends cdk.Stack {
       environment: {
         SPRING_ACTIVE_PROFILE: cfg.springProfile,
         SPRING_DATASOURCE_URL: `jdbc:mysql://${db.dbInstanceEndpointAddress}:3306/${cfg.rdsDbName}`,
-        // 기존 시크릿의 app.storage.s3.bucket-name 을 v2 버킷으로 오버라이드 (env 가 우선)
-        APP_STORAGE_S3_BUCKETNAME: cfg.storageBucket,
+        // S3 버킷명은 기존 시크릿(app.storage.s3.bucket-name)에서 직접 v2 버킷으로 지정됨
       },
     });
 
@@ -394,7 +390,12 @@ export class IgrusWebV2Stack extends cdk.Stack {
       securityGroups: serviceSgs,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       capacityProviderStrategies: [{ capacityProvider: 'FARGATE', weight: 1, base: 0 }],
-      healthCheckGracePeriod: cdk.Duration.seconds(120),
+      // 앱 기동(~60초) + ALB 헬스 수렴을 견디도록 grace 넉넉히
+      healthCheckGracePeriod: cdk.Duration.seconds(240),
+      // 배포 중 새 태스크가 healthy 될 때까지 기존 태스크 유지(무중단) + 실패 시 빠른 롤백
+      minHealthyPercent: 100,
+      maxHealthyPercent: 200,
+      circuitBreaker: { rollback: true },
     });
 
     return { service, db };
