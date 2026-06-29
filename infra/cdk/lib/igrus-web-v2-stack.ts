@@ -298,6 +298,16 @@ export class IgrusWebV2Stack extends cdk.Stack {
       target: route53.RecordTarget.fromAlias(new route53targets.LoadBalancerTarget(alb)),
     });
 
+    // project.igrus.co.kr → Vercel(igrus-project). ALB/백엔드와 무관한 프론트 프로젝트지만
+    // igrus.co.kr 존 DNS 를 한 곳(IaC)에서 관리하기 위해 코드화. (기존 CLI 레코드는 deleteExisting 으로 흡수)
+    new route53.CnameRecord(this, 'ProjectVercelCname', {
+      zone,
+      recordName: 'project',
+      domainName: 'cname.vercel-dns.com',
+      ttl: cdk.Duration.seconds(300),
+      deleteExisting: true,
+    });
+
     // ── SSM Bastion EC2 (운영 IGRUS-Web-RDS-SSM-EC2 복제) ──
     const ssmRole = new iam.Role(this, 'SsmRole', {
       roleName: 'EC2_SSM_ROLE-v2',
