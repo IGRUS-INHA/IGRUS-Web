@@ -348,6 +348,8 @@ export class IgrusWebV2Stack extends cdk.Stack {
       instanceIdentifier: cfg.rdsId,
       engine: rds.DatabaseInstanceEngine.mysql({ version: cfg.rdsVersion }),
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+      // 명시 안 하면 CDK 기본값 100GiB 로 부풀려짐 → 원본(v1)과 동일하게 20GB 고정
+      allocatedStorage: 20,
       vpc: ctx.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       publiclyAccessible: cfg.rdsPubliclyAccessible,
