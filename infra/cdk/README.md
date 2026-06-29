@@ -15,7 +15,8 @@
 | `igrus-web-mysql-rds` (MySQL 8.0.44, db.t3.micro, 20GB gp2, single-AZ, private) | `igrus-web-mysql-rds-v2` |
 | `IGRUS-Web-ALB` (internet-facing, 443) | `IGRUS-Web-ALB-v2` |
 | `IGRUS-Web-Spring-ECS-TG` (8080, HC `/` → 200) | `IGRUS-Web-Spring-ECS-TG-v2` |
-| `igrus-web-bucket`, `igrus-web-file-storage-bucket` | `…-v2` |
+| `igrus-web-file-storage-bucket`, `igrus-web-staging-file-storage-bucket` | `…-v2` |
+| `igrus-web-bucket`(웹/정적, CloudFront 전용) | **복제 안 함** — 백엔드가 접근 안 하므로 v2 불필요, 프론트는 기존 버킷 그대로 사용 |
 | `IGRUS-WEB-ALB-SG`, `igrus-web-server-ecs-service-sg`, `IGRUS-Web-MySQL-RDS-SG`, `launch-wizard-1` | `…-v2` |
 | `igrus-web-server-prod-ecs-task-role`, `…-execution-role`, `EC2_SSM_ROLE` | `…-v2` |
 | `IGRUS-Web-RDS-SSM-EC2` (t3.micro, 8GB gp3) | `IGRUS-Web-RDS-SSM-EC2-v2` |

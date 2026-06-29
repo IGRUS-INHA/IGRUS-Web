@@ -27,6 +27,7 @@ interface AppEnvConfig {
   image: string;
   logGroupName: string;
   attachDefaultSgToService: boolean; // prod=true, staging=false (운영 현황 그대로)
+  desiredCount: number; // prod=1(상시 가동), staging=0(비용 절감 위해 중지)
   // RDS (기존 DB 스냅샷에서 복원 → 데이터 그대로 복제)
   rdsId: string;
   rdsVersion: rds.MysqlEngineVersion;
@@ -144,6 +145,7 @@ export class IgrusWebV2Stack extends cdk.Stack {
         image: '218736972976.dkr.ecr.ap-northeast-2.amazonaws.com/igrus/web/spring:v1.1.8',
         logGroupName: '/ecs/igrus-web-server-task-def-v2',
         attachDefaultSgToService: true,
+        desiredCount: 1,
         rdsId: 'igrus-web-mysql-rds-v2',
         rdsVersion: rds.MysqlEngineVersion.of('8.0.44', '8.0'),
         rdsSnapshotIdentifier: 'igrus-web-mysql-rds-v2seed-20260629',
@@ -167,6 +169,7 @@ export class IgrusWebV2Stack extends cdk.Stack {
           '218736972976.dkr.ecr.ap-northeast-2.amazonaws.com/igrus/web/staging/spring:6b34009e2deac8c65c6d31f4d62c34a07343a8f7',
         logGroupName: '/ecs/igrus-web-server-staging-task-def-v2',
         attachDefaultSgToService: false,
+        desiredCount: 0, // staging 중지(비용 절감). 필요 시 1로 올려 재배포
         rdsId: 'igrus-web-staging-mysql-rds-v2',
         rdsVersion: rds.MysqlEngineVersion.of('8.4.7', '8.4'),
         rdsSnapshotIdentifier: 'igrus-web-staging-mysql-rds-v2seed-20260629',
@@ -177,14 +180,14 @@ export class IgrusWebV2Stack extends cdk.Stack {
       ctx,
     );
 
-    // ── S3 버킷 ×4 (AES256 + public 전체 차단) ──
-    this.bucket('BucketProd', 'igrus-web-bucket-v2', false);
+    // ── S3 file-storage 버킷 ×2 (AES256 + public 전체 차단) ──
+    // 웹/정적 버킷(igrus-web-bucket)은 CloudFront(프론트) 전용이며 백엔드가 접근하지 않으므로
+    // v2 를 만들지 않는다. 백엔드가 실제 사용하는 file-storage 버킷만 v2 로 복제한다.
     this.bucket('FileBucketProd', 'igrus-web-file-storage-bucket-v2', true, [
       'https://igrus.co.kr',
       'https://www.igrus.co.kr',
       'https://api.igrus.co.kr',
     ]);
-    this.bucket('BucketStaging', 'igrus-web-staging-bucket-v2', false);
     this.bucket('FileBucketStaging', 'igrus-web-staging-file-storage-bucket-v2', true, [
       'https://staging.igrus.co.kr',
       'https://staging-api.igrus.co.kr',
@@ -385,7 +388,7 @@ export class IgrusWebV2Stack extends cdk.Stack {
       serviceName: cfg.serviceName,
       cluster: ctx.cluster,
       taskDefinition: taskDef,
-      desiredCount: 1,
+      desiredCount: cfg.desiredCount,
       assignPublicIp: true,
       securityGroups: serviceSgs,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
