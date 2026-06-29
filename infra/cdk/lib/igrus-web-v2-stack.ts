@@ -25,12 +25,14 @@ interface AppEnvConfig {
   family: string;
   containerName: string;
   image: string;
+  storageBucket: string; // app.storage.s3.bucket-name override (v2 전용 버킷)
   logGroupName: string;
   attachDefaultSgToService: boolean; // prod=true, staging=false (운영 현황 그대로)
-  // RDS
+  // RDS (기존 DB 스냅샷에서 복원 → 데이터 그대로 복제)
   rdsId: string;
   rdsVersion: rds.MysqlEngineVersion;
-  rdsDbName: string;
+  rdsSnapshotIdentifier: string;
+  rdsDbName: string; // SPRING_DATASOURCE_URL 구성용 (스냅샷 내 DB명)
   rdsPubliclyAccessible: boolean;
   rdsBackupDays: number;
 }
@@ -141,10 +143,12 @@ export class IgrusWebV2Stack extends cdk.Stack {
         family: 'igrus-web-server-task-def-v2',
         containerName: 'IGRUS-WEB-SPRING-SERVER',
         image: '218736972976.dkr.ecr.ap-northeast-2.amazonaws.com/igrus/web/spring:v1.1.8',
+        storageBucket: 'igrus-web-file-storage-bucket-v2',
         logGroupName: '/ecs/igrus-web-server-task-def-v2',
         attachDefaultSgToService: true,
         rdsId: 'igrus-web-mysql-rds-v2',
         rdsVersion: rds.MysqlEngineVersion.of('8.0.44', '8.0'),
+        rdsSnapshotIdentifier: 'igrus-web-mysql-rds-v2seed-20260629',
         rdsDbName: 'igrus_web',
         rdsPubliclyAccessible: false,
         rdsBackupDays: 3,
@@ -163,12 +167,14 @@ export class IgrusWebV2Stack extends cdk.Stack {
         containerName: 'IGRUS-WEB-SPRING-STAGING-SERVER',
         image:
           '218736972976.dkr.ecr.ap-northeast-2.amazonaws.com/igrus/web/staging/spring:6b34009e2deac8c65c6d31f4d62c34a07343a8f7',
+        storageBucket: 'igrus-web-staging-file-storage-bucket-v2',
         logGroupName: '/ecs/igrus-web-server-staging-task-def-v2',
         attachDefaultSgToService: false,
         rdsId: 'igrus-web-staging-mysql-rds-v2',
         rdsVersion: rds.MysqlEngineVersion.of('8.4.7', '8.4'),
+        rdsSnapshotIdentifier: 'igrus-web-staging-mysql-rds-v2seed-20260629',
         rdsDbName: 'igrus_web_staging',
-        rdsPubliclyAccessible: true, // 운영 현황 그대로 (스테이징은 public)
+        rdsPubliclyAccessible: false, // 보안상 private (실 PII 복원이라 운영 public 설정에서 이것만 변경)
         rdsBackupDays: 1,
       },
       ctx,
@@ -206,6 +212,18 @@ export class IgrusWebV2Stack extends cdk.Stack {
       validation: acm.CertificateValidation.fromDns(zone),
     });
 
+    // cutover 로 v2 ALB 가 실제 운영 도메인도 서비스 → 기존 운영 인증서 참조(SNI 추가)
+    const apiCert = acm.Certificate.fromCertificateArn(
+      this,
+      'ApiCert',
+      'arn:aws:acm:ap-northeast-2:218736972976:certificate/189f0561-f2d4-4cf8-821d-0a0012ce9aaa', // api.igrus.co.kr
+    );
+    const stagingApiCert = acm.Certificate.fromCertificateArn(
+      this,
+      'StagingApiCert',
+      'arn:aws:acm:ap-northeast-2:218736972976:certificate/6280a8cb-0941-48b3-b6e1-1d75f4666e10', // staging-api.igrus.co.kr
+    );
+
     const prodTg = new elbv2.ApplicationTargetGroup(this, 'ProdTg', {
       targetGroupName: 'IGRUS-Web-Spring-ECS-TG-v2',
       vpc,
@@ -240,14 +258,14 @@ export class IgrusWebV2Stack extends cdk.Stack {
     alb.addListener('Prod443', {
       port: 443,
       protocol: elbv2.ApplicationProtocol.HTTPS,
-      certificates: [cloneCert],
+      certificates: [cloneCert, apiCert], // clone.* (default) + api.igrus.co.kr (SNI)
       sslPolicy: SSL_POLICY,
       defaultTargetGroups: [prodTg],
     });
     alb.addListener('Staging8080', {
       port: 8080,
       protocol: elbv2.ApplicationProtocol.HTTPS,
-      certificates: [stagingCloneCert],
+      certificates: [stagingCloneCert, stagingApiCert], // staging-clone.* + staging-api.igrus.co.kr
       sslPolicy: SSL_POLICY,
       defaultTargetGroups: [stagingTg],
     });
@@ -266,6 +284,17 @@ export class IgrusWebV2Stack extends cdk.Stack {
     new route53.ARecord(this, 'StagingCloneAlias', {
       zone,
       recordName: 'staging-clone',
+      target: route53.RecordTarget.fromAlias(new route53targets.LoadBalancerTarget(alb)),
+    });
+    // cutover: 실제 운영 도메인을 v2 ALB 로 (기존 콘솔 레코드를 코드 관리로 전환)
+    new route53.ARecord(this, 'ApiAlias', {
+      zone,
+      recordName: 'api',
+      target: route53.RecordTarget.fromAlias(new route53targets.LoadBalancerTarget(alb)),
+    });
+    new route53.ARecord(this, 'StagingApiAlias', {
+      zone,
+      recordName: 'staging-api',
       target: route53.RecordTarget.fromAlias(new route53targets.LoadBalancerTarget(alb)),
     });
 
@@ -299,7 +328,7 @@ export class IgrusWebV2Stack extends cdk.Stack {
   private addAppEnvironment(
     cfg: AppEnvConfig,
     ctx: SharedCtx,
-  ): { service: ecs.FargateService; db: rds.DatabaseInstance } {
+  ): { service: ecs.FargateService; db: rds.IDatabaseInstance } {
     // 기존 Secrets Manager 시크릿 참조 (앱이 spring.config.import 로 그대로 읽음)
     const appSecret = secretsmanager.Secret.fromSecretNameV2(
       this,
@@ -312,24 +341,22 @@ export class IgrusWebV2Stack extends cdk.Stack {
       retention: logs.RetentionDays.INFINITE,
     });
 
-    // v2 RDS: 마스터 자격증명은 CDK 가 자동 생성 (관리형 시크릿, 평문 미노출)
-    const db = new rds.DatabaseInstance(this, `${cfg.idPrefix}Rds`, {
+    // v2 RDS: 기존 DB 스냅샷에서 복원 → 데이터 그대로 복제.
+    // credentials 미지정 → 스냅샷의 마스터 자격증명(=기존 시크릿의 datasource 값)을 그대로 유지
+    const db = new rds.DatabaseInstanceFromSnapshot(this, `${cfg.idPrefix}Rds`, {
+      snapshotIdentifier: cfg.rdsSnapshotIdentifier,
       instanceIdentifier: cfg.rdsId,
       engine: rds.DatabaseInstanceEngine.mysql({ version: cfg.rdsVersion }),
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       vpc: ctx.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       publiclyAccessible: cfg.rdsPubliclyAccessible,
-      allocatedStorage: 20,
       storageType: rds.StorageType.GP2,
       multiAz: false,
-      databaseName: cfg.rdsDbName,
-      credentials: rds.Credentials.fromGeneratedSecret('admin'),
       securityGroups: [ctx.rdsSg, ctx.defaultSg],
       backupRetention: cdk.Duration.days(cfg.rdsBackupDays),
       removalPolicy: cdk.RemovalPolicy.SNAPSHOT,
     });
-    const dbSecret = db.secret!;
 
     const taskDef = new ecs.FargateTaskDefinition(this, `${cfg.idPrefix}TaskDef`, {
       family: cfg.family,
@@ -345,14 +372,14 @@ export class IgrusWebV2Stack extends cdk.Stack {
       image: ecs.ContainerImage.fromRegistry(cfg.image),
       logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'ecs', logGroup }),
       portMappings: [{ containerPort: 8080, hostPort: 8080, protocol: ecs.Protocol.TCP }],
-      // 앱 코드 불변. DB 접속만 v2 RDS 로 오버라이드 (그 외 jwt/mail/webhook 은 기존 시크릿 사용)
+      // 앱 코드 불변. DB host 만 v2 RDS 로 오버라이드.
+      // datasource 계정/비번 + jwt/mail/webhook 은 모두 기존 시크릿 값을 그대로 사용
+      // (스냅샷 복원 RDS 는 마스터 비번이 기존과 동일하므로 별도 주입 불필요)
       environment: {
         SPRING_ACTIVE_PROFILE: cfg.springProfile,
         SPRING_DATASOURCE_URL: `jdbc:mysql://${db.dbInstanceEndpointAddress}:3306/${cfg.rdsDbName}`,
-      },
-      secrets: {
-        SPRING_DATASOURCE_USERNAME: ecs.Secret.fromSecretsManager(dbSecret, 'username'),
-        SPRING_DATASOURCE_PASSWORD: ecs.Secret.fromSecretsManager(dbSecret, 'password'),
+        // 기존 시크릿의 app.storage.s3.bucket-name 을 v2 버킷으로 오버라이드 (env 가 우선)
+        APP_STORAGE_S3_BUCKETNAME: cfg.storageBucket,
       },
     });
 
