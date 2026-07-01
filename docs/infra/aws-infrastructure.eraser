@@ -1,0 +1,73 @@
+// ============================================================================
+// IGRUS-Web AWS Infrastructure  (Eraser diagram-as-code)
+// Account: 218736972976  |  Region: ap-northeast-2 (Seoul)  |  Snapshot: 2026-06-29
+// Eraser: https://app.eraser.io  →  New Diagram → "Diagram as Code"
+// 클라우드 사본: https://app.eraser.io/workspace/v4eRTH281DPGWDByPEgK
+//
+// v2 복제본(clone.igrus.co.kr / staging-clone.igrus.co.kr)은 infra/cdk 의 CDK 로 정의됨.
+// ============================================================================
+
+title IGRUS-Web AWS Infrastructure (acct 218736972976 / ap-northeast-2)
+
+// ===== External / Edge =====
+Users [icon: users]
+Route53 [icon: aws-route-53, label: "Route53 | igrus.co.kr (public zone)"]
+ACM [icon: aws-certificate-manager, color: green, label: "ACM | api.igrus.co.kr | staging-api.igrus.co.kr"]
+Gmail SMTP [icon: mail, color: gray, label: "Gmail SMTP (external) | smtp.gmail.com:587"]
+Webhook API [icon: aws-api-gateway, color: gray, label: "baebdung-i Webhook (external) | API Gateway v2zb74shbf"]
+
+AWS Cloud [icon: aws, color: orange] {
+
+  ECR [icon: aws-ec2-container-registry, color: orange, label: "ECR | igrus/web/spring (prod) | igrus/web/staging/spring"]
+  Secrets Manager [icon: aws-secrets-manager, color: red, label: "Secrets Manager | igrus/web/server/prod | igrus/web/server/staging"]
+  CloudWatch Logs [icon: aws-cloudwatch, color: pink, label: "CloudWatch Logs | /ecs/igrus-web-server-task-def(-staging)"]
+
+  VPC vpc-080c2e37 [icon: aws-vpc, color: green, label: "default VPC 172.31.0.0/16 | public subnets x4 (AZ a/b/c/d)"] {
+
+    ALB [icon: aws-elastic-load-balancing, color: purple, label: "IGRUS-Web-ALB (internet-facing) | SG: IGRUS-WEB-ALB-SG + default | L:443 HTTPS, 8080 HTTPS, 8000 HTTP"]
+
+    TG Prod [icon: aws-elastic-load-balancing, color: purple, label: "IGRUS-Web-Spring-ECS-TG | ip:8080 HTTP | HC GET / =200"]
+    TG Staging [icon: aws-elastic-load-balancing, color: blue, label: "IGRUS-Web-Spring-Staging-ECS-TG | ip:80"]
+
+    ECS Fargate Cluster [icon: aws-ecs, color: orange, label: "IGRUS-WEB-ECS-Cluster | FARGATE / FARGATE_SPOT"] {
+      Prod Task [icon: aws-fargate, color: orange, label: "igrus-web-server-ecs-service | spring:v1.1.8 :8080 | 1 vCPU / 2GB x1 | SG: ecs-service-sg + default | ~$41/mo"]
+      Staging Task [icon: aws-fargate, color: blue, label: "igrus-web-server-staging-service | spring:<git-sha> | 1 vCPU / 2GB x1 | ~$41/mo"]
+    }
+
+    RDS Prod [icon: aws-rds, color: blue, label: "igrus-web-mysql-rds | MySQL 8.0.44 db.t3.micro 20GB gp2 | Single-AZ PRIVATE | DB igrus_web | backup 3d | ~$21/mo"]
+    RDS Staging [icon: aws-rds, color: red, label: "igrus-web-staging-mysql-rds | MySQL 8.4.7 db.t3.micro 20GB | PUBLIC (!) | backup 1d | ~$21/mo"]
+
+    Bastion EC2 [icon: aws-ec2, color: green, label: "IGRUS-Web-RDS-SSM-EC2 | t3.micro 8GB gp3 | EC2_SSM_ROLE | SG: launch-wizard-1 (22 open) | ~$11/mo"]
+  }
+
+  S3 Prod [icon: aws-s3, color: green, label: "igrus-web-bucket | igrus-web-file-storage-bucket | AES256, public-block ALL, CORS"]
+  S3 Staging [icon: aws-s3, color: blue, label: "igrus-web-staging-bucket | igrus-web-staging-file-storage-bucket"]
+}
+
+Cost Estimate [icon: aws-cost-explorer, color: red, label: "Monthly (Seoul, On-Demand): Fargate ~$83 + RDS ~$42 + ALB ~$19 + EC2/EBS ~$11 + PublicIPv4 ~$15 + S3/ECR ~$2 = ~$170-185/mo | no NAT Gateway"]
+
+Security Notes [icon: shield, color: red, label: "RISK: RDS SG allows 3306 from 0.0.0.0/0 | staging RDS is PubliclyAccessible | bastion SG allows 22 from 0.0.0.0/0"]
+
+// ===== Flows =====
+Users > Route53: DNS
+Route53 > ALB: api / staging-api
+ACM > ALB: TLS certs
+ALB > TG Prod: 443 HTTPS
+ALB > TG Staging: 8080 / 8000
+TG Prod > Prod Task
+TG Staging > Staging Task
+
+Prod Task > RDS Prod: 3306
+Staging Task > RDS Staging: 3306
+Prod Task > Secrets Manager: prod config
+Staging Task > Secrets Manager: staging config
+Prod Task > ECR: pull image
+Prod Task > S3 Prod
+Staging Task > S3 Staging
+Prod Task > CloudWatch Logs
+Prod Task > Gmail SMTP: mail
+Prod Task > Webhook API: submissions
+
+Users > Bastion EC2: SSM tunnel
+Bastion EC2 > RDS Prod: 3306
+Bastion EC2 > RDS Staging: 3306

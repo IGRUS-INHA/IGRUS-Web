@@ -17,6 +17,7 @@ logs/
 .env
 .env.local
 .env.*.local
+.env.staging
 
 # ==== Backend (Spring Boot / Java) ====
 backend/build/
@@ -63,3 +64,7 @@ nul
 # OpenAPI bundled output
 openapi/bundled.yaml
 backend/src/main/resources/static/openapi.yaml
+
+
+MEMO.md
+TODO.md
