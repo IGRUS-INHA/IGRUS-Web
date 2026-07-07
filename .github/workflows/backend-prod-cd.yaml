@@ -114,7 +114,8 @@ jobs:
       - name: Verify health
         run: |
           for i in $(seq 1 30); do
-            CODE=$(curl -s -o /dev/null -w "%{http_code}" https://api.igrus.co.kr/actuator/health || true)
+            # actuator 는 prod 에 노출되지 않음 → ALB 헬스체크와 동일하게 / (200) 사용
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" https://api.igrus.co.kr/ || true)
             if [ "$CODE" = "200" ]; then
               echo "healthy (attempt $i)"
               exit 0

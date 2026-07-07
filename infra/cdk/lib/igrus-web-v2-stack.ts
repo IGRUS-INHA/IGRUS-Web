@@ -24,7 +24,7 @@ const SSL_POLICY = 'ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09' as elbv2.SslPoli
  *     ALB/Fargate 는 롤백 경로로 유지 (플래그를 1로 되돌리면 원복).
  * 3 — cleanup: ALB/ECS/bastion/staging RDS 제거(스냅샷 보존), prod RDS t4g.micro 전환.
  */
-const MIGRATION_PHASE: 1 | 2 | 3 = 1;
+const MIGRATION_PHASE: 1 | 2 | 3 = 2;
 const CUTOVER = MIGRATION_PHASE >= 2; // api 도메인이 EC2 를 향하고 Fargate 는 중지
 const LEGACY = MIGRATION_PHASE <= 2; // Fargate/ALB/bastion/staging 자원 유지 여부
 

@@ -34,7 +34,7 @@ npx cdk deploy
 ### 검증
 ```bash
 # 부팅 + user-data(도커 설치·이미지 pull·앱 기동) 3~5분 대기 후
-curl -s -o /dev/null -w "%{http_code}\n" https://ec2.igrus.co.kr/actuator/health   # 200
+curl -s -o /dev/null -w "%{http_code}\n" https://ec2.igrus.co.kr/   # 200 (actuator 는 prod 미노출 → / 사용)
 
 # 실동작: 로그인 (EC2 경로가 prod RDS/시크릿/S3 를 정상 사용하는지)
 curl -s -o /dev/null -w "%{http_code}\n" -X POST https://ec2.igrus.co.kr/api/v1/auth/password/login \
@@ -91,7 +91,7 @@ aws ssm send-command --document-name AWS-RunShellScript \
   --parameters 'commands=cd /opt/igrus && docker compose restart caddy'
 
 # 검증
-curl -s -o /dev/null -w "%{http_code}\n" https://api.igrus.co.kr/actuator/health   # 200
+curl -s -o /dev/null -w "%{http_code}\n" https://api.igrus.co.kr/   # 200
 ```
 
 이후 **prod CD 파이프라인 변경(PR)을 머지**한다 (`.github/workflows/backend-prod-cd.yaml`
@@ -128,7 +128,7 @@ aws elbv2 describe-load-balancers --query "LoadBalancers[].LoadBalancerName"   #
 aws ecs list-clusters --query clusterArns                                      # v2 클러스터 없어야
 aws rds describe-db-instances \
   --query "DBInstances[].{id:DBInstanceIdentifier,class:DBInstanceClass}"      # prod 만, t4g.micro
-curl -s -o /dev/null -w "%{http_code}\n" https://api.igrus.co.kr/actuator/health
+curl -s -o /dev/null -w "%{http_code}\n" https://api.igrus.co.kr/
 ```
 목표: 월 ~$175 → **~$47** (EC2 $19.3 + EBS $2.7 + EIP $3.7 + RDS t4g.micro $20 + ECR/Secrets ~$1.7).
 다음 달 Cost Explorer 에서 ECS/ALB/VPC-IPv4 라인이 사라졌는지 확인.
