@@ -262,7 +262,8 @@ IGRUS 웹(앱+DB) + 다른 동아리 프로젝트 + 내부 도구(스테이징, 
 
 ## 10. 관련 문서
 
+- **`docs/infra/ec2-migration-runbook.md` — 이 결정의 실행 절차 (MIGRATION_PHASE 1→2→3)**
 - `docs/infra/v1-decommission-runbook.md` — v1 자원 삭제 절차
 - `docs/infra/reconcile-runbook.md` — v2 드리프트 reconcile
 - `docs/infra/rds-shrink-runbook.md` — RDS 스토리지 축소
-- `infra/cdk/lib/igrus-web-v2-stack.ts` — 현재 v2 IaC (전환 시 EC2 construct 추가 대상)
+- `infra/cdk/lib/igrus-web-v2-stack.ts` — IaC (EC2+Caddy construct 구현 완료, phase 플래그로 전환)

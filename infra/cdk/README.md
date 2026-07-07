@@ -1,9 +1,25 @@
 # IGRUS-Web 인프라 (AWS CDK)
 
-운영(Production) 인프라를 **토씨 하나 같게** 복제하는 IaC.
-수동 생성 자원의 **이름에만 `-v2`** 를 붙이고, 접속 도메인만 `clone.igrus.co.kr` 로 새로 연결한다.
+운영(Production) 인프라를 **토씨 하나 같게** 복제한 v2(Fargate+ALB) IaC 에,
+**EC2+Caddy 전환(v3)** 이 `MIGRATION_PHASE` 플래그로 구현되어 있다.
 
 > 계정 `218736972976` / 리전 `ap-northeast-2` / 기준 스냅샷 2026-06-29
+
+## EC2 + Caddy 전환 (진행 중)
+
+상시 저부하 워크로드의 Fargate/ALB/IPv4 고정비 제거 (월 ~$175 → ~$47).
+`lib/igrus-web-v2-stack.ts` 상단 `MIGRATION_PHASE`(1→2→3)를 올려가며 배포한다:
+
+| Phase | 내용 |
+| --- | --- |
+| 1 | EC2 t3.small(`IGRUS-Web-App-EC2`) + Caddy + EIP + `ec2.igrus.co.kr` 병행 프로비저닝. 기존 인프라 유지 |
+| 2 | cutover — `api.igrus.co.kr` → EIP, prod Fargate desiredCount 0 (플래그 원복 = 즉시 롤백) |
+| 3 | cleanup — ALB/ECS/bastion/staging RDS 제거, prod RDS t4g.micro 전환 |
+
+근거: `docs/infra/ec2-caddy-migration-rationale.md` / 절차: `docs/infra/ec2-migration-runbook.md`
+
+배포는 태그 릴리즈 시 GitHub Actions 가 ECR push 후 SSM 으로 인스턴스의
+`/usr/local/bin/igrus-deploy <tag>` 를 실행한다 (`.github/workflows/backend-prod-cd.yaml`).
 
 ## 무엇을 만드나 (운영 → v2)
 

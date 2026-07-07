@@ -1,3 +1,6 @@
+# ⚠️ EC2+Caddy 전환(phase 2 cutover) 이후 유효한 파이프라인.
+# cutover 전에 릴리즈하면 EC2 만 갱신되고 api.igrus.co.kr(ALB→Fargate)은 구버전이 유지됨.
+# 절차: docs/infra/ec2-migration-runbook.md
 name: Backend Production CD Pipeline
 on:
   push:
@@ -21,12 +24,10 @@ jobs:
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
       ECR_REPOSITORY_SPRING: ${{ vars.ECR_REPOSITORY_SPRING }}
-      CONTAINER_NAME_SPRING: ${{ vars.CONTAINER_NAME_SPRING }}
-      ECS_SERVICE_SPRING: ${{ vars.ECS_SERVICE_SPRING }}
-      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
-      ECS_TASK_DEFINITION_NAME_SPRING: ${{ vars.ECS_TASK_DEFINITION_NAME_SPRING }}
       SPRING_ACTIVE_PROFILE: ${{ vars.SPRING_ACTIVE_PROFILE }}
       AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN }}
+      EC2_INSTANCE_NAME: IGRUS-Web-App-EC2
+      IMAGE_TAG: ${{ inputs.version || github.ref_name }}
     defaults:
       run:
         working-directory: backend
@@ -70,36 +71,56 @@ jobs:
         id: build-image-spring
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ inputs.version || github.ref_name }}
         run: |
-          # Build a docker container and
-          # push it to ECR so that it can
-          # be deployed to ECS.
+          # Build a docker container and push it to ECR
+          # so that it can be deployed to the app EC2.
           docker build --build-arg SPRING_ACTIVE_PROFILE=$SPRING_ACTIVE_PROFILE --build-arg GIT_COMMIT_HASH=${{ github.sha }} -t $ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_SPRING:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Get Latest ECS Task Definition ARN
-        id: get-latest-task-df
+      # EC2 위의 igrus-deploy 스크립트(SSM RunCommand)가 .env 태그 갱신 → compose pull/up
+      - name: Deploy to EC2 via SSM
         run: |
-          LATEST_TASK_DEF=$(aws ecs describe-task-definition \
-            --task-definition $ECS_TASK_DEFINITION_NAME_SPRING \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-          echo "ECS_TASK_DEFINITION_ARN=$LATEST_TASK_DEF" >> $GITHUB_ENV
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$EC2_INSTANCE_NAME" "Name=instance-state-name,Values=running" \
+            --query "Reservations[].Instances[].InstanceId" --output text)
+          if [ -z "$INSTANCE_ID" ]; then
+            echo "::error::running instance named $EC2_INSTANCE_NAME not found"
+            exit 1
+          fi
+          echo "Deploying $IMAGE_TAG to $INSTANCE_ID"
 
-      - name: Fill in the new image ID in the Amazon ECS task definition [Spring]
-        id: task-def-spring
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition-arn: ${{ env.ECS_TASK_DEFINITION_ARN }}
-          container-name: ${{ env.CONTAINER_NAME_SPRING }}
-          image: ${{ steps.build-image-spring.outputs.image }}
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "igrus-web deploy $IMAGE_TAG" \
+            --parameters "commands=/usr/local/bin/igrus-deploy $IMAGE_TAG" \
+            --query "Command.CommandId" --output text)
 
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.task-def-spring.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE_SPRING }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+          set +e
+          aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"
+          WAIT_RC=$?
+          set -e
+
+          aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+            --query "{Status:Status,Stdout:StandardOutputContent,Stderr:StandardErrorContent}" --output json
+          STATUS=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+            --query "Status" --output text)
+          if [ "$STATUS" != "Success" ] || [ $WAIT_RC -ne 0 ]; then
+            echo "::error::deploy command finished with status $STATUS"
+            exit 1
+          fi
+
+      # 컨테이너 재기동(~60초) 후 실서비스 health 확인
+      - name: Verify health
+        run: |
+          for i in $(seq 1 30); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" https://api.igrus.co.kr/actuator/health || true)
+            if [ "$CODE" = "200" ]; then
+              echo "healthy (attempt $i)"
+              exit 0
+            fi
+            echo "waiting... ($i/30, http=$CODE)"
+            sleep 10
+          done
+          echo "::error::health check failed after 300s"
+          exit 1
