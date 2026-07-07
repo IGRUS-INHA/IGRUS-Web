@@ -22,9 +22,11 @@ const SSL_POLICY = 'ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09' as elbv2.SslPoli
  *     ec2.igrus.co.kr 로 EC2 경로 검증. api.igrus.co.kr 은 아직 ALB.
  * 2 — cutover: api.igrus.co.kr A레코드 → EC2 EIP, prod Fargate desiredCount 0.
  *     ALB/Fargate 는 롤백 경로로 유지 (플래그를 1로 되돌리면 원복).
- * 3 — cleanup: ALB/ECS/bastion/staging RDS 제거(스냅샷 보존), prod RDS t4g.micro 전환.
+ * 2.5 — cleanup: 미사용 레거시 제거 — ALB(+IPv4 4개)/ECS/bastion/staging RDS(스냅샷 보존).
+ *       라이브 경로(EC2→prod RDS) 무변경 = 무중단.
+ * 3 — prod RDS t3.micro → t4g.micro (ARM −10%, 짧은 재부팅 다운타임 수반).
  */
-const MIGRATION_PHASE: 1 | 2 | 3 = 2;
+const MIGRATION_PHASE: 1 | 2 | 2.5 | 3 = 2.5;
 const CUTOVER = MIGRATION_PHASE >= 2; // api 도메인이 EC2 를 향하고 Fargate 는 중지
 const LEGACY = MIGRATION_PHASE <= 2; // Fargate/ALB/bastion/staging 자원 유지 여부
 

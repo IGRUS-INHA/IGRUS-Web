@@ -8,13 +8,14 @@
 ## EC2 + Caddy 전환 (진행 중)
 
 상시 저부하 워크로드의 Fargate/ALB/IPv4 고정비 제거 (월 ~$175 → ~$47).
-`lib/igrus-web-v2-stack.ts` 상단 `MIGRATION_PHASE`(1→2→3)를 올려가며 배포한다:
+`lib/igrus-web-v2-stack.ts` 상단 `MIGRATION_PHASE`(1→2→2.5→3)를 올려가며 배포한다:
 
 | Phase | 내용 |
 | --- | --- |
 | 1 | EC2 t3.small(`IGRUS-Web-App-EC2`) + Caddy + EIP + `ec2.igrus.co.kr` 병행 프로비저닝. 기존 인프라 유지 |
 | 2 | cutover — `api.igrus.co.kr` → EIP, prod Fargate desiredCount 0 (플래그 원복 = 즉시 롤백) |
-| 3 | cleanup — ALB/ECS/bastion/staging RDS 제거, prod RDS t4g.micro 전환 |
+| 2.5 | cleanup — ALB(+IPv4)/ECS/bastion/staging RDS 제거 (무중단) |
+| 3 | prod RDS t4g.micro 전환 (짧은 재부팅) |
 
 근거: `docs/infra/ec2-caddy-migration-rationale.md` / 절차: `docs/infra/ec2-migration-runbook.md`
 

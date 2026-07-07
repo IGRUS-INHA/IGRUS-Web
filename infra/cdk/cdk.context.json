@@ -40,5 +40,6 @@
   "hosted-zone:account=218736972976:domainName=igrus.co.kr:region=ap-northeast-2": {
     "Id": "/hostedzone/Z0288891201KKBESMOAHJ",
     "Name": "igrus.co.kr."
-  }
+  },
+  "ssm:account=218736972976:parameterName=/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64:region=ap-northeast-2": "ami-0212948777c137c94"
 }

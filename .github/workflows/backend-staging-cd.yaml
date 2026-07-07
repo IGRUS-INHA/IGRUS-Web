@@ -1,12 +1,8 @@
+# ⚠️ EC2+Caddy 전환(phase 2.5)으로 staging ECS/RDS 가 제거되어 자동 배포를 중지함.
+# staging 을 다시 쓰려면 EC2 방식(SSM igrus-deploy)으로 재설계 필요 — docs/infra/ec2-migration-runbook.md
 name: Backend Staging CD Pipeline
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-staging-cd.yaml'
-      - '!backend/docs/**'
+  workflow_dispatch:
 
 permissions:
   contents: read

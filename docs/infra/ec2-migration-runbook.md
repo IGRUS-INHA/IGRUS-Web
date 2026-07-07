@@ -1,10 +1,10 @@
 # EC2 + Caddy 전환 런북 (Fargate+ALB → 단일 t3.small)
 
 근거·비용·목표 아키텍처: `docs/infra/ec2-caddy-migration-rationale.md` (옵션 A).
-구현: `infra/cdk/lib/igrus-web-v2-stack.ts` 의 **`MIGRATION_PHASE` 상수(1→2→3)** 를 올려가며 3회 배포한다.
+구현: `infra/cdk/lib/igrus-web-v2-stack.ts` 의 **`MIGRATION_PHASE` 상수(1→2→2.5→3)** 를 올려가며 배포한다.
 
 > 계정 `218736972976` / `ap-northeast-2`. `cdk deploy` 는 자동모드 가드가 막으므로 **사용자가 직접 실행**.
-> 각 단계는 독립적으로 롤백 가능: 플래그를 이전 값으로 되돌려 재배포하면 원복된다(phase 3 제외 — 아래 참조).
+> 각 단계는 독립적으로 롤백 가능: 플래그를 이전 값으로 되돌려 재배포하면 원복된다(phase 2.5 부터는 재생성 소요 — 아래 참조).
 
 ```bash
 cd infra/cdk
@@ -102,25 +102,32 @@ curl -s -o /dev/null -w "%{http_code}\n" https://api.igrus.co.kr/   # 200
 
 ---
 
-## Phase 3 — cleanup (며칠 안정 운영 확인 후)
+## Phase 2.5 — cleanup: 미사용 레거시 제거 (무중단)
 
-`MIGRATION_PHASE = 3` 으로 수정 후:
+`MIGRATION_PHASE = 2.5` 로 수정 후:
 
 ```bash
 npx cdk deploy
 ```
-제거: ALB(+리스너/TG/clone 인증서/clone·staging-clone·staging-api 레코드), ECS 클러스터/서비스/태스크데프,
-ECS·ALB·bastion SG 와 RDS SG 의 해당 인바운드, task/execution/SSM IAM 롤, **bastion EC2** (앱 EC2 의 SSM 이 대체),
-**staging RDS** (RemovalPolicy=SNAPSHOT → 최종 스냅샷 자동 보존).
-변경: prod RDS `db.t3.micro → db.t4g.micro` (ARM, −10%, 짧은 재부팅 1회 발생).
+제거: ALB(+리스너/TG/clone 인증서/clone·staging-clone·staging-api 레코드, **퍼블릭 IPv4 4개**),
+ECS 클러스터/서비스/태스크데프, ECS·ALB·bastion SG 와 RDS SG 의 해당 인바운드, task/execution/SSM IAM 롤,
+**bastion EC2** (앱 EC2 의 SSM 이 대체), **staging RDS** (RemovalPolicy=SNAPSHOT → 최종 스냅샷 자동 보존).
+라이브 경로(EC2→prod RDS)는 무변경 → 무중단. 비용 ~$105 → **~$50/월**.
 
 주의:
-- 이 단계는 플래그 원복만으로 완전 롤백되지 않는다(재생성은 되지만 staging RDS 는 스냅샷 복원 절차 필요).
+- 이 단계부터 플래그 원복만으로 즉시 롤백되지 않는다(ALB/ECS 재생성 ~20분, staging RDS 는 스냅샷에서 재생성).
 - CloudWatch 로그 그룹(`/ecs/...`)은 RETAIN 이라 보존된다.
-- **staging CD**(`backend-staging-cd.yaml`)는 phase 3 이후 배포 대상(ECS)이 없어 실패한다 —
-  staging 을 다시 쓸 때 EC2 방식으로 재설계하거나 워크플로우를 비활성화할 것.
+- **staging CD**(`backend-staging-cd.yaml`)는 배포 대상(ECS)이 없어져 자동 트리거를 제거했다(workflow_dispatch 만 잔존) —
+  staging 을 다시 쓸 때 EC2 방식으로 재설계할 것.
 - GitHub `production` environment 의 ECS 관련 vars(`ECS_CLUSTER`, `ECS_SERVICE_SPRING`,
   `ECS_TASK_DEFINITION_NAME_SPRING`, `CONTAINER_NAME_SPRING`)는 더 이상 사용되지 않는다(정리 가능).
+
+---
+
+## Phase 3 — prod RDS ARM 전환 (짧은 다운타임)
+
+`MIGRATION_PHASE = 3` 으로 수정 후 `npx cdk deploy`.
+변경: prod RDS `db.t3.micro → db.t4g.micro` (ARM, −10%, **재부팅 수 분 발생** — 저트래픽 시간대 권장).
 
 ### 검증 & 비용 확인
 ```bash
