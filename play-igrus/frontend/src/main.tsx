@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import SubmitPage from "./pages/SubmitPage";
 import MyPage from "./pages/MyPage";
+import ProfilePage from "./pages/ProfilePage";
 import AdminPage from "./pages/AdminPage";
 import "./index.css";
 
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
       { path: "submit", element: <SubmitPage /> },
       { path: "edit/:id", element: <SubmitPage /> },
       { path: "my", element: <MyPage /> },
+      { path: "profile", element: <ProfilePage /> },
       { path: "admin", element: <AdminPage /> },
     ],
   },
