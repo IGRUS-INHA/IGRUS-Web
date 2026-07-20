@@ -225,8 +225,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex h-full items-center justify-center px-s4">
-      <div className="w-full max-w-4xl animate-in slide-in-from-bottom-8 duration-500">
+    <div className="flex min-h-full items-center justify-center px-s4 py-s7">
+      <div className="w-full max-w-sm">
         <LoginForm onSubmit={handleLogin} loading={loading} />
       </div>
     </div>

@@ -1,8 +1,9 @@
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { User, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface LoginFormData {
   studentId: string;
@@ -33,163 +34,120 @@ export default function LoginForm({
   };
 
   return (
-    <div className="overflow-hidden rounded-r4 border border-border bg-card shadow-2xl">
-      <div className="grid min-h-[520px] grid-cols-1 lg:grid-cols-5">
-        {/* Brand Panel */}
-        <div className="login-brand-panel relative flex flex-col justify-between overflow-hidden p-s6 lg:col-span-2 lg:p-s7">
-          {/* Decorative circles */}
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border-2 border-primary/20" />
-            <div className="absolute -left-8 top-1/3 h-24 w-24 rounded-full border border-primary/15" />
-            <div className="absolute -bottom-6 right-1/4 h-32 w-32 rounded-full border border-primary/10" />
-            {/* Dot grid overlay */}
-            <div className="login-dot-grid absolute inset-0" />
-          </div>
-
-          {/* Brand content */}
-          <div className="relative z-10">
-            <div className="mb-s4 flex items-center gap-s3 lg:mb-s7">
-              <img
-                src="/igruslogo.png"
-                alt="IGRUS"
-                className="h-9 w-9 lg:h-11 lg:w-11"
-              />
-              <span className="text-lg font-bold tracking-tight text-primary">
-                IGRUS
-              </span>
-            </div>
-
-            <h1 className="mb-s2 hidden text-4xl font-extrabold leading-tight text-foreground lg:block">
-              Welcome
-            </h1>
-            <p className="hidden text-foreground/80 typo-b2 lg:block">
-              IGRUS에 오신 것을 환영합니다.
-            </p>
-
-            {/* Mobile-only compact text */}
-            <p className="text-foreground/80 typo-b2 lg:hidden">
-              IGRUS에 오신 것을 환영합니다.
-            </p>
-          </div>
-
-          <p className="relative z-10 hidden text-foreground/60 typo-c1 lg:block">
-            인하대학교 IT 동아리
-          </p>
-        </div>
-
-        {/* Form Panel */}
-        <div className="flex flex-col justify-center p-s6 lg:col-span-3 lg:p-s7">
-          <div className="mb-s6">
-            <h2 className="mb-s2 typo-h2">로그인</h2>
-            <p className="text-muted-foreground typo-b2">
-              학번과 비밀번호를 입력해주세요
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-s5">
-            {/* Student ID */}
-            <div>
-              <label className="mb-s2 block text-muted-foreground typo-label">
-                학번
-              </label>
-              <div className="relative">
-                <User
-                  size={18}
-                  className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                  type="text"
-                  placeholder="8자리 학번 입력"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  required
-                  className={`w-full rounded-r3 border py-s5 pl-12 pr-s4 transition-all ${
-                    errors.studentId
-                      ? "border-destructive focus:border-destructive"
-                      : "border-border focus:border-primary"
-                  }`}
-                />
-              </div>
-              {errors.studentId && (
-                <p className="mt-s1 text-destructive typo-c1">
-                  {errors.studentId}
-                </p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="mb-s2 block text-muted-foreground typo-label">
-                비밀번호
-              </label>
-              <div className="group relative">
-                <Lock
-                  size={18}
-                  className="absolute left-s4 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="영문, 숫자 포함 8자 이상"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className={`w-full rounded-r3 border py-s5 pl-12 pr-12 transition-all ${
-                    errors.password
-                      ? "border-destructive focus:border-destructive"
-                      : "border-border focus:border-primary"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-s4 top-1/2 -translate-y-1/2 text-muted-foreground opacity-0 transition-all hover:text-foreground group-focus-within:opacity-100"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-s1 text-destructive typo-c1">
-                  {errors.password}
-                </p>
-              )}
-            </div>
-
-            {/* Forgot password */}
-            <div className="flex justify-end">
-              <Link
-                to="/forgot-password"
-                className="text-primary transition hover:text-primary/80 typo-c1"
-              >
-                비밀번호를 잊으셨나요?
-              </Link>
-            </div>
-
-            {/* Submit */}
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-s2 rounded-r3 py-s5 font-bold"
-            >
-              {loading ? "로그인 중..." : "로그인"}
-              {!loading && <ArrowRight size={18} />}
-            </Button>
-          </form>
-
-          {/* Sign up link */}
-          <div className="mt-s6 text-center">
-            <p className="text-muted-foreground typo-b2">
-              아직 계정이 없으신가요?{" "}
-              <Link
-                to="/signup"
-                className="font-semibold text-primary transition hover:text-primary/80"
-              >
-                회원가입
-              </Link>
-            </p>
-          </div>
-        </div>
+    <div>
+      {/* 헤더 */}
+      <div className="mb-s6 flex flex-col items-center text-center">
+        <img src="/igruslogo.png" alt="IGRUS" className="h-12 w-12" />
+        <h1 className="mt-s4 typo-h2 text-foreground">로그인</h1>
+        <p className="mt-s1 typo-b2 text-muted-foreground">
+          학번과 비밀번호로 로그인해요
+        </p>
       </div>
+
+      <form onSubmit={handleSubmit} className="space-y-s4">
+        {/* 학번 */}
+        <div>
+          <label className="mb-s2 block text-sm font-medium text-foreground">
+            학번
+          </label>
+          <div className="relative">
+            <User
+              size={18}
+              className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              type="text"
+              name="username"
+              autoComplete="username"
+              placeholder="8자리 학번"
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              required
+              className={cn(
+                "h-11 rounded-r3 pl-10",
+                errors.studentId && "border-destructive",
+              )}
+            />
+          </div>
+          {errors.studentId && (
+            <p className="mt-s2 text-sm text-destructive">{errors.studentId}</p>
+          )}
+        </div>
+
+        {/* 비밀번호 */}
+        <div>
+          <label className="mb-s2 block text-sm font-medium text-foreground">
+            비밀번호
+          </label>
+          <div className="relative">
+            <Lock
+              size={18}
+              className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              autoComplete="current-password"
+              placeholder="비밀번호"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className={cn(
+                "h-11 rounded-r3 pl-10 pr-10",
+                errors.password && "border-destructive",
+              )}
+            />
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="mt-s2 text-sm text-destructive">{errors.password}</p>
+          )}
+        </div>
+
+        {/* 비밀번호 찾기 */}
+        <div className="flex justify-end">
+          <Link
+            to="/forgot-password"
+            className="text-sm text-muted-foreground transition-colors hover:text-primary"
+          >
+            비밀번호를 잊으셨나요?
+          </Link>
+        </div>
+
+        {/* 로그인 버튼 */}
+        <Button
+          type="submit"
+          disabled={loading}
+          className="h-12 w-full cursor-pointer text-base font-bold"
+        >
+          {loading ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              로그인 중...
+            </>
+          ) : (
+            "로그인"
+          )}
+        </Button>
+      </form>
+
+      {/* 회원가입 링크 */}
+      <p className="mt-s6 text-center text-sm text-muted-foreground">
+        아직 계정이 없으신가요?{" "}
+        <Link
+          to="/signup"
+          className="font-semibold text-primary hover:underline"
+        >
+          회원가입
+        </Link>
+      </p>
     </div>
   );
 }
