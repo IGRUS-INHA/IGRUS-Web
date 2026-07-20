@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import {
@@ -13,7 +13,10 @@ import {
 } from "../api/client";
 import RequireLogin from "../components/RequireLogin";
 import { field, input, label } from "../components/formStyles";
-import ImageDropzone from "../components/ImageDropzone";
+import AvatarPlaceholder from "../components/Avatar";
+
+const ACCEPTED_AVATAR = ["image/png", "image/jpeg", "image/webp"];
+const MAX_AVATAR_BYTES = 4 << 20; // 서버와 동일 4MB
 
 export default function ProfilePage() {
   return (
@@ -48,6 +51,7 @@ function ProfileEditor() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean }>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchMyProfile()
@@ -70,6 +74,14 @@ function ProfileEditor() {
   const pickAvatar = async (file?: File) => {
     if (!file) return;
     setMessage(undefined);
+    if (!ACCEPTED_AVATAR.includes(file.type)) {
+      setMessage({ text: "PNG/JPEG/WebP 이미지만 올릴 수 있어요", ok: false });
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setMessage({ text: "4MB 이하 이미지만 올릴 수 있어요", ok: false });
+      return;
+    }
     try {
       const { avatarUrl: url } = await uploadMyAvatar(file);
       setAvatarUrl(url);
@@ -149,31 +161,70 @@ function ProfileEditor() {
               <p className={readOnlyValue}>{name || "—"}</p>
             </div>
           </div>
-          <div>
-            <ImageDropzone
-              id="avatar"
-              title="프로필 사진"
-              hint="PNG/JPG/WebP · 4MB 이하"
-              square
-              existingUrl={imageSrc(avatarUrl)}
-              onChange={pickAvatar}
-            />
-            {avatarUrl && (
-              <button
-                type="button"
-                onClick={removeAvatar}
-                className={css({
-                  mt: "2",
-                  fontSize: "xs",
-                  fontWeight: "600",
-                  color: "gray.500",
-                  cursor: "pointer",
-                  _hover: { color: "red.500", textDecoration: "underline" },
-                })}
-              >
-                사진 지우기
-              </button>
-            )}
+          <div className={field}>
+            <span className={label}>프로필 사진</span>
+            <div className={flex({ direction: "column", align: "center", gap: "3" })}>
+              {avatarUrl ? (
+                <img
+                  src={imageSrc(avatarUrl)}
+                  alt="프로필 사진"
+                  className={css({
+                    w: "40",
+                    h: "40",
+                    rounded: "xl",
+                    objectFit: "cover",
+                    border: "1px solid",
+                    borderColor: "gray.200",
+                  })}
+                />
+              ) : (
+                <AvatarPlaceholder size="40" rounded="xl" />
+              )}
+              <div className={flex({ gap: "3", align: "center" })}>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className={css({
+                    px: "4",
+                    py: "2",
+                    rounded: "lg",
+                    fontSize: "sm",
+                    fontWeight: "700",
+                    bg: "gray.100",
+                    color: "gray.700",
+                    cursor: "pointer",
+                    _hover: { bg: "gray.200" },
+                  })}
+                >
+                  수정하기
+                </button>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={removeAvatar}
+                    className={css({
+                      fontSize: "xs",
+                      fontWeight: "600",
+                      color: "gray.500",
+                      cursor: "pointer",
+                      _hover: { color: "red.500", textDecoration: "underline" },
+                    })}
+                  >
+                    사진 지우기
+                  </button>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPTED_AVATAR.join(",")}
+                className={css({ srOnly: true })}
+                onChange={(e) => {
+                  void pickAvatar(e.target.files?.[0]);
+                  e.target.value = ""; // 같은 파일 다시 선택 가능하게 초기화
+                }}
+              />
+            </div>
           </div>
 
           <div className={field}>

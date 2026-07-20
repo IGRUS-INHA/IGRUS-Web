@@ -3,6 +3,7 @@ import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { fetchAuthor, imageSrc, type AuthorProfile, type Project } from "../api/client";
 import { categoryColor } from "./category";
+import AvatarPlaceholder from "./Avatar";
 
 interface Props {
   /** 열려 있는 동안의 대상 프로젝트 id — undefined 면 닫힘 */
@@ -25,6 +26,11 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
     if (!dialog) return;
     if (projectId !== undefined && !dialog.open) dialog.showModal();
     if (projectId === undefined && dialog.open) dialog.close();
+    if (projectId === undefined) return;
+    document.body.style.overflow = "hidden"; // 시트 열린 동안 배경 스크롤 잠금
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [projectId]);
 
   useEffect(() => {
@@ -47,15 +53,19 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
         if (e.target === ref.current) onClose(); // 바깥 탭으로 닫기
       }}
       className={css({
-        m: "auto",
         p: 0,
         border: "none",
-        rounded: { base: "none", sm: "3xl" },
+        // 모바일: 하단에 붙는 바텀시트 / 데스크톱: 중앙 다이얼로그
+        mx: "auto",
+        mt: "auto",
+        mb: { base: 0, sm: "auto" },
+        rounded: { base: "20px 20px 0 0", sm: "3xl" },
         w: { base: "100vw", sm: "min(480px, 92vw)" },
-        h: { base: "100dvh", sm: "auto" },
+        h: "auto",
         maxW: { base: "100vw", sm: "min(480px, 92vw)" },
-        maxH: { base: "100dvh", sm: "88dvh" },
+        maxH: { base: "85dvh", sm: "88dvh" },
         overflow: "hidden",
+        animation: { base: "sheet-up 0.28s cubic-bezier(0.32, 0.72, 0, 1)", sm: "none" },
         _backdrop: { bg: "black/60" },
       })}
     >
@@ -106,21 +116,7 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
                   className={css({ w: "16", h: "16", rounded: "2xl", objectFit: "cover" })}
                 />
               ) : (
-                <div
-                  className={flex({
-                    w: "16",
-                    h: "16",
-                    align: "center",
-                    justify: "center",
-                    rounded: "2xl",
-                    bg: "indigo.600",
-                    color: "white",
-                    fontSize: "2xl",
-                    fontWeight: "800",
-                  })}
-                >
-                  {author.displayName.slice(0, 1)}
-                </div>
+                <AvatarPlaceholder size="16" rounded="2xl" />
               )}
 
               <h2 className={css({ mt: "3", fontSize: "2xl", fontWeight: "800", letterSpacing: "tight" })}>

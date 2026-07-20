@@ -4,6 +4,7 @@ import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { logout } from "../api/client";
 import { isStaff, useAuthStore } from "../stores/authStore";
+import { PersonIcon } from "./Avatar";
 
 export default function Layout() {
   const { accessToken, user } = useAuthStore();
@@ -84,10 +85,8 @@ export default function Layout() {
                       _hover: { bg: "gray.300" },
                     })}
                   >
-                    {/* 프로필 스켈레톤 (사람 실루엣) */}
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22" aria-hidden>
-                      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.42 0-8 2.24-8 5v3h16v-3c0-2.76-3.58-5-8-5Z" />
-                    </svg>
+                    {/* 프로필 자리표시자 (회색 사람 실루엣) */}
+                    <PersonIcon />
                   </button>
 
                   {menuOpen && (

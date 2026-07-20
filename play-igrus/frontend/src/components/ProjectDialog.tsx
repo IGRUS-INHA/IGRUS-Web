@@ -21,6 +21,11 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
     if (!dialog) return;
     if (project && !dialog.open) dialog.showModal();
     if (!project && dialog.open) dialog.close();
+    if (!project) return;
+    document.body.style.overflow = "hidden"; // 시트 열린 동안 배경 스크롤 잠금
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [project]);
 
   if (!project) return null;
@@ -42,15 +47,19 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
         if (e.target === ref.current) onClose(); // 바깥(backdrop) 탭으로 닫기
       }}
       className={css({
-        m: "auto",
         p: 0,
         border: "none",
-        rounded: { base: "none", sm: "2xl" },
+        // 모바일: 하단에 붙는 바텀시트 / 데스크톱: 중앙 다이얼로그
+        mx: "auto",
+        mt: "auto",
+        mb: { base: 0, sm: "auto" },
+        rounded: { base: "20px 20px 0 0", sm: "2xl" },
         w: { base: "100vw", sm: "min(640px, 92vw)" },
-        h: { base: "100dvh", sm: "auto" },
+        h: "auto",
         maxW: { base: "100vw", sm: "min(640px, 92vw)" },
-        maxH: { base: "100dvh", sm: "85dvh" },
+        maxH: { base: "85dvh", sm: "85dvh" },
         overflow: "hidden",
+        animation: { base: "sheet-up 0.28s cubic-bezier(0.32, 0.72, 0, 1)", sm: "none" },
         _backdrop: { bg: "black/60" },
       })}
     >

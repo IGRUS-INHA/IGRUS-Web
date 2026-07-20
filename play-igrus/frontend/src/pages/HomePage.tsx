@@ -177,7 +177,11 @@ export default function HomePage() {
       <ProjectDialog
         project={selected}
         onClose={() => setSelected(null)}
-        onAuthor={() => selected && setAuthorFor(selected.id)}
+        onAuthor={() => {
+          if (!selected) return;
+          setAuthorFor(selected.id); // 새 바텀시트 올리고
+          setSelected(null); // 기존 작품 시트는 지운다
+        }}
       />
       <AuthorDialog
         projectId={authorFor}
