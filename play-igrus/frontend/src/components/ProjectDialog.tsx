@@ -23,7 +23,8 @@ export default function ProjectDialog({ project, onClose }: Props) {
 
   if (!project) return null;
 
-  const banner = imageSrc(project.bannerUrl);
+  // 배너 없으면 썸네일로 대체 (그래도 없으면 분류 색 그라데이션)
+  const banner = imageSrc(project.bannerUrl || project.thumbnailUrl);
 
   const go = () => {
     if (!project.redirectUrl) return;

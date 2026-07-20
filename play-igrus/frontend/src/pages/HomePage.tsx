@@ -1,22 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
 import { css } from "styled-system/css";
 import { flex, grid } from "styled-system/patterns";
-import { fetchProject, fetchProjects, imageSrc, type Project } from "../api/client";
+import { fetchProject, fetchProjects, imageSrc, type Project, type SortKey } from "../api/client";
 import ProjectDialog from "../components/ProjectDialog";
 import { categoryColor } from "../components/category";
+
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: "popular", label: "인기순" },
+  { key: "recent", label: "최신순" },
+];
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [category, setCategory] = useState("");
+  const [sort, setSort] = useState<SortKey>("popular");
   const [selected, setSelected] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 정렬은 서버가 한다 (클릭수/score 는 외부 비공개라 클라이언트 정렬 불가)
   useEffect(() => {
-    fetchProjects()
+    setLoading(true);
+    fetchProjects(sort)
       .then(setProjects)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [sort]);
 
   const categories = useMemo(
     () => [...new Set(projects.map((p) => p.category))],
@@ -31,35 +39,41 @@ export default function HomePage() {
       .catch(() => {});
   };
 
+  const chip = (active: boolean) =>
+    css({
+      flexShrink: 0,
+      px: "3.5",
+      py: "1.5",
+      rounded: "full",
+      fontSize: "sm",
+      fontWeight: "600",
+      cursor: "pointer",
+      bg: active ? "gray.900" : "white",
+      color: active ? "white" : "gray.600",
+      border: "1px solid",
+      borderColor: active ? "gray.900" : "gray.200",
+    });
+
   return (
     <>
-      {/* 분류 필터 칩 */}
-      {categories.length > 1 && (
-        <div className={flex({ gap: "2", overflowX: "auto", pb: "3", scrollbar: "hidden" })}>
-          {["", ...categories].map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCategory(c)}
-              className={css({
-                flexShrink: 0,
-                px: "3.5",
-                py: "1.5",
-                rounded: "full",
-                fontSize: "sm",
-                fontWeight: "600",
-                cursor: "pointer",
-                bg: category === c ? "gray.900" : "white",
-                color: category === c ? "white" : "gray.600",
-                border: "1px solid",
-                borderColor: category === c ? "gray.900" : "gray.200",
-              })}
-            >
-              {c || "전체"}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* 정렬 + 분류 필터 칩 */}
+      <div className={flex({ gap: "2", align: "center", overflowX: "auto", pb: "3", scrollbar: "hidden" })}>
+        {SORTS.map((s) => (
+          <button key={s.key} type="button" onClick={() => setSort(s.key)} className={chip(sort === s.key)}>
+            {s.label}
+          </button>
+        ))}
+        {categories.length > 1 && (
+          <>
+            <span className={css({ flexShrink: 0, w: "1px", h: "5", bg: "gray.200" })} />
+            {["", ...categories].map((c) => (
+              <button key={c} type="button" onClick={() => setCategory(c)} className={chip(category === c)}>
+                {c || "전체"}
+              </button>
+            ))}
+          </>
+        )}
+      </div>
 
       {loading ? (
         <p className={emptyStyle}>불러오는 중…</p>

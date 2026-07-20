@@ -187,13 +187,13 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 	// defer db.Close() 를 쓰면 Cleanup 이 닫힌 DB 에 DELETE 를 날리게 된다 (Cleanup 은 defer 이후 실행)
 	t.Cleanup(func() {
 		db.Exec(`DELETE FROM project_clicks_daily`)
-		db.Exec(`DELETE FROM project_revisions`)
+		db.Exec(`DELETE FROM project_versions`)
 		db.Exec(`DELETE FROM projects`)
 		db.Close()
 	})
 	// 이전 실행이 비정상 종료로 남긴 행 제거 (건수 단언이 흔들리지 않게)
 	db.Exec(`DELETE FROM project_clicks_daily`)
-	db.Exec(`DELETE FROM project_revisions`)
+	db.Exec(`DELETE FROM project_versions`)
 	db.Exec(`DELETE FROM projects`)
 
 	id, err := insertProject(db, row{
@@ -210,16 +210,21 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 		t.Errorf("승인 전 클릭이 막히지 않음: %v", err)
 	}
 
+	// insertProject 는 v1 버전을 함께 만든다
+	if v, err := latestVersion(db, id); err != nil || v.Version != 1 || v.Status != "pending" {
+		t.Fatalf("v1 생성이 틀림: %+v %v", v, err)
+	}
+
 	// 운영진 둘이 동시에 눌러도 한 번만 반영
 	reviewer := Profile{StudentID: "12180001", Name: "운영진"}
-	if err := review(db, id, "approved", "", reviewer); err != nil {
+	if err := reviewVersion(db, id, "approved", "", reviewer); err != nil {
 		t.Fatalf("첫 승인이 실패함: %v", err)
 	}
-	if err := review(db, id, "rejected", "마음 바뀜", reviewer); err != errNotFound {
+	if err := reviewVersion(db, id, "rejected", "마음 바뀜", reviewer); err != errNotFound {
 		t.Fatalf("두 번째 처리가 막히지 않음: %v", err)
 	}
 
-	items, err := listApprovedProjects(db, "")
+	items, err := listApprovedProjects(db, "", "popular")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,42 +250,54 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 		t.Errorf("score=%v totalClicks=%d, want 2/2", p.Score, p.TotalClicks)
 	}
 
-	// 승인작 수정 → 수정본 대기 → 승인 시 라이브 반영 + 수정본 삭제
-	rev := revision{ProjectID: id, Title: "수정판", Description: "새 설명", BodyMD: "# v2",
-		ThumbnailKey: "aa.png", RedirectURL: "https://example.com/v2", Category: "앱"}
-	if err := upsertRevision(db, rev); err != nil {
+	// 승인작 수정 → v2 대기 (라이브 유지) → 승인 시 라이브 반영, v1 이력은 그대로 남는다
+	v2 := version{ProjectID: id, Version: 2, Title: "수정판", Description: "새 설명",
+		BodyMD: "# v2", ThumbnailKey: "aa.png", RedirectURL: "https://example.com/v2", Category: "앱"}
+	if err := insertVersion(db, v2); err != nil {
 		t.Fatal(err)
 	}
-	// 대기 중에는 라이브 유지
-	if p, _ = getProject(db, id); p.Title != "테스트" {
-		t.Fatalf("수정본 대기 중 라이브가 바뀜: %+v", p)
+	if p, _ = getProject(db, id); p.Title != "테스트" || p.Version != 1 {
+		t.Fatalf("v2 대기 중 라이브가 바뀜: %+v", p)
 	}
-	if err := applyRevision(db, id, reviewer); err != nil {
+	if err := reviewVersion(db, id, "approved", "", reviewer); err != nil {
 		t.Fatal(err)
-	}
-	if err := applyRevision(db, id, reviewer); err != errNotFound {
-		t.Fatalf("수정본 중복 승인이 막히지 않음: %v", err)
 	}
 	p, _ = getProject(db, id)
-	if p.Title != "수정판" || p.Category != "앱" || p.Status != "approved" || p.TotalClicks != 2 {
-		t.Fatalf("수정본 반영이 틀림 (클릭수 유지돼야 함): %+v", p)
+	if p.Title != "수정판" || p.Category != "앱" || p.Version != 2 || p.TotalClicks != 2 {
+		t.Fatalf("v2 반영이 틀림 (클릭수 유지돼야 함): %+v", p)
+	}
+	// 승인 이력에 v1, v2 둘 다 남는다
+	hist, err := listVersionsByStatus(db, "approved")
+	if err != nil || len(hist) != 2 {
+		t.Fatalf("승인 이력이 %d건 (want 2): %v", len(hist), err)
 	}
 
-	// 수정본 반려 — 라이브 유지, 사유만 기록
-	if err := upsertRevision(db, rev); err != nil {
+	// v3 반려 — 라이브(v2) 유지, 이력에 반려 기록
+	v3 := v2
+	v3.Version = 3
+	v3.Title = "3판"
+	if err := insertVersion(db, v3); err != nil {
 		t.Fatal(err)
 	}
-	if err := rejectRevision(db, id, "별로"); err != nil {
+	if err := reviewVersion(db, id, "rejected", "별로", reviewer); err != nil {
 		t.Fatal(err)
 	}
-	got, err := getRevision(db, id)
-	if err != nil || got.Status != "rejected" || got.RejectReason != "별로" {
-		t.Fatalf("수정본 반려 기록이 틀림: %+v %v", got, err)
+	p, _ = getProject(db, id)
+	if p.Status != "approved" || p.Version != 2 || p.Title != "수정판" {
+		t.Fatalf("v3 반려 후 라이브가 바뀜: %+v", p)
+	}
+	lv, err := latestVersion(db, id)
+	if err != nil || lv.Version != 3 || lv.Status != "rejected" || lv.RejectReason != "별로" {
+		t.Fatalf("v3 반려 기록이 틀림: %+v %v", lv, err)
 	}
 }
 
+// 인하대 학번은 3~4번째 자리가 입학년도 — 12223759 는 22학번, 1227xxxx 는 27학번.
 func TestAuthorLabel(t *testing.T) {
-	if got := authorLabel("22190001", "오유찬"); got != "22 오유찬" {
-		t.Errorf("authorLabel = %q, want %q", got, "22 오유찬")
+	cases := map[string]string{"12223759": "22 오유찬", "12274321": "27 오유찬"}
+	for id, want := range cases {
+		if got := authorLabel(id, "오유찬"); got != want {
+			t.Errorf("authorLabel(%q) = %q, want %q", id, got, want)
+		}
 	}
 }

@@ -129,21 +129,24 @@ export interface Project {
   status?: "pending" | "approved" | "rejected";
   rejectReason?: string;
   reviewerName?: string;
-  /** 본인/운영진 응답에만 포함 — 외부 비공개 */
-  totalClicks?: number;
   createdAt: string;
   reviewedAt?: string;
-  /** 승인작의 심사 대기/반려된 수정본 */
+  /** 라이브 버전(내 작품) 또는 해당 이력의 버전 번호(검수 목록) */
+  version?: number;
+  /** 심사 대기/반려된 최신 제출 버전 */
   update?: Project;
 }
 
 /** 백엔드가 주는 상대 경로(/images/..)를 play-api 절대 주소로 */
 export const imageSrc = (url?: string) => (url ? `${PLAY_API}${url}` : undefined);
 
-export const fetchProjects = (category?: string) =>
-  playFetch<Project[]>(
-    `/api/projects${category ? `?category=${encodeURIComponent(category)}` : ""}`,
-  );
+export type SortKey = "popular" | "recent";
+
+export const fetchProjects = (sort: SortKey = "popular", category?: string) => {
+  const params = new URLSearchParams({ sort });
+  if (category) params.set("category", category);
+  return playFetch<Project[]>(`/api/projects?${params}`);
+};
 
 export const fetchProject = (id: number) => playFetch<Project>(`/api/projects/${id}`);
 

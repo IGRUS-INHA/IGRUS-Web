@@ -72,6 +72,21 @@ function MyList() {
                 <div className={css({ flex: 1, minW: 0 })}>
                   <div className={flex({ align: "center", gap: "2" })}>
                     <p className={css({ fontWeight: "700", truncate: true })}>{p.title}</p>
+                    {/* 버전 표시 — 승인작은 라이브 버전, 미승인작은 제출 버전 */}
+                    <span
+                      className={css({
+                        flexShrink: 0,
+                        fontSize: "xs",
+                        fontWeight: "700",
+                        px: "1.5",
+                        py: "0.5",
+                        rounded: "md",
+                        bg: "gray.100",
+                        color: "gray.600",
+                      })}
+                    >
+                      v{p.version || (p.update?.version ?? 1)}
+                    </span>
                     <span
                       className={css({
                         flexShrink: 0,
@@ -90,24 +105,20 @@ function MyList() {
                   <p className={css({ fontSize: "sm", color: "gray.500", truncate: true })}>
                     {p.description}
                   </p>
-                  {p.status === "approved" && (
-                    <p className={css({ fontSize: "xs", color: "gray.400", mt: "0.5" })}>
-                      클릭 {p.totalClicks ?? 0}회
-                    </p>
-                  )}
                   {p.status === "rejected" && p.rejectReason && (
                     <p className={css({ fontSize: "xs", color: "red.500", mt: "0.5" })}>
                       사유: {p.rejectReason}
                     </p>
                   )}
-                  {p.update?.status === "pending" && (
+                  {p.status === "approved" && p.update?.status === "pending" && (
                     <p className={css({ fontSize: "xs", color: "amber.600", mt: "0.5" })}>
-                      수정 심사중 — 승인 전까지 기존 버전이 공개돼요
+                      v{p.update.version} 수정 심사중 — 승인 전까지 v{p.version}이 공개돼요
                     </p>
                   )}
-                  {p.update?.status === "rejected" && (
+                  {p.status === "approved" && p.update?.status === "rejected" && (
                     <p className={css({ fontSize: "xs", color: "red.500", mt: "0.5" })}>
-                      수정 반려{p.update.rejectReason ? `: ${p.update.rejectReason}` : ""}
+                      v{p.update.version} 수정 반려
+                      {p.update.rejectReason ? `: ${p.update.rejectReason}` : ""}
                     </p>
                   )}
                 </div>

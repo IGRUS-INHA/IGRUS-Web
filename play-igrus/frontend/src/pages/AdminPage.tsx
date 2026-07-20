@@ -73,7 +73,12 @@ function ReviewQueue() {
       ) : (
         <ul className={flex({ direction: "column", gap: "4" })}>
           {items.map((p) => (
-            <ReviewCard key={p.id} project={p} showActions={tab === "pending"} onDone={reload} />
+            <ReviewCard
+              key={`${p.id}-${p.version}`}
+              project={p}
+              showActions={tab === "pending"}
+              onDone={reload}
+            />
           ))}
         </ul>
       )}
@@ -93,8 +98,6 @@ function ReviewCard({
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
-  // 수정 요청 건은 새 버전(update)을 심사한다 — 기존 버전은 라이브에서 확인
-  const v = p.update ?? p;
 
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -117,52 +120,51 @@ function ReviewCard({
       })}
     >
       <div className={flex({ align: "center", gap: "2", mb: "1" })}>
-        <p className={css({ fontWeight: "800", flex: 1, minW: 0, truncate: true })}>{v.title}</p>
-        {p.update && (
-          <span
-            className={css({
-              flexShrink: 0,
-              fontSize: "xs",
-              fontWeight: "700",
-              px: "2",
-              py: "0.5",
-              rounded: "full",
-              bg: "indigo.100",
-              color: "indigo.700",
-            })}
-          >
-            수정 요청
-          </span>
-        )}
+        <p className={css({ fontWeight: "800", flex: 1, minW: 0, truncate: true })}>{p.title}</p>
+        {/* 버전 이력 — v2 이상 대기 건은 승인작의 수정 요청 */}
+        <span
+          className={css({
+            flexShrink: 0,
+            fontSize: "xs",
+            fontWeight: "700",
+            px: "1.5",
+            py: "0.5",
+            rounded: "md",
+            bg: "indigo.100",
+            color: "indigo.700",
+          })}
+        >
+          v{p.version}
+        </span>
         <span className={css({ fontSize: "xs", color: "gray.500", flexShrink: 0 })}>
-          {v.category}
+          {p.category}
         </span>
       </div>
       <p className={css({ fontSize: "sm", color: "gray.500" })}>
-        {p.author} · {new Date(v.createdAt).toLocaleDateString("ko-KR")}
+        {p.author} · {new Date(p.createdAt).toLocaleDateString("ko-KR")}
       </p>
-      <p className={css({ fontSize: "sm", mt: "1" })}>{v.description}</p>
+      <p className={css({ fontSize: "sm", mt: "1" })}>{p.description}</p>
       <a
-        href={v.redirectUrl}
+        href={p.redirectUrl}
         target="_blank"
         rel="noopener noreferrer"
         className={css({ fontSize: "sm", color: "indigo.600", wordBreak: "break-all" })}
       >
-        {v.redirectUrl}
+        {p.redirectUrl}
       </a>
 
-      {(v.thumbnailUrl || v.bannerUrl) && (
+      {(p.thumbnailUrl || p.bannerUrl) && (
         <div className={flex({ gap: "2", mt: "2" })}>
-          {v.thumbnailUrl && (
+          {p.thumbnailUrl && (
             <img
-              src={imageSrc(v.thumbnailUrl)}
+              src={imageSrc(p.thumbnailUrl)}
               alt="썸네일"
               className={css({ w: "20", h: "20", objectFit: "cover", rounded: "lg" })}
             />
           )}
-          {v.bannerUrl && (
+          {p.bannerUrl && (
             <img
-              src={imageSrc(v.bannerUrl)}
+              src={imageSrc(p.bannerUrl)}
               alt="배너"
               className={css({ h: "20", maxW: "48", objectFit: "cover", rounded: "lg" })}
             />
@@ -170,11 +172,11 @@ function ReviewCard({
         </div>
       )}
 
-      {v.body && (
+      {p.body && (
         <details className={css({ mt: "2", fontSize: "sm" })}>
           <summary className={css({ cursor: "pointer", color: "gray.500" })}>본문 보기</summary>
           <div className={css({ mt: "2", p: "3", bg: "gray.50", rounded: "lg" })}>
-            <ReactMarkdown>{v.body}</ReactMarkdown>
+            <ReactMarkdown>{p.body}</ReactMarkdown>
           </div>
         </details>
       )}

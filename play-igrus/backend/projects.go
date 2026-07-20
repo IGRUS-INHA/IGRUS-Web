@@ -59,7 +59,7 @@ func validateURL(raw string) (string, bool) {
 }
 
 // projectView 는 응답 JSON. 목록/상세/내 제출/관리자에 따라 채우는 필드가 다르다.
-// 클릭수는 외부 비공개 — 공개 뷰(list/detail)에서는 채우지 않는다.
+// 클릭수는 어떤 응답에도 싣지 않는다 (서버단 제공 절대 금지 — 랭킹 정렬로만 쓰인다).
 type projectView struct {
 	ID           int64        `json:"id"`
 	Title        string       `json:"title"`
@@ -73,17 +73,18 @@ type projectView struct {
 	Status       string       `json:"status,omitempty"`
 	RejectReason string       `json:"rejectReason,omitempty"`
 	ReviewerName string       `json:"reviewerName,omitempty"`
-	TotalClicks  int64        `json:"totalClicks,omitempty"`
 	CreatedAt    time.Time    `json:"createdAt"`
 	ReviewedAt   *time.Time   `json:"reviewedAt,omitempty"`
-	Update       *projectView `json:"update,omitempty"` // 승인 대기/반려된 수정본
+	Version      int          `json:"version,omitempty"` // 라이브 버전(내 작품) 또는 해당 버전 번호(검수)
+	Update       *projectView `json:"update,omitempty"`  // 심사 대기/반려된 최신 제출 버전
 }
 
-// authorLabel 은 "22 오유찬" 형태 — 학번 앞 2자리(입학년도)만 공개한다.
+// authorLabel 은 "22 오유찬" 형태 — 인하대 학번(예: 12223759)은 3~4번째 자리가
+// 입학년도다. 학번 전체는 공개하지 않는다.
 func authorLabel(studentID, name string) string {
 	year := studentID
-	if len(year) > 2 {
-		year = year[:2]
+	if len(year) >= 4 {
+		year = year[2:4]
 	}
 	return strings.TrimSpace(year + " " + name)
 }
@@ -117,37 +118,35 @@ func detailView(p row) projectView {
 	return v
 }
 
-// mineView / adminView: 상태·반려사유·클릭수 포함 (본인/운영진에게만)
+// mineView: 상태·반려사유·라이브 버전 포함
 func mineView(p row) projectView {
 	v := detailView(p)
 	v.Status = p.Status
 	v.RejectReason = p.RejectReason
 	v.ReviewedAt = p.ReviewedAt
-	v.TotalClicks = p.TotalClicks
+	v.Version = p.Version
 	return v
 }
 
-// revisionView: 수정본을 뷰로 — 내 작품/검수 화면의 update 필드에 실린다.
-func revisionView(rev revision) projectView {
+// versionView: 버전 이력 한 건 — 검수 목록과 내 작품의 update 필드에 실린다.
+func versionView(p row, v version) projectView {
 	return projectView{
-		ID:           rev.ProjectID,
-		Title:        rev.Title,
-		Description:  rev.Description,
-		Body:         rev.BodyMD,
-		Category:     rev.Category,
-		ThumbnailURL: imageURL(rev.ThumbnailKey),
-		BannerURL:    imageURL(rev.BannerKey),
-		RedirectURL:  rev.RedirectURL,
-		Status:       rev.Status,
-		RejectReason: rev.RejectReason,
-		CreatedAt:    rev.CreatedAt,
+		ID:           p.ID,
+		Version:      v.Version,
+		Title:        v.Title,
+		Description:  v.Description,
+		Body:         v.BodyMD,
+		Category:     v.Category,
+		Author:       authorLabel(p.StudentID, p.AuthorName),
+		ThumbnailURL: imageURL(v.ThumbnailKey),
+		BannerURL:    imageURL(v.BannerKey),
+		RedirectURL:  v.RedirectURL,
+		Status:       v.Status,
+		RejectReason: v.RejectReason,
+		ReviewerName: v.ReviewerName,
+		CreatedAt:    v.CreatedAt,
+		ReviewedAt:   v.ReviewedAt,
 	}
-}
-
-func adminView(p row) projectView {
-	v := mineView(p)
-	v.ReviewerName = p.ReviewerName
-	return v
 }
 
 func views(items []row, f func(row) projectView) []projectView {
@@ -158,9 +157,17 @@ func views(items []row, f func(row) projectView) []projectView {
 	return out
 }
 
-// GET /api/projects?category= — 승인작만, 인기순. 로그인 없이 볼 수 있다.
+// GET /api/projects?category=&sort=popular|recent — 승인작만, 정렬은 서버가 결정.
 func (s *server) listApproved(w http.ResponseWriter, r *http.Request) {
-	items, err := listApprovedProjects(s.db, strings.TrimSpace(r.URL.Query().Get("category")))
+	sort := r.URL.Query().Get("sort")
+	if sort == "" {
+		sort = "popular"
+	}
+	if sort != "popular" && sort != "recent" {
+		writeErr(w, http.StatusBadRequest, "잘못된 sort 입니다")
+		return
+	}
+	items, err := listApprovedProjects(s.db, strings.TrimSpace(r.URL.Query().Get("category")), sort)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "목록을 불러올 수 없습니다")
 		return
@@ -313,19 +320,18 @@ func (s *server) updateProject(w http.ResponseWriter, r *http.Request, p Profile
 	if !ok {
 		return
 	}
-	// 새 파일이 없으면 사용자가 화면에서 보던 버전(대기 중 수정본 > 라이브)의 이미지를 유지.
-	// 배너 제거는 미지원 — 교체만 가능.
-	baseThumb, baseBanner := proj.ThumbnailKey, proj.BannerKey
-	if proj.Status == "approved" {
-		if rev, err := getRevision(s.db, id); err == nil {
-			baseThumb, baseBanner = rev.ThumbnailKey, rev.BannerKey
-		}
+	latest, err := latestVersion(s.db, id)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "작품을 불러올 수 없습니다")
+		return
 	}
+	// 새 파일이 없으면 사용자가 폼에서 보던 최신 버전의 이미지를 유지.
+	// 배너 제거는 미지원 — 교체만 가능.
 	if thumb == "" {
-		thumb = baseThumb
+		thumb = latest.ThumbnailKey
 	}
 	if banner == "" {
-		banner = baseBanner
+		banner = latest.BannerKey
 	}
 	if thumb == "" {
 		writeErr(w, http.StatusBadRequest, "썸네일을 등록해주세요")
@@ -334,25 +340,34 @@ func (s *server) updateProject(w http.ResponseWriter, r *http.Request, p Profile
 	fields.ThumbnailKey = thumb
 	fields.BannerKey = banner
 
-	if proj.Status == "approved" {
-		err = upsertRevision(s.db, revision{
-			ProjectID:    id,
-			Title:        fields.Title,
-			Description:  fields.Description,
-			BodyMD:       fields.BodyMD,
-			ThumbnailKey: fields.ThumbnailKey,
-			BannerKey:    fields.BannerKey,
-			RedirectURL:  fields.RedirectURL,
-			Category:     fields.Category,
-		})
+	v := version{
+		ProjectID:    id,
+		Version:      latest.Version,
+		Title:        fields.Title,
+		Description:  fields.Description,
+		BodyMD:       fields.BodyMD,
+		ThumbnailKey: fields.ThumbnailKey,
+		BannerKey:    fields.BannerKey,
+		RedirectURL:  fields.RedirectURL,
+		Category:     fields.Category,
+	}
+	if latest.Status == "pending" {
+		// 심사 전 재수정 — 같은 버전 번호에 내용만 교체
+		err = updatePendingVersion(s.db, v)
 	} else {
-		err = updateProjectContent(s.db, id, fields)
+		// 심사 끝난 버전 뒤에는 새 버전으로 쌓는다 (이력 보존)
+		v.Version = latest.Version + 1
+		err = insertVersion(s.db, v)
+	}
+	if err == nil && proj.Version == 0 {
+		// 아직 라이브가 없는 프로젝트는 행 자체도 최신 내용으로 (목록/수정 폼이 이 행을 본다)
+		err = syncDraftProject(s.db, id, fields)
 	}
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "저장에 실패했습니다")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "pending"})
+	writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "pending", "version": v.Version})
 }
 
 func writeImageErr(w http.ResponseWriter, err error) {
@@ -366,33 +381,32 @@ func writeImageErr(w http.ResponseWriter, err error) {
 	}
 }
 
-// GET /api/projects/mine — 내 제출 현황(반려 사유·수정본 상태 포함)
+// GET /api/projects/mine — 내 제출 현황. 라이브 버전 번호 + 심사 대기/반려된 최신 버전.
 func (s *server) listMine(w http.ResponseWriter, r *http.Request, p Profile) {
 	items, err := listByStudent(s.db, p.StudentID)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "목록을 불러올 수 없습니다")
 		return
 	}
-	revs, err := listRevisionsByStudent(s.db, p.StudentID)
+	latest, err := listLatestVersionsByStudent(s.db, p.StudentID)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "목록을 불러올 수 없습니다")
 		return
 	}
-	out := views(items, mineView)
-	attachRevisions(out, revs)
+	out := []projectView{}
+	for _, it := range items {
+		v := mineView(it)
+		if lv, ok := latest[it.ID]; ok && lv.Status != "approved" {
+			u := versionView(it, lv)
+			v.Update = &u
+		}
+		out = append(out, v)
+	}
 	writeJSON(w, http.StatusOK, out)
 }
 
-func attachRevisions(out []projectView, revs map[int64]revision) {
-	for i := range out {
-		if rev, ok := revs[out[i].ID]; ok {
-			u := revisionView(rev)
-			out[i].Update = &u
-		}
-	}
-}
-
-// GET /api/admin/projects?status=pending — 검수 대기열
+// GET /api/admin/projects?status=pending — 검수 목록.
+// 버전 이력 그대로: 승인/반려 탭에는 지난 버전들(v1, v2, …)이 전부 남는다.
 func (s *server) listForReview(w http.ResponseWriter, r *http.Request, p Profile) {
 	status := r.URL.Query().Get("status")
 	if status == "" {
@@ -402,22 +416,14 @@ func (s *server) listForReview(w http.ResponseWriter, r *http.Request, p Profile
 		writeErr(w, http.StatusBadRequest, "잘못된 status 입니다")
 		return
 	}
-	items, err := listByStatus(s.db, status)
+	items, err := listVersionsByStatus(s.db, status)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "목록을 불러올 수 없습니다")
 		return
 	}
-	out := views(items, adminView)
-	// 대기 탭에는 승인작의 수정본 심사 건도 함께 — update 필드에 새 버전이 실린다.
-	if status == "pending" {
-		revProjects, revs, err := listPendingRevisionProjects(s.db)
-		if err != nil {
-			writeErr(w, http.StatusInternalServerError, "목록을 불러올 수 없습니다")
-			return
-		}
-		revViews := views(revProjects, adminView)
-		attachRevisions(revViews, revs)
-		out = append(out, revViews...)
+	out := []projectView{}
+	for _, it := range items {
+		out = append(out, versionView(it.p, it.v))
 	}
 	writeJSON(w, http.StatusOK, out)
 }
@@ -435,16 +441,7 @@ func (s *server) reviewProject(status string) func(http.ResponseWriter, *http.Re
 		}
 		json.NewDecoder(r.Body).Decode(&body) // 사유는 선택
 
-		// 신규 제출(pending)은 프로젝트 자체를, 그 외에는 대기 중인 수정본을 심사한다.
-		proj, err := getProject(s.db, id)
-		if err == nil && proj.Status == "pending" {
-			err = review(s.db, id, status, body.Reason, p)
-		} else if err == nil && status == "approved" {
-			err = applyRevision(s.db, id, p)
-		} else if err == nil {
-			err = rejectRevision(s.db, id, body.Reason)
-		}
-		if err == errNotFound {
+		if err := reviewVersion(s.db, id, status, body.Reason, p); err == errNotFound {
 			writeErr(w, http.StatusNotFound, "이미 처리되었거나 없는 제출입니다")
 			return
 		} else if err != nil {
