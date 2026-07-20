@@ -25,7 +25,12 @@ func (p Profile) IsStaff() bool {
 	return p.Role == "OPERATOR" || p.Role == "ADMIN"
 }
 
-// 같은 토큰으로 연속 요청이 오면 매번 기존 백엔드를 때리지 않도록 짧게 캐시한다.
+// 토큰 → 신원(학번·이름·role)은 짧게 캐시한다. 이건 화면에 보이는 표시 데이터가
+// 아니라서 캐시해도 "고쳤는데 안 바뀐다" 류의 버그가 생기지 않는다. 반대로 캐시가
+// 없으면 로그인 필요 요청마다 igrus 로 왕복이 한 번씩 붙고, play 의 가용성이
+// igrus 에 그대로 묶인다. 권한 회수가 최대 60초 늦게 반영되는 건 감수한다.
+//
+// (닉네임/자기소개/링크 같은 공개 프로필은 캐시하지 않는다 — profiles.go 참고)
 // ponytail: 프로세스 메모리 캐시. 서버를 여러 대로 늘리면 캐시가 인스턴스마다
 // 따로 놀지만, TTL 이 60초라 실질 문제는 없다. 문제가 되면 Redis 로 교체.
 type authCache struct {
@@ -69,18 +74,16 @@ func (c *authCache) put(token string, p Profile) {
 }
 
 type authenticator struct {
-	apiBase  string
-	cache    *authCache
-	profiles *profileCache
-	client   *http.Client
+	apiBase string
+	cache   *authCache
+	client  *http.Client
 }
 
 func newAuthenticator(apiBase string) *authenticator {
 	return &authenticator{
-		apiBase:  apiBase,
-		cache:    newAuthCache(),
-		profiles: newProfileCache(),
-		client:   &http.Client{Timeout: 5 * time.Second},
+		apiBase: apiBase,
+		cache:   newAuthCache(),
+		client:  &http.Client{Timeout: 5 * time.Second},
 	}
 }
 
