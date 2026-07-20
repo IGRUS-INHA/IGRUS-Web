@@ -99,6 +99,8 @@ export default function LoginForm({
                 />
                 <Input
                   type="text"
+                  name="username"
+                  autoComplete="username"
                   placeholder="8자리 학번 입력"
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
@@ -129,6 +131,8 @@ export default function LoginForm({
                 />
                 <Input
                   type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
                   placeholder="영문, 숫자 포함 8자 이상"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
