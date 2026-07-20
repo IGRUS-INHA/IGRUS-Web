@@ -1,0 +1,113 @@
+# play-igrus Go 백엔드 배포 — backend-prod-cd.yaml 과 동일한 SSM 배포 경로,
+# 대상 서비스만 play-api (igrus-deploy <tag> play-api).
+name: Play Production CD Pipeline
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'play-igrus/**'
+      - '.github/workflows/play-prod-cd.yaml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '배포할 이미지 태그 (비우면 커밋 SHA 로 생성)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy play-api to Production
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY_PLAY: igrus/play/server
+      AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN }}
+      EC2_INSTANCE_NAME: IGRUS-Web-App-EC2
+      IMAGE_TAG: ${{ inputs.version || format('play-{0}', github.sha) }}
+    defaults:
+      run:
+        working-directory: play-igrus
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: play-igrus/backend/go.mod
+          cache-dependency-path: play-igrus/backend/go.sum
+
+      - name: Test
+        working-directory: play-igrus/backend
+        run: go test ./...
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR [play]
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          # 컨텍스트 play-igrus/ — 프론트 빌드(SPA)까지 포함한 단일 이미지
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_PLAY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_PLAY:$IMAGE_TAG
+
+      # EC2 위의 igrus-deploy 스크립트(SSM RunCommand)가 .env 태그 갱신 → compose pull/up
+      - name: Deploy to EC2 via SSM
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$EC2_INSTANCE_NAME" "Name=instance-state-name,Values=running" \
+            --query "Reservations[].Instances[].InstanceId" --output text)
+          if [ -z "$INSTANCE_ID" ]; then
+            echo "::error::running instance named $EC2_INSTANCE_NAME not found"
+            exit 1
+          fi
+          echo "Deploying $IMAGE_TAG to $INSTANCE_ID"
+
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "play-igrus deploy $IMAGE_TAG" \
+            --parameters "commands=/usr/local/bin/igrus-deploy $IMAGE_TAG play-api" \
+            --query "Command.CommandId" --output text)
+
+          set +e
+          aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"
+          WAIT_RC=$?
+          set -e
+
+          aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+            --query "{Status:Status,Stdout:StandardOutputContent,Stderr:StandardErrorContent}" --output json
+          STATUS=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+            --query "Status" --output text)
+          if [ "$STATUS" != "Success" ] || [ $WAIT_RC -ne 0 ]; then
+            echo "::error::deploy command finished with status $STATUS"
+            exit 1
+          fi
+
+      - name: Verify health
+        run: |
+          for i in $(seq 1 30); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" https://play.igrus.co.kr/healthz || true)
+            if [ "$CODE" = "200" ]; then
+              echo "healthy (attempt $i)"
+              exit 0
+            fi
+            echo "waiting... ($i/30, http=$CODE)"
+            sleep 10
+          done
+          echo "::error::health check failed after 300s"
+          exit 1

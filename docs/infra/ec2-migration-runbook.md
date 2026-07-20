@@ -153,8 +153,49 @@ curl -s -o /dev/null -w "%{http_code}\n" https://api.igrus.co.kr/
 - **모니터링(후속 과제)**: CloudWatch 에 `mem_used_percent`/swap 알람 추가 검토 (rationale §7).
 - **보안(미해결)**: `MEMO.md` 의 평문 IAM 키 rotate + 삭제 (rationale §7 경고, git 미추적이어도 로컬 유출 리스크).
 
+---
+
+## play (play-igrus) 추가 배포
+
+스펙: `specs/play-igrus/spec.md`. 같은 EC2 에 `play-api` 컨테이너 하나를 추가한다 —
+Go 서버가 `play.igrus.co.kr` 에서 SPA(프론트 빌드 내장)+API 를 같은 origin 으로 서빙.
+(Caddy 사이트 블록 + compose 서비스 + `play` A레코드 — 전부 CDK 코드화됨.)
+
+### 최초 배포 (1회)
+
+자동화 스크립트: 세션 scratchpad 의 `deploy-play.sh` (아래 ①~⑤를 순서대로 실행).
+
+```bash
+# ① 시크릿 생성 (Go 서버가 시작 시 읽음 — JSON 의 dsn 키)
+aws secretsmanager create-secret --name igrus/play/server/prod \
+  --secret-string '{"dsn":"play:<비밀번호>@tcp(<RDS엔드포인트>:3306)/play_igrus?parseTime=true&loc=UTC&charset=utf8mb4"}'
+
+# ② 첫 이미지 build+push — 컨텍스트는 play-igrus/ (프론트 빌드 포함)
+#    ECR repo(igrus/play/server)는 CLI 로 생성 (spring repo 와 동일하게 CDK 밖 관리) — 생성 완료됨
+cd play-igrus
+docker buildx build --platform linux/amd64 \
+  -t 218736972976.dkr.ecr.ap-northeast-2.amazonaws.com/igrus/play/server:play-v0.1.0 --push .
+
+# ③ cdk deploy — user-data 변경 = 인스턴스 교체 (다운타임 수 분, Caddy 인증서 전체 재발급,
+#    Let's Encrypt 주 5회 한도 유의). EIP/DNS 유지.
+# ④ RDS 에 play_igrus DB + play 유저 생성 — SSM RunCommand 로 EC2 에서 실행
+#    (마스터/플레이 비밀번호는 EC2 가 Secrets Manager 에서 직접 읽음 — 명령어에 노출 없음)
+# ⑤ igrus-deploy play-v0.1.0 play-api → https://play.igrus.co.kr/healthz 확인
+```
+
+- 무중단이 꼭 필요하면: SSM 세션으로 `/opt/igrus/Caddyfile`·`docker-compose.yml`·`.env` 를
+  직접 수정 후 `docker compose up -d` → 다음 인스턴스 교체 때 CDK 와 자연 수렴.
+
+### 배포 (이후 운영)
+
+- `main` push 에 `play-igrus/**` 변경 포함 시 → `.github/workflows/play-prod-cd.yaml` 이
+  Go test → ECR push(이미지 태그 `play-<sha>`) → SSM `igrus-deploy <tag> play-api` →
+  `https://play.igrus.co.kr/healthz` 헬스체크. (workflow_dispatch 로 특정 태그 재배포 가능)
+- 기존 스프링 배포는 그대로 `igrus-deploy <tag>` (기본 service=app) — 영향 없음.
+
 ## 관련 문서
 - `docs/infra/ec2-caddy-migration-rationale.md` — 의사결정 근거·비용·트레이드오프
 - `docs/infra/v1-decommission-runbook.md` — v1 자원 삭제 (선행 작업)
 - `docs/infra/rds-shrink-runbook.md` — RDS 20GB 축소 (선행 작업)
+- `specs/play-igrus/spec.md` — play-igrus 스펙
 - `infra/cdk/README.md` — CDK 사용법

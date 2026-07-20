@@ -85,20 +85,25 @@ export const useAuthStore = create<AuthStore>()(
 );
 
 // hydration 완료 시 isHydrated 플래그 설정 + localStorage 동기화
-useAuthStore.persist.onFinishHydration(() => {
+function onHydrated(): void {
   useAuthStore.setState({ isHydrated: true });
   // Zustand persist → standalone localStorage 동기화 (client.ts가 읽는 키)
   const { accessToken } = useAuthStore.getState();
   if (accessToken) {
     localStorage.setItem("accessToken", accessToken);
+    return;
   }
-});
+  // 토큰이 없으면 play 등 다른 *.igrus.co.kr에서 로그인한 세션을
+  // 도메인 공유 refresh 쿠키로 복원 시도 (silent — 비로그인이면 무시)
+  // 동적 import: client.ts가 이 store를 정적 import하므로 순환 참조 회피
+  void import("@/api/client").then(({ restoreSessionFromCookie }) =>
+    restoreSessionFromCookie(),
+  );
+}
+
+useAuthStore.persist.onFinishHydration(onHydrated);
 
 // Zustand v5: hydration이 콜백 등록 전에 이미 완료된 경우 대비
 if (useAuthStore.persist.hasHydrated()) {
-  useAuthStore.setState({ isHydrated: true });
-  const { accessToken } = useAuthStore.getState();
-  if (accessToken) {
-    localStorage.setItem("accessToken", accessToken);
-  }
+  onHydrated();
 }

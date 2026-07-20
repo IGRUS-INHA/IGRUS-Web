@@ -13,7 +13,9 @@ npx cdk diff 나오게 하는 cli 수행 금지
 IGRUS-Web/
 ├── backend/     # Spring Boot 백엔드
 ├── frontend/    # React + Vite 프론트엔드
+├── play-igrus/  # Play IGRUS (작품 전시) — backend: Go, frontend: Vite+Panda CSS (specs/play-igrus/spec.md)
 ├── openapi/     # OpenAPI 스펙 (단일진실점 - 프론트/백 공유)
+├── infra/       # AWS CDK 인프라
 ├── docs/        # 프로젝트 문서 (ADR, 기능 명세 등)
 ├── specs/       # 기능 스펙 문서
 └── README.md

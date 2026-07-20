@@ -68,6 +68,35 @@ async function refreshAccessToken(): Promise<string> {
   return result.accessToken;
 }
 
+/**
+ * 다른 *.igrus.co.kr 서브도메인(play 등)에서 로그인한 세션을
+ * 도메인 공유 refresh 쿠키로 복원한다.
+ * 앱 시작 시 accessToken이 없을 때 1회 호출 — 비로그인 방문자는 조용히 실패.
+ */
+export async function restoreSessionFromCookie(): Promise<void> {
+  try {
+    const accessToken = await ensureRefresh();
+    // 정적 import 시 순환 참조(my-page.ts → client.ts) 발생 → 동적 import
+    const { getMyProfile } = await import("./model/my-page/my-page");
+    const res = await getMyProfile();
+    if (res.status !== 200) return;
+    const profile = res.data;
+    if (!profile.studentId || !profile.name || !profile.role) return;
+    useAuthStore.getState().setAuth(
+      {
+        studentId: profile.studentId,
+        name: profile.name,
+        email: profile.email ?? "",
+        joinedDate: "",
+        role: profile.role,
+      },
+      accessToken,
+    );
+  } catch {
+    // refresh 쿠키가 없거나 만료됨 — 비로그인 상태 유지
+  }
+}
+
 // =============================================================================
 // 로그아웃 처리
 // =============================================================================

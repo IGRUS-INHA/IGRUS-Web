@@ -34,6 +34,10 @@ const ECR_IMAGE_REPO = '218736972976.dkr.ecr.ap-northeast-2.amazonaws.com/igrus/
 /** EC2 최초 부팅 시 기동할 이미지 태그 (이후 배포는 CD 가 igrus-deploy 로 갱신) */
 const INITIAL_IMAGE_TAG = 'v1.1.8';
 
+/** play-igrus Go 백엔드 (play-api.igrus.co.kr) — 같은 EC2 에 컨테이너 추가 */
+const PLAY_ECR_IMAGE_REPO = '218736972976.dkr.ecr.ap-northeast-2.amazonaws.com/igrus/play/server';
+const PLAY_INITIAL_IMAGE_TAG = 'play-v0.1.0';
+
 /** 한 앱 환경(prod/staging)의 ECS 구성 설정 */
 interface AppEnvConfig {
   idPrefix: string;
@@ -152,6 +156,15 @@ export class IgrusWebV2Stack extends cdk.Stack {
     });
     prodSecret.grantRead(appRole);
 
+    // ── play-igrus 시크릿 (DB DSN — 값 생성은 수동, 런북 참조) ──
+    // ECR repo(igrus/play/server)는 spring repo 와 동일하게 CDK 밖에서 생성·URL 참조 (런북 참조)
+    const playSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      'PlayAppSecret',
+      'igrus/play/server/prod',
+    );
+    playSecret.grantRead(appRole);
+
     const userData = ec2.UserData.forLinux();
     userData.addCommands(
       `set -euxo pipefail
@@ -186,10 +199,16 @@ api.igrus.co.kr, ec2.igrus.co.kr {
 	encode gzip
 	reverse_proxy app:8080
 }
+
+play.igrus.co.kr {
+	encode gzip
+	reverse_proxy play-api:8080
+}
 CADDYFILE
 
 cat > /opt/igrus/.env <<'ENVFILE'
 IMAGE_TAG=${INITIAL_IMAGE_TAG}
+PLAY_IMAGE_TAG=${PLAY_INITIAL_IMAGE_TAG}
 ENVFILE
 
 cat > /opt/igrus/docker-compose.yml <<'COMPOSE'
@@ -217,6 +236,18 @@ services:
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
+  play-api:
+    image: ${PLAY_ECR_IMAGE_REPO}:\${PLAY_IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      # 토큰 introspection — 같은 compose 네트워크의 app 컨테이너 직결 (TLS 왕복 절약)
+      IGRUS_API: http://app:8080
+      PLAY_SECRET_NAME: igrus/play/server/prod
+      S3_BUCKET: igrus-web-file-storage-bucket-v2
+      AWS_REGION: ap-northeast-2
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 volumes:
   caddy_data:
   caddy_config:
@@ -226,12 +257,17 @@ COMPOSE
 cat > /usr/local/bin/igrus-deploy <<'DEPLOY'
 #!/bin/bash
 set -euo pipefail
-TAG="\${1:?usage: igrus-deploy <image-tag>}"
+TAG="\${1:?usage: igrus-deploy <image-tag> [service=app]}"
+SVC="\${2:-app}"
 export DOCKER_CONFIG=/opt/igrus/.docker
 cd /opt/igrus
-sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=\${TAG}|" .env
-docker compose pull app
-docker compose up -d app
+case "\$SVC" in
+  app)      sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=\${TAG}|" .env ;;
+  play-api) sed -i "s|^PLAY_IMAGE_TAG=.*|PLAY_IMAGE_TAG=\${TAG}|" .env ;;
+  *) echo "unknown service: \$SVC" >&2; exit 1 ;;
+esac
+docker compose pull "\$SVC"
+docker compose up -d "\$SVC"
 docker image prune -f
 DEPLOY
 chmod +x /usr/local/bin/igrus-deploy
@@ -303,6 +339,15 @@ docker compose up -d`,
         ttl: cdk.Duration.seconds(60),
       });
     }
+
+    // play.igrus.co.kr → 같은 EC2 (Go 컨테이너가 SPA+API 를 같은 origin 으로 서빙).
+    // igrus.co.kr 서브도메인이라 www 와 refresh 쿠키(Domain=igrus.co.kr) 공유 — SSO 전제.
+    new route53.ARecord(this, 'PlayAlias', {
+      zone,
+      recordName: 'play',
+      target: route53.RecordTarget.fromIpAddresses(appEip.ref),
+      ttl: cdk.Duration.seconds(60),
+    });
 
     // ══════════════════════════════════════════════════════════════════
     // 레거시 (v2 Fargate + ALB) — cleanup(phase 3) 전까지 롤백 경로로 유지
@@ -580,6 +625,7 @@ docker compose up -d`,
       deleteExisting: true,
     });
 
+    new cdk.CfnOutput(this, 'PlayUrl', { value: 'https://play.igrus.co.kr' });
     new cdk.CfnOutput(this, 'AppEc2ValidationUrl', { value: 'https://ec2.igrus.co.kr' });
     new cdk.CfnOutput(this, 'AppEc2Eip', { value: appEip.ref });
     new cdk.CfnOutput(this, 'AppEc2InstanceId', { value: appInstance.instanceId });
