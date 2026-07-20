@@ -61,7 +61,7 @@ export default function Layout() {
               className={css({ h: "8", w: "8", rounded: "lg", objectFit: "cover" })}
             />
             <span>
-              Play <span className={css({ color: "indigo.600" })}>Inha</span>
+              <span className={css({ color: "indigo.600" })}>Inha</span> Play
             </span>
           </Link>
 
