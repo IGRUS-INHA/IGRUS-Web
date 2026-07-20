@@ -188,8 +188,9 @@ docker buildx build --platform linux/amd64 \
 
 ### 배포 (이후 운영)
 
-- 태그 `play-v*` push → `.github/workflows/play-prod-cd.yaml` 이 Go test → ECR push →
-  SSM `igrus-deploy <tag> play-api` → `https://play.igrus.co.kr/healthz` 헬스체크.
+- `main` push 에 `play-igrus/**` 변경 포함 시 → `.github/workflows/play-prod-cd.yaml` 이
+  Go test → ECR push(이미지 태그 `play-<sha>`) → SSM `igrus-deploy <tag> play-api` →
+  `https://play.igrus.co.kr/healthz` 헬스체크. (workflow_dispatch 로 특정 태그 재배포 가능)
 - 기존 스프링 배포는 그대로 `igrus-deploy <tag>` (기본 service=app) — 영향 없음.
 
 ## 관련 문서

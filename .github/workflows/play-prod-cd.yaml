@@ -3,13 +3,16 @@
 name: Play Production CD Pipeline
 on:
   push:
-    tags:
-      - 'play-v*'
+    branches:
+      - main
+    paths:
+      - 'play-igrus/**'
+      - '.github/workflows/play-prod-cd.yaml'
   workflow_dispatch:
     inputs:
       version:
-        description: '배포할 이미지 태그 (예: play-v0.1.0)'
-        required: true
+        description: '배포할 이미지 태그 (비우면 커밋 SHA 로 생성)'
+        required: false
         type: string
 
 permissions:
@@ -26,7 +29,7 @@ jobs:
       ECR_REPOSITORY_PLAY: igrus/play/server
       AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN }}
       EC2_INSTANCE_NAME: IGRUS-Web-App-EC2
-      IMAGE_TAG: ${{ inputs.version || github.ref_name }}
+      IMAGE_TAG: ${{ inputs.version || format('play-{0}', github.sha) }}
     defaults:
       run:
         working-directory: play-igrus

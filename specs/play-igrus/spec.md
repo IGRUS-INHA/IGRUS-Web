@@ -88,8 +88,8 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
   (`play.igrus.co.kr → play-api:8080`), compose `play-api` 서비스,
   시크릿 `igrus/play/server/prod`(JSON `{"dsn": "..."}`) grantRead.
   ECR repo(`igrus/play/server`)는 spring repo 와 동일하게 CDK 밖에서 생성·URL 참조.
-- CD: `.github/workflows/play-prod-cd.yaml` — `play-v*` 태그 push → Go test → ECR push →
-  SSM `igrus-deploy <tag> play-api` → `/healthz` 헬스체크.
+- CD: `.github/workflows/play-prod-cd.yaml` — `main` push(`play-igrus/**` 변경 시) →
+  Go test → ECR push(`play-<sha>`) → SSM `igrus-deploy <tag> play-api` → `/healthz` 헬스체크.
 - 수동 작업 절차: `docs/infra/ec2-migration-runbook.md` 의 play 섹션 참조.
 
 ## 로컬 개발
