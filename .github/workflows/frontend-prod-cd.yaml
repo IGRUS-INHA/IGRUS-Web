@@ -1,9 +1,21 @@
 name: Frontend Production CD Pipeline
+# main push(frontend/openapi 변경) 자동 배포 — backend-prod-cd.yaml 과 같은 패턴.
+# 버전 태그 릴리즈는 release.yaml 이 workflow_call 로 호출한다.
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'openapi/**'
+      - '.github/workflows/frontend-prod-cd.yaml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '배포 버전 표기 (비우면 커밋 SHA)'
+        required: false
+        type: string
   workflow_call:
     inputs:
       version:
@@ -51,7 +63,7 @@ jobs:
         run: pnpm build
         env:
           VITE_API_URL: ${{ env.VITE_API_URL }}
-          VITE_APP_VERSION: ${{ inputs.version || github.ref_name }}
+          VITE_APP_VERSION: ${{ inputs.version || format('main-{0}', github.sha) }}
           FEATURE_COMMUNITY: 'false'
           FEATURE_SEARCH: 'false'
           FEATURE_PROFILE_EDIT: 'false'
