@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -72,27 +71,6 @@ func (s *server) lookupProfiles(ctx context.Context, studentIDs []string) (map[s
 	return out, rows.Err()
 }
 
-// resolveAuthors 는 작성자 이름을 표시 이름(닉네임 폴백)으로 채운다. 이름의 유일한
-// 진실점은 igrus users 조인이다 — 조회 실패나 탈퇴 회원이면 이름은 빈 값으로 둔다
-// (스냅샷 폴백 없음). 조회가 실패해도 목록 자체는 그대로 렌더된다.
-func (s *server) resolveAuthors(ctx context.Context, items []row) {
-	seen := map[string]bool{}
-	ids := make([]string, 0, len(items))
-	for _, it := range items {
-		if !seen[it.StudentID] {
-			seen[it.StudentID] = true
-			ids = append(ids, it.StudentID)
-		}
-	}
-	profs, err := s.lookupProfiles(ctx, ids)
-	if err != nil {
-		log.Printf("작성자 프로필 조회 실패 (이름 빈 값): %v", err)
-	}
-	for i := range items {
-		items[i].AuthorName = profs[items[i].StudentID].DisplayName // 없으면 "" (nil 맵 읽기도 안전)
-	}
-}
-
 // ── 내 프로필 사진 ────────────────────────────────────────────────────
 // 닉네임/자기소개/링크는 igrus 백엔드가 주인이고, 사진만 여기서 관리한다.
 
@@ -158,21 +136,32 @@ func (s *server) getAuthor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 표시 이름·소개·링크의 진실점은 igrus users 조인 — 실패/탈퇴면 빈 값 (스냅샷 폴백 없음).
+	// 작성자가 탈퇴/삭제(또는 학번 변경)면 부산물도 지워진 것처럼 404.
+	profs, err := s.lookupProfiles(r.Context(), []string{p.StudentID})
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "작성자를 불러올 수 없습니다")
+		return
+	}
+	prof, ok := profs[p.StudentID]
+	if !ok {
+		writeErr(w, http.StatusNotFound, "작품을 찾을 수 없습니다")
+		return
+	}
+
 	out := struct {
 		publicProfile
 		AvatarURL string        `json:"avatarUrl,omitempty"`
 		Projects  []projectView `json:"projects"`
-	}{publicProfile: publicProfile{Links: []profileLink{}}, Projects: []projectView{}}
+	}{
+		publicProfile: publicProfile{
+			DisplayName:  prof.DisplayName,
+			Introduction: prof.Introduction,
+			Links:        prof.Links,
+		},
+		Projects: []projectView{},
+	}
 	if key, err := getAvatarKey(s.db, p.StudentID); err == nil {
 		out.AvatarURL = imageURL(key)
-	}
-	if profs, err := s.lookupProfiles(r.Context(), []string{p.StudentID}); err == nil {
-		if prof, ok := profs[p.StudentID]; ok {
-			out.DisplayName = prof.DisplayName
-			out.Introduction = prof.Introduction
-			out.Links = prof.Links
-		}
 	}
 	// 이 작성자의 다른 승인작 — 승인작만 공개 (심사중/반려/작성자 비공개 제외)
 	if mine, err := listByStudent(s.db, p.StudentID); err == nil {

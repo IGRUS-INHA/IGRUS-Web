@@ -263,25 +263,56 @@ func insertProject(db *sql.DB, p row) (int64, error) {
 	return id, tx.Commit()
 }
 
-// listApprovedProjects — sort 는 핸들러에서 검증된 값만 온다.
-// popular: score DESC(동점 최신순) / recent: 최신순.
-func listApprovedProjects(db *sql.DB, category, sort string) ([]row, error) {
-	q := `SELECT ` + selectCols + ` FROM projects WHERE status = 'approved' AND hidden = 0`
+// listApprovedProjects — 승인·공개 작품 중 작성자가 살아있는 것만 반환한다.
+// igrus users 와 INNER JOIN 이라, 탈퇴(soft/hard)·학번 변경으로 작성자가 사라진 작품은
+// 애초에 쿼리에서 안 나온다 (행은 지우지 않고 노출만 차단 — 복구되면 다시 보인다).
+// 작성자 표시 이름(닉네임 폴백)도 같은 조인에서 채운다. sort 는 핸들러에서 검증됨.
+func listApprovedProjects(db *sql.DB, igrusDB, category, sort string) ([]row, error) {
+	usersTable := "users"
+	if igrusDB != "" {
+		usersTable = igrusDB + ".users"
+	}
+	q := `SELECT ` + prefixed(selectCols, "p.") + `,
+	         COALESCE(NULLIF(u.users_nickname, ''), u.users_name)
+	      FROM projects p
+	      JOIN ` + usersTable + ` u
+	        ON u.users_student_id = p.student_id AND u.users_deleted = 0
+	      WHERE p.status = 'approved' AND p.hidden = 0`
 	args := []any{}
 	if category != "" {
-		q += ` AND category = ?`
+		q += ` AND p.category = ?`
 		args = append(args, category)
 	}
 	if sort == "recent" {
-		q += ` ORDER BY created_at DESC`
+		q += ` ORDER BY p.created_at DESC`
 	} else {
-		q += ` ORDER BY score DESC, created_at DESC`
+		q += ` ORDER BY p.score DESC, p.created_at DESC`
 	}
 	rows, err := db.Query(q, args...)
 	if err != nil {
 		return nil, err
 	}
-	return scanRows(rows)
+	defer rows.Close()
+	out := []row{}
+	for rows.Next() {
+		var p row
+		var reviewed sql.NullTime
+		var displayName string
+		if err := rows.Scan(&p.ID, &p.StudentID, &p.AuthorName, &p.Department, &p.Title,
+			&p.Description, &p.BodyMD, &p.ThumbnailKey, &p.BannerKey, &p.RedirectURL,
+			&p.Category, &p.Status, &p.RejectReason, &p.ReviewerStudentID, &p.ReviewerName,
+			&reviewed, &p.CreatedAt, &p.TotalClicks, &p.Score, &p.Version, &p.Hidden,
+			&displayName); err != nil {
+			return nil, err
+		}
+		if reviewed.Valid {
+			t := reviewed.Time
+			p.ReviewedAt = &t
+		}
+		p.AuthorName = displayName // 스냅샷 대신 현재 표시 이름(닉네임 폴백)
+		out = append(out, p)
+	}
+	return out, rows.Err()
 }
 
 func listByStudent(db *sql.DB, studentID string) ([]row, error) {

@@ -51,12 +51,13 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
 - **승인/반려한 운영진 정보(학번·이름)를 기록**한다.
 - 승인/반려는 `pending` 상태에서 1회만 반영 (동시 처리 가드).
 - 작성자 표시는 **닉네임** (igrus `users` 테이블). 닉네임이 없으면 이름.
-  play·igrus 는 **같은 RDS 인스턴스**라, play 가 `igrus_web.users` 를 크로스 스키마로
-  직접 조회한다 (HTTP 왕복 없음, 목록 전체를 학번 `IN (...)` 한 쿼리로). 닉네임 폴백
-  (`COALESCE(NULLIF(nickname,''), name)`)·탈퇴 제외(`users_deleted`)를 SQL 로 적용하고,
+  play·igrus 는 **같은 RDS 인스턴스**(둘 다 `utf8mb4_unicode_ci`)라, 목록 쿼리가
+  `igrus_web.users` 와 **INNER JOIN** 한다 (HTTP 왕복 없음). 닉네임 폴백
+  (`COALESCE(NULLIF(nickname,''), name)`)·탈퇴 제외(`users_deleted=0`)를 SQL 로 적용하고,
   표시 이름만 응답에 싣는다(실명 비노출). 학번·입학년도는 비공개.
-  이름의 진실점은 이 조인뿐 — 조회 실패나 탈퇴 회원이면 이름은 빈 값(스냅샷 폴백 없음).
-  조회가 실패해도 목록 자체는 항상 뜬다.
+  - **탈퇴/삭제/학번 변경으로 작성자가 사라진 작품은 외부에 아예 안 보인다** —
+    목록은 JOIN 에서 빠지고, 상세·작성자 API 는 404(지워진 것처럼). play 의 작품 행은
+    지우지 않으므로 회원이 복구되면 작품도 다시 보인다. 목록 쿼리 실패는 fail-closed.
   - play DB 유저에 `igrus_web.users` 의 **필요한 컬럼만** SELECT 권한 부여
     (student_id·name·nickname·introduction·links·deleted). 이메일·전화·비밀번호 해시는
     권한 밖 — play 침해 시 회원 PII 유출을 막는 마지막 경계다.

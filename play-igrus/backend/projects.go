@@ -162,12 +162,12 @@ func (s *server) listApproved(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "잘못된 sort 입니다")
 		return
 	}
-	items, err := listApprovedProjects(s.db, strings.TrimSpace(r.URL.Query().Get("category")), sort)
+	// 작성자 닉네임·탈퇴 필터는 쿼리의 users 조인이 처리한다 (탈퇴자 작품은 안 나옴).
+	items, err := listApprovedProjects(s.db, s.igrusDB, strings.TrimSpace(r.URL.Query().Get("category")), sort)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "목록을 불러올 수 없습니다")
 		return
 	}
-	s.resolveAuthors(r.Context(), items) // 닉네임 표시 (서버단 폴백)
 	writeJSON(w, http.StatusOK, views(items, listView))
 }
 
@@ -187,9 +187,19 @@ func (s *server) getDetail(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, "작품을 불러올 수 없습니다")
 		return
 	}
-	items := []row{p}
-	s.resolveAuthors(r.Context(), items) // 닉네임 표시 (서버단 폴백)
-	writeJSON(w, http.StatusOK, detailView(items[0]))
+	// 작성자가 탈퇴/삭제(또는 학번 변경)면 지워진 것처럼 404.
+	profs, err := s.lookupProfiles(r.Context(), []string{p.StudentID})
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "작품을 불러올 수 없습니다")
+		return
+	}
+	prof, ok := profs[p.StudentID]
+	if !ok {
+		writeErr(w, http.StatusNotFound, "작품을 찾을 수 없습니다")
+		return
+	}
+	p.AuthorName = prof.DisplayName // 스냅샷 대신 현재 표시 이름
+	writeJSON(w, http.StatusOK, detailView(p))
 }
 
 // POST /api/projects/{id}/click — "이동하기" 클릭 집계. 랭킹 배치의 입력이 된다.

@@ -193,12 +193,22 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 		db.Exec(`DELETE FROM project_clicks_daily`)
 		db.Exec(`DELETE FROM project_versions`)
 		db.Exec(`DELETE FROM projects`)
+		db.Exec(`DROP TABLE IF EXISTS users`)
 		db.Close()
 	})
 	// 이전 실행이 비정상 종료로 남긴 행 제거 (건수 단언이 흔들리지 않게)
 	db.Exec(`DELETE FROM project_clicks_daily`)
 	db.Exec(`DELETE FROM project_versions`)
 	db.Exec(`DELETE FROM projects`)
+	// 목록 쿼리가 users 와 조인하므로 테스트 스키마에 users + 작성자 행을 둔다 (igrusDB="")
+	db.Exec(`DROP TABLE IF EXISTS users`)
+	if _, err := db.Exec(`CREATE TABLE users (
+		users_student_id VARCHAR(20), users_name VARCHAR(50), users_nickname VARCHAR(50),
+		users_introduction TEXT, users_links JSON, users_deleted TINYINT(1) NOT NULL DEFAULT 0
+	)`); err != nil {
+		t.Fatal(err)
+	}
+	db.Exec(`INSERT INTO users (users_student_id, users_name, users_deleted) VALUES ('12201234', '홍길동', 0)`)
 
 	id, err := insertProject(db, row{
 		StudentID: "12201234", AuthorName: "홍길동", Department: "컴퓨터공학과",
@@ -228,7 +238,7 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 		t.Fatalf("두 번째 처리가 막히지 않음: %v", err)
 	}
 
-	items, err := listApprovedProjects(db, "", "popular")
+	items, err := listApprovedProjects(db, "", "", "popular")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -299,7 +309,7 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 	if err := setProjectHidden(db, id, true); err != nil {
 		t.Fatal(err)
 	}
-	if items, _ := listApprovedProjects(db, "", "popular"); len(items) != 0 {
+	if items, _ := listApprovedProjects(db, "", "", "popular"); len(items) != 0 {
 		t.Fatalf("비공개 작품이 공개 목록에 남음: %+v", items)
 	}
 	if err := addClick(db, id, kstTodayString()); err != errNotFound {
@@ -308,16 +318,15 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 	if err := setProjectHidden(db, id, false); err != nil {
 		t.Fatal(err)
 	}
-	items, _ = listApprovedProjects(db, "", "popular")
+	items, _ = listApprovedProjects(db, "", "", "popular")
 	if len(items) != 1 || items[0].TotalClicks != 2 {
 		t.Fatalf("재공개 복귀가 틀림 (클릭수 유지돼야 함): %+v", items)
 	}
 }
 
-// 작성자 이름 = igrus users 조인 결과. 닉네임 있으면 닉네임, 없으면 이름,
-// 탈퇴 회원은 제외(→ 스냅샷 유지), 조회 안 된 학번도 스냅샷 유지.
-// 크로스 스키마 대신 테스트 DB 안에 users 테이블을 만들어 쿼리 로직만 검증한다.
-func TestResolveAuthorsWithMySQL(t *testing.T) {
+// 목록은 users 조인으로 작성자 이름을 채우고, 탈퇴/미존재 작성자의 작품은 아예 뺀다.
+// 크로스 스키마 대신 테스트 DB 안에 users 테이블을 만들어 조인 로직을 검증한다.
+func TestListFiltersDeletedAuthorsWithMySQL(t *testing.T) {
 	dsn := os.Getenv("TEST_DSN")
 	if dsn == "" {
 		t.Skip("TEST_DSN 미설정 — MySQL 통합 테스트 생략")
@@ -326,7 +335,14 @@ func TestResolveAuthorsWithMySQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { db.Exec(`DROP TABLE IF EXISTS users`); db.Close() })
+	t.Cleanup(func() {
+		db.Exec(`DELETE FROM project_versions`)
+		db.Exec(`DELETE FROM projects`)
+		db.Exec(`DROP TABLE IF EXISTS users`)
+		db.Close()
+	})
+	db.Exec(`DELETE FROM project_versions`)
+	db.Exec(`DELETE FROM projects`)
 	db.Exec(`DROP TABLE IF EXISTS users`)
 	if _, err := db.Exec(`CREATE TABLE users (
 		users_student_id VARCHAR(20), users_name VARCHAR(50), users_nickname VARCHAR(50),
@@ -339,23 +355,43 @@ func TestResolveAuthorsWithMySQL(t *testing.T) {
 		('12220001', '김이름', '', NULL, NULL, 0),
 		('12220002', '탈퇴자', '닉', NULL, NULL, 1)`)
 
-	s := &server{db: db, igrusDB: ""} // 빈 값 → 현재 스키마의 users
-	items := []row{
-		{StudentID: "12223759", AuthorName: "스냅샷A"}, // 닉네임 → "유찬"
-		{StudentID: "12220001", AuthorName: "스냅샷B"}, // 닉네임 없음 → 이름 "김이름"
-		{StudentID: "12220002", AuthorName: "스냅샷C"}, // 탈퇴 → 빈 값 (폴백 없음)
-		{StudentID: "99999999", AuthorName: "스냅샷D"}, // 없음 → 빈 값 (폴백 없음)
-	}
-	s.resolveAuthors(context.Background(), items)
-
-	want := []string{"유찬", "김이름", "", ""}
-	for i, w := range want {
-		if items[i].AuthorName != w {
-			t.Errorf("items[%d].AuthorName = %q, want %q", i, items[i].AuthorName, w)
+	// 작성자 4명: 닉네임 / 이름폴백 / 탈퇴 / users 에 없음
+	mk := func(sid, title string) int64 {
+		id, err := insertProject(db, row{StudentID: sid, AuthorName: "스냅샷", Title: title,
+			BodyMD: "x", Category: "게임", RedirectURL: "https://example.com"})
+		if err != nil {
+			t.Fatal(err)
 		}
+		if err := reviewVersion(db, id, "approved", "", Profile{StudentID: "op", Name: "운영"}); err != nil {
+			t.Fatal(err)
+		}
+		return id
+	}
+	mk("12223759", "닉네임작")
+	mk("12220001", "이름작")
+	mk("12220002", "탈퇴작") // 탈퇴 → 목록 제외
+	mk("99999999", "유령작") // users 없음 → 목록 제외
+
+	s := &server{db: db, igrusDB: ""}
+	items, err := listApprovedProjects(s.db, s.igrusDB, "", "recent")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]string{} // title → author
+	for _, it := range items {
+		got[it.Title] = it.AuthorName
+	}
+	if len(items) != 2 {
+		t.Fatalf("탈퇴/미존재 작성자 작품이 안 걸러짐: %+v", got)
+	}
+	if got["닉네임작"] != "유찬" || got["이름작"] != "김이름" {
+		t.Errorf("작성자 이름이 틀림: %+v", got)
+	}
+	if _, ok := got["탈퇴작"]; ok {
+		t.Error("탈퇴 작성자 작품이 목록에 남음")
 	}
 
-	// getAuthor 경로: 링크 JSON 파싱 확인
+	// getAuthor 경로 primitive: 링크 JSON 파싱
 	profs, err := s.lookupProfiles(context.Background(), []string{"12223759"})
 	if err != nil {
 		t.Fatal(err)
