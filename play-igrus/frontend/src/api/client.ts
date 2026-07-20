@@ -164,6 +164,8 @@ export interface AuthorProfile {
   displayName: string;
   introduction?: string;
   links: ProfileLink[];
+  /** 프로필 사진 (play API 가 관리) */
+  avatarUrl?: string;
   /** 이 작성자의 승인작 목록 */
   projects?: Project[];
 }
@@ -174,6 +176,9 @@ export const fetchAuthor = (projectId: number) =>
 // ── 내 공개 프로필 (igrus 마이페이지) ────────────────────────────────
 
 export interface MyPublicProfile {
+  /** 읽기 전용 — 학번/본명은 여기서 수정할 수 없다 */
+  studentId?: string;
+  name?: string;
   nickname?: string;
   introduction?: string;
   links?: ProfileLink[];
@@ -188,6 +193,19 @@ export const updateMyProfile = (profile: MyPublicProfile) =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(profile),
   });
+
+// ── 내 프로필 사진 (play API — 이미지 저장이 여기라서) ────────────────
+
+export const fetchMyAvatar = () => playFetch<{ avatarUrl: string }>("/api/profile/avatar");
+
+export const uploadMyAvatar = (file: File) => {
+  const form = new FormData();
+  form.append("image", file);
+  return playFetch<{ avatarUrl: string }>("/api/profile/avatar", { method: "PUT", body: form });
+};
+
+export const deleteMyAvatar = () =>
+  playFetch<void>("/api/profile/avatar", { method: "DELETE" });
 
 export const clickProject = (id: number) =>
   playFetch<void>(`/api/projects/${id}/click`, { method: "POST" });

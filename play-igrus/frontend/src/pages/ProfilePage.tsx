@@ -3,12 +3,17 @@ import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import {
   ApiError,
+  deleteMyAvatar,
+  fetchMyAvatar,
   fetchMyProfile,
+  imageSrc,
   updateMyProfile,
+  uploadMyAvatar,
   type ProfileLink,
 } from "../api/client";
 import RequireLogin from "../components/RequireLogin";
 import { field, input, label } from "../components/formStyles";
+import ImageDropzone from "../components/ImageDropzone";
 
 export default function ProfilePage() {
   return (
@@ -20,25 +25,70 @@ export default function ProfilePage() {
   );
 }
 
-/** 공개 프로필 편집 — 닉네임/자기소개/링크. 기존 users 테이블(igrus API)에 저장된다. */
+/** 수정 불가 항목(학번/이름) 표시 — 입력칸처럼 보이되 회색으로 잠긴 느낌 */
+const readOnlyValue = css({
+  px: "3",
+  py: "2",
+  rounded: "lg",
+  bg: "gray.50",
+  border: "1px solid",
+  borderColor: "gray.200",
+  color: "gray.500",
+  fontSize: "sm",
+});
+
+/** 공개 프로필 편집 — 사진/닉네임/자기소개/링크. 학번·이름은 읽기 전용. */
 function ProfileEditor() {
   const [loaded, setLoaded] = useState(false);
+  const [studentId, setStudentId] = useState("");
+  const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
   const [introduction, setIntroduction] = useState("");
   const [links, setLinks] = useState<ProfileLink[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean }>();
 
   useEffect(() => {
     fetchMyProfile()
       .then((p) => {
+        setStudentId(p.studentId ?? "");
+        setName(p.name ?? "");
         setNickname(p.nickname ?? "");
         setIntroduction(p.introduction ?? "");
         setLinks(p.links ?? []);
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
+    // 사진은 play API 담당이라 별도 호출 — 실패해도 나머지 편집은 막지 않는다
+    fetchMyAvatar()
+      .then((a) => setAvatarUrl(a.avatarUrl))
+      .catch(() => {});
   }, []);
+
+  // 사진은 폼 저장과 무관하게 고른 즉시 반영된다 (별도 엔드포인트라 저장 버튼과 섞으면 헷갈린다)
+  const pickAvatar = async (file?: File) => {
+    if (!file) return;
+    setMessage(undefined);
+    try {
+      const { avatarUrl: url } = await uploadMyAvatar(file);
+      setAvatarUrl(url);
+      setMessage({ text: "프로필 사진이 바뀌었어요", ok: true });
+    } catch (e) {
+      setMessage({ text: e instanceof ApiError ? e.message : "사진 업로드에 실패했어요", ok: false });
+    }
+  };
+
+  const removeAvatar = async () => {
+    setMessage(undefined);
+    try {
+      await deleteMyAvatar();
+      setAvatarUrl("");
+      setMessage({ text: "프로필 사진을 지웠어요", ok: true });
+    } catch (e) {
+      setMessage({ text: e instanceof ApiError ? e.message : "사진 삭제에 실패했어요", ok: false });
+    }
+  };
 
   const setLink = (index: number, patch: Partial<ProfileLink>) =>
     setLinks((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
@@ -88,6 +138,48 @@ function ProfileEditor() {
         <p className={css({ color: "gray.400", fontSize: "sm", py: "4" })}>불러오는 중…</p>
       ) : (
         <div className={flex({ direction: "column", gap: "4" })}>
+          {/* 학번·본명은 여기서 못 바꾼다 — 동아리 가입 정보라 운영진 문의 */}
+          <div className={flex({ gap: "3" })}>
+            <div className={`${field} ${css({ flex: 1 })}`}>
+              <span className={label}>학번</span>
+              <p className={readOnlyValue}>{studentId || "—"}</p>
+            </div>
+            <div className={`${field} ${css({ flex: 1 })}`}>
+              <span className={label}>이름</span>
+              <p className={readOnlyValue}>{name || "—"}</p>
+            </div>
+          </div>
+          <p className={css({ fontSize: "xs", color: "gray.400", mt: "-2" })}>
+            학번과 이름은 여기서 바꿀 수 없어요. 잘못됐다면 운영진에게 문의해 주세요.
+          </p>
+
+          <div>
+            <ImageDropzone
+              id="avatar"
+              title="프로필 사진"
+              hint="PNG/JPG/WebP · 4MB 이하 · 고르면 바로 반영돼요"
+              square
+              existingUrl={imageSrc(avatarUrl)}
+              onChange={pickAvatar}
+            />
+            {avatarUrl && (
+              <button
+                type="button"
+                onClick={removeAvatar}
+                className={css({
+                  mt: "2",
+                  fontSize: "xs",
+                  fontWeight: "600",
+                  color: "gray.500",
+                  cursor: "pointer",
+                  _hover: { color: "red.500", textDecoration: "underline" },
+                })}
+              >
+                사진 지우기
+              </button>
+            )}
+          </div>
+
           <div className={field}>
             <label htmlFor="nickname" className={label}>
               닉네임

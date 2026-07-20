@@ -7,7 +7,6 @@ import (
 	"image/png"
 	"math"
 	"mime/multipart"
-	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
@@ -73,15 +72,18 @@ func TestAuthCacheExpires(t *testing.T) {
 	}
 
 	c.put("tok2", Profile{Name: "김철수", Role: "OPERATOR"})
-	p, ok := c.get("tok2")
-	if !ok {
+	if _, ok := c.get("tok2"); !ok {
 		t.Fatal("방금 넣은 캐시를 못 찾음")
 	}
-	if !p.IsStaff() {
-		t.Error("OPERATOR 가 운영진으로 인식되지 않음")
-	}
-	if (Profile{Role: "MEMBER"}).IsStaff() {
-		t.Error("MEMBER 가 운영진으로 인식됨")
+}
+
+func TestIsStaff(t *testing.T) {
+	for role, want := range map[string]bool{
+		"ADMIN": true, "OPERATOR": true, "MEMBER": false, "ASSOCIATE": false, "": false,
+	} {
+		if got := (Profile{Role: role}).IsStaff(); got != want {
+			t.Errorf("IsStaff(%q) = %v, want %v", role, got, want)
+		}
 	}
 }
 
@@ -312,30 +314,54 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 	}
 }
 
-// 공개 프로필 프록시 — 닉네임이 있으면 목록/작성자 응답의 이름이 닉네임으로 바뀌고
-// (서버단 폴백), igrus 조회가 실패하면 제출 당시 이름 스냅샷을 유지한다.
-func TestResolveAuthors(t *testing.T) {
-	igrus := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/v1/users/12223759/public-profile":
-			writeJSON(w, http.StatusOK, publicProfile{DisplayName: "닉네임", Introduction: "소개"})
-		default:
-			w.WriteHeader(http.StatusNotFound)
-		}
-	}))
-	defer igrus.Close()
+// 작성자 이름 = igrus users 조인 결과. 닉네임 있으면 닉네임, 없으면 이름,
+// 탈퇴 회원은 제외(→ 스냅샷 유지), 조회 안 된 학번도 스냅샷 유지.
+// 크로스 스키마 대신 테스트 DB 안에 users 테이블을 만들어 쿼리 로직만 검증한다.
+func TestResolveAuthorsWithMySQL(t *testing.T) {
+	dsn := os.Getenv("TEST_DSN")
+	if dsn == "" {
+		t.Skip("TEST_DSN 미설정 — MySQL 통합 테스트 생략")
+	}
+	db, err := openDB(dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { db.Exec(`DROP TABLE IF EXISTS users`); db.Close() })
+	db.Exec(`DROP TABLE IF EXISTS users`)
+	if _, err := db.Exec(`CREATE TABLE users (
+		users_student_id VARCHAR(20), users_name VARCHAR(50), users_nickname VARCHAR(50),
+		users_introduction TEXT, users_links JSON, users_deleted TINYINT(1) NOT NULL DEFAULT 0
+	)`); err != nil {
+		t.Fatal(err)
+	}
+	db.Exec(`INSERT INTO users (users_student_id, users_name, users_nickname, users_introduction, users_links, users_deleted) VALUES
+		('12223759', '오유찬', '유찬', '소개', '[{"label":"github","url":"https://x"}]', 0),
+		('12220001', '김이름', '', NULL, NULL, 0),
+		('12220002', '탈퇴자', '닉', NULL, NULL, 1)`)
 
-	s := &server{auth: newAuthenticator(igrus.URL)}
+	s := &server{db: db, igrusDB: ""} // 빈 값 → 현재 스키마의 users
 	items := []row{
-		{StudentID: "12223759", AuthorName: "오유찬"},
-		{StudentID: "12220000", AuthorName: "김아그"}, // 프로필 없음 → 스냅샷 유지
+		{StudentID: "12223759", AuthorName: "스냅샷A"}, // 닉네임 → "유찬"
+		{StudentID: "12220001", AuthorName: "스냅샷B"}, // 닉네임 없음 → 이름 "김이름"
+		{StudentID: "12220002", AuthorName: "스냅샷C"}, // 탈퇴 → 빈 값 (폴백 없음)
+		{StudentID: "99999999", AuthorName: "스냅샷D"}, // 없음 → 빈 값 (폴백 없음)
 	}
 	s.resolveAuthors(context.Background(), items)
 
-	if items[0].AuthorName != "닉네임" {
-		t.Errorf("닉네임 미반영: %q", items[0].AuthorName)
+	want := []string{"유찬", "김이름", "", ""}
+	for i, w := range want {
+		if items[i].AuthorName != w {
+			t.Errorf("items[%d].AuthorName = %q, want %q", i, items[i].AuthorName, w)
+		}
 	}
-	if items[1].AuthorName != "김아그" {
-		t.Errorf("폴백 실패: %q", items[1].AuthorName)
+
+	// getAuthor 경로: 링크 JSON 파싱 확인
+	profs, err := s.lookupProfiles(context.Background(), []string{"12223759"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := profs["12223759"]
+	if len(p.Links) != 1 || p.Links[0].Label != "github" || p.Introduction != "소개" {
+		t.Errorf("링크/소개 파싱 틀림: %+v", p)
 	}
 }

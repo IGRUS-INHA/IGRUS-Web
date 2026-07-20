@@ -18,6 +18,7 @@ func main() {
 		apiBase = cmp.Or(os.Getenv("IGRUS_API"), "https://api.igrus.co.kr")
 		dataDir = cmp.Or(os.Getenv("DATA_DIR"), "./data")
 		dsn     = os.Getenv("DSN")
+		igrusDB = cmp.Or(os.Getenv("IGRUS_DB_NAME"), "igrus_web") // 작성자 닉네임 크로스 스키마 조회
 	)
 
 	if name := os.Getenv("PLAY_SECRET_NAME"); name != "" {
@@ -42,7 +43,7 @@ func main() {
 		log.Fatalf("이미지 스토어 초기화 실패: %v", err)
 	}
 
-	s := &server{db: db, auth: newAuthenticator(apiBase), images: images}
+	s := &server{db: db, auth: newAuthenticator(apiBase), images: images, igrusDB: igrusDB}
 	startRankingLoop(db)
 
 	mux := http.NewServeMux()
@@ -69,6 +70,9 @@ func main() {
 	mux.HandleFunc("PUT /api/projects/{id}", s.auth.requireLogin(s.updateProject))
 	mux.HandleFunc("PUT /api/projects/{id}/visibility", s.auth.requireLogin(s.setVisibility))
 	mux.HandleFunc("GET /api/projects/mine", s.auth.requireLogin(s.listMine))
+	mux.HandleFunc("GET /api/profile/avatar", s.auth.requireLogin(s.getMyAvatar))
+	mux.HandleFunc("PUT /api/profile/avatar", s.auth.requireLogin(s.putMyAvatar))
+	mux.HandleFunc("DELETE /api/profile/avatar", s.auth.requireLogin(s.deleteMyAvatar))
 
 	// 운영진 전용
 	mux.HandleFunc("GET /api/admin/projects", s.auth.requireStaff(s.listForReview))
@@ -112,7 +116,7 @@ func cors(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Max-Age", "3600")
 		}
 		if r.Method == http.MethodOptions {

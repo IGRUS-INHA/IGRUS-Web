@@ -2,16 +2,18 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
-	"sync"
-	"time"
+	"strings"
 )
 
-// 공개 프로필 (닉네임/자기소개/링크) — igrus 백엔드 public-profile 프록시.
-// 닉네임 폴백은 igrus 서버가 한다: 닉네임이 있으면 displayName 에 닉네임만 오고
-// 실명은 응답에 없다. 여기서는 조회 실패 시에만 제출 당시 이름 스냅샷으로 폴백.
+// 공개 프로필 (닉네임/자기소개/링크) — igrus users 테이블에서 직접 읽는다.
+// play 와 igrus 는 같은 RDS 인스턴스라, HTTP 왕복 대신 크로스 스키마 조회 한 번으로
+// 끝낸다 (play DB 유저에 igrus_web.users 의 필요한 컬럼만 SELECT 권한을 부여해 둔다).
+// 캐시하지 않는다 — 요청 하나 안에서만 살아서 프로필 수정이 곧바로 반영된다.
 
 type profileLink struct {
 	Label string `json:"label"`
@@ -24,87 +26,118 @@ type publicProfile struct {
 	Links        []profileLink `json:"links"`
 }
 
-// ponytail: 프로세스 메모리 5분 캐시 (authCache 와 같은 이유) — 문제가 되면 Redis.
-const profileTTL = 5 * time.Minute
-
-type profileCache struct {
-	mu      sync.Mutex
-	entries map[string]profileEntry
-}
-
-type profileEntry struct {
-	profile publicProfile
-	ok      bool // 404 등 실패도 캐시해서 igrus 를 반복 호출하지 않는다
-	expires time.Time
-}
-
-func newProfileCache() *profileCache {
-	return &profileCache{entries: map[string]profileEntry{}}
-}
-
-func (c *profileCache) get(studentID string) (profileEntry, bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	e, ok := c.entries[studentID]
-	if !ok || time.Now().After(e.expires) {
-		delete(c.entries, studentID)
-		return profileEntry{}, false
+// lookupProfiles 는 학번들의 공개 프로필을 한 번의 쿼리로 읽는다.
+// 닉네임 폴백(닉네임 없으면 이름)은 여기서 SQL 로 적용한다 — 실명은 절대 노출하지 않고,
+// 폴백 결과(DisplayName)만 응답에 싣는다. 탈퇴 회원(users_deleted)은 제외.
+func (s *server) lookupProfiles(ctx context.Context, studentIDs []string) (map[string]publicProfile, error) {
+	out := map[string]publicProfile{}
+	if len(studentIDs) == 0 {
+		return out, nil
 	}
-	return e, true
-}
-
-func (c *profileCache) put(studentID string, e profileEntry) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	now := time.Now()
-	for k, old := range c.entries {
-		if now.After(old.expires) {
-			delete(c.entries, k)
+	// igrusDB 비어 있으면 현재 스키마의 users (테스트용) — prod 는 "igrus_web".
+	usersTable := "users"
+	if s.igrusDB != "" {
+		usersTable = s.igrusDB + ".users"
+	}
+	q := `SELECT users_student_id,
+	         COALESCE(NULLIF(users_nickname, ''), users_name),
+	         COALESCE(users_introduction, ''), users_links
+	      FROM ` + usersTable + `
+	      WHERE users_deleted = 0 AND users_student_id IN (?` + strings.Repeat(",?", len(studentIDs)-1) + `)`
+	args := make([]any, len(studentIDs))
+	for i, id := range studentIDs {
+		args[i] = id
+	}
+	rows, err := s.db.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var sid, display, intro string
+		var linksJSON sql.NullString
+		if err := rows.Scan(&sid, &display, &intro, &linksJSON); err != nil {
+			return nil, err
 		}
+		p := publicProfile{DisplayName: display, Introduction: intro, Links: []profileLink{}}
+		if linksJSON.Valid && linksJSON.String != "" {
+			// 깨진 JSON 이어도 링크만 비운다 — 이름/소개는 살린다
+			_ = json.Unmarshal([]byte(linksJSON.String), &p.Links)
+			if p.Links == nil {
+				p.Links = []profileLink{}
+			}
+		}
+		out[sid] = p
 	}
-	e.expires = now.Add(profileTTL)
-	c.entries[studentID] = e
+	return out, rows.Err()
 }
 
-// publicProfile 은 학번으로 공개 프로필을 조회한다 (인증 불필요 엔드포인트).
-func (a *authenticator) publicProfile(ctx context.Context, studentID string) (publicProfile, bool) {
-	if e, ok := a.profiles.get(studentID); ok {
-		return e.profile, e.ok
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-		a.apiBase+"/api/v1/users/"+studentID+"/public-profile", nil)
-	if err != nil {
-		return publicProfile{}, false
-	}
-	resp, err := a.client.Do(req)
-	if err != nil {
-		// 네트워크 실패는 캐시하지 않는다 — igrus 가 복구되면 바로 다시 시도
-		return publicProfile{}, false
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		a.profiles.put(studentID, profileEntry{ok: false})
-		return publicProfile{}, false
-	}
-	var p publicProfile
-	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
-		return publicProfile{}, false
-	}
-	a.profiles.put(studentID, profileEntry{profile: p, ok: true})
-	return p, true
-}
-
-// resolveAuthors 는 목록의 작성자 이름을 공개 프로필의 표시 이름(닉네임 폴백 적용)으로
-// 교체한다. 조회 실패 시 제출 당시 이름 스냅샷 유지.
-// ponytail: 작성자 수가 적어 순차 조회 + 캐시로 충분 — 느려지면 병렬화.
+// resolveAuthors 는 작성자 이름을 표시 이름(닉네임 폴백)으로 채운다. 이름의 유일한
+// 진실점은 igrus users 조인이다 — 조회 실패나 탈퇴 회원이면 이름은 빈 값으로 둔다
+// (스냅샷 폴백 없음). 조회가 실패해도 목록 자체는 그대로 렌더된다.
 func (s *server) resolveAuthors(ctx context.Context, items []row) {
-	for i := range items {
-		if prof, ok := s.auth.publicProfile(ctx, items[i].StudentID); ok && prof.DisplayName != "" {
-			items[i].AuthorName = prof.DisplayName
+	seen := map[string]bool{}
+	ids := make([]string, 0, len(items))
+	for _, it := range items {
+		if !seen[it.StudentID] {
+			seen[it.StudentID] = true
+			ids = append(ids, it.StudentID)
 		}
 	}
+	profs, err := s.lookupProfiles(ctx, ids)
+	if err != nil {
+		log.Printf("작성자 프로필 조회 실패 (이름 빈 값): %v", err)
+	}
+	for i := range items {
+		items[i].AuthorName = profs[items[i].StudentID].DisplayName // 없으면 "" (nil 맵 읽기도 안전)
+	}
+}
+
+// ── 내 프로필 사진 ────────────────────────────────────────────────────
+// 닉네임/자기소개/링크는 igrus 백엔드가 주인이고, 사진만 여기서 관리한다.
+
+// GET /api/profile/avatar
+func (s *server) getMyAvatar(w http.ResponseWriter, r *http.Request, me Profile) {
+	key, err := getAvatarKey(s.db, me.StudentID)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "프로필 사진을 불러올 수 없습니다")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"avatarUrl": imageURL(key)})
+}
+
+// PUT /api/profile/avatar — multipart, 필드명 image.
+// 이전 이미지는 S3 에 남긴다 (다른 곳에서 참조 중일 수 있고, 용량이 미미하다).
+func (s *server) putMyAvatar(w http.ResponseWriter, r *http.Request, me Profile) {
+	key, err := s.saveImage(r, "image")
+	switch {
+	case err == errTooLarge:
+		writeErr(w, http.StatusBadRequest, "이미지는 4MB 이하여야 합니다")
+		return
+	case err == errNotImage:
+		writeErr(w, http.StatusBadRequest, "PNG, JPG, WebP 이미지만 올릴 수 있습니다")
+		return
+	case err != nil:
+		writeErr(w, http.StatusBadRequest, "이미지를 읽을 수 없습니다")
+		return
+	case key == "": // saveImage 는 파일이 없으면 빈 키를 준다 — 여기선 필수다
+		writeErr(w, http.StatusBadRequest, "이미지를 선택해 주세요")
+		return
+	}
+	if err := setAvatarKey(s.db, me.StudentID, key); err != nil {
+		writeErr(w, http.StatusInternalServerError, "프로필 사진을 저장할 수 없습니다")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"avatarUrl": imageURL(key)})
+}
+
+// DELETE /api/profile/avatar
+func (s *server) deleteMyAvatar(w http.ResponseWriter, r *http.Request, me Profile) {
+	if err := deleteAvatarKey(s.db, me.StudentID); err != nil {
+		writeErr(w, http.StatusInternalServerError, "프로필 사진을 지울 수 없습니다")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // GET /api/projects/{id}/author — 작성자 프로필 다이얼로그용.
@@ -125,16 +158,19 @@ func (s *server) getAuthor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 표시 이름·소개·링크의 진실점은 igrus users 조인 — 실패/탈퇴면 빈 값 (스냅샷 폴백 없음).
 	out := struct {
 		publicProfile
-		Projects []projectView `json:"projects"`
-	}{publicProfile{DisplayName: p.AuthorName, Links: []profileLink{}}, []projectView{}}
-	if prof, ok := s.auth.publicProfile(r.Context(), p.StudentID); ok {
-		if prof.DisplayName != "" {
+		AvatarURL string        `json:"avatarUrl,omitempty"`
+		Projects  []projectView `json:"projects"`
+	}{publicProfile: publicProfile{Links: []profileLink{}}, Projects: []projectView{}}
+	if key, err := getAvatarKey(s.db, p.StudentID); err == nil {
+		out.AvatarURL = imageURL(key)
+	}
+	if profs, err := s.lookupProfiles(r.Context(), []string{p.StudentID}); err == nil {
+		if prof, ok := profs[p.StudentID]; ok {
 			out.DisplayName = prof.DisplayName
-		}
-		out.Introduction = prof.Introduction
-		if prof.Links != nil {
+			out.Introduction = prof.Introduction
 			out.Links = prof.Links
 		}
 	}

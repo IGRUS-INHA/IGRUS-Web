@@ -22,9 +22,10 @@ const (
 var allowedCategories = map[string]bool{"게임": true, "앱": true}
 
 type server struct {
-	db     *sql.DB
-	auth   *authenticator
-	images imageStore
+	db      *sql.DB
+	auth    *authenticator
+	images  imageStore
+	igrusDB string // 작성자 닉네임 조회용 igrus 스키마명 (같은 RDS 인스턴스, 크로스 스키마)
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {

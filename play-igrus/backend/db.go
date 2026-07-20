@@ -67,6 +67,36 @@ var schema = []string{
 	  PRIMARY KEY (project_id, version),
 	  INDEX idx_versions_status (status)
 	) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+	// 프로필 사진 — 닉네임/자기소개/링크는 igrus users 테이블이지만, 이미지 저장은
+	// 여기(S3 play/ prefix)에 이미 있으므로 키만 학번에 매달아 둔다.
+	`CREATE TABLE IF NOT EXISTS profile_avatars (
+	  student_id VARCHAR(8)   NOT NULL PRIMARY KEY,
+	  image_key  VARCHAR(255) NOT NULL,
+	  updated_at DATETIME(3)  NOT NULL
+	) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+}
+
+// getAvatarKey 는 없으면 "" 를 준다 (미설정은 에러가 아니다).
+func getAvatarKey(db *sql.DB, studentID string) (string, error) {
+	var key string
+	err := db.QueryRow(`SELECT image_key FROM profile_avatars WHERE student_id = ?`, studentID).Scan(&key)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	return key, err
+}
+
+func setAvatarKey(db *sql.DB, studentID, key string) error {
+	_, err := db.Exec(
+		`INSERT INTO profile_avatars (student_id, image_key, updated_at) VALUES (?, ?, ?)
+		 ON DUPLICATE KEY UPDATE image_key = VALUES(image_key), updated_at = VALUES(updated_at)`,
+		studentID, key, time.Now().UTC())
+	return err
+}
+
+func deleteAvatarKey(db *sql.DB, studentID string) error {
+	_, err := db.Exec(`DELETE FROM profile_avatars WHERE student_id = ?`, studentID)
+	return err
 }
 
 // row 는 projects 테이블 한 행. JSON 응답 형태는 projects.go 의 뷰 변환이 결정한다.

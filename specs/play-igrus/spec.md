@@ -22,7 +22,14 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
   - www 에서 로그인 → play 는 앱 시작 시 `bootstrapAuth()` 로 복원
 - play 백엔드는 **JWT 를 직접 검증하지 않는다.** HMAC 시크릿을 공유하면 play 서버가
   igrus-web 전체 토큰을 위조할 수 있기 때문. 대신 `Authorization` 헤더를 기존 백엔드
-  `/api/v1/mypage/profile` 로 넘겨 응답을 신뢰한다(introspection, 60초 캐시).
+  `/api/v1/mypage/profile` 로 넘겨 응답을 신뢰한다(introspection).
+- **캐시 정책** — 세 축이 서로 다르다:
+  - 인증(토큰→신원): 프로세스 메모리 60초 캐시. 표시 데이터가 아니라 신원이라 캐시해도
+    "고쳤는데 안 바뀐다"가 없고, 없으면 로그인 요청마다 igrus 왕복이 붙는다.
+    권한 회수는 최대 60초 늦게 반영(감수). igrus 직결(`http://app:8080`)이라 왕복 자체는 싸다.
+  - 공개 프로필(닉네임/소개/링크): **캐시 안 함.** DB 조인이라 수정이 곧바로 반영된다.
+    (이전엔 5분 캐시라 프로필을 고쳐도 메인에 옛 값이 남는 버그가 있었다.)
+  - 랭킹(score): `ranking.go` 가 `score` 컬럼에 미리 계산 — 매 요청 재계산하면 비싼 유일한 값.
 - 운영진 = 프로필 role 이 `OPERATOR` 또는 `ADMIN`.
 
 ## 작품(project)
@@ -43,12 +50,21 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
 - 제출 → `pending` → 운영진 승인(`approved`) / 반려(`rejected`, 사유 선택).
 - **승인/반려한 운영진 정보(학번·이름)를 기록**한다.
 - 승인/반려는 `pending` 상태에서 1회만 반영 (동시 처리 가드).
-- 작성자 표시는 **닉네임** (igrus `users` 테이블의 공개 프로필). 닉네임이 없으면
-  이름 — 폴백은 **igrus 서버가 한다** (`GET /api/v1/users/{학번}/public-profile` 의
-  `displayName`; 닉네임이 있으면 실명은 응답에 없음). 학번·입학년도는 비공개.
-  play 서버는 5분 TTL 캐시로 조회하고, 실패 시 제출 당시 이름 스냅샷으로 폴백.
-- 작성자 탭(카드/상세) → 프로필 다이얼로그: 표시 이름·자기소개·링크·제작한 작품
-  (승인작만, 탭 → 해당 작품 다이얼로그) (`GET /api/projects/{id}/author` — 학번 비노출 프록시).
+- 작성자 표시는 **닉네임** (igrus `users` 테이블). 닉네임이 없으면 이름.
+  play·igrus 는 **같은 RDS 인스턴스**라, play 가 `igrus_web.users` 를 크로스 스키마로
+  직접 조회한다 (HTTP 왕복 없음, 목록 전체를 학번 `IN (...)` 한 쿼리로). 닉네임 폴백
+  (`COALESCE(NULLIF(nickname,''), name)`)·탈퇴 제외(`users_deleted`)를 SQL 로 적용하고,
+  표시 이름만 응답에 싣는다(실명 비노출). 학번·입학년도는 비공개.
+  이름의 진실점은 이 조인뿐 — 조회 실패나 탈퇴 회원이면 이름은 빈 값(스냅샷 폴백 없음).
+  조회가 실패해도 목록 자체는 항상 뜬다.
+  - play DB 유저에 `igrus_web.users` 의 **필요한 컬럼만** SELECT 권한 부여
+    (student_id·name·nickname·introduction·links·deleted). 이메일·전화·비밀번호 해시는
+    권한 밖 — play 침해 시 회원 PII 유출을 막는 마지막 경계다.
+  - 스키마명은 `IGRUS_DB_NAME` env (기본 `igrus_web`).
+- 작성자 탭(카드/상세) → **개발자 프로필 다이얼로그** (커피챗·포트폴리오 용도):
+  프로필 사진·표시 이름·출시작 수·자기소개·링크 칩, 그 아래 출시작 목록
+  (썸네일 + 작품명 + 분류 뱃지 + 출시일, 탭 → 해당 작품 다이얼로그).
+  승인작만 노출 (`GET /api/projects/{id}/author` — 학번 비노출).
 - **클릭수는 어떤 API 응답에도 싣지 않는다** (본인·운영진 포함 서버단 제공 금지) —
   랭킹 정렬 입력으로만 쓰인다.
 
@@ -66,6 +82,13 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
 - `/my` 는 라이브 버전(vN 뱃지)과 심사중/반려된 수정 버전을 함께 보여준다.
 - 구 스키마 이관은 부팅 시 idempotent migrate: `projects.version`·`hidden` 컬럼 추가,
   기존 행 v1 백필, 구 `project_revisions` → 다음 버전 이관 후 테이블 제거.
+
+### 프로필 사진
+
+- 닉네임·자기소개·링크의 주인은 igrus `users` 테이블이지만, **사진만 play 가 관리**한다
+  (이미지 저장 파이프라인(S3 `play/` prefix + `/images/{key}` 프록시)이 여기 있어서).
+- play DB `profile_avatars(student_id PK, image_key, updated_at)` — 학번 1개당 1장.
+- 교체 시 이전 이미지는 S3 에 남긴다 (키가 랜덤이라 재사용되지 않고, 용량이 미미).
 
 ### 공개/비공개 (작성자 토글)
 
@@ -92,12 +115,15 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
 |---|---|---|
 | `GET /api/projects?category=&sort=` | 공개 | 승인작 목록 (sort: popular 기본 / recent) |
 | `GET /api/projects/{id}` | 공개 | 상세 (배너·본문·리다이렉트 URL 포함) |
-| `GET /api/projects/{id}/author` | 공개 | 작성자 공개 프로필 (표시 이름·자기소개·링크·승인작 목록, 학번 비노출) |
+| `GET /api/projects/{id}/author` | 공개 | 작성자 공개 프로필 (사진·표시 이름·자기소개·링크·승인작 목록, 학번 비노출) |
 | `POST /api/projects/{id}/click` | 공개 | 클릭 집계 (204) |
 | `POST /api/projects` | 로그인 | multipart 제출 → pending |
 | `PUT /api/projects/{id}` | 로그인(본인) | 수정 — 승인작은 수정본 대기, 그 외 즉시 반영 후 pending |
 | `PUT /api/projects/{id}/visibility` | 로그인(본인) | 승인작 공개/비공개 토글 (`{"hidden": bool}`) |
 | `GET /api/projects/mine` | 로그인 | 내 제출 현황 (반려 사유·수정본 상태·`hidden` 포함) |
+| `GET /api/profile/avatar` | 로그인 | 내 프로필 사진 URL (`{"avatarUrl": ""}` = 미설정) |
+| `PUT /api/profile/avatar` | 로그인 | 프로필 사진 업로드 (multipart `image`, 4MB·PNG/JPG/WebP) |
+| `DELETE /api/profile/avatar` | 로그인 | 프로필 사진 삭제 (204) |
 | `GET /api/admin/projects?status=` | 운영진 | 검수 목록 — 버전 이력 단위 (기본 pending) |
 | `POST /api/admin/projects/{id}/approve` | 운영진 | 승인 — 신규는 공개, 수정 요청은 라이브 반영 |
 | `POST /api/admin/projects/{id}/reject` | 운영진 | 반려 (`{reason}` 선택) — 수정 요청은 라이브 유지 |
@@ -117,8 +143,12 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
 - `/login`: 학번(8자리)+비밀번호. 회원가입은 www 링크.
 - `/submit`: RHF 제출 폼 (설명 50자 카운터, 이미지 드래그 앤 드롭·미리보기, 필수 뱃지).
 - `/edit/{id}`: 제출 폼 재사용 — 대기 중 수정본이 있으면 그 내용을 프리필.
-- `/profile`: 공개 프로필(내 정보) 편집 — 닉네임/자기소개/링크 +·🗑 (igrus `users`
-  테이블에 저장, `PATCH /api/v1/mypage/profile` 직접 호출).
+- `/profile`: 내 정보 —
+  - 학번·이름: **읽기 전용** (동아리 가입 정보. 틀리면 운영진 문의 안내).
+  - 프로필 사진: 드롭존으로 고르면 즉시 업로드 (저장 버튼과 무관), 지우기 버튼.
+    play DB `profile_avatars` 에 학번→이미지 키로 저장 (이미지는 S3 `play/` prefix).
+  - 닉네임/자기소개/링크 +·🗑: igrus `users` 테이블에 저장
+    (`PATCH /api/v1/mypage/profile` 직접 호출, 저장 버튼).
 - `/my`: 내 제출 상태 (심사중/승인됨/반려됨+사유, 수정 심사중/수정 반려 표시, 수정 버튼,
   승인작 숨기기/공개하기 버튼 + 비공개 뱃지).
 - 헤더: 출시하기(+운영진 검수)와 프로필 아바타(스켈레톤) — 아바타 탭 →
