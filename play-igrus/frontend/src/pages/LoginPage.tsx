@@ -80,7 +80,7 @@ export default function LoginPage() {
       <p className={css({ fontSize: "sm", color: "gray.500", mt: "6", textAlign: "center" })}>
         계정이 없다면{" "}
         <a
-          href="https://www.igrus.co.kr/signup"
+          href="https://www.igrus.co.kr/signup?utm_source=play"
           className={css({ color: "indigo.600", fontWeight: "600" })}
         >
           아이그루스에서 가입
