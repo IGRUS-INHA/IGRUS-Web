@@ -38,6 +38,13 @@ frontend/coverage/
 frontend/.next/
 frontend/out/
 
+# ==== play-igrus ====
+play-igrus/frontend/node_modules/
+play-igrus/frontend/dist/
+play-igrus/frontend/styled-system/
+play-igrus/backend/play-server
+play-igrus/backend/data/
+
 # npm / yarn / pnpm
 npm-debug.log*
 yarn-debug.log*
@@ -68,3 +75,5 @@ backend/src/main/resources/static/openapi.yaml
 
 MEMO.md
 TODO.md
+.obsidian/
+doc/

@@ -1,0 +1,218 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { css } from "styled-system/css";
+import { flex } from "styled-system/patterns";
+import { ApiError, submitProject } from "../api/client";
+import RequireLogin from "../components/RequireLogin";
+import { SUGGESTED_CATEGORIES } from "../components/category";
+import { field, input, label, primaryBtn } from "../components/formStyles";
+
+interface Form {
+  title: string;
+  description: string;
+  body: string;
+  url: string;
+  category: string;
+  thumbnail: FileList;
+  banner: FileList;
+}
+
+export default function SubmitPage() {
+  return (
+    <RequireLogin>
+      <SubmitForm />
+    </RequireLogin>
+  );
+}
+
+function SubmitForm() {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<Form>({ defaultValues: { category: SUGGESTED_CATEGORIES[0] } });
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const desc = watch("description") ?? "";
+  const thumbFile = watch("thumbnail")?.[0];
+  const bannerFile = watch("banner")?.[0];
+
+  const onSubmit = async (data: Form) => {
+    setError("");
+    const form = new FormData();
+    form.set("title", data.title);
+    form.set("description", data.description);
+    form.set("body", data.body);
+    form.set("url", data.url);
+    form.set("category", data.category);
+    if (data.thumbnail?.[0]) form.set("thumbnail", data.thumbnail[0]);
+    if (data.banner?.[0]) form.set("banner", data.banner[0]);
+    try {
+      await submitProject(form);
+      navigate("/my");
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "제출에 실패했습니다");
+    }
+  };
+
+  return (
+    <div className={css({ maxW: "lg", mx: "auto" })}>
+      <h1 className={css({ fontSize: "2xl", fontWeight: "800", mb: "1" })}>작품 출시</h1>
+      <p className={css({ fontSize: "sm", color: "gray.500", mb: "6" })}>
+        운영진 승인 후 메인에 공개돼요
+      </p>
+
+      <form onSubmit={handleSubmit(onSubmit)} className={flex({ direction: "column", gap: "5" })}>
+        <div className={field}>
+          <label htmlFor="title" className={label}>
+            제목
+          </label>
+          <input
+            id="title"
+            className={input}
+            {...register("title", {
+              required: "제목을 입력해주세요",
+              maxLength: { value: 100, message: "제목은 100자 이내예요" },
+            })}
+          />
+          {errors.title && <p className={errText}>{errors.title.message}</p>}
+        </div>
+
+        <div className={field}>
+          <label htmlFor="description" className={label}>
+            설명{" "}
+            <span className={css({ color: "gray.400", fontWeight: "400" })}>({desc.length}/50)</span>
+          </label>
+          <input
+            id="description"
+            maxLength={50}
+            placeholder="카드에 보이는 한 줄 소개"
+            className={input}
+            {...register("description", {
+              required: "설명을 입력해주세요",
+              maxLength: { value: 50, message: "설명은 50자 이내예요" },
+            })}
+          />
+          {errors.description && <p className={errText}>{errors.description.message}</p>}
+        </div>
+
+        <div className={field}>
+          <label htmlFor="body" className={label}>
+            본문{" "}
+            <span className={css({ color: "gray.400", fontWeight: "400" })}>(마크다운)</span>
+          </label>
+          <textarea
+            id="body"
+            rows={10}
+            placeholder={"# 내 작품 소개\n\n마크다운으로 자유롭게 작성해요"}
+            className={`${input} ${css({ resize: "vertical", fontFamily: "mono", fontSize: "sm" })}`}
+            {...register("body")}
+          />
+          {errors.body && <p className={errText}>{errors.body.message}</p>}
+        </div>
+
+        <div className={field}>
+          <label htmlFor="url" className={label}>
+            작품 주소
+          </label>
+          <input
+            id="url"
+            type="url"
+            inputMode="url"
+            placeholder="https://"
+            className={input}
+            {...register("url", {
+              required: "작품 주소를 입력해주세요",
+              pattern: { value: /^https?:\/\/.+/, message: "http:// 또는 https:// 로 시작해야 해요" },
+            })}
+          />
+          {errors.url && <p className={errText}>{errors.url.message}</p>}
+        </div>
+
+        <div className={field}>
+          <label htmlFor="category" className={label}>
+            분류
+          </label>
+          <input
+            id="category"
+            list="category-suggestions"
+            className={input}
+            {...register("category", {
+              required: "분류를 입력해주세요",
+              maxLength: { value: 20, message: "분류는 20자 이내예요" },
+            })}
+          />
+          <datalist id="category-suggestions">
+            {SUGGESTED_CATEGORIES.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+          {errors.category && <p className={errText}>{errors.category.message}</p>}
+        </div>
+
+        <FilePicker
+          id="thumbnail"
+          title="정방형 썸네일 (선택)"
+          hint="카드에 보이는 정사각형 이미지 · 4MB 이하"
+          file={thumbFile}
+          registration={register("thumbnail")}
+          previewClass={css({ w: "24", h: "24", objectFit: "cover", rounded: "lg" })}
+        />
+        <FilePicker
+          id="banner"
+          title="배너 (선택)"
+          hint="상세 화면 위에 보이는 가로 이미지 · 4MB 이하"
+          file={bannerFile}
+          registration={register("banner")}
+          previewClass={css({ w: "full", maxH: "32", objectFit: "cover", rounded: "lg" })}
+        />
+
+        {error && <p className={errText}>{error}</p>}
+
+        <button type="submit" disabled={isSubmitting} className={primaryBtn}>
+          {isSubmitting ? "제출 중…" : "출시 신청"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function FilePicker({
+  id,
+  title,
+  hint,
+  file,
+  registration,
+  previewClass,
+}: {
+  id: string;
+  title: string;
+  hint: string;
+  file?: File;
+  registration: object;
+  previewClass: string;
+}) {
+  return (
+    <div className={field}>
+      <label htmlFor={id} className={label}>
+        {title}
+      </label>
+      <input
+        id={id}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className={css({ fontSize: "sm" })}
+        {...registration}
+      />
+      <p className={css({ fontSize: "xs", color: "gray.400", mt: "1" })}>{hint}</p>
+      {file && (
+        <img src={URL.createObjectURL(file)} alt="미리보기" className={previewClass} />
+      )}
+    </div>
+  );
+}
+
+const errText = css({ fontSize: "xs", color: "red.500", mt: "1" });

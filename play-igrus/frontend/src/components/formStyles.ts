@@ -1,0 +1,28 @@
+import { css } from "styled-system/css";
+
+export const field = css({ display: "flex", flexDirection: "column" });
+
+export const label = css({ fontSize: "sm", fontWeight: "600", mb: "1.5" });
+
+export const input = css({
+  border: "1px solid",
+  borderColor: "gray.300",
+  rounded: "lg",
+  px: "3",
+  py: "2.5",
+  fontSize: "md", // 16px 미만이면 iOS 사파리가 포커스 시 화면을 확대한다
+  bg: "white",
+  _focus: { outline: "2px solid", outlineColor: "indigo.500", borderColor: "transparent" },
+});
+
+export const primaryBtn = css({
+  bg: "indigo.600",
+  color: "white",
+  py: "3",
+  rounded: "xl",
+  fontSize: "md",
+  fontWeight: "700",
+  cursor: "pointer",
+  _hover: { bg: "indigo.700" },
+  _disabled: { opacity: 0.6, cursor: "not-allowed" },
+});
