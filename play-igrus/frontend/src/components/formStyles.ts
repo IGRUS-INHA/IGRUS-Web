@@ -20,13 +20,16 @@ export const requiredMark = css({
 
 export const input = css({
   border: "1px solid",
-  borderColor: "gray.300",
-  rounded: "lg",
-  px: "3",
+  borderColor: "gray.200",
+  rounded: "xl",
+  px: "3.5",
   py: "2.5",
   fontSize: "md", // 16px 미만이면 iOS 사파리가 포커스 시 화면을 확대한다
-  bg: "white",
-  _focus: { outline: "2px solid", outlineColor: "indigo.500", borderColor: "transparent" },
+  bg: "gray.50",
+  transition: "border-color 0.15s, background 0.15s",
+  _hover: { borderColor: "gray.300" },
+  _focus: { outline: "2px solid", outlineColor: "indigo.500", borderColor: "transparent", bg: "white" },
+  _placeholder: { color: "gray.400" },
 });
 
 export const primaryBtn = css({

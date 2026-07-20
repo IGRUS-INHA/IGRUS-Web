@@ -30,14 +30,14 @@ export default function ProfilePage() {
 
 /** 수정 불가 항목(학번/이름) 표시 — 입력칸처럼 보이되 회색으로 잠긴 느낌 */
 const readOnlyValue = css({
-  px: "3",
-  py: "2",
-  rounded: "lg",
-  bg: "gray.50",
+  px: "3.5",
+  py: "2.5",
+  rounded: "xl",
+  bg: "gray.100",
   border: "1px solid",
   borderColor: "gray.200",
   color: "gray.500",
-  fontSize: "sm",
+  fontSize: "md",
 });
 
 /** 공개 프로필 편집 — 사진/닉네임/자기소개/링크. 학번·이름은 읽기 전용. */
@@ -137,19 +137,22 @@ function ProfileEditor() {
         bg: "white",
         border: "1px solid",
         borderColor: "gray.200",
-        rounded: "xl",
-        p: "4",
+        rounded: "2xl",
+        overflow: "hidden",
       })}
     >
-      <h1 className={css({ fontSize: "2xl", fontWeight: "800", mb: "1" })}>내 정보</h1>
-      <p className={css({ fontSize: "sm", color: "gray.500", mb: "4" })}>
-        작품에 표시되는 공개 프로필이에요.
-      </p>
+      <div className={css({ px: "6", pt: "7", pb: "5" })}>
+        <h1 className={css({ fontSize: "2xl", fontWeight: "800", letterSpacing: "tight" })}>내 정보</h1>
+        <p className={css({ fontSize: "sm", color: "gray.500", mt: "1" })}>
+          작품에 표시되는 공개 프로필이에요.
+        </p>
+      </div>
 
-      {!loaded ? (
-        <p className={css({ color: "gray.400", fontSize: "sm", py: "4" })}>불러오는 중…</p>
-      ) : (
-        <div className={flex({ direction: "column", gap: "4" })}>
+      <div className={css({ px: "6", pt: "1", pb: "6" })}>
+        {!loaded ? (
+          <p className={css({ color: "gray.400", fontSize: "sm", py: "4" })}>불러오는 중…</p>
+        ) : (
+          <div className={flex({ direction: "column", gap: "4" })}>
           {/* 학번·본명은 여기서 못 바꾼다 — 동아리 가입 정보라 운영진 문의 */}
           <div className={flex({ gap: "3" })}>
             <div className={`${field} ${css({ flex: 1 })}`}>
@@ -169,16 +172,16 @@ function ProfileEditor() {
                   src={imageSrc(avatarUrl)}
                   alt="프로필 사진"
                   className={css({
-                    w: "40",
-                    h: "40",
-                    rounded: "xl",
+                    w: "24",
+                    h: "24",
+                    rounded: "2xl",
                     objectFit: "cover",
                     border: "1px solid",
                     borderColor: "gray.200",
                   })}
                 />
               ) : (
-                <AvatarPlaceholder size="40" rounded="xl" />
+                <AvatarPlaceholder size="24" rounded="2xl" />
               )}
               <div className={flex({ gap: "3", align: "center" })}>
                 <button
@@ -187,7 +190,7 @@ function ProfileEditor() {
                   className={css({
                     px: "4",
                     py: "2",
-                    rounded: "lg",
+                    rounded: "full",
                     fontSize: "sm",
                     fontWeight: "700",
                     bg: "gray.100",
@@ -332,9 +335,9 @@ function ProfileEditor() {
               alignSelf: "flex-end",
               bg: "indigo.600",
               color: "white",
-              px: "5",
-              py: "2",
-              rounded: "lg",
+              px: "6",
+              py: "9px",
+              rounded: "full",
               fontSize: "sm",
               fontWeight: "700",
               cursor: "pointer",
@@ -344,8 +347,9 @@ function ProfileEditor() {
           >
             {saving ? "저장 중…" : "저장"}
           </button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
