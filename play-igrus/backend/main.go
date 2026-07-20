@@ -67,6 +67,7 @@ func main() {
 	// 로그인 필요
 	mux.HandleFunc("POST /api/projects", s.auth.requireLogin(s.createProject))
 	mux.HandleFunc("PUT /api/projects/{id}", s.auth.requireLogin(s.updateProject))
+	mux.HandleFunc("PUT /api/projects/{id}/visibility", s.auth.requireLogin(s.setVisibility))
 	mux.HandleFunc("GET /api/projects/mine", s.auth.requireLogin(s.listMine))
 
 	// 운영진 전용

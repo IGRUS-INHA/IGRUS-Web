@@ -64,8 +64,18 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
     (클릭수·score 유지), 반려 시 이력에만 기록. 배너 제거는 미지원(교체만).
   - **미승인작**(심사중/반려): 프로젝트 행도 최신 내용으로 동기화되고 다시 심사 대기.
 - `/my` 는 라이브 버전(vN 뱃지)과 심사중/반려된 수정 버전을 함께 보여준다.
-- 구 스키마 이관은 부팅 시 idempotent migrate: `projects.version` 컬럼 추가, 기존 행
-  v1 백필, 구 `project_revisions` → 다음 버전 이관 후 테이블 제거.
+- 구 스키마 이관은 부팅 시 idempotent migrate: `projects.version`·`hidden` 컬럼 추가,
+  기존 행 v1 백필, 구 `project_revisions` → 다음 버전 이관 후 테이블 제거.
+
+### 공개/비공개 (작성자 토글)
+
+- 작성자가 본인 **승인작**을 공개 목록에서 내리거나 다시 올릴 수 있다
+  (`PUT /api/projects/{id}/visibility`, body `{"hidden": true|false}`).
+- `projects.hidden` — 심사 상태(status)와 **별개 축**. 숨겨도 승인 상태·클릭수·score 는
+  유지되고, 재공개는 재심사 없이 즉시 반영된다.
+- 숨김 중에는 메인 목록·상세·작성자 다이얼로그의 승인작 목록에서 제외되고 클릭 집계도
+  차단된다 (score 오염 방지). 랭킹 배치는 그대로 돈다.
+- `/my` 에서는 계속 보이며 "비공개" 뱃지 + 숨기기/공개하기 버튼(확인 다이얼로그) 표시.
 
 ## 랭킹 (인기순)
 
@@ -86,7 +96,8 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
 | `POST /api/projects/{id}/click` | 공개 | 클릭 집계 (204) |
 | `POST /api/projects` | 로그인 | multipart 제출 → pending |
 | `PUT /api/projects/{id}` | 로그인(본인) | 수정 — 승인작은 수정본 대기, 그 외 즉시 반영 후 pending |
-| `GET /api/projects/mine` | 로그인 | 내 제출 현황 (반려 사유·수정본 상태 포함) |
+| `PUT /api/projects/{id}/visibility` | 로그인(본인) | 승인작 공개/비공개 토글 (`{"hidden": bool}`) |
+| `GET /api/projects/mine` | 로그인 | 내 제출 현황 (반려 사유·수정본 상태·`hidden` 포함) |
 | `GET /api/admin/projects?status=` | 운영진 | 검수 목록 — 버전 이력 단위 (기본 pending) |
 | `POST /api/admin/projects/{id}/approve` | 운영진 | 승인 — 신규는 공개, 수정 요청은 라이브 반영 |
 | `POST /api/admin/projects/{id}/reject` | 운영진 | 반려 (`{reason}` 선택) — 수정 요청은 라이브 유지 |
@@ -108,7 +119,8 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
 - `/edit/{id}`: 제출 폼 재사용 — 대기 중 수정본이 있으면 그 내용을 프리필.
 - `/profile`: 공개 프로필(내 정보) 편집 — 닉네임/자기소개/링크 +·🗑 (igrus `users`
   테이블에 저장, `PATCH /api/v1/mypage/profile` 직접 호출).
-- `/my`: 내 제출 상태 (심사중/승인됨/반려됨+사유, 수정 심사중/수정 반려 표시, 수정 버튼).
+- `/my`: 내 제출 상태 (심사중/승인됨/반려됨+사유, 수정 심사중/수정 반려 표시, 수정 버튼,
+  승인작 숨기기/공개하기 버튼 + 비공개 뱃지).
 - 헤더: 출시하기(+운영진 검수)와 프로필 아바타(스켈레톤) — 아바타 탭 →
   내 정보 / 내 작품 / 로그아웃 메뉴 (내 작품·로그아웃 버튼은 메뉴로 이동).
 - `/admin`: 운영진 검수 (대기/승인/반려 탭, 승인·반려 버튼).

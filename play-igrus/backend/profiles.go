@@ -116,7 +116,7 @@ func (s *server) getAuthor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := getProject(s.db, id)
-	if err == errNotFound || (err == nil && p.Status != "approved") {
+	if err == errNotFound || (err == nil && (p.Status != "approved" || p.Hidden)) {
 		writeErr(w, http.StatusNotFound, "작품을 찾을 수 없습니다")
 		return
 	}
@@ -138,10 +138,10 @@ func (s *server) getAuthor(w http.ResponseWriter, r *http.Request) {
 			out.Links = prof.Links
 		}
 	}
-	// 이 작성자의 다른 승인작 — 승인작만 공개 (심사중/반려 비공개)
+	// 이 작성자의 다른 승인작 — 승인작만 공개 (심사중/반려/작성자 비공개 제외)
 	if mine, err := listByStudent(s.db, p.StudentID); err == nil {
 		for _, it := range mine {
-			if it.Status == "approved" {
+			if it.Status == "approved" && !it.Hidden {
 				out.Projects = append(out.Projects, listView(it))
 			}
 		}

@@ -292,6 +292,24 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 	if err != nil || lv.Version != 3 || lv.Status != "rejected" || lv.RejectReason != "별로" {
 		t.Fatalf("v3 반려 기록이 틀림: %+v %v", lv, err)
 	}
+
+	// 작성자 비공개 → 공개 목록 제외 + 클릭 차단, 재공개 → score·클릭수 그대로 복귀
+	if err := setProjectHidden(db, id, true); err != nil {
+		t.Fatal(err)
+	}
+	if items, _ := listApprovedProjects(db, "", "popular"); len(items) != 0 {
+		t.Fatalf("비공개 작품이 공개 목록에 남음: %+v", items)
+	}
+	if err := addClick(db, id, kstTodayString()); err != errNotFound {
+		t.Errorf("비공개 작품 클릭이 막히지 않음: %v", err)
+	}
+	if err := setProjectHidden(db, id, false); err != nil {
+		t.Fatal(err)
+	}
+	items, _ = listApprovedProjects(db, "", "popular")
+	if len(items) != 1 || items[0].TotalClicks != 2 {
+		t.Fatalf("재공개 복귀가 틀림 (클릭수 유지돼야 함): %+v", items)
+	}
 }
 
 // 공개 프로필 프록시 — 닉네임이 있으면 목록/작성자 응답의 이름이 닉네임으로 바뀌고

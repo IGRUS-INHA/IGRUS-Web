@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
-import { fetchMine, imageSrc, type Project } from "../api/client";
+import { fetchMine, imageSrc, setProjectVisibility, type Project } from "../api/client";
 import RequireLogin from "../components/RequireLogin";
 import { categoryColor } from "../components/category";
 
@@ -22,6 +22,7 @@ const STATUS_LABEL = {
 
 function MyList() {
   const [items, setItems] = useState<Project[] | null>(null);
+  const [confirming, setConfirming] = useState<Project | null>(null);
 
   useEffect(() => {
     fetchMine()
@@ -101,6 +102,22 @@ function MyList() {
                     >
                       {s.text}
                     </span>
+                    {p.status === "approved" && p.hidden && (
+                      <span
+                        className={css({
+                          flexShrink: 0,
+                          fontSize: "xs",
+                          fontWeight: "700",
+                          px: "2",
+                          py: "0.5",
+                          rounded: "full",
+                          bg: "gray.200",
+                          color: "gray.600",
+                        })}
+                      >
+                        비공개
+                      </span>
+                    )}
                   </div>
                   <p className={css({ fontSize: "sm", color: "gray.500", truncate: true })}>
                     {p.description}
@@ -122,29 +139,158 @@ function MyList() {
                     </p>
                   )}
                 </div>
-                <Link
-                  to={`/edit/${p.id}`}
-                  className={css({
-                    alignSelf: "center",
-                    flexShrink: 0,
-                    fontSize: "sm",
-                    fontWeight: "600",
-                    color: "indigo.600",
-                    px: "2.5",
-                    py: "1.5",
-                    rounded: "lg",
-                    border: "1px solid",
-                    borderColor: "indigo.200",
-                  })}
-                >
-                  수정
-                </Link>
+                <div className={flex({ direction: "column", gap: "1.5", alignSelf: "center", flexShrink: 0 })}>
+                  <Link
+                    to={`/edit/${p.id}`}
+                    className={css({
+                      textAlign: "center",
+                      fontSize: "sm",
+                      fontWeight: "600",
+                      color: "indigo.600",
+                      px: "2.5",
+                      py: "1.5",
+                      rounded: "lg",
+                      border: "1px solid",
+                      borderColor: "indigo.200",
+                    })}
+                  >
+                    수정
+                  </Link>
+                  {/* 공개 토글은 승인작에만 — 심사중/반려작은 애초에 비공개 */}
+                  {p.status === "approved" && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirming(p)}
+                      className={css({
+                        fontSize: "sm",
+                        fontWeight: "600",
+                        color: "gray.600",
+                        px: "2.5",
+                        py: "1.5",
+                        rounded: "lg",
+                        border: "1px solid",
+                        borderColor: "gray.300",
+                        cursor: "pointer",
+                      })}
+                    >
+                      {p.hidden ? "공개하기" : "숨기기"}
+                    </button>
+                  )}
+                </div>
               </li>
             );
           })}
         </ul>
       )}
+
+      <VisibilityDialog
+        project={confirming}
+        onClose={() => setConfirming(null)}
+        onDone={(updated) => {
+          setItems((prev) => prev?.map((it) => (it.id === updated.id ? updated : it)) ?? prev);
+          setConfirming(null);
+        }}
+      />
     </div>
+  );
+}
+
+/** 공개/비공개 확인 다이얼로그 (native <dialog> — ProjectDialog 와 같은 패턴) */
+function VisibilityDialog({
+  project,
+  onClose,
+  onDone,
+}: {
+  project: Project | null;
+  onClose: () => void;
+  onDone: (updated: Project) => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    if (project && !dialog.open) dialog.showModal();
+    if (!project && dialog.open) dialog.close();
+    setError("");
+  }, [project]);
+
+  if (!project) return null;
+  const toHidden = !project.hidden;
+
+  const submit = () => {
+    setBusy(true);
+    setProjectVisibility(project.id, toHidden)
+      .then(() => onDone({ ...project, hidden: toHidden }))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : "처리에 실패했습니다"))
+      .finally(() => setBusy(false));
+  };
+
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      onClick={(e) => {
+        if (e.target === ref.current) onClose();
+      }}
+      className={css({
+        m: "auto",
+        p: "6",
+        border: "none",
+        rounded: "2xl",
+        w: "min(360px, 92vw)",
+        _backdrop: { bg: "black/60" },
+      })}
+    >
+      <p className={css({ fontWeight: "700", mb: "2" })}>
+        {toHidden ? "작품을 숨길까요?" : "작품을 다시 공개할까요?"}
+      </p>
+      <p className={css({ fontSize: "sm", color: "gray.500", mb: "4" })}>
+        {toHidden
+          ? `‘${project.title}’이(가) 메인 목록에서 보이지 않게 돼요. 언제든 다시 공개할 수 있어요.`
+          : `‘${project.title}’이(가) 심사 없이 바로 다시 공개돼요.`}
+      </p>
+      {error && <p className={css({ fontSize: "sm", color: "red.500", mb: "3" })}>{error}</p>}
+      <div className={flex({ gap: "2", justify: "flex-end" })}>
+        <button
+          type="button"
+          onClick={onClose}
+          className={css({
+            fontSize: "sm",
+            fontWeight: "600",
+            px: "3",
+            py: "1.5",
+            rounded: "lg",
+            border: "1px solid",
+            borderColor: "gray.300",
+            color: "gray.600",
+            cursor: "pointer",
+          })}
+        >
+          취소
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={busy}
+          className={css({
+            fontSize: "sm",
+            fontWeight: "600",
+            px: "3",
+            py: "1.5",
+            rounded: "lg",
+            bg: toHidden ? "gray.700" : "indigo.600",
+            color: "white",
+            cursor: "pointer",
+            _disabled: { opacity: 0.5, cursor: "default" },
+          })}
+        >
+          {busy ? "처리 중…" : toHidden ? "숨기기" : "공개하기"}
+        </button>
+      </div>
+    </dialog>
   );
 }
 
