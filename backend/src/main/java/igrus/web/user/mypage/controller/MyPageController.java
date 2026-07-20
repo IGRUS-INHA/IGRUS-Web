@@ -25,6 +25,7 @@ import igrus.web.generated.model.ApiEmailVerificationRequest;
 import igrus.web.generated.model.ApiChangePhoneNumberRequest;
 import igrus.web.generated.model.ApiUpdateStudentIdRequest;
 import igrus.web.generated.model.ApiChangePasswordRequest;
+import igrus.web.generated.model.ApiUpdateMyProfileRequest;
 import igrus.web.generated.model.ApiWithdrawRequest;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
@@ -39,9 +40,11 @@ import igrus.web.user.mypage.dto.response.MyPostResponse;
 import igrus.web.user.mypage.service.read.GetMyCommentsService;
 import igrus.web.user.mypage.service.read.GetMyPostsService;
 import igrus.web.user.mypage.service.read.GetMyProfileService;
+import igrus.web.user.dto.ProfileLinkMapper;
 import igrus.web.user.mypage.service.write.ChangeEmailService;
 import igrus.web.user.mypage.service.write.ChangeMyPasswordService;
 import igrus.web.user.mypage.service.write.ChangePhoneNumberService;
+import igrus.web.user.mypage.service.write.UpdateMyProfileService;
 import igrus.web.user.mypage.service.write.UpdateStudentIdService;
 import igrus.web.user.mypage.service.write.VerifyEmailChangeService;
 import igrus.web.user.withdrawal.dto.request.WithdrawRequest;
@@ -75,6 +78,7 @@ public class MyPageController implements MyPageApi {
     private final ChangePhoneNumberService changePhoneNumberService;
     private final ChangeMyPasswordService changeMyPasswordService;
     private final UpdateStudentIdService updateStudentIdService;
+    private final UpdateMyProfileService updateMyProfileService;
     private final WithdrawService withdrawService;
 
     // === 프로필 ===
@@ -93,7 +97,23 @@ public class MyPageController implements MyPageApi {
                 .role(response.role() != null
                         ? ApiMyProfileResponse.RoleEnum.fromValue(response.role().name()) : null)
                 .createdAt(response.createdAt())
-                .hasTemporaryStudentId(response.hasTemporaryStudentId()));
+                .hasTemporaryStudentId(response.hasTemporaryStudentId())
+                .nickname(response.nickname())
+                .introduction(response.introduction())
+                .links(ProfileLinkMapper.toApi(response.links())));
+    }
+
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> updateMyProfile(ApiUpdateMyProfileRequest updateMyProfileRequest) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        updateMyProfileService.updateMyProfile(
+                user.userId(),
+                updateMyProfileRequest.getNickname(),
+                updateMyProfileRequest.getIntroduction(),
+                ProfileLinkMapper.fromApi(updateMyProfileRequest.getLinks())
+        );
+        return ResponseEntity.noContent().build();
     }
 
     // === 이메일 변경 ===

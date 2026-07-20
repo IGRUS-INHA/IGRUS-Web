@@ -14,6 +14,7 @@ import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
+import igrus.web.user.domain.ProfileLink;
 import igrus.web.user.domain.User;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
@@ -22,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -45,6 +48,18 @@ public class SignupService {
      * @return 회원가입 응답
      */
     public PasswordSignupResponse signup(PasswordSignupRequest request) {
+        return signup(request, null, null, null);
+    }
+
+    /**
+     * 회원가입을 처리합니다 (선택 공개 프로필 포함).
+     *
+     * @param nickname     닉네임 (선택)
+     * @param introduction 자기소개 (선택)
+     * @param links        프로필 링크 목록 (선택)
+     */
+    public PasswordSignupResponse signup(PasswordSignupRequest request,
+                                         String nickname, String introduction, List<ProfileLink> links) {
         log.info("회원가입 요청: email={}", request.email());
 
         // 중복 검증
@@ -78,6 +93,7 @@ public class SignupService {
             request.joinRoute(),
             request.customJoinRoute()
         );
+        user.updatePublicProfile(nickname, introduction, links);
         userRepository.save(user);
 
         // PasswordCredential 생성 및 저장

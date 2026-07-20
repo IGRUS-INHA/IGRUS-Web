@@ -79,16 +79,6 @@ type projectView struct {
 	Update       *projectView `json:"update,omitempty"`  // 심사 대기/반려된 최신 제출 버전
 }
 
-// authorLabel 은 "22 오유찬" 형태 — 인하대 학번(예: 12223759)은 3~4번째 자리가
-// 입학년도다. 학번 전체는 공개하지 않는다.
-func authorLabel(studentID, name string) string {
-	year := studentID
-	if len(year) >= 4 {
-		year = year[2:4]
-	}
-	return strings.TrimSpace(year + " " + name)
-}
-
 func imageURL(key string) string {
 	if key == "" {
 		return ""
@@ -97,13 +87,15 @@ func imageURL(key string) string {
 }
 
 // listView: 메인 카드용 — 본문/리다이렉트 제외 (payload 절약). 클릭수 비공개.
+// Author 는 공개 표시 이름 — 공개 응답에서는 resolveAuthors 로 닉네임이 반영된다.
+// 학번은 어떤 형태로도 노출하지 않는다.
 func listView(p row) projectView {
 	return projectView{
 		ID:           p.ID,
 		Title:        p.Title,
 		Description:  p.Description,
 		Category:     p.Category,
-		Author:       authorLabel(p.StudentID, p.AuthorName),
+		Author:       p.AuthorName,
 		ThumbnailURL: imageURL(p.ThumbnailKey),
 		CreatedAt:    p.CreatedAt,
 	}
@@ -137,7 +129,7 @@ func versionView(p row, v version) projectView {
 		Description:  v.Description,
 		Body:         v.BodyMD,
 		Category:     v.Category,
-		Author:       authorLabel(p.StudentID, p.AuthorName),
+		Author:       p.AuthorName,
 		ThumbnailURL: imageURL(v.ThumbnailKey),
 		BannerURL:    imageURL(v.BannerKey),
 		RedirectURL:  v.RedirectURL,
@@ -172,6 +164,7 @@ func (s *server) listApproved(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, "목록을 불러올 수 없습니다")
 		return
 	}
+	s.resolveAuthors(r.Context(), items) // 닉네임 표시 (서버단 폴백)
 	writeJSON(w, http.StatusOK, views(items, listView))
 }
 
@@ -191,7 +184,9 @@ func (s *server) getDetail(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, "작품을 불러올 수 없습니다")
 		return
 	}
-	writeJSON(w, http.StatusOK, detailView(p))
+	items := []row{p}
+	s.resolveAuthors(r.Context(), items) // 닉네임 표시 (서버단 폴백)
+	writeJSON(w, http.StatusOK, detailView(items[0]))
 }
 
 // POST /api/projects/{id}/click — "이동하기" 클릭 집계. 랭킹 배치의 입력이 된다.

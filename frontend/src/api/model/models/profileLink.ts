@@ -33,33 +33,23 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { MyProfileResponseRole } from "./myProfileResponseRole";
-import type { ProfileLink } from "./profileLink";
 
 /**
- * 내 프로필 정보
+ * 프로필 외부 링크 (github, linkedin, velog 등)
  */
-export interface MyProfileResponse {
-  /** 학번 */
-  studentId?: string;
-  /** 이름 */
-  name?: string;
-  /** 이메일 */
-  email?: string;
-  /** 전화번호 */
-  phoneNumber?: string;
-  /** 학과 */
-  department?: string;
-  /** 역할 */
-  role?: MyProfileResponseRole;
-  /** 가입일 */
-  createdAt?: string;
-  /** 임시 학번 사용 여부 */
-  hasTemporaryStudentId?: boolean;
-  /** 닉네임 (미설정 시 null) */
-  nickname?: string;
-  /** 자기소개 */
-  introduction?: string;
-  /** 프로필 링크 목록 */
-  links?: ProfileLink[];
+export interface ProfileLink {
+  /**
+   * 링크 라벨
+   * @minLength 1
+   * @maxLength 30
+   * @pattern .*\S.*
+   */
+  label: string;
+  /**
+   * 링크 URL (http/https 만 허용)
+   * @minLength 1
+   * @maxLength 2048
+   * @pattern ^https?://.+
+   */
+  url: string;
 }

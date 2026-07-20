@@ -33,33 +33,25 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { MyProfileResponseRole } from "./myProfileResponseRole";
 import type { ProfileLink } from "./profileLink";
 
 /**
- * 내 프로필 정보
+ * 공개 프로필(닉네임/자기소개/링크) 수정 요청 — 세 필드를 통째로 교체하며, 생략/null 은 해당 값을 비운다
  */
-export interface MyProfileResponse {
-  /** 학번 */
-  studentId?: string;
-  /** 이름 */
-  name?: string;
-  /** 이메일 */
-  email?: string;
-  /** 전화번호 */
-  phoneNumber?: string;
-  /** 학과 */
-  department?: string;
-  /** 역할 */
-  role?: MyProfileResponseRole;
-  /** 가입일 */
-  createdAt?: string;
-  /** 임시 학번 사용 여부 */
-  hasTemporaryStudentId?: boolean;
-  /** 닉네임 (미설정 시 null) */
+export interface UpdateMyProfileRequest {
+  /**
+   * 닉네임 (비우면 이름으로 표시)
+   * @maxLength 50
+   */
   nickname?: string;
-  /** 자기소개 */
+  /**
+   * 자기소개
+   * @maxLength 1000
+   */
   introduction?: string;
-  /** 프로필 링크 목록 */
+  /**
+   * 프로필 링크 목록
+   * @maxItems 10
+   */
   links?: ProfileLink[];
 }

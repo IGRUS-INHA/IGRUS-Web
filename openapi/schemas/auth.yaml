@@ -145,6 +145,22 @@ PasswordSignupRequest:
       - GENERAL_LEAVE
       - MILITARY_LEAVE
       example: ENROLLED
+    nickname:
+      type: string
+      description: 닉네임 (선택, 미설정 시 이름으로 표시)
+      example: 유찬
+      maxLength: 50
+    introduction:
+      type: string
+      description: 자기소개 (선택)
+      example: 웹을 좋아하는 개발자입니다.
+      maxLength: 1000
+    links:
+      type: array
+      description: 프로필 링크 목록 (선택)
+      items:
+        $ref: ./_common.yaml#/ProfileLink
+      maxItems: 10
     privacyConsent:
       type: boolean
       description: 개인정보 처리방침 동의 여부 (반드시 true여야 함)
@@ -307,6 +323,22 @@ TemporaryStudentIdSignupRequest:
       - GENERAL_LEAVE
       - MILITARY_LEAVE
       example: ENROLLED
+    nickname:
+      type: string
+      description: 닉네임 (선택, 미설정 시 이름으로 표시)
+      example: 유찬
+      maxLength: 50
+    introduction:
+      type: string
+      description: 자기소개 (선택)
+      example: 웹을 좋아하는 개발자입니다.
+      maxLength: 1000
+    links:
+      type: array
+      description: 프로필 링크 목록 (선택)
+      items:
+        $ref: ./_common.yaml#/ProfileLink
+      maxItems: 10
     privacyConsent:
       type: boolean
       description: 개인정보 처리방침 동의 여부

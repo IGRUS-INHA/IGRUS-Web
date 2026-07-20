@@ -33,6 +33,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
+import type { ProfileLink } from "./profileLink";
 import type { TemporaryStudentIdSignupRequestEnrollmentStatus } from "./temporaryStudentIdSignupRequestEnrollmentStatus";
 import type { TemporaryStudentIdSignupRequestGender } from "./temporaryStudentIdSignupRequestGender";
 import type { TemporaryStudentIdSignupRequestInterestsItem } from "./temporaryStudentIdSignupRequestInterestsItem";
@@ -113,6 +114,21 @@ export interface TemporaryStudentIdSignupRequest {
   grade: number;
   /** 재학 상태 */
   enrollmentStatus: TemporaryStudentIdSignupRequestEnrollmentStatus;
+  /**
+   * 닉네임 (선택, 미설정 시 이름으로 표시)
+   * @maxLength 50
+   */
+  nickname?: string;
+  /**
+   * 자기소개 (선택)
+   * @maxLength 1000
+   */
+  introduction?: string;
+  /**
+   * 프로필 링크 목록 (선택)
+   * @maxItems 10
+   */
+  links?: ProfileLink[];
   /** 개인정보 처리방침 동의 여부 */
   privacyConsent: boolean;
   /**

@@ -230,7 +230,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
             PasswordSignupRequest request = createValidRequest();
             PasswordSignupResponse response = PasswordSignupResponse.signupCompleted(VALID_EMAIL);
 
-            given(signupService.signup(any(PasswordSignupRequest.class))).willReturn(response);
+            given(signupService.signup(any(PasswordSignupRequest.class), any(), any(), any())).willReturn(response);
 
             // when & then
             mockMvc.perform(post(SIGNUP_URL)
@@ -484,7 +484,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
             // given
             PasswordSignupRequest request = createValidRequest();
 
-            given(signupService.signup(any(PasswordSignupRequest.class)))
+            given(signupService.signup(any(PasswordSignupRequest.class), any(), any(), any()))
                     .willThrow(new DuplicateStudentIdException());
 
             // when & then
@@ -502,7 +502,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
             // given
             PasswordSignupRequest request = createValidRequest();
 
-            given(signupService.signup(any(PasswordSignupRequest.class)))
+            given(signupService.signup(any(PasswordSignupRequest.class), any(), any(), any()))
                     .willThrow(new DuplicateEmailException());
 
             // when & then
@@ -520,7 +520,7 @@ class PasswordAuthControllerSignupTest extends PasswordAuthControllerTestBase {
             // given
             PasswordSignupRequest request = createValidRequest();
 
-            given(signupService.signup(any(PasswordSignupRequest.class)))
+            given(signupService.signup(any(PasswordSignupRequest.class), any(), any(), any()))
                     .willThrow(new DuplicatePhoneNumberException());
 
             // when & then

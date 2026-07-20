@@ -50,6 +50,7 @@ func main() {
 	// 공개
 	mux.HandleFunc("GET /api/projects", s.listApproved)
 	mux.HandleFunc("GET /api/projects/{id}", s.getDetail)
+	mux.HandleFunc("GET /api/projects/{id}/author", s.getAuthor)
 	mux.HandleFunc("POST /api/projects/{id}/click", s.click)
 	mux.HandleFunc("GET /images/{key}", s.serveImage)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {

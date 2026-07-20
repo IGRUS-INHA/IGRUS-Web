@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,7 +22,9 @@ import java.util.List;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -82,5 +85,41 @@ class MyPageControllerSmokeTest extends ServiceIntegrationTestBase {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+    }
+
+    @DisplayName("PATCH /api/v1/mypage/profile - 공개 프로필 수정 후 조회에 반영된다 (204/200)")
+    @Test
+    void updateMyProfile_ThenGetReflectsChanges() throws Exception {
+        mockMvc.perform(patch("/api/v1/mypage/profile")
+                        .with(withAuth(member))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nickname":"유찬","introduction":"안녕하세요",
+                                 "links":[{"label":"github","url":"https://github.com/u"}]}
+                                """))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/v1/mypage/profile")
+                        .with(withAuth(member))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nickname").value("유찬"))
+                .andExpect(jsonPath("$.introduction").value("안녕하세요"))
+                .andExpect(jsonPath("$.links[0].url").value("https://github.com/u"))
+                .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+    }
+
+    @DisplayName("PATCH /api/v1/mypage/profile - http/https 가 아닌 링크 URL 은 400")
+    @Test
+    void updateMyProfile_WithInvalidLinkUrl_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(patch("/api/v1/mypage/profile")
+                        .with(withAuth(member))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"links":[{"label":"x","url":"javascript:alert(1)"}]}
+                                """))
+                .andExpect(status().isBadRequest());
     }
 }

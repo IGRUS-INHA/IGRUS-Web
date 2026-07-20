@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -24,6 +24,9 @@ import {
   Copy,
   CircleCheck,
   LogIn,
+  Plus,
+  Trash2,
+  Link as LinkIcon,
 } from "lucide-react";
 import {
   useSignup,
@@ -112,6 +115,24 @@ const signupSchema = z
     joinRoute: z.string().min(1, "가입 경로를 선택해주세요."),
     customJoinRoute: z.string().optional(),
     motivation: z.string().optional(),
+    nickname: z.string().max(50, "닉네임은 50자 이내여야 합니다.").optional(),
+    introduction: z
+      .string()
+      .max(1000, "자기소개는 1000자 이내여야 합니다.")
+      .optional(),
+    links: z
+      .array(
+        z.object({
+          label: z
+            .string()
+            .min(1, "라벨을 입력해주세요.")
+            .max(30, "라벨은 30자 이내여야 합니다."),
+          url: z
+            .string()
+            .regex(/^https?:\/\/.+/, "http/https 링크만 입력할 수 있습니다."),
+        }),
+      )
+      .max(10, "링크는 최대 10개까지 등록할 수 있습니다."),
     privacyConsent: z.literal(true, {
       message: "개인정보 처리방침에 동의해주세요.",
     }),
@@ -175,6 +196,7 @@ export default function SignupPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     trigger,
     watch,
@@ -204,11 +226,16 @@ export default function SignupPage() {
       joinRoute: "",
       customJoinRoute: "",
       motivation: "",
+      nickname: "",
+      introduction: "",
+      links: [],
       privacyConsent: undefined as unknown as true,
       termsConsent: undefined as unknown as true,
     },
     mode: "onTouched",
   });
+
+  const linkFields = useFieldArray({ control, name: "links" });
 
   const watchedPassword = watch("password");
   const selectedWishes = watch("wishes") ?? [];
@@ -409,6 +436,9 @@ export default function SignupPage() {
         joinRoute: joinRouteToEnum[data.joinRoute] ?? "OTHER",
         customJoinRoute:
           data.joinRoute === "기타" ? data.customJoinRoute : undefined,
+        nickname: data.nickname || undefined,
+        introduction: data.introduction || undefined,
+        links: data.links.length > 0 ? data.links : undefined,
         privacyConsent: data.privacyConsent,
         verificationToken,
       };
@@ -1396,6 +1426,90 @@ export default function SignupPage() {
                         "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
                       )}
                     />
+                  </div>
+                </FormField>
+
+                <FormField
+                  label="닉네임 (선택)"
+                  error={errors.nickname?.message}
+                >
+                  <Input
+                    {...register("nickname")}
+                    placeholder="공개 프로필에 표시될 이름 (미설정 시 이름으로 표시)"
+                    onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+                  />
+                </FormField>
+
+                <FormField
+                  label="자기소개 (선택)"
+                  error={errors.introduction?.message}
+                >
+                  <textarea
+                    {...register("introduction")}
+                    placeholder="공개 프로필에 표시될 자기소개를 작성해주세요"
+                    rows={3}
+                    className={cn(
+                      "w-full rounded-r2 border border-input bg-transparent px-s3 py-s2 text-sm",
+                      "placeholder:text-muted-foreground resize-none transition-all outline-none",
+                      "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
+                    )}
+                  />
+                </FormField>
+
+                <FormField label="프로필 링크 (선택)">
+                  <div className="space-y-s2">
+                    {linkFields.fields.map((field, index) => (
+                      <div key={field.id} className="space-y-s1">
+                        <div className="flex items-center gap-s2">
+                          <Input
+                            {...register(`links.${index}.label`)}
+                            placeholder="github"
+                            className="w-28 shrink-0"
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && e.preventDefault()
+                            }
+                          />
+                          <Input
+                            {...register(`links.${index}.url`)}
+                            placeholder="https://github.com/username"
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && e.preventDefault()
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => linkFields.remove(index)}
+                            className="shrink-0 p-s2 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                            aria-label="링크 삭제"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        {(errors.links?.[index]?.label ??
+                          errors.links?.[index]?.url) && (
+                          <p className="text-xs text-destructive">
+                            {errors.links[index]?.label?.message ??
+                              errors.links[index]?.url?.message}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                    {linkFields.fields.length < 10 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          linkFields.append({ label: "", url: "" })
+                        }
+                        className={cn(
+                          "flex items-center gap-s1 text-sm text-muted-foreground",
+                          "hover:text-primary transition-colors cursor-pointer",
+                        )}
+                      >
+                        <Plus size={16} />
+                        <LinkIcon size={14} />
+                        링크 추가
+                      </button>
+                    )}
                   </div>
                 </FormField>
               </div>

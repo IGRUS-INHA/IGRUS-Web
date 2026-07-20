@@ -14,6 +14,7 @@ import igrus.web.security.auth.password.dto.response.PasswordSignupResponse;
 import igrus.web.security.auth.password.repository.PasswordCredentialRepository;
 import igrus.web.user.domain.Interest;
 import igrus.web.user.domain.JoinRoute;
+import igrus.web.user.domain.ProfileLink;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.TempStudentIdNotAvailableException;
 import igrus.web.user.repository.UserRepository;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 임시 학번 회원가입 서비스.
@@ -57,6 +59,18 @@ public class TempStudentIdSignupService {
      * @return 회원가입 응답 (임시 학번 포함)
      */
     public PasswordSignupResponse signup(TemporaryStudentIdSignupRequest request) {
+        return signup(request, null, null, null);
+    }
+
+    /**
+     * 임시 학번으로 회원가입을 처리합니다 (선택 공개 프로필 포함).
+     *
+     * @param nickname     닉네임 (선택)
+     * @param introduction 자기소개 (선택)
+     * @param links        프로필 링크 목록 (선택)
+     */
+    public PasswordSignupResponse signup(TemporaryStudentIdSignupRequest request,
+                                         String nickname, String introduction, List<ProfileLink> links) {
         log.info("임시 학번 회원가입 요청: email={}", request.email());
 
         // 1~2월 기간 검증
@@ -96,6 +110,7 @@ public class TempStudentIdSignupService {
                 request.joinRoute(),
                 request.customJoinRoute()
         );
+        user.updatePublicProfile(nickname, introduction, links);
         userRepository.save(user);
 
         // PasswordCredential 생성 및 저장

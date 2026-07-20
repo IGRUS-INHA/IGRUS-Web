@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { css } from "styled-system/css";
 import { flex, grid } from "styled-system/patterns";
 import { fetchProject, fetchProjects, imageSrc, type Project, type SortKey } from "../api/client";
+import AuthorDialog from "../components/AuthorDialog";
 import ProjectDialog from "../components/ProjectDialog";
 import { categoryColor } from "../components/category";
 
@@ -12,9 +13,9 @@ const SORTS: { key: SortKey; label: string }[] = [
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [category, setCategory] = useState("");
   const [sort, setSort] = useState<SortKey>("popular");
   const [selected, setSelected] = useState<Project | null>(null);
+  const [authorFor, setAuthorFor] = useState<number>(); // 작성자 다이얼로그 대상 프로젝트 id
   const [loading, setLoading] = useState(true);
 
   // 정렬은 서버가 한다 (클릭수/score 는 외부 비공개라 클라이언트 정렬 불가)
@@ -25,12 +26,6 @@ export default function HomePage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [sort]);
-
-  const categories = useMemo(
-    () => [...new Set(projects.map((p) => p.category))],
-    [projects],
-  );
-  const visible = category ? projects.filter((p) => p.category === category) : projects;
 
   const open = (p: Project) => {
     setSelected(p); // 목록 데이터로 즉시 열고
@@ -56,35 +51,25 @@ export default function HomePage() {
 
   return (
     <>
-      {/* 정렬 + 분류 필터 칩 */}
+      {/* 정렬 칩 (분류 필터는 제거 — 스펙) */}
       <div className={flex({ gap: "2", align: "center", overflowX: "auto", pb: "3", scrollbar: "hidden" })}>
         {SORTS.map((s) => (
           <button key={s.key} type="button" onClick={() => setSort(s.key)} className={chip(sort === s.key)}>
             {s.label}
           </button>
         ))}
-        {categories.length > 1 && (
-          <>
-            <span className={css({ flexShrink: 0, w: "1px", h: "5", bg: "gray.200" })} />
-            {["", ...categories].map((c) => (
-              <button key={c} type="button" onClick={() => setCategory(c)} className={chip(category === c)}>
-                {c || "전체"}
-              </button>
-            ))}
-          </>
-        )}
       </div>
 
       {loading ? (
         <p className={emptyStyle}>불러오는 중…</p>
-      ) : visible.length === 0 ? (
+      ) : projects.length === 0 ? (
         <p className={emptyStyle}>아직 등록된 작품이 없어요</p>
       ) : (
         <div className={grid({ columns: { base: 2, sm: 3, md: 4 }, gap: { base: "3", sm: "4" } })}>
-          {visible.map((p) => (
-            <button
+          {projects.map((p) => (
+            /* 작성자 버튼이 안에 있어 button 중첩을 피하려고 div+onClick (HTML 유효성) */
+            <div
               key={p.id}
-              type="button"
               onClick={() => open(p)}
               className={css({
                 textAlign: "left",
@@ -100,13 +85,31 @@ export default function HomePage() {
             >
               {/* 정방형 썸네일 (스펙) — 없으면 분류 색 플레이스홀더 */}
               <div
-                className={css({ aspectRatio: "1", bg: "gray.100" })}
+                className={css({ pos: "relative", aspectRatio: "1", bg: "gray.100" })}
                 style={
                   p.thumbnailUrl
                     ? undefined
                     : { background: `linear-gradient(135deg, ${categoryColor(p.category)}, #1e1b4b)` }
                 }
               >
+                {/* 분류 뱃지 (앱/게임) */}
+                <span
+                  className={css({
+                    pos: "absolute",
+                    top: "2",
+                    left: "2",
+                    zIndex: 1,
+                    fontSize: "xs",
+                    fontWeight: "700",
+                    color: "white",
+                    px: "2",
+                    py: "0.5",
+                    rounded: "full",
+                  })}
+                  style={{ background: categoryColor(p.category) }}
+                >
+                  {p.category}
+                </span>
                 {p.thumbnailUrl ? (
                   <img
                     src={imageSrc(p.thumbnailUrl)}
@@ -145,17 +148,38 @@ export default function HomePage() {
                 >
                   {p.description}
                 </p>
-                {/* 작성자 — 예: "22 오유찬" */}
-                <p className={css({ fontSize: "xs", color: "gray.400", mt: "1", truncate: true })}>
+                {/* 작성자 (닉네임 폴백은 서버가) — 탭하면 프로필 다이얼로그 */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation(); // 카드 열림 방지
+                    setAuthorFor(p.id);
+                  }}
+                  className={css({
+                    display: "block",
+                    maxW: "full",
+                    fontSize: "xs",
+                    color: "gray.400",
+                    mt: "1",
+                    truncate: true,
+                    cursor: "pointer",
+                    _hover: { color: "gray.600", textDecoration: "underline" },
+                  })}
+                >
                   {p.author}
-                </p>
+                </button>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}
 
-      <ProjectDialog project={selected} onClose={() => setSelected(null)} />
+      <ProjectDialog
+        project={selected}
+        onClose={() => setSelected(null)}
+        onAuthor={() => selected && setAuthorFor(selected.id)}
+      />
+      <AuthorDialog projectId={authorFor} onClose={() => setAuthorFor(undefined)} />
     </>
   );
 }

@@ -8,10 +8,12 @@ import { categoryColor } from "./category";
 interface Props {
   project: Project | null;
   onClose: () => void;
+  /** 작성자 탭 → 작성자 프로필 다이얼로그 열기 */
+  onAuthor?: () => void;
 }
 
 /** 작품 상세 — 모바일은 풀스크린 시트, 데스크톱은 다이얼로그 (native <dialog>) */
-export default function ProjectDialog({ project, onClose }: Props) {
+export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -23,8 +25,12 @@ export default function ProjectDialog({ project, onClose }: Props) {
 
   if (!project) return null;
 
-  // 배너 없으면 썸네일로 대체 (그래도 없으면 분류 색 그라데이션)
-  const banner = imageSrc(project.bannerUrl || project.thumbnailUrl);
+  // 배너 없으면 썸네일로 대체 (그래도 없으면 분류 색 그라데이션).
+  // 상세 응답으로 배너가 뒤늦게 오면 src 교체 대신 썸네일 위에 로드 완료 후
+  // 페이드인한다 — src 교체는 로딩 동안 빈 화면이 보여 플리커가 난다.
+  const thumb = imageSrc(project.thumbnailUrl);
+  const banner = imageSrc(project.bannerUrl);
+  const base = thumb ?? banner;
 
   const go = () => {
     if (!project.redirectUrl) return;
@@ -57,16 +63,35 @@ export default function ProjectDialog({ project, onClose }: Props) {
         <div
           className={css({ pos: "relative", flexShrink: 0, h: { base: "40", sm: "48" } })}
           style={
-            banner
+            base
               ? undefined
               : { background: `linear-gradient(135deg, ${categoryColor(project.category)}, #1e1b4b)` }
           }
         >
-          {banner && (
+          {base && (
             <img
-              src={banner}
+              src={base}
               alt=""
               className={css({ w: "full", h: "full", objectFit: "cover" })}
+            />
+          )}
+          {banner && banner !== base && (
+            <img
+              key={banner}
+              src={banner}
+              alt=""
+              onLoad={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+              className={css({
+                pos: "absolute",
+                inset: 0,
+                w: "full",
+                h: "full",
+                objectFit: "cover",
+                opacity: 0,
+                transition: "opacity 0.25s",
+              })}
             />
           )}
           <button
@@ -103,7 +128,23 @@ export default function ProjectDialog({ project, onClose }: Props) {
               {project.category}
             </span>
           </div>
-          <p className={css({ fontSize: "sm", color: "gray.500", mt: "1" })}>{project.author}</p>
+          {/* 작성자 탭 → 프로필 다이얼로그 */}
+          <button
+            type="button"
+            onClick={onAuthor}
+            className={css({
+              fontSize: "sm",
+              color: "gray.500",
+              mt: "1",
+              cursor: "pointer",
+              textDecoration: "underline",
+              textDecorationColor: "gray.300",
+              textUnderlineOffset: "3px",
+              _hover: { color: "gray.700" },
+            })}
+          >
+            {project.author}
+          </button>
         </div>
 
         {/* 마크다운 본문 (스크롤) */}
