@@ -48,7 +48,9 @@ export default function Layout() {
               alt=""
               className={css({ h: "8", w: "8", rounded: "md", objectFit: "cover" })}
             />
-            Play <span className={css({ color: "indigo.600" })}>Inha</span>
+            <span>
+              Play <span className={css({ color: "indigo.600" })}>Inha</span>
+            </span>
           </Link>
 
           <nav className={flex({ align: "center", gap: "3", fontSize: "sm" })}>

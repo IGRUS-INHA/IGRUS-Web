@@ -21,18 +21,31 @@
 
 1. **가입 유형 선택 화면**: 첫 화면에서 "회원으로 가입" / "비회원으로 가입" 중 선택
    - 회원: 폼 하단(회원가입 버튼 위)에 회비 납부 안내 박스 표시 (회비 게이트 화면 제거)
-   - 비회원: 회비 안내 없이 가입. "기타" 섹션(가입 목적/관심 분야/가입 경로/가입 동기) 미노출
+   - 비회원: 회비 안내 없이 가입. 가입 목적/관심 분야/가입 경로/닉네임/자기소개 입력 영역 미노출
      - API 필수값은 프론트에서 기본값으로 전송: 관심 분야 `OTHER`, 가입 경로 `OTHER`, 가입 목적 `[]`
 2. **단일 화면 폼**: 기존 4단계(기본 정보 → 연락처 → 계정 보안 → 기타) 스텝을 제거하고 한 화면에서 모두 입력. "다음/이전" 버튼 및 스텝 인디케이터 없음
 3. **이메일 인증 수동 발송**: 이메일 입력 후 "이메일 인증하기" 버튼을 눌러야 인증 코드가 발송됨 (기존 중복 체크 통과 시 자동 발송 제거)
 4. **재발송 쿨다운 10초**: 인증 코드 재발송 대기 시간 60초 → 10초
 5. 중복(학번/이메일/전화번호) 검증은 blur 시 실시간 체크 + 제출 시 서버 에러 코드로 필드 에러 표시
 
+## 회원가입 필드 순서 변경 (2026-07-20)
+
+섹션 부제목(기본 정보/연락처/계정 보안/기타)을 모두 제거하고, 아래 순서의 단일 흐름으로 재배치했습니다:
+
+학번 → 이름 → **비밀번호/비밀번호 확인** → 성별 → 학년 → 재학상태 → 이메일(인증) → 전화번호 → 학과 → _(회원 전용)_ 가입 목적 → 관심 분야 → 가입 경로 → 닉네임(선택) → 자기소개(선택) → **개인정보 처리방침·이용약관 동의** → _(회원 전용)_ 회비 안내 → 제출
+
+- 비밀번호 입력을 폼 하단에서 이름 바로 다음으로 이동
+- 개인정보·이용약관 동의를 폼 중간에서 제출 버튼 바로 앞으로 이동
+- "가입 동기 (선택)" 텍스트 입력 필드 제거 (백엔드 optional 필드이므로 값 없이 전송)
+- "프로필 링크 (선택)" 입력 제거 (가입 시 입력받지 않으며, play-igrus 프로필에서 채움)
+
 **수동 테스트 체크리스트 (신규 플로우)**:
 
 - [ ] 가입 유형 선택 화면에서 두 버튼 모두 클릭 가능
-- [ ] 회원 선택 시: 기타 섹션 표시 + 회원가입 버튼 위 회비 안내 박스(계좌 복사 동작) 표시
-- [ ] 비회원 선택 시: 기타 섹션·회비 안내 미표시, 가입 성공 (Network: `POST .../signup` Body에 `interests: ["OTHER"]`, `joinRoute: "OTHER"`, `wishes: []`)
+- [ ] 회원 선택 시: 가입 목적/관심 분야/가입 경로/닉네임/자기소개 입력 영역 표시 + 회원가입 버튼 위 회비 안내 박스(계좌 복사 동작) 표시
+- [ ] 비회원 선택 시: 해당 입력 영역·회비 안내 미표시, 가입 성공 (Network: `POST .../signup` Body에 `interests: ["OTHER"]`, `joinRoute: "OTHER"`, `wishes: []`)
+- [ ] "가입 동기", "프로필 링크" 입력 필드가 더 이상 존재하지 않음
+- [ ] 개인정보 처리방침/이용약관 동의 체크박스가 제출 버튼 바로 위에 위치
 - [ ] 이메일 입력/도메인 변경 시 인증 메일이 자동 발송되지 않음
 - [ ] "이메일 인증하기" 클릭 시에만 발송, 재발송 버튼 10초 쿨다운
 - [ ] 이메일 미인증 상태로 회원가입 클릭 시 "이메일 인증을 완료해주세요." 표시
@@ -62,7 +75,6 @@ export class SignupPage {
   readonly departmentInput: Locator;
   readonly gradeInput: Locator;
   readonly genderSelect: Locator;
-  readonly motivationTextarea: Locator;
   readonly passwordInput: Locator;
   readonly passwordConfirmInput: Locator;
   readonly privacyConsentCheckbox: Locator;
@@ -89,8 +101,6 @@ export class SignupPage {
     this.departmentInput = page.getByPlaceholder("학과 (예: 컴퓨터공학과)");
     this.gradeInput = page.getByPlaceholder("학년 (1~4)");
     this.genderSelect = page.locator('select[name="gender"]');
-    this.motivationTextarea =
-      page.getByPlaceholder("동아리 가입 동기를 작성해주세요");
     this.passwordInput = page.locator('input[name="password"]').first();
     this.passwordConfirmInput = page.locator('input[name="passwordConfirm"]');
     this.privacyConsentCheckbox = page.locator('input[name="privacyConsent"]');
@@ -129,7 +139,6 @@ export class SignupPage {
     department: string;
     grade: string;
     gender: "MALE" | "FEMALE";
-    motivation: string;
     password: string;
     passwordConfirm: string;
   }) {
@@ -140,7 +149,6 @@ export class SignupPage {
     await this.departmentInput.fill(data.department);
     await this.gradeInput.fill(data.grade);
     await this.genderSelect.selectOption(data.gender);
-    await this.motivationTextarea.fill(data.motivation);
     await this.passwordInput.fill(data.password);
     await this.passwordConfirmInput.fill(data.passwordConfirm);
     await this.privacyConsentCheckbox.check();
@@ -268,7 +276,6 @@ export function generateUniqueUser() {
     department: "컴퓨터공학과",
     grade: "3",
     gender: "MALE" as const,
-    motivation: "프로그래밍에 관심이 많아서 지원합니다",
     password: "Test1234!@",
     passwordConfirm: "Test1234!@",
   };
@@ -692,14 +699,13 @@ test.describe("로그인", () => {
 2. 폼 입력:
    - 학번: `12345678`
    - 이름: `홍길동`
+   - 비밀번호: `Test1234!@`
+   - 비밀번호 확인: `Test1234!@`
+   - 성별: `남성` 선택
+   - 학년: `3`
    - 이메일: `test@inha.edu`
    - 전화번호: `010-1234-5678`
    - 학과: `컴퓨터공학과`
-   - 학년: `3`
-   - 성별: `남성` 선택
-   - 가입 동기: `프로그래밍에 관심이 많아서 지원합니다`
-   - 비밀번호: `Test1234!@`
-   - 비밀번호 확인: `Test1234!@`
    - 개인정보 동의: 체크
 3. "회원가입" 버튼 클릭
 4. **예상 결과**:

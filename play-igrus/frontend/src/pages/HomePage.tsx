@@ -179,7 +179,14 @@ export default function HomePage() {
         onClose={() => setSelected(null)}
         onAuthor={() => selected && setAuthorFor(selected.id)}
       />
-      <AuthorDialog projectId={authorFor} onClose={() => setAuthorFor(undefined)} />
+      <AuthorDialog
+        projectId={authorFor}
+        onClose={() => setAuthorFor(undefined)}
+        onProject={(p) => {
+          setAuthorFor(undefined);
+          open(p);
+        }}
+      />
     </>
   );
 }

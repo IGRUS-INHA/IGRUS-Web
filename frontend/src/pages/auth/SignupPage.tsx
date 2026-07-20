@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -9,7 +9,6 @@ import {
   Mail,
   Phone,
   Building2,
-  FileText,
   Eye,
   EyeOff,
   ChevronDown,
@@ -24,9 +23,6 @@ import {
   Copy,
   CircleCheck,
   LogIn,
-  Plus,
-  Trash2,
-  Link as LinkIcon,
 } from "lucide-react";
 import {
   useSignup,
@@ -114,25 +110,11 @@ const signupSchema = z
     customInterest: z.string().optional(),
     joinRoute: z.string().min(1, "가입 경로를 선택해주세요."),
     customJoinRoute: z.string().optional(),
-    motivation: z.string().optional(),
     nickname: z.string().max(50, "닉네임은 50자 이내여야 합니다.").optional(),
     introduction: z
       .string()
       .max(1000, "자기소개는 1000자 이내여야 합니다.")
       .optional(),
-    links: z
-      .array(
-        z.object({
-          label: z
-            .string()
-            .min(1, "라벨을 입력해주세요.")
-            .max(30, "라벨은 30자 이내여야 합니다."),
-          url: z
-            .string()
-            .regex(/^https?:\/\/.+/, "http/https 링크만 입력할 수 있습니다."),
-        }),
-      )
-      .max(10, "링크는 최대 10개까지 등록할 수 있습니다."),
     privacyConsent: z.literal(true, {
       message: "개인정보 처리방침에 동의해주세요.",
     }),
@@ -196,7 +178,6 @@ export default function SignupPage() {
 
   const {
     register,
-    control,
     handleSubmit,
     trigger,
     watch,
@@ -225,17 +206,13 @@ export default function SignupPage() {
       customInterest: "",
       joinRoute: "",
       customJoinRoute: "",
-      motivation: "",
       nickname: "",
       introduction: "",
-      links: [],
       privacyConsent: undefined as unknown as true,
       termsConsent: undefined as unknown as true,
     },
     mode: "onTouched",
   });
-
-  const linkFields = useFieldArray({ control, name: "links" });
 
   const watchedPassword = watch("password");
   const selectedWishes = watch("wishes") ?? [];
@@ -419,7 +396,6 @@ export default function SignupPage() {
         email: fullEmail,
         phoneNumber: formatPhoneNumber(data.phoneNumber),
         department: data.department,
-        motivation: data.motivation || undefined,
         gender: data.gender!,
         grade: data.grade!,
         enrollmentStatus: (enrollmentStatusToEnum[data.enrollmentStatus] ??
@@ -438,7 +414,6 @@ export default function SignupPage() {
           data.joinRoute === "기타" ? data.customJoinRoute : undefined,
         nickname: data.nickname || undefined,
         introduction: data.introduction || undefined,
-        links: data.links.length > 0 ? data.links : undefined,
         privacyConsent: data.privacyConsent,
         verificationToken,
       };
@@ -626,12 +601,7 @@ export default function SignupPage() {
             )}
 
             <form onSubmit={(e) => e.preventDefault()}>
-              {/* 기본 정보 */}
-              <div className="space-y-s4">
-                <h2 className="typo-h4 text-foreground flex items-center gap-s2 border-b border-border pb-s3">
-                  <User size={18} className="text-primary" />
-                  기본 정보
-                </h2>
+              <div className="space-y-s5">
                 {!useTempStudentId && (
                   <FormField
                     label="학번"
@@ -738,6 +708,83 @@ export default function SignupPage() {
                   </div>
                 </FormField>
 
+                <div className="rounded-r2 bg-muted/50 border border-border p-s4">
+                  <p className="typo-c1 text-muted-foreground">
+                    비밀번호는{" "}
+                    <strong className="text-foreground">
+                      영문, 숫자를 포함하여 8자 이상
+                    </strong>
+                    으로 설정해주세요.
+                  </p>
+                </div>
+
+                <FormField label="비밀번호" error={errors.password?.message}>
+                  <div className="relative">
+                    <Lock
+                      size={18}
+                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      {...register("password")}
+                      type={showPassword ? "text" : "password"}
+                      placeholder="비밀번호 입력"
+                      className="pl-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </FormField>
+
+                <FormField
+                  label="비밀번호 확인"
+                  error={errors.passwordConfirm?.message}
+                  success={
+                    passwordConfirmTouched &&
+                    !errors.passwordConfirm &&
+                    watch("passwordConfirm")
+                      ? "비밀번호가 일치합니다."
+                      : undefined
+                  }
+                >
+                  <div className="relative">
+                    <Lock
+                      size={18}
+                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      {...register("passwordConfirm", {
+                        onBlur: () => {
+                          setPasswordConfirmTouched(true);
+                          trigger("passwordConfirm");
+                        },
+                      })}
+                      type={showPasswordConfirm ? "text" : "password"}
+                      placeholder="비밀번호 재입력"
+                      className="pl-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() =>
+                        setShowPasswordConfirm(!showPasswordConfirm)
+                      }
+                      className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      {showPasswordConfirm ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
+                    </button>
+                  </div>
+                </FormField>
+
                 <FormField label="성별" error={errors.gender?.message}>
                   <div className="grid grid-cols-2 gap-s3">
                     {(["MALE", "FEMALE"] as const).map((g) => (
@@ -809,59 +856,6 @@ export default function SignupPage() {
                   </div>
                 </FormField>
 
-                <div className="space-y-s3 rounded-r2 border border-border p-s4">
-                  <FormField error={errors.privacyConsent?.message}>
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-s3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          {...register("privacyConsent")}
-                          className="cursor-pointer accent-primary"
-                        />
-                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                          개인정보 처리방침에 동의합니다 (필수)
-                        </span>
-                      </label>
-                      <Link
-                        to="/privacy"
-                        target="_blank"
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <ExternalLink size={16} />
-                      </Link>
-                    </div>
-                  </FormField>
-
-                  <FormField error={errors.termsConsent?.message}>
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-s3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          {...register("termsConsent")}
-                          className="cursor-pointer accent-primary"
-                        />
-                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                          이용약관에 동의합니다 (필수)
-                        </span>
-                      </label>
-                      <Link
-                        to="/terms"
-                        target="_blank"
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <ExternalLink size={16} />
-                      </Link>
-                    </div>
-                  </FormField>
-                </div>
-              </div>
-
-              {/* 연락처 & 학과 */}
-              <div className="space-y-s4 mt-s7">
-                <h2 className="typo-h4 text-foreground flex items-center gap-s2 border-b border-border pb-s3">
-                  <Mail size={18} className="text-primary" />
-                  연락처
-                </h2>
                 <FormField
                   label="이메일"
                   error={
@@ -1204,314 +1198,199 @@ export default function SignupPage() {
                     />
                   </div>
                 </FormField>
-              </div>
 
-              {/* 계정 보안 */}
-              <div className="space-y-s4 mt-s7">
-                <h2 className="typo-h4 text-foreground flex items-center gap-s2 border-b border-border pb-s3">
-                  <Lock size={18} className="text-primary" />
-                  계정 보안
-                </h2>
-                <div className="rounded-r2 bg-muted/50 border border-border p-s4">
-                  <p className="typo-c1 text-muted-foreground">
-                    비밀번호는{" "}
-                    <strong className="text-foreground">
-                      영문, 숫자를 포함하여 8자 이상
-                    </strong>
-                    으로 설정해주세요.
-                  </p>
-                </div>
-
-                <FormField label="비밀번호" error={errors.password?.message}>
-                  <div className="relative">
-                    <Lock
-                      size={18}
-                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    />
-                    <Input
-                      {...register("password")}
-                      type={showPassword ? "text" : "password"}
-                      placeholder="비밀번호 입력"
-                      className="pl-10 pr-10"
-                    />
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </FormField>
-
-                <FormField
-                  label="비밀번호 확인"
-                  error={errors.passwordConfirm?.message}
-                  success={
-                    passwordConfirmTouched &&
-                    !errors.passwordConfirm &&
-                    watch("passwordConfirm")
-                      ? "비밀번호가 일치합니다."
-                      : undefined
-                  }
+                <div
+                  className={cn(
+                    "space-y-s5",
+                    memberType !== "member" && "hidden",
+                  )}
                 >
-                  <div className="relative">
-                    <Lock
-                      size={18}
-                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    />
-                    <Input
-                      {...register("passwordConfirm", {
-                        onBlur: () => {
-                          setPasswordConfirmTouched(true);
-                          trigger("passwordConfirm");
-                        },
-                      })}
-                      type={showPasswordConfirm ? "text" : "password"}
-                      placeholder="비밀번호 재입력"
-                      className="pl-10 pr-10"
-                    />
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() =>
-                        setShowPasswordConfirm(!showPasswordConfirm)
-                      }
-                      className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                    >
-                      {showPasswordConfirm ? (
-                        <EyeOff size={18} />
-                      ) : (
-                        <Eye size={18} />
-                      )}
-                    </button>
-                  </div>
-                </FormField>
-              </div>
+                  <FormField
+                    label={WISH_TITLE}
+                    error={submitted ? errors.wishes?.message : undefined}
+                  >
+                    <div className="flex flex-wrap gap-s2">
+                      {wishOptions.map((wish) => (
+                        <button
+                          key={wish}
+                          type="button"
+                          onClick={() => handleWishToggle(wish)}
+                          className={cn(
+                            "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
+                            selectedWishes.includes(wish)
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "border-border bg-muted text-foreground hover:border-primary/50",
+                          )}
+                        >
+                          {wish}
+                        </button>
+                      ))}
+                    </div>
+                  </FormField>
 
-              {/* 기타 (회원 전용) */}
-              <div
-                className={cn(
-                  "space-y-s4 mt-s7",
-                  memberType !== "member" && "hidden",
-                )}
-              >
-                <h2 className="typo-h4 text-foreground flex items-center gap-s2 border-b border-border pb-s3">
-                  <FileText size={18} className="text-primary" />
-                  기타
-                </h2>
-                <FormField
-                  label={WISH_TITLE}
-                  error={submitted ? errors.wishes?.message : undefined}
-                >
-                  <div className="flex flex-wrap gap-s2">
-                    {wishOptions.map((wish) => (
+                  <FormField
+                    label={INTEREST_TITLE}
+                    error={submitted ? errors.interests?.message : undefined}
+                  >
+                    <div className="flex flex-wrap gap-s2">
+                      {interestOptions.map((interest) => (
+                        <button
+                          key={interest}
+                          type="button"
+                          onClick={() => handleInterestToggle(interest)}
+                          className={cn(
+                            "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
+                            selectedInterests.includes(interest)
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "border-border bg-muted text-foreground hover:border-primary/50",
+                          )}
+                        >
+                          {interest}
+                        </button>
+                      ))}
                       <button
-                        key={wish}
                         type="button"
-                        onClick={() => handleWishToggle(wish)}
+                        onClick={() => handleInterestToggle("기타")}
                         className={cn(
                           "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                          selectedWishes.includes(wish)
+                          selectedInterests.includes("기타")
                             ? "bg-primary text-primary-foreground border-primary"
                             : "border-border bg-muted text-foreground hover:border-primary/50",
                         )}
                       >
-                        {wish}
+                        기타
                       </button>
-                    ))}
-                  </div>
-                </FormField>
+                    </div>
+                    {selectedInterests.includes("기타") && (
+                      <Input
+                        {...register("customInterest")}
+                        placeholder="관심 분야를 입력해주세요"
+                        className="mt-s2"
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && e.preventDefault()
+                        }
+                      />
+                    )}
+                  </FormField>
 
-                <FormField
-                  label={INTEREST_TITLE}
-                  error={submitted ? errors.interests?.message : undefined}
-                >
-                  <div className="flex flex-wrap gap-s2">
-                    {interestOptions.map((interest) => (
+                  <FormField
+                    label={JOIN_ROUTE_TITLE}
+                    error={submitted ? errors.joinRoute?.message : undefined}
+                  >
+                    <div className="flex flex-wrap gap-s2">
+                      {joinRouteOptions.map((route) => (
+                        <button
+                          key={route}
+                          type="button"
+                          onClick={() => handleJoinRouteSelect(route)}
+                          className={cn(
+                            "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
+                            selectedJoinRoute === route
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "border-border bg-muted text-foreground hover:border-primary/50",
+                          )}
+                        >
+                          {route}
+                        </button>
+                      ))}
                       <button
-                        key={interest}
                         type="button"
-                        onClick={() => handleInterestToggle(interest)}
+                        onClick={() => handleJoinRouteSelect("기타")}
                         className={cn(
                           "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                          selectedInterests.includes(interest)
+                          selectedJoinRoute === "기타"
                             ? "bg-primary text-primary-foreground border-primary"
                             : "border-border bg-muted text-foreground hover:border-primary/50",
                         )}
                       >
-                        {interest}
+                        기타
                       </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => handleInterestToggle("기타")}
-                      className={cn(
-                        "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                        selectedInterests.includes("기타")
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border bg-muted text-foreground hover:border-primary/50",
-                      )}
-                    >
-                      기타
-                    </button>
-                  </div>
-                  {selectedInterests.includes("기타") && (
+                    </div>
+                    {selectedJoinRoute === "기타" && (
+                      <Input
+                        {...register("customJoinRoute")}
+                        placeholder="가입 경로를 입력해주세요"
+                        className="mt-s2"
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && e.preventDefault()
+                        }
+                      />
+                    )}
+                  </FormField>
+
+                  <FormField
+                    label="닉네임 (선택)"
+                    error={errors.nickname?.message}
+                  >
                     <Input
-                      {...register("customInterest")}
-                      placeholder="관심 분야를 입력해주세요"
-                      className="mt-s2"
+                      {...register("nickname")}
+                      placeholder="공개 프로필에 표시될 이름 (미설정 시 이름으로 표시)"
                       onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
                     />
-                  )}
-                </FormField>
+                  </FormField>
 
-                <FormField
-                  label={JOIN_ROUTE_TITLE}
-                  error={submitted ? errors.joinRoute?.message : undefined}
-                >
-                  <div className="flex flex-wrap gap-s2">
-                    {joinRouteOptions.map((route) => (
-                      <button
-                        key={route}
-                        type="button"
-                        onClick={() => handleJoinRouteSelect(route)}
-                        className={cn(
-                          "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                          selectedJoinRoute === route
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "border-border bg-muted text-foreground hover:border-primary/50",
-                        )}
-                      >
-                        {route}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => handleJoinRouteSelect("기타")}
-                      className={cn(
-                        "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                        selectedJoinRoute === "기타"
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border bg-muted text-foreground hover:border-primary/50",
-                      )}
-                    >
-                      기타
-                    </button>
-                  </div>
-                  {selectedJoinRoute === "기타" && (
-                    <Input
-                      {...register("customJoinRoute")}
-                      placeholder="가입 경로를 입력해주세요"
-                      className="mt-s2"
-                      onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
-                    />
-                  )}
-                </FormField>
-
-                <FormField label="가입 동기 (선택)">
-                  <div className="relative">
-                    <FileText
-                      size={18}
-                      className="absolute left-s3 top-s3 text-muted-foreground"
-                    />
+                  <FormField
+                    label="자기소개 (선택)"
+                    error={errors.introduction?.message}
+                  >
                     <textarea
-                      {...register("motivation")}
-                      placeholder="동아리 가입 동기를 작성해주세요"
-                      rows={4}
+                      {...register("introduction")}
+                      placeholder="공개 프로필에 표시될 자기소개를 작성해주세요"
+                      rows={3}
                       className={cn(
-                        "w-full rounded-r2 border border-input bg-transparent pl-10 pr-s3 py-s2 text-sm",
+                        "w-full rounded-r2 border border-input bg-transparent px-s3 py-s2 text-sm",
                         "placeholder:text-muted-foreground resize-none transition-all outline-none",
                         "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
                       )}
                     />
-                  </div>
-                </FormField>
+                  </FormField>
+                </div>
 
-                <FormField
-                  label="닉네임 (선택)"
-                  error={errors.nickname?.message}
-                >
-                  <Input
-                    {...register("nickname")}
-                    placeholder="공개 프로필에 표시될 이름 (미설정 시 이름으로 표시)"
-                    onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
-                  />
-                </FormField>
-
-                <FormField
-                  label="자기소개 (선택)"
-                  error={errors.introduction?.message}
-                >
-                  <textarea
-                    {...register("introduction")}
-                    placeholder="공개 프로필에 표시될 자기소개를 작성해주세요"
-                    rows={3}
-                    className={cn(
-                      "w-full rounded-r2 border border-input bg-transparent px-s3 py-s2 text-sm",
-                      "placeholder:text-muted-foreground resize-none transition-all outline-none",
-                      "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
-                    )}
-                  />
-                </FormField>
-
-                <FormField label="프로필 링크 (선택)">
-                  <div className="space-y-s2">
-                    {linkFields.fields.map((field, index) => (
-                      <div key={field.id} className="space-y-s1">
-                        <div className="flex items-center gap-s2">
-                          <Input
-                            {...register(`links.${index}.label`)}
-                            placeholder="github"
-                            className="w-28 shrink-0"
-                            onKeyDown={(e) =>
-                              e.key === "Enter" && e.preventDefault()
-                            }
-                          />
-                          <Input
-                            {...register(`links.${index}.url`)}
-                            placeholder="https://github.com/username"
-                            onKeyDown={(e) =>
-                              e.key === "Enter" && e.preventDefault()
-                            }
-                          />
-                          <button
-                            type="button"
-                            onClick={() => linkFields.remove(index)}
-                            className="shrink-0 p-s2 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-                            aria-label="링크 삭제"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                        {(errors.links?.[index]?.label ??
-                          errors.links?.[index]?.url) && (
-                          <p className="text-xs text-destructive">
-                            {errors.links[index]?.label?.message ??
-                              errors.links[index]?.url?.message}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                    {linkFields.fields.length < 10 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          linkFields.append({ label: "", url: "" })
-                        }
-                        className={cn(
-                          "flex items-center gap-s1 text-sm text-muted-foreground",
-                          "hover:text-primary transition-colors cursor-pointer",
-                        )}
+                <div className="space-y-s3 rounded-r2 border border-border p-s4">
+                  <FormField error={errors.privacyConsent?.message}>
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-s3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          {...register("privacyConsent")}
+                          className="cursor-pointer accent-primary"
+                        />
+                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                          개인정보 처리방침에 동의합니다 (필수)
+                        </span>
+                      </label>
+                      <Link
+                        to="/privacy"
+                        target="_blank"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        <Plus size={16} />
-                        <LinkIcon size={14} />
-                        링크 추가
-                      </button>
-                    )}
-                  </div>
-                </FormField>
+                        <ExternalLink size={16} />
+                      </Link>
+                    </div>
+                  </FormField>
+
+                  <FormField error={errors.termsConsent?.message}>
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-s3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          {...register("termsConsent")}
+                          className="cursor-pointer accent-primary"
+                        />
+                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                          이용약관에 동의합니다 (필수)
+                        </span>
+                      </label>
+                      <Link
+                        to="/terms"
+                        target="_blank"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ExternalLink size={16} />
+                      </Link>
+                    </div>
+                  </FormField>
+                </div>
               </div>
 
               {/* 회비 납부 안내 (회원 전용) */}

@@ -162,6 +162,8 @@ export interface AuthorProfile {
   displayName: string;
   introduction?: string;
   links: ProfileLink[];
+  /** 이 작성자의 승인작 목록 */
+  projects?: Project[];
 }
 
 export const fetchAuthor = (projectId: number) =>

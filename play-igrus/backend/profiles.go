@@ -125,7 +125,10 @@ func (s *server) getAuthor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out := publicProfile{DisplayName: p.AuthorName, Links: []profileLink{}}
+	out := struct {
+		publicProfile
+		Projects []projectView `json:"projects"`
+	}{publicProfile{DisplayName: p.AuthorName, Links: []profileLink{}}, []projectView{}}
 	if prof, ok := s.auth.publicProfile(r.Context(), p.StudentID); ok {
 		if prof.DisplayName != "" {
 			out.DisplayName = prof.DisplayName
@@ -133,6 +136,14 @@ func (s *server) getAuthor(w http.ResponseWriter, r *http.Request) {
 		out.Introduction = prof.Introduction
 		if prof.Links != nil {
 			out.Links = prof.Links
+		}
+	}
+	// 이 작성자의 다른 승인작 — 승인작만 공개 (심사중/반려 비공개)
+	if mine, err := listByStudent(s.db, p.StudentID); err == nil {
+		for _, it := range mine {
+			if it.Status == "approved" {
+				out.Projects = append(out.Projects, listView(it))
+			}
 		}
 	}
 	writeJSON(w, http.StatusOK, out)
