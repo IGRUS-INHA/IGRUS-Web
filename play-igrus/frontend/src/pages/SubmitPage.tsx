@@ -110,8 +110,8 @@ function SubmitForm() {
       </h1>
       <p className={css({ fontSize: "sm", color: "gray.500", mb: "6" })}>
         {editId
-          ? "수정 내용은 운영진 승인 후 반영돼요 (그전까지 기존 버전이 공개돼요)"
-          : "운영진 승인 후 메인에 공개돼요"}
+          ? "수정 내용은 승인 후 반영돼요"
+          : "제출하면 승인 대기 상태가 돼요"}
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className={flex({ direction: "column", gap: "5" })}>
