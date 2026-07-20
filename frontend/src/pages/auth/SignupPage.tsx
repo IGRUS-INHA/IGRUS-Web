@@ -33,17 +33,9 @@ import {
 import type { PasswordSignupRequestEnrollmentStatus } from "@/api/model/models";
 import { majorOptions } from "@/constants/majorOptions";
 import { domainOptions } from "@/constants/domainOptions";
-import { WISH_TITLE, wishOptions, wishToEnum } from "@/constants/wishOptions";
-import {
-  INTEREST_TITLE,
-  interestOptions,
-  interestToEnum,
-} from "@/constants/interestOptions";
-import {
-  JOIN_ROUTE_TITLE,
-  joinRouteOptions,
-  joinRouteToEnum,
-} from "@/constants/joinRouteOptions";
+import { wishToEnum } from "@/constants/wishOptions";
+import { interestToEnum } from "@/constants/interestOptions";
+import { joinRouteToEnum } from "@/constants/joinRouteOptions";
 import {
   ENROLLMENT_STATUS_TITLE,
   enrollmentStatusOptions,
@@ -140,7 +132,6 @@ export default function SignupPage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [serverError, setServerError] = useState<string>();
   const [passwordConfirmTouched, setPasswordConfirmTouched] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [useTempStudentId, setUseTempStudentId] = useState(false);
   const [signupCompleted, setSignupCompleted] = useState(false);
   const [completedTempStudentId, setCompletedTempStudentId] = useState<
@@ -201,11 +192,12 @@ export default function SignupPage() {
       department: "",
       password: "",
       passwordConfirm: "",
-      wishes: [],
-      interests: [],
-      customInterest: "",
-      joinRoute: "",
-      customJoinRoute: "",
+      // UI 제거됨 — 스키마 필수값 충족용 기본값 (백엔드 enum 매핑 유효)
+      wishes: ["네트워킹 및 친목 활동"],
+      interests: ["기타"],
+      customInterest: "미정",
+      joinRoute: "기타",
+      customJoinRoute: "미정",
       nickname: "",
       introduction: "",
       privacyConsent: undefined as unknown as true,
@@ -215,9 +207,6 @@ export default function SignupPage() {
   });
 
   const watchedPassword = watch("password");
-  const selectedWishes = watch("wishes") ?? [];
-  const selectedInterests = watch("interests") ?? [];
-  const selectedJoinRoute = watch("joinRoute") ?? "";
   const emailDomain = watch("emailDomain");
   const emailLocalValue = watch("emailLocal");
   const customDomainValue = watch("customDomain");
@@ -254,45 +243,6 @@ export default function SignupPage() {
       trigger("passwordConfirm");
     }
   }, [watchedPassword, passwordConfirmTouched, trigger]);
-
-  const handleWishToggle = (wish: string) => {
-    const current = getValues("wishes") ?? [];
-    const updated = current.includes(wish)
-      ? current.filter((w) => w !== wish)
-      : [...current, wish];
-    setValue("wishes", updated);
-  };
-
-  const handleInterestToggle = (interest: string) => {
-    const current = getValues("interests") ?? [];
-    if (interest === "기타") {
-      if (current.includes("기타")) {
-        setValue(
-          "interests",
-          current.filter((i) => i !== "기타"),
-        );
-        setValue("customInterest", "");
-      } else {
-        setValue("interests", [...current, "기타"]);
-      }
-    } else {
-      const updated = current.includes(interest)
-        ? current.filter((i) => i !== interest)
-        : [...current, interest];
-      setValue("interests", updated);
-    }
-  };
-
-  const handleJoinRouteSelect = (route: string) => {
-    if (selectedJoinRoute === route) {
-      setValue("joinRoute", "");
-    } else {
-      setValue("joinRoute", route);
-    }
-    if (route !== "기타") {
-      setValue("customJoinRoute", "");
-    }
-  };
 
   const handleSendCode = async () => {
     const valid = await trigger(["emailLocal", "emailDomain", "customDomain"]);
@@ -708,16 +658,6 @@ export default function SignupPage() {
                   </div>
                 </FormField>
 
-                <div className="rounded-r2 bg-muted/50 border border-border p-s4">
-                  <p className="typo-c1 text-muted-foreground">
-                    비밀번호는{" "}
-                    <strong className="text-foreground">
-                      영문, 숫자를 포함하여 8자 이상
-                    </strong>
-                    으로 설정해주세요.
-                  </p>
-                </div>
-
                 <FormField label="비밀번호" error={errors.password?.message}>
                   <div className="relative">
                     <Lock
@@ -804,6 +744,48 @@ export default function SignupPage() {
                         {g === "MALE" ? "남성" : "여성"}
                       </button>
                     ))}
+                  </div>
+                </FormField>
+
+                <FormField label="학과" error={errors.department?.message}>
+                  <div className="relative">
+                    <Building2
+                      size={18}
+                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <select
+                      {...register("department")}
+                      className={cn(
+                        "w-full h-9 rounded-r2 border border-input bg-background text-foreground pl-10 pr-10 text-sm",
+                        "appearance-none cursor-pointer transition-all outline-none",
+                        "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
+                        !watch("department") && "text-muted-foreground",
+                      )}
+                    >
+                      <option
+                        value=""
+                        className="bg-background text-foreground"
+                      >
+                        학과를 선택하세요
+                      </option>
+                      {majorOptions.map((college) => (
+                        <optgroup key={college.title} label={college.title}>
+                          {college.items.map((dept) => (
+                            <option
+                              key={dept.key}
+                              value={dept.value}
+                              className="bg-background text-foreground"
+                            >
+                              {dept.value}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={16}
+                      className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                    />
                   </div>
                 </FormField>
 
@@ -1157,179 +1139,6 @@ export default function SignupPage() {
                   </div>
                 </FormField>
 
-                <FormField label="학과" error={errors.department?.message}>
-                  <div className="relative">
-                    <Building2
-                      size={18}
-                      className="absolute left-s3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    />
-                    <select
-                      {...register("department")}
-                      className={cn(
-                        "w-full h-9 rounded-r2 border border-input bg-background text-foreground pl-10 pr-10 text-sm",
-                        "appearance-none cursor-pointer transition-all outline-none",
-                        "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
-                        !watch("department") && "text-muted-foreground",
-                      )}
-                    >
-                      <option
-                        value=""
-                        className="bg-background text-foreground"
-                      >
-                        학과를 선택하세요
-                      </option>
-                      {majorOptions.map((college) => (
-                        <optgroup key={college.title} label={college.title}>
-                          {college.items.map((dept) => (
-                            <option
-                              key={dept.key}
-                              value={dept.value}
-                              className="bg-background text-foreground"
-                            >
-                              {dept.value}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      size={16}
-                      className="absolute right-s3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                    />
-                  </div>
-                </FormField>
-
-                <div
-                  className={cn(
-                    "space-y-s5",
-                    memberType !== "member" && "hidden",
-                  )}
-                >
-                  <FormField
-                    label={WISH_TITLE}
-                    error={submitted ? errors.wishes?.message : undefined}
-                  >
-                    <div className="flex flex-wrap gap-s2">
-                      {wishOptions.map((wish) => (
-                        <button
-                          key={wish}
-                          type="button"
-                          onClick={() => handleWishToggle(wish)}
-                          className={cn(
-                            "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                            selectedWishes.includes(wish)
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "border-border bg-muted text-foreground hover:border-primary/50",
-                          )}
-                        >
-                          {wish}
-                        </button>
-                      ))}
-                    </div>
-                  </FormField>
-
-                  <FormField
-                    label={INTEREST_TITLE}
-                    error={submitted ? errors.interests?.message : undefined}
-                  >
-                    <div className="flex flex-wrap gap-s2">
-                      {interestOptions.map((interest) => (
-                        <button
-                          key={interest}
-                          type="button"
-                          onClick={() => handleInterestToggle(interest)}
-                          className={cn(
-                            "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                            selectedInterests.includes(interest)
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "border-border bg-muted text-foreground hover:border-primary/50",
-                          )}
-                        >
-                          {interest}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => handleInterestToggle("기타")}
-                        className={cn(
-                          "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                          selectedInterests.includes("기타")
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "border-border bg-muted text-foreground hover:border-primary/50",
-                        )}
-                      >
-                        기타
-                      </button>
-                    </div>
-                    {selectedInterests.includes("기타") && (
-                      <Input
-                        {...register("customInterest")}
-                        placeholder="관심 분야를 입력해주세요"
-                        className="mt-s2"
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && e.preventDefault()
-                        }
-                      />
-                    )}
-                  </FormField>
-
-                  <FormField
-                    label={JOIN_ROUTE_TITLE}
-                    error={submitted ? errors.joinRoute?.message : undefined}
-                  >
-                    <div className="flex flex-wrap gap-s2">
-                      {joinRouteOptions.map((route) => (
-                        <button
-                          key={route}
-                          type="button"
-                          onClick={() => handleJoinRouteSelect(route)}
-                          className={cn(
-                            "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                            selectedJoinRoute === route
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "border-border bg-muted text-foreground hover:border-primary/50",
-                          )}
-                        >
-                          {route}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => handleJoinRouteSelect("기타")}
-                        className={cn(
-                          "px-s3 py-s2 rounded-full border text-sm transition-all cursor-pointer",
-                          selectedJoinRoute === "기타"
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "border-border bg-muted text-foreground hover:border-primary/50",
-                        )}
-                      >
-                        기타
-                      </button>
-                    </div>
-                    {selectedJoinRoute === "기타" && (
-                      <Input
-                        {...register("customJoinRoute")}
-                        placeholder="가입 경로를 입력해주세요"
-                        className="mt-s2"
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && e.preventDefault()
-                        }
-                      />
-                    )}
-                  </FormField>
-
-                  <FormField
-                    label="닉네임 (선택)"
-                    error={errors.nickname?.message}
-                  >
-                    <Input
-                      {...register("nickname")}
-                      placeholder="공개 프로필에 표시될 이름 (미설정 시 이름으로 표시)"
-                      onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
-                    />
-                  </FormField>
-                </div>
-
                 <div className="space-y-s3 rounded-r2 border border-border p-s4">
                   <FormField error={errors.privacyConsent?.message}>
                     <div className="flex items-center justify-between">
@@ -1416,7 +1225,6 @@ export default function SignupPage() {
                 type="button"
                 disabled={isSubmitting}
                 onClick={() => {
-                  setSubmitted(true);
                   if (useTempStudentId) {
                     setValue("studentId", "00000000");
                   }

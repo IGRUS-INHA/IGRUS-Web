@@ -126,10 +126,6 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
               <h2 className={css({ mt: "3", fontSize: "2xl", fontWeight: "800", letterSpacing: "tight" })}>
                 {author.displayName}
               </h2>
-              <p className={css({ fontSize: "xs", fontWeight: "700", color: "indigo.500", mt: "0.5" })}>
-                개발자 · 출시작 {projects.length}
-              </p>
-
               {author.introduction && (
                 <p
                   className={css({

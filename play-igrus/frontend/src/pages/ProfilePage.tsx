@@ -131,7 +131,7 @@ function ProfileEditor() {
     >
       <h1 className={css({ fontSize: "2xl", fontWeight: "800", mb: "1" })}>내 정보</h1>
       <p className={css({ fontSize: "sm", color: "gray.500", mb: "4" })}>
-        작품에 표시되는 공개 프로필이에요. 닉네임을 정하면 이름 대신 닉네임만 공개돼요.
+        작품에 표시되는 공개 프로필이에요.
       </p>
 
       {!loaded ? (
@@ -149,15 +149,11 @@ function ProfileEditor() {
               <p className={readOnlyValue}>{name || "—"}</p>
             </div>
           </div>
-          <p className={css({ fontSize: "xs", color: "gray.400", mt: "-2" })}>
-            학번과 이름은 여기서 바꿀 수 없어요. 잘못됐다면 운영진에게 문의해 주세요.
-          </p>
-
           <div>
             <ImageDropzone
               id="avatar"
               title="프로필 사진"
-              hint="PNG/JPG/WebP · 4MB 이하 · 고르면 바로 반영돼요"
+              hint="PNG/JPG/WebP · 4MB 이하"
               square
               existingUrl={imageSrc(avatarUrl)}
               onChange={pickAvatar}
@@ -225,7 +221,7 @@ function ProfileEditor() {
                   />
                   <input
                     aria-label="링크 주소"
-                    className={input}
+                    className={`${input} ${css({ flex: 1, minW: 0 })}`}
                     placeholder="https://github.com/username"
                     value={link.url}
                     onChange={(e) => setLink(i, { url: e.target.value })}
