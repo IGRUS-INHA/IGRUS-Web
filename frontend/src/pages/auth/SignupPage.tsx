@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,12 +14,10 @@ import {
   EyeOff,
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
   Check,
   Loader2,
   ExternalLink,
   Wallet,
-  AlertTriangle,
   Info,
   Key,
   Clock,
@@ -128,46 +126,13 @@ const signupSchema = z
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
-// --- Step Config ---
-
-const STEPS = [
-  { title: "기본 정보", icon: User },
-  { title: "연락처", icon: Mail },
-  { title: "계정 보안", icon: Lock },
-  { title: "기타", icon: FileText },
-] as const;
-
-const STEP_FIELDS: (keyof SignupFormData)[][] = [
-  [
-    "studentId",
-    "name",
-    "gender",
-    "grade",
-    "enrollmentStatus",
-    "privacyConsent",
-    "termsConsent",
-  ],
-  ["emailLocal", "emailDomain", "customDomain", "phoneNumber", "department"],
-  ["password", "passwordConfirm"],
-  [
-    "wishes",
-    "interests",
-    "customInterest",
-    "joinRoute",
-    "customJoinRoute",
-    "motivation",
-  ],
-];
-
 // --- Component ---
 
 export default function SignupPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
-  const [feeConfirmed, setFeeConfirmed] = useState(false);
-  const [feeChecked, setFeeChecked] = useState(false);
-  const [step, setStep] = useState(0);
+  const [memberType, setMemberType] = useState<"member" | "guest">();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [serverError, setServerError] = useState<string>();
@@ -193,9 +158,9 @@ export default function SignupPage() {
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [verificationError, setVerificationError] = useState<string>();
 
-  // 인증 코드 유효시간 타이머 (10분) / 재발송 쿨다운 (60초)
+  // 인증 코드 유효시간 타이머 (10분) / 재발송 쿨다운 (10초)
   const codeTimer = useCountdown({ initialSeconds: 600 });
-  const resendCooldown = useCountdown({ initialSeconds: 60 });
+  const resendCooldown = useCountdown({ initialSeconds: 10 });
   const {
     studentId: studentIdCheck,
     email: emailCheck,
@@ -325,31 +290,11 @@ export default function SignupPage() {
     }
   };
 
-  // 이메일 중복 체크 통과 시 자동으로 인증 코드 발송
-  // emailCheck.isAvailable 변경 시에만 실행 — 나머지는 가드 조건이므로 ref로 참조
-  const emailVerifiedRef = useRef(emailVerified);
-  emailVerifiedRef.current = emailVerified;
-  const codeSentRef = useRef(codeSent);
-  codeSentRef.current = codeSent;
-  const sendingCodeRef = useRef(sendingCode);
-  sendingCodeRef.current = sendingCode;
-  const handleSendCodeRef = useRef<(() => Promise<void>) | null>(null);
-
-  useEffect(() => {
-    if (
-      emailCheck.isAvailable &&
-      !emailVerifiedRef.current &&
-      !codeSentRef.current &&
-      !sendingCodeRef.current
-    ) {
-      handleSendCodeRef.current?.();
-    }
-  }, [emailCheck.isAvailable]);
-
   const handleSendCode = async () => {
     const valid = await trigger(["emailLocal", "emailDomain", "customDomain"]);
     if (!valid) return;
     if (emailVerified && currentFullEmail === verifiedEmail) return;
+    if (emailCheck.isDuplicate) return;
     if (sendingCode) return;
 
     setSendingCode(true);
@@ -367,7 +312,6 @@ export default function SignupPage() {
       setSendingCode(false);
     }
   };
-  handleSendCodeRef.current = handleSendCode;
 
   const handleVerifyCode = async () => {
     setVerifyingCode(true);
@@ -422,9 +366,6 @@ export default function SignupPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const findStepForField = (field: keyof SignupFormData) =>
-    STEP_FIELDS.findIndex((fields) => fields.includes(field));
-
   const composeEmail = () => {
     const local = getValues("emailLocal");
     const domain = getValues("emailDomain");
@@ -434,86 +375,12 @@ export default function SignupPage() {
     return "";
   };
 
-  const handleNext = async () => {
-    const fields = STEP_FIELDS[step] ?? [];
-    // 임시 학번 사용 시 studentId 검증 건너뜀
-    const fieldsToValidate =
-      step === 0 && useTempStudentId
-        ? fields.filter((f) => f !== "studentId")
-        : fields;
-    const valid = await trigger(fieldsToValidate);
-    if (!valid) return;
-
-    // Step 0: 학번 중복 체크 확인 (임시 학번 사용 시 건너뜀)
-    if (step === 0 && !useTempStudentId) {
-      const studentIdValue = getValues("studentId");
-      if (/^\d{8}$/.test(studentIdValue)) {
-        if (!studentIdCheck.isChecked) {
-          checkStudentId(studentIdValue);
-          return;
-        }
-        if (studentIdCheck.isDuplicate) {
-          setError("studentId", {
-            message: studentIdCheck.message ?? "이미 가입된 학번입니다.",
-          });
-          return;
-        }
-      }
-    }
-
-    // Step 1: 이메일, 전화번호 중복 체크 확인
-    if (step === 1) {
-      const fullEmail = composeEmail();
-      if (fullEmail) {
-        if (!emailCheck.isChecked) {
-          checkEmail(fullEmail);
-          return;
-        }
-        if (emailCheck.isDuplicate) {
-          setError("emailLocal", {
-            message: emailCheck.message ?? "이미 존재하는 이메일입니다.",
-          });
-          return;
-        }
-      }
-
-      if (!emailVerified) {
-        setVerificationError("이메일 인증을 완료해주세요.");
-        return;
-      }
-
-      const phoneValue = getValues("phoneNumber");
-      if (/^\d{3}-\d{4}-\d{4}$/.test(phoneValue)) {
-        if (!phoneNumberCheck.isChecked) {
-          checkPhoneNumber(phoneValue);
-          return;
-        }
-        if (phoneNumberCheck.isDuplicate) {
-          setError("phoneNumber", {
-            message: phoneNumberCheck.message ?? "이미 등록된 전화번호입니다.",
-          });
-          return;
-        }
-      }
-    }
-
-    const nextStep = step + 1;
-    if (nextStep < STEP_FIELDS.length) {
-      clearErrors(STEP_FIELDS[nextStep]);
-    }
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
-  };
-
-  const handlePrev = () => {
-    if (step === 0) {
-      setFeeConfirmed(false);
-    } else {
-      setStep((s) => s - 1);
-    }
-  };
-
   const onSubmit = async (data: SignupFormData) => {
     setServerError(undefined);
+    if (!emailVerified) {
+      setVerificationError("이메일 인증을 완료해주세요.");
+      return;
+    }
     try {
       const domain =
         data.emailDomain === "custom" ? data.customDomain : data.emailDomain;
@@ -570,13 +437,10 @@ export default function SignupPage() {
       }
     } catch (error: unknown) {
       if (hasErrorCode(error, "DUPLICATE_STUDENT_ID")) {
-        setStep(findStepForField("studentId"));
         setError("studentId", { message: "이미 가입된 학번입니다." });
       } else if (hasErrorCode(error, "DUPLICATE_EMAIL")) {
-        setStep(findStepForField("emailLocal"));
         setError("emailLocal", { message: "이미 존재하는 이메일입니다." });
       } else if (hasErrorCode(error, "DUPLICATE_PHONE_NUMBER")) {
-        setStep(findStepForField("phoneNumber"));
         setError("phoneNumber", { message: "이미 등록된 전화번호입니다." });
       } else if (hasErrorCode(error, "TEMP_STUDENT_ID_NOT_AVAILABLE")) {
         setServerError("임시 학번 발급은 1월~2월에만 가능합니다.");
@@ -587,8 +451,6 @@ export default function SignupPage() {
       }
     }
   };
-
-  const isLastStep = step === STEPS.length - 1;
 
   const slackInviteUrl = import.meta.env.VITE_SLACK_INVITE_URL;
 
@@ -669,99 +531,50 @@ export default function SignupPage() {
           </p>
         </div>
 
-        {/* Fee Payment Confirmation Gate */}
-        {!feeConfirmed && (
-          <div className="rounded-r4 border bg-card p-s6 shadow-sm">
-            <div className="flex items-center gap-s2 mb-s5">
-              <Wallet size={22} className="text-primary" />
-              <h2 className="typo-h4 text-foreground">회비 납부 안내</h2>
-            </div>
-
-            <p className="typo-b2 text-foreground mb-s5">
-              IGRUS의 활동에 참여하기 위해선 회비 <strong>2만원</strong>을
-              납부해주셔야 합니다.
-            </p>
-
-            <div className="bg-muted/50 border border-border rounded-r2 p-s4 mb-s5 space-y-s2">
-              <div className="relative flex flex-col sm:block gap-s1">
-                <span className="text-sm text-muted-foreground shrink-0">
-                  입금자명 양식
-                </span>
-                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-baseline sm:justify-center">
-                  학번 2자리+이름 (ex. 26김아그)
-                </span>
-              </div>
-              <div className="relative flex flex-col sm:block gap-s1">
-                <span className="text-sm text-muted-foreground shrink-0">
-                  입금계좌
-                </span>
-                <span className="text-sm font-medium text-foreground sm:absolute sm:inset-0 sm:flex sm:items-center sm:justify-center">
-                  토스뱅크 1002-3803-2581
-                  <button
-                    type="button"
-                    onClick={handleCopyAccount}
-                    className="inline-flex items-center ml-s2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                    title="계좌번호 복사"
-                  >
-                    {copied ? (
-                      <Check size={14} className="text-green-600" />
-                    ) : (
-                      <Copy size={14} />
-                    )}
-                  </button>
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-s2 mb-s5 rounded-r2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-s3">
-              <AlertTriangle
-                size={16}
-                className="text-amber-600 shrink-0 mt-0.5"
-              />
-              <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                입금자명 양식을 지키지 않으실 경우, 회비 납부 명단에서 누락될 수
-                있습니다.
-                <br />
-                정확한 형식으로 입금해 주시기 바랍니다.
-              </p>
-            </div>
-
-            <div className="flex items-start gap-s2 mb-s5 rounded-r2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-s3">
-              <AlertTriangle
-                size={16}
-                className="text-amber-600 shrink-0 mt-0.5"
-              />
-              <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                입금 후 반드시 회원가입과 이메일 인증까지 완료해 주세요.
-                <br />
-                회원가입 또는 이메일 인증이 완료되지 않으면 가입이 정상 처리되지
-                않습니다.
-              </p>
-            </div>
-
-            <label className="flex items-center gap-s3 cursor-pointer group mb-s5">
-              <input
-                type="checkbox"
-                checked={feeChecked}
-                onChange={(e) => setFeeChecked(e.target.checked)}
-                className="cursor-pointer accent-primary"
-              />
-              <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                회비 납부를 완료했습니다
-              </span>
-            </label>
-
-            <Button
+        {/* Membership Type Selection */}
+        {!memberType && (
+          <div className="rounded-r4 border bg-card p-s6 shadow-sm space-y-s4">
+            <button
               type="button"
-              disabled={!feeChecked}
-              onClick={() => setFeeConfirmed(true)}
-              className="w-full cursor-pointer"
+              onClick={() => {
+                setMemberType("member");
+                setValue("wishes", []);
+                setValue("interests", []);
+                setValue("joinRoute", "");
+              }}
+              className="w-full rounded-r2 border border-border bg-muted p-s5 text-left hover:border-primary/50 transition-all cursor-pointer"
             >
-              회원가입 진행하기
-              <ChevronRight size={18} />
-            </Button>
+              <div className="flex items-center gap-s2 mb-s1">
+                <Wallet size={18} className="text-primary" />
+                <span className="typo-h4 text-foreground">회원으로 가입</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                회비를 납부하고 동아리 활동에 참여합니다
+              </p>
+            </button>
 
-            <p className="text-center text-sm text-muted-foreground mt-s5">
+            <button
+              type="button"
+              onClick={() => {
+                setMemberType("guest");
+                // 비회원은 기타 섹션을 입력받지 않으므로 스키마·API 필수값을 "기타"로 채움
+                // (wishes의 "기타"는 enum 매핑에서 걸러져 빈 배열로 전송됨)
+                setValue("wishes", ["기타"]);
+                setValue("interests", ["기타"]);
+                setValue("joinRoute", "기타");
+              }}
+              className="w-full rounded-r2 border border-border bg-muted p-s5 text-left hover:border-primary/50 transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-s2 mb-s1">
+                <User size={18} className="text-primary" />
+                <span className="typo-h4 text-foreground">비회원으로 가입</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                회비 납부 없이 가입합니다
+              </p>
+            </button>
+
+            <p className="text-center text-sm text-muted-foreground">
               이미 계정이 있으신가요?{" "}
               <Link
                 to="/login"
@@ -773,64 +586,8 @@ export default function SignupPage() {
           </div>
         )}
 
-        {/* Step Indicator */}
-        {feeConfirmed && (
-          <div className="flex items-center justify-between mb-s7 px-s2">
-            {STEPS.map((s, i) => {
-              const Icon = s.icon;
-              const isActive = i === step;
-              const isCompleted = i < step;
-
-              return (
-                <div
-                  key={s.title}
-                  className="flex items-center flex-1 last:flex-none"
-                >
-                  <div className="flex flex-col items-center gap-s1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isCompleted) setStep(i);
-                      }}
-                      className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2",
-                        isCompleted &&
-                          "bg-primary border-primary text-primary-foreground cursor-pointer hover:bg-primary/90",
-                        isActive && "border-primary bg-primary/10 text-primary",
-                        !isActive &&
-                          !isCompleted &&
-                          "border-border bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {isCompleted ? <Check size={18} /> : <Icon size={18} />}
-                    </button>
-                    <span
-                      className={cn(
-                        "typo-c1 font-medium whitespace-nowrap",
-                        (isActive || isCompleted) && "text-primary",
-                        !isActive && !isCompleted && "text-muted-foreground",
-                      )}
-                    >
-                      {s.title}
-                    </span>
-                  </div>
-
-                  {i < STEPS.length - 1 && (
-                    <div
-                      className={cn(
-                        "flex-1 h-0.5 mx-s2 mt-[-20px] rounded-full transition-colors duration-300",
-                        i < step ? "bg-primary" : "bg-border",
-                      )}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
         {/* Form Card */}
-        {feeConfirmed && (
+        {memberType && (
           <div className="rounded-r4 border bg-card p-s6 shadow-sm">
             {serverError && (
               <div className="mb-s5 rounded-r2 bg-destructive/10 border border-destructive/20 p-s4 text-sm text-destructive">
@@ -839,8 +596,12 @@ export default function SignupPage() {
             )}
 
             <form onSubmit={(e) => e.preventDefault()}>
-              {/* Step 1: 기본 정보 */}
-              <div className={cn("space-y-s4", step !== 0 && "hidden")}>
+              {/* 기본 정보 */}
+              <div className="space-y-s4">
+                <h2 className="typo-h4 text-foreground flex items-center gap-s2 border-b border-border pb-s3">
+                  <User size={18} className="text-primary" />
+                  기본 정보
+                </h2>
                 {!useTempStudentId && (
                   <FormField
                     label="학번"
@@ -1065,8 +826,12 @@ export default function SignupPage() {
                 </div>
               </div>
 
-              {/* Step 2: 연락처 & 학과 */}
-              <div className={cn("space-y-s4", step !== 1 && "hidden")}>
+              {/* 연락처 & 학과 */}
+              <div className="space-y-s4 mt-s7">
+                <h2 className="typo-h4 text-foreground flex items-center gap-s2 border-b border-border pb-s3">
+                  <Mail size={18} className="text-primary" />
+                  연락처
+                </h2>
                 <FormField
                   label="이메일"
                   error={
@@ -1179,32 +944,34 @@ export default function SignupPage() {
                     </div>
                   )}
 
-                  {/* 인증 코드 발송 중 (최초) */}
-                  {sendingCode && !codeSent && (
-                    <div className="flex items-center gap-s1 mt-s3">
-                      <Loader2
-                        size={14}
-                        className="animate-spin text-muted-foreground"
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        인증 코드 발송 중...
-                      </span>
-                    </div>
-                  )}
-
-                  {/* 최초 발송 실패 시 에러 + 재시도 */}
-                  {!codeSent && !sendingCode && verificationError && (
+                  {/* 이메일 인증하기 버튼 (버튼을 눌러야 인증 코드 발송) */}
+                  {!codeSent && !emailVerified && (
                     <div className="mt-s3 space-y-s2">
-                      <p className="text-sm text-destructive">
-                        {verificationError}
-                      </p>
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
                         onClick={handleSendCode}
-                        className="text-sm text-primary hover:underline transition cursor-pointer"
+                        disabled={
+                          sendingCode ||
+                          emailCheck.isChecking ||
+                          emailCheck.isDuplicate
+                        }
+                        className="w-full cursor-pointer"
                       >
-                        다시 시도
-                      </button>
+                        {sendingCode ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            인증 코드 발송 중...
+                          </>
+                        ) : (
+                          "이메일 인증하기"
+                        )}
+                      </Button>
+                      {verificationError && (
+                        <p className="text-sm text-destructive">
+                          {verificationError}
+                        </p>
+                      )}
                     </div>
                   )}
 
@@ -1409,8 +1176,12 @@ export default function SignupPage() {
                 </FormField>
               </div>
 
-              {/* Step 3: 계정 보안 */}
-              <div className={cn("space-y-s4", step !== 2 && "hidden")}>
+              {/* 계정 보안 */}
+              <div className="space-y-s4 mt-s7">
+                <h2 className="typo-h4 text-foreground flex items-center gap-s2 border-b border-border pb-s3">
+                  <Lock size={18} className="text-primary" />
+                  계정 보안
+                </h2>
                 <div className="rounded-r2 bg-muted/50 border border-border p-s4">
                   <p className="typo-c1 text-muted-foreground">
                     비밀번호는{" "}
@@ -1489,8 +1260,17 @@ export default function SignupPage() {
                 </FormField>
               </div>
 
-              {/* Step 4: 가입 동기 */}
-              <div className={cn("space-y-s4", step !== 3 && "hidden")}>
+              {/* 기타 (회원 전용) */}
+              <div
+                className={cn(
+                  "space-y-s4 mt-s7",
+                  memberType !== "member" && "hidden",
+                )}
+              >
+                <h2 className="typo-h4 text-foreground flex items-center gap-s2 border-b border-border pb-s3">
+                  <FileText size={18} className="text-primary" />
+                  기타
+                </h2>
                 <FormField
                   label={WISH_TITLE}
                   error={submitted ? errors.wishes?.message : undefined}
@@ -1620,54 +1400,74 @@ export default function SignupPage() {
                 </FormField>
               </div>
 
-              {/* Navigation Buttons */}
-              <div className="flex items-center gap-s3 mt-s6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrev}
-                  className="flex-1 cursor-pointer"
-                >
-                  <ChevronLeft size={18} />
-                  이전
-                </Button>
+              {/* 회비 납부 안내 (회원 전용) */}
+              {memberType === "member" && (
+                <div className="mt-s7 rounded-r2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-s4 space-y-s2">
+                  <div className="flex items-center gap-s2">
+                    <Wallet size={16} className="text-amber-600 shrink-0" />
+                    <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                      회비 2만원을 납부해주세요
+                    </p>
+                  </div>
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    입금자명 양식: 학번 2자리+이름 (ex. 26김아그)
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center">
+                    입금계좌: 토스뱅크 1002-3803-2581
+                    <button
+                      type="button"
+                      onClick={handleCopyAccount}
+                      className="inline-flex items-center ml-s2 hover:text-primary transition-colors cursor-pointer"
+                      title="계좌번호 복사"
+                    >
+                      {copied ? (
+                        <Check size={14} className="text-green-600" />
+                      ) : (
+                        <Copy size={14} />
+                      )}
+                    </button>
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    입금자명 양식을 지키지 않으실 경우, 회비 납부 명단에서
+                    누락될 수 있습니다.
+                  </p>
+                </div>
+              )}
 
-                {!isLastStep ? (
-                  <Button
-                    type="button"
-                    onClick={handleNext}
-                    className="flex-1 cursor-pointer"
-                  >
-                    다음
-                    <ChevronRight size={18} />
-                  </Button>
+              {/* Submit */}
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  setSubmitted(true);
+                  if (useTempStudentId) {
+                    setValue("studentId", "00000000");
+                  }
+                  handleSubmit(onSubmit)();
+                }}
+                className="w-full mt-s6 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    가입 중...
+                  </>
                 ) : (
-                  <Button
-                    type="button"
-                    disabled={isSubmitting}
-                    onClick={() => {
-                      setSubmitted(true);
-                      if (useTempStudentId) {
-                        setValue("studentId", "00000000");
-                      }
-                      handleSubmit(onSubmit)();
-                    }}
-                    className="flex-1 cursor-pointer"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 size={18} className="animate-spin" />
-                        가입 중...
-                      </>
-                    ) : (
-                      <>
-                        회원가입
-                        <Check size={18} />
-                      </>
-                    )}
-                  </Button>
+                  <>
+                    회원가입
+                    <Check size={18} />
+                  </>
                 )}
-              </div>
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => setMemberType(undefined)}
+                className="flex items-center justify-center gap-s1 w-full mt-s4 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <ChevronLeft size={16} />
+                가입 유형 다시 선택
+              </button>
             </form>
 
             {/* Login Link */}
