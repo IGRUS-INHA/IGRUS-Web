@@ -2,10 +2,22 @@
 # cutover 전에 릴리즈하면 EC2 만 갱신되고 api.igrus.co.kr(ALB→Fargate)은 구버전이 유지됨.
 # 절차: docs/infra/ec2-migration-runbook.md
 name: Backend Production CD Pipeline
+# main push(backend/openapi 변경) 자동 배포 — play-prod-cd.yaml 과 같은 패턴.
+# 버전 태그 릴리즈는 release.yaml 이 workflow_call 로 호출한다.
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'openapi/**'
+      - '.github/workflows/backend-prod-cd.yaml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '배포할 이미지 태그 (비우면 커밋 SHA 로 생성)'
+        required: false
+        type: string
   workflow_call:
     inputs:
       version:
@@ -27,7 +39,7 @@ jobs:
       SPRING_ACTIVE_PROFILE: ${{ vars.SPRING_ACTIVE_PROFILE }}
       AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_BACKEND_GITHUB_ACTIONS_ROLE_ARN }}
       EC2_INSTANCE_NAME: IGRUS-Web-App-EC2
-      IMAGE_TAG: ${{ inputs.version || github.ref_name }}
+      IMAGE_TAG: ${{ inputs.version || format('main-{0}', github.sha) }}
     defaults:
       run:
         working-directory: backend

@@ -144,8 +144,10 @@ curl -s -o /dev/null -w "%{http_code}\n" https://api.igrus.co.kr/
 
 ## 운영 메모 (전환 후)
 
-- **배포**: 태그 push(v*) → CI 가 ECR push 후 SSM 으로 `igrus-deploy <tag>` 실행 (컨테이너 재기동 ~60초 다운타임,
-  트래픽 ≈0 이라 수용. 무중단이 필요해지면 blue-green 을 후속 도입).
+- **배포**: main push(`backend/**`·`openapi/**` 변경) → CD 가 이미지 태그 `main-<sha>` 로 ECR push 후
+  SSM 으로 `igrus-deploy <tag>` 실행 (컨테이너 재기동 ~60초 다운타임, 트래픽 ≈0 이라 수용.
+  무중단이 필요해지면 blue-green 을 후속 도입). 버전 태그 릴리즈는 release.yaml(workflow_dispatch),
+  특정 태그 재배포는 backend-prod-cd 의 workflow_dispatch 로 가능.
 - **인스턴스 교체**: user-data 수정 시 인스턴스가 교체된다(`userDataCausesReplacement`). EIP/DNS 는 유지되고
   Caddy 인증서는 재발급된다(Let's Encrypt 중복 발급 한도 주 5회 유의).
 - **장애 복구**: EC2 는 시스템 장애 시 simplified auto-recovery 로 자동 복구. 심각 시 스택 재배포로 재현.
