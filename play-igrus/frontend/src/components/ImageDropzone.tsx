@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
-import { label } from "./formStyles";
+import { label, requiredMark } from "./formStyles";
 
 const ACCEPTED = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 4 << 20; // 서버와 동일 4MB — 업로드 전에 미리 걸러준다
@@ -14,20 +14,35 @@ interface Props {
   onChange: (file?: File) => void;
   /** 미리보기 비율 — 썸네일은 정방형, 배너는 가로 */
   square?: boolean;
+  /** 수정 모드에서 이미 등록된 이미지 — 새 파일 선택 전까지 미리보기로 보여준다 */
+  existingUrl?: string;
+  /** 필수 뱃지 표시 */
+  required?: boolean;
 }
 
 /** 이미지 선택 영역 — 탭하면 파일 선택, 드래그 앤 드롭도 지원 (모바일은 탭) */
-export default function ImageDropzone({ id, title, hint, file, onChange, square }: Props) {
+export default function ImageDropzone({
+  id,
+  title,
+  hint,
+  file,
+  onChange,
+  square,
+  existingUrl,
+  required,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [warn, setWarn] = useState("");
 
-  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : undefined), [file]);
+  const objectUrl = useMemo(() => (file ? URL.createObjectURL(file) : undefined), [file]);
   useEffect(() => {
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [previewUrl]);
+  }, [objectUrl]);
+  // 새 파일 > 기존 등록 이미지 순으로 미리보기 (✕ 는 새 파일만 취소 — 기존 이미지 제거는 미지원)
+  const previewUrl = objectUrl ?? existingUrl;
 
   const pick = (picked?: File) => {
     setWarn("");
@@ -45,7 +60,10 @@ export default function ImageDropzone({ id, title, hint, file, onChange, square 
 
   return (
     <div>
-      <p className={label}>{title}</p>
+      <p className={label}>
+        {title}
+        {required && <span className={requiredMark}>필수</span>}
+      </p>
       <div
         role="button"
         tabIndex={0}
@@ -89,6 +107,7 @@ export default function ImageDropzone({ id, title, hint, file, onChange, square 
                 objectFit: "cover",
               })}
             />
+            {file && (
             <button
               type="button"
               aria-label="이미지 제거"
@@ -112,6 +131,7 @@ export default function ImageDropzone({ id, title, hint, file, onChange, square 
             >
               ✕
             </button>
+            )}
           </>
         ) : (
           <div className={flex({ direction: "column", align: "center", gap: "1", py: "7" })}>

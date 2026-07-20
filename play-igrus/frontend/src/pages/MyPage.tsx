@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { fetchMine, imageSrc, type Project } from "../api/client";
@@ -91,7 +92,7 @@ function MyList() {
                   </p>
                   {p.status === "approved" && (
                     <p className={css({ fontSize: "xs", color: "gray.400", mt: "0.5" })}>
-                      클릭 {p.totalClicks}회
+                      클릭 {p.totalClicks ?? 0}회
                     </p>
                   )}
                   {p.status === "rejected" && p.rejectReason && (
@@ -99,7 +100,34 @@ function MyList() {
                       사유: {p.rejectReason}
                     </p>
                   )}
+                  {p.update?.status === "pending" && (
+                    <p className={css({ fontSize: "xs", color: "amber.600", mt: "0.5" })}>
+                      수정 심사중 — 승인 전까지 기존 버전이 공개돼요
+                    </p>
+                  )}
+                  {p.update?.status === "rejected" && (
+                    <p className={css({ fontSize: "xs", color: "red.500", mt: "0.5" })}>
+                      수정 반려{p.update.rejectReason ? `: ${p.update.rejectReason}` : ""}
+                    </p>
+                  )}
                 </div>
+                <Link
+                  to={`/edit/${p.id}`}
+                  className={css({
+                    alignSelf: "center",
+                    flexShrink: 0,
+                    fontSize: "sm",
+                    fontWeight: "600",
+                    color: "indigo.600",
+                    px: "2.5",
+                    py: "1.5",
+                    rounded: "lg",
+                    border: "1px solid",
+                    borderColor: "indigo.200",
+                  })}
+                >
+                  수정
+                </Link>
               </li>
             );
           })}

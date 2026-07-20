@@ -65,6 +65,7 @@ func main() {
 
 	// 로그인 필요
 	mux.HandleFunc("POST /api/projects", s.auth.requireLogin(s.createProject))
+	mux.HandleFunc("PUT /api/projects/{id}", s.auth.requireLogin(s.updateProject))
 	mux.HandleFunc("GET /api/projects/mine", s.auth.requireLogin(s.listMine))
 
 	// 운영진 전용
@@ -109,7 +110,7 @@ func cors(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
 			w.Header().Set("Access-Control-Max-Age", "3600")
 		}
 		if r.Method == http.MethodOptions {

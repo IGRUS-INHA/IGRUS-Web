@@ -44,6 +44,21 @@ var schema = []string{
 	  clicks     BIGINT NOT NULL DEFAULT 0,
 	  PRIMARY KEY (project_id, click_date)
 	) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+	// 승인작 수정본 — 승인 전까지 라이브 버전(projects)은 그대로 유지된다.
+	// 프로젝트당 수정본 1개(PK)만: 재수정하면 덮어쓴다.
+	`CREATE TABLE IF NOT EXISTS project_revisions (
+	  project_id    BIGINT        PRIMARY KEY,
+	  title         VARCHAR(100)  NOT NULL,
+	  description   VARCHAR(50)   NOT NULL DEFAULT '',
+	  body_md       MEDIUMTEXT    NOT NULL,
+	  thumbnail_key VARCHAR(255)  NOT NULL DEFAULT '',
+	  banner_key    VARCHAR(255)  NOT NULL DEFAULT '',
+	  redirect_url  VARCHAR(2048) NOT NULL,
+	  category      VARCHAR(20)   NOT NULL,
+	  status        VARCHAR(10)   NOT NULL DEFAULT 'pending',
+	  reject_reason VARCHAR(500)  NOT NULL DEFAULT '',
+	  created_at    DATETIME(3)   NOT NULL
+	) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
 }
 
 // row 는 projects 테이블 한 행. JSON 응답 형태는 projects.go 의 뷰 변환이 결정한다.
@@ -189,6 +204,165 @@ func review(db *sql.DB, id int64, status, reason string, reviewer Profile) error
 		`UPDATE projects SET status = ?, reject_reason = ?, reviewer_student_id = ?,
 		 reviewer_name = ?, reviewed_at = ? WHERE id = ? AND status = 'pending'`,
 		status, reason, reviewer.StudentID, reviewer.Name, time.Now().UTC(), id)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return errNotFound
+	}
+	return nil
+}
+
+// updateProjectContent 는 pending/rejected 작품의 직접 수정 — 심사 대기 상태로 되돌린다.
+func updateProjectContent(db *sql.DB, id int64, p row) error {
+	_, err := db.Exec(
+		`UPDATE projects SET title = ?, description = ?, body_md = ?, thumbnail_key = ?,
+		 banner_key = ?, redirect_url = ?, category = ?, status = 'pending', reject_reason = ''
+		 WHERE id = ?`,
+		p.Title, p.Description, p.BodyMD, p.ThumbnailKey, p.BannerKey, p.RedirectURL, p.Category, id)
+	return err
+}
+
+// ── 수정본 (project_revisions) ─────────────────────────────────────────
+
+type revision struct {
+	ProjectID    int64
+	Title        string
+	Description  string
+	BodyMD       string
+	ThumbnailKey string
+	BannerKey    string
+	RedirectURL  string
+	Category     string
+	Status       string // pending | rejected
+	RejectReason string
+	CreatedAt    time.Time
+}
+
+const revCols = `project_id, title, description, body_md, thumbnail_key, banner_key,
+	redirect_url, category, status, reject_reason, created_at`
+
+func scanRevisions(rows *sql.Rows) (map[int64]revision, error) {
+	defer rows.Close()
+	out := map[int64]revision{}
+	for rows.Next() {
+		var v revision
+		err := rows.Scan(&v.ProjectID, &v.Title, &v.Description, &v.BodyMD, &v.ThumbnailKey,
+			&v.BannerKey, &v.RedirectURL, &v.Category, &v.Status, &v.RejectReason, &v.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		out[v.ProjectID] = v
+	}
+	return out, rows.Err()
+}
+
+// upsertRevision — 재수정하면 이전 수정본(반려 포함)을 덮어쓰고 다시 심사 대기가 된다.
+func upsertRevision(db *sql.DB, rev revision) error {
+	_, err := db.Exec(
+		`REPLACE INTO project_revisions
+		 (project_id, title, description, body_md, thumbnail_key, banner_key,
+		  redirect_url, category, status, reject_reason, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', '', ?)`,
+		rev.ProjectID, rev.Title, rev.Description, rev.BodyMD, rev.ThumbnailKey,
+		rev.BannerKey, rev.RedirectURL, rev.Category, time.Now().UTC())
+	return err
+}
+
+func getRevision(db *sql.DB, projectID int64) (revision, error) {
+	rows, err := db.Query(`SELECT `+revCols+` FROM project_revisions WHERE project_id = ?`, projectID)
+	if err != nil {
+		return revision{}, err
+	}
+	revs, err := scanRevisions(rows)
+	if err != nil {
+		return revision{}, err
+	}
+	rev, ok := revs[projectID]
+	if !ok {
+		return revision{}, errNotFound
+	}
+	return rev, nil
+}
+
+func listRevisionsByStudent(db *sql.DB, studentID string) (map[int64]revision, error) {
+	rows, err := db.Query(
+		`SELECT `+revCols+` FROM project_revisions
+		 WHERE project_id IN (SELECT id FROM projects WHERE student_id = ?)`, studentID)
+	if err != nil {
+		return nil, err
+	}
+	return scanRevisions(rows)
+}
+
+// listPendingRevisionProjects 는 검수 대기열용 — 수정본이 대기 중인 프로젝트 행 + 수정본.
+func listPendingRevisionProjects(db *sql.DB) ([]row, map[int64]revision, error) {
+	revRows, err := db.Query(`SELECT ` + revCols + ` FROM project_revisions WHERE status = 'pending'`)
+	if err != nil {
+		return nil, nil, err
+	}
+	revs, err := scanRevisions(revRows)
+	if err != nil {
+		return nil, nil, err
+	}
+	rows, err := db.Query(`SELECT ` + selectCols + ` FROM projects
+		WHERE id IN (SELECT project_id FROM project_revisions WHERE status = 'pending')
+		ORDER BY created_at DESC`)
+	if err != nil {
+		return nil, nil, err
+	}
+	items, err := scanRows(rows)
+	if err != nil {
+		return nil, nil, err
+	}
+	return items, revs, nil
+}
+
+// applyRevision 은 수정본 승인 — 라이브 버전에 반영 후 수정본을 지운다.
+// FOR UPDATE + status 조건으로 동시 승인을 한 번만 반영한다.
+func applyRevision(db *sql.DB, id int64, reviewer Profile) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	rows, err := tx.Query(
+		`SELECT `+revCols+` FROM project_revisions WHERE project_id = ? AND status = 'pending' FOR UPDATE`, id)
+	if err != nil {
+		return err
+	}
+	revs, err := scanRevisions(rows)
+	if err != nil {
+		return err
+	}
+	rev, ok := revs[id]
+	if !ok {
+		return errNotFound
+	}
+	_, err = tx.Exec(
+		`UPDATE projects SET title = ?, description = ?, body_md = ?, thumbnail_key = ?,
+		 banner_key = ?, redirect_url = ?, category = ?, reviewer_student_id = ?,
+		 reviewer_name = ?, reviewed_at = ? WHERE id = ?`,
+		rev.Title, rev.Description, rev.BodyMD, rev.ThumbnailKey, rev.BannerKey,
+		rev.RedirectURL, rev.Category, reviewer.StudentID, reviewer.Name, time.Now().UTC(), id)
+	if err != nil {
+		return err
+	}
+	if _, err := tx.Exec(`DELETE FROM project_revisions WHERE project_id = ?`, id); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// rejectRevision — 라이브 버전은 유지, 수정본만 반려 표시(작성자가 사유를 본다).
+func rejectRevision(db *sql.DB, id int64, reason string) error {
+	res, err := db.Exec(
+		`UPDATE project_revisions SET status = 'rejected', reject_reason = ?
+		 WHERE project_id = ? AND status = 'pending'`, reason, id)
 	if err != nil {
 		return err
 	}

@@ -131,6 +131,10 @@ export default function HomePage() {
                 >
                   {p.description}
                 </p>
+                {/* 작성자 — 예: "22 오유찬" */}
+                <p className={css({ fontSize: "xs", color: "gray.400", mt: "1", truncate: true })}>
+                  {p.author}
+                </p>
               </div>
             </button>
           ))}

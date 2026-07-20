@@ -93,6 +93,8 @@ function ReviewCard({
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  // 수정 요청 건은 새 버전(update)을 심사한다 — 기존 버전은 라이브에서 확인
+  const v = p.update ?? p;
 
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -115,36 +117,52 @@ function ReviewCard({
       })}
     >
       <div className={flex({ align: "center", gap: "2", mb: "1" })}>
-        <p className={css({ fontWeight: "800", flex: 1, minW: 0, truncate: true })}>{p.title}</p>
+        <p className={css({ fontWeight: "800", flex: 1, minW: 0, truncate: true })}>{v.title}</p>
+        {p.update && (
+          <span
+            className={css({
+              flexShrink: 0,
+              fontSize: "xs",
+              fontWeight: "700",
+              px: "2",
+              py: "0.5",
+              rounded: "full",
+              bg: "indigo.100",
+              color: "indigo.700",
+            })}
+          >
+            수정 요청
+          </span>
+        )}
         <span className={css({ fontSize: "xs", color: "gray.500", flexShrink: 0 })}>
-          {p.category}
+          {v.category}
         </span>
       </div>
       <p className={css({ fontSize: "sm", color: "gray.500" })}>
-        {p.author} · {new Date(p.createdAt).toLocaleDateString("ko-KR")}
+        {p.author} · {new Date(v.createdAt).toLocaleDateString("ko-KR")}
       </p>
-      <p className={css({ fontSize: "sm", mt: "1" })}>{p.description}</p>
+      <p className={css({ fontSize: "sm", mt: "1" })}>{v.description}</p>
       <a
-        href={p.redirectUrl}
+        href={v.redirectUrl}
         target="_blank"
         rel="noopener noreferrer"
         className={css({ fontSize: "sm", color: "indigo.600", wordBreak: "break-all" })}
       >
-        {p.redirectUrl}
+        {v.redirectUrl}
       </a>
 
-      {(p.thumbnailUrl || p.bannerUrl) && (
+      {(v.thumbnailUrl || v.bannerUrl) && (
         <div className={flex({ gap: "2", mt: "2" })}>
-          {p.thumbnailUrl && (
+          {v.thumbnailUrl && (
             <img
-              src={imageSrc(p.thumbnailUrl)}
+              src={imageSrc(v.thumbnailUrl)}
               alt="썸네일"
               className={css({ w: "20", h: "20", objectFit: "cover", rounded: "lg" })}
             />
           )}
-          {p.bannerUrl && (
+          {v.bannerUrl && (
             <img
-              src={imageSrc(p.bannerUrl)}
+              src={imageSrc(v.bannerUrl)}
               alt="배너"
               className={css({ h: "20", maxW: "48", objectFit: "cover", rounded: "lg" })}
             />
@@ -152,11 +170,11 @@ function ReviewCard({
         </div>
       )}
 
-      {p.body && (
+      {v.body && (
         <details className={css({ mt: "2", fontSize: "sm" })}>
           <summary className={css({ cursor: "pointer", color: "gray.500" })}>본문 보기</summary>
           <div className={css({ mt: "2", p: "3", bg: "gray.50", rounded: "lg" })}>
-            <ReactMarkdown>{p.body}</ReactMarkdown>
+            <ReactMarkdown>{v.body}</ReactMarkdown>
           </div>
         </details>
       )}

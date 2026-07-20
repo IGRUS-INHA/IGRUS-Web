@@ -122,16 +122,19 @@ export interface Project {
   description: string;
   body?: string;
   category: string;
-  author: string;
+  author?: string;
   thumbnailUrl?: string;
   bannerUrl?: string;
   redirectUrl?: string;
   status?: "pending" | "approved" | "rejected";
   rejectReason?: string;
   reviewerName?: string;
-  totalClicks: number;
+  /** 본인/운영진 응답에만 포함 — 외부 비공개 */
+  totalClicks?: number;
   createdAt: string;
   reviewedAt?: string;
+  /** 승인작의 심사 대기/반려된 수정본 */
+  update?: Project;
 }
 
 /** 백엔드가 주는 상대 경로(/images/..)를 play-api 절대 주소로 */
@@ -151,6 +154,13 @@ export const fetchMine = () => playFetch<Project[]>("/api/projects/mine");
 
 export const submitProject = (form: FormData) =>
   playFetch<{ id: number; status: string }>("/api/projects", { method: "POST", body: form });
+
+/** 본인 작품 수정 — 승인작은 수정본으로 쌓여 재승인 후 반영된다 */
+export const updateProject = (id: number, form: FormData) =>
+  playFetch<{ id: number; status: string }>(`/api/projects/${id}`, {
+    method: "PUT",
+    body: form,
+  });
 
 export const fetchAdminProjects = (status: string) =>
   playFetch<Project[]>(`/api/admin/projects?status=${status}`);

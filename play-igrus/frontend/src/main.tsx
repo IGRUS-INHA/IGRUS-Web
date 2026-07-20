@@ -21,6 +21,7 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "login", element: <LoginPage /> },
       { path: "submit", element: <SubmitPage /> },
+      { path: "edit/:id", element: <SubmitPage /> },
       { path: "my", element: <MyPage /> },
       { path: "admin", element: <AdminPage /> },
     ],

@@ -43,6 +43,7 @@ play-igrus/frontend/node_modules/
 play-igrus/frontend/dist/
 play-igrus/frontend/styled-system/
 play-igrus/backend/play-server
+play-igrus/backend/play-igrus
 play-igrus/backend/data/
 
 # npm / yarn / pnpm

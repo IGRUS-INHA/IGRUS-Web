@@ -48,8 +48,8 @@ func TestDecay(t *testing.T) {
 		daysAgo float64
 		want    float64
 	}{
-		{0, 1},    // 오늘 클릭은 그대로
-		{7, 0.5},  // 반감기
+		{0, 1},   // 오늘 클릭은 그대로
+		{7, 0.5}, // 반감기
 		{14, 0.25},
 	}
 	for _, c := range cases {
@@ -187,11 +187,13 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 	// defer db.Close() 를 쓰면 Cleanup 이 닫힌 DB 에 DELETE 를 날리게 된다 (Cleanup 은 defer 이후 실행)
 	t.Cleanup(func() {
 		db.Exec(`DELETE FROM project_clicks_daily`)
+		db.Exec(`DELETE FROM project_revisions`)
 		db.Exec(`DELETE FROM projects`)
 		db.Close()
 	})
 	// 이전 실행이 비정상 종료로 남긴 행 제거 (건수 단언이 흔들리지 않게)
 	db.Exec(`DELETE FROM project_clicks_daily`)
+	db.Exec(`DELETE FROM project_revisions`)
 	db.Exec(`DELETE FROM projects`)
 
 	id, err := insertProject(db, row{
@@ -241,5 +243,44 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 	}
 	if math.Abs(p.Score-2) > 1e-9 || p.TotalClicks != 2 {
 		t.Errorf("score=%v totalClicks=%d, want 2/2", p.Score, p.TotalClicks)
+	}
+
+	// 승인작 수정 → 수정본 대기 → 승인 시 라이브 반영 + 수정본 삭제
+	rev := revision{ProjectID: id, Title: "수정판", Description: "새 설명", BodyMD: "# v2",
+		ThumbnailKey: "aa.png", RedirectURL: "https://example.com/v2", Category: "앱"}
+	if err := upsertRevision(db, rev); err != nil {
+		t.Fatal(err)
+	}
+	// 대기 중에는 라이브 유지
+	if p, _ = getProject(db, id); p.Title != "테스트" {
+		t.Fatalf("수정본 대기 중 라이브가 바뀜: %+v", p)
+	}
+	if err := applyRevision(db, id, reviewer); err != nil {
+		t.Fatal(err)
+	}
+	if err := applyRevision(db, id, reviewer); err != errNotFound {
+		t.Fatalf("수정본 중복 승인이 막히지 않음: %v", err)
+	}
+	p, _ = getProject(db, id)
+	if p.Title != "수정판" || p.Category != "앱" || p.Status != "approved" || p.TotalClicks != 2 {
+		t.Fatalf("수정본 반영이 틀림 (클릭수 유지돼야 함): %+v", p)
+	}
+
+	// 수정본 반려 — 라이브 유지, 사유만 기록
+	if err := upsertRevision(db, rev); err != nil {
+		t.Fatal(err)
+	}
+	if err := rejectRevision(db, id, "별로"); err != nil {
+		t.Fatal(err)
+	}
+	got, err := getRevision(db, id)
+	if err != nil || got.Status != "rejected" || got.RejectReason != "별로" {
+		t.Fatalf("수정본 반려 기록이 틀림: %+v %v", got, err)
+	}
+}
+
+func TestAuthorLabel(t *testing.T) {
+	if got := authorLabel("22190001", "오유찬"); got != "22 오유찬" {
+		t.Errorf("authorLabel = %q, want %q", got, "22 오유찬")
 	}
 }
