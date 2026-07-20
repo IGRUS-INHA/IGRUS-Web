@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { css } from "styled-system/css";
-import { flex } from "styled-system/patterns";
-import { fetchAuthor, type AuthorProfile } from "../api/client";
+import { flex, grid } from "styled-system/patterns";
+import { fetchAuthor, imageSrc, type AuthorProfile, type Project } from "../api/client";
+import { categoryColor } from "./category";
 
 interface Props {
   /** 열려 있는 동안의 대상 프로젝트 id — undefined 면 닫힘 */
   projectId?: number;
   onClose: () => void;
+  /** 작품 목록에서 작품 탭 — 이 다이얼로그를 닫고 해당 작품을 연다 */
+  onProject?: (p: Project) => void;
 }
 
-/** 작성자 프로필 다이얼로그 — 닉네임(또는 이름), 자기소개, 링크 */
-export default function AuthorDialog({ projectId, onClose }: Props) {
+/** 작성자 프로필 다이얼로그 — 닉네임(또는 이름), 자기소개, 링크, 제작한 작품 */
+export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const [author, setAuthor] = useState<AuthorProfile | null>(null);
 
@@ -120,6 +123,58 @@ export default function AuthorDialog({ projectId, onClose }: Props) {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {author.projects && author.projects.length > 0 && (
+              <>
+                <h3 className={css({ mt: "5", fontSize: "sm", fontWeight: "800", color: "gray.500" })}>
+                  제작한 작품
+                </h3>
+                <div className={grid({ columns: 3, gap: "2", mt: "2" })}>
+                  {author.projects.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => onProject?.(p)}
+                      className={css({ textAlign: "left", cursor: "pointer" })}
+                    >
+                      <div
+                        className={css({ aspectRatio: "1", rounded: "lg", overflow: "hidden", bg: "gray.100" })}
+                        style={
+                          p.thumbnailUrl
+                            ? undefined
+                            : { background: `linear-gradient(135deg, ${categoryColor(p.category)}, #1e1b4b)` }
+                        }
+                      >
+                        {p.thumbnailUrl ? (
+                          <img
+                            src={imageSrc(p.thumbnailUrl)}
+                            alt={p.title}
+                            loading="lazy"
+                            className={css({ w: "full", h: "full", objectFit: "cover" })}
+                          />
+                        ) : (
+                          <div
+                            className={flex({
+                              w: "full",
+                              h: "full",
+                              align: "center",
+                              justify: "center",
+                              color: "white",
+                              fontWeight: "800",
+                            })}
+                          >
+                            {p.title.slice(0, 1)}
+                          </div>
+                        )}
+                      </div>
+                      <p className={css({ mt: "1", fontSize: "xs", fontWeight: "700", truncate: true })}>
+                        {p.title}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </>
         )}

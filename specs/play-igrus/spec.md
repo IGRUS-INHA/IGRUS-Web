@@ -47,8 +47,8 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
   이름 — 폴백은 **igrus 서버가 한다** (`GET /api/v1/users/{학번}/public-profile` 의
   `displayName`; 닉네임이 있으면 실명은 응답에 없음). 학번·입학년도는 비공개.
   play 서버는 5분 TTL 캐시로 조회하고, 실패 시 제출 당시 이름 스냅샷으로 폴백.
-- 작성자 탭(카드/상세) → 프로필 다이얼로그: 표시 이름·자기소개·링크
-  (`GET /api/projects/{id}/author` — 학번 비노출 프록시).
+- 작성자 탭(카드/상세) → 프로필 다이얼로그: 표시 이름·자기소개·링크·제작한 작품
+  (승인작만, 탭 → 해당 작품 다이얼로그) (`GET /api/projects/{id}/author` — 학번 비노출 프록시).
 - **클릭수는 어떤 API 응답에도 싣지 않는다** (본인·운영진 포함 서버단 제공 금지) —
   랭킹 정렬 입력으로만 쓰인다.
 
@@ -82,7 +82,7 @@ IGRUS 가입자(동아리 비회원 포함 — 인하대생 누구나)가 본인
 |---|---|---|
 | `GET /api/projects?category=&sort=` | 공개 | 승인작 목록 (sort: popular 기본 / recent) |
 | `GET /api/projects/{id}` | 공개 | 상세 (배너·본문·리다이렉트 URL 포함) |
-| `GET /api/projects/{id}/author` | 공개 | 작성자 공개 프로필 (표시 이름·자기소개·링크, 학번 비노출) |
+| `GET /api/projects/{id}/author` | 공개 | 작성자 공개 프로필 (표시 이름·자기소개·링크·승인작 목록, 학번 비노출) |
 | `POST /api/projects/{id}/click` | 공개 | 클릭 집계 (204) |
 | `POST /api/projects` | 로그인 | multipart 제출 → pending |
 | `PUT /api/projects/{id}` | 로그인(본인) | 수정 — 승인작은 수정본 대기, 그 외 즉시 반영 후 pending |
