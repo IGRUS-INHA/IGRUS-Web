@@ -24,12 +24,13 @@ export function useSheetDrag(
     let startX = 0;
     let startY = 0;
     let dy = 0;
+    let scroller: HTMLElement | null = null; // 터치가 시작된 시점의 스크롤 앱 영역
     let startedInScroller = false; // 터치가 스크롤 앱 영역에서 시작됐는지
     let dragging = false; // 이번 터치가 시트 드래그로 확정됐는지
 
     const onStart = (e: TouchEvent) => {
       // 스크롤 영역은 시트가 늦게 채워질 수 있어(로딩) 터치 시작마다 다시 찾는다
-      const scroller = sheet.querySelector<HTMLElement>("[data-sheet-scroll]");
+      scroller = sheet.querySelector<HTMLElement>("[data-sheet-scroll]");
       startedInScroller = !!scroller && scroller.contains(e.target as Node);
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
@@ -42,9 +43,12 @@ export function useSheetDrag(
       if (!dragging) {
         const dyRaw = t.clientY - startY;
         const dxRaw = t.clientX - startX;
-        // 아래로(6px 데드존) + 세로 우세 + 스크롤 앱 영역 밖(헤더·배너·손잡이)에서 시작했을 때만 확정.
-        // 앱 목록 영역에서 시작한 터치는 스크롤 여부와 무관하게 시트로 넘어가지 않는다.
-        if (dyRaw > 6 && Math.abs(dyRaw) > Math.abs(dxRaw) && !startedInScroller) {
+        // 스크롤 앱 영역에서 시작했어도, 그 영역이 맨 위(scrollTop<=0)면 시트로 넘긴다.
+        // → 목록이 스크롤 가능하고 아직 위가 아니면 네이티브 스크롤,
+        //   맨 위이거나 요소가 적어 스크롤 불가면 시트가 내려감(창 전체 pull-to-refresh 방지).
+        const scrollerAtTop = !startedInScroller || !scroller || scroller.scrollTop <= 0;
+        // 아래로(6px 데드존) + 세로 우세 + 스크롤 영역이 맨 위일 때만 확정.
+        if (dyRaw > 6 && Math.abs(dyRaw) > Math.abs(dxRaw) && scrollerAtTop) {
           dragging = true;
           startY = t.clientY; // 재기준점 → dy 0부터 부드럽게
         } else {

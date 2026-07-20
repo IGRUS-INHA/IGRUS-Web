@@ -165,7 +165,7 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
               출시한 앱
             </h3>
 
-            <div data-sheet-scroll className={css({ flex: 1, minH: 0, overflowY: "auto", px: "6", pb: "6" })}>
+            <div data-sheet-scroll className={css({ flex: 1, minH: 0, overflowY: "auto", overscrollBehavior: "contain", px: "6", pb: "6" })}>
               {projects.length === 0 ? (
                 <p className={css({ fontSize: "sm", color: "gray.400", py: "6", textAlign: "center" })}>
                   아직 공개된 작품이 없습니다
