@@ -1,0 +1,17 @@
+PublicProfileResponse:
+  type: object
+  description: 공개 프로필 — play 등 외부 표시용. 닉네임이 있으면 실명은 응답에 포함되지 않는다 (서버단 폴백)
+  properties:
+    displayName:
+      type: string
+      description: 표시 이름 — 닉네임이 있으면 닉네임, 없으면 이름
+      example: 유찬
+    introduction:
+      type: string
+      description: 자기소개
+      example: 웹을 좋아하는 개발자입니다.
+    links:
+      type: array
+      description: 프로필 링크 목록
+      items:
+        $ref: ./_common.yaml#/ProfileLink

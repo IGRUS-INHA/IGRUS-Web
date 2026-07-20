@@ -266,6 +266,8 @@ paths:
     $ref: ./paths/users.yaml#/usersMeLikes
   /api/v1/users/me/bookmarks:
     $ref: ./paths/users.yaml#/usersMeBookmarks
+  /api/v1/users/{studentId}/public-profile:
+    $ref: ./paths/users.yaml#/usersPublicProfile
   /api/v1/admin/surveys/{surveyId}/responses:
     $ref: ./paths/surveys.yaml#/adminSurveysBySurveyIdResponses
   /api/v1/surveys/trash:
@@ -592,6 +594,13 @@ components:
     # mypage
     ChangeEmailRequest:
       $ref: './schemas/mypage.yaml#/ChangeEmailRequest'
+    UpdateMyProfileRequest:
+      $ref: './schemas/mypage.yaml#/UpdateMyProfileRequest'
+    # users
+    ProfileLink:
+      $ref: './schemas/_common.yaml#/ProfileLink'
+    PublicProfileResponse:
+      $ref: './schemas/users.yaml#/PublicProfileResponse'
     UpdateStudentIdRequest:
       $ref: './schemas/mypage.yaml#/UpdateStudentIdRequest'
     ChangePhoneNumberRequest:

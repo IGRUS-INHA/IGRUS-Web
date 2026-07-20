@@ -38,6 +38,7 @@ import type { PasswordSignupRequestGender } from "./passwordSignupRequestGender"
 import type { PasswordSignupRequestInterestsItem } from "./passwordSignupRequestInterestsItem";
 import type { PasswordSignupRequestJoinRoute } from "./passwordSignupRequestJoinRoute";
 import type { PasswordSignupRequestWishesItem } from "./passwordSignupRequestWishesItem";
+import type { ProfileLink } from "./profileLink";
 
 /**
  * 비밀번호 기반 회원가입 요청
@@ -118,6 +119,21 @@ export interface PasswordSignupRequest {
   grade: number;
   /** 재학 상태 */
   enrollmentStatus: PasswordSignupRequestEnrollmentStatus;
+  /**
+   * 닉네임 (선택, 미설정 시 이름으로 표시)
+   * @maxLength 50
+   */
+  nickname?: string;
+  /**
+   * 자기소개 (선택)
+   * @maxLength 1000
+   */
+  introduction?: string;
+  /**
+   * 프로필 링크 목록 (선택)
+   * @maxItems 10
+   */
+  links?: ProfileLink[];
   /** 개인정보 처리방침 동의 여부 (반드시 true여야 함) */
   privacyConsent: boolean;
   /**

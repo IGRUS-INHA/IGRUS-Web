@@ -33,31 +33,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
  * OpenAPI spec version: ec724ff
  */
-import type { MyProfileResponseRole } from "./myProfileResponseRole";
 import type { ProfileLink } from "./profileLink";
 
 /**
- * 내 프로필 정보
+ * 공개 프로필 — play 등 외부 표시용. 닉네임이 있으면 실명은 응답에 포함되지 않는다 (서버단 폴백)
  */
-export interface MyProfileResponse {
-  /** 학번 */
-  studentId?: string;
-  /** 이름 */
-  name?: string;
-  /** 이메일 */
-  email?: string;
-  /** 전화번호 */
-  phoneNumber?: string;
-  /** 학과 */
-  department?: string;
-  /** 역할 */
-  role?: MyProfileResponseRole;
-  /** 가입일 */
-  createdAt?: string;
-  /** 임시 학번 사용 여부 */
-  hasTemporaryStudentId?: boolean;
-  /** 닉네임 (미설정 시 null) */
-  nickname?: string;
+export interface PublicProfileResponse {
+  /** 표시 이름 — 닉네임이 있으면 닉네임, 없으면 이름 */
+  displayName?: string;
   /** 자기소개 */
   introduction?: string;
   /** 프로필 링크 목록 */

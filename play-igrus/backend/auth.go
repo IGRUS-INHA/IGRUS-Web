@@ -69,16 +69,18 @@ func (c *authCache) put(token string, p Profile) {
 }
 
 type authenticator struct {
-	apiBase string
-	cache   *authCache
-	client  *http.Client
+	apiBase  string
+	cache    *authCache
+	profiles *profileCache
+	client   *http.Client
 }
 
 func newAuthenticator(apiBase string) *authenticator {
 	return &authenticator{
-		apiBase: apiBase,
-		cache:   newAuthCache(),
-		client:  &http.Client{Timeout: 5 * time.Second},
+		apiBase:  apiBase,
+		cache:    newAuthCache(),
+		profiles: newProfileCache(),
+		client:   &http.Client{Timeout: 5 * time.Second},
 	}
 }
 

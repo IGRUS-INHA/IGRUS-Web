@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"image"
 	"image/png"
 	"math"
 	"mime/multipart"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
@@ -292,12 +294,30 @@ func TestReviewAndRankingWithMySQL(t *testing.T) {
 	}
 }
 
-// 인하대 학번은 3~4번째 자리가 입학년도 — 12223759 는 22학번, 1227xxxx 는 27학번.
-func TestAuthorLabel(t *testing.T) {
-	cases := map[string]string{"12223759": "22 오유찬", "12274321": "27 오유찬"}
-	for id, want := range cases {
-		if got := authorLabel(id, "오유찬"); got != want {
-			t.Errorf("authorLabel(%q) = %q, want %q", id, got, want)
+// 공개 프로필 프록시 — 닉네임이 있으면 목록/작성자 응답의 이름이 닉네임으로 바뀌고
+// (서버단 폴백), igrus 조회가 실패하면 제출 당시 이름 스냅샷을 유지한다.
+func TestResolveAuthors(t *testing.T) {
+	igrus := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/users/12223759/public-profile":
+			writeJSON(w, http.StatusOK, publicProfile{DisplayName: "닉네임", Introduction: "소개"})
+		default:
+			w.WriteHeader(http.StatusNotFound)
 		}
+	}))
+	defer igrus.Close()
+
+	s := &server{auth: newAuthenticator(igrus.URL)}
+	items := []row{
+		{StudentID: "12223759", AuthorName: "오유찬"},
+		{StudentID: "12220000", AuthorName: "김아그"}, // 프로필 없음 → 스냅샷 유지
+	}
+	s.resolveAuthors(context.Background(), items)
+
+	if items[0].AuthorName != "닉네임" {
+		t.Errorf("닉네임 미반영: %q", items[0].AuthorName)
+	}
+	if items[1].AuthorName != "김아그" {
+		t.Errorf("폴백 실패: %q", items[1].AuthorName)
 	}
 }

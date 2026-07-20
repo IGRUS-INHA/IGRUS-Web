@@ -135,6 +135,39 @@ MyProfileResponse:
       type: boolean
       description: 임시 학번 사용 여부
       example: false
+    nickname:
+      type: string
+      description: 닉네임 (미설정 시 null)
+      example: 유찬
+    introduction:
+      type: string
+      description: 자기소개
+      example: 웹을 좋아하는 개발자입니다.
+    links:
+      type: array
+      description: 프로필 링크 목록
+      items:
+        $ref: ./_common.yaml#/ProfileLink
+UpdateMyProfileRequest:
+  type: object
+  description: 공개 프로필(닉네임/자기소개/링크) 수정 요청 — 세 필드를 통째로 교체하며, 생략/null 은 해당 값을 비운다
+  properties:
+    nickname:
+      type: string
+      description: 닉네임 (비우면 이름으로 표시)
+      example: 유찬
+      maxLength: 50
+    introduction:
+      type: string
+      description: 자기소개
+      example: 웹을 좋아하는 개발자입니다.
+      maxLength: 1000
+    links:
+      type: array
+      description: 프로필 링크 목록
+      items:
+        $ref: ./_common.yaml#/ProfileLink
+      maxItems: 10
 MyPostPageResponse:
   type: object
   description: 내 게시글 목록 페이징 응답

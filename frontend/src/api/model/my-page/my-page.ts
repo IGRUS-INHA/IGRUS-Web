@@ -64,6 +64,7 @@ import type {
   MyPostPageResponse,
   MyProfileResponse,
   MyRegistrationResponse,
+  UpdateMyProfileRequest,
   UpdateStudentIdRequest,
   WithdrawRequest,
 } from ".././models";
@@ -1024,6 +1025,127 @@ export function useGetMyProfile<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+/**
+ * 닉네임/자기소개/링크를 통째로 교체합니다 (생략/null 은 해당 값을 비움)
+ * @summary 공개 프로필 수정
+ */
+export type updateMyProfileResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type updateMyProfileResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type updateMyProfileResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type updateMyProfileResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type updateMyProfileResponseSuccess = updateMyProfileResponse204 & {
+  headers: Headers;
+};
+export type updateMyProfileResponseError = (
+  | updateMyProfileResponse400
+  | updateMyProfileResponse401
+  | updateMyProfileResponse404
+) & {
+  headers: Headers;
+};
+
+export type updateMyProfileResponse =
+  | updateMyProfileResponseSuccess
+  | updateMyProfileResponseError;
+
+export const getUpdateMyProfileUrl = () => {
+  return `/api/v1/mypage/profile`;
+};
+
+export const updateMyProfile = async (
+  updateMyProfileRequest: UpdateMyProfileRequest,
+  options?: RequestInit,
+): Promise<updateMyProfileResponse> => {
+  return customFetch<updateMyProfileResponse>(getUpdateMyProfileUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateMyProfileRequest),
+  });
+};
+
+export const getUpdateMyProfileMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyProfile>>,
+    TError,
+    { data: UpdateMyProfileRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMyProfile>>,
+  TError,
+  { data: UpdateMyProfileRequest },
+  TContext
+> => {
+  const mutationKey = ["updateMyProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMyProfile>>,
+    { data: UpdateMyProfileRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateMyProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMyProfile>>
+>;
+export type UpdateMyProfileMutationBody = UpdateMyProfileRequest;
+export type UpdateMyProfileMutationError = void;
+
+/**
+ * @summary 공개 프로필 수정
+ */
+export const useUpdateMyProfile = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateMyProfile>>,
+      TError,
+      { data: UpdateMyProfileRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateMyProfile>>,
+  TError,
+  { data: UpdateMyProfileRequest },
+  TContext
+> => {
+  return useMutation(getUpdateMyProfileMutationOptions(options), queryClient);
+};
 /**
  * 내가 작성한 게시글 목록을 페이징하여 조회합니다
  * @summary 내 게시글 목록 조회

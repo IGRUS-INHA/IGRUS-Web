@@ -56,6 +56,9 @@ public class ApiSecurityConfig {
                 // 외부인 행사 신청 (인증 불필요)
                 .requestMatchers(HttpMethod.POST, "/api/v1/events/*/registrations/external").permitAll()
 
+                // 공개 프로필 조회 (play 등 외부 표시용, 인증 불필요)
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/*/public-profile").permitAll()
+
                 // 학기별 회원 명단 조회 (운영진 이상)
                 .requestMatchers("/api/v1/semesters/**").hasAnyRole("OPERATOR", "ADMIN")
 

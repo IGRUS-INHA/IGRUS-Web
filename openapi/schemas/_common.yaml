@@ -182,6 +182,27 @@ EmailNotVerifiedErrorResponse:
         type: string
         description: 사용자 등록 이메일
         example: user@inha.edu
+ProfileLink:
+  type: object
+  description: 프로필 외부 링크 (github, linkedin, velog 등)
+  properties:
+    label:
+      type: string
+      description: 링크 라벨
+      example: github
+      maxLength: 30
+      minLength: 1
+      pattern: .*\S.*
+    url:
+      type: string
+      description: 링크 URL (http/https 만 허용)
+      example: https://github.com/username
+      maxLength: 2048
+      minLength: 1
+      pattern: ^https?://.+
+  required:
+  - label
+  - url
 AccountRecoverableErrorResponse:
   type: object
   description: 복구 가능한 탈퇴 계정 에러 응답. 클라이언트가 복구 플로우로 이동할 수 있도록 추가 정보를 포함합니다.

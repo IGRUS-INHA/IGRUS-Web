@@ -150,6 +150,41 @@ export const fetchProjects = (sort: SortKey = "popular", category?: string) => {
 
 export const fetchProject = (id: number) => playFetch<Project>(`/api/projects/${id}`);
 
+// ── 작성자 공개 프로필 ──────────────────────────────────────────────
+// 닉네임 폴백은 서버가 한다 (닉네임이 있으면 실명·학번은 응답에 없다).
+
+export interface ProfileLink {
+  label: string;
+  url: string;
+}
+
+export interface AuthorProfile {
+  displayName: string;
+  introduction?: string;
+  links: ProfileLink[];
+}
+
+export const fetchAuthor = (projectId: number) =>
+  playFetch<AuthorProfile>(`/api/projects/${projectId}/author`);
+
+// ── 내 공개 프로필 (igrus 마이페이지) ────────────────────────────────
+
+export interface MyPublicProfile {
+  nickname?: string;
+  introduction?: string;
+  links?: ProfileLink[];
+}
+
+export const fetchMyProfile = () => igrusFetch<MyPublicProfile>("/api/v1/mypage/profile");
+
+/** 닉네임/자기소개/링크를 통째로 교체 (빈 값은 비움) */
+export const updateMyProfile = (profile: MyPublicProfile) =>
+  igrusFetch<void>("/api/v1/mypage/profile", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profile),
+  });
+
 export const clickProject = (id: number) =>
   playFetch<void>(`/api/projects/${id}/click`, { method: "POST" });
 

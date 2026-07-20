@@ -1,9 +1,11 @@
 package igrus.web.user.mypage.dto.response;
 
+import igrus.web.user.domain.ProfileLink;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 내 프로필 조회 응답 DTO.
@@ -23,7 +25,13 @@ public record MyProfileResponse(
 
         Instant createdAt,
 
-        boolean hasTemporaryStudentId
+        boolean hasTemporaryStudentId,
+
+        String nickname,
+
+        String introduction,
+
+        List<ProfileLink> links
 ) {
     public static MyProfileResponse from(User user) {
         return new MyProfileResponse(
@@ -34,7 +42,10 @@ public record MyProfileResponse(
                 user.getDepartment(),
                 user.getRole(),
                 user.getCreatedAt(),
-                user.isHasTemporaryStudentId()
+                user.isHasTemporaryStudentId(),
+                user.getNickname(),
+                user.getIntroduction(),
+                user.getLinks()
         );
     }
 }

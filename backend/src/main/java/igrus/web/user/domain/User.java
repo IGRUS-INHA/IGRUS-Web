@@ -1,6 +1,7 @@
 package igrus.web.user.domain;
 
 import igrus.web.common.converter.InterestListConverter;
+import igrus.web.common.converter.ProfileLinkListConverter;
 import igrus.web.common.converter.WishListConverter;
 import igrus.web.common.domain.SoftDeletableEntity;
 import igrus.web.user.exception.InvalidEmailException;
@@ -116,6 +117,19 @@ public class User extends SoftDeletableEntity {
     @Column(name = "users_has_temporary_student_id", nullable = false)
     private boolean hasTemporaryStudentId = false;
 
+    /** 닉네임 (선택) — 공개 표시 이름. 없으면 이름으로 표시 */
+    @Column(name = "users_nickname", length = 50)
+    private String nickname;
+
+    /** 자기소개 (선택) */
+    @Column(name = "users_introduction", columnDefinition = "TEXT")
+    private String introduction;
+
+    /** 프로필 외부 링크 (JSON 배열) */
+    @Convert(converter = ProfileLinkListConverter.class)
+    @Column(name = "users_links", columnDefinition = "JSON")
+    private List<ProfileLink> links = new ArrayList<>();
+
     /** 사용자 직책 목록 (다대다 관계: 한 사용자가 여러 직책 보유 가능) */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserPosition> userPositions = new ArrayList<>();
@@ -201,6 +215,10 @@ public class User extends SoftDeletableEntity {
 
     public List<Wish> getWishes() {
         return Collections.unmodifiableList(this.wishes);
+    }
+
+    public List<ProfileLink> getLinks() {
+        return Collections.unmodifiableList(this.links);
     }
 
     public List<Interest> getInterests() {
@@ -377,6 +395,27 @@ public class User extends SoftDeletableEntity {
 
     public void updateMotivation(String motivation) {
         this.motivation = motivation;
+    }
+
+    // === 공개 프로필 (닉네임/자기소개/링크) ===
+
+    /**
+     * 공개 프로필을 통째로 교체합니다. 빈 문자열은 null 로 정규화됩니다.
+     * 값 형식 검증(길이, URL http/https)은 API 경계의 Bean Validation 이 담당합니다.
+     */
+    public void updatePublicProfile(String nickname, String introduction, List<ProfileLink> links) {
+        this.nickname = normalizeBlank(nickname);
+        this.introduction = normalizeBlank(introduction);
+        this.links = links != null ? new ArrayList<>(links) : new ArrayList<>();
+    }
+
+    /** 공개 프로필 표시 이름 — 닉네임이 있으면 닉네임, 없으면 이름 (닉네임 설정 시 실명 비노출) */
+    public String getPublicDisplayName() {
+        return nickname != null ? nickname : name;
+    }
+
+    private static String normalizeBlank(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
     }
 
     public void updateEmail(String email) {

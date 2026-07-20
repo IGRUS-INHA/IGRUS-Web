@@ -27,6 +27,7 @@ import igrus.web.security.auth.common.dto.request.EmailVerificationRequest;
 import igrus.web.security.auth.common.dto.request.ResendVerificationRequest;
 import igrus.web.security.auth.password.dto.request.PasswordLoginRequest;
 import igrus.web.security.auth.password.dto.request.PasswordSignupRequest;
+import igrus.web.user.dto.ProfileLinkMapper;
 import igrus.web.security.auth.password.dto.request.TemporaryStudentIdSignupRequest;
 import igrus.web.user.domain.EnrollmentStatus;
 import igrus.web.user.domain.Gender;
@@ -199,7 +200,10 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
                 passwordSignupRequest.getVerificationToken()
         );
 
-        var response = signupService.signup(request);
+        var response = signupService.signup(request,
+                passwordSignupRequest.getNickname(),
+                passwordSignupRequest.getIntroduction(),
+                ProfileLinkMapper.fromApi(passwordSignupRequest.getLinks()));
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiPasswordSignupResponse()
                 .message(response.message())
                 .email(response.email())
@@ -241,7 +245,10 @@ public class PasswordAuthController implements PasswordAuthenticationApi {
                 temporaryStudentIdSignupRequest.getVerificationToken()
         );
 
-        var response = tempStudentIdSignupService.signup(request);
+        var response = tempStudentIdSignupService.signup(request,
+                temporaryStudentIdSignupRequest.getNickname(),
+                temporaryStudentIdSignupRequest.getIntroduction(),
+                ProfileLinkMapper.fromApi(temporaryStudentIdSignupRequest.getLinks()));
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiPasswordSignupResponse()
                 .message(response.message())
                 .email(response.email())
