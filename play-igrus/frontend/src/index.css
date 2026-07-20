@@ -13,3 +13,13 @@
     sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* 바텀시트(모바일 CTA) 슬라이드업 */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
