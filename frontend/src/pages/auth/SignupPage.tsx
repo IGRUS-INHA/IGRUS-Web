@@ -82,7 +82,7 @@ const signupSchema = z
       .optional()
       .refine((v) => v !== undefined, { message: "학년을 선택해주세요." }),
     enrollmentStatus: z.string().min(1, "재학/휴학 여부를 선택해주세요."),
-    emailLocal: z.string().min(1, "이메일 아이디를 입력해주세요."),
+    emailLocal: z.string().min(1, "이메일을 입력해주세요."),
     emailDomain: z.string().min(1, "도메인을 선택해주세요."),
     customDomain: z.string().optional(),
     phoneNumber: z
@@ -414,7 +414,7 @@ export default function SignupPage() {
   // --- 완료 화면 ---
   if (signupCompleted) {
     return (
-      <div className="mx-auto w-full max-w-lg px-s4 py-s7 animate-in slide-in-from-bottom-4 duration-500">
+      <div className="mx-auto w-full max-w-lg px-s4 py-s7 max-sm:w-screen max-sm:relative max-sm:left-1/2 max-sm:-translate-x-1/2">
         {/* 완료 아이콘 및 메시지 */}
         <div className="text-center mb-s7">
           <div className="mx-auto w-16 h-16 rounded-full bg-brand-l1 dark:bg-primary/15 flex items-center justify-center mb-s5">
@@ -436,7 +436,7 @@ export default function SignupPage() {
 
         {/* 슬랙 안내 섹션 */}
         {slackInviteUrl && (
-          <div className="rounded-r4 border bg-card p-s6 shadow-sm mb-s4">
+          <div className="mb-s6">
             <h2 className="typo-h4 text-foreground mb-s3">
               슬랙 채널에 참여하세요
             </h2>
@@ -479,7 +479,7 @@ export default function SignupPage() {
   // --- 가입 유형 선택 화면 ---
   if (!memberType) {
     return (
-      <div className="mx-auto w-full max-w-md px-s4 py-s7 animate-in slide-in-from-bottom-4 duration-500">
+      <div className="mx-auto w-full max-w-md px-s4 py-s7 max-sm:w-screen max-sm:relative max-sm:left-1/2 max-sm:-translate-x-1/2">
         <div className="text-center mb-s6">
           <h1 className="typo-h2 text-foreground">IGRUS 회원가입</h1>
           <p className="typo-b2 text-muted-foreground mt-s1">
@@ -494,9 +494,11 @@ export default function SignupPage() {
             description="회비를 납부하고 동아리 활동에 참여합니다"
             onClick={() => {
               setMemberType("member");
-              setValue("wishes", []);
-              setValue("interests", []);
-              setValue("joinRoute", "");
+              // 희망활동/관심/가입경로 입력 UI는 제거됨 — 스키마 필수(min 1) 충족용
+              // 더미값. "기타"는 enum 매핑에서 걸러져 빈 값으로 전송된다. (비회원과 동일)
+              setValue("wishes", ["기타"]);
+              setValue("interests", ["기타"]);
+              setValue("joinRoute", "기타");
             }}
           />
           <TypeChoice
@@ -513,23 +515,13 @@ export default function SignupPage() {
             }}
           />
         </div>
-
-        <p className="text-center text-sm text-muted-foreground mt-s6">
-          이미 계정이 있으신가요?{" "}
-          <Link
-            to="/login"
-            className="text-primary font-semibold hover:underline"
-          >
-            로그인
-          </Link>
-        </p>
       </div>
     );
   }
 
   // --- 가입 폼 화면 ---
   return (
-    <div className="mx-auto w-full max-w-lg px-s4 pt-s6 pb-s7">
+    <div className="mx-auto w-full max-w-lg px-s4 pt-s6 pb-s2 max-sm:w-screen max-sm:relative max-sm:left-1/2 max-sm:-translate-x-1/2">
       {/* 헤더 */}
       <div className="mb-s5">
         <button
@@ -554,9 +546,9 @@ export default function SignupPage() {
         </div>
       )}
 
-      <form onSubmit={(e) => e.preventDefault()} className="space-y-s4">
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-s6">
         {/* 계정 (로그인 정보) */}
-        <SectionCard
+        <Section
           icon={Lock}
           title="계정"
           hint="이 학번과 비밀번호로 로그인해요"
@@ -699,7 +691,7 @@ export default function SignupPage() {
                 })}
                 type={showPasswordConfirm ? "text" : "password"}
                 autoComplete="new-password"
-                placeholder="비밀번호 재입력"
+                placeholder="비밀번호 한 번 더 입력"
                 className="h-11 rounded-r3 pl-10 pr-10"
               />
               <button
@@ -712,10 +704,10 @@ export default function SignupPage() {
               </button>
             </div>
           </FormField>
-        </SectionCard>
+        </Section>
 
         {/* 이메일 인증 */}
-        <SectionCard
+        <Section
           icon={Mail}
           title="이메일 인증"
           hint="가입 확인 메일을 받을 이메일이에요"
@@ -744,7 +736,7 @@ export default function SignupPage() {
                       resetEmail();
                     },
                   })}
-                  placeholder="아이디"
+                  placeholder="이메일"
                   autoComplete="email"
                   disabled={emailVerified}
                   className="h-11 rounded-r3 pl-10"
@@ -813,7 +805,7 @@ export default function SignupPage() {
                     resetEmail();
                   },
                 })}
-                placeholder="도메인 입력 (예: example.com)"
+                placeholder="직접 입력 (예: gmail.com)"
                 disabled={emailVerified}
                 className="h-11 rounded-r3 mt-s2"
               />
@@ -872,7 +864,7 @@ export default function SignupPage() {
                     />
                     <Input
                       type="text"
-                      placeholder="6자리 인증 코드"
+                      placeholder="인증 코드 6자리"
                       value={verificationCode}
                       onChange={(e) =>
                         setVerificationCode(
@@ -958,10 +950,10 @@ export default function SignupPage() {
               </div>
             )}
           </FormField>
-        </SectionCard>
+        </Section>
 
         {/* 기본 정보 */}
-        <SectionCard icon={User} title="기본 정보">
+        <Section icon={User} title="기본 정보">
           <FormField label="이름" error={errors.name?.message}>
             <div className="relative">
               <User
@@ -1083,10 +1075,6 @@ export default function SignupPage() {
               ))}
             </div>
           </FormField>
-        </SectionCard>
-
-        {/* 연락처 */}
-        <SectionCard icon={Phone} title="연락처">
           <FormField
             label="전화번호"
             error={
@@ -1145,10 +1133,10 @@ export default function SignupPage() {
               )}
             </div>
           </FormField>
-        </SectionCard>
+        </Section>
 
         {/* 약관 동의 */}
-        <SectionCard icon={ShieldCheck} title="약관 동의">
+        <Section icon={ShieldCheck} title="약관 동의">
           <FormField error={errors.privacyConsent?.message}>
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-s3 cursor-pointer group">
@@ -1192,7 +1180,7 @@ export default function SignupPage() {
               </Link>
             </div>
           </FormField>
-        </SectionCard>
+        </Section>
 
         {/* 회비 납부 안내 (회원 전용) */}
         {memberType === "member" && (
@@ -1228,19 +1216,8 @@ export default function SignupPage() {
           </div>
         )}
 
-        {/* 로그인 링크 */}
-        <p className="text-center text-sm text-muted-foreground">
-          이미 계정이 있으신가요?{" "}
-          <Link
-            to="/login"
-            className="text-primary font-semibold hover:underline"
-          >
-            로그인
-          </Link>
-        </p>
-
         {/* 하단 고정 CTA */}
-        <div className="sticky bottom-0 z-10 -mx-s4 px-s4 pt-s3 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/90 backdrop-blur-sm border-t border-border">
+        <div className="sticky bottom-0 z-10 -mx-s4 px-s4 pt-s3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-background">
           <Button
             type="button"
             disabled={isSubmitting}
@@ -1284,7 +1261,7 @@ function TypeChoice({
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-s4 rounded-r4 border bg-card p-s5 text-left shadow-sm hover:border-primary transition-all cursor-pointer"
+      className="w-full flex items-center gap-s4 rounded-r3 border border-border p-s4 text-left hover:border-primary hover:bg-muted/40 transition-all cursor-pointer"
     >
       <div className="flex items-center justify-center w-11 h-11 shrink-0 rounded-full bg-brand-l1 dark:bg-primary/15">
         <Icon size={20} className="text-primary" />
@@ -1297,7 +1274,7 @@ function TypeChoice({
   );
 }
 
-function SectionCard({
+function Section({
   icon: Icon,
   title,
   hint,
@@ -1309,7 +1286,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-r4 border bg-card p-s5 shadow-sm">
+    <section className="pt-s6 border-t border-border/60 first-of-type:border-t-0 first-of-type:pt-0">
       <div className="mb-s4">
         <div className="flex items-center gap-s2">
           <Icon size={16} className="text-primary" />

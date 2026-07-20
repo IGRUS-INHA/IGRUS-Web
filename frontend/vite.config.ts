@@ -10,8 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
-  const apiTarget =
-    env.VITE_API_TARGET || "https://staging-api.igrus.co.kr:8080";
+  const apiTarget = env.VITE_API_TARGET || "https://api.igrus.co.kr";
 
   return {
     plugins: [
