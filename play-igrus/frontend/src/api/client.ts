@@ -127,6 +127,8 @@ export interface Project {
   bannerUrl?: string;
   redirectUrl?: string;
   status?: "pending" | "approved" | "rejected";
+  /** 작성자가 공개를 내린 상태 (내 작품 응답에만) */
+  hidden?: boolean;
   rejectReason?: string;
   reviewerName?: string;
   createdAt: string;
@@ -200,6 +202,14 @@ export const updateProject = (id: number, form: FormData) =>
   playFetch<{ id: number; status: string }>(`/api/projects/${id}`, {
     method: "PUT",
     body: form,
+  });
+
+/** 본인 승인작 공개/비공개 토글 — 재공개는 재심사 없이 즉시 반영 */
+export const setProjectVisibility = (id: number, hidden: boolean) =>
+  playFetch<{ hidden: boolean }>(`/api/projects/${id}/visibility`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hidden }),
   });
 
 export const fetchAdminProjects = (status: string) =>

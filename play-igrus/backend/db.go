@@ -36,6 +36,7 @@ var schema = []string{
 	  total_clicks        BIGINT        NOT NULL DEFAULT 0,
 	  score               DOUBLE        NOT NULL DEFAULT 0,
 	  version             INT           NOT NULL DEFAULT 0,
+	  hidden              TINYINT(1)    NOT NULL DEFAULT 0,
 	  INDEX idx_projects_status_score (status, score DESC),
 	  INDEX idx_projects_student (student_id)
 	) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
@@ -89,7 +90,8 @@ type row struct {
 	CreatedAt         time.Time
 	TotalClicks       int64
 	Score             float64
-	Version           int // 라이브 버전 번호 (0 = 아직 승인된 버전 없음)
+	Version           int  // 라이브 버전 번호 (0 = 아직 승인된 버전 없음)
+	Hidden            bool // 작성자가 공개를 내린 상태 — 심사 상태(status)와 별개 축
 }
 
 func openDB(dsn string) (*sql.DB, error) {
@@ -119,13 +121,18 @@ func openDB(dsn string) (*sql.DB, error) {
 
 // migrate 는 구버전 스키마에서 넘어오는 idempotent 이관 — 매 부팅마다 실행해도 안전하다.
 func migrate(db *sql.DB) error {
-	// ① 기존 projects 테이블에 version 컬럼 추가 (MySQL 은 ADD COLUMN IF NOT EXISTS 미지원)
+	// ① 기존 projects 테이블에 없는 컬럼 추가 (MySQL 은 ADD COLUMN IF NOT EXISTS 미지원)
 	var n int
-	db.QueryRow(`SELECT COUNT(*) FROM information_schema.columns
-		WHERE table_schema = DATABASE() AND table_name = 'projects' AND column_name = 'version'`).Scan(&n)
-	if n == 0 {
-		if _, err := db.Exec(`ALTER TABLE projects ADD COLUMN version INT NOT NULL DEFAULT 0`); err != nil {
-			return err
+	for col, ddl := range map[string]string{
+		"version": `ALTER TABLE projects ADD COLUMN version INT NOT NULL DEFAULT 0`,
+		"hidden":  `ALTER TABLE projects ADD COLUMN hidden TINYINT(1) NOT NULL DEFAULT 0`,
+	} {
+		db.QueryRow(`SELECT COUNT(*) FROM information_schema.columns
+			WHERE table_schema = DATABASE() AND table_name = 'projects' AND column_name = ?`, col).Scan(&n)
+		if n == 0 {
+			if _, err := db.Exec(ddl); err != nil {
+				return err
+			}
 		}
 	}
 	// ② 버전 이력이 없는 기존 프로젝트는 현재 내용을 v1 로 백필
@@ -167,7 +174,7 @@ func migrate(db *sql.DB) error {
 
 const selectCols = `id, student_id, author_name, department, title, description, body_md,
 	thumbnail_key, banner_key, redirect_url, category, status, reject_reason,
-	reviewer_student_id, reviewer_name, reviewed_at, created_at, total_clicks, score, version`
+	reviewer_student_id, reviewer_name, reviewed_at, created_at, total_clicks, score, version, hidden`
 
 func scanRows(rows *sql.Rows) ([]row, error) {
 	defer rows.Close()
@@ -179,7 +186,7 @@ func scanRows(rows *sql.Rows) ([]row, error) {
 		err := rows.Scan(&p.ID, &p.StudentID, &p.AuthorName, &p.Department, &p.Title,
 			&p.Description, &p.BodyMD, &p.ThumbnailKey, &p.BannerKey, &p.RedirectURL,
 			&p.Category, &p.Status, &p.RejectReason, &p.ReviewerStudentID, &p.ReviewerName,
-			&reviewed, &p.CreatedAt, &p.TotalClicks, &p.Score, &p.Version)
+			&reviewed, &p.CreatedAt, &p.TotalClicks, &p.Score, &p.Version, &p.Hidden)
 		if err != nil {
 			return nil, err
 		}
@@ -229,7 +236,7 @@ func insertProject(db *sql.DB, p row) (int64, error) {
 // listApprovedProjects — sort 는 핸들러에서 검증된 값만 온다.
 // popular: score DESC(동점 최신순) / recent: 최신순.
 func listApprovedProjects(db *sql.DB, category, sort string) ([]row, error) {
-	q := `SELECT ` + selectCols + ` FROM projects WHERE status = 'approved'`
+	q := `SELECT ` + selectCols + ` FROM projects WHERE status = 'approved' AND hidden = 0`
 	args := []any{}
 	if category != "" {
 		q += ` AND category = ?`
@@ -450,7 +457,7 @@ func listVersionsByStatus(db *sql.DB, status string) ([]versionItem, error) {
 		err := rows.Scan(&p.ID, &p.StudentID, &p.AuthorName, &p.Department, &p.Title,
 			&p.Description, &p.BodyMD, &p.ThumbnailKey, &p.BannerKey, &p.RedirectURL,
 			&p.Category, &p.Status, &p.RejectReason, &p.ReviewerStudentID, &p.ReviewerName,
-			&pReviewed, &p.CreatedAt, &p.TotalClicks, &p.Score, &p.Version,
+			&pReviewed, &p.CreatedAt, &p.TotalClicks, &p.Score, &p.Version, &p.Hidden,
 			&v.ProjectID, &v.Version, &v.Title, &v.Description, &v.BodyMD,
 			&v.ThumbnailKey, &v.BannerKey, &v.RedirectURL, &v.Category, &v.Status,
 			&v.RejectReason, &v.ReviewerName, &vReviewed, &v.CreatedAt)
@@ -496,10 +503,17 @@ func listLatestVersionsByStudent(db *sql.DB, studentID string) (map[int64]versio
 	return latest, nil
 }
 
+// setProjectHidden 은 공개/비공개 토글 — 소유·상태 검증은 핸들러가 한다.
+func setProjectHidden(db *sql.DB, id int64, hidden bool) error {
+	_, err := db.Exec(`UPDATE projects SET hidden = ? WHERE id = ?`, hidden, id)
+	return err
+}
+
 // addClick 은 승인된 작품의 클릭을 총합 + 일별(KST 날짜) 버킷에 기록한다.
 func addClick(db *sql.DB, id int64, date string) error {
 	res, err := db.Exec(
-		`UPDATE projects SET total_clicks = total_clicks + 1 WHERE id = ? AND status = 'approved'`, id)
+		`UPDATE projects SET total_clicks = total_clicks + 1
+		 WHERE id = ? AND status = 'approved' AND hidden = 0`, id)
 	if err != nil {
 		return err
 	}

@@ -71,6 +71,7 @@ type projectView struct {
 	BannerURL    string       `json:"bannerUrl,omitempty"`
 	RedirectURL  string       `json:"redirectUrl,omitempty"`
 	Status       string       `json:"status,omitempty"`
+	Hidden       bool         `json:"hidden,omitempty"` // 작성자가 공개를 내린 상태 (내 작품 응답에만)
 	RejectReason string       `json:"rejectReason,omitempty"`
 	ReviewerName string       `json:"reviewerName,omitempty"`
 	CreatedAt    time.Time    `json:"createdAt"`
@@ -114,6 +115,7 @@ func detailView(p row) projectView {
 func mineView(p row) projectView {
 	v := detailView(p)
 	v.Status = p.Status
+	v.Hidden = p.Hidden
 	v.RejectReason = p.RejectReason
 	v.ReviewedAt = p.ReviewedAt
 	v.Version = p.Version
@@ -176,7 +178,7 @@ func (s *server) getDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := getProject(s.db, id)
-	if err == errNotFound || (err == nil && p.Status != "approved") {
+	if err == errNotFound || (err == nil && (p.Status != "approved" || p.Hidden)) {
 		writeErr(w, http.StatusNotFound, "작품을 찾을 수 없습니다")
 		return
 	}
@@ -374,6 +376,45 @@ func writeImageErr(w http.ResponseWriter, err error) {
 	default:
 		writeErr(w, http.StatusInternalServerError, "이미지 저장에 실패했습니다")
 	}
+}
+
+// PUT /api/projects/{id}/visibility — 본인 승인작 공개/비공개 토글.
+// 심사 상태(status)와 별개 축 — 재공개 시 재심사 없이 즉시 노출, 클릭수·score 유지.
+func (s *server) setVisibility(w http.ResponseWriter, r *http.Request, p Profile) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, "잘못된 id 입니다")
+		return
+	}
+	var body struct {
+		Hidden bool `json:"hidden"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeErr(w, http.StatusBadRequest, "요청 본문이 올바르지 않습니다")
+		return
+	}
+	proj, err := getProject(s.db, id)
+	if err == errNotFound {
+		writeErr(w, http.StatusNotFound, "작품을 찾을 수 없습니다")
+		return
+	}
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "작품을 불러올 수 없습니다")
+		return
+	}
+	if proj.StudentID != p.StudentID {
+		writeErr(w, http.StatusForbidden, "본인 작품만 변경할 수 있습니다")
+		return
+	}
+	if proj.Status != "approved" {
+		writeErr(w, http.StatusBadRequest, "승인된 작품만 공개 설정을 바꿀 수 있습니다")
+		return
+	}
+	if err := setProjectHidden(s.db, id, body.Hidden); err != nil {
+		writeErr(w, http.StatusInternalServerError, "처리에 실패했습니다")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"hidden": body.Hidden})
 }
 
 // GET /api/projects/mine — 내 제출 현황. 라이브 버전 번호 + 심사 대기/반려된 최신 버전.
