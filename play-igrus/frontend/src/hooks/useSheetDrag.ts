@@ -7,10 +7,12 @@ import { useEffect, type RefObject } from "react";
  * - 그 영역이 "스크롤 가능"(내용이 넘침, scrollHeight>clientHeight)하면, 거기서 시작한
  *   터치는 통째로 네이티브 스크롤에 맡긴다 → 시트는 고정, 목록만 스크롤.
  *   (현재 scrollTop 위치가 아니라 스크롤 가능 여부로 판단한다.)
- * - 스크롤 불가(요소가 적음)하거나 손잡이·헤더 등에서 시작하면 시트 드래그로 처리한다.
+ * - 스크롤 불가(요소가 적음)하거나 손잡이·헤더·바깥 백드롭에서 시작하면 시트 드래그로
+ *   처리한다. 모달 <dialog> 라 백드롭 터치도 target 이 dialog → 여기 리스너가 받는다.
  *
- * dy 는 pointer-down 이후 매 move 의 상대 이동을 누적한다. 아래로 가면 늘고 위로 가면
- * 0 까지 줄어들므로, 위로 갔다가 아래로 반전해도 그 지점부터 자연스럽게 내려간다.
+ * dy 는 pointer-down 위치를 고정 기준으로 한 절대 이동이다: max(0, 현재Y - 시작Y).
+ * 위로 올라가면 0(쉬는 위치), 처음 위치보다 아래로 내려간 만큼만 시트가 내려간다.
+ * (예: down=50 → up 30 → down 80 이면 dy=30, 처음 기준으로 30만 내려감.)
  *
  * @param sheetRef translateY 로 움직일 시트 요소(<dialog>)
  * @param onClose  임계치 이상 끌어내렸을 때 호출
@@ -26,8 +28,8 @@ export function useSheetDrag(
     if (!sheet || !open) return;
     if (!window.matchMedia("(max-width: 639px)").matches) return; // 모바일 전용
 
-    let lastY = 0; // 직전 move 의 y — 상대 이동 계산용
-    let dy = 0; // 시트가 내려간 누적 거리(>=0)
+    let startY = 0; // pointer-down y — 고정 기준
+    let dy = 0; // 시트가 내려간 거리(>=0)
     let scrollable = false; // 이번 터치가 스크롤 가능한 영역에서 시작했는지
     let dragging = false; // 이번 터치가 시트 드래그로 확정됐는지
 
@@ -38,7 +40,7 @@ export function useSheetDrag(
         !!scroller &&
         scroller.contains(e.target as Node) &&
         scroller.scrollHeight - scroller.clientHeight > 1;
-      lastY = e.touches[0].clientY;
+      startY = e.touches[0].clientY;
       dy = 0;
       dragging = false;
     };
@@ -46,14 +48,15 @@ export function useSheetDrag(
     const onMove = (e: TouchEvent) => {
       if (scrollable) return; // 스크롤 가능 목록 → 네이티브 스크롤에 맡김(시트 고정)
       const t = e.touches[0];
-      // 직전 위치 대비 상대 이동을 누적: 아래로 가면 늘고, 위로 가면 0까지 준다.
-      dy = Math.max(0, dy + (t.clientY - lastY));
-      lastY = t.clientY;
+      // 처음 pointer-down 위치를 고정 기준으로 한 절대 이동. 위로 가면 0.
+      dy = Math.max(0, t.clientY - startY);
+      // 아래로 당기는 동안엔 첫 픽셀부터 페이지 스크롤·새로고침을 막는다.
+      // (시트 내부든 백드롭 등 외부든 동일 — 6px 데드존 사이 pull-to-refresh 확정 방지)
+      if (t.clientY > startY) e.preventDefault();
       if (!dragging) {
-        if (dy < 6) return; // 미세 이동(탭 등) 무시
+        if (dy < 6) return; // 미세 이동(탭 등)은 시각 이동 없이 무시
         dragging = true;
       }
-      e.preventDefault(); // 확정 후엔 배경/페이지 스크롤 차단(pull-to-refresh 방지)
       sheet.style.transition = "none";
       sheet.style.transform = `translateY(${dy}px)`;
     };
