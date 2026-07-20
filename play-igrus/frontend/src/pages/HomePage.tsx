@@ -30,7 +30,8 @@ export default function HomePage() {
   const open = (p: Project) => {
     setSelected(p); // 목록 데이터로 즉시 열고
     fetchProject(p.id)
-      .then(setSelected) // 본문/배너는 도착하면 채운다
+      // 도착 전에 유저가 닫았거나 다른 작품을 열었으면 되살리지 않는다 (닫힌 시트 재개장 → 스크롤 잠금 잔존 방지)
+      .then((full) => setSelected((cur) => (cur?.id === p.id ? full : cur)))
       .catch(() => {});
   };
 

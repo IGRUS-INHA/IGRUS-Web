@@ -4,7 +4,9 @@ import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { clickProject, imageSrc, type Project } from "../api/client";
 import { useScrollLock } from "../hooks/useScrollLock";
+import { useSheetDrag } from "../hooks/useSheetDrag";
 import CloseButton from "./CloseButton";
+import SheetHandle from "./SheetHandle";
 import { categoryColor } from "./category";
 
 interface Props {
@@ -26,6 +28,7 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
   }, [project]);
 
   useScrollLock(project != null); // 시트 열린 동안 배경 스크롤 잠금
+  useSheetDrag(ref, onClose, project != null); // 모바일: 손가락으로 끌어내려 닫기
 
   if (!project) return null;
 
@@ -65,6 +68,7 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
       <div className={flex({ pos: "relative", direction: "column", h: "full", maxH: "inherit", bg: "white" })}>
         {/* X — 개발자 시트와 같은 시트 최상단 코너 (배너 위) */}
         <CloseButton onClick={onClose} />
+        <SheetHandle />
 
         {/* 배너 — 이전처럼 full-bleed (패딩·라운드 없음) */}
         {banner && (
@@ -129,7 +133,7 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
         </div>
 
         {/* 소개 (마크다운, 스크롤) */}
-        <div className={css({ flex: 1, minH: 0, overflowY: "auto", px: "6", pb: "6" })}>
+        <div data-sheet-scroll className={css({ flex: 1, minH: 0, overflowY: "auto", px: "6", pb: "6" })}>
           <h3
             className={css({
               fontSize: "xs",
