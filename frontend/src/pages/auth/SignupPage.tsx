@@ -1328,22 +1328,6 @@ export default function SignupPage() {
                       onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
                     />
                   </FormField>
-
-                  <FormField
-                    label="자기소개 (선택)"
-                    error={errors.introduction?.message}
-                  >
-                    <textarea
-                      {...register("introduction")}
-                      placeholder="공개 프로필에 표시될 자기소개를 작성해주세요"
-                      rows={3}
-                      className={cn(
-                        "w-full rounded-r2 border border-input bg-transparent px-s3 py-s2 text-sm",
-                        "placeholder:text-muted-foreground resize-none transition-all outline-none",
-                        "focus:border-ring focus:ring-ring/50 focus:ring-[3px]",
-                      )}
-                    />
-                  </FormField>
                 </div>
 
                 <div className="space-y-s3 rounded-r2 border border-border p-s4">
