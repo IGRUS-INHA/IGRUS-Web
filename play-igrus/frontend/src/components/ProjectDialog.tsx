@@ -25,12 +25,8 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
 
   if (!project) return null;
 
-  // 배너 없으면 썸네일로 대체 (그래도 없으면 분류 색 그라데이션).
-  // 상세 응답으로 배너가 뒤늦게 오면 src 교체 대신 썸네일 위에 로드 완료 후
-  // 페이드인한다 — src 교체는 로딩 동안 빈 화면이 보여 플리커가 난다.
-  const thumb = imageSrc(project.thumbnailUrl);
+  // 배너 없으면 흰색.
   const banner = imageSrc(project.bannerUrl);
-  const base = thumb ?? banner;
 
   const go = () => {
     if (!project.redirectUrl) return;
@@ -59,39 +55,13 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
       })}
     >
       <div className={flex({ direction: "column", h: "full", maxH: "inherit", bg: "white" })}>
-        {/* 배너 (없으면 분류 색 그라데이션) */}
-        <div
-          className={css({ pos: "relative", flexShrink: 0, h: { base: "40", sm: "48" } })}
-          style={
-            base
-              ? undefined
-              : { background: `linear-gradient(135deg, ${categoryColor(project.category)}, #1e1b4b)` }
-          }
-        >
-          {base && (
+        {/* 배너 (없으면 흰색 — 부모 배경 그대로) */}
+        <div className={css({ pos: "relative", flexShrink: 0, h: { base: "40", sm: "48" } })}>
+          {banner && (
             <img
-              src={base}
-              alt=""
-              className={css({ w: "full", h: "full", objectFit: "cover" })}
-            />
-          )}
-          {banner && banner !== base && (
-            <img
-              key={banner}
               src={banner}
               alt=""
-              onLoad={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
-              className={css({
-                pos: "absolute",
-                inset: 0,
-                w: "full",
-                h: "full",
-                objectFit: "cover",
-                opacity: 0,
-                transition: "opacity 0.25s",
-              })}
+              className={css({ w: "full", h: "full", objectFit: "cover" })}
             />
           )}
           <button

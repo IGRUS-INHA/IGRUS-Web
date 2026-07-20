@@ -20,12 +20,15 @@ func main() {
 		dsn     = os.Getenv("DSN")
 	)
 
+	igrusDSN := os.Getenv("IGRUS_DSN") // 이관용 (선택) — prod 는 시크릿의 igrus_dsn 키
 	if name := os.Getenv("PLAY_SECRET_NAME"); name != "" {
 		var err error
-		dsn, err = loadDSNFromSecrets(ctx, name)
+		var secretIgrusDSN string
+		dsn, secretIgrusDSN, err = loadDSNFromSecrets(ctx, name)
 		if err != nil {
 			log.Fatalf("시크릿 로드 실패: %v", err)
 		}
+		igrusDSN = cmp.Or(igrusDSN, secretIgrusDSN)
 	}
 	if dsn == "" {
 		log.Fatal("DSN 환경변수 또는 PLAY_SECRET_NAME 이 필요합니다")
@@ -73,6 +76,9 @@ func main() {
 	mux.HandleFunc("GET /api/admin/projects", s.auth.requireStaff(s.listForReview))
 	mux.HandleFunc("POST /api/admin/projects/{id}/approve", s.auth.requireStaff(s.reviewProject("approved")))
 	mux.HandleFunc("POST /api/admin/projects/{id}/reject", s.auth.requireStaff(s.reviewProject("rejected")))
+
+	// 임시 이관 엔드포인트 — igrus DSN 설정 시에만 열린다 (admin_migrate.go)
+	registerMigrate(mux, s, igrusDSN)
 
 	srv := &http.Server{
 		Addr:              ":" + port,
