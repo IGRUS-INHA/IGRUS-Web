@@ -3,9 +3,14 @@ import { useEffect, type RefObject } from "react";
 /**
  * 모바일 바텀시트를 손가락으로 아래로 끌어내려 닫는 제스처.
  *
- * 앱 목록 등 내부 스크롤과 충돌하지 않도록, 안쪽 스크롤 영역([data-sheet-scroll])이
- * 맨 위에 있고 + 아래로 당기는 수직 제스처일 때만 드래그로 확정한다.
- * 그 외(목록 스크롤·위로 당김·가로 스와이프)는 네이티브 스크롤에 맡긴다.
+ * 안쪽 스크롤 영역([data-sheet-scroll])과 충돌하지 않도록:
+ * - 그 영역이 "스크롤 가능"(내용이 넘침, scrollHeight>clientHeight)하면, 거기서 시작한
+ *   터치는 통째로 네이티브 스크롤에 맡긴다 → 시트는 고정, 목록만 스크롤.
+ *   (현재 scrollTop 위치가 아니라 스크롤 가능 여부로 판단한다.)
+ * - 스크롤 불가(요소가 적음)하거나 손잡이·헤더 등에서 시작하면 시트 드래그로 처리한다.
+ *
+ * dy 는 pointer-down 이후 매 move 의 상대 이동을 누적한다. 아래로 가면 늘고 위로 가면
+ * 0 까지 줄어들므로, 위로 갔다가 아래로 반전해도 그 지점부터 자연스럽게 내려간다.
  *
  * @param sheetRef translateY 로 움직일 시트 요소(<dialog>)
  * @param onClose  임계치 이상 끌어내렸을 때 호출
@@ -21,42 +26,34 @@ export function useSheetDrag(
     if (!sheet || !open) return;
     if (!window.matchMedia("(max-width: 639px)").matches) return; // 모바일 전용
 
-    let startX = 0;
-    let startY = 0;
-    let dy = 0;
-    let scroller: HTMLElement | null = null; // 터치가 시작된 시점의 스크롤 앱 영역
-    let startedInScroller = false; // 터치가 스크롤 앱 영역에서 시작됐는지
+    let lastY = 0; // 직전 move 의 y — 상대 이동 계산용
+    let dy = 0; // 시트가 내려간 누적 거리(>=0)
+    let scrollable = false; // 이번 터치가 스크롤 가능한 영역에서 시작했는지
     let dragging = false; // 이번 터치가 시트 드래그로 확정됐는지
 
     const onStart = (e: TouchEvent) => {
       // 스크롤 영역은 시트가 늦게 채워질 수 있어(로딩) 터치 시작마다 다시 찾는다
-      scroller = sheet.querySelector<HTMLElement>("[data-sheet-scroll]");
-      startedInScroller = !!scroller && scroller.contains(e.target as Node);
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
+      const scroller = sheet.querySelector<HTMLElement>("[data-sheet-scroll]");
+      scrollable =
+        !!scroller &&
+        scroller.contains(e.target as Node) &&
+        scroller.scrollHeight - scroller.clientHeight > 1;
+      lastY = e.touches[0].clientY;
       dy = 0;
       dragging = false;
     };
 
     const onMove = (e: TouchEvent) => {
+      if (scrollable) return; // 스크롤 가능 목록 → 네이티브 스크롤에 맡김(시트 고정)
       const t = e.touches[0];
+      // 직전 위치 대비 상대 이동을 누적: 아래로 가면 늘고, 위로 가면 0까지 준다.
+      dy = Math.max(0, dy + (t.clientY - lastY));
+      lastY = t.clientY;
       if (!dragging) {
-        const dyRaw = t.clientY - startY;
-        const dxRaw = t.clientX - startX;
-        // 스크롤 앱 영역에서 시작했어도, 그 영역이 맨 위(scrollTop<=0)면 시트로 넘긴다.
-        // → 목록이 스크롤 가능하고 아직 위가 아니면 네이티브 스크롤,
-        //   맨 위이거나 요소가 적어 스크롤 불가면 시트가 내려감(창 전체 pull-to-refresh 방지).
-        const scrollerAtTop = !startedInScroller || !scroller || scroller.scrollTop <= 0;
-        // 아래로(6px 데드존) + 세로 우세 + 스크롤 영역이 맨 위일 때만 확정.
-        if (dyRaw > 6 && Math.abs(dyRaw) > Math.abs(dxRaw) && scrollerAtTop) {
-          dragging = true;
-          startY = t.clientY; // 재기준점 → dy 0부터 부드럽게
-        } else {
-          return; // 네이티브 스크롤에 맡김
-        }
+        if (dy < 6) return; // 미세 이동(탭 등) 무시
+        dragging = true;
       }
-      dy = Math.max(0, t.clientY - startY);
-      e.preventDefault(); // 확정 후엔 배경/내부 스크롤 차단
+      e.preventDefault(); // 확정 후엔 배경/페이지 스크롤 차단(pull-to-refresh 방지)
       sheet.style.transition = "none";
       sheet.style.transform = `translateY(${dy}px)`;
     };
