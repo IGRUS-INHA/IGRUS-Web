@@ -3,7 +3,9 @@ import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { fetchAuthor, imageSrc, type AuthorProfile, type Project } from "../api/client";
 import { useScrollLock } from "../hooks/useScrollLock";
+import { useSheetDrag } from "../hooks/useSheetDrag";
 import CloseButton from "./CloseButton";
+import SheetHandle from "./SheetHandle";
 import { categoryColor } from "./category";
 import AvatarPlaceholder from "./Avatar";
 
@@ -31,6 +33,7 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
   }, [projectId]);
 
   useScrollLock(projectId !== undefined); // 시트 열린 동안 배경 스크롤 잠금
+  useSheetDrag(ref, onClose, projectId !== undefined); // 모바일: 손가락으로 끌어내려 닫기
 
   useEffect(() => {
     if (projectId === undefined) return;
@@ -70,6 +73,7 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
     >
       <div className={flex({ pos: "relative", direction: "column", h: "full", maxH: "inherit", bg: "white" })}>
         <CloseButton onClick={onClose} />
+        <SheetHandle />
 
         {author === null ? (
           <p className={css({ textAlign: "center", color: "gray.400", py: "20", fontSize: "sm" })}>
@@ -144,24 +148,24 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
               )}
             </div>
 
-            {/* 출시작 */}
-            <div className={css({ flex: 1, minH: 0, overflowY: "auto", px: "6", pb: "6" })}>
-              <h3
-                className={css({
-                  fontSize: "xs",
-                  fontWeight: "800",
-                  color: "gray.400",
-                  letterSpacing: "wider",
-                  pt: "2",
-                  pb: "3",
-                  pos: "sticky",
-                  top: 0,
-                  bg: "white",
-                })}
-              >
-                출시한 작품
-              </h3>
+            {/* 출시작 — 헤더는 스크롤 밖 고정, 목록만 스크롤 */}
+            <h3
+              className={css({
+                flexShrink: 0,
+                fontSize: "xs",
+                fontWeight: "800",
+                color: "gray.400",
+                letterSpacing: "wider",
+                px: "6",
+                pt: "2",
+                pb: "3",
+                bg: "white",
+              })}
+            >
+              출시한 앱
+            </h3>
 
+            <div data-sheet-scroll className={css({ flex: 1, minH: 0, overflowY: "auto", px: "6", pb: "6" })}>
               {projects.length === 0 ? (
                 <p className={css({ fontSize: "sm", color: "gray.400", py: "6", textAlign: "center" })}>
                   아직 공개된 작품이 없습니다
