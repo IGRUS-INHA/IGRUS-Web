@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
@@ -7,6 +8,7 @@ import { isStaff, useAuthStore } from "../stores/authStore";
 export default function Layout() {
   const { accessToken, user } = useAuthStore();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className={css({ minH: "100dvh", bg: "gray.50" })}>
@@ -33,10 +35,20 @@ export default function Layout() {
         >
           <Link
             to="/"
-            className={css({ fontSize: "lg", fontWeight: "800", letterSpacing: "tight" })}
+            className={flex({
+              align: "center",
+              gap: "2",
+              fontSize: "lg",
+              fontWeight: "800",
+              letterSpacing: "tight",
+            })}
           >
-            PLAY{" "}
-            <span className={css({ color: "indigo.600" })}>IGRUS</span>
+            <img
+              src="/logo.jpg"
+              alt=""
+              className={css({ h: "8", w: "8", rounded: "md", objectFit: "cover" })}
+            />
+            Play <span className={css({ color: "indigo.600" })}>Inha</span>
           </Link>
 
           <nav className={flex({ align: "center", gap: "3", fontSize: "sm" })}>
@@ -45,23 +57,81 @@ export default function Layout() {
                 <Link to="/submit" className={navBtn}>
                   출시하기
                 </Link>
-                <Link to="/my" className={navLink}>
-                  내 작품
-                </Link>
                 {isStaff(user) && (
                   <Link to="/admin" className={navLink}>
                     검수
                   </Link>
                 )}
-                <button
-                  type="button"
-                  className={css({ color: "gray.500", cursor: "pointer" })}
-                  onClick={() => {
-                    void logout().then(() => navigate("/"));
-                  }}
-                >
-                  로그아웃
-                </button>
+
+                {/* 프로필 아바타 → 드롭다운 메뉴 (내 정보 / 내 작품 / 로그아웃) */}
+                <div className={css({ pos: "relative" })}>
+                  <button
+                    type="button"
+                    aria-label="프로필 메뉴"
+                    onClick={() => setMenuOpen((o) => !o)}
+                    className={flex({
+                      w: "9",
+                      h: "9",
+                      align: "center",
+                      justify: "center",
+                      rounded: "full",
+                      bg: "gray.200",
+                      color: "gray.500",
+                      cursor: "pointer",
+                      overflow: "hidden",
+                      _hover: { bg: "gray.300" },
+                    })}
+                  >
+                    {/* 프로필 스켈레톤 (사람 실루엣) */}
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22" aria-hidden>
+                      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.42 0-8 2.24-8 5v3h16v-3c0-2.76-3.58-5-8-5Z" />
+                    </svg>
+                  </button>
+
+                  {menuOpen && (
+                    <>
+                      {/* 바깥 탭으로 닫기 */}
+                      <div
+                        className={css({ pos: "fixed", inset: 0, zIndex: 10 })}
+                        onClick={() => setMenuOpen(false)}
+                      />
+                      <div
+                        className={flex({
+                          pos: "absolute",
+                          right: 0,
+                          top: "calc(100% + 8px)",
+                          zIndex: 11,
+                          direction: "column",
+                          w: "36",
+                          bg: "white",
+                          border: "1px solid",
+                          borderColor: "gray.200",
+                          rounded: "xl",
+                          shadow: "lg",
+                          overflow: "hidden",
+                          py: "1",
+                        })}
+                      >
+                        <Link to="/profile" className={menuItem} onClick={() => setMenuOpen(false)}>
+                          내 정보
+                        </Link>
+                        <Link to="/my" className={menuItem} onClick={() => setMenuOpen(false)}>
+                          내 작품
+                        </Link>
+                        <button
+                          type="button"
+                          className={`${menuItem} ${css({ color: "red.500", textAlign: "left" })}`}
+                          onClick={() => {
+                            setMenuOpen(false);
+                            void logout().then(() => navigate("/"));
+                          }}
+                        >
+                          로그아웃
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </>
             ) : (
               <Link to="/login" className={navBtn}>
@@ -80,6 +150,17 @@ export default function Layout() {
 }
 
 const navLink = css({ color: "gray.700", _hover: { color: "indigo.600" } });
+
+const menuItem = css({
+  display: "block",
+  px: "4",
+  py: "2.5",
+  fontSize: "sm",
+  fontWeight: "600",
+  color: "gray.700",
+  cursor: "pointer",
+  _hover: { bg: "gray.50" },
+});
 
 const navBtn = css({
   bg: "indigo.600",
