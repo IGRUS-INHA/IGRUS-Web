@@ -4,6 +4,20 @@ export const field = css({ display: "flex", flexDirection: "column" });
 
 export const label = css({ fontSize: "sm", fontWeight: "600", mb: "1.5" });
 
+/** 필수 항목 표시 — 라벨 옆 붉은 뱃지 */
+export const requiredMark = css({
+  display: "inline-block",
+  fontSize: "2xs",
+  fontWeight: "700",
+  color: "red.500",
+  bg: "red.50",
+  px: "1.5",
+  py: "0.5",
+  rounded: "sm",
+  ml: "1.5",
+  verticalAlign: "middle",
+});
+
 export const input = css({
   border: "1px solid",
   borderColor: "gray.300",

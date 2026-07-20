@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { ApiError, submitProject } from "../api/client";
+import ImageDropzone from "../components/ImageDropzone";
 import RequireLogin from "../components/RequireLogin";
 import { SUGGESTED_CATEGORIES } from "../components/category";
-import { field, input, label, primaryBtn } from "../components/formStyles";
+import { field, input, label, primaryBtn, requiredMark } from "../components/formStyles";
 
 interface Form {
   title: string;
@@ -14,8 +15,6 @@ interface Form {
   body: string;
   url: string;
   category: string;
-  thumbnail: FileList;
-  banner: FileList;
 }
 
 export default function SubmitPage() {
@@ -34,11 +33,12 @@ function SubmitForm() {
     formState: { errors, isSubmitting },
   } = useForm<Form>({ defaultValues: { category: SUGGESTED_CATEGORIES[0] } });
   const [error, setError] = useState("");
+  // 이미지는 드롭도 받아야 해서 RHF 대신 state 로 관리 (선택 항목이라 검증도 단순)
+  const [thumbFile, setThumbFile] = useState<File | undefined>();
+  const [bannerFile, setBannerFile] = useState<File | undefined>();
   const navigate = useNavigate();
 
   const desc = watch("description") ?? "";
-  const thumbFile = watch("thumbnail")?.[0];
-  const bannerFile = watch("banner")?.[0];
 
   const onSubmit = async (data: Form) => {
     setError("");
@@ -48,8 +48,8 @@ function SubmitForm() {
     form.set("body", data.body);
     form.set("url", data.url);
     form.set("category", data.category);
-    if (data.thumbnail?.[0]) form.set("thumbnail", data.thumbnail[0]);
-    if (data.banner?.[0]) form.set("banner", data.banner[0]);
+    if (thumbFile) form.set("thumbnail", thumbFile);
+    if (bannerFile) form.set("banner", bannerFile);
     try {
       await submitProject(form);
       navigate("/my");
@@ -68,7 +68,7 @@ function SubmitForm() {
       <form onSubmit={handleSubmit(onSubmit)} className={flex({ direction: "column", gap: "5" })}>
         <div className={field}>
           <label htmlFor="title" className={label}>
-            제목
+            제목<span className={requiredMark}>필수</span>
           </label>
           <input
             id="title"
@@ -83,7 +83,7 @@ function SubmitForm() {
 
         <div className={field}>
           <label htmlFor="description" className={label}>
-            설명{" "}
+            설명<span className={requiredMark}>필수</span>{" "}
             <span className={css({ color: "gray.400", fontWeight: "400" })}>({desc.length}/50)</span>
           </label>
           <input
@@ -116,7 +116,7 @@ function SubmitForm() {
 
         <div className={field}>
           <label htmlFor="url" className={label}>
-            작품 주소
+            작품 주소<span className={requiredMark}>필수</span>
           </label>
           <input
             id="url"
@@ -134,7 +134,7 @@ function SubmitForm() {
 
         <div className={field}>
           <label htmlFor="category" className={label}>
-            분류
+            분류<span className={requiredMark}>필수</span>
           </label>
           <input
             id="category"
@@ -153,21 +153,20 @@ function SubmitForm() {
           {errors.category && <p className={errText}>{errors.category.message}</p>}
         </div>
 
-        <FilePicker
+        <ImageDropzone
           id="thumbnail"
           title="정방형 썸네일 (선택)"
           hint="카드에 보이는 정사각형 이미지 · 4MB 이하"
           file={thumbFile}
-          registration={register("thumbnail")}
-          previewClass={css({ w: "24", h: "24", objectFit: "cover", rounded: "lg" })}
+          onChange={setThumbFile}
+          square
         />
-        <FilePicker
+        <ImageDropzone
           id="banner"
           title="배너 (선택)"
           hint="상세 화면 위에 보이는 가로 이미지 · 4MB 이하"
           file={bannerFile}
-          registration={register("banner")}
-          previewClass={css({ w: "full", maxH: "32", objectFit: "cover", rounded: "lg" })}
+          onChange={setBannerFile}
         />
 
         {error && <p className={errText}>{error}</p>}
@@ -176,41 +175,6 @@ function SubmitForm() {
           {isSubmitting ? "제출 중…" : "출시 신청"}
         </button>
       </form>
-    </div>
-  );
-}
-
-function FilePicker({
-  id,
-  title,
-  hint,
-  file,
-  registration,
-  previewClass,
-}: {
-  id: string;
-  title: string;
-  hint: string;
-  file?: File;
-  registration: object;
-  previewClass: string;
-}) {
-  return (
-    <div className={field}>
-      <label htmlFor={id} className={label}>
-        {title}
-      </label>
-      <input
-        id={id}
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        className={css({ fontSize: "sm" })}
-        {...registration}
-      />
-      <p className={css({ fontSize: "xs", color: "gray.400", mt: "1" })}>{hint}</p>
-      {file && (
-        <img src={URL.createObjectURL(file)} alt="미리보기" className={previewClass} />
-      )}
     </div>
   );
 }
