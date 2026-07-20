@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { fetchAuthor, imageSrc, type AuthorProfile, type Project } from "../api/client";
+import { useScrollLock } from "../hooks/useScrollLock";
+import CloseButton from "./CloseButton";
 import { categoryColor } from "./category";
 import AvatarPlaceholder from "./Avatar";
 
@@ -26,12 +28,9 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
     if (!dialog) return;
     if (projectId !== undefined && !dialog.open) dialog.showModal();
     if (projectId === undefined && dialog.open) dialog.close();
-    if (projectId === undefined) return;
-    document.body.style.overflow = "hidden"; // 시트 열린 동안 배경 스크롤 잠금
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [projectId]);
+
+  useScrollLock(projectId !== undefined); // 시트 열린 동안 배경 스크롤 잠금
 
   useEffect(() => {
     if (projectId === undefined) return;
@@ -69,7 +68,9 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
         _backdrop: { bg: "black/60" },
       })}
     >
-      <div className={flex({ direction: "column", h: "full", maxH: "inherit", bg: "white" })}>
+      <div className={flex({ pos: "relative", direction: "column", h: "full", maxH: "inherit", bg: "white" })}>
+        <CloseButton onClick={onClose} />
+
         {author === null ? (
           <p className={css({ textAlign: "center", color: "gray.400", py: "20", fontSize: "sm" })}>
             불러오는 중…
@@ -88,27 +89,6 @@ export default function AuthorDialog({ projectId, onClose, onProject }: Props) {
                 gradientTo: "white",
               })}
             >
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="닫기"
-                className={css({
-                  pos: "absolute",
-                  top: "4",
-                  right: "4",
-                  w: "8",
-                  h: "8",
-                  rounded: "full",
-                  bg: "black/5",
-                  color: "gray.600",
-                  fontSize: "sm",
-                  cursor: "pointer",
-                  _hover: { bg: "black/10" },
-                })}
-              >
-                ✕
-              </button>
-
               {author.avatarUrl ? (
                 <img
                   src={imageSrc(author.avatarUrl)}

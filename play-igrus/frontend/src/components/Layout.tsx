@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
@@ -10,6 +10,17 @@ export default function Layout() {
   const { accessToken, user } = useAuthStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // 메뉴 바깥 클릭 시 닫기. (헤더 backdrop-filter 때문에 fixed 오버레이가 헤더 밖을 못 덮어서 document 리스너로 처리)
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [menuOpen]);
 
   return (
     <div className={css({ minH: "100dvh", bg: "gray.50" })}>
@@ -18,10 +29,10 @@ export default function Layout() {
           pos: "sticky",
           top: 0,
           zIndex: 10,
-          bg: "white/90",
-          backdropFilter: "blur(8px)",
+          bg: "white/80",
+          backdropFilter: "blur(12px)",
           borderBottom: "1px solid",
-          borderColor: "gray.200",
+          borderColor: "gray.100",
         })}
       >
         <div
@@ -47,7 +58,7 @@ export default function Layout() {
             <img
               src="/logo.jpg"
               alt=""
-              className={css({ h: "8", w: "8", rounded: "md", objectFit: "cover" })}
+              className={css({ h: "8", w: "8", rounded: "lg", objectFit: "cover" })}
             />
             <span>
               Play <span className={css({ color: "indigo.600" })}>Inha</span>
@@ -67,7 +78,7 @@ export default function Layout() {
                 )}
 
                 {/* 프로필 아바타 → 드롭다운 메뉴 (내 정보 / 내 작품 / 로그아웃) */}
-                <div className={css({ pos: "relative" })}>
+                <div ref={menuRef} className={css({ pos: "relative" })}>
                   <button
                     type="button"
                     aria-label="프로필 메뉴"
@@ -90,29 +101,22 @@ export default function Layout() {
                   </button>
 
                   {menuOpen && (
-                    <>
-                      {/* 바깥 탭으로 닫기 */}
-                      <div
-                        className={css({ pos: "fixed", inset: 0, zIndex: 10 })}
-                        onClick={() => setMenuOpen(false)}
-                      />
-                      <div
-                        className={flex({
-                          pos: "absolute",
-                          right: 0,
-                          top: "calc(100% + 8px)",
-                          zIndex: 11,
-                          direction: "column",
-                          w: "36",
-                          bg: "white",
-                          border: "1px solid",
-                          borderColor: "gray.200",
-                          rounded: "xl",
-                          shadow: "lg",
-                          overflow: "hidden",
-                          py: "1",
-                        })}
-                      >
+                    <div
+                      className={flex({
+                        pos: "absolute",
+                        right: 0,
+                        top: "calc(100% + 8px)",
+                        zIndex: 11,
+                        direction: "column",
+                        w: "36",
+                        bg: "white",
+                        border: "1px solid",
+                        borderColor: "gray.200",
+                        rounded: "2xl",
+                        overflow: "hidden",
+                        py: "1",
+                      })}
+                    >
                         <Link to="/profile" className={menuItem} onClick={() => setMenuOpen(false)}>
                           내 정보
                         </Link>
@@ -129,8 +133,7 @@ export default function Layout() {
                         >
                           로그아웃
                         </button>
-                      </div>
-                    </>
+                    </div>
                   )}
                 </div>
               </>
@@ -166,9 +169,9 @@ const menuItem = css({
 const navBtn = css({
   bg: "indigo.600",
   color: "white",
-  px: "3",
+  px: "3.5",
   py: "1.5",
-  rounded: "lg",
-  fontWeight: "600",
+  rounded: "full",
+  fontWeight: "700",
   _hover: { bg: "indigo.700" },
 });

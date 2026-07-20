@@ -3,6 +3,8 @@ import ReactMarkdown from "react-markdown";
 import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { clickProject, imageSrc, type Project } from "../api/client";
+import { useScrollLock } from "../hooks/useScrollLock";
+import CloseButton from "./CloseButton";
 import { categoryColor } from "./category";
 
 interface Props {
@@ -12,7 +14,7 @@ interface Props {
   onAuthor?: () => void;
 }
 
-/** 작품 상세 — 모바일은 풀스크린 시트, 데스크톱은 다이얼로그 (native <dialog>) */
+/** 작품 상세 — 모바일은 하단 바텀시트, 데스크톱은 다이얼로그 (개발자 시트와 같은 감성) */
 export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
 
@@ -21,12 +23,9 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
     if (!dialog) return;
     if (project && !dialog.open) dialog.showModal();
     if (!project && dialog.open) dialog.close();
-    if (!project) return;
-    document.body.style.overflow = "hidden"; // 시트 열린 동안 배경 스크롤 잠금
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [project]);
+
+  useScrollLock(project != null); // 시트 열린 동안 배경 스크롤 잠금
 
   if (!project) return null;
 
@@ -53,7 +52,7 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
         mx: "auto",
         mt: "auto",
         mb: { base: 0, sm: "auto" },
-        rounded: { base: "20px 20px 0 0", sm: "2xl" },
+        rounded: { base: "20px 20px 0 0", sm: "3xl" },
         w: { base: "100vw", sm: "min(640px, 92vw)" },
         h: "auto",
         maxW: { base: "100vw", sm: "min(640px, 92vw)" },
@@ -63,78 +62,96 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
         _backdrop: { bg: "black/60" },
       })}
     >
-      <div className={flex({ direction: "column", h: "full", maxH: "inherit", bg: "white" })}>
-        {/* 배너 (없으면 흰색 — 부모 배경 그대로) */}
-        <div className={css({ pos: "relative", flexShrink: 0, h: { base: "40", sm: "48" } })}>
-          {banner && (
-            <img
-              src={banner}
-              alt=""
-              className={css({ w: "full", h: "full", objectFit: "cover" })}
-            />
-          )}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="닫기"
-            className={css({
-              pos: "absolute",
-              top: "3",
-              right: "3",
-              w: "9",
-              h: "9",
-              rounded: "full",
-              bg: "black/50",
-              color: "white",
-              fontSize: "lg",
-              cursor: "pointer",
-            })}
-          >
-            ✕
-          </button>
-        </div>
+      <div className={flex({ pos: "relative", direction: "column", h: "full", maxH: "inherit", bg: "white" })}>
+        {/* X — 개발자 시트와 같은 시트 최상단 코너 (배너 위) */}
+        <CloseButton onClick={onClose} />
 
-        {/* 제목/작성자 */}
-        <div className={css({ px: "5", pt: "4", pb: "3", borderBottom: "1px solid", borderColor: "gray.100" })}>
-          <div className={flex({ align: "center", gap: "2" })}>
-            <h2 className={css({ fontSize: "xl", fontWeight: "800", flex: 1, minW: 0 })}>
-              {project.title}
-            </h2>
+        {/* 배너 — 이전처럼 full-bleed (패딩·라운드 없음) */}
+        {banner && (
+          <img
+            src={banner}
+            alt=""
+            className={css({ flexShrink: 0, display: "block", w: "full", h: { base: "40", sm: "48" }, objectFit: "cover" })}
+          />
+        )}
+
+        {/* 제목 헤더 */}
+        <div
+          className={css({
+            flexShrink: 0,
+            px: "6",
+            pt: banner ? "5" : "7",
+            pb: "5",
+          })}
+        >
+          <h2 className={css({ fontSize: "2xl", fontWeight: "800", letterSpacing: "tight", pr: "10" })}>
+            {project.title}
+          </h2>
+
+          {/* 분류·작성자 칩 (개발자 시트 링크 칩과 동일 감성) */}
+          <div className={flex({ align: "center", gap: "2", mt: "3", wrap: "wrap" })}>
             <span
-              className={css({ fontSize: "xs", fontWeight: "700", color: "white", px: "2", py: "0.5", rounded: "full" })}
+              className={css({
+                flexShrink: 0,
+                fontSize: "xs",
+                fontWeight: "700",
+                color: "white",
+                px: "2.5",
+                py: "1",
+                rounded: "full",
+              })}
               style={{ background: categoryColor(project.category) }}
             >
               {project.category}
             </span>
+            <button
+              type="button"
+              onClick={onAuthor}
+              className={css({
+                maxW: "full",
+                fontSize: "xs",
+                fontWeight: "700",
+                px: "3",
+                py: "1",
+                rounded: "full",
+                bg: "white",
+                color: "gray.700",
+                border: "1px solid",
+                borderColor: "gray.200",
+                truncate: true,
+                cursor: "pointer",
+                _hover: { borderColor: "indigo.400", color: "indigo.600" },
+              })}
+            >
+              {project.author}
+            </button>
           </div>
-          {/* 작성자 탭 → 프로필 다이얼로그 */}
-          <button
-            type="button"
-            onClick={onAuthor}
-            className={css({
-              fontSize: "sm",
-              color: "gray.500",
-              mt: "1",
-              cursor: "pointer",
-              textDecoration: "underline",
-              textDecorationColor: "gray.300",
-              textUnderlineOffset: "3px",
-              _hover: { color: "gray.700" },
-            })}
-          >
-            {project.author}
-          </button>
         </div>
 
-        {/* 마크다운 본문 (스크롤) */}
-        <div className={css({ flex: 1, overflowY: "auto", px: "5", py: "4" })}>
+        {/* 소개 (마크다운, 스크롤) */}
+        <div className={css({ flex: 1, minH: 0, overflowY: "auto", px: "6", pb: "6" })}>
+          <h3
+            className={css({
+              fontSize: "xs",
+              fontWeight: "800",
+              color: "gray.400",
+              letterSpacing: "wider",
+              pt: "2",
+              pb: "3",
+              pos: "sticky",
+              top: 0,
+              bg: "white",
+            })}
+          >
+            소개
+          </h3>
           <div className={markdownStyle}>
             <ReactMarkdown>{project.body ?? ""}</ReactMarkdown>
           </div>
         </div>
 
         {/* 이동하기 */}
-        <div className={css({ flexShrink: 0, p: "4", borderTop: "1px solid", borderColor: "gray.100" })}>
+        <div className={css({ flexShrink: 0, p: "4" })}>
           <button
             type="button"
             onClick={go}

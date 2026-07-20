@@ -37,16 +37,18 @@ export default function HomePage() {
   const chip = (active: boolean) =>
     css({
       flexShrink: 0,
-      px: "3.5",
+      px: "4",
       py: "1.5",
       rounded: "full",
       fontSize: "sm",
-      fontWeight: "600",
+      fontWeight: "700",
       cursor: "pointer",
-      bg: active ? "gray.900" : "white",
+      transition: "colors 0.15s",
+      bg: active ? "indigo.600" : "white",
       color: active ? "white" : "gray.600",
       border: "1px solid",
-      borderColor: active ? "gray.900" : "gray.200",
+      borderColor: active ? "indigo.600" : "gray.200",
+      _hover: active ? {} : { borderColor: "indigo.300", color: "indigo.600" },
     });
 
   return (
@@ -72,14 +74,16 @@ export default function HomePage() {
               key={p.id}
               onClick={() => open(p)}
               className={css({
+                pos: "relative",
                 textAlign: "left",
                 cursor: "pointer",
                 bg: "white",
-                rounded: "xl",
+                rounded: "2xl",
                 overflow: "hidden",
                 border: "1px solid",
                 borderColor: "gray.200",
-                transition: "transform 0.1s",
+                transition: "transform 0.1s, border-color 0.15s",
+                _hover: { borderColor: "indigo.200" },
                 _active: { transform: "scale(0.97)" },
               })}
             >
@@ -92,17 +96,17 @@ export default function HomePage() {
                     : { background: `linear-gradient(135deg, ${categoryColor(p.category)}, #1e1b4b)` }
                 }
               >
-                {/* 분류 뱃지 (앱/게임) */}
+                {/* 분류 뱃지 (앱/게임) — 썸네일 우측 상단 */}
                 <span
                   className={css({
                     pos: "absolute",
-                    top: "2",
-                    left: "2",
+                    top: "2.5",
+                    right: "2.5",
                     zIndex: 1,
                     fontSize: "xs",
                     fontWeight: "700",
                     color: "white",
-                    px: "2",
+                    px: "2.5",
                     py: "0.5",
                     rounded: "full",
                   })}
@@ -159,11 +163,11 @@ export default function HomePage() {
                     display: "block",
                     maxW: "full",
                     fontSize: "xs",
-                    color: "gray.400",
+                    color: "gray.500",
                     mt: "1",
                     truncate: true,
                     cursor: "pointer",
-                    _hover: { color: "gray.600", textDecoration: "underline" },
+                    _hover: { color: "indigo.600" },
                   })}
                 >
                   {p.author}
