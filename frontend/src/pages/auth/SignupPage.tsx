@@ -467,7 +467,18 @@ export default function SignupPage() {
           type="button"
           variant={slackInviteUrl ? "outline" : "default"}
           className="w-full h-12 text-base cursor-pointer"
-          onClick={() => navigate("/login")}
+          onClick={() => {
+            // play.igrus 에서 온 회원가입(utm_source=play)이면 play 로그인으로 되돌려보낸다.
+            // utm 등 쿼리스트링은 그대로 전달해 경로가 바뀌어도 유지되게 함.
+            if (
+              new URLSearchParams(window.location.search).get("utm_source") ===
+              "play"
+            ) {
+              window.location.href = `https://play.igrus.co.kr/login${window.location.search}`;
+              return;
+            }
+            navigate("/login");
+          }}
         >
           <LogIn size={16} />
           로그인하러 가기
