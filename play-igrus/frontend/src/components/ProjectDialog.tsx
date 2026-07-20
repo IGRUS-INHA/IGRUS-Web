@@ -133,7 +133,7 @@ export default function ProjectDialog({ project, onClose, onAuthor }: Props) {
         </div>
 
         {/* 소개 (마크다운, 스크롤) */}
-        <div data-sheet-scroll className={css({ flex: 1, minH: 0, overflowY: "auto", px: "6", pb: "6" })}>
+        <div data-sheet-scroll className={css({ flex: 1, minH: 0, overflowY: "auto", overscrollBehavior: "contain", px: "6", pb: "6" })}>
           <h3
             className={css({
               fontSize: "xs",
