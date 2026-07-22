@@ -79,23 +79,14 @@ func recomputeScores(db *sql.DB, today time.Time) error {
 	return tx.Commit()
 }
 
-// startRankingLoop 은 시작 시 1회 + 매일 04:00 KST 에 점수를 재계산한다.
+// startRankingLoop 은 시작 시 1회 + 매시간 점수를 재계산한다.
 func startRankingLoop(db *sql.DB) {
 	go func() {
 		for {
 			if err := recomputeScores(db, kstToday()); err != nil {
 				log.Printf("랭킹 재계산 실패: %v", err)
 			}
-			time.Sleep(untilNextRun())
+			time.Sleep(time.Hour)
 		}
 	}()
-}
-
-func untilNextRun() time.Duration {
-	now := time.Now().In(kst)
-	next := time.Date(now.Year(), now.Month(), now.Day(), 4, 0, 0, 0, kst)
-	if !next.After(now) {
-		next = next.Add(24 * time.Hour)
-	}
-	return next.Sub(now)
 }
