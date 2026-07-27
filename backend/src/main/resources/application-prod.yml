@@ -46,6 +46,8 @@ app:
     same-site: Lax
     domain: igrus.co.kr
   frontend-url: https://www.igrus.co.kr
+  sso:
+    allowed-redirect-origins: https://play.igrus.co.kr,https://inhaplay.com,https://www.inhaplay.com
   webhook:
     baebdung-i:
       secret: ${app.webhook.baebdung-i.secret}

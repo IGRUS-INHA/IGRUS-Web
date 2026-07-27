@@ -93,6 +93,8 @@ tags:
   description: 외부인(비회원) 행사 신청 API
 - name: Password Authentication
   description: 비밀번호 기반 인증 관련 API
+- name: SSO Authentication
+  description: 다른 도메인 서비스(play 등)와의 세션 연동 SSO API
 - name: MyPage
   description: 마이페이지 API
 - name: Survey Form
@@ -234,6 +236,10 @@ paths:
     $ref: ./paths/auth.yaml#/authPasswordLogin
   /api/v1/auth/password/account/recover:
     $ref: ./paths/auth.yaml#/authPasswordAccountRecover
+  /api/v1/auth/sso/authorize:
+    $ref: ./paths/auth.yaml#/authSsoAuthorize
+  /api/v1/auth/sso/token:
+    $ref: ./paths/auth.yaml#/authSsoToken
   /api/v1/admin/users/{userId}/force-activate:
     $ref: ./paths/admin.yaml#/adminUsersByUserIdForceActivate
   /api/v1/admin/semesters/{year}/{semester}/members:

@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         "/api": { target: playTarget, changeOrigin: true },
+        "/auth": { target: playTarget, changeOrigin: true },
         "/images": { target: playTarget, changeOrigin: true },
         "/igrus-api": {
           target: igrusTarget,

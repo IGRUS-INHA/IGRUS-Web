@@ -376,3 +376,53 @@ authPasswordAccountRecoveryCheck:
       '400':
         description: 잘못된 요청 (학번 형식 오류)
     security: []
+authSsoAuthorize:
+  get:
+    tags:
+    - SSO Authentication
+    summary: SSO 인가 (일회용 코드 발급)
+    description: 브라우저 top-level 리다이렉트로 호출됩니다. refresh 쿠키로 로그인 상태를 확인하고, 로그인되어 있으면 일회용 코드를 redirect_uri에 sso_code 쿼리로 붙여 리다이렉트합니다. 비로그인이면 sso=none으로 리다이렉트합니다. redirect_uri의 origin은 서버 허용 목록에 있어야 합니다.
+    operationId: ssoAuthorize
+    parameters:
+    - name: redirect_uri
+      in: query
+      required: true
+      description: 코드 수신 후 돌아갈 절대 URI (origin이 허용 목록에 있어야 함)
+      schema:
+        type: string
+        format: uri
+    responses:
+      '302':
+        description: redirect_uri로 리다이렉트 (성공 시 ?sso_code=, 비로그인 시 ?sso=none)
+        headers:
+          Location:
+            schema:
+              type: string
+      '400':
+        description: 허용되지 않았거나 잘못된 redirect_uri
+    security: []
+authSsoToken:
+  post:
+    tags:
+    - SSO Authentication
+    summary: SSO 일회용 코드 → 토큰 교환
+    description: ssoAuthorize가 발급한 일회용 코드를 액세스 토큰과 새 리프레시 토큰(새 토큰 패밀리)으로 교환합니다. 코드는 60초 내 1회만 사용할 수 있습니다. 서비스 백엔드(server-to-server) 호출용입니다.
+    operationId: ssoIssueToken
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/auth.yaml#/SsoTokenRequest
+      required: true
+    responses:
+      '200':
+        description: 토큰 발급 성공
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/auth.yaml#/SsoTokenResponse
+      '400':
+        description: 잘못된 요청 (유효성 검증 실패)
+      '401':
+        description: 유효하지 않거나 만료된 코드
+    security: []

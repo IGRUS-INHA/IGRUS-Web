@@ -31,6 +31,8 @@ public enum AuthErrorCode implements ErrorCode {
     REFRESH_TOKEN_THEFT_DETECTED(401, "토큰 도용이 감지되어 모든 세션이 종료되었습니다"),
     PASSWORD_RESET_TOKEN_INVALID(400, "유효하지 않은 비밀번호 재설정 토큰입니다"),
     PASSWORD_RESET_TOKEN_EXPIRED(400, "비밀번호 재설정 토큰이 만료되었습니다"),
+    SSO_CODE_INVALID(401, "유효하지 않거나 만료된 SSO 코드입니다"),
+    SSO_REDIRECT_URI_NOT_ALLOWED(400, "허용되지 않은 redirect_uri 입니다"),
 
     // Email & Verification
     EMAIL_SEND_FAILED(500, "이메일 발송에 실패했습니다"),

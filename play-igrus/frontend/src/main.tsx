@@ -11,7 +11,7 @@ import ProfilePage from "./pages/ProfilePage";
 import AdminPage from "./pages/AdminPage";
 import "./index.css";
 
-// www 등 다른 *.igrus.co.kr 에서 로그인한 세션을 refresh 쿠키로 복원
+// 퍼스트파티 refresh 쿠키로 세션 복원, 없으면 igrus SSO 핸드오프 1회 시도
 void bootstrapAuth();
 
 const router = createBrowserRouter([

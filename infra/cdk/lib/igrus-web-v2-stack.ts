@@ -200,7 +200,7 @@ api.igrus.co.kr, ec2.igrus.co.kr {
 	reverse_proxy app:8080
 }
 
-play.igrus.co.kr {
+play.igrus.co.kr, inhaplay.com, www.inhaplay.com {
 	encode gzip
 	reverse_proxy play-api:8080
 }

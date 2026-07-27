@@ -14,14 +14,16 @@ export class ApiError extends Error {
   }
 }
 
-// ── 세션 (www 프론트 client.ts 와 동일 패턴) ─────────────────────────
-// accessToken 은 origin 별 격리지만, refresh 쿠키는 Domain=igrus.co.kr 라
-// www 에서 로그인했으면 여기서도 refresh 한 번으로 세션이 복원된다.
+// ── 세션 ─────────────────────────────────────────────────────────────
+// 인증은 play 백엔드의 /auth/* 프록시를 통한다. 프록시가 igrus refresh 토큰을
+// "이 도메인의 퍼스트파티 쿠키"로 심기 때문에 inhaplay.com 처럼 igrus.co.kr 과
+// 등록 도메인이 달라도 세션이 유지된다. www 에서 로그인한 세션은 igrus 의
+// /api/v1/auth/sso/authorize 로 1회 top-level 리다이렉트(SSO 핸드오프)해 가져온다.
 
 let refreshPromise: Promise<string> | null = null;
 
 async function refreshAccessToken(): Promise<string> {
-  const res = await fetch(`${IGRUS_API}/api/v1/auth/password/refresh`, {
+  const res = await fetch(`${PLAY_API}/auth/refresh`, {
     method: "POST",
     credentials: "include",
   });
@@ -40,13 +42,69 @@ function ensureRefresh(): Promise<string> {
   return refreshPromise;
 }
 
-/** 앱 시작 시 1회 — refresh 쿠키로 세션 복원 시도. 비로그인이면 조용히 실패. */
+// SSO 바운스는 탭 세션당 1회만 — 리다이렉트 루프 방지
+const SSO_ATTEMPTED_KEY = "playSsoAttempted";
+
+/** SSO 일회용 코드를 play 세션(퍼스트파티 refresh 쿠키)으로 교환.
+ *  state 는 /auth/sso/start 가 심은 쿠키와 서버에서 대조된다 (로그인 CSRF 방지). */
+async function exchangeSsoCode(code: string, state: string): Promise<void> {
+  const res = await fetch(`${PLAY_API}/auth/sso/exchange`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, state }),
+  });
+  if (!res.ok) return; // 만료/재사용 코드, state 불일치 — 비로그인으로 진행
+  const data = (await res.json()) as { accessToken: string };
+  useAuthStore.getState().setAccessToken(data.accessToken);
+}
+
+/** SSO 핸드오프 시작 — state 발급 후 igrus authorize 로 top-level 리다이렉트 */
+async function startSsoHandoff(): Promise<void> {
+  const res = await fetch(`${PLAY_API}/auth/sso/start`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) throw new ApiError(res.status, "SSO 시작 실패");
+  const { state } = (await res.json()) as { state: string };
+  const back = new URL(location.href);
+  back.searchParams.set("sso_state", state);
+  location.replace(
+    `${IGRUS_API}/api/v1/auth/sso/authorize?redirect_uri=${encodeURIComponent(back.toString())}`,
+  );
+}
+
+/**
+ * 앱 시작 시 1회 — 퍼스트파티 refresh 쿠키로 세션 복원을 시도하고,
+ * 실패하면 www 세션을 가져오기 위해 igrus SSO authorize 로 1회 리다이렉트한다.
+ * (돌아올 때 ?sso_code= 또는 ?sso=none 이 붙는다)
+ */
 export async function bootstrapAuth(): Promise<void> {
   try {
+    const url = new URL(location.href);
+    if (url.searchParams.has("sso_code") || url.searchParams.has("sso")) {
+      sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
+      const code = url.searchParams.get("sso_code");
+      const state = url.searchParams.get("sso_state");
+      url.searchParams.delete("sso_code");
+      url.searchParams.delete("sso_state");
+      url.searchParams.delete("sso");
+      history.replaceState(null, "", url);
+      if (code && state) await exchangeSsoCode(code, state);
+    }
     if (!useAuthStore.getState().accessToken) await ensureRefresh();
     await loadProfile();
   } catch {
-    // 비로그인 방문자 — 무시
+    // 비로그인 — www 에 로그인돼 있을 수 있으니 SSO 핸드오프 1회 시도
+    if (!sessionStorage.getItem(SSO_ATTEMPTED_KEY)) {
+      sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
+      try {
+        await startSsoHandoff();
+        return; // 리다이렉트로 떠남
+      } catch {
+        // play 서버 문제 — 비로그인으로 진행
+      }
+    }
   } finally {
     useAuthStore.getState().setBootstrapped();
   }
@@ -59,9 +117,9 @@ export async function loadProfile(): Promise<User> {
 }
 
 export async function login(studentId: string, password: string): Promise<void> {
-  const res = await fetch(`${IGRUS_API}/api/v1/auth/password/login`, {
+  const res = await fetch(`${PLAY_API}/auth/login`, {
     method: "POST",
-    credentials: "include", // Set-Cookie Domain=igrus.co.kr — www 와 세션 공유
+    credentials: "include", // 프록시가 refresh 토큰을 이 도메인 쿠키로 심는다
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ studentId, password }),
   });
@@ -75,11 +133,12 @@ export async function login(studentId: string, password: string): Promise<void> 
 }
 
 export async function logout(): Promise<void> {
-  // 도메인 쿠키가 지워지므로 www 쪽도 함께 로그아웃된다 (SSO 정상 동작)
-  await fetch(`${IGRUS_API}/api/v1/auth/password/logout`, {
+  // play 전용 토큰 패밀리만 종료한다 — www 세션은 영향 없음
+  await fetch(`${PLAY_API}/auth/logout`, {
     method: "POST",
     credentials: "include",
   }).catch(() => {});
+  sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1"); // 로그아웃 직후 SSO 재바운스 방지
   useAuthStore.getState().clear();
 }
 

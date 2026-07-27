@@ -65,6 +65,13 @@ func main() {
 		mux.Handle("GET /", spaHandler(staticDir))
 	}
 
+	// igrus 인증 프록시 (sso.go — inhaplay.com 등 다른 도메인에서의 세션 유지용)
+	mux.HandleFunc("POST /auth/login", s.ssoLogin)
+	mux.HandleFunc("POST /auth/refresh", s.ssoRefresh)
+	mux.HandleFunc("POST /auth/logout", s.ssoLogout)
+	mux.HandleFunc("POST /auth/sso/start", s.ssoStart)
+	mux.HandleFunc("POST /auth/sso/exchange", s.ssoExchange)
+
 	// 로그인 필요
 	mux.HandleFunc("POST /api/projects", s.auth.requireLogin(s.createProject))
 	mux.HandleFunc("PUT /api/projects/{id}", s.auth.requireLogin(s.updateProject))
