@@ -82,14 +82,18 @@ async function startSsoHandoff(): Promise<void> {
 export async function bootstrapAuth(): Promise<void> {
   try {
     const url = new URL(location.href);
-    if (url.searchParams.has("sso_code") || url.searchParams.has("sso")) {
-      sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
+    if (
+      url.searchParams.has("sso_code") ||
+      url.searchParams.has("sso_state") ||
+      url.searchParams.has("sso")
+    ) {
       const code = url.searchParams.get("sso_code");
       const state = url.searchParams.get("sso_state");
       url.searchParams.delete("sso_code");
       url.searchParams.delete("sso_state");
       url.searchParams.delete("sso");
-      history.replaceState(null, "", url);
+      history.replaceState(null, "", url); // 주소창 정리는 스토리지보다 먼저 (스토리지 예외에도 URL 은 깨끗하게)
+      sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
       if (code && state) await exchangeSsoCode(code, state);
     }
     if (!useAuthStore.getState().accessToken) await ensureRefresh();
