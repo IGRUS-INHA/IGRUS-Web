@@ -47,6 +47,7 @@ export default function LoginPage() {
             id="studentId"
             type="text"
             inputMode="numeric"
+            autoComplete="username"
             placeholder="12345678"
             className={input}
             {...register("studentId", {
@@ -64,6 +65,7 @@ export default function LoginPage() {
           <input
             id="password"
             type="password"
+            autoComplete="current-password"
             className={input}
             {...register("password", { required: "비밀번호를 입력해주세요" })}
           />
