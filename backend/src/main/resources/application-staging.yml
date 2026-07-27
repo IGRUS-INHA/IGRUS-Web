@@ -46,6 +46,8 @@ app:
     same-site: Lax
     domain: igrus.co.kr
   frontend-url: https://staging.igrus.co.kr
+  sso:
+    allowed-redirect-origins: http://localhost:5173,http://localhost:5174
   webhook:
     baebdung-i:
       enabled: false

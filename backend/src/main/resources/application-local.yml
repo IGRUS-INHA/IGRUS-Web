@@ -31,6 +31,8 @@ app:
   cookie:
     secure: false
     same-site: Lax
+  sso:
+    allowed-redirect-origins: http://localhost:5173,http://localhost:5174
   webhook:
     baebdung-i:
       enabled: false

@@ -603,3 +603,35 @@ RecoveryEligibilityResponse:
       type: string
       description: 안내 메시지
       example: 탈퇴한 계정입니다. 복구하시겠습니까?
+SsoTokenRequest:
+  type: object
+  description: SSO 일회용 코드 교환 요청
+  required:
+  - code
+  properties:
+    code:
+      type: string
+      description: ssoAuthorize가 발급한 일회용 코드
+      example: 3q2-8fJd0mX...
+SsoTokenResponse:
+  type: object
+  description: SSO 토큰 교환 응답
+  properties:
+    accessToken:
+      type: string
+      description: JWT Access Token
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    refreshToken:
+      type: string
+      description: 새로 발급된 Refresh Token (새 토큰 패밀리 — 호출한 서비스가 자체 쿠키로 보관)
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    expiresIn:
+      type: integer
+      format: int64
+      description: Access Token 만료까지 남은 시간 (밀리초)
+      example: 300000
+    refreshExpiresIn:
+      type: integer
+      format: int64
+      description: Refresh Token 만료까지 남은 시간 (밀리초)
+      example: 1209600000
