@@ -43,7 +43,8 @@ func main() {
 		log.Fatalf("이미지 스토어 초기화 실패: %v", err)
 	}
 
-	s := &server{db: db, auth: newAuthenticator(apiBase), images: images, igrusDB: igrusDB}
+	s := &server{db: db, auth: newAuthenticator(apiBase), images: images, igrusDB: igrusDB,
+		slack: &slackNotifier{url: os.Getenv("SLACK_WEBHOOK_URL")}}
 	startRankingLoop(db)
 
 	mux := http.NewServeMux()

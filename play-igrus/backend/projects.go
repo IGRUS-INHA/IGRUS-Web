@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -26,6 +27,7 @@ type server struct {
 	auth    *authenticator
 	images  imageStore
 	igrusDB string // 작성자 닉네임 조회용 igrus 스키마명 (같은 RDS 인스턴스, 크로스 스키마)
+	slack   *slackNotifier
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
@@ -295,6 +297,7 @@ func (s *server) createProject(w http.ResponseWriter, r *http.Request, p Profile
 		writeErr(w, http.StatusInternalServerError, "저장에 실패했습니다")
 		return
 	}
+	s.slack.notify(fmt.Sprintf("🔔 신규 검수요청 — %s (%s) / %s\nhttps://play.igrus.co.kr/admin", fields.Title, fields.Category, p.Name))
 	writeJSON(w, http.StatusCreated, map[string]any{"id": id, "status": "pending"})
 }
 
@@ -366,6 +369,10 @@ func (s *server) updateProject(w http.ResponseWriter, r *http.Request, p Profile
 		// 심사 끝난 버전 뒤에는 새 버전으로 쌓는다 (이력 보존)
 		v.Version = latest.Version + 1
 		err = insertVersion(s.db, v)
+		if err == nil {
+			// 심사 대기 중 재수정은 이미 알림이 나갔으므로 새 제출 버전만 알린다
+			s.slack.notify(fmt.Sprintf("🔔 신규 검수요청 — %s v%d (%s) / %s\nhttps://play.igrus.co.kr/admin", v.Title, v.Version, v.Category, p.Name))
+		}
 	}
 	if err == nil && proj.Version == 0 {
 		// 아직 라이브가 없는 프로젝트는 행 자체도 최신 내용으로 (목록/수정 폼이 이 행을 본다)
