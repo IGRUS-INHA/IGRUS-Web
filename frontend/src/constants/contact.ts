@@ -11,9 +11,9 @@ export const CLUB_INFO = {
   description: "인하대학교의 IT 동아리입니다.",
   address: "인천광역시 미추홀구 인하로 100, 5호관 동쪽 지하 003",
   // TODO: 매학기 회장 정보 업데이트 필요
-  phone1: "회장 송준희 : 010-6587-7550",
+  phone1: "회장 송준희 : 010-2687-6602",
   // TODO: 매학기 부회장 정보 업데이트 필요
-  phone2: "부회장 장예나 : 010-2290-3343",
+  phone2: "부회장 장예나 : 010-3258-1769",
 } as const;
 
 export const SNS_LINKS = {
