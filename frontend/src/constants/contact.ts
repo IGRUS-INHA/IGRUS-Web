@@ -9,12 +9,11 @@ export const CLUB_INFO = {
   name: "IGRUS",
   fullName: "인하대학교 IT 동아리",
   description: "인하대학교의 IT 동아리입니다.",
-  // TODO: 실제 동아리 방 주소로 교체 필요
   address: "인천광역시 미추홀구 인하로 100, 5호관 동쪽 지하 003",
-  // TODO: 실제 이메일 주소로 교체 필요
-  phone1: "회장 구주원 : 010-6587-7550",
-  // TODO: 실제 전화번호로 교체 필요
-  phone2: "부회장 신연우 : 010-2290-3343",
+  // TODO: 매학기 회장 정보 업데이트 필요
+  phone1: "회장 송준희 : 010-6587-7550",
+  // TODO: 매학기 부회장 정보 업데이트 필요
+  phone2: "부회장 장예나 : 010-2290-3343",
 } as const;
 
 export const SNS_LINKS = {
