@@ -1206,7 +1206,7 @@ export default function SignupPage() {
               입금자명 양식: 학번 2자리+이름 (ex. 26김아그)
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center">
-              입금계좌: 토스뱅크 1002-3803-2581
+              입금계좌: KB국민 757302-00-169676 (김승균)
               <button
                 type="button"
                 onClick={handleCopyAccount}
