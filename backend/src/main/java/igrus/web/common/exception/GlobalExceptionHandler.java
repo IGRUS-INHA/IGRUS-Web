@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     private static final long ERROR_ALERT_COOLDOWN_MS = 60_000;
+    private static final int ERROR_ALERT_REASON_MAX_LENGTH = 500;
 
     // @WebMvcTest 슬라이스에는 SlackNotifier 빈이 없으므로 ObjectProvider 로 주입
     private final ObjectProvider<SlackNotifier> slackNotifier;
@@ -317,15 +318,20 @@ public class GlobalExceptionHandler {
 
     // ponytail: 전역 1분 쿨다운 — 쿨다운 중 발생한 다른 500 은 슬랙에 안 뜬다(로그에는 남음).
     // 서로 다른 에러를 놓치는 게 문제가 되면 예외 타입별 쿨다운으로 바꿀 것.
-    // 예외 메시지에는 개인정보/SQL 값이 섞일 수 있어 슬랙에는 보내지 않는다. 상세는 traceId 로 로그에서 조회.
+    // 원인 파악용으로 예외 메시지를 앞부분만 붙인다. 개인정보/SQL 값이 섞일 수 있으므로 운영진 전용 서버 알림 채널로만 보낸다.
     private void alertSlack(Exception e, HttpServletRequest request) {
         long now = System.currentTimeMillis();
         long last = lastErrorAlertAt.get();
         if (now - last < ERROR_ALERT_COOLDOWN_MS || !lastErrorAlertAt.compareAndSet(last, now)) {
             return;
         }
-        slackNotifier.ifAvailable(notifier -> notifier.send("🚨 서버 500 에러\n"
+        String message = e.getMessage() == null ? "(메시지 없음)" : e.getMessage();
+        String reason = message.length() > ERROR_ALERT_REASON_MAX_LENGTH
+                ? message.substring(0, ERROR_ALERT_REASON_MAX_LENGTH) + "…"
+                : message;
+        slackNotifier.ifAvailable(notifier -> notifier.sendServerAlert("🚨 서버 500 에러\n"
                 + request.getMethod() + " " + request.getRequestURI() + "\n"
-                + e.getClass().getName() + " (traceId=" + MDC.get("traceId") + ")"));
+                + e.getClass().getName() + " (traceId=" + MDC.get("traceId") + ")\n"
+                + "원인: " + reason));
     }
 }

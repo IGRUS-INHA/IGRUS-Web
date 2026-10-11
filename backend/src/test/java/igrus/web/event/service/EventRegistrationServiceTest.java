@@ -85,7 +85,7 @@ class EventRegistrationServiceTest {
     private EventStatusHelper eventStatusHelper;
 
     @Mock
-    private EventRegistrationSlackNotifier eventRegistrationSlackNotifier;
+    private EventSlackNotifier eventSlackNotifier;
 
     @InjectMocks
     private EventRegistrationService eventRegistrationService;
@@ -171,7 +171,7 @@ class EventRegistrationServiceTest {
             assertThat(response).isNotNull();
             verify(eventRepository).incrementCurrentCountIfAvailable(EVENT_ID);
             verify(eventRegistrationRepository).save(any(EventRegistration.class));
-            verify(eventRegistrationSlackNotifier).notifyRegistered(eq(EVENT_ID), anyString());
+            verify(eventSlackNotifier).notifyRegistered(eq(EVENT_ID), anyString());
         }
 
         /**
@@ -397,6 +397,7 @@ class EventRegistrationServiceTest {
             when(registration.getStatus()).thenReturn(statusAfterUpdate);
             when(registration.isCanceled()).thenReturn(statusAfterUpdate == EventRegistrationStatus.CANCELED);
             when(registration.isRejected()).thenReturn(statusAfterUpdate == EventRegistrationStatus.REJECTED);
+            org.mockito.Mockito.lenient().when(registration.getUser()).thenReturn(regularMember);
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.of(registration));
             when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
@@ -423,6 +424,8 @@ class EventRegistrationServiceTest {
             verify(registration, never()).cancel();
             verify(eventRepository, never()).decrementCurrentCount(any());
             verify(eventStatusHelper, never()).updateEventStatusAfterDecrement(any());
+            verify(eventSlackNotifier).notifyCancelRequested(
+                    org.mockito.ArgumentMatchers.eq(EVENT_ID), any(), org.mockito.ArgumentMatchers.eq(REASON));
         }
 
         @Test
