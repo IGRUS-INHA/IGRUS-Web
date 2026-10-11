@@ -99,6 +99,7 @@ public class EventService {
     private final ApplicationEventPublisher eventPublisher;
     private final EventStatusHelper eventStatusHelper;
     private final DownloadUrlService downloadUrlService;
+    private final EventSlackNotifier eventSlackNotifier;
 
     /**
      * 행사를 생성합니다.
@@ -160,6 +161,8 @@ public class EventService {
         if (request.surveyId() != null) {
             log.info("행사 생성 요청 - userId: {}, title: {}, surveyId: {}", userId, request.title(), request.surveyId());
         }
+
+        eventSlackNotifier.notifyEventCreated(savedEvent, user.getName());
 
         // 8. 응답 DTO 반환
         return EventCreateResponse.from(savedEvent);

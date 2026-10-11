@@ -17,20 +17,24 @@ import java.util.concurrent.RejectedExecutionException;
 /**
  * Slack Incoming Webhook 으로 운영 채널에 알림을 보낸다.
  * URL(app.webhook.slack.url)이 비어 있으면(로컬/테스트 등) no-op.
+ * 서버 오류 알림은 별도 채널(app.webhook.slack.server-alert-url)로 보내며, 비어 있으면 기본 URL 을 쓴다.
  */
 @Slf4j
 @Component
 public class SlackNotifier {
 
     private final String url;
+    private final String serverAlertUrl;
     private final Executor executor;
     private final RestClient restClient;
 
     public SlackNotifier(
             @Value("${app.webhook.slack.url:}") String url,
+            @Value("${app.webhook.slack.server-alert-url:}") String serverAlertUrl,
             @Qualifier("webhookTaskExecutor") Executor executor
     ) {
         this.url = url;
+        this.serverAlertUrl = serverAlertUrl.isBlank() ? url : serverAlertUrl;
         this.executor = executor;
 
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
@@ -43,17 +47,28 @@ public class SlackNotifier {
      * 비동기 발송. 어떤 경우에도 예외를 던지지 않으며, 실패 시 로그만 남긴다.
      */
     public void send(String text) {
+        send(url, text);
+    }
+
+    /**
+     * 서버 오류(500 등) 알림을 서버 알림 채널로 비동기 발송한다.
+     */
+    public void sendServerAlert(String text) {
+        send(serverAlertUrl, text);
+    }
+
+    private void send(String url, String text) {
         if (url.isBlank()) {
             return;
         }
         try {
-            executor.execute(() -> post(text));
+            executor.execute(() -> post(url, text));
         } catch (RejectedExecutionException e) {
             log.warn("슬랙 알림 누락: 웹훅 작업 큐가 가득 참");
         }
     }
 
-    private void post(String text) {
+    private void post(String url, String text) {
         try {
             restClient.post()
                     .uri(url)

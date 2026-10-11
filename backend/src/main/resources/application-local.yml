@@ -38,3 +38,4 @@ app:
       enabled: false
     slack:
       url: ${SLACK_WEBHOOK_URL:}  # 비어 있으면 슬랙 알림 비활성화
+      server-alert-url: ${SLACK_SERVER_ALERT_WEBHOOK_URL:}  # 서버 오류 알림 채널. 비어 있으면 위 url 사용

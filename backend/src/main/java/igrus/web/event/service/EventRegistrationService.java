@@ -94,7 +94,7 @@ public class EventRegistrationService {
     private final SurveyAnswerFactory surveyAnswerFactory;
     private final ApplicationEventPublisher eventPublisher;
     private final EventStatusHelper eventStatusHelper;
-    private final EventRegistrationSlackNotifier eventRegistrationSlackNotifier;
+    private final EventSlackNotifier eventSlackNotifier;
 
     /**
      * 행사에 신청합니다.
@@ -134,7 +134,7 @@ public class EventRegistrationService {
     public RegistrationResponse registerEvent(Long eventId, Long userId,
                                                List<SubmitAnswerRequest> surveyAnswers) {
         RegistrationResponse response = doRegisterEvent(eventId, userId, surveyAnswers);
-        userRepository.findById(userId).ifPresent(user -> eventRegistrationSlackNotifier.notifyRegistered(
+        userRepository.findById(userId).ifPresent(user -> eventSlackNotifier.notifyRegistered(
                 eventId, user.getName() + " (" + user.getStudentId() + ")"));
         return response;
     }
@@ -258,6 +258,8 @@ public class EventRegistrationService {
 
         log.info("신청 취소 요청 접수 - eventId: {}, registrationId: {}, userId: {}",
                 eventId, registrationId, userId);
+        eventSlackNotifier.notifyCancelRequested(
+                eventId, EventSlackNotifier.applicantLabel(registration), strippedReason);
         return RegistrationResponse.from(registration);
     }
 
@@ -306,8 +308,11 @@ public class EventRegistrationService {
         }
 
         log.info("신청 취소 요청 거절 - registrationId: {}, operatorId: {}", registrationId, operatorUserId);
-        return RegistrationResponse.from(eventRegistrationRepository.findById(registrationId)
-                .orElseThrow(EventRegistrationNotFoundException::new));
+        EventRegistration registration = eventRegistrationRepository.findById(registrationId)
+                .orElseThrow(EventRegistrationNotFoundException::new);
+        eventSlackNotifier.notifyCancelRequestRejected(registration.getEvent().getId(),
+                EventSlackNotifier.applicantLabel(registration), operator.getName());
+        return RegistrationResponse.from(registration);
     }
 
     /**
@@ -589,6 +594,7 @@ public class EventRegistrationService {
         // 3. 취소 전 상태 및 취소 요청 사유 저장 (원자적 UPDATE 이후 엔티티가 분리되므로 미리 읽음)
         String previousStatus = registration.getStatus().name();
         String cancelReason = registration.getCancelReason();
+        String applicant = EventSlackNotifier.applicantLabel(registration);
 
         // 4. 신청자 수 감소 여부 판단 (취소 전에 확인)
         boolean shouldDecrementCount = registration.isActive();
@@ -612,6 +618,7 @@ public class EventRegistrationService {
 
         log.info("관리자 행사 신청 취소 - eventId: {}, registrationId: {}, operatorId: {}",
                 eventId, registrationId, operatorUserId);
+        eventSlackNotifier.notifyCancelAccepted(eventId, applicant, operator.getName());
 
         // 8. 응답 반환
         return RegistrationResponse.from(registration);

@@ -44,7 +44,7 @@ class SlackNotifierTest {
     @Test
     @DisplayName("텍스트를 Slack 웹훅 형식(JSON text)으로 POST 한다")
     void send_PostsJsonText() {
-        new SlackNotifier(url, Runnable::run).send("새 문의 접수");
+        new SlackNotifier(url, "", Runnable::run).send("새 문의 접수");
 
         assertThat(receivedBodies).containsExactly("{\"text\":\"새 문의 접수\"}");
     }
@@ -52,15 +52,31 @@ class SlackNotifierTest {
     @Test
     @DisplayName("사용자 입력의 멘션/링크 문법을 이스케이프한다")
     void send_EscapesSlackControlCharacters() {
-        new SlackNotifier(url, Runnable::run).send("<!channel> a&b");
+        new SlackNotifier(url, "", Runnable::run).send("<!channel> a&b");
 
         assertThat(receivedBodies).containsExactly("{\"text\":\"&lt;!channel&gt; a&amp;b\"}");
     }
 
     @Test
+    @DisplayName("서버 알림은 서버 알림 채널 URL 로 보낸다")
+    void sendServerAlert_UsesServerAlertUrl() {
+        new SlackNotifier("", url, Runnable::run).sendServerAlert("서버 500 에러");
+
+        assertThat(receivedBodies).containsExactly("{\"text\":\"서버 500 에러\"}");
+    }
+
+    @Test
+    @DisplayName("서버 알림 채널 URL 이 비어 있으면 기본 URL 로 보낸다")
+    void sendServerAlert_BlankServerAlertUrl_FallsBackToDefaultUrl() {
+        new SlackNotifier(url, "", Runnable::run).sendServerAlert("서버 500 에러");
+
+        assertThat(receivedBodies).hasSize(1);
+    }
+
+    @Test
     @DisplayName("URL 이 비어 있으면 아무것도 보내지 않는다")
     void send_BlankUrl_NoOp() {
-        new SlackNotifier("", Runnable::run).send("무시");
+        new SlackNotifier("", "", Runnable::run).send("무시");
 
         assertThat(receivedBodies).isEmpty();
     }
@@ -70,7 +86,7 @@ class SlackNotifierTest {
     void send_ServerError_DoesNotThrow() {
         responseStatus = 500;
 
-        assertThatCode(() -> new SlackNotifier(url, Runnable::run).send("실패"))
+        assertThatCode(() -> new SlackNotifier(url, "", Runnable::run).send("실패"))
                 .doesNotThrowAnyException();
         assertThat(receivedBodies).hasSize(1);
     }
@@ -80,9 +96,9 @@ class SlackNotifierTest {
     void send_ConnectionFailureOrRejected_DoesNotThrow() {
         server.stop(0);
 
-        assertThatCode(() -> new SlackNotifier(url, Runnable::run).send("연결 실패"))
+        assertThatCode(() -> new SlackNotifier(url, "", Runnable::run).send("연결 실패"))
                 .doesNotThrowAnyException();
-        assertThatCode(() -> new SlackNotifier(url, task -> {
+        assertThatCode(() -> new SlackNotifier(url, "", task -> {
             throw new RejectedExecutionException();
         }).send("큐 포화"))
                 .doesNotThrowAnyException();

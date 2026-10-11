@@ -75,6 +75,9 @@ class EventServiceTest {
     @Mock
     private EventStatusHelper eventStatusHelper;
 
+    @Mock
+    private EventSlackNotifier eventSlackNotifier;
+
     @InjectMocks
     private EventService eventService;
 
