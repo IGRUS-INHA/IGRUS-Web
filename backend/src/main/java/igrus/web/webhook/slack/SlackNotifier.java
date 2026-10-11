@@ -17,8 +17,7 @@ import java.util.concurrent.RejectedExecutionException;
 /**
  * Slack Incoming Webhook 으로 운영 채널에 알림을 보낸다.
  * URL(app.webhook.slack.url)이 비어 있으면(로컬/테스트 등) no-op.
- * 서버 오류 알림은 별도 채널(app.webhook.slack.server-alert-url)로 보내며, 비어 있으면 기본 URL 을 쓴다.
- * 예외 메시지 같은 민감할 수 있는 상세는 서버 알림 채널이 따로 설정된 경우에만 붙인다.
+ * 서버 오류 알림은 별도 채널(app.webhook.slack.server-alert-url)로 보내며, 비어 있으면 보내지 않는다.
  */
 @Slf4j
 @Component
@@ -53,16 +52,9 @@ public class SlackNotifier {
 
     /**
      * 서버 오류(500 등) 알림을 서버 알림 채널로 비동기 발송한다.
-     * 서버 알림 채널이 설정되지 않았으면 기본 채널로 보내되, 더 많은 사람이 보는 채널이므로 detail 은 뺀다.
-     *
-     * @param detail 예외 메시지 등 개인정보/SQL 값이 섞일 수 있는 상세
      */
-    public void sendServerAlert(String text, String detail) {
-        if (serverAlertUrl.isBlank()) {
-            send(url, text);
-            return;
-        }
-        send(serverAlertUrl, text + "\n" + detail);
+    public void sendServerAlert(String text) {
+        send(serverAlertUrl, text);
     }
 
     private void send(String url, String text) {
