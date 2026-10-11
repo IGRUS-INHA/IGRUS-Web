@@ -38,6 +38,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -203,6 +204,270 @@ class EventRegistrationControllerIntegrationTest extends ServiceIntegrationTestB
                     .andExpect(jsonPath("$.totalElements").value(0))
                     .andExpect(jsonPath("$.empty").value(true))
                     .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+    }
+
+    // ==================== 신청 취소 요청 / 운영진 알림 ====================
+
+    @Nested
+    @DisplayName("신청 취소 요청 및 운영진 취소 요청 목록")
+    class CancelRequestTest {
+
+        private String cancelRequestUrl(Event event) {
+            return "/api/v1/events/" + event.getId() + "/registrations/cancel-request";
+        }
+
+        private org.springframework.test.web.servlet.ResultActions requestCancel(Event event, User user, String body)
+                throws Exception {
+            return mockMvc.perform(post(cancelRequestUrl(event))
+                    .with(withAuth(user))
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body));
+        }
+
+        @Test
+        @DisplayName("[INT-050] 신청자가 취소 요청하면 200, 신청 상태는 유지되고 사유가 저장된다 (OpenAPI 스키마 검증)")
+        void requestCancel_ByRegistrant_Returns200AndKeepsStatus() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            EventRegistration registration = createAndSaveWaitingRegistration(event, member);
+
+            requestCancel(event, member, "{\"reason\":\"개인 사정\"}")
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.registrationId").value(registration.getId()))
+                    .andExpect(jsonPath("$.status").value("WAITING"))
+                    .andExpect(jsonPath("$.isRegistered").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+
+            EventRegistration saved = eventRegistrationRepository.findById(registration.getId()).orElseThrow();
+            assertThat(saved.getCancelReason()).isEqualTo("개인 사정");
+            assertThat(saved.getCancelRequestedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("[INT-051] 이미 취소 요청한 신청에 다시 요청하면 409 EVENT_CANCEL_ALREADY_REQUESTED")
+        void requestCancel_Twice_Returns409() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            createAndSaveWaitingRegistration(event, member);
+            requestCancel(event, member, "{\"reason\":\"개인 사정\"}").andExpect(status().isOk());
+
+            requestCancel(event, member, "{\"reason\":\"다른 사유\"}")
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value("EVENT_CANCEL_ALREADY_REQUESTED"));
+        }
+
+        @Test
+        @DisplayName("[INT-052] 사유가 없거나 공백뿐이거나 500자를 넘으면 400이고 요청이 저장되지 않는다")
+        void requestCancel_InvalidReason_Returns400() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            EventRegistration registration = createAndSaveWaitingRegistration(event, member);
+
+            requestCancel(event, member, "{}").andExpect(status().isBadRequest());
+            requestCancel(event, member, "{\"reason\":\"   \"}").andExpect(status().isBadRequest());
+            requestCancel(event, member, "{\"reason\":\"" + "가".repeat(501) + "\"}")
+                    .andExpect(status().isBadRequest());
+
+            assertThat(eventRegistrationRepository.findById(registration.getId()).orElseThrow()
+                    .getCancelRequestedAt()).isNull();
+        }
+
+        @Test
+        @DisplayName("[INT-053] 500자 사유는 허용된다 (경계값)")
+        void requestCancel_MaxLengthReason_Returns200() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            createAndSaveWaitingRegistration(event, member);
+
+            requestCancel(event, member, "{\"reason\":\"" + "가".repeat(500) + "\"}")
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("[INT-054] 신청하지 않은 사용자가 취소 요청하면 404")
+        void requestCancel_NotRegistered_Returns404() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+
+            requestCancel(event, member, "{\"reason\":\"개인 사정\"}")
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("[INT-055] 비인증 사용자가 취소 요청하면 401")
+        void requestCancel_Unauthenticated_Returns401() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+
+            mockMvc.perform(post(cancelRequestUrl(event))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"reason\":\"개인 사정\"}"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("[INT-056] 신청자 본인 즉시 취소(DELETE)는 더 이상 지원하지 않는다 → 405, 신청 유지")
+        void deleteRegistration_NoLongerSupported_Returns405() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            EventRegistration registration = createAndSaveWaitingRegistration(event, member);
+
+            mockMvc.perform(delete("/api/v1/events/" + event.getId() + "/registrations")
+                            .with(withAuth(member))
+                            .with(csrf()))
+                    .andExpect(status().isMethodNotAllowed());
+
+            assertThat(eventRegistrationRepository.findById(registration.getId()).orElseThrow().isCanceled())
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("[INT-057] OPERATOR가 취소 요청 목록 조회 시 요청 항목이 반환되고, 취소 처리 후에도 CANCELED로 남는다 (OpenAPI 스키마 검증)")
+        void getCancelRequestList_Operator_ReturnsRequestsBeforeAndAfterCancel() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            EventRegistration registration = createAndSaveWaitingRegistration(event, member);
+            createAndSaveWaitingRegistration(event, associate); // 취소 요청 없는 신청은 목록에 없어야 함
+            requestCancel(event, member, "{\"reason\":\"개인 사정\"}").andExpect(status().isOk());
+
+            // 처리 대기 중
+            mockMvc.perform(get("/api/v1/registrations/cancel-requests")
+                            .with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].registrationId").value(registration.getId()))
+                    .andExpect(jsonPath("$.content[0].eventId").value(event.getId()))
+                    .andExpect(jsonPath("$.content[0].eventTitle").value("선발제 행사"))
+                    .andExpect(jsonPath("$.content[0].userName").value(member.getName()))
+                    .andExpect(jsonPath("$.content[0].studentId").value(member.getStudentId()))
+                    .andExpect(jsonPath("$.content[0].isExternal").value(false))
+                    .andExpect(jsonPath("$.content[0].cancelReason").value("개인 사정"))
+                    .andExpect(jsonPath("$.content[0].cancelRequestedAt").exists())
+                    .andExpect(jsonPath("$.content[0].status").value("WAITING"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+
+            // 운영진이 취소 처리
+            mockMvc.perform(post("/api/v1/registrations/" + registration.getId() + "/cancel")
+                            .with(withAuth(operator))
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("CANCELED"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+
+            // 취소 후에도 알림은 남고 CANCELED로 표시
+            mockMvc.perform(get("/api/v1/registrations/cancel-requests")
+                            .with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].status").value("CANCELED"))
+                    .andExpect(jsonPath("$.content[0].cancelReason").value("개인 사정"))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+
+            // 신청자 목록에도 취소 요청 정보가 포함됨
+            mockMvc.perform(get("/api/v1/events/" + event.getId() + "/registrations")
+                            .with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[?(@.registrationId == %d)].cancelReason", registration.getId())
+                            .value("개인 사정"))
+                    .andExpect(jsonPath("$.content[?(@.cancelRequestedAt != null)].registrationId")
+                            .value(registration.getId().intValue()))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+
+        private String rejectUrl(EventRegistration registration) {
+            return "/api/v1/registrations/" + registration.getId() + "/cancel-request/reject";
+        }
+
+        @Test
+        @DisplayName("[INT-070] OPERATOR가 취소 요청을 거절하면 200, 요청이 초기화되어 목록에서 사라지고 신청자가 다시 요청할 수 있다 (OpenAPI 스키마 검증)")
+        void rejectCancelRequest_Operator_ClearsRequestAndAllowsReRequest() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            EventRegistration registration = createAndSaveWaitingRegistration(event, member);
+            requestCancel(event, member, "{\"reason\":\"개인 사정\"}").andExpect(status().isOk());
+
+            mockMvc.perform(post(rejectUrl(registration)).with(withAuth(operator)).with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.registrationId").value(registration.getId()))
+                    .andExpect(jsonPath("$.status").value("WAITING"))
+                    .andExpect(jsonPath("$.isRegistered").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+
+            EventRegistration saved = eventRegistrationRepository.findById(registration.getId()).orElseThrow();
+            assertThat(saved.getCancelReason()).isNull();
+            assertThat(saved.getCancelRequestedAt()).isNull();
+
+            mockMvc.perform(get("/api/v1/registrations/cancel-requests").with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(0))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+
+            // 거절 후 재요청은 409가 아니라 200
+            requestCancel(event, member, "{\"reason\":\"다시 요청\"}").andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("[INT-071] 취소 요청이 없는 신청의 요청 거절 → 400 EVENT_CANCEL_REQUEST_NOT_PENDING")
+        void rejectCancelRequest_NoRequest_Returns400() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            EventRegistration registration = createAndSaveWaitingRegistration(event, member);
+
+            mockMvc.perform(post(rejectUrl(registration)).with(withAuth(operator)).with(csrf()))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("EVENT_CANCEL_REQUEST_NOT_PENDING"));
+        }
+
+        @Test
+        @DisplayName("[INT-072] 이미 취소 처리된 신청의 요청 거절 → 400, 취소됨 알림은 목록에 남는다")
+        void rejectCancelRequest_AlreadyCanceled_Returns400AndKeepsNotification() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            EventRegistration registration = createAndSaveWaitingRegistration(event, member);
+            requestCancel(event, member, "{\"reason\":\"개인 사정\"}").andExpect(status().isOk());
+            mockMvc.perform(post("/api/v1/registrations/" + registration.getId() + "/cancel")
+                            .with(withAuth(operator)).with(csrf()))
+                    .andExpect(status().isOk());
+
+            mockMvc.perform(post(rejectUrl(registration)).with(withAuth(operator)).with(csrf()))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("EVENT_CANCEL_REQUEST_NOT_PENDING"));
+
+            mockMvc.perform(get("/api/v1/registrations/cancel-requests").with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].status").value("CANCELED"))
+                    .andExpect(jsonPath("$.content[0].cancelReason").value("개인 사정"));
+        }
+
+        @Test
+        @DisplayName("[INT-073] MEMBER가 취소 요청 거절 → 403, 요청은 유지된다")
+        void rejectCancelRequest_MemberRole_Returns403() throws Exception {
+            Event event = createAndSaveManualApproveEvent();
+            EventRegistration registration = createAndSaveWaitingRegistration(event, member);
+            requestCancel(event, member, "{\"reason\":\"개인 사정\"}").andExpect(status().isOk());
+
+            mockMvc.perform(post(rejectUrl(registration))
+                            .header("Authorization", "Bearer " + generateToken(member)))
+                    .andExpect(status().isForbidden());
+
+            assertThat(eventRegistrationRepository.findById(registration.getId()).orElseThrow()
+                    .getCancelReason()).isEqualTo("개인 사정");
+        }
+
+        @Test
+        @DisplayName("[INT-074] 존재하지 않는 신청의 취소 요청 거절 → 404")
+        void rejectCancelRequest_NotFound_Returns404() throws Exception {
+            mockMvc.perform(post("/api/v1/registrations/999999/cancel-request/reject")
+                            .with(withAuth(operator)).with(csrf()))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("[INT-058] MEMBER가 취소 요청 목록 조회 → 403")
+        void getCancelRequestList_MemberRole_Returns403() throws Exception {
+            mockMvc.perform(get("/api/v1/registrations/cancel-requests")
+                            .header("Authorization", "Bearer " + generateToken(member)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("[INT-059] 비인증 사용자가 취소 요청 목록 조회 → 401")
+        void getCancelRequestList_Unauthenticated_Returns401() throws Exception {
+            mockMvc.perform(get("/api/v1/registrations/cancel-requests"))
+                    .andExpect(status().isUnauthorized());
         }
     }
 

@@ -313,7 +313,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | **요청 본문** | 없음 (registrationId로 대상 식별) |
 | **응답** | 200 OK + `RegistrationResponse` |
 | **URL 패턴 근거** | 기존 승인(`POST /registrations/{registrationId}/approve`), 거절(`POST /registrations/{registrationId}/reject`), 되돌리기(`POST /registrations/{registrationId}/revert`)와 동일한 패턴 |
-| **적용 대상** | 외부인 신청뿐 아니라, 관리자가 회원 신청을 취소하는 경우에도 사용 가능 (기존 `DELETE /api/v1/events/{eventId}/registrations`는 본인 취소 용도로 유지) |
+| **적용 대상** | 외부인 신청뿐 아니라, 관리자가 회원 신청을 취소하는 경우에도 사용 가능 (2026-10-11 변경: 본인 즉시 취소 `DELETE /api/v1/events/{eventId}/registrations`는 제거되고 취소 요청제로 대체됨 — 회원의 취소 요청도 이 API로 처리) |
 
 - **[RESOLVED]**: OpenAPI 스펙에 외부인 취소 엔드포인트 추가 완료 (GAP-EXT-03 해결, TASK-001)
 

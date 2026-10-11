@@ -83,8 +83,11 @@ EventDetailResponse:
       type: integer
       format: int32
     currentCount:
-      type: integer
+      type:
+        - integer
+        - 'null'
       format: int32
+      description: 현재 신청자 수. 운영진 이상에게만 제공되며 그 외에는 null
     visibility:
       type: string
       enum:
@@ -129,6 +132,9 @@ EventDetailResponse:
       type: boolean
     isRegistered:
       type: boolean
+    cancelRequested:
+      type: boolean
+      description: 현재 사용자의 유효한 신청에 취소 요청이 접수되어 운영진 처리를 기다리는 중인지 여부
     surveyId:
       type:
         - integer
@@ -302,8 +308,11 @@ EventListResponse:
       type: integer
       format: int32
     currentCount:
-      type: integer
+      type:
+        - integer
+        - 'null'
       format: int32
+      description: 현재 신청자 수. 운영진 이상에게만 제공되며 그 외에는 null
     visibility:
       type: string
       enum:
@@ -485,6 +494,9 @@ AdminEventDetailResponse:
       type: boolean
     isRegistered:
       type: boolean
+    cancelRequested:
+      type: boolean
+      description: 현재 사용자의 유효한 신청에 취소 요청이 접수되어 운영진 처리를 기다리는 중인지 여부
     visibility:
       type: string
       description: 공개 상태
@@ -610,6 +622,17 @@ RegistrationListResponse:
     registeredAt:
       type: string
       format: date-time
+    cancelReason:
+      type:
+        - string
+        - 'null'
+      description: 취소 요청 사유 (취소 요청이 없으면 null)
+    cancelRequestedAt:
+      type:
+        - string
+        - 'null'
+      format: date-time
+      description: 취소 요청 일시 (취소 요청이 없으면 null)
 CreateEventWithSurveyRequest:
   type: object
   description: 행사 + 설문 원자적 생성 요청. 행사와 설문(질문+선택지)을 하나의 트랜잭션으로 생성합니다.
@@ -796,3 +819,86 @@ EventImageDownloadUrlResponse:
     presignedUrl:
       type: string
       description: presigned download URL
+RequestCancelRegistrationRequest:
+  type: object
+  description: 신청 취소 요청
+  required:
+  - reason
+  properties:
+    reason:
+      type: string
+      minLength: 1
+      maxLength: 500
+      pattern: '^[\s\S]*\S[\s\S]*$'
+      description: 취소 사유 (공백만으로는 불가, 최대 500자)
+PageCancelRequestListResponse:
+  type: object
+  properties:
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32
+    pageable:
+      $ref: ./_common.yaml#/PageableObject
+    size:
+      type: integer
+      format: int32
+    content:
+      type: array
+      items:
+        $ref: '#/CancelRequestListResponse'
+    number:
+      type: integer
+      format: int32
+    sort:
+      $ref: ./_common.yaml#/SortObject
+    numberOfElements:
+      type: integer
+      format: int32
+    first:
+      type: boolean
+    last:
+      type: boolean
+    empty:
+      type: boolean
+CancelRequestListResponse:
+  type: object
+  description: 신청 취소 요청 알림 항목
+  properties:
+    registrationId:
+      type: integer
+      format: int64
+    eventId:
+      type: integer
+      format: int64
+    eventTitle:
+      type: string
+    userName:
+      type: string
+      description: 신청자 이름
+    studentId:
+      type:
+        - string
+        - 'null'
+      description: 학번
+    isExternal:
+      type: boolean
+      description: 외부인 신청 여부
+    cancelReason:
+      type: string
+      description: 취소 요청 사유
+    cancelRequestedAt:
+      type: string
+      format: date-time
+      description: 취소 요청 일시
+    status:
+      type: string
+      description: 신청 상태. CANCELED이면 운영진이 취소 처리를 완료한 요청
+      enum:
+      - REGISTERED
+      - WAITING
+      - APPROVED
+      - REJECTED
+      - CANCELED

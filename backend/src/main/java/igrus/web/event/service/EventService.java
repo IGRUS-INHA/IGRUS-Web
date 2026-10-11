@@ -207,9 +207,12 @@ public class EventService {
         boolean canEdit = user.isOperatorOrAbove();
         boolean isRegistered = eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
                 eventId, userId, ACTIVE_REGISTRATION_STATUSES);
+        boolean cancelRequested = isRegistered && eventRegistrationRepository
+                .existsByEventIdAndUserIdAndStatusInAndCancelRequestedAtIsNotNull(
+                        eventId, userId, ACTIVE_REGISTRATION_STATUSES);
 
         List<EventAttachmentDto> attachmentDtos = getAttachmentDtos(eventId);
-        return EventDetailResponse.from(event, canEdit, isRegistered, attachmentDtos);
+        return EventDetailResponse.from(event, canEdit, isRegistered, cancelRequested, attachmentDtos);
     }
 
     /**
@@ -608,7 +611,10 @@ public class EventService {
                 eventId, userId, ACTIVE_REGISTRATION_STATUSES);
 
         List<EventAttachmentDto> attachmentDtos = getAttachmentDtos(eventId);
-        return EventDetailResponse.from(event, true, isRegistered, attachmentDtos);
+        boolean cancelRequested = isRegistered && eventRegistrationRepository
+                .existsByEventIdAndUserIdAndStatusInAndCancelRequestedAtIsNotNull(
+                        eventId, userId, ACTIVE_REGISTRATION_STATUSES);
+        return EventDetailResponse.from(event, true, isRegistered, cancelRequested, attachmentDtos);
     }
 
     // === Visibility 변경 메서드 ===

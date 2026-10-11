@@ -8,6 +8,7 @@ import {
   HelpCircle,
   User,
   ShieldCheck,
+  Bell,
   Sun,
   Moon,
   X,
@@ -175,6 +176,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 active={isActive("/mypage")}
                 onClick={handleMenuClick}
               />
+              {isAdmin && (
+                <MenuItem
+                  to="/notify"
+                  icon={<Bell size={20} />}
+                  label="취소 요청 알림"
+                  active={isActive("/notify")}
+                  onClick={handleMenuClick}
+                />
+              )}
               {isAdmin && (
                 <MenuItem
                   to="/admin"

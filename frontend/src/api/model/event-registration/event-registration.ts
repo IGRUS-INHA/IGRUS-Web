@@ -50,11 +50,14 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  GetCancelRequestListParams,
   GetRegistrationListParams,
   MyRegistrationResponse,
+  PageCancelRequestListResponse,
   PageRegistrationListResponse,
   RegisterEventRequest,
   RegistrationResponse,
+  RequestCancelRegistrationRequest,
 } from ".././models";
 
 import { customFetch } from "../../client";
@@ -62,12 +65,17 @@ import { customFetch } from "../../client";
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * 관리자가 신청(회원/외부인)을 취소합니다. 운영진 이상만 가능합니다.
+ * 관리자가 신청(회원/외부인)을 취소합니다. 운영진 이상만 가능합니다. 회원의 취소 요청도 이 API로 처리합니다.
  * @summary 관리자 신청 취소
  */
 export type cancelRegistrationByAdminResponse200 = {
   data: RegistrationResponse;
   status: 200;
+};
+
+export type cancelRegistrationByAdminResponse400 = {
+  data: void;
+  status: 400;
 };
 
 export type cancelRegistrationByAdminResponse401 = {
@@ -90,6 +98,7 @@ export type cancelRegistrationByAdminResponseSuccess =
     headers: Headers;
   };
 export type cancelRegistrationByAdminResponseError = (
+  | cancelRegistrationByAdminResponse400
   | cancelRegistrationByAdminResponse401
   | cancelRegistrationByAdminResponse403
   | cancelRegistrationByAdminResponse404
@@ -184,6 +193,141 @@ export const useCancelRegistrationByAdmin = <TError = void, TContext = unknown>(
 > => {
   return useMutation(
     getCancelRegistrationByAdminMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * 처리 대기 중인 취소 요청을 거절합니다. 운영진 이상만 가능합니다.
+취소 요청 사유/일시가 초기화되어 요청하지 않은 상태로 돌아가며, 신청 상태와 정원은 변하지 않습니다.
+거절 후 신청자는 다시 취소 요청할 수 있습니다.
+
+ * @summary 신청 취소 요청 거절
+ */
+export type rejectCancelRequestResponse200 = {
+  data: RegistrationResponse;
+  status: 200;
+};
+
+export type rejectCancelRequestResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type rejectCancelRequestResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type rejectCancelRequestResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type rejectCancelRequestResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type rejectCancelRequestResponseSuccess =
+  rejectCancelRequestResponse200 & {
+    headers: Headers;
+  };
+export type rejectCancelRequestResponseError = (
+  | rejectCancelRequestResponse400
+  | rejectCancelRequestResponse401
+  | rejectCancelRequestResponse403
+  | rejectCancelRequestResponse404
+) & {
+  headers: Headers;
+};
+
+export type rejectCancelRequestResponse =
+  | rejectCancelRequestResponseSuccess
+  | rejectCancelRequestResponseError;
+
+export const getRejectCancelRequestUrl = (registrationId: number) => {
+  return `/api/v1/registrations/${registrationId}/cancel-request/reject`;
+};
+
+export const rejectCancelRequest = async (
+  registrationId: number,
+  options?: RequestInit,
+): Promise<rejectCancelRequestResponse> => {
+  return customFetch<rejectCancelRequestResponse>(
+    getRejectCancelRequestUrl(registrationId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getRejectCancelRequestMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof rejectCancelRequest>>,
+    TError,
+    { registrationId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof rejectCancelRequest>>,
+  TError,
+  { registrationId: number },
+  TContext
+> => {
+  const mutationKey = ["rejectCancelRequest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof rejectCancelRequest>>,
+    { registrationId: number }
+  > = (props) => {
+    const { registrationId } = props ?? {};
+
+    return rejectCancelRequest(registrationId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RejectCancelRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof rejectCancelRequest>>
+>;
+
+export type RejectCancelRequestMutationError = void;
+
+/**
+ * @summary 신청 취소 요청 거절
+ */
+export const useRejectCancelRequest = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof rejectCancelRequest>>,
+      TError,
+      { registrationId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof rejectCancelRequest>>,
+  TError,
+  { registrationId: number },
+  TContext
+> => {
+  return useMutation(
+    getRejectCancelRequestMutationOptions(options),
     queryClient,
   );
 };
@@ -945,80 +1089,92 @@ export const useRegisterEvent = <TError = void, TContext = unknown>(
   return useMutation(getRegisterEventMutationOptions(options), queryClient);
 };
 /**
- * 행사 신청을 취소합니다.
- * @summary 신청 취소
+ * 본인의 행사 신청에 대해 취소를 요청합니다. 신청자는 직접 취소할 수 없으며,
+운영진이 요청을 확인하고 취소 처리해야 실제로 취소됩니다.
+요청 중에도 신청 상태(및 정원 점유)는 그대로 유지됩니다.
+
+ * @summary 신청 취소 요청
  */
-export type cancelRegistrationResponse200 = {
+export type requestCancelRegistrationResponse200 = {
   data: RegistrationResponse;
   status: 200;
 };
 
-export type cancelRegistrationResponse400 = {
+export type requestCancelRegistrationResponse400 = {
   data: void;
   status: 400;
 };
 
-export type cancelRegistrationResponse401 = {
+export type requestCancelRegistrationResponse401 = {
   data: void;
   status: 401;
 };
 
-export type cancelRegistrationResponse404 = {
+export type requestCancelRegistrationResponse404 = {
   data: void;
   status: 404;
 };
 
-export type cancelRegistrationResponseSuccess =
-  cancelRegistrationResponse200 & {
+export type requestCancelRegistrationResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type requestCancelRegistrationResponseSuccess =
+  requestCancelRegistrationResponse200 & {
     headers: Headers;
   };
-export type cancelRegistrationResponseError = (
-  | cancelRegistrationResponse400
-  | cancelRegistrationResponse401
-  | cancelRegistrationResponse404
+export type requestCancelRegistrationResponseError = (
+  | requestCancelRegistrationResponse400
+  | requestCancelRegistrationResponse401
+  | requestCancelRegistrationResponse404
+  | requestCancelRegistrationResponse409
 ) & {
   headers: Headers;
 };
 
-export type cancelRegistrationResponse =
-  | cancelRegistrationResponseSuccess
-  | cancelRegistrationResponseError;
+export type requestCancelRegistrationResponse =
+  | requestCancelRegistrationResponseSuccess
+  | requestCancelRegistrationResponseError;
 
-export const getCancelRegistrationUrl = (eventId: number) => {
-  return `/api/v1/events/${eventId}/registrations`;
+export const getRequestCancelRegistrationUrl = (eventId: number) => {
+  return `/api/v1/events/${eventId}/registrations/cancel-request`;
 };
 
-export const cancelRegistration = async (
+export const requestCancelRegistration = async (
   eventId: number,
+  requestCancelRegistrationRequest: RequestCancelRegistrationRequest,
   options?: RequestInit,
-): Promise<cancelRegistrationResponse> => {
-  return customFetch<cancelRegistrationResponse>(
-    getCancelRegistrationUrl(eventId),
+): Promise<requestCancelRegistrationResponse> => {
+  return customFetch<requestCancelRegistrationResponse>(
+    getRequestCancelRegistrationUrl(eventId),
     {
       ...options,
-      method: "DELETE",
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(requestCancelRegistrationRequest),
     },
   );
 };
 
-export const getCancelRegistrationMutationOptions = <
+export const getRequestCancelRegistrationMutationOptions = <
   TError = void,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof cancelRegistration>>,
+    Awaited<ReturnType<typeof requestCancelRegistration>>,
     TError,
-    { eventId: number },
+    { eventId: number; data: RequestCancelRegistrationRequest },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof cancelRegistration>>,
+  Awaited<ReturnType<typeof requestCancelRegistration>>,
   TError,
-  { eventId: number },
+  { eventId: number; data: RequestCancelRegistrationRequest },
   TContext
 > => {
-  const mutationKey = ["cancelRegistration"];
+  const mutationKey = ["requestCancelRegistration"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -1028,48 +1184,270 @@ export const getCancelRegistrationMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof cancelRegistration>>,
-    { eventId: number }
+    Awaited<ReturnType<typeof requestCancelRegistration>>,
+    { eventId: number; data: RequestCancelRegistrationRequest }
   > = (props) => {
-    const { eventId } = props ?? {};
+    const { eventId, data } = props ?? {};
 
-    return cancelRegistration(eventId, requestOptions);
+    return requestCancelRegistration(eventId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CancelRegistrationMutationResult = NonNullable<
-  Awaited<ReturnType<typeof cancelRegistration>>
+export type RequestCancelRegistrationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestCancelRegistration>>
 >;
-
-export type CancelRegistrationMutationError = void;
+export type RequestCancelRegistrationMutationBody =
+  RequestCancelRegistrationRequest;
+export type RequestCancelRegistrationMutationError = void;
 
 /**
- * @summary 신청 취소
+ * @summary 신청 취소 요청
  */
-export const useCancelRegistration = <TError = void, TContext = unknown>(
+export const useRequestCancelRegistration = <TError = void, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof cancelRegistration>>,
+      Awaited<ReturnType<typeof requestCancelRegistration>>,
       TError,
-      { eventId: number },
+      { eventId: number; data: RequestCancelRegistrationRequest },
       TContext
     >;
     request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof cancelRegistration>>,
+  Awaited<ReturnType<typeof requestCancelRegistration>>,
   TError,
-  { eventId: number },
+  { eventId: number; data: RequestCancelRegistrationRequest },
   TContext
 > => {
   return useMutation(
-    getCancelRegistrationMutationOptions(options),
+    getRequestCancelRegistrationMutationOptions(options),
     queryClient,
   );
 };
+/**
+ * 취소 요청이 접수된 신청 목록을 최신 요청순으로 조회합니다. 운영진 이상만 가능합니다.
+이미 취소 처리된 요청도 포함되며, status가 CANCELED이면 처리 완료된 요청입니다.
+취소 요청 후 신청 자체가 거절(REJECTED)된 건은 포함되지 않습니다.
+
+ * @summary 신청 취소 요청 목록 조회
+ */
+export type getCancelRequestListResponse200 = {
+  data: PageCancelRequestListResponse;
+  status: 200;
+};
+
+export type getCancelRequestListResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type getCancelRequestListResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type getCancelRequestListResponseSuccess =
+  getCancelRequestListResponse200 & {
+    headers: Headers;
+  };
+export type getCancelRequestListResponseError = (
+  | getCancelRequestListResponse401
+  | getCancelRequestListResponse403
+) & {
+  headers: Headers;
+};
+
+export type getCancelRequestListResponse =
+  | getCancelRequestListResponseSuccess
+  | getCancelRequestListResponseError;
+
+export const getGetCancelRequestListUrl = (
+  params?: GetCancelRequestListParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/registrations/cancel-requests?${stringifiedParams}`
+    : `/api/v1/registrations/cancel-requests`;
+};
+
+export const getCancelRequestList = async (
+  params?: GetCancelRequestListParams,
+  options?: RequestInit,
+): Promise<getCancelRequestListResponse> => {
+  return customFetch<getCancelRequestListResponse>(
+    getGetCancelRequestListUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetCancelRequestListQueryKey = (
+  params?: GetCancelRequestListParams,
+) => {
+  return [
+    `/api/v1/registrations/cancel-requests`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetCancelRequestListQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCancelRequestList>>,
+  TError = void,
+>(
+  params?: GetCancelRequestListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCancelRequestList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCancelRequestListQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCancelRequestList>>
+  > = ({ signal }) =>
+    getCancelRequestList(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCancelRequestList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetCancelRequestListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCancelRequestList>>
+>;
+export type GetCancelRequestListQueryError = void;
+
+export function useGetCancelRequestList<
+  TData = Awaited<ReturnType<typeof getCancelRequestList>>,
+  TError = void,
+>(
+  params: undefined | GetCancelRequestListParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCancelRequestList>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCancelRequestList>>,
+          TError,
+          Awaited<ReturnType<typeof getCancelRequestList>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCancelRequestList<
+  TData = Awaited<ReturnType<typeof getCancelRequestList>>,
+  TError = void,
+>(
+  params?: GetCancelRequestListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCancelRequestList>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCancelRequestList>>,
+          TError,
+          Awaited<ReturnType<typeof getCancelRequestList>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCancelRequestList<
+  TData = Awaited<ReturnType<typeof getCancelRequestList>>,
+  TError = void,
+>(
+  params?: GetCancelRequestListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCancelRequestList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 신청 취소 요청 목록 조회
+ */
+
+export function useGetCancelRequestList<
+  TData = Awaited<ReturnType<typeof getCancelRequestList>>,
+  TError = void,
+>(
+  params?: GetCancelRequestListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCancelRequestList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetCancelRequestListQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 /**
  * 내가 신청한 행사 목록을 조회합니다.
  * @summary 내 신청 목록 조회

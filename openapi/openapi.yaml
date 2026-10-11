@@ -164,6 +164,8 @@ paths:
     $ref: ./paths/storage.yaml#/storageConfirm
   /api/v1/registrations/{registrationId}/cancel:
     $ref: ./paths/events.yaml#/registrationsByRegistrationIdCancel
+  /api/v1/registrations/{registrationId}/cancel-request/reject:
+    $ref: ./paths/events.yaml#/registrationsByRegistrationIdCancelRequestReject
   /api/v1/registrations/{registrationId}/revert:
     $ref: ./paths/events.yaml#/registrationsByRegistrationIdRevert
   /api/v1/registrations/{registrationId}/reject:
@@ -200,6 +202,10 @@ paths:
     $ref: ./paths/events.yaml#/eventsByEventIdReopenRegistration
   /api/v1/events/{eventId}/registrations:
     $ref: ./paths/events.yaml#/eventsByEventIdRegistrations
+  /api/v1/events/{eventId}/registrations/cancel-request:
+    $ref: ./paths/events.yaml#/eventsByEventIdRegistrationsCancelRequest
+  /api/v1/registrations/cancel-requests:
+    $ref: ./paths/events.yaml#/registrationsCancelRequests
   /api/v1/events/{eventId}/registrations/external:
     $ref: ./paths/events.yaml#/eventsByEventIdRegistrationsExternal
   /api/v1/events/{eventId}/reactivate:
@@ -568,6 +574,12 @@ components:
       $ref: './schemas/events.yaml#/PageRegistrationListResponse'
     RegistrationListResponse:
       $ref: './schemas/events.yaml#/RegistrationListResponse'
+    RequestCancelRegistrationRequest:
+      $ref: './schemas/events.yaml#/RequestCancelRegistrationRequest'
+    PageCancelRequestListResponse:
+      $ref: './schemas/events.yaml#/PageCancelRequestListResponse'
+    CancelRequestListResponse:
+      $ref: './schemas/events.yaml#/CancelRequestListResponse'
     # inquiries
     UpdateInquiryStatusRequest:
       $ref: './schemas/inquiries.yaml#/UpdateInquiryStatusRequest'

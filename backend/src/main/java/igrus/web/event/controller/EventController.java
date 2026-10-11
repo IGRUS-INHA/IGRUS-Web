@@ -96,8 +96,10 @@ public class EventController implements EventApi {
                 eventStatusEnum, registrationStatusEnum);
 
         var responses = eventService.getEventList(eventStatusEnum, registrationStatusEnum);
+        boolean showCurrentCount = isOperatorOrAbove(SecurityUtils.getCurrentUser());
         List<ApiEventListResponse> result = responses.stream()
                 .map(this::mapToEventListResponseInner)
+                .map(r -> showCurrentCount ? r : r.currentCount(null))
                 .toList();
         return ResponseEntity.ok(result);
     }
@@ -108,7 +110,11 @@ public class EventController implements EventApi {
         Long userId = user != null ? user.userId() : null;
         log.info("행사 상세 조회 요청 - eventId: {}, userId: {}", eventId, userId);
         var response = eventService.getEvent(eventId, userId);
-        return ResponseEntity.ok(mapToEventDetailResponse(response));
+        ApiEventDetailResponse result = mapToEventDetailResponse(response);
+        if (!isOperatorOrAbove(user)) {
+            result.currentCount(null);
+        }
+        return ResponseEntity.ok(result);
     }
 
     @Override
@@ -207,6 +213,11 @@ public class EventController implements EventApi {
 
     // ===== 매핑 헬퍼 =====
 
+    /** 신청 인원 현황(currentCount)은 운영진 이상에게만 공개한다. */
+    private static boolean isOperatorOrAbove(AuthenticatedUser user) {
+        return user != null && ("OPERATOR".equals(user.role()) || "ADMIN".equals(user.role()));
+    }
+
     private ApiEventDetailResponse mapToEventDetailResponse(EventDetailResponse r) {
         ApiEventDetailResponse response = new ApiEventDetailResponse()
                 .id(r.id())
@@ -240,6 +251,7 @@ public class EventController implements EventApi {
                 .updatedAt(r.updatedAt())
                 .canEdit(r.canEdit())
                 .isRegistered(r.isRegistered())
+                .cancelRequested(r.cancelRequested())
                 .surveyId(r.surveyId())
                 .allowExternal(r.allowExternal());
 

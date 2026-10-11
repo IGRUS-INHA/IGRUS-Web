@@ -65,6 +65,8 @@ export interface AdminEventDetailResponse {
   updatedAt?: string;
   canEdit?: boolean;
   isRegistered?: boolean;
+  /** 현재 사용자의 유효한 신청에 취소 요청이 접수되어 운영진 처리를 기다리는 중인지 여부 */
+  cancelRequested?: boolean;
   /** 공개 상태 */
   visibility?: AdminEventDetailResponseVisibility;
   /**

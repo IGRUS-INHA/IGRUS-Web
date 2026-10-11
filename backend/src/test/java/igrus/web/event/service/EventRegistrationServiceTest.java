@@ -383,97 +383,109 @@ class EventRegistrationServiceTest {
     }
 
     @Nested
-    @DisplayName("cancelRegistration - 신청 취소")
-    class CancelRegistrationTest {
+    @DisplayName("requestCancelRegistration - 신청 취소 요청")
+    class RequestCancelRegistrationTest {
 
-        /**
-         * SVC-020: REGISTERED 상태 취소
-         */
-        @Test
-        @DisplayName("[SVC-020] REGISTERED 상태의 신청을 취소하면 카운트 감소")
-        void cancelRegistration_FromRegistered_DecrementsCount() {
-            // given
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
-            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+        private static final String REASON = "개인 사정";
 
+        /** 조건부 UPDATE 결과(updatedRows)와 UPDATE 이후 재조회되는 신청 상태를 준비한다. */
+        private EventRegistration stubRegistration(Event event, EventRegistrationStatus statusAfterUpdate,
+                                                   int updatedRows) {
+            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(event));
             EventRegistration registration = mock(EventRegistration.class);
-            when(registration.isCanceled()).thenReturn(false);
-            when(registration.isActive()).thenReturn(true);
-            when(registration.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
-            when(registration.getRegisteredAt()).thenReturn(Instant.now());
             when(registration.getId()).thenReturn(REGISTRATION_ID);
+            when(registration.getStatus()).thenReturn(statusAfterUpdate);
+            when(registration.isCanceled()).thenReturn(statusAfterUpdate == EventRegistrationStatus.CANCELED);
+            when(registration.isRejected()).thenReturn(statusAfterUpdate == EventRegistrationStatus.REJECTED);
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.of(registration));
-
-            // when
-            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
-
-            // then
-            assertThat(response).isNotNull();
-            verify(registration).cancel();
-            verify(eventRepository).decrementCurrentCount(EVENT_ID);
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registration));
+            when(eventRegistrationRepository.requestCancelIfActive(
+                    org.mockito.ArgumentMatchers.eq(REGISTRATION_ID), any(), any())).thenReturn(updatedRows);
+            return registration;
         }
 
-        /**
-         * SVC-021: WAITING 상태 취소
-         */
         @Test
-        @DisplayName("[SVC-021] WAITING 상태의 신청을 취소하면 카운트 감소 없음")
-        void cancelRegistration_FromWaiting_NoCountChange() {
+        @DisplayName("[SVC-020] 취소 요청은 앞뒤 공백을 제거한 사유를 조건부 UPDATE로 기록하고 신청 상태와 신청자 수는 바꾸지 않는다")
+        void requestCancel_FromRegistered_KeepsStatusAndCount() {
             // given
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
-
-            EventRegistration registration = mock(EventRegistration.class);
-            when(registration.isCanceled()).thenReturn(false);
-            when(registration.isActive()).thenReturn(false); // WAITING은 isActive() = false
-            when(registration.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
-            when(registration.getRegisteredAt()).thenReturn(Instant.now());
-            when(registration.getId()).thenReturn(REGISTRATION_ID);
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
-                    .thenReturn(Optional.of(registration));
+            EventRegistration registration = stubRegistration(autoApproveEvent, EventRegistrationStatus.REGISTERED, 1);
 
             // when
-            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
+            RegistrationResponse response =
+                    eventRegistrationService.requestCancelRegistration(EVENT_ID, USER_ID, "  " + REASON + " ");
 
             // then
-            assertThat(response).isNotNull();
-            verify(registration).cancel();
+            assertThat(response.status()).isEqualTo(EventRegistrationStatus.REGISTERED);
+            assertThat(response.isRegistered()).isTrue();
+            verify(eventRegistrationRepository).requestCancelIfActive(
+                    org.mockito.ArgumentMatchers.eq(REGISTRATION_ID), org.mockito.ArgumentMatchers.eq(REASON), any());
+            verify(registration, never()).cancel();
             verify(eventRepository, never()).decrementCurrentCount(any());
+            verify(eventStatusHelper, never()).updateEventStatusAfterDecrement(any());
         }
 
-        /**
-         * SVC-022: 이미 취소된 신청 취소
-         */
         @Test
-        @DisplayName("[SVC-022] 이미 취소된 신청을 취소하면 AlreadyCanceledException 발생")
-        void cancelRegistration_AlreadyCanceled_ThrowsException() {
-            // given
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
+        @DisplayName("[SVC-021] 이미 취소 요청한 신청에 다시 요청하면 CancelAlreadyRequestedException 발생")
+        void requestCancel_AlreadyRequested_ThrowsException() {
+            stubRegistration(autoApproveEvent, EventRegistrationStatus.REGISTERED, 0);
 
-            EventRegistration registration = mock(EventRegistration.class);
-            when(registration.isCanceled()).thenReturn(true);
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
-                    .thenReturn(Optional.of(registration));
+            assertThatThrownBy(() -> eventRegistrationService.requestCancelRegistration(EVENT_ID, USER_ID, REASON))
+                    .isInstanceOf(CancelAlreadyRequestedException.class);
+        }
 
-            // when & then
-            assertThatThrownBy(() -> eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID))
+        @Test
+        @DisplayName("[SVC-022] 이미 취소된 신청에 취소 요청하면 AlreadyCanceledException 발생")
+        void requestCancel_AlreadyCanceled_ThrowsException() {
+            stubRegistration(autoApproveEvent, EventRegistrationStatus.CANCELED, 0);
+
+            assertThatThrownBy(() -> eventRegistrationService.requestCancelRegistration(EVENT_ID, USER_ID, REASON))
                     .isInstanceOf(AlreadyCanceledException.class);
         }
 
-        /**
-         * SVC-023: 존재하지 않는 신청 취소
-         */
         @Test
-        @DisplayName("[SVC-023] 존재하지 않는 신청을 취소하면 EventRegistrationNotFoundException 발생")
-        void cancelRegistration_NotFound_ThrowsException() {
-            // given
+        @DisplayName("[SVC-023] 존재하지 않는 신청에 취소 요청하면 EventRegistrationNotFoundException 발생")
+        void requestCancel_NotFound_ThrowsException() {
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(autoApproveEvent));
             when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
                     .thenReturn(Optional.empty());
 
-            // when & then
-            assertThatThrownBy(() -> eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID))
+            assertThatThrownBy(() -> eventRegistrationService.requestCancelRegistration(EVENT_ID, USER_ID, REASON))
                     .isInstanceOf(EventRegistrationNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("[SVC-024] 거절된 신청에 취소 요청하면 InvalidRegistrationStatusException 발생")
+        void requestCancel_Rejected_ThrowsException() {
+            stubRegistration(manualApproveEvent, EventRegistrationStatus.REJECTED, 0);
+
+            assertThatThrownBy(() -> eventRegistrationService.requestCancelRegistration(EVENT_ID, USER_ID, REASON))
+                    .isInstanceOf(InvalidRegistrationStatusException.class);
+        }
+
+        @Test
+        @DisplayName("[SVC-025] 전각 공백(U+3000)만 있는 사유는 CancelReasonRequiredException 발생, 아무것도 기록하지 않는다")
+        void requestCancel_IdeographicSpaceOnlyReason_ThrowsException() {
+            stubRegistration(autoApproveEvent, EventRegistrationStatus.REGISTERED, 1);
+
+            assertThatThrownBy(() -> eventRegistrationService.requestCancelRegistration(EVENT_ID, USER_ID, "\u3000\u3000"))
+                    .isInstanceOf(CancelReasonRequiredException.class);
+            verify(eventRegistrationRepository, never()).requestCancelIfActive(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("[SVC-026] UNPUBLISHED로 전환된 행사의 기존 신청에도 취소 요청할 수 있다")
+        void requestCancel_UnpublishedEvent_WorksNormally() {
+            Event unpublishedEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
+            when(unpublishedEvent.getVisibility()).thenReturn(EventVisibility.UNPUBLISHED);
+            stubRegistration(unpublishedEvent, EventRegistrationStatus.REGISTERED, 1);
+
+            RegistrationResponse response =
+                    eventRegistrationService.requestCancelRegistration(EVENT_ID, USER_ID, REASON);
+
+            assertThat(response.registrationId()).isEqualTo(REGISTRATION_ID);
+            verify(eventRegistrationRepository).requestCancelIfActive(
+                    org.mockito.ArgumentMatchers.eq(REGISTRATION_ID), org.mockito.ArgumentMatchers.eq(REASON), any());
         }
     }
 
@@ -1190,83 +1202,20 @@ class EventRegistrationServiceTest {
     class CountMatrixTest {
 
         /**
-         * SVC-REG-071: 겹침 기간 정원 마감 → 취소 → 자동 재오픈
+         * SVC-REG-072: CANCELED 행사에서 신청 취소 요청 시 예외 발생
          */
         @Test
-        @DisplayName("[SVC-REG-071] 겹침 기간 정원 마감 후 취소하면 registrationStatus=OPEN 복원")
-        void cancelRegistration_CapacityFullDuringOverlapPeriod_ReopensRegistration() {
-            // given: reg=OPEN, event=ONGOING, REGISTERED 상태 (isActive=true)
-            Event ongoingEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
-            when(ongoingEvent.getRegistrationStatus()).thenReturn(RegistrationStatus.OPEN);
-            when(ongoingEvent.getEventStatus()).thenReturn(EventStatus.ONGOING);
-
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(ongoingEvent));
-            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
-
-            // 정원 마감 후 취소된 신청 (REGISTERED → CANCELED, isActive=true로 카운트 감소 필요)
-            EventRegistration registration = mock(EventRegistration.class);
-            when(registration.isCanceled()).thenReturn(false);
-            when(registration.isActive()).thenReturn(true);
-            when(registration.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
-            when(registration.getRegisteredAt()).thenReturn(Instant.now());
-            when(registration.getId()).thenReturn(REGISTRATION_ID);
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
-                    .thenReturn(Optional.of(registration));
-
-            // when
-            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
-
-            // then
-            assertThat(response).isNotNull();
-            verify(registration).cancel();
-            verify(eventRepository).decrementCurrentCount(EVENT_ID);
-            // updateEventStatusAfterDecrement 공통 헬퍼 호출 확인
-            verify(eventStatusHelper).updateEventStatusAfterDecrement(EVENT_ID);
-        }
-
-        /**
-         * SVC-REG-072: CANCELED 행사에서 신청 취소 시 예외 발생
-         */
-        @Test
-        @DisplayName("[SVC-REG-072] CANCELED 행사에서 신청 취소 시 예외 발생")
-        void cancelRegistration_CanceledEvent_ThrowsException() {
+        @DisplayName("[SVC-REG-072] CANCELED 행사에서 신청 취소 요청 시 예외 발생")
+        void requestCancelRegistration_CanceledEvent_ThrowsException() {
             // given: eventStatus=CANCELED
             Event canceledEvent = createMockEvent(EventRegistrationType.AUTO_APPROVE);
             when(canceledEvent.getEventStatus()).thenReturn(EventStatus.CANCELED);
 
             when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(canceledEvent));
 
-            // when & then: CANCELED 행사에서 신청 취소 시 예외 발생
-            assertThatThrownBy(() -> eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID))
+            // when & then: CANCELED 행사에서 신청 취소 요청 시 예외 발생
+            assertThatThrownBy(() -> eventRegistrationService.requestCancelRegistration(EVENT_ID, USER_ID, "개인 사정"))
                     .isInstanceOf(EventNotCancelableException.class);
-        }
-
-        /**
-         * SVC-REG-073: APPROVED 상태 취소 서비스 (선발제)
-         */
-        @Test
-        @DisplayName("[SVC-REG-073] APPROVED 상태 신청을 취소하면 카운트 감소")
-        void cancelRegistration_FromApproved_DecrementsCount() {
-            // given: APPROVED, MANUAL_APPROVE
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(manualApproveEvent));
-            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
-
-            EventRegistration registration = mock(EventRegistration.class);
-            when(registration.isCanceled()).thenReturn(false);
-            when(registration.isActive()).thenReturn(true); // APPROVED는 isActive=true
-            when(registration.getStatus()).thenReturn(EventRegistrationStatus.CANCELED);
-            when(registration.getRegisteredAt()).thenReturn(Instant.now());
-            when(registration.getId()).thenReturn(REGISTRATION_ID);
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
-                    .thenReturn(Optional.of(registration));
-
-            // when
-            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
-
-            // then
-            assertThat(response).isNotNull();
-            verify(registration).cancel();
-            verify(eventRepository).decrementCurrentCount(EVENT_ID);
         }
 
         /**
@@ -1465,40 +1414,6 @@ class EventRegistrationServiceTest {
             verify(userRepository, never()).findById(any());
         }
 
-        /**
-         * TASK-021 항목 3: PUBLISHED 행사에서 신청 후 unpublish한 경우,
-         * 기존 신청에 대한 cancelRegistration()은 visibility와 무관하게 정상 동작해야 한다.
-         */
-        @Test
-        @DisplayName("UNPUBLISHED 행사에서 기존 신청에 대한 cancelRegistration()이 정상 동작한다")
-        void cancelRegistration_UnpublishedEvent_WorksNormally() {
-            // given: UNPUBLISHED 상태의 행사 (publish 후 unpublish된 경우)
-            Event unpublishedEvent = mock(Event.class);
-            when(unpublishedEvent.getId()).thenReturn(EVENT_ID);
-            when(unpublishedEvent.getVisibility()).thenReturn(EventVisibility.UNPUBLISHED);
-            when(eventRepository.findByIdAndNotDeleted(EVENT_ID)).thenReturn(Optional.of(unpublishedEvent));
-
-            // 기존 신청이 존재 (PUBLISHED 시절에 신청한 것, cancel 전 REGISTERED 상태)
-            EventRegistration registration = mock(EventRegistration.class);
-            when(registration.isCanceled()).thenReturn(false);
-            when(registration.isActive()).thenReturn(true);
-            when(registration.getStatus())
-                    .thenReturn(EventRegistrationStatus.REGISTERED)  // cancel 전
-                    .thenReturn(EventRegistrationStatus.CANCELED);   // cancel 후 (RegistrationResponse.from용)
-            when(registration.getRegisteredAt()).thenReturn(Instant.now());
-            when(registration.getId()).thenReturn(REGISTRATION_ID);
-            when(eventRegistrationRepository.findByEventIdAndUserId(EVENT_ID, USER_ID))
-                    .thenReturn(Optional.of(registration));
-            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
-
-            // when: visibility와 무관하게 취소 가능
-            RegistrationResponse response = eventRegistrationService.cancelRegistration(EVENT_ID, USER_ID);
-
-            // then: 정상 취소 처리
-            assertThat(response).isNotNull();
-            verify(registration).cancel();
-            verify(eventRepository).decrementCurrentCount(EVENT_ID);
-        }
     }
 
     // ========== 설문 연동 (Survey-Event Registration) ==========
@@ -2694,6 +2609,25 @@ class EventRegistrationServiceTest {
             assertThat(changed.changeType()).isEqualTo(igrus.web.event.domain.EventChangeType.REGISTRATION_CANCELED_BY_ADMIN);
             assertThat(changed.previousValue()).isEqualTo("REGISTERED");
             assertThat(changed.newValue()).isEqualTo("CANCELED");
+        }
+
+        @Test
+        @DisplayName("[TC-078] 취소 요청이 있던 신청을 운영진이 취소하면 요청 사유가 감사 이벤트 reason에 기록된다")
+        void cancelByAdmin_WithCancelRequest_PublishesReason() {
+            // given
+            when(registeredRegistration.getCancelReason()).thenReturn("개인 사정");
+            when(eventRegistrationRepository.findById(REGISTRATION_ID)).thenReturn(Optional.of(registeredRegistration));
+            when(userRepository.findById(OPERATOR_ID)).thenReturn(Optional.of(operator));
+            when(eventRepository.decrementCurrentCount(EVENT_ID)).thenReturn(1);
+
+            // when
+            eventRegistrationService.cancelRegistrationByAdmin(REGISTRATION_ID, OPERATOR_ID);
+
+            // then
+            var captor = org.mockito.ArgumentCaptor.forClass(igrus.web.event.audit.EventStatusChanged.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertThat(captor.getValue().reason()).isEqualTo("개인 사정");
+            verify(eventStatusHelper).updateEventStatusAfterDecrement(EVENT_ID);
         }
     }
 }

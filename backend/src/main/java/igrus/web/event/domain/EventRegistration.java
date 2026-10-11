@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.Instant;
 
@@ -26,6 +27,9 @@ import java.time.Instant;
         @AttributeOverride(name = "createdBy", column = @Column(name = "event_registrations_created_by", updatable = false)),
         @AttributeOverride(name = "updatedBy", column = @Column(name = "event_registrations_updated_by"))
 })
+// 변경된 컬럼만 UPDATE: 상태 변경(승인/거절/되돌리기/취소)이 동시에 커밋된 취소 요청 컬럼을
+// 읽은 시점 값(null)으로 덮어쓰지 않게 한다. (취소 요청은 조건부 원자적 UPDATE로 기록됨)
+@DynamicUpdate
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EventRegistration extends BaseEntity {
@@ -74,6 +78,14 @@ public class EventRegistration extends BaseEntity {
     /** 외부인 학과 */
     @Column(name = "event_registrations_external_department", length = 100)
     private String externalDepartment;
+
+    /** 취소 요청 사유 (취소 요청이 없으면 null, 취소 처리 후에도 유지) */
+    @Column(name = "event_registrations_cancel_reason", length = 500)
+    private String cancelReason;
+
+    /** 취소 요청 시각 (취소 요청이 없으면 null, 취소 처리 후에도 유지) */
+    @Column(name = "event_registrations_cancel_requested_at")
+    private Instant cancelRequestedAt;
 
     // === 정적 팩토리 메서드 ===
 
@@ -184,6 +196,8 @@ public class EventRegistration extends BaseEntity {
                 ? EventRegistrationStatus.REGISTERED
                 : EventRegistrationStatus.WAITING;
         this.registeredAt = Instant.now();
+        this.cancelReason = null;
+        this.cancelRequestedAt = null;
     }
 
     // === 조회 메서드 ===

@@ -24,6 +24,7 @@ import EventEditPage from "@/pages/event/EventEditPage";
 import EventRegistrationsPage from "@/pages/event/EventRegistrationsPage";
 import EventApplyPage from "@/pages/event/EventApplyPage";
 import EventExternalApplyPage from "@/pages/event/EventExternalApplyPage";
+import CancelRequestNotifyPage from "@/pages/event/CancelRequestNotifyPage";
 
 // 문의
 import InquiryPage from "@/pages/inquiry/InquiryPage";
@@ -131,6 +132,14 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute minRole="OPERATOR">
             <EventRegistrationsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "notify",
+        element: (
+          <ProtectedRoute minRole="OPERATOR">
+            <CancelRequestNotifyPage />
           </ProtectedRoute>
         ),
       },

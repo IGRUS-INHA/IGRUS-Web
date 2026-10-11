@@ -28,7 +28,7 @@ import {
   useEvent,
   useAdminEvent,
   useApplyEvent,
-  useCancelEventApplication,
+  useRequestCancelEventApplication,
   useDeleteEvent,
   useCloseEvent,
   eventKeys,
@@ -62,6 +62,7 @@ import {
   isEventCapacityFull,
   isEventRegistrationClosed,
   isEventOperatorRequired,
+  isEventCancelAlreadyRequested,
   hasErrorCode,
 } from "@/utils/error";
 import { formatPhoneNumber } from "@/utils";
@@ -115,6 +116,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const [reasonDialog, setReasonDialog] = useState<{
     title: string;
+    maxLength?: number;
     onConfirm: (reason: string) => void;
   } | null>(null);
 
@@ -227,8 +229,8 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
 
   // Mutations
   const { mutate: applyEvent, isPending: isApplying } = useApplyEvent();
-  const { mutate: cancelRegistration, isPending: isCanceling } =
-    useCancelEventApplication();
+  const { mutate: requestCancel, isPending: isRequestingCancel } =
+    useRequestCancelEventApplication();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: closeEvent, isPending: isClosing } = useCloseEvent();
 
@@ -350,6 +352,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
   const canApply = user && isRegistrable && !hasApplied && !isUnpublished;
   const canCancel =
     user && hasApplied && (detail?.eventStatus ?? event.status) !== "CANCELED";
+  const isCancelRequested = detail?.cancelRequested ?? false;
   const hasRegistrants = (detail?.currentCount ?? event.currentCount ?? 0) > 0;
 
   // OPERATOR menu items
@@ -399,30 +402,32 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
     );
   };
 
-  const handleCancelRegistration = () => {
-    const isReregistrationBlocked =
-      detail?.closeReason === "DEADLINE_PASSED" ||
-      detail?.closeReason === "MANUAL_CLOSE";
-    const message = isReregistrationBlocked
-      ? "신청을 취소하면 재신청이 불가능합니다. 정말 취소하시겠습니까?"
-      : "행사 신청을 취소하시겠습니까?";
-    if (!confirm(message)) return;
-    cancelRegistration(
-      { eventId: numericId },
-      {
-        onError: (error: unknown) => {
-          if (hasErrorCode(error, "EVENT_ALREADY_CANCELED")) {
-            alert("이미 취소된 신청입니다.");
-          } else if (hasErrorCode(error, "CANCEL_DEADLINE_PASSED")) {
-            alert("취소 가능 기간이 지났습니다.");
-          } else if (hasErrorCode(error, "EVENT_NOT_CANCELABLE")) {
-            alert("취소된 행사의 신청은 취소할 수 없습니다.");
-          } else {
-            alert(getErrorMessage(error));
-          }
-        },
+  const handleRequestCancel = () => {
+    setReasonDialog({
+      title: "신청 취소 요청 사유",
+      maxLength: 500,
+      onConfirm: (reason) => {
+        requestCancel(
+          { eventId: numericId, data: { reason } },
+          {
+            onSuccess: () =>
+              alert("취소 요청이 접수되었습니다. 운영진 확인 후 취소됩니다."),
+            onError: (error: unknown) => {
+              if (isEventCancelAlreadyRequested(error)) {
+                alert("이미 취소 요청한 신청입니다.");
+              } else if (hasErrorCode(error, "EVENT_ALREADY_CANCELED")) {
+                alert("이미 취소된 신청입니다.");
+              } else if (hasErrorCode(error, "EVENT_NOT_CANCELABLE")) {
+                alert("취소된 행사의 신청은 취소할 수 없습니다.");
+              } else {
+                alert(getErrorMessage(error));
+              }
+            },
+          },
+        );
+        setReasonDialog(null);
       },
-    );
+    });
   };
 
   const handleDelete = () => {
@@ -485,11 +490,10 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
         ? formatShortDate(regEnd)
         : undefined;
 
-  // Progress
-  const currentCount = detail?.currentCount ?? event.currentCount ?? 0;
+  // Progress — 신청 인원(currentCount)은 운영진에게만 내려온다
+  const currentCount = detail?.currentCount ?? event.currentCount ?? undefined;
   const capacity = detail?.capacity ?? event.capacity ?? 0;
-  const progressPercent =
-    capacity > 0 ? Math.min((currentCount / capacity) * 100, 100) : 0;
+  const showCurrentCount = isOperator && currentCount !== undefined;
 
   // 이미지 — 확장 시 detail.attachments에서 objectKey 추출
   const imageObjectKeys = useMemo(
@@ -903,26 +907,32 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
             </p>
           )}
 
-          {/* Progress bar */}
+          {/* 모집 현황(운영진) / 모집 정원(그 외) */}
           {capacity > 0 && (
             <div>
               <div className="flex items-center justify-between mb-s4">
                 <div className="flex items-center gap-1.5">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-semibold text-foreground">
-                    모집 현황
+                    {showCurrentCount ? "모집 현황" : "모집 정원"}
                   </span>
                 </div>
                 <span className="text-sm font-medium text-muted-foreground">
-                  {currentCount} / {capacity}
+                  {showCurrentCount
+                    ? `${currentCount} / ${capacity}`
+                    : `최대 ${capacity}명`}
                 </span>
               </div>
-              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
+              {showCurrentCount && (
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{
+                      width: `${Math.min((currentCount / capacity) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -1085,17 +1095,26 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
                 {isApplying ? "신청 중..." : "신청하기"}
               </button>
             )}
-            {isAuthenticated && canCancel && (
+            {isAuthenticated && canCancel && !isCancelRequested && (
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCancelRegistration();
+                  handleRequestCancel();
                 }}
-                disabled={isCanceling}
+                disabled={isRequestingCancel}
                 className="w-full py-s3 rounded-r4 font-bold flex items-center justify-center gap-s2 transition-all bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isCanceling ? "취소 중..." : "신청 취소"}
+                {isRequestingCancel ? "요청 중..." : "신청 취소 요청"}
+              </button>
+            )}
+            {isAuthenticated && canCancel && isCancelRequested && (
+              <button
+                type="button"
+                disabled
+                className="w-full py-s3 rounded-r4 font-bold flex items-center justify-center gap-s2 bg-muted text-muted-foreground cursor-not-allowed"
+              >
+                취소 요청됨 (운영진 확인 대기)
               </button>
             )}
             {isAuthenticated && !canApply && !canCancel && (
@@ -1140,6 +1159,7 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
         createPortal(
           <ReasonDialog
             title={reasonDialog.title}
+            maxLength={reasonDialog.maxLength}
             onConfirm={reasonDialog.onConfirm}
             onCancel={() => setReasonDialog(null)}
           />,

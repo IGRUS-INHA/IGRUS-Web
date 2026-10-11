@@ -5,6 +5,7 @@ import igrus.web.event.domain.Event;
 import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.EventRegistrationType;
+import igrus.web.event.exception.CancelAlreadyRequestedException;
 import igrus.web.event.repository.EventRegistrationRepository;
 import igrus.web.event.repository.EventRepository;
 import igrus.web.event.service.EventRegistrationService;
@@ -216,7 +217,10 @@ class EventConcurrencyTest extends ServiceIntegrationTestBase {
             readyLatch.countDown();
             try {
                 startLatch.await();
-                eventRegistrationService.cancelRegistration(event.getId(), members.get(0).getId());
+                // 신청자는 직접 취소할 수 없다: 취소 요청 → 운영진 취소 처리
+                Long registrationId = eventRegistrationService.requestCancelRegistration(
+                        event.getId(), members.get(0).getId(), "개인 사정").registrationId();
+                eventRegistrationService.cancelRegistrationByAdmin(registrationId, operator.getId());
             } catch (Exception e) {
                 // 취소 실패는 무시
             }
@@ -309,5 +313,97 @@ class EventConcurrencyTest extends ServiceIntegrationTestBase {
         assertThat(updated.getCurrentCount()).isEqualTo(1);
         assertThat(updated.getCurrentCount()).isGreaterThanOrEqualTo(0);
         assertThat(updated.getCurrentCount()).isLessThanOrEqualTo(event.getCapacity());
+    }
+
+    /**
+     * INT-049: 동시 중복 취소 요청 — 같은 신청에 3건 동시 요청 → 정확히 1건만 기록.
+     * 조건부 원자적 UPDATE({@code requestCancelIfActive})가 중복 요청을 막는지 검증합니다.
+     */
+    @Test
+    @DisplayName("[INT-049] 동시 중복 취소 요청: 같은 신청에 3건 동시 → 정확히 1건 성공, 나머지는 409")
+    void concurrentCancelRequest_SameRegistration_ExactlyOneSucceeds() throws Exception {
+        // given
+        Event event = createAndSaveOpenEvent(10, EventRegistrationType.AUTO_APPROVE);
+        User user = members.get(0);
+        eventRegistrationService.registerEvent(event.getId(), user.getId(), null);
+
+        int threadCount = 3;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch readyLatch = new CountDownLatch(threadCount);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger alreadyRequestedCount = new AtomicInteger(0);
+        AtomicInteger otherFailCount = new AtomicInteger(0);
+
+        // when
+        List<Future<?>> futures = new ArrayList<>();
+        for (int i = 0; i < threadCount; i++) {
+            final String reason = "사유 " + i;
+            futures.add(executor.submit(() -> {
+                readyLatch.countDown();
+                try {
+                    startLatch.await();
+                    eventRegistrationService.requestCancelRegistration(event.getId(), user.getId(), reason);
+                    successCount.incrementAndGet();
+                } catch (CancelAlreadyRequestedException e) {
+                    alreadyRequestedCount.incrementAndGet();
+                } catch (Exception e) {
+                    otherFailCount.incrementAndGet();
+                }
+            }));
+        }
+
+        readyLatch.await();
+        startLatch.countDown(); // 동시 시작
+        for (Future<?> f : futures) f.get(10, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        // then
+        assertThat(successCount.get()).isEqualTo(1);
+        assertThat(alreadyRequestedCount.get()).isEqualTo(2);
+        assertThat(otherFailCount.get()).isZero();
+
+        EventRegistration saved = eventRegistrationRepository
+                .findByEventIdAndUserId(event.getId(), user.getId()).orElseThrow();
+        assertThat(saved.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+        assertThat(saved.getCancelReason()).startsWith("사유 ");
+        assertThat(eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow().getCurrentCount())
+                .isEqualTo(1);
+    }
+
+    /**
+     * INT-091: 승인 트랜잭션이 신청을 읽은 뒤 커밋하기 전에 취소 요청이 커밋되는 상황.
+     * {@code @DynamicUpdate}가 없으면 승인 커밋이 전체 컬럼 UPDATE로 취소 요청 기록을 null로 덮어쓴다.
+     * (스레드 타이밍에 의존하지 않도록 승인 측 트랜잭션을 테스트에서 직접 열어 순서를 고정한다)
+     */
+    @Test
+    @DisplayName("[INT-091] 승인 트랜잭션 도중 취소 요청이 커밋돼도 요청 기록이 유지된다")
+    void approveInProgress_CancelRequestCommitted_RequestRecordKept() {
+        // given: 선발제 행사에 WAITING 신청
+        Event event = createAndSaveOpenEvent(10, EventRegistrationType.MANUAL_APPROVE);
+        User user = members.get(0);
+        Long registrationId = eventRegistrationService
+                .registerEvent(event.getId(), user.getId(), null).registrationId();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        // when: 승인 트랜잭션이 신청을 읽은 뒤, 다른 트랜잭션에서 취소 요청이 커밋되고, 그 다음 승인이 커밋됨
+        transactionTemplate.execute(status -> {
+            EventRegistration registration = eventRegistrationRepository.findById(registrationId).orElseThrow();
+            try {
+                executor.submit(() -> eventRegistrationService.requestCancelRegistration(
+                        event.getId(), user.getId(), "개인 사정")).get(10, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+            registration.approve();
+            return null;
+        });
+        executor.shutdown();
+
+        // then: 승인도 반영되고 취소 요청 기록도 남아 있음
+        EventRegistration saved = eventRegistrationRepository.findById(registrationId).orElseThrow();
+        assertThat(saved.getStatus()).isEqualTo(EventRegistrationStatus.APPROVED);
+        assertThat(saved.getCancelReason()).isEqualTo("개인 사정");
+        assertThat(saved.getCancelRequestedAt()).isNotNull();
     }
 }

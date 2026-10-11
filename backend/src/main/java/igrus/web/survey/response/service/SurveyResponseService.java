@@ -3,8 +3,6 @@ package igrus.web.survey.response.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import igrus.web.event.domain.Event;
-import igrus.web.event.domain.EventRegistration;
 import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.ExternalSurveyResponse;
 import igrus.web.event.repository.EventRegistrationRepository;
@@ -42,7 +40,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +58,13 @@ public class SurveyResponseService {
     private final UserRepository userRepository;
     private final SurveyAnswerValidator answerValidator;
     private final SurveyAnswerFactory surveyAnswerFactory;
+    /** 유효한(취소/거절되지 않은) 행사 신청 상태 */
+    private static final Set<EventRegistrationStatus> ACTIVE_REGISTRATION_STATUSES = Set.of(
+            EventRegistrationStatus.REGISTERED,
+            EventRegistrationStatus.WAITING,
+            EventRegistrationStatus.APPROVED
+    );
+
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
     private final ExternalSurveyResponseRepository externalSurveyResponseRepository;
@@ -253,7 +258,8 @@ public class SurveyResponseService {
     /**
      * 본인 응답을 삭제합니다.
      * OPEN 상태의 설문에서만 삭제 가능합니다.
-     * 행사 연결 설문의 경우 행사 신청도 함께 취소됩니다.
+     * 연결된 행사에 유효한 신청(REGISTERED/WAITING/APPROVED)이 있으면 삭제할 수 없습니다.
+     * (행사 신청 취소는 운영진만 처리할 수 있으므로 응답 삭제가 우회 경로가 되어서는 안 됨)
      *
      * @param surveyId 설문 ID
      * @param auth     인증된 사용자 정보
@@ -273,50 +279,24 @@ public class SurveyResponseService {
         SurveyResponse response = surveyResponseRepository.findBySurveyIdAndUserIdAndDeletedFalse(surveyId, user.getId())
                 .orElseThrow(SurveyResponseNotFoundException::new);
 
-        response.delete(user.getId());
+        validateNoActiveLinkedEventRegistration(surveyId, user.getId());
 
-        cancelLinkedEventRegistration(surveyId, user.getId());
+        response.delete(user.getId());
 
         log.info("설문 응답 삭제 - surveyId: {}, userId: {}", surveyId, user.getId());
     }
 
     /**
-     * 설문과 연결된 행사의 신청을 취소합니다.
-     * 연결된 행사가 없거나 신청이 없으면 아무 동작하지 않습니다.
+     * 설문과 연결된 행사에 유효한 신청이 있으면 응답 삭제를 거부합니다.
      */
-    private void cancelLinkedEventRegistration(Long surveyId, Long userId) {
-        Optional<Event> eventOptional = eventRepository.findBySurveyId(surveyId);
-        if (eventOptional.isEmpty()) {
-            return;
+    private void validateNoActiveLinkedEventRegistration(Long surveyId, Long userId) {
+        boolean inUse = eventRepository.findBySurveyId(surveyId)
+                .map(event -> eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                        event.getId(), userId, ACTIVE_REGISTRATION_STATUSES))
+                .orElse(false);
+        if (inUse) {
+            throw new SurveyResponseInUseByEventRegistrationException();
         }
-
-        Event event = eventOptional.get();
-        Optional<EventRegistration> registrationOptional =
-                eventRegistrationRepository.findByEventIdAndUserId(event.getId(), userId);
-        if (registrationOptional.isEmpty()) {
-            return;
-        }
-
-        EventRegistration registration = registrationOptional.get();
-        if (registration.isCanceled()) {
-            return;
-        }
-
-        // WAITING 상태는 정원에 포함되지 않으므로 카운트를 감소하지 않음.
-        // APPROVED, REGISTERED 상태만 정원에 포함되므로 해당 상태일 때만 카운트 감소.
-        boolean wasApproved = registration.getStatus() == EventRegistrationStatus.APPROVED
-                || registration.getStatus() == EventRegistrationStatus.REGISTERED;
-
-        // cancel()을 먼저 호출하여 상태를 변경한 후 카운트를 감소시킴.
-        // cancel()은 엔티티 상태만 변경하고, decrementCurrentCount()는 별도 @Modifying 쿼리로 실행됨.
-        registration.cancel();
-
-        if (wasApproved) {
-            eventRepository.decrementCurrentCount(event.getId());
-        }
-
-        log.info("설문 응답 삭제로 행사 신청 취소 - eventId: {}, userId: {}, wasApproved: {}",
-                event.getId(), userId, wasApproved);
     }
 
     // ==================== Private helpers ====================

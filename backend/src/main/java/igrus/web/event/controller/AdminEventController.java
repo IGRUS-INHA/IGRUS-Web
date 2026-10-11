@@ -119,6 +119,7 @@ public class AdminEventController implements AdminEventApi {
                 .updatedAt(r.updatedAt())
                 .canEdit(r.canEdit())
                 .isRegistered(r.isRegistered())
+                .cancelRequested(r.cancelRequested())
                 .visibility(r.visibility() != null
                         ? ApiAdminEventDetailResponse.VisibilityEnum.fromValue(r.visibility().name())
                         : null)

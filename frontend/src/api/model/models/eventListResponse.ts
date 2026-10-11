@@ -48,7 +48,11 @@ export interface EventListResponse {
   registrationStartAt?: string;
   registrationEndAt?: string;
   capacity?: number;
-  currentCount?: number;
+  /**
+   * 현재 신청자 수. 운영진 이상에게만 제공되며 그 외에는 null
+   * @nullable
+   */
+  currentCount?: number | null;
   visibility?: EventListResponseVisibility;
   registrationStatus?: EventListResponseRegistrationStatus;
   eventStatus?: EventListResponseEventStatus;

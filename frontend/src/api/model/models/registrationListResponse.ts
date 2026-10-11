@@ -78,4 +78,14 @@ export interface RegistrationListResponse {
   isExternal?: boolean;
   status?: RegistrationListResponseStatus;
   registeredAt?: string;
+  /**
+   * 취소 요청 사유 (취소 요청이 없으면 null)
+   * @nullable
+   */
+  cancelReason?: string | null;
+  /**
+   * 취소 요청 일시 (취소 요청이 없으면 null)
+   * @nullable
+   */
+  cancelRequestedAt?: string | null;
 }

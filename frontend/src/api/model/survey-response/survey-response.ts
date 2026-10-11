@@ -362,7 +362,7 @@ export const useUpdateMyResponse = <TError = void, TContext = unknown>(
   return useMutation(getUpdateMyResponseMutationOptions(options), queryClient);
 };
 /**
- * 본인이 제출한 설문 응답을 삭제합니다. OPEN 상태의 설문에서만 삭제 가능합니다. 행사 연결 설문의 경우 행사 신청도 함께 취소됩니다.
+ * 본인이 제출한 설문 응답을 삭제합니다. OPEN 상태의 설문에서만 삭제 가능합니다. 연결된 행사에 유효한 신청이 있으면 삭제할 수 없습니다(행사 신청 취소는 취소 요청 후 운영진이 처리).
  * @summary 본인 응답 삭제
  */
 export type deleteMyResponseResponse204 = {

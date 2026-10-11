@@ -3,10 +3,14 @@ package igrus.web.event.controller;
 import igrus.web.common.util.PageResponseMapper;
 import igrus.web.common.util.PageableUtils;
 import igrus.web.common.util.SecurityUtils;
+import igrus.web.event.dto.response.CancelRequestListResponse;
 import igrus.web.event.dto.response.RegistrationListResponse;
 import igrus.web.event.service.EventRegistrationService;
 import igrus.web.generated.api.EventRegistrationApi;
+import igrus.web.generated.model.ApiCancelRequestListResponse;
 import igrus.web.generated.model.ApiMyRegistrationResponse;
+import igrus.web.generated.model.ApiPageCancelRequestListResponse;
+import igrus.web.generated.model.ApiRequestCancelRegistrationRequest;
 import igrus.web.generated.model.ApiPageRegistrationListResponse;
 import igrus.web.generated.model.ApiRegistrationListResponse;
 import igrus.web.generated.model.ApiRegisterEventRequest;
@@ -28,7 +32,7 @@ import java.util.List;
 
 /**
  * 행사 신청 컨트롤러.
- * 행사 신청, 취소, 조회, 승인/거절 API를 제공합니다.
+ * 행사 신청, 취소 요청, 조회, 승인/거절/취소 처리 API를 제공합니다.
  */
 @Slf4j
 @RestController
@@ -54,10 +58,14 @@ public class EventRegistrationController implements EventRegistrationApi {
 
     @Override
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiRegistrationResponse> cancelRegistration(Long eventId) {
+    public ResponseEntity<ApiRegistrationResponse> requestCancelRegistration(
+            Long eventId,
+            ApiRequestCancelRegistrationRequest requestCancelRegistrationRequest
+    ) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 취소 요청 - eventId: {}, userId: {}", eventId, user.userId());
-        var response = eventRegistrationService.cancelRegistration(eventId, user.userId());
+        var response = eventRegistrationService.requestCancelRegistration(
+                eventId, user.userId(), requestCancelRegistrationRequest.getReason());
         return ResponseEntity.ok(mapToRegistrationResponse(response));
     }
 
@@ -111,6 +119,34 @@ public class EventRegistrationController implements EventRegistrationApi {
 
     @Override
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<ApiPageCancelRequestListResponse> getCancelRequestList(Integer page, Integer size) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("신청 취소 요청 목록 조회 요청 - userId: {}", user.userId());
+        Pageable pageable = PageableUtils.of(page, size, List.of("cancelRequestedAt,DESC"));
+        var responsePage = eventRegistrationService.getCancelRequestList(user.userId(), pageable);
+
+        ApiPageCancelRequestListResponse result = PageResponseMapper.toSpringPageResponse(
+                responsePage,
+                this::mapToCancelRequestListResponse,
+                ApiPageCancelRequestListResponse::new,
+                (r, content, meta) -> r
+                        .content(content)
+                        .totalElements(meta.totalElements())
+                        .totalPages(meta.totalPages())
+                        .number(meta.number())
+                        .size(meta.size())
+                        .numberOfElements(meta.numberOfElements())
+                        .first(meta.first())
+                        .last(meta.last())
+                        .empty(meta.empty())
+                        .pageable(meta.pageable())
+                        .sort(meta.sort())
+        );
+        return ResponseEntity.ok(result);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<ApiRegistrationResponse> approveRegistration(Long registrationId) {
         AuthenticatedUser user = SecurityUtils.requireCurrentUser();
         log.info("신청 승인 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
@@ -146,6 +182,15 @@ public class EventRegistrationController implements EventRegistrationApi {
         log.info("관리자 행사 신청 취소 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
         var response = eventRegistrationService.cancelRegistrationByAdmin(
                 registrationId, user.userId());
+        return ResponseEntity.ok(mapToRegistrationResponse(response));
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
+    public ResponseEntity<ApiRegistrationResponse> rejectCancelRequest(Long registrationId) {
+        AuthenticatedUser user = SecurityUtils.requireCurrentUser();
+        log.info("신청 취소 요청 거절 요청 - registrationId: {}, userId: {}", registrationId, user.userId());
+        var response = eventRegistrationService.rejectCancelRequest(registrationId, user.userId());
         return ResponseEntity.ok(mapToRegistrationResponse(response));
     }
 
@@ -220,6 +265,21 @@ public class EventRegistrationController implements EventRegistrationApi {
                         : null)
                 .registeredAt(r.registeredAt())
                 .isExternal(r.isExternal())
-                .phone(r.phone());
+                .phone(r.phone())
+                .cancelReason(r.cancelReason())
+                .cancelRequestedAt(r.cancelRequestedAt());
+    }
+
+    private ApiCancelRequestListResponse mapToCancelRequestListResponse(CancelRequestListResponse r) {
+        return new ApiCancelRequestListResponse()
+                .registrationId(r.registrationId())
+                .eventId(r.eventId())
+                .eventTitle(r.eventTitle())
+                .userName(r.userName())
+                .studentId(r.studentId())
+                .isExternal(r.isExternal())
+                .cancelReason(r.cancelReason())
+                .cancelRequestedAt(r.cancelRequestedAt())
+                .status(ApiCancelRequestListResponse.StatusEnum.fromValue(r.status().name()));
     }
 }
