@@ -58,19 +58,19 @@ class SlackNotifierTest {
     }
 
     @Test
-    @DisplayName("서버 알림은 서버 알림 채널 URL 로 보낸다")
-    void sendServerAlert_UsesServerAlertUrl() {
-        new SlackNotifier("", url, Runnable::run).sendServerAlert("서버 500 에러");
+    @DisplayName("서버 알림은 서버 알림 채널 URL 로 상세와 함께 보낸다")
+    void sendServerAlert_UsesServerAlertUrlWithDetail() {
+        new SlackNotifier("", url, Runnable::run).sendServerAlert("서버 500 에러", "원인: boom");
 
-        assertThat(receivedBodies).containsExactly("{\"text\":\"서버 500 에러\"}");
+        assertThat(receivedBodies).containsExactly("{\"text\":\"서버 500 에러\\n원인: boom\"}");
     }
 
     @Test
-    @DisplayName("서버 알림 채널 URL 이 비어 있으면 기본 URL 로 보낸다")
-    void sendServerAlert_BlankServerAlertUrl_FallsBackToDefaultUrl() {
-        new SlackNotifier(url, "", Runnable::run).sendServerAlert("서버 500 에러");
+    @DisplayName("서버 알림 채널 URL 이 비어 있으면 기본 URL 로 상세 없이 보낸다")
+    void sendServerAlert_BlankServerAlertUrl_FallsBackWithoutDetail() {
+        new SlackNotifier(url, "", Runnable::run).sendServerAlert("서버 500 에러", "원인: boom");
 
-        assertThat(receivedBodies).hasSize(1);
+        assertThat(receivedBodies).containsExactly("{\"text\":\"서버 500 에러\"}");
     }
 
     @Test

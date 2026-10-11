@@ -318,7 +318,8 @@ public class GlobalExceptionHandler {
 
     // ponytail: 전역 1분 쿨다운 — 쿨다운 중 발생한 다른 500 은 슬랙에 안 뜬다(로그에는 남음).
     // 서로 다른 에러를 놓치는 게 문제가 되면 예외 타입별 쿨다운으로 바꿀 것.
-    // 원인 파악용으로 예외 메시지를 앞부분만 붙인다. 개인정보/SQL 값이 섞일 수 있으므로 운영진 전용 서버 알림 채널로만 보낸다.
+    // 원인 파악용으로 예외 메시지를 앞부분만 붙인다. 개인정보/SQL 값이 섞일 수 있어
+    // SlackNotifier 가 서버 알림 채널이 따로 설정된 경우에만 붙인다.
     private void alertSlack(Exception e, HttpServletRequest request) {
         long now = System.currentTimeMillis();
         long last = lastErrorAlertAt.get();
@@ -331,7 +332,7 @@ public class GlobalExceptionHandler {
                 : message;
         slackNotifier.ifAvailable(notifier -> notifier.sendServerAlert("🚨 서버 500 에러\n"
                 + request.getMethod() + " " + request.getRequestURI() + "\n"
-                + e.getClass().getName() + " (traceId=" + MDC.get("traceId") + ")\n"
-                + "원인: " + reason));
+                + e.getClass().getName() + " (traceId=" + MDC.get("traceId") + ")",
+                "원인: " + reason));
     }
 }
