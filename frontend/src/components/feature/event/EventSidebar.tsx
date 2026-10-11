@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Event } from "@/types/entities";
+import { useAuth } from "@/hooks";
 
 interface EventSidebarProps {
   events: Event[];
@@ -17,6 +18,9 @@ function getFirstDayOfMonth(year: number, month: number): number {
 }
 
 export default function EventSidebar({ events }: EventSidebarProps) {
+  const { user } = useAuth();
+  // 신청 인원 현황은 운영진에게만 제공된다 (그 외에는 currentCount가 내려오지 않음)
+  const isOperator = user?.role === "OPERATOR" || user?.role === "ADMIN";
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
@@ -160,10 +164,12 @@ export default function EventSidebar({ events }: EventSidebarProps) {
             <p className="text-2xl font-bold">{recruitingCount}</p>
             <p className="text-xs text-muted-foreground mt-0.5">모집중</p>
           </div>
-          <div>
-            <p className="text-2xl font-bold">{totalParticipants}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">총 참여자</p>
-          </div>
+          {isOperator && (
+            <div>
+              <p className="text-2xl font-bold">{totalParticipants}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">총 참여자</p>
+            </div>
+          )}
           <div>
             <p className="text-2xl font-bold">{thisMonthCount}</p>
             <p className="text-xs text-muted-foreground mt-0.5">이번 달</p>

@@ -7,6 +7,7 @@ import {
   BarChart3,
   ClipboardCheck,
   ChevronDown,
+  Download,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import { useUIStore } from "@/stores";
 import { cn } from "@/lib/utils";
 import { useEvent } from "@/hooks/queries/useEvents";
 import {
-  useRegistrationList,
+  useAllRegistrations,
   useApproveEventRegistration,
   useRejectEventRegistration,
   useRevertEventRegistration,
@@ -27,6 +28,9 @@ import {
   getErrorMessage,
 } from "@/utils/error";
 import { formatDate } from "@/utils/date";
+import { formatDateTime } from "@/utils";
+import { formatDateLocal } from "@/utils/event";
+import { toCsv, downloadCsv } from "@/utils/csv";
 import RegistrationChart from "@/components/feature/event/RegistrationChart";
 import SurveyResultsTab from "@/components/feature/event/SurveyResultsTab";
 import SurveyAnswerPanel from "@/components/feature/event/SurveyAnswerPanel";
@@ -53,6 +57,43 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   REJECTED: { label: "거절", className: "bg-destructive/10 text-destructive" },
   CANCELED: { label: "취소", className: "bg-muted text-muted-foreground" },
 };
+
+const CSV_HEADER = [
+  "이름",
+  "학번",
+  "학과",
+  "학년",
+  "이메일",
+  "전화번호",
+  "구분",
+  "상태",
+  "신청일시",
+  "취소 요청 사유",
+  "취소 요청 일시",
+];
+
+function toCsvRow(r: RegistrationListResponse): string[] {
+  return [
+    r.userName ?? "",
+    r.studentId ?? "",
+    r.userDepartment ?? "",
+    r.userGrade != null ? String(r.userGrade) : "",
+    r.userEmail ?? "",
+    r.phone ?? "",
+    r.isExternal ? "외부인" : "회원",
+    r.status ? (STATUS_BADGE[r.status]?.label ?? r.status) : "",
+    r.registeredAt ? formatDateTime(r.registeredAt) : "",
+    r.cancelReason ?? "",
+    r.cancelRequestedAt ? formatDateTime(r.cancelRequestedAt) : "",
+  ];
+}
+
+// 취소 요청 배지는 유효한 신청에만 표시한다 (취소·거절된 신청 제외)
+const CANCEL_REQUESTABLE_STATUSES: string[] = [
+  "REGISTERED",
+  "WAITING",
+  "APPROVED",
+];
 
 const REGISTRATION_TYPE_LABEL: Record<string, string> = {
   AUTO_APPROVE: "선착순",
@@ -95,12 +136,11 @@ export default function EventRegistrationsPage() {
     error: eventError,
   } = useEvent(numericEventId);
 
-  const { data: registrationsResponse, isLoading: regLoading } =
-    useRegistrationList(numericEventId, {
-      page: 0,
-      size: 100,
-      sort: ["registeredAt,DESC"],
-    });
+  const {
+    data: registrations,
+    isLoading: regLoading,
+    error: registrationsError,
+  } = useAllRegistrations(numericEventId);
 
   const { mutate: approve, isPending: isApproving } =
     useApproveEventRegistration(numericEventId);
@@ -131,10 +171,7 @@ export default function EventRegistrationsPage() {
     [event?.surveyId],
   );
 
-  const allRegistrations =
-    registrationsResponse?.status === 200
-      ? (registrationsResponse.data.content ?? [])
-      : [];
+  const allRegistrations = useMemo(() => registrations ?? [], [registrations]);
   const isManualApprove = event?.registrationType === "MANUAL_APPROVE";
 
   // 설문 응답 매핑 (회원: userId, 외부인: registrationId)
@@ -238,6 +275,12 @@ export default function EventRegistrationsPage() {
     );
   };
 
+  const handleExportCsv = () => {
+    const csv = toCsv([CSV_HEADER, ...allRegistrations.map(toCsvRow)]);
+    const safeTitle = (event?.title ?? "행사").replace(/[\\/:*?"<>|]/g, "_");
+    downloadCsv(`${safeTitle}_신청자_${formatDateLocal(new Date())}.csv`, csv);
+  };
+
   const renderActions = (r: RegistrationListResponse) => {
     if (!isManualApprove || !r.registrationId) return null;
 
@@ -317,6 +360,15 @@ export default function EventRegistrationsPage() {
     );
   }
 
+  // 조회 실패를 "신청자가 없습니다"로 보여주지 않는다
+  if (registrationsError) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        {getErrorMessage(registrationsError)}
+      </div>
+    );
+  }
+
   return (
     <div className="animate-in slide-in-from-right-8 duration-300">
       {/* 뒤로가기 */}
@@ -345,6 +397,15 @@ export default function EventRegistrationsPage() {
           <span className="typo-b2 text-muted-foreground">
             {event.currentCount ?? 0} / {event.capacity ?? 0}명
           </span>
+          <Button
+            size="xs"
+            variant="outline"
+            className="ml-auto"
+            onClick={handleExportCsv}
+            disabled={allRegistrations.length === 0}
+          >
+            <Download size={14} /> CSV로 내보내기
+          </Button>
         </div>
       </div>
 
@@ -459,6 +520,18 @@ export default function EventRegistrationsPage() {
                                 -
                               </span>
                             )}
+                            {r.cancelRequestedAt &&
+                              r.status !== undefined &&
+                              CANCEL_REQUESTABLE_STATUSES.includes(
+                                r.status,
+                              ) && (
+                                <span
+                                  title={r.cancelReason ?? undefined}
+                                  className="ml-s1 px-s2 py-0.5 rounded-r2 typo-c2 font-bold bg-destructive/10 text-destructive"
+                                >
+                                  취소 요청
+                                </span>
+                              )}
                           </td>
                           <td className="py-s4 typo-b2 text-muted-foreground">
                             {formatDate(r.registeredAt)}

@@ -22,6 +22,8 @@ import java.time.Instant;
  * @param registeredAt   신청일시
  * @param isExternal     외부인 신청 여부
  * @param phone          외부인 전화번호 (회원인 경우 null)
+ * @param cancelReason      취소 요청 사유 (없으면 null)
+ * @param cancelRequestedAt 취소 요청 일시 (없으면 null)
  */
 public record RegistrationListResponse(
         Long registrationId,
@@ -35,7 +37,9 @@ public record RegistrationListResponse(
         EventRegistrationStatus status,
         Instant registeredAt,
         Boolean isExternal,
-        String phone
+        String phone,
+        String cancelReason,
+        Instant cancelRequestedAt
 ) {
     /**
      * EventRegistration 엔티티로부터 RegistrationListResponse를 생성합니다.
@@ -60,7 +64,9 @@ public record RegistrationListResponse(
                     registration.getStatus(),
                     registration.getRegisteredAt(),
                     registration.getIsExternal(),
-                    null
+                    null,
+                    registration.getCancelReason(),
+                    registration.getCancelRequestedAt()
             );
         } else {
             // 외부인 신청
@@ -76,7 +82,9 @@ public record RegistrationListResponse(
                     registration.getStatus(),
                     registration.getRegisteredAt(),
                     registration.getIsExternal(),
-                    registration.getExternalPhone()
+                    registration.getExternalPhone(),
+                    registration.getCancelReason(),
+                    registration.getCancelRequestedAt()
             );
         }
     }

@@ -213,7 +213,12 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   EVENT_FULL: "정원이 마감되었습니다.",
   ALREADY_REGISTERED: "이미 신청한 행사입니다.",
   NOT_REGISTERED: "신청 내역이 없습니다.",
-  CANCEL_DEADLINE_PASSED: "취소 가능 기간이 지났습니다.",
+  EVENT_CANCEL_ALREADY_REQUESTED: "이미 취소 요청한 신청입니다.",
+  EVENT_CANCEL_REQUEST_NOT_PENDING: "이미 처리된 요청입니다.",
+  EVENT_CANCEL_REASON_REQUIRED: "취소 사유를 입력해주세요.",
+  SURVEY_RESPONSE_IN_USE_BY_EVENT_REGISTRATION:
+    "행사 신청에 사용 중인 설문 응답은 삭제할 수 없습니다.",
+  EVENT_NOT_CANCELABLE: "취소된 행사의 신청은 취소할 수 없습니다.",
   EVENT_SURVEY_RESPONSE_REQUIRED:
     "설문 응답이 필요합니다. 설문을 먼저 작성해주세요.",
   EVENT_SURVEY_NOT_READY: "설문이 아직 시작되지 않았습니다.",
@@ -585,6 +590,13 @@ export function isEventCapacityFull(error: unknown): boolean {
  */
 export function isEventRegistrationClosed(error: unknown): boolean {
   return hasErrorCode(error, "EVENT_REGISTRATION_CLOSED");
+}
+
+/**
+ * EVENT_CANCEL_ALREADY_REQUESTED 에러인지 확인
+ */
+export function isEventCancelAlreadyRequested(error: unknown): boolean {
+  return hasErrorCode(error, "EVENT_CANCEL_ALREADY_REQUESTED");
 }
 
 /**

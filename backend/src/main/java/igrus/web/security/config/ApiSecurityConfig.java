@@ -75,6 +75,8 @@ public class ApiSecurityConfig {
                         "/api/v1/admin/events/**",
                         "/api/v1/admin/surveys/**",
                         "/api/v1/registrations/*/cancel",
+                        "/api/v1/registrations/cancel-requests",
+                        "/api/v1/registrations/*/cancel-request/reject",
                         "/api/v1/admin/comment-reports/**"
                 ).hasAnyRole("OPERATOR", "ADMIN")
 

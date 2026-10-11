@@ -11,10 +11,13 @@ import igrus.web.event.domain.EventStatusChangeHistory;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.RegistrationStatus;
 import igrus.web.event.dto.request.UpdateEventRequest;
+import igrus.web.event.exception.CancelAlreadyRequestedException;
+import igrus.web.event.exception.CancelRequestNotPendingException;
 import igrus.web.event.exception.EventCapacityFullException;
 import igrus.web.event.exception.EventNotEditableException;
 import igrus.web.event.exception.EventNotOpenException;
 import igrus.web.event.exception.EventRegistrationNotReopenableException;
+import igrus.web.event.exception.OperatorPermissionRequiredException;
 import igrus.web.event.exception.SurveyNotReadyException;
 import igrus.web.event.exception.SurveyResponseRequiredException;
 import igrus.web.event.repository.EventRegistrationRepository;
@@ -31,7 +34,10 @@ import igrus.web.survey.question.repository.SurveyQuestionRepository;
 import igrus.web.survey.repository.SurveyRepository;
 import igrus.web.survey.response.domain.SurveyResponse;
 import igrus.web.survey.response.dto.request.SubmitAnswerRequest;
+import igrus.web.survey.response.exception.SurveyResponseInUseByEventRegistrationException;
 import igrus.web.survey.response.repository.SurveyResponseRepository;
+import igrus.web.survey.response.service.SurveyResponseService;
+import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +45,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -101,6 +109,9 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private SurveyResponseRepository surveyResponseRepository;
+
+    @Autowired
+    private SurveyResponseService surveyResponseService;
 
     private User member;
     private User member2;
@@ -247,6 +258,221 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         });
     }
 
+    /**
+     * 신청자는 직접 취소할 수 없다: 취소 요청 → 운영진 취소 처리 순서로 취소한다.
+     */
+    private void requestCancelAndProcess(Long eventId, Long userId) {
+        Long registrationId = eventRegistrationService
+                .requestCancelRegistration(eventId, userId, "개인 사정").registrationId();
+        eventRegistrationService.cancelRegistrationByAdmin(registrationId, operator.getId());
+    }
+
+    @Nested
+    @DisplayName("신청 취소 요청 / 운영진 알림 목록")
+    class CancelRequestTest {
+
+        @Test
+        @DisplayName("[INT-040] 같은 신청에 취소 요청을 두 번 하면 CancelAlreadyRequestedException 발생")
+        void requestCancel_Twice_ThrowsException() {
+            Event event = createAndSaveAutoApproveEvent();
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            eventRegistrationService.requestCancelRegistration(event.getId(), member.getId(), "개인 사정");
+
+            assertThatThrownBy(() -> eventRegistrationService
+                    .requestCancelRegistration(event.getId(), member.getId(), "다른 사유"))
+                    .isInstanceOf(CancelAlreadyRequestedException.class);
+        }
+
+        @Test
+        @DisplayName("[INT-041] 취소 요청 목록은 처리 대기/취소 완료를 모두 최신 요청순으로 반환하고 요청 없는 신청은 제외한다")
+        void getCancelRequestList_ReturnsPendingAndCanceled_NewestFirst() {
+            // given: member는 요청 후 취소 처리됨, member2는 요청만, operator는 요청 없이 신청만
+            Event event = createAndSaveAutoApproveEvent();
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            eventRegistrationService.registerEvent(event.getId(), member2.getId(), null);
+            eventRegistrationService.registerEvent(event.getId(), operator.getId(), null);
+            requestCancelAndProcess(event.getId(), member.getId());
+            eventRegistrationService.requestCancelRegistration(event.getId(), member2.getId(), "일정 변경");
+
+            // when
+            var page = eventRegistrationService.getCancelRequestList(operator.getId(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "cancelRequestedAt")));
+
+            // then
+            assertThat(page.getTotalElements()).isEqualTo(2);
+            var newest = page.getContent().get(0);
+            var oldest = page.getContent().get(1);
+            assertThat(newest.status()).isEqualTo(EventRegistrationStatus.REGISTERED);
+            assertThat(newest.cancelReason()).isEqualTo("일정 변경");
+            assertThat(newest.userName()).isEqualTo(member2.getName());
+            assertThat(newest.studentId()).isEqualTo(member2.getStudentId());
+            assertThat(newest.eventId()).isEqualTo(event.getId());
+            assertThat(newest.eventTitle()).isEqualTo("테스트 행사");
+            assertThat(newest.isExternal()).isFalse();
+            assertThat(oldest.status()).isEqualTo(EventRegistrationStatus.CANCELED);
+            assertThat(oldest.cancelReason()).isEqualTo("개인 사정");
+            assertThat(newest.cancelRequestedAt()).isAfterOrEqualTo(oldest.cancelRequestedAt());
+        }
+
+        @Test
+        @DisplayName("[INT-045] 취소 요청 거절 시 요청 정보가 DB에서 초기화되고 정원은 유지되며, 목록/상세에서 사라지고 재요청할 수 있다")
+        void rejectCancelRequest_ClearsRequest_AndAllowsReRequest() {
+            Event event = createAndSaveAutoApproveEvent();
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            Long registrationId = eventRegistrationService
+                    .requestCancelRegistration(event.getId(), member.getId(), "개인 사정").registrationId();
+
+            // when
+            var response = eventRegistrationService.rejectCancelRequest(registrationId, operator.getId());
+
+            // then: 요청하지 않은 상태로 복원, 신청/정원 유지
+            assertThat(response.status()).isEqualTo(EventRegistrationStatus.REGISTERED);
+            EventRegistration saved = eventRegistrationRepository.findById(registrationId).orElseThrow();
+            assertThat(saved.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+            assertThat(saved.getCancelReason()).isNull();
+            assertThat(saved.getCancelRequestedAt()).isNull();
+            assertThat(eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow().getCurrentCount())
+                    .isEqualTo(1);
+            assertThat(eventRegistrationService.getCancelRequestList(operator.getId(), PageRequest.of(0, 20))
+                    .getTotalElements()).isZero();
+            assertThat(eventService.getEvent(event.getId(), member.getId()).cancelRequested()).isFalse();
+
+            // then: 다시 취소 요청 가능
+            eventRegistrationService.requestCancelRegistration(event.getId(), member.getId(), "다시 요청");
+            assertThat(eventRegistrationRepository.findById(registrationId).orElseThrow().getCancelReason())
+                    .isEqualTo("다시 요청");
+        }
+
+        @Test
+        @DisplayName("[INT-046] 취소 요청이 없는 신청의 요청을 거절하면 CancelRequestNotPendingException 발생")
+        void rejectCancelRequest_NoRequest_ThrowsException() {
+            Event event = createAndSaveAutoApproveEvent();
+            Long registrationId = eventRegistrationService
+                    .registerEvent(event.getId(), member.getId(), null).registrationId();
+
+            assertThatThrownBy(() -> eventRegistrationService.rejectCancelRequest(registrationId, operator.getId()))
+                    .isInstanceOf(CancelRequestNotPendingException.class);
+        }
+
+        @Test
+        @DisplayName("[INT-047] 이미 취소 처리된 신청의 요청을 거절하면 예외가 발생하고 취소됨 알림 기록은 유지된다")
+        void rejectCancelRequest_AlreadyCanceled_ThrowsAndKeepsRecord() {
+            Event event = createAndSaveAutoApproveEvent();
+            Long registrationId = eventRegistrationService
+                    .registerEvent(event.getId(), member.getId(), null).registrationId();
+            requestCancelAndProcess(event.getId(), member.getId());
+
+            assertThatThrownBy(() -> eventRegistrationService.rejectCancelRequest(registrationId, operator.getId()))
+                    .isInstanceOf(CancelRequestNotPendingException.class);
+
+            EventRegistration saved = eventRegistrationRepository.findById(registrationId).orElseThrow();
+            assertThat(saved.getStatus()).isEqualTo(EventRegistrationStatus.CANCELED);
+            assertThat(saved.getCancelReason()).isEqualTo("개인 사정");
+            assertThat(eventRegistrationService.getCancelRequestList(operator.getId(), PageRequest.of(0, 20))
+                    .getTotalElements()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("[INT-048] 운영진이 아닌 사용자가 취소 요청을 거절하면 OperatorPermissionRequiredException 발생하고 요청은 유지된다")
+        void rejectCancelRequest_Member_ThrowsException() {
+            Event event = createAndSaveAutoApproveEvent();
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            Long registrationId = eventRegistrationService
+                    .requestCancelRegistration(event.getId(), member.getId(), "개인 사정").registrationId();
+
+            assertThatThrownBy(() -> eventRegistrationService.rejectCancelRequest(registrationId, member.getId()))
+                    .isInstanceOf(OperatorPermissionRequiredException.class);
+            assertThat(eventRegistrationRepository.findById(registrationId).orElseThrow().getCancelReason())
+                    .isEqualTo("개인 사정");
+        }
+
+        @Test
+        @DisplayName("[INT-090] 탈퇴(soft delete)한 회원의 취소 요청도 목록에 이름이 채워져 내려간다")
+        void getCancelRequestList_WithdrawnMember_HasUserName() {
+            Event event = createAndSaveAutoApproveEvent();
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            eventRegistrationService.requestCancelRegistration(event.getId(), member.getId(), "개인 사정");
+            transactionTemplate.execute(status -> {
+                User user = userRepository.findById(member.getId()).orElseThrow();
+                user.withdraw();
+                user.delete(user.getId());
+                return null;
+            });
+
+            var page = eventRegistrationService.getCancelRequestList(operator.getId(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "cancelRequestedAt")));
+
+            assertThat(page.getTotalElements()).isEqualTo(1);
+            assertThat(page.getContent().get(0).userName()).isEqualTo(User.WITHDRAWN_DISPLAY_NAME);
+            assertThat(page.getContent().get(0).studentId()).isNull();
+            assertThat(page.getContent().get(0).isExternal()).isFalse();
+        }
+
+        @Test
+        @DisplayName("[INT-092] 취소 요청 후 신청 자체가 거절(REJECTED)된 건은 취소 요청 목록과 전체 건수에서 제외된다")
+        void getCancelRequestList_RejectedRegistration_Excluded() {
+            Event event = createAndSaveManualApproveEvent();
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            eventRegistrationService.registerEvent(event.getId(), member2.getId(), null);
+            Long rejectedId = eventRegistrationService
+                    .requestCancelRegistration(event.getId(), member.getId(), "개인 사정").registrationId();
+            Long pendingId = eventRegistrationService
+                    .requestCancelRegistration(event.getId(), member2.getId(), "일정 변경").registrationId();
+            eventRegistrationService.rejectRegistration(rejectedId, operator.getId());
+
+            var page = eventRegistrationService.getCancelRequestList(operator.getId(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "cancelRequestedAt")));
+
+            assertThat(page.getTotalElements()).isEqualTo(1);
+            assertThat(page.getContent()).extracting("registrationId").containsExactly(pendingId);
+        }
+
+        @Test
+        @DisplayName("[INT-044] 삭제된 행사의 취소 요청은 목록과 전체 건수에서 모두 제외된다")
+        void getCancelRequestList_DeletedEvent_Excluded() {
+            Event event = createAndSaveAutoApproveEvent();
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            requestCancelAndProcess(event.getId(), member.getId());
+            eventService.deleteEvent(event.getId(), operator.getId());
+
+            var page = eventRegistrationService.getCancelRequestList(operator.getId(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "cancelRequestedAt")));
+
+            assertThat(page.getContent()).isEmpty();
+            assertThat(page.getTotalElements()).isZero();
+        }
+
+        @Test
+        @DisplayName("[INT-042] 운영진이 아닌 사용자가 취소 요청 목록을 조회하면 OperatorPermissionRequiredException 발생")
+        void getCancelRequestList_Member_ThrowsException() {
+            assertThatThrownBy(() -> eventRegistrationService.getCancelRequestList(member.getId(),
+                    PageRequest.of(0, 20)))
+                    .isInstanceOf(OperatorPermissionRequiredException.class);
+        }
+
+        @Test
+        @DisplayName("[INT-043] 취소 요청 중인 신청은 행사 상세에서 isRegistered=true, cancelRequested=true로 보인다")
+        void getEvent_WithPendingCancelRequest_ShowsCancelRequested() {
+            Event event = createAndSaveAutoApproveEvent();
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            assertThat(eventService.getEvent(event.getId(), member.getId()).cancelRequested()).isFalse();
+
+            Long registrationId = eventRegistrationService
+                    .requestCancelRegistration(event.getId(), member.getId(), "개인 사정").registrationId();
+
+            var pending = eventService.getEvent(event.getId(), member.getId());
+            assertThat(pending.isRegistered()).isTrue();
+            assertThat(pending.cancelRequested()).isTrue();
+            assertThat(eventService.getEvent(event.getId(), member2.getId()).cancelRequested()).isFalse();
+
+            // 운영진 취소 후에는 더 이상 유효한 신청이 아니므로 둘 다 false
+            eventRegistrationService.cancelRegistrationByAdmin(registrationId, operator.getId());
+            var canceled = eventService.getEvent(event.getId(), member.getId());
+            assertThat(canceled.isRegistered()).isFalse();
+            assertThat(canceled.cancelRequested()).isFalse();
+        }
+    }
+
     @Nested
     @DisplayName("선착순(AUTO_APPROVE) 행사 - 신청/취소/재신청 흐름")
     class AutoApproveFlowTest {
@@ -257,7 +483,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
          * EventRegistration의 cancel() 변경을 소실시키는 버그를 검출.
          */
         @Test
-        @DisplayName("[INT-001] 선착순 행사 신청 후 취소하면 DB에 CANCELED 상태가 반영됨")
+        @DisplayName("[INT-001] 선착순 행사 신청 → 취소 요청 → 운영진 취소 시 DB에 CANCELED 상태가 반영됨")
         void registerAndCancel_AutoApprove_CanceledStatusPersistedInDb() {
             // given
             Event event = createAndSaveAutoApproveEvent();
@@ -271,14 +497,28 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     .orElseThrow();
             assertThat(afterRegister.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
 
-            // when: 취소
-            eventRegistrationService.cancelRegistration(event.getId(), member.getId());
+            // when: 신청자가 취소 요청
+            Long registrationId = eventRegistrationService
+                    .requestCancelRegistration(event.getId(), member.getId(), "개인 사정").registrationId();
 
-            // then: DB에서 CANCELED 확인 (flush 누락 시 여전히 REGISTERED)
+            // then: 요청만으로는 취소되지 않고 정원도 그대로 점유
+            EventRegistration afterRequest = eventRegistrationRepository.findById(registrationId).orElseThrow();
+            assertThat(afterRequest.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+            assertThat(afterRequest.getCancelReason()).isEqualTo("개인 사정");
+            assertThat(afterRequest.getCancelRequestedAt()).isNotNull();
+            assertThat(eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow().getCurrentCount())
+                    .isEqualTo(1);
+
+            // when: 운영진이 취소 처리
+            eventRegistrationService.cancelRegistrationByAdmin(registrationId, operator.getId());
+
+            // then: DB에서 CANCELED 확인 (flush 누락 시 여전히 REGISTERED), 취소 요청 정보는 알림용으로 유지
             EventRegistration afterCancel = eventRegistrationRepository
                     .findByEventIdAndUserId(event.getId(), member.getId())
                     .orElseThrow();
             assertThat(afterCancel.getStatus()).isEqualTo(EventRegistrationStatus.CANCELED);
+            assertThat(afterCancel.getCancelReason()).isEqualTo("개인 사정");
+            assertThat(afterCancel.getCancelRequestedAt()).isNotNull();
 
             // then: 행사 currentCount가 0으로 복원됨
             Event updatedEvent = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -299,7 +539,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
 
             // when: 신청 → 취소 → 재신청
             eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
-            eventRegistrationService.cancelRegistration(event.getId(), member.getId());
+            requestCancelAndProcess(event.getId(), member.getId());
             eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
 
             // then: DB에서 REGISTERED 확인
@@ -307,6 +547,9 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
                     .findByEventIdAndUserId(event.getId(), member.getId())
                     .orElseThrow();
             assertThat(afterReRegister.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+            // then: 이전 취소 요청 정보는 초기화됨
+            assertThat(afterReRegister.getCancelReason()).isNull();
+            assertThat(afterReRegister.getCancelRequestedAt()).isNull();
 
             // then: 행사 currentCount가 1
             Event updatedEvent = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -331,7 +574,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
 
             // when: 신청 → 취소 → 재신청
             eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
-            eventRegistrationService.cancelRegistration(event.getId(), member.getId());
+            requestCancelAndProcess(event.getId(), member.getId());
             eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
 
             // then: DB에서 WAITING 확인
@@ -368,7 +611,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("[INT-005] 겹침 기간 정원 마감→취소→자동 재오픈")
+        @DisplayName("[INT-005] 겹침 기간 정원 마감→취소 요청→운영진 취소→자동 재오픈")
         void overlapPeriod_CapacityFull_Cancel_AutoReopen() {
             // given: capacity=2 겹침 행사
             Event event = createAndSaveOverlapEventWithCapacity(2);
@@ -383,8 +626,15 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             assertThat(afterFull.getCloseReason()).isEqualTo(EventCloseReason.CAPACITY_FULL);
             assertThat(afterFull.getCurrentCount()).isEqualTo(2);
 
-            // when: 1명 취소
-            eventRegistrationService.cancelRegistration(event.getId(), member.getId());
+            // when: 1명 취소 요청 → 아직 정원 마감 유지
+            Long registrationId = eventRegistrationService
+                    .requestCancelRegistration(event.getId(), member.getId(), "개인 사정").registrationId();
+            Event afterRequest = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
+            assertThat(afterRequest.getRegistrationStatus()).isEqualTo(RegistrationStatus.CLOSED);
+            assertThat(afterRequest.getCurrentCount()).isEqualTo(2);
+
+            // when: 운영진이 취소 처리
+            eventRegistrationService.cancelRegistrationByAdmin(registrationId, operator.getId());
 
             // then: OPEN 복원, currentCount=1, eventStatus=ONGOING 유지
             Event afterCancel = eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow();
@@ -938,6 +1188,49 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             assertThat(reg.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
         }
 
+        // ==================== 설문 응답 삭제는 행사 신청 취소의 우회 경로가 아니다 ====================
+
+        @Test
+        @DisplayName("[TC-EVTSRV-044] 연결된 행사에 유효한 신청이 있으면 설문 응답 삭제가 거부되고 신청·정원·응답이 유지된다")
+        void deleteMyResponse_ActiveLinkedRegistration_Rejected() {
+            Survey survey = createAndSaveOpenSurvey();
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey);
+            eventRegistrationService.registerEvent(event.getId(), member.getId(),
+                    createSurveyAnswers(getQuestionId(survey)));
+            AuthenticatedUser auth = new AuthenticatedUser(
+                    member.getId(), member.getStudentId(), member.getRole().name());
+
+            assertThatThrownBy(() -> surveyResponseService.deleteMyResponse(survey.getId(), auth))
+                    .isInstanceOf(SurveyResponseInUseByEventRegistrationException.class);
+
+            EventRegistration reg = eventRegistrationRepository
+                    .findByEventIdAndUserId(event.getId(), member.getId()).orElseThrow();
+            assertThat(reg.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED);
+            assertThat(eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow().getCurrentCount())
+                    .isEqualTo(1);
+            assertThat(surveyResponseRepository.existsBySurveyIdAndUserId(survey.getId(), member.getId()))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("[TC-EVTSRV-044a] 운영진이 신청을 취소한 뒤에는 설문 응답을 삭제할 수 있다")
+        void deleteMyResponse_AfterRegistrationCanceledByOperator_Succeeds() {
+            Survey survey = createAndSaveOpenSurvey();
+            Event event = createAndSaveSurveyLinkedAutoEvent(survey);
+            eventRegistrationService.registerEvent(event.getId(), member.getId(),
+                    createSurveyAnswers(getQuestionId(survey)));
+            requestCancelAndProcess(event.getId(), member.getId());
+            AuthenticatedUser auth = new AuthenticatedUser(
+                    member.getId(), member.getStudentId(), member.getRole().name());
+
+            surveyResponseService.deleteMyResponse(survey.getId(), auth);
+
+            assertThat(surveyResponseRepository.findBySurveyIdAndUserIdAndDeletedFalse(survey.getId(), member.getId()))
+                    .isEmpty();
+            assertThat(eventRepository.findByIdAndNotDeleted(event.getId()).orElseThrow().getCurrentCount())
+                    .isZero();
+        }
+
         // ==================== TC-018 / TC-059 ====================
 
         @Test
@@ -1166,7 +1459,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
             eventRegistrationService.registerEvent(event.getId(), member.getId(), answersA);
 
             // when: 취소
-            eventRegistrationService.cancelRegistration(event.getId(), member.getId());
+            requestCancelAndProcess(event.getId(), member.getId());
 
             // when: 운영진이 설문A -> 설문B로 변경
             Survey surveyB = createAndSaveOpenSurvey();
@@ -1204,7 +1497,7 @@ class EventRegistrationIntegrationTest extends ServiceIntegrationTestBase {
 
             List<SubmitAnswerRequest> answersA = createSurveyAnswers(questionIdA);
             eventRegistrationService.registerEvent(event.getId(), member.getId(), answersA);
-            eventRegistrationService.cancelRegistration(event.getId(), member.getId());
+            requestCancelAndProcess(event.getId(), member.getId());
 
             // when: 설문 변경 (A -> B), 사용자가 설문B에 미응답
             Survey surveyB = createAndSaveOpenSurvey();

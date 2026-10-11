@@ -51,7 +51,11 @@ export interface EventDetailResponse {
   registrationStartAt?: string;
   registrationEndAt?: string;
   capacity?: number;
-  currentCount?: number;
+  /**
+   * 현재 신청자 수. 운영진 이상에게만 제공되며 그 외에는 null
+   * @nullable
+   */
+  currentCount?: number | null;
   visibility?: EventDetailResponseVisibility;
   registrationStatus?: EventDetailResponseRegistrationStatus;
   eventStatus?: EventDetailResponseEventStatus;
@@ -63,6 +67,8 @@ export interface EventDetailResponse {
   updatedAt?: string;
   canEdit?: boolean;
   isRegistered?: boolean;
+  /** 현재 사용자의 유효한 신청에 취소 요청이 접수되어 운영진 처리를 기다리는 중인지 여부 */
+  cancelRequested?: boolean;
   /**
    * 연결된 설문 ID (null이면 설문 미연결)
    * @nullable

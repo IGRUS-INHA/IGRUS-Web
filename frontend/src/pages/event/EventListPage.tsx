@@ -72,7 +72,7 @@ function mapToEvent(
     ...(apiEvent.eventStartAt && { startDate: apiEvent.eventStartAt }),
     ...(apiEvent.eventEndAt && { endDate: apiEvent.eventEndAt }),
     ...(apiEvent.capacity !== undefined && { capacity: apiEvent.capacity }),
-    ...(apiEvent.currentCount !== undefined && {
+    ...(apiEvent.currentCount != null && {
       currentCount: apiEvent.currentCount,
     }),
     ...(apiEvent.registrationStartAt && {

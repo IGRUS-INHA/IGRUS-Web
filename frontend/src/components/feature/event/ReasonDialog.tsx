@@ -2,12 +2,14 @@ import { useState } from "react";
 
 interface ReasonDialogProps {
   title: string;
+  maxLength?: number;
   onConfirm: (reason: string) => void;
   onCancel: () => void;
 }
 
 export default function ReasonDialog({
   title,
+  maxLength,
   onConfirm,
   onCancel,
 }: ReasonDialogProps) {
@@ -21,6 +23,7 @@ export default function ReasonDialog({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="사유를 입력하세요"
+          maxLength={maxLength}
           className="w-full h-24 px-s3 py-s2 rounded-r2 border border-border bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <div className="flex justify-end gap-s2">

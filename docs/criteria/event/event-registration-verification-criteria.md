@@ -1,12 +1,34 @@
 # 행사 신청 (Event Registration) 검증 기준서
 
 > **Status**: Draft
-> **Last Updated**: 2026-03-06
+> **Last Updated**: 2026-10-11
 > **Scope**: 행사 신청(Register), 취소(Cancel), 재신청(Re-Register), 승인(Approve), 거절(Reject), 되돌리기(Revert), 동시성 제어(Concurrency), 2축 모델 연동
 > **상태 모델**: 2축 모델 연동 (registrationStatus + eventStatus) — [행사 검증 기준서](./event-verification-criteria.md) 참조
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 
 > **✅ 리팩토링 완료**: 이 문서는 기존 단일 축 FSM(EventStatus 5상태)에서 **2축 모델**(registrationStatus + eventStatus)로 재설계된 사양을 기술한다. 코드 리팩토링이 완료되어 모든 항목이 현재 구현과 일치한다.
+
+> **변경 (2026-10-11) — 취소 요청제**: 신청자는 더 이상 직접 취소할 수 없다. 사유를 적어 **취소 요청**만 할 수 있고, 운영진이 취소 처리해야 실제로 취소된다. 아래 [취소 요청](#취소-요청-cancel-request) 절이 이 문서의 기존 "본인 취소" 서술보다 우선한다.
+
+## 취소 요청 (Cancel Request)
+
+| 항목 | 내용 |
+|------|------|
+| 데이터 | `EventRegistration.cancelReason`(최대 500자), `cancelRequestedAt` — 둘 다 nullable (V56). 별도 상태 enum 없음 |
+| 취소 요청 | `POST /api/v1/events/{eventId}/registrations/cancel-request` `{reason}` (인증 필요, 1~500자). 신청 상태·`currentCount`·`registrationStatus` **불변** (정원 계속 점유). 공백만 있는 사유는 스펙 pattern(ASCII 공백류) 또는 서비스(`strip()` 후 빈 문자열, 전각 공백 U+3000 포함)에서 400 `EVENT_CANCEL_REASON_REQUIRED` |
+| 동시성 | 요청 기록·요청 거절은 엔티티 저장이 아닌 **조건부 원자적 UPDATE**(`requestCancelIfActive`: `status IN (REGISTERED, WAITING, APPROVED) AND cancelRequestedAt IS NULL` / `clearPendingCancelRequest`: `cancelRequestedAt IS NOT NULL AND status <> CANCELED`)로 수행 → 동시에 진행된 운영진 취소/승인의 `status`를 덮어쓰지 않고, 동시 중복 요청은 정확히 1건만 성공(나머지 409). UNPUBLISHED로 전환된 행사의 기존 신청도 요청 가능. 반대 방향 보호: `EventRegistration`은 `@DynamicUpdate`라 승인/거절/되돌리기/운영진 취소가 `status` 컬럼만 UPDATE하므로 동시에 커밋된 취소 요청 기록을 지우지 않는다 (승인은 분리된 엔티티 merge 대신 재조회 후 변경) |
+| 요청 불가 | 행사 `eventStatus == CANCELED` → 400 `EVENT_NOT_CANCELABLE` / 신청 없음 → 404 / 신청 CANCELED → 400 `EVENT_ALREADY_CANCELED` / 신청 REJECTED → 400 `EVENT_INVALID_REGISTRATION_STATUS` / 이미 요청됨 → 409 `EVENT_CANCEL_ALREADY_REQUESTED` |
+| 운영진 알림 목록 | `GET /api/v1/registrations/cancel-requests` (OPERATOR+, 페이징, `cancelRequestedAt` DESC). 처리 대기 + 이미 취소된 요청 모두 포함, 삭제된 행사와 요청 후 신청 자체가 거절(REJECTED)된 건은 제외. `status == CANCELED`이면 "취소됨" |
+| 실제 취소 | 기존 `POST /api/v1/registrations/{registrationId}/cancel` (OPERATOR+). 이미 CANCELED이면 400 `EVENT_INVALID_REGISTRATION_STATUS`. `currentCount--` 및 자동 재오픈은 이 시점에 발생. 요청 사유는 감사 이벤트 `REGISTRATION_CANCELED_BY_ADMIN`의 reason에 기록. 취소 후에도 `cancelReason`/`cancelRequestedAt` 유지 |
+| 요청 거절 | `POST /api/v1/registrations/{registrationId}/cancel-request/reject` (OPERATOR+). `cancelReason`/`cancelRequestedAt`을 null로 되돌려 요청하지 않은 상태로 복원. 신청 상태·`currentCount` 불변, 감사 이력 없음(로그만). 거절 후 알림 목록에서 사라지고 `cancelRequested=false`, 신청자는 다시 요청 가능. 대기 중인 요청이 없으면(요청한 적 없음 / 이미 CANCELED 처리됨 — 기록은 유지) 400 `EVENT_CANCEL_REQUEST_NOT_PENDING`, 신청 없음 404 |
+| 재신청 | `reRegister()` 시 `cancelReason`/`cancelRequestedAt` 초기화 |
+| 화면 표시용 필드 | 행사 상세 `cancelRequested`(유효한 신청이 취소 요청 처리 대기 중일 때만 true) — 공개 상세(`EventDetailResponse`)와 관리자 상세(`AdminEventDetailResponse`) 모두. 신청자 목록 `cancelReason`/`cancelRequestedAt` |
+| 탈퇴 회원 | 탈퇴(soft delete)한 회원의 취소 요청은 목록에 `userName = "탈퇴한 사용자"`, `studentId = null`로 표시 |
+| 우회 경로 차단 | 설문 응답 삭제(`DELETE /api/v1/surveys/{surveyId}/responses`)는 연결된 행사에 유효한 신청이 있으면 409 `SURVEY_RESPONSE_IN_USE_BY_EVENT_REGISTRATION`으로 거부 (과거의 "응답 삭제 시 신청 자동 취소"는 폐기, [EVTSRV-030](./event-survey-improvements-verification-criteria.md) 참조) |
+| 제거됨 | `DELETE /api/v1/events/{eventId}/registrations` (본인 즉시 취소) → 405 |
+| 범위 밖 | 외부인(비회원) 신청 — 본인 취소 수단이 원래 없음 (운영진 취소만) |
+
+테스트: `EventRegistrationServiceTest` SVC-020~026·SVC-REG-072·TC-078, `EventRegistrationIntegrationTest` INT-001/002/005·INT-040~048·INT-090·INT-092·TC-EVTSRV-044/044a, `EventRegistrationControllerIntegrationTest` INT-050~059·INT-070~074, `EventConcurrencyTest` INT-021·INT-049·INT-091, `EventControllerIntegrationTest` INT-065·INT-066.
 
 ## 목적
 
@@ -191,7 +213,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 전이 | 트리거 | 사전조건 | 사후조건 | 관련 코드 |
 |------|--------|---------|---------|----------|
 | (생성) → REGISTERED | `EventRegistration.create()` | 선착순 행사 | `status = REGISTERED`, `registeredAt = now` | `EventRegistration:70-71` |
-| REGISTERED → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED`, 행사 `currentCount--` | `EventRegistration:95-97`, `EventRegistrationService:168-181` |
+| REGISTERED → CANCELED | `registration.cancel()` | 운영진 취소 처리 (본인은 취소 요청만 가능) | `status = CANCELED`, 행사 `currentCount--` | `EventRegistration.cancel()`, `EventRegistrationService.cancelRegistrationByAdmin()` |
 | CANCELED → REGISTERED | `registration.reRegister()` | `registrationStatus == OPEN`, 기간 내, 정원 여유 | `status = REGISTERED`, `registeredAt` 갱신 | `EventRegistration:125-133` |
 
 ### 2-2. 선발제(MANUAL_APPROVE) 행사의 EventRegistrationStatus FSM
@@ -219,9 +241,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | WAITING → REJECTED | `registration.reject()` | OPERATOR+ 권한, 선발제, `eventStatus ∉ {COMPLETED, CANCELED}` `(현재 구현 일치)` | `status = REJECTED` | `EventRegistration:88-90`, `EventRegistrationService:333` |
 | APPROVED → WAITING | `registration.revertToWaiting()` | OPERATOR+ 권한, 선발제, `eventStatus == UPCOMING` `(현재 구현 일치)` | `status = WAITING`, 행사 `currentCount--` | `EventRegistration:104-108`, `EventRegistrationService:390-399` |
 | REJECTED → WAITING | `registration.revertToWaiting()` | OPERATOR+ 권한, 선발제, `eventStatus == UPCOMING` `(현재 구현 일치)` | `status = WAITING` (카운트 변경 없음) | `EventRegistration:104-108`, `EventRegistrationService:390-400` |
-| WAITING → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED` (카운트 변경 없음, WAITING은 isActive=false) | `EventRegistration:95-97` |
-| APPROVED → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED`, 행사 `currentCount--` | `EventRegistration:95-97`, `EventRegistrationService:168-181` |
-| REJECTED → CANCELED | `registration.cancel()` | 본인 요청 | `status = CANCELED` (카운트 변경 없음, REJECTED는 isActive=false) | `EventRegistration:95-97` |
+| WAITING → CANCELED | `registration.cancel()` | 운영진 취소 처리 (본인은 취소 요청만 가능) | `status = CANCELED` (카운트 변경 없음, WAITING은 isActive=false) | `EventRegistration:95-97` |
+| APPROVED → CANCELED | `registration.cancel()` | 운영진 취소 처리 (본인은 취소 요청만 가능) | `status = CANCELED`, 행사 `currentCount--` | `EventRegistration.cancel()`, `EventRegistrationService.cancelRegistrationByAdmin()` |
+| REJECTED → CANCELED | `registration.cancel()` | 운영진 취소 처리 (REJECTED는 본인 취소 요청 불가) | `status = CANCELED` (카운트 변경 없음, REJECTED는 isActive=false) | `EventRegistration:95-97` |
 | CANCELED → WAITING | `registration.reRegister()` | `registrationStatus == OPEN`, 기간 내, 정원 여유 | `status = WAITING`, `registeredAt` 갱신 | `EventRegistration:125-133` |
 
 **금지된 전이 (Invalid Transition)**:
@@ -242,8 +264,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 작업 | 선착순 | 선발제 | 관련 코드 |
 |------|--------|--------|----------|
 | 신청(register) | `++` (원자적 UPDATE) | 변경 없음 | `EventRegistrationService:123-130` |
-| 취소(cancel, isActive=true) | `--` (원자적 UPDATE) | `--` (APPROVED만) | `EventRegistrationService:174-181` |
-| 취소(cancel, isActive=false) | N/A | 변경 없음 (WAITING) | `EventRegistrationService:168` |
+| 취소(cancel, isActive=true) | `--` (원자적 UPDATE) | `--` (APPROVED만) | `EventRegistrationService.cancelRegistrationByAdmin()` |
+| 취소(cancel, isActive=false) | N/A | 변경 없음 (WAITING) | `EventRegistrationService.cancelRegistrationByAdmin()` |
+| 취소 요청 / 요청 거절 | 변경 없음 | 변경 없음 | `EventRegistrationService.requestCancelRegistration()`, `rejectCancelRequest()` |
 | 승인(approve) | N/A | `++` (원자적 UPDATE) | `EventRegistrationService:279-282` |
 | 거절(reject) | N/A | 변경 없음 | - |
 | 되돌리기(revert, APPROVED) | N/A | `--` (원자적 UPDATE) | `EventRegistrationService:394-399` |
@@ -338,7 +361,9 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 행사 신청 (allowExternal=false) | 401 | **403** | **O** | **O** | **O** |
 | 행사 신청 (allowExternal=true) | 401 | **O** | **O** | **O** | **O** |
 | 외부인 신청 (`/external`) | **O** (인증 불필요) | N/A | N/A | N/A | N/A |
-| 신청 취소 (본인) | 401 | O | O | O | O |
+| 신청 취소 요청 (본인, `/registrations/cancel-request`) | 401 | O | O | O | O |
+| 취소 요청 목록 조회 (`/registrations/cancel-requests`) | 401 | 403 | 403 | **O** | **O** |
+| 취소 요청 거절 (`/registrations/{id}/cancel-request/reject`) | 401 | 403 | 403 | **O** | **O** |
 | 신청 취소 (관리자, `/cancel`) | 401 | 403 | 403 | **O** | **O** |
 | 내 신청 목록 조회 | 401 | O | O | O | O |
 | 신청자 목록 조회 | 401 | 403 | 403 | **O** | **O** |
@@ -365,7 +390,10 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 서비스 메서드 | 검증 방식 | 검증 예외 |
 |-------------|---------|----------|
 | `registerEvent` | `user.isAssociate() && !event.getAllowExternal()` 조건부 확인 | `AssociateMemberNotAllowedException` |
-| `cancelRegistration` | **검증 없음** (인증된 사용자 본인의 신청만 조회 가능) | - |
+| `requestCancelRegistration` | **검증 없음** (인증된 사용자 본인의 신청만 조회 가능) | - |
+| `getCancelRequestList` | `validateOperatorPermission(user)` | `OperatorPermissionRequiredException` |
+| `rejectCancelRequest` | `validateOperatorPermission(user)` | `OperatorPermissionRequiredException` |
+| `cancelRegistrationByAdmin` | `validateOperatorPermission(user)` | `OperatorPermissionRequiredException` |
 | `getMyRegistrations` | **검증 없음** (인증된 사용자 본인 데이터) | - |
 | `getRegistrationList` | `validateOperatorPermission(user)` | `OperatorPermissionRequiredException` |
 | `approveRegistration` | `validateOperatorPermission(user)` | `OperatorPermissionRequiredException` |
@@ -381,7 +409,8 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 | 엔드포인트 | 로그 메시지 | 관련 코드 |
 |-----------|-----------|----------|
 | POST `/api/v1/events/{eventId}/registrations` | `행사 신청 요청 - eventId: {}, userId: {}` | `EventRegistrationController:62` |
-| DELETE `/api/v1/events/{eventId}/registrations` | `신청 취소 요청 - eventId: {}, userId: {}` | `EventRegistrationController:79` |
+| POST `/api/v1/events/{eventId}/registrations/cancel-request` | `신청 취소 요청 - eventId: {}, userId: {}` | `EventRegistrationController` |
+| GET `/api/v1/registrations/cancel-requests` | `신청 취소 요청 목록 조회 요청 - userId: {}` | `EventRegistrationController` |
 | GET `/api/v1/my/registrations` | `내 신청 목록 조회 요청 - userId: {}` | `EventRegistrationController:93` |
 | GET `/api/v1/events/{eventId}/registrations` | `신청자 목록 조회 요청 - eventId: {}, userId: {}` | `EventRegistrationController:114` |
 | POST `/api/v1/registrations/{registrationId}/approve` | `신청 승인 요청 - registrationId: {}, userId: {}` | `EventRegistrationController:132` |
@@ -392,7 +421,7 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | 이벤트 | 로그 레벨 | 로그 메시지 | 관련 코드 |
 |--------|---------|-----------|----------|
-| 취소 시 카운트 감소 실패 | `error` | `신청자 수 감소 실패 (이미 0): eventId={}` | `EventRegistrationService:177` |
+| 취소 시 카운트 감소 실패 | `error` | `신청자 수 감소 실패 (이미 0): eventId={}, registrationId={}` | `EventRegistrationService.cancelRegistrationByAdmin()`, `revertRegistration()` |
 | 되돌리기 시 카운트 감소 실패 | `error` | `신청자 수 감소 실패 (이미 0): eventId={}, registrationId={}` | `EventRegistrationService:397` |
 | 원자적 UPDATE 후 행사 조회 실패 | `warn` | `행사 상태 갱신 실패: 원자적 UPDATE 이후 행사를 찾을 수 없음. eventId={}` | `EventRegistrationService:521,537` |
 
@@ -415,19 +444,19 @@ QA Testing 용어 정리 wiki의 10개 영역 중, 이 도메인에 직접 관�
 
 | 테스트 클래스 | 테스트 수 | 범위 |
 |-------------|---------|------|
-| `EventRegistrationTest` | 28개 | 생성(3), 상태 변경(5), 재신청(7), 되돌리기(5), 조회(8) - 중첩 클래스 구조 |
+| `EventRegistrationTest` | 31개 | 생성, 상태 변경, 재신청, 되돌리기, 조회, 외부인 생성 - 중첩 클래스 구조 |
 
 **서비스 단위 테스트** (Mockito):
 
 | 테스트 클래스 | 테스트 수 | 범위 |
 |-------------|---------|------|
-| `EventRegistrationServiceTest` | 29개 | registerEvent(11), cancelRegistration(4), getMyRegistrations(2), getRegistrationList(2), approveRegistration(5), rejectRegistration(4), revertRegistration(7) - 중첩 클래스 구조 |
+| `EventRegistrationServiceTest` | 102개 | registerEvent, requestCancelRegistration(7), getMyRegistrations, getRegistrationList, approve/reject/revertRegistration, 2축 모델, 카운트 매트릭스, visibility, 설문 연동, cancelRegistrationByAdmin 등 - 중첩 클래스 구조 |
 
 **통합 테스트** (`@SpringBootTest`, non-transactional):
 
 | 테스트 클래스 | 테스트 수 | 범위 |
 |-------------|---------|------|
-| `EventRegistrationIntegrationTest` | 3개 | 선착순 신청-취소(INT-001), 선착순 신청-취소-재신청(INT-002), 선발제 신청-취소-재신청(INT-003) |
+| `EventRegistrationIntegrationTest` | 42개 | 취소 요청/거절/알림 목록(INT-040~048, INT-090), 신청-취소 요청-운영진 취소-재신청(INT-001~003), 2축 모델, 선발제 흐름, 설문 연동 |
 
 ### 7-2. 테스트-검증 항목 매핑
 

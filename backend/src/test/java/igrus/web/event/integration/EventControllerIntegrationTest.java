@@ -9,6 +9,7 @@ import igrus.web.event.domain.EventRegistrationType;
 import igrus.web.event.dto.request.CreateEventRequest;
 import igrus.web.event.dto.request.EventStatusChangeReasonRequest;
 import igrus.web.event.repository.EventRepository;
+import igrus.web.event.service.EventRegistrationService;
 import igrus.web.security.auth.common.domain.AuthenticatedUser;
 import igrus.web.security.jwt.JwtTokenProvider;
 import igrus.web.user.domain.User;
@@ -70,6 +71,9 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private EventRepository eventRepository;
+
+    @Autowired
+    private EventRegistrationService eventRegistrationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
@@ -297,6 +301,124 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(event.getId()))
                     .andExpect(jsonPath("$.canEdit").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+    }
+
+    // ==================== 신청 인원 현황(currentCount)은 운영진만 ====================
+
+    @Nested
+    @DisplayName("신청 인원 현황(currentCount) 공개 범위")
+    class CurrentCountVisibilityTest {
+
+        private Event createEventWithOneRegistration() {
+            Event event = createAndSaveOpenEvent();
+            eventRegistrationService.registerEvent(event.getId(), member.getId(), null);
+            return event;
+        }
+
+        @Test
+        @DisplayName("[INT-060] 비로그인 사용자의 행사 목록에는 currentCount가 없고 capacity/isRegistrable은 있다")
+        void getEventList_Unauthenticated_HidesCurrentCount() throws Exception {
+            createEventWithOneRegistration();
+
+            mockMvc.perform(get("/api/v1/events"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].currentCount").doesNotExist())
+                    .andExpect(jsonPath("$[0].capacity").value(10))
+                    .andExpect(jsonPath("$[0].isRegistrable").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+
+        @Test
+        @DisplayName("[INT-061] MEMBER의 행사 목록/상세에는 currentCount가 없다")
+        void getEvent_Member_HidesCurrentCount() throws Exception {
+            Event event = createEventWithOneRegistration();
+
+            mockMvc.perform(get("/api/v1/events").with(withAuth(member)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].currentCount").doesNotExist())
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+
+            mockMvc.perform(get("/api/v1/events/" + event.getId()).with(withAuth(member)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.currentCount").doesNotExist())
+                    .andExpect(jsonPath("$.capacity").value(10))
+                    .andExpect(jsonPath("$.isRegistered").value(true))
+                    .andExpect(jsonPath("$.cancelRequested").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+
+        @Test
+        @DisplayName("[INT-062] OPERATOR의 행사 목록/상세에는 currentCount가 내려간다")
+        void getEvent_Operator_ShowsCurrentCount() throws Exception {
+            Event event = createEventWithOneRegistration();
+
+            mockMvc.perform(get("/api/v1/events").with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].currentCount").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+
+            mockMvc.perform(get("/api/v1/events/" + event.getId()).with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.currentCount").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+
+        @Test
+        @DisplayName("[INT-063] 비로그인 사용자의 allowExternal 행사 상세에는 currentCount가 없다")
+        void getEvent_Unauthenticated_HidesCurrentCount() throws Exception {
+            Event event = createAndSaveOpenEventWithAllowExternal();
+
+            mockMvc.perform(get("/api/v1/events/" + event.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.currentCount").doesNotExist())
+                    .andExpect(jsonPath("$.capacity").value(10))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+
+        @Test
+        @DisplayName("[INT-064] 운영진 전용 관리자 API 응답에는 currentCount가 그대로 내려간다")
+        void getAdminEvent_Operator_ShowsCurrentCount() throws Exception {
+            Event event = createEventWithOneRegistration();
+
+            mockMvc.perform(get("/api/v1/admin/events/" + event.getId()).with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.currentCount").value(1))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+
+        @Test
+        @DisplayName("[INT-066] 운영진 본인이 취소 요청한 행사의 관리자 상세에는 cancelRequested=true가 내려간다")
+        void getAdminEvent_OperatorOwnPendingCancelRequest_ShowsCancelRequested() throws Exception {
+            Event event = createAndSaveOpenEvent();
+            eventRegistrationService.registerEvent(event.getId(), operator.getId(), null);
+
+            mockMvc.perform(get("/api/v1/admin/events/" + event.getId()).with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.isRegistered").value(true))
+                    .andExpect(jsonPath("$.cancelRequested").value(false))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+
+            eventRegistrationService.requestCancelRegistration(event.getId(), operator.getId(), "개인 사정");
+
+            mockMvc.perform(get("/api/v1/admin/events/" + event.getId()).with(withAuth(operator)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.isRegistered").value(true))
+                    .andExpect(jsonPath("$.cancelRequested").value(true))
+                    .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
+        }
+
+        @Test
+        @DisplayName("[INT-065] 취소 요청 중인 신청자의 행사 상세에는 cancelRequested=true가 내려간다")
+        void getEvent_PendingCancelRequest_ShowsCancelRequested() throws Exception {
+            Event event = createEventWithOneRegistration();
+            eventRegistrationService.requestCancelRegistration(event.getId(), member.getId(), "개인 사정");
+
+            mockMvc.perform(get("/api/v1/events/" + event.getId()).with(withAuth(member)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.isRegistered").value(true))
+                    .andExpect(jsonPath("$.cancelRequested").value(true))
                     .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
         }
     }

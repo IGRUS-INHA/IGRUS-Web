@@ -1,13 +1,15 @@
 # 행사 (Event) 검증 기준서
 
 > **Status**: Draft
-> **Last Updated**: 2026-02-27
+> **Last Updated**: 2026-10-11
 > **Scope**: 행사 생성(Create), 조회(Read), 수정(Update), 삭제(Delete), 상태 관리(Status), Lazy Evaluation, 행사 취소/재활성화, 등록 수동 재오픈, **Visibility(공개/비공개) 관리, 관리자 전용 API**
 > **상태 모델**: 3축 모델 (visibility + registrationStatus + eventStatus)
 > **Reference**: [QA Testing 관련 용어 정리](https://github.com/IGRUS-INHA/IGRUS-Web/wiki/QA-Testing-%EA%B4%80%EB%A0%A8-%EC%9A%A9%EC%96%B4-%EC%A0%95%EB%A6%AC)
 > **관련 이슈**: [#483 행사 Visibility(공개/비공개) 추가 및 관리자 전용 API](https://github.com/IGRUS-INHA/IGRUS-Web/issues/483)
 
 > **3축 모델 확장**: 이 문서는 기존 2축 모델(registrationStatus + eventStatus)에 **3번째 축 visibility**(PUBLISHED/UNPUBLISHED)를 추가한 사양을 기술한다. Visibility 축은 SurveyVisibility 패턴을 따르며, eventStatus/registrationStatus와 독립적으로 동작한다.
+
+> **변경 (2026-10-11) — 신청 인원 현황은 운영진만**: 공개 조회 API(`GET /api/v1/events`, `GET /api/v1/events/{eventId}`)의 `currentCount`는 요청자가 OPERATOR/ADMIN일 때만 값이 내려가고, 그 외(비로그인·ASSOCIATE·MEMBER)에는 `null`이다. `capacity`, `isRegistrable`, `closeReason`은 그대로 공개한다. 관리자 API(`/api/v1/admin/events...`)와 운영진 전용 변경 API 응답은 영향 없다. 행사 상세(공개·관리자 모두)에는 현재 사용자의 취소 요청 대기 여부 `cancelRequested`가 추가되었다 ([행사 신청 검증 기준서](./event-registration-verification-criteria.md#취소-요청-cancel-request)). 테스트: `EventControllerIntegrationTest` INT-060~066.
 
 ## 목적
 

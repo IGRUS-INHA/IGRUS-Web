@@ -16,7 +16,7 @@ import {
 } from "@/api/model/admin-event/admin-event";
 import {
   useRegisterEvent,
-  useCancelRegistration,
+  useRequestCancelRegistration,
 } from "@/api/model/event-registration/event-registration";
 import type {
   GetEventListParams,
@@ -100,11 +100,11 @@ export function useApplyEvent() {
   });
 }
 
-// 행사 신청 취소 (실제 API 사용)
-export function useCancelEventApplication() {
+// 행사 신청 취소 요청 (운영진 확인 후 취소됨)
+export function useRequestCancelEventApplication() {
   const queryClient = useQueryClient();
 
-  return useCancelRegistration({
+  return useRequestCancelRegistration({
     mutation: {
       onSuccess: (_data, variables) => {
         invalidateEventQueries(queryClient, variables.eventId);

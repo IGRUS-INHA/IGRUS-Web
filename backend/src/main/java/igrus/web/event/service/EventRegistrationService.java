@@ -8,12 +8,16 @@ import igrus.web.event.domain.EventRegistrationStatus;
 import igrus.web.event.domain.EventStatus;
 import igrus.web.event.domain.EventVisibility;
 import igrus.web.event.domain.RegistrationStatus;
+import igrus.web.event.dto.response.CancelRequestListResponse;
 import igrus.web.event.dto.response.MyRegistrationResponse;
 import igrus.web.event.dto.response.RegistrationListResponse;
 import igrus.web.event.dto.response.RegistrationResponse;
 import igrus.web.event.exception.AlreadyCanceledException;
 import igrus.web.event.exception.AlreadyRegisteredException;
 import igrus.web.event.exception.AssociateMemberNotAllowedException;
+import igrus.web.event.exception.CancelAlreadyRequestedException;
+import igrus.web.event.exception.CancelReasonRequiredException;
+import igrus.web.event.exception.CancelRequestNotPendingException;
 import igrus.web.event.exception.EventCapacityFullException;
 import igrus.web.event.exception.EventNotCancelableException;
 import igrus.web.event.exception.EventNotEditableException;
@@ -63,7 +67,10 @@ import java.util.Set;
  * <p>제공 기능:</p>
  * <ul>
  *   <li>{@link #registerEvent} - 행사 신청 (정회원 이상)</li>
- *   <li>{@link #cancelRegistration} - 신청 취소 (신청자 본인)</li>
+ *   <li>{@link #requestCancelRegistration} - 신청 취소 요청 (신청자 본인)</li>
+ *   <li>{@link #getCancelRequestList} - 취소 요청 목록 조회 (운영진 이상)</li>
+ *   <li>{@link #rejectCancelRequest} - 취소 요청 거절 (운영진 이상)</li>
+ *   <li>{@link #cancelRegistrationByAdmin} - 신청 취소 처리 (운영진 이상)</li>
  *   <li>{@link #getMyRegistrations} - 내 신청 목록 조회</li>
  *   <li>{@link #getRegistrationList} - 신청자 목록 조회 (운영진 이상)</li>
  *   <li>{@link #approveRegistration} - 신청 승인 - 선발제 (운영진 이상)</li>
@@ -195,55 +202,112 @@ public class EventRegistrationService {
     }
 
     /**
-     * 신청을 취소합니다.
-     *
-     * <p>동시성 제어: 원자적 UPDATE 방식 사용</p>
+     * 본인 신청의 취소를 요청합니다.
+     * 신청 상태와 신청자 수는 변경하지 않으며, 운영진이 {@link #cancelRegistrationByAdmin}으로
+     * 처리해야 실제로 취소됩니다.
      *
      * @param eventId 행사 ID
      * @param userId  신청자 ID (본인)
-     * @return 취소된 신청 응답 DTO
+     * @param reason  취소 사유
+     * @return 신청 응답 DTO (상태 변경 없음)
      * @throws EventNotFoundException             행사를 찾을 수 없는 경우
-     * @throws EventNotCancelableException         CANCELED 상태의 행사인 경우
+     * @throws EventNotCancelableException        CANCELED 상태의 행사인 경우
      * @throws EventRegistrationNotFoundException 신청을 찾을 수 없는 경우
+     * @throws AlreadyCanceledException           이미 취소된 신청인 경우
+     * @throws InvalidRegistrationStatusException 거절된 신청인 경우
+     * @throws CancelAlreadyRequestedException    이미 취소 요청한 경우
+     * @throws CancelReasonRequiredException      사유가 공백 문자뿐인 경우
      */
-    public RegistrationResponse cancelRegistration(Long eventId, Long userId) {
-        // 1. 행사 존재 확인
+    public RegistrationResponse requestCancelRegistration(Long eventId, Long userId, String reason) {
+        // 전각 공백 등 유니코드 공백만 있는 사유는 strip 후 비게 되므로 거부
+        String strippedReason = reason == null ? "" : reason.strip();
+        if (strippedReason.isEmpty()) {
+            throw new CancelReasonRequiredException();
+        }
+
         Event event = eventRepository.findByIdAndNotDeleted(eventId)
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
-        // 1-1. 취소된 행사의 신청은 취소 불가
+        // 취소된 행사의 신청은 취소 요청 불가
         if (event.getEventStatus() == EventStatus.CANCELED) {
             throw new EventNotCancelableException(event.getEventStatus());
         }
 
-        // 2. 신청 조회
-        EventRegistration registration = eventRegistrationRepository.findByEventIdAndUserId(eventId, userId)
+        Long registrationId = eventRegistrationRepository.findByEventIdAndUserId(eventId, userId)
+                .orElseThrow(EventRegistrationNotFoundException::new)
+                .getId();
+
+        // 조건부 원자적 UPDATE: 동시에 진행된 운영진 취소/승인이나 중복 요청과 경합해도
+        // status를 덮어쓰지 않고, 정확히 한 요청만 기록된다.
+        int updated = eventRegistrationRepository.requestCancelIfActive(
+                registrationId, strippedReason, Instant.now());
+
+        // 영속성 컨텍스트가 초기화되었으므로 최신 상태를 다시 조회
+        EventRegistration registration = eventRegistrationRepository.findById(registrationId)
                 .orElseThrow(EventRegistrationNotFoundException::new);
 
-        // 3. 이미 취소된 신청인지 확인
-        if (registration.isCanceled()) {
-            throw new AlreadyCanceledException();
-        }
-
-        // 4. 신청자 수 감소 여부 판단 (취소 전에 확인)
-        // REGISTERED(선착순) 또는 APPROVED(선발제 승인) 상태였으면 카운트 감소
-        boolean shouldDecrementCount = registration.isActive();
-
-        // 5. 신청 취소 (상태 변경)
-        registration.cancel();
-
-        // 6. 신청자 수 감소 (원자적 UPDATE)
-        if (shouldDecrementCount) {
-            int decremented = eventRepository.decrementCurrentCount(eventId);
-            if (decremented == 0) {
-                log.error("신청자 수 감소 실패 (이미 0): eventId={}", eventId);
+        if (updated == 0) {
+            if (registration.isCanceled()) {
+                throw new AlreadyCanceledException();
             }
-            // 자리가 생겼으면 상태 변경 (정원 마감 → OPEN)
-            eventStatusHelper.updateEventStatusAfterDecrement(eventId);
+            if (registration.isRejected()) {
+                throw new InvalidRegistrationStatusException();
+            }
+            throw new CancelAlreadyRequestedException();
         }
 
-        // 7. 응답 반환
+        log.info("신청 취소 요청 접수 - eventId: {}, registrationId: {}, userId: {}",
+                eventId, registrationId, userId);
         return RegistrationResponse.from(registration);
+    }
+
+    /**
+     * 취소 요청이 접수된 신청 목록을 조회합니다. (운영진 알림용, 이미 취소 처리된 요청 포함)
+     *
+     * @param userId   요청자 ID
+     * @param pageable 페이징 정보
+     * @return 취소 요청 목록
+     * @throws UserNotFoundException               사용자를 찾을 수 없는 경우
+     * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
+     */
+    @Transactional(readOnly = true)
+    public Page<CancelRequestListResponse> getCancelRequestList(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        validateOperatorPermission(user);
+
+        return eventRegistrationRepository.findCancelRequested(pageable)
+                .map(CancelRequestListResponse::from);
+    }
+
+    /**
+     * 취소 요청을 거절합니다. 취소 요청 사유/일시를 초기화하며 신청 상태와 신청자 수는 변경하지 않습니다.
+     *
+     * @param registrationId 신청 ID
+     * @param operatorUserId 요청자 ID (운영진/관리자)
+     * @return 신청 응답 DTO (상태 변경 없음)
+     * @throws EventRegistrationNotFoundException  신청을 찾을 수 없는 경우
+     * @throws UserNotFoundException               사용자를 찾을 수 없는 경우
+     * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
+     * @throws CancelRequestNotPendingException    처리 대기 중인 취소 요청이 없는 경우
+     */
+    public RegistrationResponse rejectCancelRequest(Long registrationId, Long operatorUserId) {
+        if (!eventRegistrationRepository.existsById(registrationId)) {
+            throw new EventRegistrationNotFoundException();
+        }
+
+        User operator = userRepository.findById(operatorUserId)
+                .orElseThrow(() -> new UserNotFoundException(operatorUserId));
+        validateOperatorPermission(operator);
+
+        // 조건부 원자적 UPDATE: 대기 중인 요청만 초기화하고 status는 건드리지 않는다.
+        if (eventRegistrationRepository.clearPendingCancelRequest(registrationId) == 0) {
+            throw new CancelRequestNotPendingException();
+        }
+
+        log.info("신청 취소 요청 거절 - registrationId: {}, operatorId: {}", registrationId, operatorUserId);
+        return RegistrationResponse.from(eventRegistrationRepository.findById(registrationId)
+                .orElseThrow(EventRegistrationNotFoundException::new));
     }
 
     /**
@@ -350,9 +414,12 @@ public class EventRegistrationService {
             throw new EventCapacityFullException();
         }
 
-        // 11. 승인 처리 (clearAutomatically로 인한 엔티티 분리 대비 — 명시적 save 필요)
-        registration.approve();
-        eventRegistrationRepository.save(registration);
+        // 11. 승인 처리 (clearAutomatically로 엔티티가 분리되었으므로 다시 조회)
+        // 분리된 엔티티를 merge하면 그 사이 커밋된 취소 요청 컬럼까지 읽은 시점 값으로 덮어쓰므로,
+        // 최신 상태를 다시 조회해 status만 변경한다.
+        eventRegistrationRepository.findById(registrationId)
+                .orElseThrow(EventRegistrationNotFoundException::new)
+                .approve();
 
         // 12. 정원이 찼으면 상태 변경
         eventStatusHelper.updateEventStatusAfterIncrement(eventId);
@@ -505,7 +572,7 @@ public class EventRegistrationService {
      * @throws EventRegistrationNotFoundException 신청을 찾을 수 없는 경우
      * @throws UserNotFoundException              사용자를 찾을 수 없는 경우
      * @throws OperatorPermissionRequiredException 운영진 권한이 없는 경우
-     * @throws AlreadyCanceledException           이미 취소된 신청인 경우
+     * @throws InvalidRegistrationStatusException  이미 취소된 신청인 경우 (EVENT_INVALID_REGISTRATION_STATUS, 400)
      */
     public RegistrationResponse cancelRegistrationByAdmin(Long registrationId, Long operatorUserId) {
         // 1. 신청 조회
@@ -519,8 +586,9 @@ public class EventRegistrationService {
                 .orElseThrow(() -> new UserNotFoundException(operatorUserId));
         validateOperatorPermission(operator);
 
-        // 3. 취소 전 상태 저장
+        // 3. 취소 전 상태 및 취소 요청 사유 저장 (원자적 UPDATE 이후 엔티티가 분리되므로 미리 읽음)
         String previousStatus = registration.getStatus().name();
+        String cancelReason = registration.getCancelReason();
 
         // 4. 신청자 수 감소 여부 판단 (취소 전에 확인)
         boolean shouldDecrementCount = registration.isActive();
@@ -540,7 +608,7 @@ public class EventRegistrationService {
         // 7. 감사 이력 이벤트 발행
         eventPublisher.publishEvent(new EventStatusChanged(
                 eventId, operatorUserId, EventChangeType.REGISTRATION_CANCELED_BY_ADMIN,
-                previousStatus, "CANCELED", null));
+                previousStatus, "CANCELED", cancelReason));
 
         log.info("관리자 행사 신청 취소 - eventId: {}, registrationId: {}, operatorId: {}",
                 eventId, registrationId, operatorUserId);

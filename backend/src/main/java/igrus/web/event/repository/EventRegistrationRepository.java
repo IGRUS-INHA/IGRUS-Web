@@ -7,7 +7,11 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +55,52 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
      * @return 유효한 신청이 있으면 true
      */
     boolean existsByEventIdAndUserIdAndStatusIn(Long eventId, Long userId, Collection<EventRegistrationStatus> statuses);
+
+
+    /**
+     * 특정 사용자가 특정 행사에 취소 요청 중인 유효한 신청이 있는지 확인합니다.
+     * 행사 상세 조회 시 "취소 요청됨" 표시용.
+     */
+    boolean existsByEventIdAndUserIdAndStatusInAndCancelRequestedAtIsNotNull(
+            Long eventId, Long userId, Collection<EventRegistrationStatus> statuses);
+
+
+    /**
+     * 취소 요청을 원자적으로 기록합니다.
+     * 유효한 신청(REGISTERED/WAITING/APPROVED)이고 아직 요청이 없을 때만 기록합니다.
+     * 엔티티 전체 UPDATE로 동시에 변경된 status를 덮어쓰지 않도록 두 컬럼만 조건부로 갱신합니다.
+     *
+     * @return 변경된 행 수 (1이면 성공, 0이면 취소/거절된 신청이거나 이미 요청됨)
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE EventRegistration r SET r.cancelReason = :reason, r.cancelRequestedAt = :requestedAt "
+            + "WHERE r.id = :id AND r.status IN ('REGISTERED', 'WAITING', 'APPROVED') "
+            + "AND r.cancelRequestedAt IS NULL")
+    int requestCancelIfActive(@Param("id") Long id, @Param("reason") String reason,
+                              @Param("requestedAt") Instant requestedAt);
+
+    /**
+     * 처리 대기 중인 취소 요청을 원자적으로 초기화합니다. (운영진의 요청 거절)
+     * 이미 취소 처리된 신청의 요청 기록은 알림 이력이므로 지우지 않습니다.
+     *
+     * @return 변경된 행 수 (1이면 성공, 0이면 대기 중인 요청 없음)
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE EventRegistration r SET r.cancelReason = NULL, r.cancelRequestedAt = NULL "
+            + "WHERE r.id = :id AND r.cancelRequestedAt IS NOT NULL AND r.status <> 'CANCELED'")
+    int clearPendingCancelRequest(@Param("id") Long id);
+
+
+    /**
+     * 취소 요청이 접수된 신청 목록을 조회합니다. (처리 대기 + 이미 취소된 것 모두 포함)
+     * 요청 후 운영진이 신청 자체를 거절(REJECTED)한 건은 더 처리할 것이 없으므로 제외합니다.
+     * 운영진 알림 페이지용. 행사/신청자를 fetch join하여 N+1을 방지합니다.
+     */
+    @Query(value = "SELECT r FROM EventRegistration r JOIN FETCH r.event LEFT JOIN FETCH r.user "
+            + "WHERE r.cancelRequestedAt IS NOT NULL AND r.status <> 'REJECTED'",
+            countQuery = "SELECT COUNT(r) FROM EventRegistration r JOIN r.event "
+                    + "WHERE r.cancelRequestedAt IS NOT NULL AND r.status <> 'REJECTED'")
+    Page<EventRegistration> findCancelRequested(Pageable pageable);
 
 
     /**

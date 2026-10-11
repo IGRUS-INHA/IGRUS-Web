@@ -37,6 +37,7 @@ import java.util.List;
  * @param isRegistered        현재 사용자가 신청했는지 여부
  * @param surveyId            연결된 설문 ID (null이면 설문 미연결)
  * @param allowExternal       외부인(비회원) 신청 허용 여부
+ * @param cancelRequested     현재 사용자의 유효한 신청이 취소 요청 처리 대기 중인지 여부
  */
 public record EventDetailResponse(
         Long id,
@@ -62,7 +63,8 @@ public record EventDetailResponse(
         boolean isRegistered,
         Long surveyId,
         List<EventAttachmentDto> attachments,
-        Boolean allowExternal
+        Boolean allowExternal,
+        boolean cancelRequested
 ) {
     /**
      * Event 엔티티로부터 EventDetailResponse를 생성합니다.
@@ -79,6 +81,11 @@ public record EventDetailResponse(
 
     public static EventDetailResponse from(Event event, boolean canEdit, boolean isRegistered,
                                             List<EventAttachmentDto> attachments) {
+        return from(event, canEdit, isRegistered, false, attachments);
+    }
+
+    public static EventDetailResponse from(Event event, boolean canEdit, boolean isRegistered,
+                                            boolean cancelRequested, List<EventAttachmentDto> attachments) {
         return new EventDetailResponse(
                 event.getId(),
                 event.getTitle(),
@@ -103,7 +110,8 @@ public record EventDetailResponse(
                 isRegistered,
                 event.getSurveyId(),
                 attachments,
-                event.getAllowExternal()
+                event.getAllowExternal(),
+                cancelRequested
         );
     }
 

@@ -631,18 +631,30 @@
 
 ### 교차 도메인 검증 (행사 신청 연동)
 
-#### TC-EVTSRV-044: 행사 연결 설문의 응답 삭제 시 행사 신청 자동 취소
+#### TC-EVTSRV-044: 행사 연결 설문의 응답 삭제 — 유효한 신청이 있으면 거부 (정책 변경 2026-10-11)
 
 | 항목 | 내용 |
 |------|------|
 | **우선순위** | 상 |
+| **테스트 유형** | 예외 |
+| **검증 기준 ID** | EVTSRV-030 |
+| **사전 조건** | 설문 S가 행사 E에 연결됨(`event.surveyId == S.id`), 사용자 U가 설문 S에 응답하고 행사 E에 신청함(REGISTERED/WAITING/APPROVED), 설문 `responseStatus == OPEN` |
+| **테스트 절차** | 1. 사용자 U의 인증 토큰으로 `DELETE /api/v1/surveys/{S.id}/responses` 호출 <br> 2. 409 `SURVEY_RESPONSE_IN_USE_BY_EVENT_REGISTRATION` 확인 <br> 3. 설문 응답·신청 상태·`currentCount`가 그대로인지 확인 |
+| **입력 데이터** | `DELETE /api/v1/surveys/{S.id}/responses` (Authorization: Bearer {사용자 U 토큰}) |
+| **기대 결과** | 삭제 거부, 행사 신청은 취소되지 않음 (취소는 취소 요청 후 운영진만 처리) |
+| **비고** | 구현: `EventRegistrationIntegrationTest` TC-EVTSRV-044 |
+
+#### TC-EVTSRV-044a: 운영진이 신청을 취소한 뒤에는 응답 삭제 가능
+
+| 항목 | 내용 |
+|------|------|
+| **우선순위** | 중 |
 | **테스트 유형** | 정상 |
 | **검증 기준 ID** | EVTSRV-030 |
-| **사전 조건** | 설문 S가 행사 E에 연결됨(`event.surveyId == S.id`), 사용자 U가 설문 S에 응답하고 행사 E에 신청함(승인 상태), 설문 `responseStatus == OPEN` |
-| **테스트 절차** | 1. 사용자 U의 인증 토큰으로 `DELETE /api/v1/surveys/{S.id}/responses` 호출 <br> 2. HTTP 204 확인 <br> 3. 설문 응답이 삭제(soft-delete)되었는지 확인 <br> 4. 행사 E에 대한 사용자 U의 신청 상태가 `CANCELED`로 변경되었는지 확인 <br> 5. 행사 E의 `currentCount`가 1 감소했는지 확인 |
-| **입력 데이터** | `DELETE /api/v1/surveys/{S.id}/responses` (Authorization: Bearer {사용자 U 토큰}) |
-| **기대 결과** | 설문 응답 삭제 + 행사 신청 자동 취소(CANCELED) + 정원 카운트 감소 |
-| **비고** | 교차 도메인 트랜잭션 원자성 검증 |
+| **사전 조건** | TC-EVTSRV-044와 동일하되, 사용자 U의 취소 요청을 운영진이 처리하여 신청이 CANCELED |
+| **테스트 절차** | 1. `DELETE /api/v1/surveys/{S.id}/responses` 호출 <br> 2. 응답이 soft-delete되었는지 확인 |
+| **기대 결과** | 응답 삭제 성공, `currentCount` 추가 변화 없음 |
+| **비고** | 구현: `EventRegistrationIntegrationTest` TC-EVTSRV-044a |
 
 #### TC-EVTSRV-045: 독립 설문(행사 미연결)의 응답 삭제 시 행사 부작용 없음
 
@@ -939,7 +951,7 @@
 | EVTSRV-027 | TC-EVTSRV-041 | 커버됨 |
 | EVTSRV-028 | TC-EVTSRV-042 | 커버됨 |
 | EVTSRV-029 | TC-EVTSRV-043 | 커버됨 |
-| EVTSRV-030 | TC-EVTSRV-044 | 커버됨 |
+| EVTSRV-030 | TC-EVTSRV-044, TC-EVTSRV-044a | 커버됨 |
 | EVTSRV-031 | TC-EVTSRV-045 | 커버됨 |
 | EVTSRV-032 | TC-EVTSRV-046, 047 | 커버됨 |
 | EVTSRV-033 | TC-EVTSRV-048, 049 | 커버됨 |
