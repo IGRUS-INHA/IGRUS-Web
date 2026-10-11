@@ -46,6 +46,10 @@ play-igrus/backend/play-server
 play-igrus/backend/play-igrus
 play-igrus/backend/data/
 
+# ==== recruit-form ====
+recruit-form/node_modules/
+recruit-form/dist/
+
 # npm / yarn / pnpm
 npm-debug.log*
 yarn-debug.log*
