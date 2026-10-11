@@ -14,7 +14,6 @@ import igrus.web.event.dto.response.EventCreateResponse;
 import igrus.web.event.dto.response.EventDetailResponse;
 import igrus.web.event.dto.response.EventListResponse;
 import igrus.web.event.audit.EventStatusChanged;
-import igrus.web.event.exception.AssociateMemberNotAllowedException;
 import igrus.web.event.exception.EventAccessDeniedException;
 import igrus.web.event.exception.EventAuthenticationRequiredException;
 import igrus.web.event.exception.EventAttachmentValidationException;
@@ -179,7 +178,6 @@ public class EventService {
      * @return 행사 상세 응답 DTO
      * @throws EventNotFoundException                행사를 찾을 수 없는 경우 (UNPUBLISHED 포함)
      * @throws EventAuthenticationRequiredException   비인증 사용자가 allowExternal=false 행사 접근 시
-     * @throws AssociateMemberNotAllowedException     준회원인 경우
      */
     public EventDetailResponse getEvent(Long eventId, Long userId) {
         Event event = eventRepository.findByIdAndVisibility(eventId, EventVisibility.PUBLISHED)
@@ -200,11 +198,6 @@ public class EventService {
         // 인증된 사용자 처리
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-
-        // 준회원 접근 제한
-        if (user.isAssociate()) {
-            throw new AssociateMemberNotAllowedException();
-        }
 
         // 권한 정보 계산
         boolean canEdit = user.isOperatorOrAbove();

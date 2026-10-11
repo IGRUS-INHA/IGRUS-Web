@@ -748,7 +748,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 
 | ID | 검증 항목 | 예상 결과 | 검증 위치 |
 |----|----------|----------|----------|
-| SEC-EVT-01 | 준회원이 행사 상세 조회 시도 | `AssociateMemberNotAllowedException` (403) | `EventService:122-124` |
+| SEC-EVT-01 | 준회원이 행사 상세 조회 시도 | 200 (조회 허용, 신청은 기존대로 allowExternal 행사만) | `EventService.getEvent` |
 | SEC-EVT-02 | 일반 회원(MEMBER)이 행사 생성 시도 | `EventAccessDeniedException` (403) | `EventService:270-274` |
 | SEC-EVT-03 | 일반 회원이 행사 수정 시도 | `EventAccessDeniedException` (403) | `EventService:283-286` |
 | SEC-EVT-04 | 일반 회원이 행사 삭제 시도 | `EventAccessDeniedException` (403) | `EventService:283-286` |
@@ -944,7 +944,7 @@ EVT-INV-13의 5가지 조건을 모두 만족할 때, `closeReason` 종류와 �
 
 | 검증 | 커버 테스트 | 상태 |
 |------|-----------|------|
-| SEC-EVT-01 (준회원 조회 차단) | `EventServiceTest:getEvent_WithAssociateMember_ThrowsException` | **커버됨** |
+| SEC-EVT-01 (준회원 조회 허용) | `EventServiceTest:getEvent_WithAssociateMember_ReturnsDetail` | **커버됨** |
 | SEC-EVT-02 (일반 회원 생성 차단) | `EventServiceTest:createEvent_WithRegularMember_ThrowsException` | **커버됨** |
 | SEC-EVT-03 (일반 회원 수정 차단) | `EventServiceTest:updateEvent_WithRegularMember_ThrowsException` | **커버됨** |
 | SEC-EVT-04 (일반 회원 삭제 차단) | `EventServiceTest:deleteEvent_WithRegularMember_ThrowsException` | **커버됨** |

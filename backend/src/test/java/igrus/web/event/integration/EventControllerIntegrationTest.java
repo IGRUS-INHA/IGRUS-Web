@@ -53,7 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *     <li>INT-023: 비인증 사용자 행사 생성 → 401</li>
  *     <li>INT-024: 비인증 사용자 행사 상세 조회 → 401</li>
  *     <li>INT-025: MEMBER가 행사 생성 → 403</li>
- *     <li>INT-026: ASSOCIATE가 행사 상세 조회 → 403</li>
+ *     <li>INT-026: ASSOCIATE가 행사 상세 조회 → 200</li>
  *     <li>INT-027: MEMBER가 행사 취소 → 403</li>
  *     <li>INT-028: MEMBER가 행사 재활성화 → 403</li>
  *     <li>INT-029: MEMBER가 등록 재오픈 → 403</li>
@@ -480,14 +480,15 @@ class EventControllerIntegrationTest extends ServiceIntegrationTestBase {
     // ==================== INT-026 ====================
 
     @Test
-    @DisplayName("[INT-026] ASSOCIATE가 행사 상세 조회 → 403")
-    void getEvent_AssociateRole_Returns403() throws Exception {
+    @DisplayName("[INT-026] ASSOCIATE가 행사 상세 조회 → 200")
+    void getEvent_AssociateRole_Returns200() throws Exception {
         Event event = createAndSaveOpenEvent();
         String token = generateToken(associate);
 
         mockMvc.perform(get("/api/v1/events/" + event.getId())
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk())
+                .andExpect(OpenApiValidatorUtil.matchesOpenApiSpec());
     }
 
     // ==================== INT-027 ====================

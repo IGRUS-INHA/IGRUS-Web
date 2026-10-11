@@ -129,9 +129,11 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
     isExpanded && !isOperator && (isAuthenticated || !!event.allowExternal),
   );
   const adminQuery = useAdminEvent(numericId, isExpanded && isOperator);
-  const { data: detailResponse, isLoading: isDetailLoading } = isOperator
-    ? adminQuery
-    : publicQuery;
+  const {
+    data: detailResponse,
+    isLoading: isDetailLoading,
+    error: detailError,
+  } = isOperator ? adminQuery : publicQuery;
   const detail = detailResponse?.data;
 
   // External registration mutation
@@ -895,6 +897,10 @@ export default function EventAccordionItem({ event }: EventAccordionItemProps) {
           ) : !isAuthenticated && !event.allowExternal ? (
             <p className="text-sm text-muted-foreground">
               로그인하면 상세 정보를 확인할 수 있습니다.
+            </p>
+          ) : detailError ? (
+            <p className="text-sm text-muted-foreground">
+              {getErrorMessage(detailError)}
             </p>
           ) : detail?.description ? (
             <RichTextViewer
