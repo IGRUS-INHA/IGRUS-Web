@@ -2,6 +2,7 @@ package igrus.web.common.config;
 
 import igrus.web.security.auth.common.service.AuthEmailService;
 import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
+import igrus.web.webhook.slack.SlackNotifier;
 import java.time.Clock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -34,6 +35,12 @@ public class TestExternalServiceConfig {
     @Primary
     public BaebdungiWebhookService testBaebdungiWebhookService() {
         return Mockito.mock(BaebdungiWebhookService.class);
+    }
+
+    @Bean
+    @Primary
+    public SlackNotifier testSlackNotifier() {
+        return Mockito.mock(SlackNotifier.class);
     }
 
     @Bean

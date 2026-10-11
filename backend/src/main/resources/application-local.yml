@@ -36,3 +36,5 @@ app:
   webhook:
     baebdung-i:
       enabled: false
+    slack:
+      url: ${SLACK_WEBHOOK_URL:}  # 비어 있으면 슬랙 알림 비활성화

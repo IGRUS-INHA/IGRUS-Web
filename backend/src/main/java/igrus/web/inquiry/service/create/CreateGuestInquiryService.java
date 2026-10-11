@@ -8,6 +8,7 @@ import igrus.web.inquiry.repository.GuestInquiryRepository;
 import igrus.web.inquiry.service.support.InquiryAttachmentHelper;
 import igrus.web.inquiry.service.support.InquiryNotificationService;
 import igrus.web.inquiry.service.support.InquiryPersistenceExecutor;
+import igrus.web.webhook.slack.SlackNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -29,6 +30,7 @@ public class CreateGuestInquiryService {
     private final PasswordEncoder passwordEncoder;
     private final InquiryNotificationService inquiryNotificationService;
     private final InquiryAttachmentHelper inquiryAttachmentHelper;
+    private final SlackNotifier slackNotifier;
 
     private static final int MAX_INQUIRY_NUMBER_RETRIES = 3;
 
@@ -72,6 +74,9 @@ public class CreateGuestInquiryService {
                 } catch (Exception e) {
                     log.error("문의 접수 확인 이메일 발송 실패: inquiryNumber={}, email={}", saved.getInquiryNumber(), request.getEmail(), e);
                 }
+
+                slackNotifier.send("📩 새 문의 접수 (비회원)\n["
+                        + saved.getInquiryNumber() + "] " + request.getTitle());
 
                 return InquiryCreateResponse.from(saved);
             } catch (DataIntegrityViolationException e) {

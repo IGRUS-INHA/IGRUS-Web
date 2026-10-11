@@ -84,6 +84,9 @@ class EventRegistrationServiceTest {
     @Mock
     private EventStatusHelper eventStatusHelper;
 
+    @Mock
+    private EventRegistrationSlackNotifier eventRegistrationSlackNotifier;
+
     @InjectMocks
     private EventRegistrationService eventRegistrationService;
 
@@ -168,6 +171,7 @@ class EventRegistrationServiceTest {
             assertThat(response).isNotNull();
             verify(eventRepository).incrementCurrentCountIfAvailable(EVENT_ID);
             verify(eventRegistrationRepository).save(any(EventRegistration.class));
+            verify(eventRegistrationSlackNotifier).notifyRegistered(eq(EVENT_ID), anyString());
         }
 
         /**

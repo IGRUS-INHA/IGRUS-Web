@@ -35,6 +35,7 @@ services:
       SPRING_ACTIVE_PROFILE: local
       DB_USERNAME: ${DB_USERNAME:-igrus}
       DB_PASSWORD: ${DB_PASSWORD:-igrus1234}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/igrus-web
       SPRING_CLOUD_AWS_SECRETSMANAGER_ENABLED: "false"
       SPRING_CLOUD_AWS_REGION_STATIC: ap-northeast-2

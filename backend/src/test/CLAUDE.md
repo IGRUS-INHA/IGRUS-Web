@@ -46,6 +46,7 @@ private AuthEmailService authEmailService;
 **MockBean으로 등록된 외부 서비스 목록** (`TestExternalServiceConfig`):
 - `AuthEmailService`
 - `BaebdungiWebhookService`
+- `SlackNotifier`
 - `Clock`
 
 ### @WebMvcTest (슬라이스 테스트) — `@MockitoBean` 허용

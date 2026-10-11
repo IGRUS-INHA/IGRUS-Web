@@ -77,6 +77,9 @@ class ExternalEventRegistrationServiceTest {
     @Mock
     private EventStatusHelper eventStatusHelper;
 
+    @Mock
+    private EventRegistrationSlackNotifier eventRegistrationSlackNotifier;
+
     @InjectMocks
     private ExternalEventRegistrationService service;
 
@@ -154,6 +157,7 @@ class ExternalEventRegistrationServiceTest {
             assertThat(response.registrationId()).isEqualTo(REGISTRATION_ID);
             verify(eventRegistrationRepository).save(any(EventRegistration.class));
             verify(eventRepository).incrementCurrentCountIfAvailable(EVENT_ID);
+            verify(eventRegistrationSlackNotifier).notifyRegistered(EVENT_ID, NAME + " (" + STUDENT_ID + ", 외부인)");
         }
 
         @Test

@@ -16,8 +16,13 @@ import igrus.web.community.post.exception.PostTitleTooLongException;
 import igrus.web.community.exception.CommunityErrorCode;
 import igrus.web.security.auth.common.exception.account.AccountRecoverableException;
 import igrus.web.security.auth.common.exception.email.EmailNotVerifiedException;
+import igrus.web.webhook.slack.SlackNotifier;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -31,11 +36,19 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private static final long ERROR_ALERT_COOLDOWN_MS = 60_000;
+
+    // @WebMvcTest 슬라이스에는 SlackNotifier 빈이 없으므로 ObjectProvider 로 주입
+    private final ObjectProvider<SlackNotifier> slackNotifier;
+    private final AtomicLong lastErrorAlertAt = new AtomicLong();
 
     /**
      * 이메일 미인증 상태에서의 접근 시도 예외 처리.
@@ -295,9 +308,24 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception e) {
+    public ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest request) {
         log.error("Unhandled Exception: {}", e.getMessage(), e);
+        alertSlack(e, request);
         ErrorResponse response = ErrorResponse.of(CommonErrorCode.INTERNAL_SERVER_ERROR);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    // ponytail: 전역 1분 쿨다운 — 쿨다운 중 발생한 다른 500 은 슬랙에 안 뜬다(로그에는 남음).
+    // 서로 다른 에러를 놓치는 게 문제가 되면 예외 타입별 쿨다운으로 바꿀 것.
+    // 예외 메시지에는 개인정보/SQL 값이 섞일 수 있어 슬랙에는 보내지 않는다. 상세는 traceId 로 로그에서 조회.
+    private void alertSlack(Exception e, HttpServletRequest request) {
+        long now = System.currentTimeMillis();
+        long last = lastErrorAlertAt.get();
+        if (now - last < ERROR_ALERT_COOLDOWN_MS || !lastErrorAlertAt.compareAndSet(last, now)) {
+            return;
+        }
+        slackNotifier.ifAvailable(notifier -> notifier.send("🚨 서버 500 에러\n"
+                + request.getMethod() + " " + request.getRequestURI() + "\n"
+                + e.getClass().getName() + " (traceId=" + MDC.get("traceId") + ")"));
     }
 }
