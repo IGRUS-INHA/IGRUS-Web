@@ -67,6 +67,7 @@ public class ExternalEventRegistrationService {
     private final SurveyAnswerValidator surveyAnswerValidator;
     private final ObjectMapper objectMapper;
     private final EventStatusHelper eventStatusHelper;
+    private final EventRegistrationSlackNotifier eventRegistrationSlackNotifier;
 
     /**
      * 외부인 행사 신청을 처리합니다.
@@ -179,6 +180,8 @@ public class ExternalEventRegistrationService {
                 eventId, studentId, savedRegistration.getId());
 
         // 14. 응답 반환
+        eventRegistrationSlackNotifier.notifyRegistered(eventId, name + " (" + studentId + ", 외부인)");
+
         return RegistrationResponse.from(savedRegistration);
     }
 

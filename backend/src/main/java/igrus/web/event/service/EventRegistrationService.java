@@ -87,6 +87,7 @@ public class EventRegistrationService {
     private final SurveyAnswerFactory surveyAnswerFactory;
     private final ApplicationEventPublisher eventPublisher;
     private final EventStatusHelper eventStatusHelper;
+    private final EventRegistrationSlackNotifier eventRegistrationSlackNotifier;
 
     /**
      * 행사에 신청합니다.
@@ -125,6 +126,14 @@ public class EventRegistrationService {
      */
     public RegistrationResponse registerEvent(Long eventId, Long userId,
                                                List<SubmitAnswerRequest> surveyAnswers) {
+        RegistrationResponse response = doRegisterEvent(eventId, userId, surveyAnswers);
+        userRepository.findById(userId).ifPresent(user -> eventRegistrationSlackNotifier.notifyRegistered(
+                eventId, user.getName() + " (" + user.getStudentId() + ")"));
+        return response;
+    }
+
+    private RegistrationResponse doRegisterEvent(Long eventId, Long userId,
+                                                 List<SubmitAnswerRequest> surveyAnswers) {
         List<SubmitAnswerRequest> answers = surveyAnswers != null ? surveyAnswers : List.of();
 
         // 1. 행사 조회 (락 없이)

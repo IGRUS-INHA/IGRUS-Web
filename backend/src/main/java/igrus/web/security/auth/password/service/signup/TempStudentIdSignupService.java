@@ -20,6 +20,7 @@ import igrus.web.user.exception.TempStudentIdNotAvailableException;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.user.service.TempStudentIdGeneratorService;
 import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
+import igrus.web.webhook.slack.SlackNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -50,6 +51,7 @@ public class TempStudentIdSignupService {
     private final AuthEmailService authEmailService;
     private final TempStudentIdGeneratorService tempStudentIdGeneratorService;
     private final BaebdungiWebhookService baebdungiWebhookService;
+    private final SlackNotifier slackNotifier;
     private final Clock clock;
 
     /**
@@ -126,6 +128,8 @@ public class TempStudentIdSignupService {
 
         // 뱁둥이봇 웹훅 호출 (비동기, 실패해도 가입 프로세스에 영향 없음)
         baebdungiWebhookService.sendSubmission(user);
+        slackNotifier.send("🎉 신규 가입\n" + user.getName()
+                + " (" + user.getDepartment() + " " + user.getGrade() + "학년, " + user.getStudentId() + ")");
 
         // 임시 학번 안내 이메일 발송
         authEmailService.sendTemporaryStudentIdEmail(request.email(), request.name(), tempStudentId);

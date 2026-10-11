@@ -11,6 +11,7 @@ import igrus.web.inquiry.service.support.InquiryPersistenceExecutor;
 import igrus.web.user.domain.User;
 import igrus.web.user.exception.UserNotFoundException;
 import igrus.web.user.repository.UserRepository;
+import igrus.web.webhook.slack.SlackNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,6 +32,7 @@ public class CreateMemberInquiryService {
     private final InquiryPersistenceExecutor inquiryPersistenceExecutor;
     private final InquiryNotificationService inquiryNotificationService;
     private final InquiryAttachmentHelper inquiryAttachmentHelper;
+    private final SlackNotifier slackNotifier;
 
     private static final int MAX_INQUIRY_NUMBER_RETRIES = 3;
 
@@ -74,6 +76,9 @@ public class CreateMemberInquiryService {
                 } catch (Exception e) {
                     log.error("문의 접수 확인 이메일 발송 실패: inquiryNumber={}, userId={}", saved.getInquiryNumber(), userId, e);
                 }
+
+                slackNotifier.send("📩 새 문의 접수 (회원)\n["
+                        + saved.getInquiryNumber() + "] " + request.getTitle());
 
                 return InquiryCreateResponse.from(saved);
             } catch (DataIntegrityViolationException e) {

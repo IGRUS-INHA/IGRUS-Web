@@ -117,6 +117,8 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
      */
     long countByEventIdAndStatus(Long eventId, EventRegistrationStatus status);
 
+    long countByEventIdAndStatusIn(Long eventId, Collection<EventRegistrationStatus> statuses);
+
 
     // === 외부인 중복 검사 쿼리 (DECISION-02: 서비스 레벨만) ===
 

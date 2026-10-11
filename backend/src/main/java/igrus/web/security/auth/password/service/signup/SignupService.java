@@ -18,6 +18,7 @@ import igrus.web.user.domain.ProfileLink;
 import igrus.web.user.domain.User;
 import igrus.web.user.repository.UserRepository;
 import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
+import igrus.web.webhook.slack.SlackNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,6 +39,7 @@ public class SignupService {
     private final PrivacyConsentRepository privacyConsentRepository;
     private final PasswordEncoder passwordEncoder;
     private final BaebdungiWebhookService baebdungiWebhookService;
+    private final SlackNotifier slackNotifier;
 
     private static final String PRIVACY_POLICY_VERSION = "1.0";
 
@@ -109,6 +111,8 @@ public class SignupService {
 
         // 뱁둥이봇 웹훅 호출 (비동기, 실패해도 가입 프로세스에 영향 없음)
         baebdungiWebhookService.sendSubmission(user);
+        slackNotifier.send("🎉 신규 가입\n" + user.getName()
+                + " (" + user.getDepartment() + " " + user.getGrade() + "학년, " + user.getStudentId() + ")");
 
         log.info("회원가입 완료: email={}", request.email());
 

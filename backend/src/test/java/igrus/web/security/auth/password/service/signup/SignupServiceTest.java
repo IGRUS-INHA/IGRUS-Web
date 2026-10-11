@@ -19,6 +19,7 @@ import igrus.web.user.domain.User;
 import igrus.web.user.domain.UserRole;
 import igrus.web.user.domain.UserStatus;
 import igrus.web.webhook.baebdungi.service.BaebdungiWebhookService;
+import igrus.web.webhook.slack.SlackNotifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,6 +30,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.verify;
 
 @DisplayName("SignupService 통합 테스트")
@@ -39,6 +41,9 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
 
     @Autowired
     private BaebdungiWebhookService baebdungiWebhookService;
+
+    @Autowired
+    private SlackNotifier slackNotifier;
 
     private static final String VALID_STUDENT_ID = "20231234";
     private static final String VALID_NAME = "홍길동";
@@ -53,7 +58,7 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
     @BeforeEach
     void setUp() {
         setUpBase();
-        Mockito.reset(baebdungiWebhookService);
+        Mockito.reset(baebdungiWebhookService, slackNotifier);
     }
 
     private PasswordSignupRequest createValidSignupRequest() {
@@ -154,6 +159,10 @@ class SignupServiceTest extends ServiceIntegrationTestBase {
 
             // 웹훅 호출 확인
             verify(baebdungiWebhookService).sendSubmission(any(User.class));
+
+            // 슬랙 가입 알림 확인 (이름, 학과, 학번 포함)
+            verify(slackNotifier).send(contains(VALID_NAME + " (" + VALID_DEPARTMENT));
+            verify(slackNotifier).send(contains(VALID_STUDENT_ID));
         }
 
         @Test
