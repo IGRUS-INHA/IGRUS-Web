@@ -488,16 +488,20 @@ class EventServiceTest {
         }
 
         /**
-         * SVC-EVT-008: 준회원 행사 조회 거부
+         * SVC-EVT-008: 준회원 행사 조회 허용
          */
         @Test
-        @DisplayName("[SVC-EVT-008] 준회원이 행사를 조회하면 AssociateMemberNotAllowedException 발생")
-        void getEvent_WithAssociateMember_ThrowsException() {
+        @DisplayName("[SVC-EVT-008] 준회원도 행사를 조회할 수 있고 canEdit은 false다")
+        void getEvent_WithAssociateMember_ReturnsDetail() {
             when(eventRepository.findByIdAndVisibility(EVENT_ID, EventVisibility.PUBLISHED)).thenReturn(Optional.of(mockEvent));
             when(userRepository.findById(4L)).thenReturn(Optional.of(associateMember));
+            when(eventRegistrationRepository.existsByEventIdAndUserIdAndStatusIn(
+                    eq(EVENT_ID), eq(4L), any(Set.class))).thenReturn(false);
 
-            assertThatThrownBy(() -> eventService.getEvent(EVENT_ID, 4L))
-                    .isInstanceOf(AssociateMemberNotAllowedException.class);
+            EventDetailResponse response = eventService.getEvent(EVENT_ID, 4L);
+
+            assertThat(response.canEdit()).isFalse();
+            assertThat(response.isRegistered()).isFalse();
         }
 
         /**

@@ -67,7 +67,7 @@ import { customFetch } from "../../client";
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * 행사의 상세 정보를 조회합니다. 준회원은 조회할 수 없습니다.
+ * 행사의 상세 정보를 조회합니다. 준회원도 조회할 수 있습니다.
 allowExternal=true인 행사는 비인증 사용자도 조회할 수 있습니다.
  * @summary 행사 상세 조회
  */
@@ -81,11 +81,6 @@ export type getEventResponse401 = {
   status: 401;
 };
 
-export type getEventResponse403 = {
-  data: void;
-  status: 403;
-};
-
 export type getEventResponse404 = {
   data: void;
   status: 404;
@@ -96,7 +91,6 @@ export type getEventResponseSuccess = getEventResponse200 & {
 };
 export type getEventResponseError = (
   | getEventResponse401
-  | getEventResponse403
   | getEventResponse404
 ) & {
   headers: Headers;
